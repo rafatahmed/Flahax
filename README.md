@@ -1,27 +1,26 @@
 # FlahaX
 
-FlahaX chooses a fertilizer combination and the grams of each salt for a fixed crop formula. Version 0.1.0. It is a separate Python package. The FlahaFAST application does not import it.
+[![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
+[![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
+[![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](LICENSE)
 
-The crop formula does not change. This season’s water is subtracted from it. The gap that remains is what the salts must cover. Every real salt in the library is a candidate. Non-negative grams decide which salts stay in the mix.
+FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. Version 0.1.0. The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
 
-## License
-
-Use of FlahaX is free of charge, including commercial use. The [Flaha Free Use License](LICENSE) allows you to install and run the package. It does not allow you to modify the software, and it does not allow you to give copies of it to anyone else. Downloading an official release for your own use is covered. Republishing, forking, or shipping your own copy is not.
-
-Because modification and redistribution are withheld, this is a proprietary free-use license. It is outside the Open Source Definition, which requires those permissions.
+The package is separate from the FlahaFAST application. FlahaFAST does not import it.
 
 ## Install
 
-Python 3.11 or newer. No third-party dependencies.
-
-From this repository, in a virtual environment:
+Python 3.11 or newer. There are no third-party dependencies.
 
 ```powershell
-python -m pip install -e .
-python -c "import flahax; print(flahax.__version__)"
+py -m pip install flahax
 ```
 
-The package is not on a public index yet. Building a release is described in [docs/publishing.md](docs/publishing.md).
+A checkout of this repository can be installed for local work:
+
+```powershell
+py -m pip install -e .
+```
 
 ## Quick start
 
@@ -33,21 +32,26 @@ result = recommend(
     targets={"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54},
     water={"Ca": 20},
 )
+
+for salt in result["salts"]:
+    print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
 ```
 
-The same call from the command line, reading JSON on standard input:
+The same solve accepts one JSON object on standard input:
 
 ```powershell
 @'
 {"targets": {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}, "water": {"Ca": 20}}
-'@ | python -m flahax
+'@ | flahax
 ```
 
-`result["salts"]` lists each chosen salt with `gramsPerLitre`. `result["rows"]` lists each element with its target, the final ppm, and `deltaPct`.
+`result["salts"]` lists each chosen salt and its `gramsPerLitre`. `result["rows"]` lists each element with its target, the final concentration in ppm, and `deltaPct`. Grams are for one litre of the solution the plant sees.
 
-## Proof
+Element symbols follow the formula database: `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`.
 
-Edited pepper targets, with 20 ppm calcium already in the water, fit inside 1% on every targeted element using six salts:
+## Worked example
+
+Edited pepper targets, with 20 ppm calcium already in the water, stay inside 1% on every targeted element. The fit uses six salts:
 
 | Salt | g/L |
 |---|---:|
@@ -58,23 +62,46 @@ Edited pepper targets, with 20 ppm calcium already in the water, fit inside 1% o
 | Calcium nitrate (ag grade) | 0.046 |
 | Calcium monobasic phosphate | 0.048 |
 
-The mathematics, the library counts, and the regression case are in [docs/method.md](docs/method.md).
+The ppm equation, the Lawson–Hanson solve, the library counts, and the regression case are in [docs/method.md](docs/method.md).
+
+## Citation
+
+Please cite FlahaX when the package, or a recommendation it produced, is used in a report or a paper.
+
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.1.0) [Computer software]. https://pypi.org/project/flahax/
+
+```bibtex
+@software{alkhashan2026flahax,
+  author  = {Al Khashan, Rafat A.},
+  title   = {FlahaX: fertilizer salt selection for a fixed crop formula},
+  year    = {2026},
+  version = {0.1.0},
+  url     = {https://pypi.org/project/flahax/},
+  license = {Flaha Free Use License}
+}
+```
+
+GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” button. That file carries the same record.
 
 ## Documentation
 
-- [docs/usage.md](docs/usage.md) — install, library call, command line, inputs, and result fields
-- [docs/method.md](docs/method.md) — ppm equation, solver, library file, and the pepper proof
-- [docs/publishing.md](docs/publishing.md) — build the sdist and wheel
-- [INTEGRATION.md](INTEGRATION.md) — how FlahaFAST can call the package without changing the current flow
+| Document | Contents |
+|---|---|
+| [docs/usage.md](docs/usage.md) | Library call, command line, inputs, and result fields |
+| [docs/method.md](docs/method.md) | ppm equation, solver, library file, and the pepper proof |
+| [INTEGRATION.md](INTEGRATION.md) | Calling FlahaX from FlahaFAST without changing the current flow |
+| [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
-## Tests
-
-After `pip install -e .`, from the repository root:
+From a checkout, the tests are:
 
 ```powershell
-python -m unittest discover -s tests -t .
+py -m unittest discover -s tests -t .
 ```
 
-## Scope of this version
+## Scope of version 0.1.0
 
-Grams are for one litre of the solution the plant sees. This version does not split tanks, adjust pH, price the mix, or apply a concentration factor. It does not write to the FlahaFAST database.
+This version returns grams for one litre of working solution. It does not split tanks, adjust pH, price the mix, or apply a concentration factor. It does not write to the FlahaFAST database.
+
+## License
+
+Use of FlahaX is free of charge, including commercial use, under the [Flaha Free Use License](LICENSE). That license permits installation and running of an official copy. Modification, forking, republishing, and giving copies to anyone else require permission from the copyright holder. The license is a proprietary free-use license.

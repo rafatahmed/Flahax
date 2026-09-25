@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use FlahaX, please cite it as below."
+title: "FlahaX: fertilizer salt selection for a fixed crop formula"
+abstract: >-
+  FlahaX chooses fertilizer salts and the grams of each salt so that a fixed
+  crop formula, after subtraction of the season's water, is met with the
+  smallest percentage error the salt library allows.
+type: software
+authors:
+  - family-names: Al Khashan
+    given-names: Rafat A.
+version: 0.1.0
+date-released: 2026-09-25
+url: https://pypi.org/project/flahax/
+repository-code: https://github.com/rafatahmed/Flahax
+license-url: https://github.com/rafatahmed/Flahax/blob/v0.1.0/LICENSE
+keywords:
+  - fertilizer
+  - hydroponics
+  - nutrient solution
+  - formulation
+  - non-negative least squares
+preferred-citation:
+  type: software
+  title: "FlahaX: fertilizer salt selection for a fixed crop formula"
+  authors:
+    - family-names: Al Khashan
+      given-names: Rafat A.
+  year: 2026
+  version: 0.1.0
+  url: https://pypi.org/project/flahax/
+  license-url: https://github.com/rafatahmed/Flahax/blob/v0.1.0/LICENSE
