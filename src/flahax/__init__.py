@@ -29,12 +29,14 @@ from .equilibrium import (
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
 from .phosphate import OrthophosphateSpeciation, orthophosphate_speciation
+from .phosphate_complexes import CalciumMagnesiumPhosphateSpeciation, calcium_magnesium_phosphate_speciation
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
     "DeliveryError",
     "CalciteCo2Equilibrium",
+    "CalciumMagnesiumPhosphateSpeciation",
     "GypsumEquilibrium",
     "DurationMinutes",
     "FinalSolutionRecipe",
@@ -56,6 +58,7 @@ __all__ = [
     "VolumeLitres",
     "alkalinity_meq_per_litre",
     "calcite_co2_reference_values",
+    "calcium_magnesium_phosphate_speciation",
     "davies_gamma",
     "elemental_contribution",
     "final_solution_recipe",

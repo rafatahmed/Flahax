@@ -8,7 +8,7 @@ FlahaX's final chemistry model is a source-versioned aqueous-equilibrium system,
 |---|---|---|---|
 | Carbonate / calcium | CO₂, HCO₃⁻, CO₃²⁻, Ca²⁺, H⁺, OH⁻ | Calcite | First 25 °C open-CO₂ kernel verified |
 | Sulfate / calcium / magnesium | SO₄²⁻, HSO₄⁻, Ca²⁺, Mg²⁺ and complexes | Gypsum, anhydrite, epsomite, kieserite | Pure-water Ca²⁺/SO₄²⁻/CaSO₄(aq) gypsum kernel and PHREEQC fixture verified; magnesium and mixture coverage remain |
-| Phosphate / calcium / magnesium | H₃PO₄, H₂PO₄⁻, HPO₄²⁻, PO₄³⁻, Ca/Mg complexes | Calcium phosphate phases, struvite where ammonium/Mg are present | Source-traceable uncomplexed orthophosphate acid/base foundation added; metal complexes, phases, and mixture fixture pending |
+| Phosphate / calcium / magnesium | H₃PO₄, H₂PO₄⁻, HPO₄²⁻, PO₄³⁻, Ca/Mg complexes | Calcium phosphate phases, struvite where ammonium/Mg are present | PHREEQC 3.8.9 Ca/Mg/phosphate fixture and fixed-pH complexation kernel added; solid equilibrium and full activity coverage pending |
 | Nitrogen | NO₃⁻, NH₄⁺, NH₃ and acid/base relation | Ammonia volatility boundary where applicable | Pending |
 | Potassium / sodium / chloride | K⁺, Na⁺, Cl⁻ and ion pairs where supplied by selected database | K/Na salts only when named phase data applies | Pending |
 | Micronutrients | Fe, Mn, Zn, Cu, B, Mo species and chelates | Hydroxide/phosphate/carbonate precipitation; chelate stability | Pending, requires chelate dataset |
@@ -45,3 +45,16 @@ sum(m_i) = P_total_uncomplexed
 ```
 
 It requires pH and ionic strength as model inputs, applies only through `I = 0.1 mol/kgw`, and rejects wider use. It does not yet solve pH, ionic strength, calcium/magnesium complexes, or solids. Consequently it must not approve a calcium–phosphate stock. The next required evidence is a PHREEQC mixture fixture with stated Ca, Mg, P, counter-ions, temperature, and phase set; only then can those complex and phase equations be enabled for planning.
+
+## Calcium–magnesium–phosphate reference mixture
+
+That fixture is now checked in: 2 mmol/kgw Ca as calcium chloride, 1 mmol/kgw Mg as magnesium chloride, and 1 mmol/kgw P as sodium dihydrogen phosphate, at 25 °C and pH 6.5. PHREEQC 3.8.9 reports free-ion activities and `SI(Hydroxyapatite) = 3.15`. The compact FlahaX kernel solves the matching Ca/Mg phosphate complexes at specified pH and ionic strength:
+
+```text
+Ca2+ + HPO4^2- <-> CaHPO4(aq)     log beta = 2.739
+Mg2+ + HPO4^2- <-> MgHPO4(aq)     log beta = 2.870
+Ca2+ + PO4^3-  <-> CaPO4-         log beta = 6.459
+Mg2+ + PO4^3-  <-> MgPO4-         log beta = 6.589
+```
+
+The reference test uses `±0.05 SI` because the package intentionally uses a reduced Davies activity calculation while PHREEQC uses its complete ion-association model. This is verification of the direction and bounded numerical behavior—not permission to precipitate or approve a stock. Solid-equilibrium and broader activity-model coverage are still required before that decision is automated.

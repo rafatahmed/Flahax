@@ -25,6 +25,10 @@ This fixture is a provenance and harness canary. It is not a hydroponic stock or
 
 This is a deliberately small calcium–sulfate fixture—not an approval of a fertilizer stock. A future stock fixture must add stated fertilizer totals, background ions, temperature, and every phase that can limit that mixture.
 
+## Calcium–magnesium–phosphate mixture fixture
+
+`ca_mg_phosphate_complexation.json` was generated locally from official PHREEQC 3.8.9 source and `phreeqc.dat`. It records a fully stated chloride/phosphate counter-ion system, selected free-ion molalities, phosphate acid forms, ionic strength, and hydroxyapatite saturation index. It verifies a reduced dependency-free Ca/Mg/phosphate complexation kernel with an explicit `0.05` absolute tolerance. The tolerance documents the difference between that narrow Davies kernel and PHREEQC's full ion-association model; it is not a safety margin or a stock-approval threshold.
+
 ## Required fixture families before P2/P3 completion
 
 | Family | Required model inputs | Expected outputs |

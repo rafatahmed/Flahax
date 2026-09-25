@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1",
+  "reference": {
+    "software": "PHREEQC 3.8.9",
+    "database": "phreeqc.dat",
+    "activityModel": "PHREEQC ion-association aqueous model",
+    "sourceUrl": "https://github.com/phreeqc-dev/phreeqc3",
+    "sourceDescription": "FlahaX reference mixture generated from official PHREEQC source commit at 25 C; CaCl2 2 mmol/kgw, MgCl2 1 mmol/kgw, NaH2PO4 1 mmol/kgw."
+  },
+  "phreeqcInput": "TITLE FlahaX calcium-magnesium-phosphate reference mixture\nSOLUTION 1\n    temp 25\n    pH 6.5\n    units mmol/kgw\n    Ca 2\n    Mg 1\n    P 1 as H2PO4\n    Na 1\n    Cl 6\nSELECTED_OUTPUT\n    -file ca_mg_phosphate_probe.sel\n    -reset false\n    -pH true\n    -ionic_strength true\n    -totals Ca Mg P Na Cl\n    -molalities Ca+2 Mg+2 PO4-3 HPO4-2 H2PO4-\n    -activities Ca+2 Mg+2 PO4-3 H+\n    -si Hydroxyapatite\nEND\n",
+  "inputSha256": "305c6211e1d169b9601e546280fe8bc38f58e0c316770d7eb343345d25a2dba7",
+  "expected": {
+    "absoluteTolerance": 0.05,
+    "values": {
+      "ph": 6.5,
+      "ionicStrength": 0.00985,
+      "freeCalciumMolal": 0.001897,
+      "freeMagnesiumMolal": 0.0009318,
+      "freePhosphateMolal": 0.0000000004197,
+      "hpo4Molal": 0.0001738,
+      "h2po4Molal": 0.0006546,
+      "si.Hydroxyapatite": 3.15
+    }
+  }
+}
