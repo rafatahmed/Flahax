@@ -83,3 +83,5 @@ The next reduced-system step now iterates pH and ionic strength to charge closur
 The first calcium/sulfate competition probe is now checked in separately. Its PHREEQC 3.8.9 output is `SI(Gypsum) = -1.98`, `SI(Struvite) = -0.46`, and `SI(Hydroxyapatite) = 10.69`. FlahaX compares the gypsum and struvite free-ion activity products within the reduced-model tolerance; hydroxyapatite remains a separately modelled calcium-phosphate constraint.
 
 Calcium and sulfate can now be supplied explicitly to the reduced charge-balanced struvite solver. They contribute to charge balance and ionic strength, and the result includes a gypsum saturation index when both are present. Their aqueous complexes and any precipitated amount remain deliberately outside this increment.
+
+The solver now includes neutral `CaSO4(aq)` using the current `phreeqc.dat` `log beta = 2.14`. It conserves analytical calcium and sulfate totals, reports free Ca²⁺/SO₄²⁻ and the neutral pair, and bases gypsum SI on free-ion activities. Calcium-phosphate and carbonate complexes remain outside this reduced family.

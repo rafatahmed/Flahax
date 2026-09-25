@@ -10,3 +10,4 @@ class StruviteMixtureTests(unittest.TestCase):
  def test_calcium_sulfate_are_explicit_charge_and_phase_inputs(self):
   r=solve_charge_balanced_struvite_mixture(.001,.001,.001,.002,.005,.001,.001)
   self.assertAlmostEqual(r.charge_residual,0,places=9); self.assertIsNotNone(r.gypsum_si)
+  self.assertGreater(r.calcium_sulfate_molal,0); self.assertLess(r.free_calcium_molal,.001)
