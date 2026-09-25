@@ -18,6 +18,7 @@ from .delivery_quantities import (
     rescore_with_reagent,
 )
 from .engine import gap_for, load_library, recommend, solve_weights
+from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 
 __all__ = [
     "DeliveryError",
@@ -30,6 +31,10 @@ __all__ = [
     "MassGrams",
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
+    "StockPlan",
+    "StockSaltDose",
+    "StockTank",
+    "StockTankPlan",
     "TemperatureCelsius",
     "VolumeLitres",
     "elemental_contribution",
@@ -38,6 +43,7 @@ __all__ = [
     "gap_for",
     "load_library",
     "make_audit_record",
+    "plan_stocks",
     "recommend",
     "solve_weights",
     "validate_delivery_request",

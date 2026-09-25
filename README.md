@@ -96,6 +96,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/implementation-roadmap.md](docs/implementation-roadmap.md) | Trackable delivery-system implementation plan and acceptance gates |
 | [docs/delivery-contracts.md](docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
 | [docs/delivery-quantities.md](docs/delivery-quantities.md) | P1 unit-safe batch adaptation and reagent nutrient contributions |
+| [docs/stock-planning.md](docs/stock-planning.md) | P2 conservative stock-tank planning and bench-validation protocol |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:

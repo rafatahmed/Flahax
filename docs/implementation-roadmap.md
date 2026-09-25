@@ -66,17 +66,17 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Exit condition:** a recipe containing salts plus a reagent addition conserves mass and either remains within configured nutrient tolerance or is rejected.
 
-### P2 — Conservative stock-tank planner `[ ]`
+### P2 — Conservative stock-tank planner `[-]`
 
 **Objective:** produce safe, explainable A/B/acid stock plans before modelling detailed equilibria.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P2.1 | Product compatibility graph | Tests reject calcium + concentrated phosphate/sulfate in one tank; rule provenance is reported |
-| P2.2 | Per-product, temperature-bounded solubility-limit records | Missing source/range fails; boundary and safety-margin tests |
-| P2.3 | Tank-assignment constraint solver | Deterministic assignment or explicit infeasibility explanation |
-| P2.4 | Stock concentration and capacity calculation | Hand-checked 1:100 and multi-channel examples; no tank overfill |
-| P2.5 | Bench validation protocol and result record | Jar/hold test template at planned maximum concentration and minimum temperature |
+| P2.1 | Product compatibility graph `[x]` | Tests reject supplied separation-rule conflicts; rule provenance is reported |
+| P2.2 | Per-product, temperature-bounded solubility-limit records `[x]` | Missing source/range fails; boundary and safety-margin tests |
+| P2.3 | Tank-assignment constraint solver `[x]` | Deterministic assignment or explicit infeasibility explanation |
+| P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
+| P2.5 | Bench validation protocol and result record `[-]` | Jar/hold test template is documented; physical validation evidence is required |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
@@ -189,4 +189,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** begin **P2.1–P2.2**. Preserve the P0/P1 contracts while defining sourced hard compatibility rules and temperature-bounded solubility limits. Do not infer a product's compatibility from its name.
+**Current next action:** collect and approve P2.5 bench-validation records for the intended product catalogue. In parallel, P3 can begin as a planning-only alkalinity/titration model; it must not create an automatic pH-control loop.
