@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,8 +8,30 @@ version = "0.1.0"
 description = "Choose fertilizer salts and weights that minimize crop-formula percentage error."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "LicenseRef-Flaha-Free-Use"
+license-files = ["LICEN[CS]E*"]
 authors = [{ name = "Flaha" }]
+keywords = ["fertilizer", "hydroponics", "nutrient-solution", "formulation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/rafatahmed/Flahax"
+Documentation = "https://github.com/rafatahmed/Flahax/tree/main/docs"
+Source = "https://github.com/rafatahmed/Flahax"
+Issues = "https://github.com/rafatahmed/Flahax/issues"
+
+[project.scripts]
+flahax = "flahax.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,65 @@
+SPDX-License-Identifier: LicenseRef-Flaha-Free-Use
+
+Flaha Free Use License
+Version 1.0
+
+Copyright (c) 2026 Flaha
+
+This license covers the FlahaX software and its accompanying files (the
+"Software"), including source code, the salt library data shipped with the
+package, and documentation in this repository.
+
+1. Free use
+
+You may install and run the Software, at no charge, for any purpose,
+including commercial work, research, and personal use. You may make the
+copies that installation and execution require on computers you control,
+and you may keep reasonable backup copies for that same use. Obtaining
+the Software from the copyright holder's official repository or official
+package release, for your own use, is allowed.
+
+2. No redistribution
+
+You may not distribute, publish, sublicense, sell, rent, lend, or otherwise
+give the Software to anyone else, in source form or in built form. That
+includes republishing this repository, uploading the package to a package
+index, mirroring the files, or shipping the Software inside a product or
+archive that you give to a third party.
+
+3. No modification
+
+You may not modify, translate, adapt, or create derivative works of the
+Software. You may not remove or change copyright notices, license text, or
+author attributions.
+
+4. Reservation of rights
+
+The copyright holder reserves all rights that this license does not
+expressly grant. No patent rights and no trademark rights are granted.
+"Flaha" and "FlahaX" remain marks of their owner.
+
+5. Termination
+
+If you break section 2 or section 3, this license ends automatically for
+you. Sections 6 and 7 continue to apply.
+
+6. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, AND NON-INFRINGEMENT. THE ENTIRE RISK AS TO THE QUALITY AND USE
+OF THE SOFTWARE IS WITH YOU.
+
+7. Limitation of liability
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN CONTRACT, TORT, OR OTHERWISE, ARISING FROM OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OF THE SOFTWARE.
+
+8. How this license relates to open source
+
+This license makes use of the Software free. It does not permit copying
+the Software onward or modifying it. Because those permissions are
+withheld, this license is a proprietary free-use license. It is not an
+open-source license under the Open Source Definition, and it is not free
+software under the Free Software Definition.

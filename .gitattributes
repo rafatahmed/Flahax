@@ -1,0 +1,20 @@
+# Normalize text to LF so source distributions are identical on every OS.
+* text=auto eol=lf
+
+*.py   text eol=lf
+*.pyi  text eol=lf
+*.toml text eol=lf
+*.cfg  text eol=lf
+*.ini  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Keep the license byte-for-byte as stored.
+LICENSE text eol=lf
+
+# Leave these out of `git archive` source snapshots.
+.gitignore     export-ignore
+.gitattributes export-ignore
