@@ -58,3 +58,14 @@ Mg2+ + PO4^3-  <-> MgPO4-         log beta = 6.589
 ```
 
 The reference test uses `±0.05 SI` because the package intentionally uses a reduced Davies activity calculation while PHREEQC uses its complete ion-association model. This is verification of the direction and bounded numerical behavior—not permission to precipitate or approve a stock. Solid-equilibrium and broader activity-model coverage are still required before that decision is automated.
+
+## Hydroxyapatite boundary
+
+FlahaX now also exposes the fixed-pH thermodynamic boundary for the phase reaction:
+
+```text
+Hydroxyapatite + 4H+ <-> 5Ca2+ + 3HPO4^2- + H2O
+log10(a_HPO4,eq) = (log K - 5 log10(a_Ca) - 4 pH) / 3
+```
+
+This gives the HPO₄²⁻ activity at `SI = 0` and makes the separation between a phase boundary and precipitation kinetics explicit. It does not calculate how much solid forms, nor can it replace the conservative A/B stock separation rule.

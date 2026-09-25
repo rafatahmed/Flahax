@@ -40,6 +40,21 @@ class CalciumMagnesiumPhosphateSpeciation:
     hydroxyapatite_si: float
 
 
+def hydroxyapatite_hpo4_activity_at_equilibrium(calcium_activity: float, ph: float) -> float:
+    """Return the HPO4-2 activity at SI(Hydroxyapatite) = 0.
+
+    Uses the `phreeqc.dat` reaction
+    ``Hydroxyapatite + 4H+ = 5Ca+2 + 3HPO4-2 + H2O``.
+    It is a thermodynamic boundary, not a precipitation-kinetics prediction.
+    """
+    if not math.isfinite(calcium_activity) or calcium_activity <= 0:
+        raise DeliveryError("out_of_range", "calcium activity must be positive and finite")
+    if not math.isfinite(ph) or not 0 <= ph <= 14:
+        raise DeliveryError("out_of_range", "pH must be finite and in [0, 14]")
+    log_hpo4 = (LOG_K_HYDROXYAPATITE_HPO4 - 5 * math.log10(calcium_activity) - 4 * ph) / 3
+    return 10.0 ** log_hpo4
+
+
 def _solve_linear3(matrix: list[list[float]], vector: list[float]) -> list[float]:
     augmented = [row[:] + [value] for row, value in zip(matrix, vector)]
     for column in range(3):

@@ -78,7 +78,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
 | P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness, carbonate/calcium canary, and gypsum/anhydrite Example 2 fixture checked in; mixed nutrient-stock fixture family remains |
 | P2.6 | Activity/speciation saturation model `[-]` | Carbonate/calcium and pure-water calcium/sulfate Davies kernels pass PHREEQC fixtures; phosphate/magnesium and mixed-fertilizer phases remain |
-| P2.7 | Full fertilizer-chemistry data model `[-]` | Ca/Mg/phosphate PHREEQC 3.8.9 reference-mixture fixture and fixed-pH complexation kernel added; full ion-association activity model, solid equilibrium, and broader mixture coverage remain |
+| P2.7 | Full fertilizer-chemistry data model `[-]` | Ca/Mg/phosphate PHREEQC 3.8.9 fixture, fixed-pH complexation kernel, and hydroxyapatite `SI=0` activity boundary added; precipitation extent, full activity model, and broader mixtures remain |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add the hydroxyapatite solid-equilibrium and mixed-ion activity-model coverage needed to tighten the Ca/Mg/phosphate fixture tolerance, then add nitrogen/struvite only with a separate fixture. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** add a nitrogen/struvite PHREEQC fixture with explicit ammonium, magnesium, phosphate, counter-ions, pH, and candidate phases. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
