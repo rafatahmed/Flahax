@@ -35,6 +35,7 @@ from .phosphate_complexes import (
     hydroxyapatite_hpo4_activity_at_equilibrium,
 )
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
+from .struvite import struvite_saturation_index
 from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
@@ -80,6 +81,7 @@ __all__ = [
     "solve_weights",
     "solve_calcite_co2_equilibrium",
     "solve_gypsum_equilibrium",
+    "struvite_saturation_index",
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"

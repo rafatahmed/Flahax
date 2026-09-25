@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add a nitrogen/struvite PHREEQC fixture with explicit ammonium, magnesium, phosphate, counter-ions, pH, and candidate phases. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** extend the checked-in nitrogen/struvite reference mixture from its activity-product boundary to full ammonium/acid-base and mixed-ion speciation. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.

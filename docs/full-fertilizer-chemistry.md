@@ -69,3 +69,7 @@ log10(a_HPO4,eq) = (log K - 5 log10(a_Ca) - 4 pH) / 3
 ```
 
 This gives the HPO₄²⁻ activity at `SI = 0` and makes the separation between a phase boundary and precipitation kinetics explicit. It does not calculate how much solid forms, nor can it replace the conservative A/B stock separation rule.
+
+## Struvite boundary
+
+For ammonium-bearing mixtures, FlahaX now evaluates the explicit 25 °C phase relation `MgNH4PO4:6H2O = Mg²⁺ + NH4⁺ + PO4³⁻ + 6H2O`, with `log K = -13.26`. The corresponding PHREEQC probe is undersaturated (`SI = -0.30`). As with hydroxyapatite, this is an activity-product boundary only; ammonium acid/base speciation and full mixed-ion equilibrium are the next required extension.
