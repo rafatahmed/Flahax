@@ -29,9 +29,13 @@ Grams are constrained to be greater than or equal to zero. The solver is Lawson�
 loss = Σ (Δ% / 100)²
 ```
 
-An element that the formula does not ask for, such as ammonium or chloride, still has a light penalty: its ppm is divided by 100 and squared. That stops a salt from looking free when it dumps an element nobody requested. A sparsity term of `0.02` on each gram pushes salts that do not improve the fit back to zero, so the result is a short combination rather than a dusting of every salt.
+An element that the formula does not ask for still has a light penalty: its ppm is divided by 100 and squared. A ridge term of `0.02` on each gram shrinks weights. That term is L2 regularization. It does not count salts, and it does not by itself produce a short recipe.
 
-`recommend` runs that solve on every usable salt at once. Salts with grams above 0.000001 g/L are the combination, so zinc, copper, and molybdenum stay in the result when the formula asks for them.
+The least-squares step inside Lawson–Hanson is a Householder QR solve. The normal equations are not formed.
+
+After that fit, a salt is removed only when a refit still keeps every requested ion inside the tolerance already achieved, and inside 1% when the first fit was already inside 1%. Grams above 0.000001 g/L are the recipe.
+
+`recommend` does not dose every row in the file. A salt whose formula cannot contain an assayed element is left out. Carbonate formulas are left out of a default recipe. Sodium and chloride are left out unless the formula asks for them, the caller allows them, or a requested ion stays outside 1% without the salt that carries them. The result then says whether the recipe is feasible, the largest absolute Δ%, the unrequested ions added, the total grams per litre, and any warnings.
 
 ## Library file
 

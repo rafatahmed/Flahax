@@ -43,7 +43,7 @@ The same solve is available as a program. It reads one JSON object from standard
 '@ | python -m flahax
 ```
 
-After installation, `flahax` is the same program. A missing or empty `targets` object exits with status 1 and a message on standard error. `water` is optional and defaults to an empty map. Invalid JSON exits with status 1.
+After installation, `flahax` is the same program. A missing or empty `targets` object exits with status 1 and a message on standard error. `water` may be omitted. A `water` value that is present and is not a JSON object exits with status 1. Unknown ions, total `N`, negative ppm, and non-finite ppm exit with status 1. Optional `allowIons` is a list such as `["Cl"]`. Optional `allowCarbonates` is true or false.
 
 ## Public functions
 
@@ -52,11 +52,11 @@ from flahax import gap_for, load_library, recommend, solve_weights
 
 load_library() -> dict
 gap_for(targets, water) -> dict
-recommend(salts, targets, water=None) -> dict
-solve_weights(salts, targets, water=None, sparsity=0.0) -> dict
+recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.02) -> dict
+solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
-`solve_weights` fits a set of salts you already chose. `recommend` calls it with `sparsity=0.02` after dropping unusable rows.
+`solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then calls the fit with `ridge=0.02`. `ridge` shrinks grams. It is not a count of salts.
 
 `forward(salts, grams, water=None)` and `score(achieved, targets)` live in `flahax.engine`. `forward` applies the ppm equation. `score` returns the loss and the percentage-error rows.
 
@@ -64,7 +64,7 @@ solve_weights(salts, targets, water=None, sparsity=0.0) -> dict
 
 Targets and water are maps of element symbol to ppm. Use the database symbols:
 
-`N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`.
+`N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
 
 A missing target means the formula does not ask for that element. That is different from a target of zero. Any ppm the salts still produce for an unrequested element is penalized.
 

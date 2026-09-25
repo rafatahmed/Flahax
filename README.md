@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](LICENSE)
 
-FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. Version 0.1.0. The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
+FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. Version 0.2.0. The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
 
 The package is separate from the FlahaFAST application. FlahaFAST does not import it.
 
@@ -68,14 +68,14 @@ The ppm equation, the Lawson–Hanson solve, the library counts, and the regress
 
 Please cite FlahaX when the package, or a recommendation it produced, is used in a report or a paper.
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.1.0) [Computer software]. https://pypi.org/project/flahax/
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.2.0) [Computer software]. https://pypi.org/project/flahax/
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: fertilizer salt selection for a fixed crop formula},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://pypi.org/project/flahax/},
   license = {Flaha Free Use License}
 }
@@ -98,9 +98,11 @@ From a checkout, the tests are:
 py -m unittest discover -s tests -t .
 ```
 
-## Scope of version 0.1.0
+## Scope of version 0.2.0
 
-This version returns grams for one litre of working solution. It does not split tanks, adjust pH, price the mix, or apply a concentration factor. It does not write to the FlahaFAST database.
+This version returns grams for one litre of working solution. A salt is dosed from the shipped library only when its assay uses known ions and its formula does not rule the assay out. Default recipes leave out carbonate salts, and they leave out sodium and chloride unless the formula asks for that ion or the caller allows it. The result reports whether every requested ion landed inside 1%, plus warnings.
+
+It does not split tanks, adjust pH, price the mix, or apply a concentration factor. It does not write to the FlahaFAST database.
 
 ## License
 

@@ -11,8 +11,8 @@ py -m build
 
 That writes two files under `dist/`:
 
-- `flahax-0.1.0.tar.gz`, the source distribution
-- `flahax-0.1.0-py3-none-any.whl`, the built distribution
+- `flahax-0.2.0.tar.gz`, the source distribution
+- `flahax-0.2.0-py3-none-any.whl`, the built distribution
 
 Check them before uploading:
 

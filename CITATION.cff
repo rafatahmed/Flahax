@@ -9,11 +9,11 @@ type: software
 authors:
   - family-names: Al Khashan
     given-names: Rafat A.
-version: 0.1.0
+version: 0.2.0
 date-released: 2026-09-25
 url: https://pypi.org/project/flahax/
 repository-code: https://github.com/rafatahmed/Flahax
-license-url: https://github.com/rafatahmed/Flahax/blob/v0.1.0/LICENSE
+license-url: https://github.com/rafatahmed/Flahax/blob/main/LICENSE
 keywords:
   - fertilizer
   - hydroponics
@@ -27,6 +27,6 @@ preferred-citation:
     - family-names: Al Khashan
       given-names: Rafat A.
   year: 2026
-  version: 0.1.0
+  version: 0.2.0
   url: https://pypi.org/project/flahax/
-  license-url: https://github.com/rafatahmed/Flahax/blob/v0.1.0/LICENSE
+  license-url: https://github.com/rafatahmed/Flahax/blob/main/LICENSE

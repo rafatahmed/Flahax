@@ -1,9 +1,10 @@
 import unittest
 
 from flahax import gap_for, load_library, recommend
-from flahax.engine import _usable, forward, score
+from flahax.composition import assay_conflict
+from flahax.engine import forward, score
 
-SALTS = [salt for salt in load_library()["salts"] if _usable(salt)]
+SALTS = [salt for salt in load_library()["salts"] if assay_conflict(salt) is None]
 
 # Project Test01. Pepper (Howard Resh), season 2026. Water calcium 20 ppm.
 TARGETS = {

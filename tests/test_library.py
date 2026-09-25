@@ -1,7 +1,7 @@
 import unittest
 
 from flahax import load_library, recommend
-from flahax.engine import _usable
+from flahax.composition import assay_conflict
 
 LIBRARY = load_library()
 
@@ -14,7 +14,7 @@ class LibrarySuite(unittest.TestCase):
         self.assertIn("WC1", [water["name"] for water in LIBRARY["waters"]])
 
     def test_each_crop_formula_is_solved_from_the_whole_library(self):
-        salts = [salt for salt in LIBRARY["salts"] if _usable(salt)]
+        salts = [salt for salt in LIBRARY["salts"] if assay_conflict(salt) is None]
         known = {salt["id"] for salt in salts}
         misses = []
         for formula in LIBRARY["formulas"]:

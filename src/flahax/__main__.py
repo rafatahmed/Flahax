@@ -3,8 +3,7 @@
 import json
 import sys
 
-from flahax import load_library, recommend
-from flahax.engine import _usable
+from flahax import InputError, load_library, recommend
 
 
 def main() -> int:
@@ -13,13 +12,29 @@ def main() -> int:
     except json.JSONDecodeError:
         print("Expected a JSON object on stdin.", file=sys.stderr)
         return 1
-    targets = payload.get("targets") if isinstance(payload, dict) else None
-    if not isinstance(targets, dict) or not targets:
-        print("targets are required.", file=sys.stderr)
+    if not isinstance(payload, dict):
+        print("Expected a JSON object on stdin.", file=sys.stderr)
         return 1
-    water = payload.get("water") if isinstance(payload.get("water"), dict) else {}
-    salts = [salt for salt in load_library()["salts"] if _usable(salt)]
-    result = recommend(salts, targets, water)
+    targets = payload.get("targets")
+    if "water" in payload and payload["water"] is not None and not isinstance(payload["water"], dict):
+        print("water must be a map of ion symbol to ppm.", file=sys.stderr)
+        return 1
+    water = payload.get("water") or {}
+    allow = payload.get("allowIons") or []
+    if not isinstance(allow, list):
+        print("allowIons must be a list of ion symbols.", file=sys.stderr)
+        return 1
+    try:
+        result = recommend(
+            load_library()["salts"],
+            targets,
+            water,
+            allow_ions=set(allow),
+            allow_carbonates=bool(payload.get("allowCarbonates")),
+        )
+    except InputError as exc:
+        print(exc, file=sys.stderr)
+        return 1
     json.dump(result, sys.stdout)
     sys.stdout.write("\n")
     return 0
