@@ -1,6 +1,7 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 from .composition import InputError
+from .ammonia import AmmoniaSpeciation, ammonia_speciation
 from .delivery_contracts import DeliveryError, make_audit_record, validate_delivery_request
 from .delivery_quantities import (
     DurationMinutes,
@@ -40,6 +41,7 @@ from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
     "DeliveryError",
+    "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
     "CalciumMagnesiumPhosphateSpeciation",
     "GypsumEquilibrium",
@@ -62,6 +64,7 @@ __all__ = [
     "TemperatureCelsius",
     "VolumeLitres",
     "alkalinity_meq_per_litre",
+    "ammonia_speciation",
     "calcite_co2_reference_values",
     "calcium_magnesium_phosphate_speciation",
     "hydroxyapatite_hpo4_activity_at_equilibrium",

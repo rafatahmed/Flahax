@@ -73,3 +73,5 @@ This gives the HPO₄²⁻ activity at `SI = 0` and makes the separation between
 ## Struvite boundary
 
 For ammonium-bearing mixtures, FlahaX now evaluates the explicit 25 °C phase relation `MgNH4PO4:6H2O = Mg²⁺ + NH4⁺ + PO4³⁻ + 6H2O`, with `log K = -13.26`. The corresponding PHREEQC probe is undersaturated (`SI = -0.30`). As with hydroxyapatite, this is an activity-product boundary only; ammonium acid/base speciation and full mixed-ion equilibrium are the next required extension.
+
+The first nitrogen extension now solves `NH4+ = NH3 + H+` with PHREEQC `log K = -9.252` at 25 °C. It accepts total ammoniacal nitrogen, pH, and ionic strength, returns activity-corrected NH₄⁺ and neutral NH₃, and preserves their molal mass balance. Coupling it to phosphate/magnesium/counter-ion balances remains the next fixture-backed increment.
