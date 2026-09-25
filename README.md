@@ -1,5 +1,7 @@
 # FlahaX
 
+![FlahaX in Practice: from water analysis to a reviewed nutrient recipe](docs/FlahaX_Use_Workflow_v020.jpg)
+
 [![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](LICENSE)
@@ -90,6 +92,9 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/usage.md](docs/usage.md) | Library call, command line, inputs, and result fields |
 | [docs/method.md](docs/method.md) | ppm equation, solver, library file, and the pepper proof |
 | [INTEGRATION.md](INTEGRATION.md) | Calling FlahaX from FlahaFAST without changing the current flow |
+| [docs/delivery-control-design.md](docs/delivery-control-design.md) | Technical frame for future stock tanks, pH, and dosing control |
+| [docs/implementation-roadmap.md](docs/implementation-roadmap.md) | Trackable delivery-system implementation plan and acceptance gates |
+| [docs/delivery-contracts.md](docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:
