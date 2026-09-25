@@ -26,6 +26,7 @@ from .equilibrium import (
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
+from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
     "DeliveryError",
@@ -37,6 +38,7 @@ __all__ = [
     "InjectionRatio",
     "InputError",
     "MassGrams",
+    "MineralPhase",
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
     "PhPlan",
@@ -57,6 +59,7 @@ __all__ = [
     "make_audit_record",
     "plan_stocks",
     "plan_ph",
+    "phase_saturation_index",
     "recommend",
     "solve_weights",
     "solve_calcite_co2_equilibrium",

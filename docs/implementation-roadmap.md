@@ -78,6 +78,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
 | P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness and official canary fixture checked in; nutrient-stock fixture family remains to be added |
 | P2.6 | Activity/speciation saturation model `[-]` | First internal carbonate/calcium Davies kernel passes the PHREEQC canary fixture; sulfate/phosphate/fertilizer phase families remain |
+| P2.7 | Full fertilizer-chemistry data model `[-]` | Generic sourced mineral-phase SI entity and major-ion coverage matrix added; sulfate/calcium PHREEQC fixture is next |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
@@ -95,6 +96,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 | P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
+| P3.7 | Fertilizer acid/base species coverage `[ ]` | Add phosphate and nitrogen acid/base families only after their fixture-backed thermodynamic definitions exist |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
@@ -191,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** implement the reference-model harness for P2.5/P2.6 and P3.6. Use published thermodynamic data and golden input/output fixtures from an authoritative equilibrium solver. Physical trials may later validate a particular product lot or installation, but they are not a prerequisite for mathematical model definition or verification.
+**Current next action:** add the sulfate/calcium PHREEQC fixture and its activity/speciation kernel, then phosphate/calcium/magnesium. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
