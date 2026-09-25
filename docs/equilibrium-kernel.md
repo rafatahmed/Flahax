@@ -63,4 +63,27 @@ result = solve_calcite_co2_equilibrium(log_pco2=-2.0)
 print(result.ph, result.si_calcite)
 ```
 
-The next kernels must add sulfate, phosphate, magnesium, potassium, nitrate/ammonium, dissolved-product complexes, target-pH reagent mole balance, and named solid phases. Each extension needs a matching checked-in PHREEQC fixture before it becomes part of a production planning decision.
+## Calcium–sulfate increment
+
+The next dependency-free kernel adds pure-water gypsum equilibrium at 25 °C. It retains the neutral calcium–sulfate pair because it changes the relationship between free ions (which determine saturation) and analytical totals (which a fertilizer label reports):
+
+```text
+Gypsum(s) <-> Ca2+ + SO4^2- + 2 H2O        log K = -4.58
+Ca2+ + SO4^2- <-> CaSO4(aq)                log beta = 2.31
+SI_phase = log10(a_Ca2+ * a_SO4^2-) - log10(K_phase)
+```
+
+The phase constants and aqueous complex are taken from the versioned `phreeqc.dat` source. The solver uses Davies coefficients for the two free divalent ions, so `CaSO4(aq)` contributes to total dissolved calcium and sulfate but not ionic strength. PHREEQC Example 2 is the golden fixture: gypsum has `SI = 0` at 25 °C and anhydrite has `SI = -0.22` from the stated `phreeqc.dat` constants.
+
+This does **not** calculate solubility for arbitrary fertilizer stocks. It excludes HSO4-, magnesium, phosphate, nitrate, potassium, counter-ions, background alkalinity, other calcium sulfate complexes, and all non-gypsum solids. It is a traceable family increment; actual stock approval remains governed by the conservative planner until a full mixture fixture and species/phase coverage exist.
+
+## API
+
+```python
+from flahax import solve_gypsum_equilibrium
+
+result = solve_gypsum_equilibrium()
+print(result.total_calcium_molal, result.si_gypsum)
+```
+
+The next kernels must add phosphate/calcium/magnesium, potassium, nitrate/ammonium, target-pH reagent mole balance, and their named solid phases. Each extension needs a matching checked-in PHREEQC fixture before it becomes part of a production planning decision.

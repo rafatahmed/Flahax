@@ -21,6 +21,9 @@ LOG_K1_CARBONIC_25C = -6.35
 LOG_K2_CARBONIC_25C = -10.33
 LOG_K_WATER_25C = -14.0
 LOG_K_CALCITE_25C = -8.45
+LOG_K_GYPSUM_25C = -4.58
+LOG_K_ANHYDRITE_25C = -4.36
+LOG_BETA_CASO4_25C = 2.31
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +40,25 @@ class CalciteCo2Equilibrium:
     si_co2_gas: float
 
 
+@dataclass(frozen=True, slots=True)
+class GypsumEquilibrium:
+    """Pure-water gypsum equilibrium at 25 °C using Davies activities.
+
+    The supported aqueous species are free ``Ca+2`` and ``SO4-2`` plus the
+    neutral ``CaSO4`` ion pair. It does not include HSO4-, Mg, phosphate,
+    background electrolyte, or temperature correction.
+    """
+
+    ionic_strength: float
+    free_calcium_molal: float
+    free_sulfate_molal: float
+    calcium_sulfate_molal: float
+    total_calcium_molal: float
+    total_sulfate_molal: float
+    si_gypsum: float
+    si_anhydrite: float
+
+
 def calcite_co2_reference_values(result: CalciteCo2Equilibrium) -> dict[str, float]:
     """Map the supported kernel result to PHREEQC-fixture output names."""
     if not isinstance(result, CalciteCo2Equilibrium):
@@ -50,6 +72,16 @@ def calcite_co2_reference_values(result: CalciteCo2Equilibrium) -> dict[str, flo
         "co2Molal": result.co2_molal,
         "si.Calcite": result.si_calcite,
         "si.CO2(g)": result.si_co2_gas,
+    }
+
+
+def gypsum_reference_values(result: GypsumEquilibrium) -> dict[str, float]:
+    """Map the supported gypsum kernel result to fixture output names."""
+    if not isinstance(result, GypsumEquilibrium):
+        raise TypeError("result must be a GypsumEquilibrium value")
+    return {
+        "si.Gypsum": result.si_gypsum,
+        "si.Anhydrite": result.si_anhydrite,
     }
 
 
@@ -134,4 +166,45 @@ def solve_calcite_co2_equilibrium(log_pco2: float, temperature_c: float = 25.0) 
         co2_molal=species["co2"],
         si_calcite=si_calcite,
         si_co2_gas=log_pco2,
+    )
+
+
+def solve_gypsum_equilibrium(temperature_c: float = 25.0) -> GypsumEquilibrium:
+    """Solve gypsum-saturated pure water at 25 °C.
+
+    For the dissolution reaction ``Gypsum = Ca+2 + SO4-2 + 2 H2O``, this
+    solves ``a_Ca * a_SO4 = 10**logK``. Electroneutrality gives equal free
+    calcium and sulfate molalities; their divalent charge gives
+    ``I = 4 m_free``. The neutral complex obeys
+    ``m_CaSO4 = 10**logBeta * a_Ca * a_SO4`` and contributes to totals but
+    not ionic strength. Anhydrite is evaluated at the same ion activity
+    product. This is deliberately a pure-water, 25 °C kernel.
+    """
+    if temperature_c != 25.0:
+        raise DeliveryError("unsupported_temperature", "gypsum kernel currently supports 25 °C only")
+    target_iap = 10.0 ** LOG_K_GYPSUM_25C
+    lower, upper = 0.0, 0.2
+    for _ in range(100):
+        free_molal = (lower + upper) / 2.0
+        gamma = davies_gamma(2, 4.0 * free_molal)
+        if (gamma * free_molal) ** 2 < target_iap:
+            lower = free_molal
+        else:
+            upper = free_molal
+    free_molal = (lower + upper) / 2.0
+    ionic_strength = 4.0 * free_molal
+    gamma = davies_gamma(2, ionic_strength)
+    activity = gamma * free_molal
+    iap = activity * activity
+    calcium_sulfate = 10.0 ** LOG_BETA_CASO4_25C * iap
+    total = free_molal + calcium_sulfate
+    return GypsumEquilibrium(
+        ionic_strength=ionic_strength,
+        free_calcium_molal=free_molal,
+        free_sulfate_molal=free_molal,
+        calcium_sulfate_molal=calcium_sulfate,
+        total_calcium_molal=total,
+        total_sulfate_molal=total,
+        si_gypsum=math.log10(iap) - LOG_K_GYPSUM_25C,
+        si_anhydrite=math.log10(iap) - LOG_K_ANHYDRITE_25C,
     )

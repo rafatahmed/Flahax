@@ -20,9 +20,12 @@ from .delivery_quantities import (
 from .engine import gap_for, load_library, recommend, solve_weights
 from .equilibrium import (
     CalciteCo2Equilibrium,
+    GypsumEquilibrium,
     calcite_co2_reference_values,
     davies_gamma,
+    gypsum_reference_values,
     solve_calcite_co2_equilibrium,
+    solve_gypsum_equilibrium,
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
@@ -31,6 +34,7 @@ from .thermodynamics import MineralPhase, phase_saturation_index
 __all__ = [
     "DeliveryError",
     "CalciteCo2Equilibrium",
+    "GypsumEquilibrium",
     "DurationMinutes",
     "FinalSolutionRecipe",
     "FlowLitresPerMinute",
@@ -55,6 +59,7 @@ __all__ = [
     "final_solution_recipe",
     "rescore_with_reagent",
     "gap_for",
+    "gypsum_reference_values",
     "load_library",
     "make_audit_record",
     "plan_stocks",
@@ -63,6 +68,7 @@ __all__ = [
     "recommend",
     "solve_weights",
     "solve_calcite_co2_equilibrium",
+    "solve_gypsum_equilibrium",
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"

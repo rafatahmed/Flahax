@@ -7,7 +7,7 @@ FlahaX's final chemistry model is a source-versioned aqueous-equilibrium system,
 | Family | Aqueous forms and reactions | Candidate solids / constraints | Status |
 |---|---|---|---|
 | Carbonate / calcium | CO₂, HCO₃⁻, CO₃²⁻, Ca²⁺, H⁺, OH⁻ | Calcite | First 25 °C open-CO₂ kernel verified |
-| Sulfate / calcium / magnesium | SO₄²⁻, HSO₄⁻, Ca²⁺, Mg²⁺ and complexes | Gypsum, anhydrite, epsomite, kieserite | Next |
+| Sulfate / calcium / magnesium | SO₄²⁻, HSO₄⁻, Ca²⁺, Mg²⁺ and complexes | Gypsum, anhydrite, epsomite, kieserite | Pure-water Ca²⁺/SO₄²⁻/CaSO₄(aq) gypsum kernel and PHREEQC fixture verified; magnesium and mixture coverage remain |
 | Phosphate / calcium / magnesium | H₃PO₄, H₂PO₄⁻, HPO₄²⁻, PO₄³⁻, Ca/Mg complexes | Calcium phosphate phases, struvite where ammonium/Mg are present | Pending |
 | Nitrogen | NO₃⁻, NH₄⁺, NH₃ and acid/base relation | Ammonia volatility boundary where applicable | Pending |
 | Potassium / sodium / chloride | K⁺, Na⁺, Cl⁻ and ion pairs where supplied by selected database | K/Na salts only when named phase data applies | Pending |
@@ -30,4 +30,4 @@ The initial reference is the PHREEQC `phreeqc.dat` database and its documented a
 
 ## Next chemistry increment
 
-Sulfate is next because calcium sulfate is central to stock compatibility. The increment will add a PHREEQC sulfate/calcium fixture first, then implement only the species and phases required to match it. Phosphate follows with the same fixture-first rule. This keeps the package mathematically traceable while it grows toward complete fertilizer chemistry.
+Calcium sulfate is central to stock compatibility because only **free-ion activities**, not total label concentrations, enter the gypsum saturation index. The first sulfate increment is now fixture-backed for pure water at 25 °C and includes neutral `CaSO4(aq)`. It is not a mixed-fertilizer solubility claim: magnesium, phosphate, counter-ions, acidity, background-water composition, and additional phases remain outside that kernel. Phosphate follows with the same fixture-first rule.

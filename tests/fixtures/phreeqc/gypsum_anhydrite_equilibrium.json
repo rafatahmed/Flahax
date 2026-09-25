@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "reference": {
+    "software": "PHREEQC Version 3",
+    "database": "phreeqc.dat",
+    "activityModel": "PHREEQC ion-association aqueous model",
+    "sourceUrl": "https://raw.githubusercontent.com/phreeqc-dev/phreeqc3/master/examples/ex2",
+    "sourceDescription": "Example 2 at its first 25 C step: pure water equilibrated with gypsum and anhydrite. Gypsum is stable below about 58 C."
+  },
+  "phreeqcInput": "TITLE Example 2.--Temperature dependence of solubility\n                  of gypsum and anhydrite\nSOLUTION 1 Pure water\n        pH      7.0\n        temp    25.0\nEQUILIBRIUM_PHASES 1\n        Gypsum          0.0     1.0\n        Anhydrite       0.0     1.0\nREACTION_TEMPERATURE 1\n        25.0 75.0 in 51 steps\nSELECTED_OUTPUT\n        -file   ex2.sel\n        -temperature\n        -si     anhydrite  gypsum\nEND\n",
+  "inputSha256": "037879b4bc9c82a78fda9c11fcce955e604d5b291054ac6874c9c98fec02f676",
+  "expected": {
+    "absoluteTolerance": 0.0001,
+    "values": {
+      "si.Gypsum": 0.0,
+      "si.Anhydrite": -0.22
+    }
+  }
+}

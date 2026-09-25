@@ -3,10 +3,16 @@ from pathlib import Path
 import unittest
 
 from flahax.reference_fixtures import assert_reference_result, load_reference_fixture
-from flahax.equilibrium import calcite_co2_reference_values, solve_calcite_co2_equilibrium
+from flahax.equilibrium import (
+    calcite_co2_reference_values,
+    gypsum_reference_values,
+    solve_calcite_co2_equilibrium,
+    solve_gypsum_equilibrium,
+)
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "phreeqc" / "calcite_co2_equilibrium.json"
+GYPSUM_FIXTURE = Path(__file__).parent / "fixtures" / "phreeqc" / "gypsum_anhydrite_equilibrium.json"
 
 
 class ReferenceFixtures(unittest.TestCase):
@@ -23,6 +29,12 @@ class ReferenceFixtures(unittest.TestCase):
         actual["si.Calcite"] = 0.01
         with self.assertRaises(AssertionError):
             assert_reference_result(fixture, actual)
+
+    def test_gypsum_anhydrite_example_two_fixture(self):
+        fixture = load_reference_fixture(GYPSUM_FIXTURE)
+        self.assertIn("Gypsum", fixture["phreeqcInput"])
+        self.assertIn("Anhydrite", fixture["phreeqcInput"])
+        assert_reference_result(fixture, gypsum_reference_values(solve_gypsum_equilibrium()))
 
     def test_fixture_hash_mismatch_is_rejected(self):
         payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
