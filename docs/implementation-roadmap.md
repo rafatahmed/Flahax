@@ -78,7 +78,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
 | P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness, carbonate/calcium canary, and gypsum/anhydrite Example 2 fixture checked in; mixed nutrient-stock fixture family remains |
 | P2.6 | Activity/speciation saturation model `[-]` | Carbonate/calcium and pure-water calcium/sulfate Davies kernels pass PHREEQC fixtures; phosphate/magnesium and mixed-fertilizer phases remain |
-| P2.7 | Full fertilizer-chemistry data model `[-]` | Generic sourced mineral-phase SI entity, major-ion coverage matrix, and first calcium-sulfate complex/phase family added; phosphate/calcium/magnesium is next |
+| P2.7 | Full fertilizer-chemistry data model `[-]` | Generic sourced mineral-phase SI entity, major-ion coverage matrix, calcium-sulfate phase family, and uncomplexed orthophosphate acid/base foundation added; Ca/Mg complexes and a phosphate mixture fixture remain |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
@@ -96,7 +96,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 | P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
-| P3.7 | Fertilizer acid/base species coverage `[ ]` | Add phosphate and nitrogen acid/base families only after their fixture-backed thermodynamic definitions exist |
+| P3.7 | Fertilizer acid/base species coverage `[-]` | PHREEQC-sourced 25 °C uncomplexed orthophosphate distribution added with mass-balance and domain guards; mixture fixture, metal complexes, and nitrogen family remain |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add a phosphate/calcium/magnesium PHREEQC fixture and its activity/speciation kernel. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** obtain and check in a PHREEQC calcium/magnesium/phosphate mixture fixture (including counter-ions, temperature, activity model, and candidate phases), then add the matching complex/phase kernel. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.

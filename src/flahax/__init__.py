@@ -28,6 +28,7 @@ from .equilibrium import (
     solve_gypsum_equilibrium,
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
+from .phosphate import OrthophosphateSpeciation, orthophosphate_speciation
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 from .thermodynamics import MineralPhase, phase_saturation_index
 
@@ -46,6 +47,7 @@ __all__ = [
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
     "PhPlan",
+    "OrthophosphateSpeciation",
     "StockPlan",
     "StockSaltDose",
     "StockTank",
@@ -64,6 +66,7 @@ __all__ = [
     "make_audit_record",
     "plan_stocks",
     "plan_ph",
+    "orthophosphate_speciation",
     "phase_saturation_index",
     "recommend",
     "solve_weights",

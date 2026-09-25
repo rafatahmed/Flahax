@@ -23,7 +23,8 @@ LOG_K_WATER_25C = -14.0
 LOG_K_CALCITE_25C = -8.45
 LOG_K_GYPSUM_25C = -4.58
 LOG_K_ANHYDRITE_25C = -4.36
-LOG_BETA_CASO4_25C = 2.31
+# PHREEQC Version 3 master phreeqc.dat: Ca+2 + SO4-2 = CaSO4, log K 2.14.
+LOG_BETA_CASO4_25C = 2.14
 
 
 @dataclass(frozen=True, slots=True)

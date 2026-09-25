@@ -69,7 +69,7 @@ The next dependency-free kernel adds pure-water gypsum equilibrium at 25 °C. It
 
 ```text
 Gypsum(s) <-> Ca2+ + SO4^2- + 2 H2O        log K = -4.58
-Ca2+ + SO4^2- <-> CaSO4(aq)                log beta = 2.31
+Ca2+ + SO4^2- <-> CaSO4(aq)                log beta = 2.14
 SI_phase = log10(a_Ca2+ * a_SO4^2-) - log10(K_phase)
 ```
 
@@ -86,4 +86,8 @@ result = solve_gypsum_equilibrium()
 print(result.total_calcium_molal, result.si_gypsum)
 ```
 
-The next kernels must add phosphate/calcium/magnesium, potassium, nitrate/ammonium, target-pH reagent mole balance, and their named solid phases. Each extension needs a matching checked-in PHREEQC fixture before it becomes part of a production planning decision.
+## Orthophosphate acid/base foundation
+
+`orthophosphate_speciation(total_phosphate_molal, ph, ionic_strength)` is a fixed-input 25 °C species distribution for the four uncomplexed orthophosphate forms. Its reaction constants come directly from the official [PHREEQC `phreeqc.dat`](https://github.com/phreeqc-dev/phreeqc3/blob/master/database/phreeqc.dat). It preserves the phosphate mass balance while applying Davies activities.
+
+It intentionally does not claim PHREEQC mixture equivalence yet. Calcium/magnesium complexation, solid phases, counter-ions, charge balance, and pH prediction are all excluded. The next kernel must add them together against a checked-in PHREEQC mixture fixture before it can make a production planning decision.
