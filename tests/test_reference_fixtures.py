@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 
 from flahax.reference_fixtures import assert_reference_result, load_reference_fixture
+from flahax.equilibrium import calcite_co2_reference_values, solve_calcite_co2_equilibrium
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "phreeqc" / "calcite_co2_equilibrium.json"
@@ -17,9 +18,11 @@ class ReferenceFixtures(unittest.TestCase):
 
     def test_comparator_accepts_reference_values_and_rejects_drift(self):
         fixture = load_reference_fixture(FIXTURE)
-        assert_reference_result(fixture, {"si.Calcite": 0.0, "si.CO2(g)": -2.0})
+        actual = calcite_co2_reference_values(solve_calcite_co2_equilibrium(-2.0))
+        assert_reference_result(fixture, actual)
+        actual["si.Calcite"] = 0.01
         with self.assertRaises(AssertionError):
-            assert_reference_result(fixture, {"si.Calcite": 0.01, "si.CO2(g)": -2.0})
+            assert_reference_result(fixture, actual)
 
     def test_fixture_hash_mismatch_is_rejected(self):
         payload = json.loads(FIXTURE.read_text(encoding="utf-8"))

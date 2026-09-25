@@ -77,7 +77,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.3 | Tank-assignment constraint solver `[x]` | Deterministic assignment or explicit infeasibility explanation |
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
 | P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness and official canary fixture checked in; nutrient-stock fixture family remains to be added |
-| P2.6 | Activity/speciation saturation model `[ ]` | Calculate `SI = log10(IAP/K)` from a complete solution definition; separation rules remain a conservative fallback, not the scientific proof |
+| P2.6 | Activity/speciation saturation model `[-]` | First internal carbonate/calcium Davies kernel passes the PHREEQC canary fixture; sulfate/phosphate/fertilizer phase families remain |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
@@ -94,7 +94,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.3 | Acid/base dose plan `[x]` | Dimensional dose calculation; density, normality, and endpoint guardrails |
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
-| P3.6 | Aqueous-equilibrium target-pH solver `[ ]` | Solve mass action, electroneutrality, alkalinity, reagent stoichiometry, gas boundary, activity coefficients, and precipitation constraints; compare fixtures with cited reference-solver outputs |
+| P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 

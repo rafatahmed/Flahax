@@ -18,11 +18,18 @@ from .delivery_quantities import (
     rescore_with_reagent,
 )
 from .engine import gap_for, load_library, recommend, solve_weights
+from .equilibrium import (
+    CalciteCo2Equilibrium,
+    calcite_co2_reference_values,
+    davies_gamma,
+    solve_calcite_co2_equilibrium,
+)
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 
 __all__ = [
     "DeliveryError",
+    "CalciteCo2Equilibrium",
     "DurationMinutes",
     "FinalSolutionRecipe",
     "FlowLitresPerMinute",
@@ -40,6 +47,8 @@ __all__ = [
     "TemperatureCelsius",
     "VolumeLitres",
     "alkalinity_meq_per_litre",
+    "calcite_co2_reference_values",
+    "davies_gamma",
     "elemental_contribution",
     "final_solution_recipe",
     "rescore_with_reagent",
@@ -50,6 +59,7 @@ __all__ = [
     "plan_ph",
     "recommend",
     "solve_weights",
+    "solve_calcite_co2_equilibrium",
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"

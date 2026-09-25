@@ -99,6 +99,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/stock-planning.md](docs/stock-planning.md) | P2 conservative stock-tank planning and bench-validation protocol |
 | [docs/ph-planning.md](docs/ph-planning.md) | P3 titration-bounded pH planning and mandatory verification |
 | [docs/reference-fixtures.md](docs/reference-fixtures.md) | Dependency-free PHREEQC golden-fixture verification baseline |
+| [docs/equilibrium-kernel.md](docs/equilibrium-kernel.md) | First internal activity/speciation kernel verified against PHREEQC |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:
