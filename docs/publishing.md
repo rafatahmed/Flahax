@@ -23,18 +23,9 @@ py -m twine check dist/*
 
 ## GitHub release
 
-Pushing a GitHub Release runs `.github/workflows/publish.yml`. That workflow builds `dist/`, checks it with Twine, and publishes to PyPI with [Trusted Publishing](https://docs.pypi.org/trusted-publishers/). No API token is stored in the repository.
+Pushing a GitHub Release runs `.github/workflows/publish.yml`. That workflow builds `dist/`, checks it with Twine, and publishes to PyPI. The workflow password is the repository secret `PYPI_API_TOKEN`. The username Twine sends is `__token__`. The token value stays in GitHub secret storage, not in this repository.
 
-On PyPI, under the account or project publishing settings, add a pending publisher:
-
-| Field | Value |
-|---|---|
-| Owner | `rafatahmed` |
-| Repository | `Flahax` |
-| Workflow | `publish.yml` |
-| Environment | `pypi` |
-
-The GitHub environment name must be `pypi`, matching the workflow. A new PyPI upload also needs a new `version` in `pyproject.toml` before the next release. PyPI keeps a filename that was already published.
+A new PyPI upload needs a new `version` in `pyproject.toml` before the next release. PyPI keeps a filename that was already published.
 
 ## Manual upload
 
