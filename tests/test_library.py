@@ -8,7 +8,7 @@ LIBRARY = load_library()
 
 class LibrarySuite(unittest.TestCase):
     def test_tables_match_the_database_export(self):
-        self.assertEqual(len(LIBRARY["salts"]), 30)
+        self.assertEqual(len(LIBRARY["salts"]), 28)
         self.assertEqual(len(LIBRARY["waters"]), 3)
         self.assertEqual(len(LIBRARY["formulas"]), 26)
         self.assertIn("WC1", [water["name"] for water in LIBRARY["waters"]])

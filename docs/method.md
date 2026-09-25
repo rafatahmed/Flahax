@@ -43,11 +43,11 @@ After that fit, a salt is removed only when a refit still keeps every requested 
 
 | Key | Count | Contents |
 |---|---:|---|
-| `salts` | 30 | Name, formula, element percentages |
+| `salts` | 28 | Example fertilizers used by the tests. A live recommendation receives the saved rows instead. |
 | `waters` | 3 | `Default Water Profile` (no ions), `WC1` (Ca 20), `WC2` (N, Mg, Ca, Fe) |
 | `formulas` | 26 | Name, targets, linked water, salt names stored on the formula |
 
-Two rows are placeholders, not fertilizers: `Si_test` and `test_all`, both with formula text `Input Formula Here`. Unusable rows are those placeholders, salts whose name starts with `test_`, and salts with no elements. The other salts all enter the solve. Nothing in the solver prefers a salt because its name is MAP, MKP, or SOP.
+The file is an example for the tests. `python -m flahax` does not read it. The caller passes the fertilizer rows. A name that starts with `test` or a formula of `Input Formula Here` is still rejected if one is passed. Nothing in the solver prefers a salt because its name is MAP, MKP, or SOP.
 
 The formulas stored in that file are the library rows. Pepper (Howard Resh) there is nitrate-N 190, P 40, K 340, Ca 170, S 360, ammonium 18. The edited pepper targets in the proof below are a separate case.
 

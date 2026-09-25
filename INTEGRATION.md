@@ -36,4 +36,4 @@ While it is on:
 
 Do not block Salts while the recommendation loads. Do not change Crop, Water, or the formula row in the database. Do not auto-accept. Do not run FlahaX inside Open results. Do not deploy the Python package inside the Node process until the salt panel has been tried with the switch on and with the switch off.
 
-The join is `python -m flahax`, reading JSON on stdin and writing the `recommend` result on stdout. Version 0.2.0 is the contract: one library, rejected total `N`, and `feasible` before the grams may be accepted. A non-zero exit is an error message, not an empty success.
+The join is `python -m flahax`. Stdin is `{targets, water, salts}`. `salts` are the fertilizer rows saved in FlahaFAST, including any the user added. The JSON file inside this package is an example for the tests and is not read by that command. Version 0.2.0 still rejects total `N`, and grams may be accepted only when `feasible` is true. A non-zero exit is an error message, not an empty success.

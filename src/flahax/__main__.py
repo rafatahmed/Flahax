@@ -3,7 +3,7 @@
 import json
 import sys
 
-from flahax import InputError, load_library, recommend
+from flahax import InputError, recommend
 
 
 def main() -> int:
@@ -20,13 +20,17 @@ def main() -> int:
         print("water must be a map of ion symbol to ppm.", file=sys.stderr)
         return 1
     water = payload.get("water") or {}
+    salts = payload.get("salts")
+    if not isinstance(salts, list) or not salts:
+        print("salts are required. Pass the saved fertilizer rows. The packaged library is only an example.", file=sys.stderr)
+        return 1
     allow = payload.get("allowIons") or []
     if not isinstance(allow, list):
         print("allowIons must be a list of ion symbols.", file=sys.stderr)
         return 1
     try:
         result = recommend(
-            load_library()["salts"],
+            salts,
             targets,
             water,
             allow_ions=set(allow),
