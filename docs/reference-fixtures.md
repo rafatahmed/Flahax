@@ -33,6 +33,8 @@ This is a deliberately small calcium–sulfate fixture—not an approval of a fe
 
 `struvite_probe.pqi` is the exact PHREEQC 3.8.9 input for the first nitrogen fixture. It defines struvite in the input (the base `phreeqc.dat` does not include that phase), uses literature/PHREEQC-forum `log K = -13.26` at 25 °C, and specifies 1 mmol/kgw Mg, NH₄, and phosphate with Na/Cl counter-ions at pH 8.5. Its selected output is `SI(Struvite) = -0.30`; the dependency-free boundary test verifies the same free-ion activity product. This remains a fixed-activity criterion, not a precipitation or dosing decision.
 
+`ca_sulfate_struvite_probe.pqi` adds calcium and sulfate to that explicitly stated family. It is retained as a separate PHREEQC 3.8.9 reference because phase competition must not be inferred from salt names or combined total concentrations.
+
 ## Required fixture families before P2/P3 completion
 
 | Family | Required model inputs | Expected outputs |

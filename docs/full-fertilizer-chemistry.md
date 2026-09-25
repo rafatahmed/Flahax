@@ -79,3 +79,5 @@ The first nitrogen extension now solves `NH4+ = NH3 + H+` with PHREEQC `log K = 
 The checked-in struvite probe is now coupled at fixed pH and ionic strength: magnesium/phosphate and ammonium/ammonia mass balances, sodium association, and the struvite activity product are solved together. The reduced Davies result is `SI = -0.306`, compared with PHREEQC's `-0.30`. It still does not solve pH, ionic strength, solid amount, calcium competition, or sulfate/carbonate interference.
 
 The next reduced-system step now iterates pH and ionic strength to charge closure for stated Mg, total NHx, total phosphate, Na, and Cl inputs. It is deliberately not a general water model: calcium, sulfate, carbonate, other counter-ions, and solid precipitation remain excluded.
+
+The first calcium/sulfate competition probe is now checked in separately. Its PHREEQC 3.8.9 output is `SI(Gypsum) = -1.98`, `SI(Struvite) = -0.46`, and `SI(Hydroxyapatite) = 10.69`. FlahaX compares the gypsum and struvite free-ion activity products within the reduced-model tolerance; hydroxyapatite remains a separately modelled calcium-phosphate constraint.

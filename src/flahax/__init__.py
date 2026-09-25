@@ -1,6 +1,7 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 from .composition import InputError
+from .competition import CalciumSulfateStruviteCompetition, calcium_sulfate_struvite_competition
 from .ammonia import AmmoniaSpeciation, ammonia_speciation
 from .delivery_contracts import DeliveryError, make_audit_record, validate_delivery_request
 from .delivery_quantities import (
@@ -44,6 +45,7 @@ __all__ = [
     "DeliveryError",
     "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
+    "CalciumSulfateStruviteCompetition",
     "ChargeBalancedStruviteMixture",
     "CalciumMagnesiumPhosphateSpeciation",
     "GypsumEquilibrium",
@@ -69,6 +71,7 @@ __all__ = [
     "alkalinity_meq_per_litre",
     "ammonia_speciation",
     "calcite_co2_reference_values",
+    "calcium_sulfate_struvite_competition",
     "calcium_magnesium_phosphate_speciation",
     "hydroxyapatite_hpo4_activity_at_equilibrium",
     "davies_gamma",

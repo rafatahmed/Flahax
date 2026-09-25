@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add calcium/sulfate competition to separately specified PHREEQC fixtures, then extend the charge-balanced solver only after those reference outputs are checked in. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** extend the charge-balanced solver only after calcium/sulfate competition outputs are incorporated as separately specified PHREEQC fixtures. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
