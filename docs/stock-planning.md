@@ -58,9 +58,25 @@ The planner rejects:
 
 The planner evaluates valid tank assignments in tank-ID order and chooses one that uses the fewest tanks. It returns the first deterministic assignment at that minimum. This is an explainable constraint solution, not a chemical equilibrium calculation.
 
-## Bench-validation record required before operational use
+## Mathematical verification is the completion criterion
 
-P2 is not operationally complete until an authorized laboratory or operations team records a test for every planned stock/product combination:
+The current planner is a conservative constraint solver. It is not yet a full aqueous-equilibrium model. P2's scientific completion criterion is regression against an authoritative speciation/saturation calculation, using a named thermodynamic database, activity model, temperature, complete ionic composition, and named solid phases.
+
+For each phase `p`, the reference calculation is:
+
+```text
+SI_p = log10(IAP_p / K_p)
+IAP_p = product_i(a_i ^ nu_i)
+a_i = gamma_i * c_i
+```
+
+`SI_p > 0` means supersaturation under the selected model. The reference output must retain `SI`, `log IAP`, `log K`, ionic strength, activities, and database identity. PHREEQC reports these quantities and supports activity models including ion-association, Pitzer, and SIT; FlahaX will use it as the independent numerical reference, not as an unexamined black box. [PHREEQC Version 3](https://doi.org/10.3133/tm6A43) documents this model and its inputs.
+
+The existing separation rules remain useful as a conservative fallback when a complete equilibrium input is unavailable. They must not be represented as the proof of chemical compatibility.
+
+## Optional deployment validation record
+
+Physical evidence can later validate a particular product lot, water source, storage vessel, and mixing process. It is not required to establish the mathematical model or verify FlahaX against the cited reference solver. If such evidence is wanted for deployment, record:
 
 | Field | Required evidence |
 |---|---|
@@ -71,4 +87,4 @@ P2 is not operationally complete until an authorized laboratory or operations te
 | Observation | Clarity, sediment, crystallization, heat, colour change, photograph if available |
 | Result | Pass/fail, reviewer, timestamp, and source record revision |
 
-A passing computation only proves that the input constraints were met. A passing bench test is the required evidence that the constraint data are appropriate for that product, water, and temperature range.
+A passing reference regression proves agreement with the selected mathematical model. A physical test, if performed, is evidence about a particular real-world deployment—not a substitute for the mathematical model.

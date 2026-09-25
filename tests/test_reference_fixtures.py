@@ -1,0 +1,38 @@
+import json
+from pathlib import Path
+import unittest
+
+from flahax.reference_fixtures import assert_reference_result, load_reference_fixture
+
+
+FIXTURE = Path(__file__).parent / "fixtures" / "phreeqc" / "calcite_co2_equilibrium.json"
+
+
+class ReferenceFixtures(unittest.TestCase):
+    def test_official_phreeqc_fixture_has_intact_provenance_and_input(self):
+        fixture = load_reference_fixture(FIXTURE)
+        self.assertEqual(fixture["reference"]["database"], "phreeqc.dat")
+        self.assertIn("Calcite", fixture["phreeqcInput"])
+        self.assertEqual(fixture["expected"]["values"]["si.Calcite"], 0.0)
+
+    def test_comparator_accepts_reference_values_and_rejects_drift(self):
+        fixture = load_reference_fixture(FIXTURE)
+        assert_reference_result(fixture, {"si.Calcite": 0.0, "si.CO2(g)": -2.0})
+        with self.assertRaises(AssertionError):
+            assert_reference_result(fixture, {"si.Calcite": 0.01, "si.CO2(g)": -2.0})
+
+    def test_fixture_hash_mismatch_is_rejected(self):
+        payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        payload["inputSha256"] = "0" * 64
+        altered = FIXTURE.parent / "altered.json"
+        try:
+            altered.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaises(Exception):
+                load_reference_fixture(altered)
+        finally:
+            if altered.exists():
+                altered.unlink()
+
+
+if __name__ == "__main__":
+    unittest.main()

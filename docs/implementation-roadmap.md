@@ -66,7 +66,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Exit condition:** a recipe containing salts plus a reagent addition conserves mass and either remains within configured nutrient tolerance or is rejected.
 
-### P2 — Conservative stock-tank planner `[-]`
+### P2 — Stock-tank compatibility and equilibrium model `[-]`
 
 **Objective:** produce safe, explainable A/B/acid stock plans before modelling detailed equilibria.
 
@@ -76,27 +76,29 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.2 | Per-product, temperature-bounded solubility-limit records `[x]` | Missing source/range fails; boundary and safety-margin tests |
 | P2.3 | Tank-assignment constraint solver `[x]` | Deterministic assignment or explicit infeasibility explanation |
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
-| P2.5 | Bench validation protocol and result record `[-]` | Jar/hold test template is documented; physical validation evidence is required |
+| P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness and official canary fixture checked in; nutrient-stock fixture family remains to be added |
+| P2.6 | Activity/speciation saturation model `[ ]` | Calculate `SI = log10(IAP/K)` from a complete solution definition; separation rules remain a conservative fallback, not the scientific proof |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
-**Decision gate G2:** confirm whether the product catalogue is narrow enough for maintained rule tables. If not, defer arbitrary-product stock planning rather than guess compatibility.
+**Decision gate G2:** select a published thermodynamic database and an activity model appropriate to the intended ionic-strength range. The current rule table is not the long-term scientific authority.
 
-### P3 — pH and alkalinity planning `[-]`
+### P3 — pH and alkalinity equilibrium model `[-]`
 
 **Objective:** calculate a bounded initial reagent dose from measured buffering, then require measurement-based verification.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
 | P3.1 | Alkalinity normalization (`mg/L as CaCO3` to `meq/L`) `[x]` | Unit-tested conversion using 50.043 mg/meq; P3 dose remains based on a water-specific titration curve rather than a generic residual-alkalinity assumption. |
-| P3.2 | Titration-curve record and interpolation `[x]` | Monotonicity, endpoint, matched-record, and extrapolation-rejection tests |
+| P3.2 | Titration-curve record and interpolation `[x]` | Optional site-calibration path with monotonicity, endpoint, matched-record, and extrapolation-rejection tests |
 | P3.3 | Acid/base dose plan `[x]` | Dimensional dose calculation; density, normality, and endpoint guardrails |
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
+| P3.6 | Aqueous-equilibrium target-pH solver `[ ]` | Solve mass action, electroneutrality, alkalinity, reagent stoichiometry, gas boundary, activity coefficients, and precipitation constraints; compare fixtures with cited reference-solver outputs |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
-**Decision gate G3:** approve the first allowed reagent set and their verified assays/densities. Do not accept product names as chemical identities.
+**Decision gate G3:** choose the gas boundary (closed total inorganic carbon or specified CO2 partial pressure), activity model, thermodynamic database, and allowed reagent stoichiometry. These are mathematical model inputs, not laboratory work.
 
 ### P4 — Pump calibration and dosing planner `[ ]`
 
@@ -134,7 +136,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P6.1 | Golden test fixtures | Pepper plus at least one high-alkalinity and one incompatibility case |
 | P6.2 | Property tests | Non-negative mass/volume, unit consistency, constraint preservation, deterministic plans |
 | P6.3 | Sensitivity tests | Water alkalinity, temperature, assay, injector ratio, and pump-rate perturbations produce bounded/visible effects |
-| P6.4 | Bench-test evidence set | Stock clarity/precipitation, delivered-volume, pH, EC, and laboratory-ion comparison |
+| P6.4 | Reference-equivalence evidence set | Golden activities, species, saturation indices, pH/reagent amount, and numerical-tolerance comparison against the cited solver |
 | P6.5 | Release checklist | Documentation, API stability, regression suite, safety review, version/citation update |
 
 **Decision gate G6:** an independent reviewer signs off on test and bench evidence before the planner is advertised for operational use.
@@ -160,7 +162,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | Must have | P2 | Solves the immediate physical stock-tank safety problem conservatively |
 | Must have before automation | P3, P4, P5, P6 | pH and hardware decisions require calibrated, verifiable evidence |
 | Later / optional | P7 | External application integration must not drive core chemistry design |
-| Explicitly deferred | Full PHREEQC runtime integration; autonomous recirculating ion correction; cost optimization; pump actuation | Each requires separate data, validation, operational authority, and safety review |
+| Explicitly deferred | Full PHREEQC runtime integration; autonomous recirculating ion correction; cost optimization; pump actuation | The reference-equivalence harness comes first; runtime coupling needs a separate dependency and architecture decision |
 
 ## Metrics and release gates
 
@@ -179,14 +181,14 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 | Risk | Early warning | Mitigation | Owner required |
 |---|---|---|---|
-| Incomplete water analysis | Missing alkalinity, temperature, or ions | Block pH/stock approval; request laboratory analysis | Agronomy/operations |
+| Incomplete model input | Missing alkalinity, temperature, ions, gas boundary, or thermodynamic database | Block equilibrium solve; request the missing referenced input | Agronomy/operations |
 | Product data differs from assay | Unverified label, lot change, oxide/element ambiguity | Versioned certificate/assay record; reject ambiguous units | Procurement/agronomy |
-| Stock precipitation | Cloudiness, sediment, temperature excursion | Conservative segregation, limit tables, jar and hold tests | Chemistry/operations |
+| Stock precipitation | Positive saturation index or phase constraint breach | Activity/speciation solve and named phase constraints | Chemistry/model owner |
 | Pump drift | Delivered-volume deviation | Scheduled calibration and command bounds | Operations |
 | Sensor drift | pH/EC inconsistency or stale calibration | Calibration schedule; reject stale data; independent spot checks | Operations |
-| False confidence from EC | EC matches but ion analysis differs | Laboratory-ion verification and mass-balance review | Agronomy |
+| False confidence from EC | EC matches but modelled ion balance differs | Activity/speciation reference regression and elemental mass-balance review | Model owner |
 | Scope creep into actuator control | Requests to auto-dose before evidence exists | Keep package planning-only; require a separate safety authorization | Product owner |
 
 ## Next action
 
-**Current next action:** collect P2.5 stock evidence and obtain a first approved water/reagent/titration record set for P3.1. P4 may begin independently as a calibration-record and runtime-planning module; it must not perform hardware I/O.
+**Current next action:** implement the reference-model harness for P2.5/P2.6 and P3.6. Use published thermodynamic data and golden input/output fixtures from an authoritative equilibrium solver. Physical trials may later validate a particular product lot or installation, but they are not a prerequisite for mathematical model definition or verification.

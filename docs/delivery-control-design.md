@@ -112,7 +112,7 @@ SI_phase = log10(IAP / K_sp)
 
 `SI_phase > 0` means the specified equilibrium model is supersaturated with respect to that phase; it is a risk signal, not a promise that precipitation will occur on the controller's time scale. A proper calculation needs aqueous speciation, activities, temperature-dependent equilibrium constants, gas assumptions, and a stated thermodynamic database. The USGS PHREEQC model is an appropriate independent validation tool because it calculates species activities, saturation indices, mixing, mineral equilibria, and reaction paths; it should be used for offline validation, not silently embedded as an unverified production dependency [PHREEQC Version 3 documentation](https://doi.org/10.3133/tm6A43).
 
-Therefore the first release should use conservative rule-based separation plus maximum validated concentration tables. A later model may use activities and published/validated solubility data, but it still requires physical confirmation by jar testing and a hold-time test at the lowest expected storage temperature. Calcium-phosphate precipitation has been specifically investigated in hydroponic nutrient solutions, reinforcing this conservative constraint [Formation of Calcium Phosphate Precipitation in Nutrient Solution for Hydroponic Cultivation](https://doi.org/10.1080/00380768.1993.10419799).
+Therefore the first release should use conservative rule-based separation plus maximum sourced concentration tables. The mathematical completion path is activity/speciation calculation with a named thermodynamic database and regression against reference outputs. A physical jar/hold test may later validate a particular product lot or installation; it is not required to define or verify the mathematical model. Calcium-phosphate precipitation has been specifically investigated in hydroponic nutrient solutions, reinforcing the need for an explicit phase model [Formation of Calcium Phosphate Precipitation in Nutrient Solution for Hydroponic Cultivation](https://doi.org/10.1080/00380768.1993.10419799).
 
 ### 2.3 Proposed tank-assignment function
 
@@ -154,7 +154,7 @@ n_H+ = V_f * D_H+(pH_target)                 [meq]
 V_acid = n_H+ / N_acid                       [L]
 ```
 
-where `N_acid` is the validated delivered normality (meq/L) of the acid product after any dilution. Use product density and assay to establish `N_acid`; do not infer it from a trade name. In a simplified neutralization estimate, `D_H+` may be based on the alkalinity reduction desired, but the titration curve is the required calibration because carbonate speciation, dissolved CO2, and other buffers make pH nonlinear.
+where `N_acid` is the delivered normality (meq/L) of the acid product after any dilution. Use product density and assay to establish `N_acid`; do not infer it from a trade name. A measured titration curve is an optional site-calibration path. The mathematical path instead solves carbonate speciation, dissolved CO2/gas boundary, alkalinity, activities, and electroneutrality from the complete solution definition.
 
 The same form applies to a base channel using `n_OH-` and base normality.
 
@@ -242,7 +242,7 @@ Plant uptake and unmeasured losses are not directly observable from EC and pH. T
 
 Required inputs:
 
-- current water laboratory analysis: ions, pH, alkalinity, EC, temperature, sampling date;
+- current water-analysis record: ions, pH, alkalinity, EC, temperature, sampling date, source, and revision;
 - fertilizer and acid/base product assay, density where relevant, lot, and units;
 - target final volume or measured irrigation water volume;
 - injector/pump calibration and stock-tank capacity;
@@ -256,7 +256,7 @@ Before a plan can be accepted, it must meet all of the following:
 3. Each stock concentration is below its validated temperature-dependent limit with a documented safety margin.
 4. Acid/base nutrient additions are included in the final balance and the result remains within configured tolerance.
 5. Requested volumes and runtimes lie within current pump calibrations and tank capacities.
-6. The field procedure requires post-mix pH, EC, flow, and—on a defined schedule—laboratory ion verification.
+6. Mathematical acceptance requires regression against named reference-solver fixtures, including activities and saturation indices. Deployment measurements are optional installation evidence and do not replace the mathematical regression.
 
 ## 6.1 Package-quality requirements
 
@@ -266,19 +266,19 @@ A scientifically sound model still needs reliable software boundaries. Before an
 - **Pure planning functions:** `plan_stocks`, `plan_ph`, and hardware command calculation must be deterministic and side-effect free. Hardware I/O belongs behind a separate adapter.
 - **No invented chemistry:** absent alkalinity, reagent normality, density, solubility data, temperature limits, or calibration must produce an explicit incomplete-plan error, never a plausible-looking dose.
 - **Constraint-first solver:** stock compatibility, solubility ceilings, tank capacities, calibrated pump bounds, and safety limits are hard constraints; cost or recipe simplicity can be optimization objectives only after those constraints pass.
-- **Independent verification:** unit tests cover units, mass conservation, known dilution cases, constraint rejection, and uncertainty propagation. Integration tests replay recorded calibration and telemetry scenarios. Bench and laboratory results remain the acceptance evidence for chemical claims.
+- **Independent verification:** unit tests cover units, mass conservation, known dilution cases, constraint rejection, and uncertainty propagation. Chemical-model tests compare golden fixtures against a cited, named equilibrium solver and thermodynamic database. Physical measurements, if later collected, are deployment evidence rather than the model-definition gate.
 - **Versioned reference data:** product assays, thermodynamic data, compatibility rules, titration curves, and calibration records each carry source, date, temperature range, and revision identifier.
 
 These rules keep the current lightweight package intact: FlahaX can remain dependency-free and deterministic while an optional, separately validated delivery integration performs field-specific chemistry and control.
 
 ## 7. Validation sequence
 
-1. Verify water and product assays in a laboratory or against certificates of analysis.
-2. Run a bench-scale stock solubility/compatibility test at the highest planned concentration and lowest expected storage temperature.
-3. Verify injector ratio and pump-volume repeatability with water, then with the actual stock solution.
-4. Mix a controlled final batch; measure pH, EC, and selected ions with suitable laboratory methods.
-5. Compare measured concentrations to the FlahaX prediction and investigate deviations before field release.
-6. Run supervised irrigation trials with alarms enabled and no unattended corrective pH loop.
+1. Define the complete solution inputs: total ions, temperature, pH/alkalinity, gas boundary, product stoichiometry, and named solid phases.
+2. Run the cited reference equilibrium solver with a named activity model and thermodynamic database; retain activities, species, ionic strength, and saturation indices as golden output.
+3. Compare FlahaX numerical outputs to those fixtures within declared numerical tolerances.
+4. Verify injector ratio and pump-volume arithmetic separately with deterministic calibration fixtures.
+5. Run package regression, conservation, constraint, and reference-equivalence tests before release.
+6. If deployed later, supervised irrigation or physical tests may validate the installation; they do not establish the governing mathematical model.
 
 ## References
 

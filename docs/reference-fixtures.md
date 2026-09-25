@@ -1,0 +1,32 @@
+# PHREEQC Reference Fixtures
+
+FlahaX uses checked-in PHREEQC golden fixtures as its dependency-free scientific verification baseline. PHREEQC is **not** a runtime dependency of the package.
+
+## Fixture contract
+
+Each fixture is a JSON document under `tests/fixtures/phreeqc/` and contains:
+
+- the exact PHREEQC input text;
+- SHA-256 of that input text;
+- PHREEQC version, thermodynamic database, and aqueous activity model;
+- source URL and concise source description;
+- selected expected numeric output; and
+- a declared absolute numerical tolerance.
+
+`flahax.reference_fixtures` verifies fixture integrity and compares a FlahaX solver result to the expected values. A future equilibrium solver must pass these tests without downloading, installing, or invoking PHREEQC.
+
+## Initial official fixture
+
+`calcite_co2_equilibrium.json` is based on PHREEQC Version 3 Example 3, part A: pure water at 25 °C equilibrated with calcite at log CO₂ partial pressure -2. The checked selected outputs are the imposed calcite and CO₂ saturation indices. The original input is published in the [PHREEQC Version 3 example repository](https://github.com/phreeqc-dev/phreeqc3/blob/master/examples/ex3), and the underlying model is documented by the [U.S. Geological Survey](https://doi.org/10.3133/tm6A43).
+
+This fixture is a provenance and harness canary. It is not a hydroponic stock or pH case.
+
+## Required fixture families before P2/P3 completion
+
+| Family | Required model inputs | Expected outputs |
+|---|---|---|
+| Stock compatibility | Complete ion totals, temperature, activity model, database, named calcium/phosphate/sulfate phases | Ionic strength, activities, `log IAP`, `log K`, saturation indices |
+| Target pH | Complete water/fertilizer totals, alkalinity, gas boundary, reagent stoichiometry, temperature, activity model, database | Reagent amount, pH, species activities, saturation indices |
+| Boundary cases | Near-zero, zero, and positive saturation index; target pH endpoints | Defined numeric tolerances and explicit infeasibility outcomes |
+
+The fixture generator is an offline research step: run PHREEQC with the selected version/database, retain its input and selected output, then check in the compact fixture. FlahaX tests remain dependency-free thereafter.

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "reference": {
+    "software": "PHREEQC Version 3",
+    "database": "phreeqc.dat",
+    "activityModel": "PHREEQC ion-association aqueous model",
+    "sourceUrl": "https://raw.githubusercontent.com/phreeqc-dev/phreeqc3/master/examples/ex3",
+    "sourceDescription": "Example 3, part A: calcite equilibrium at log PCO2 = -2.0 and 25 C."
+  },
+  "phreeqcInput": "TITLE Example 3, part A.--Calcite equilibrium at log Pco2 = -2.0 and 25C.\nSOLUTION 1  Pure water\n        pH      7.0\n        temp    25.0\nEQUILIBRIUM_PHASES\n        CO2(g)          -2.0\n        Calcite         0.0\nSAVE solution 1\nEND\n",
+  "inputSha256": "8ba3a27b708d33298653c5c972effaa4733cfad93ba041a91170b98d1c77c34f",
+  "expected": {
+    "absoluteTolerance": 1e-12,
+    "values": {
+      "si.Calcite": 0.0,
+      "si.CO2(g)": -2.0
+    }
+  }
+}
