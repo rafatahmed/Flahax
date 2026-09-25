@@ -1,0 +1,20 @@
+TITLE FlahaX calcite equilibrium allocation probe
+SOLUTION 1
+    temp 25
+    pH 8.5
+    units mmol/kgw
+    Ca 1
+    C 1 as HCO3
+    Na 2
+    Cl 2
+EQUILIBRIUM_PHASES 1
+    Calcite 0 0.1
+SELECTED_OUTPUT
+    -file calcite_allocation_probe.sel
+    -reset false
+    -pH true
+    -ionic_strength true
+    -totals Ca C
+    -si Calcite
+    -equilibrium_phases Calcite
+END

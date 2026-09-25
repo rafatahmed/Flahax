@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add carbonate aqueous complexation and phase-mass allocation only against separately specified PHREEQC equilibrium fixtures. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** derive calcite phase-mass allocation internally against the checked-in equilibrium fixture, then add additional named phases one fixture at a time. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.

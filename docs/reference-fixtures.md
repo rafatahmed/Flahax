@@ -37,6 +37,8 @@ This is a deliberately small calcium–sulfate fixture—not an approval of a fe
 
 `carbonate_competition_probe.pqi` adds bicarbonate and records calcite, gypsum, struvite, and hydroxyapatite saturation indices. It is the first reference for carbonate competition; it does not establish precipitation quantities or kinetic order.
 
+`calcite_allocation_probe.pqi` is the first phase-mass fixture. PHREEQC 3.8.9 adjusts calcite from `0.100000` to `0.100033792 mol/kgw`, reaches `SI(Calcite)=0`, and shifts pH to `8.07859`. FlahaX records this allocation with a typed sign convention: a decrease is dissolution; an increase is precipitation.
+
 ## Required fixture families before P2/P3 completion
 
 | Family | Required model inputs | Expected outputs |

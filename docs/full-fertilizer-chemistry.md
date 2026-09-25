@@ -87,3 +87,5 @@ Calcium and sulfate can now be supplied explicitly to the reduced charge-balance
 The solver now includes neutral `CaSO4(aq)` using the current `phreeqc.dat` `log beta = 2.14`. It conserves analytical calcium and sulfate totals, reports free Ca²⁺/SO₄²⁻ and the neutral pair, and bases gypsum SI on free-ion activities. Calcium-phosphate and carbonate complexes remain outside this reduced family.
 
 The carbonate competition probe adds bicarbonate to the Ca/SO4/struvite mixture. PHREEQC reports calcite `SI = 0.26`, gypsum `SI = -1.99`, and struvite `SI = -0.48`. FlahaX now exposes these three named activity-product indices together; it still does not allocate precipitated mass between phases.
+
+The first phase-mass fixture is calcite-only: PHREEQC reaches calcite equilibrium by precipitating `3.3792e-5 mol/kgw`. FlahaX now has a typed allocation record with an explicit positive-dissolution / negative-precipitation convention; calculation of that allocation remains the next fixture-verified solver increment.

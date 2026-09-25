@@ -30,6 +30,7 @@ from .equilibrium import (
     solve_gypsum_equilibrium,
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
+from .phase_allocation import PhaseAllocation, phase_allocation
 from .phosphate import OrthophosphateSpeciation, orthophosphate_speciation
 from .phosphate_complexes import (
     CalciumMagnesiumPhosphateSpeciation,
@@ -61,6 +62,7 @@ __all__ = [
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
     "PhPlan",
+    "PhaseAllocation",
     "OrthophosphateSpeciation",
     "StockPlan",
     "StruviteMixtureSpeciation",
@@ -86,6 +88,7 @@ __all__ = [
     "make_audit_record",
     "plan_stocks",
     "plan_ph",
+    "phase_allocation",
     "orthophosphate_speciation",
     "phase_saturation_index",
     "recommend",
