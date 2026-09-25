@@ -1,0 +1,25 @@
+TITLE FlahaX carbonate competition probe
+PHASES
+Struvite
+    MgNH4PO4:6H2O = Mg+2 + NH4+ + PO4-3 + 6H2O
+    -log_k -13.26
+SOLUTION 1
+    temp 25
+    pH 8.5
+    units mmol/kgw
+    Ca 1
+    Mg 1
+    N(-3) 1 as NH4
+    P 1 as H2PO4
+    S(6) 1 as SO4
+    C 1 as HCO3
+    Na 3
+    Cl 5
+SELECTED_OUTPUT
+    -file carbonate_competition_probe.sel
+    -reset false
+    -pH true
+    -ionic_strength true
+    -activities Ca+2 CO3-2 Mg+2 NH4+ SO4-2 PO4-3
+    -si Calcite Gypsum Struvite Hydroxyapatite
+END

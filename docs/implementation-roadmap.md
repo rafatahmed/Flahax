@@ -96,7 +96,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 | P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
-| P3.7 | Fertilizer acid/base species coverage `[-]` | Reduced charge-balanced pH/I solver now partitions Ca/SO4 into free ions and CaSO4(aq), and emits gypsum SI; carbonate competition and precipitation extent remain |
+| P3.7 | Fertilizer acid/base species coverage `[-]` | Carbonate competition fixture plus calcite/gypsum/struvite activity indices added; carbonate complexation and precipitation extent remain |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add carbonate competition as separately specified PHREEQC fixtures before calculating precipitation extent. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** add carbonate aqueous complexation and phase-mass allocation only against separately specified PHREEQC equilibrium fixtures. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.

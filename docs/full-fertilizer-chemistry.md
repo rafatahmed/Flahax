@@ -85,3 +85,5 @@ The first calcium/sulfate competition probe is now checked in separately. Its PH
 Calcium and sulfate can now be supplied explicitly to the reduced charge-balanced struvite solver. They contribute to charge balance and ionic strength, and the result includes a gypsum saturation index when both are present. Their aqueous complexes and any precipitated amount remain deliberately outside this increment.
 
 The solver now includes neutral `CaSO4(aq)` using the current `phreeqc.dat` `log beta = 2.14`. It conserves analytical calcium and sulfate totals, reports free Ca²⁺/SO₄²⁻ and the neutral pair, and bases gypsum SI on free-ion activities. Calcium-phosphate and carbonate complexes remain outside this reduced family.
+
+The carbonate competition probe adds bicarbonate to the Ca/SO4/struvite mixture. PHREEQC reports calcite `SI = 0.26`, gypsum `SI = -1.99`, and struvite `SI = -0.48`. FlahaX now exposes these three named activity-product indices together; it still does not allocate precipitated mass between phases.

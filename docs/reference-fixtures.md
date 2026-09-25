@@ -35,6 +35,8 @@ This is a deliberately small calcium–sulfate fixture—not an approval of a fe
 
 `ca_sulfate_struvite_probe.pqi` adds calcium and sulfate to that explicitly stated family. It is retained as a separate PHREEQC 3.8.9 reference because phase competition must not be inferred from salt names or combined total concentrations.
 
+`carbonate_competition_probe.pqi` adds bicarbonate and records calcite, gypsum, struvite, and hydroxyapatite saturation indices. It is the first reference for carbonate competition; it does not establish precipitation quantities or kinetic order.
+
 ## Required fixture families before P2/P3 completion
 
 | Family | Required model inputs | Expected outputs |
