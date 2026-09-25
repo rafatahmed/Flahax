@@ -26,8 +26,8 @@ While it is off, every screen is the current flow. No new request, no new button
 
 While it is on:
 
-1. Salts asks for a recommendation only after water and the formula are both saved. The call is allowed to fail. On failure or timeout the salt page shows exactly what it shows today, including the formula’s own salt ids when those exist.
-2. The recommendation is a panel, not a new stage. **Use this combination** replaces the selection and stores the grams on the draft. **Keep my salts** leaves the selection untouched and stores nothing from FlahaX.
+1. Salts asks for a recommendation only after water and the formula are both saved. The call is allowed to fail. A non-zero exit, including total `N`, an unknown ion, or a negative ppm, is shown as that error. The formula’s own salt ticks stay as they are.
+2. The recommendation is a panel, not a new stage. **Use this combination** is available only when `feasible` is true. It replaces the selection and stores the grams on the draft. Warnings, including a salt admitted as the only source of a requested ion, stay visible. **Keep my salts** leaves the selection untouched and stores nothing from FlahaX.
 3. Recipe, if and only if the draft says the user accepted, uses those grams as the salt amounts and does not solve them again. A/B and pH stay optional and unchanged. If the user did not accept, Recipe solves as it does now.
 4. Open results saves the balance that Recipe actually produced. The snapshot may record `flahaxAccepted: true` or `false`. It does not replace the result with a new solve at save time.
 5. History analysis, for a saved run with `flahaxAccepted` not true, may show the recommendation beside the saved balance. If that call fails, the history page omits the panel. The saved numbers stay.
@@ -36,4 +36,4 @@ While it is on:
 
 Do not block Salts while the recommendation loads. Do not change Crop, Water, or the formula row in the database. Do not auto-accept. Do not run FlahaX inside Open results. Do not deploy the Python package inside the Node process until the salt panel has been tried with the switch on and with the switch off.
 
-The first technical join is a single command, `python -m flahax`, reading JSON on stdin and writing the `recommend` result on stdout. The Node server starts it only when the switch is on. A non-zero exit becomes “no recommendation,” and the user continues.
+The join is `python -m flahax`, reading JSON on stdin and writing the `recommend` result on stdout. Version 0.2.0 is the contract: one library, rejected total `N`, and `feasible` before the grams may be accepted. A non-zero exit is an error message, not an empty success.
