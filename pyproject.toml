@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flahax"
+version = "0.1.0"
+description = "Choose fertilizer salts and weights that minimize crop-formula percentage error."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Flaha" }]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+flahax = ["data/*.json"]
