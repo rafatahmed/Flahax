@@ -53,16 +53,16 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Decision gate G0:** batch preparation is the implemented P0 planning scope. Proportional injection remains deferred and rejected until its operating model, calibration requirements, and safety envelope are formally approved.
 
-### P1 — Units, invariants, and recipe interface `[ ]`
+### P1 — Units, invariants, and recipe interface `[x]`
 
 **Objective:** make every calculation dimensionally explicit and preserve the existing solver contract.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P1.1 | Immutable value objects for mass, volume, concentration, time, temperature, flow, ratio, and equivalents | Conversion and invalid-unit tests |
-| P1.2 | Adapter from `recommend` result to a final-solution recipe | Round-trip fixture; grams/L and ppm mass conservation tests |
-| P1.3 | Reagent nutrient-contribution calculation | Known nitric/phosphoric/sulfuric-acid and KOH cases; re-scored final recipe |
-| P1.4 | Tolerance and rounding policy | No rounding before constraint checks; documented output precision |
+| P1.1 | Immutable value objects for mass, volume, concentration, time, temperature, flow, ratio, and equivalents `[x]` | Conversion and invalid-unit tests |
+| P1.2 | Adapter from `recommend` result to a final-solution recipe `[x]` | Round-trip fixture; grams/L and ppm mass conservation tests |
+| P1.3 | Reagent nutrient-contribution calculation `[x]` | Known elemental contribution and re-scored final-recipe tests |
+| P1.4 | Tolerance and rounding policy `[x]` | No rounding before constraint checks; documented output precision |
 
 **Exit condition:** a recipe containing salts plus a reagent addition conserves mass and either remains within configured nutrient tolerance or is rejected.
 
@@ -189,4 +189,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** begin **P1.1–P1.2**. Preserve the P0 contract boundaries while introducing explicit, immutable quantity types and an adapter from the existing `recommend` result. Do not begin stock, pH, or pump calculations until P1 acceptance evidence exists.
+**Current next action:** begin **P2.1–P2.2**. Preserve the P0/P1 contracts while defining sourced hard compatibility rules and temperature-bounded solubility limits. Do not infer a product's compatibility from its name.

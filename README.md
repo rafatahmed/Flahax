@@ -95,6 +95,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/delivery-control-design.md](docs/delivery-control-design.md) | Technical frame for future stock tanks, pH, and dosing control |
 | [docs/implementation-roadmap.md](docs/implementation-roadmap.md) | Trackable delivery-system implementation plan and acceptance gates |
 | [docs/delivery-contracts.md](docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
+| [docs/delivery-quantities.md](docs/delivery-quantities.md) | P1 unit-safe batch adaptation and reagent nutrient contributions |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:
