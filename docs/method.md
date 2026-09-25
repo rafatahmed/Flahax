@@ -43,7 +43,7 @@ After that fit, a salt is removed only when a refit still keeps every requested 
 
 | Key | Count | Contents |
 |---|---:|---|
-| `salts` | 37 | Name, formula, element percentages |
+| `salts` | 30 | Name, formula, element percentages |
 | `waters` | 3 | `Default Water Profile` (no ions), `WC1` (Ca 20), `WC2` (N, Mg, Ca, Fe) |
 | `formulas` | 26 | Name, targets, linked water, salt names stored on the formula |
 

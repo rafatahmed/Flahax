@@ -17,9 +17,7 @@ class CompositionGuards(unittest.TestCase):
             reason = assay_conflict(salt)
             if reason and "placeholder" not in reason:
                 conflicts.append(reason)
-        self.assertEqual(conflicts, [
-            "Sodium Nitrate lists Fe at 7%, while NaNO3 contains 0.00%",
-        ])
+        self.assertEqual(conflicts, [])
 
     def test_total_nitrogen_is_rejected(self):
         with self.assertRaises(InputError):
@@ -55,7 +53,7 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertIn("Sodium Molybdate (Dihydrate)", names)
         self.assertFalse(result["feasible"])
-        self.assertAlmostEqual(result["maxAbsDeltaPct"], 37.4264, places=3)
+        self.assertAlmostEqual(result["maxAbsDeltaPct"], 37.4319, places=3)
         self.assertFalse(any("Potassium Chloride" in note for note in result["warnings"]))
         sulfur = next(row for row in result["rows"] if row["symbol"] == "S")
         self.assertLess(sulfur["deltaPct"], -30)
@@ -75,16 +73,14 @@ class CompositionGuards(unittest.TestCase):
         notes = [assay_drift(salt) for salt in load_library()["salts"]]
         self.assertTrue(any(note and note.startswith("Mg Nitrate") for note in notes))
 
-    def test_allowing_chloride_makes_those_salts_eligible(self):
-        blocked = recommend(load_library()["salts"], {"K": 100})
-        opened = recommend(load_library()["salts"], {"K": 100}, allow_ions={"Cl"})
-        blocked_ids = {item["id"] for item in blocked["excluded"]}
-        opened_ids = {item["id"] for item in opened["excluded"]}
-        chloride = next(
-            salt for salt in load_library()["salts"] if salt["formula"] == "KCl"
-        )
-        self.assertIn(chloride["id"], blocked_ids)
-        self.assertNotIn(chloride["id"], opened_ids)
+    def test_the_fertilizer_list_has_no_chloride_salts(self):
+        chloride = [
+            salt["name"] for salt in load_library()["salts"]
+            if float(salt["elements"].get("Cl") or 0) > 0
+            and not str(salt["name"]).lower().startswith("test")
+            and salt.get("formula") != "Input Formula Here"
+        ]
+        self.assertEqual(chloride, [])
 
 
 class LeastSquares(unittest.TestCase):

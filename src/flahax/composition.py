@@ -13,7 +13,7 @@ import re
 # Ions the mass balance knows. Total "N" is absent on purpose: nitrate and
 # ammonium are different rows, and a single N figure cannot be split safely.
 IONS = frozenset({
-    "N_NO3", "N_NH4", "P", "K", "Ca", "Mg", "S",
+    "N_NO3", "N_NH4", "N_UREA", "P", "K", "Ca", "Mg", "S",
     "Fe", "Mn", "Zn", "B", "Cu", "Mo", "Na", "Cl", "Si",
 })
 

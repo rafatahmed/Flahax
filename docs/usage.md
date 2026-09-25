@@ -105,4 +105,4 @@ From the repository root, after the package is installed:
 python -m unittest discover -s tests -t .
 ```
 
-`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the export still has 37 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula.
+`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the export still has 30 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula.
