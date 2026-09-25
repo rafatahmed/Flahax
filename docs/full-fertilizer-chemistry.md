@@ -81,3 +81,5 @@ The checked-in struvite probe is now coupled at fixed pH and ionic strength: mag
 The next reduced-system step now iterates pH and ionic strength to charge closure for stated Mg, total NHx, total phosphate, Na, and Cl inputs. It is deliberately not a general water model: calcium, sulfate, carbonate, other counter-ions, and solid precipitation remain excluded.
 
 The first calcium/sulfate competition probe is now checked in separately. Its PHREEQC 3.8.9 output is `SI(Gypsum) = -1.98`, `SI(Struvite) = -0.46`, and `SI(Hydroxyapatite) = 10.69`. FlahaX compares the gypsum and struvite free-ion activity products within the reduced-model tolerance; hydroxyapatite remains a separately modelled calcium-phosphate constraint.
+
+Calcium and sulfate can now be supplied explicitly to the reduced charge-balanced struvite solver. They contribute to charge balance and ionic strength, and the result includes a gypsum saturation index when both are present. Their aqueous complexes and any precipitated amount remain deliberately outside this increment.

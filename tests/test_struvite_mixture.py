@@ -7,3 +7,6 @@ class StruviteMixtureTests(unittest.TestCase):
  def test_reduced_system_solves_charge_balance(self):
   r=solve_charge_balanced_struvite_mixture(.001,.001,.001,.001,.003)
   self.assertAlmostEqual(r.charge_residual,0,places=9); self.assertGreaterEqual(r.ph,0); self.assertLessEqual(r.ph,14)
+ def test_calcium_sulfate_are_explicit_charge_and_phase_inputs(self):
+  r=solve_charge_balanced_struvite_mixture(.001,.001,.001,.002,.005,.001,.001)
+  self.assertAlmostEqual(r.charge_residual,0,places=9); self.assertIsNotNone(r.gypsum_si)
