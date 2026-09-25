@@ -23,9 +23,18 @@ py -m twine check dist/*
 
 ## GitHub release
 
-Pushing a GitHub Release runs `.github/workflows/publish.yml`. That workflow builds `dist/`, checks it with Twine, and publishes to PyPI. The workflow password is the repository secret `PYPI_API_TOKEN`. The username Twine sends is `__token__`. The token value stays in GitHub secret storage, not in this repository.
+`flahax` already exists on PyPI, so the publisher is added on the project, not as a pending publisher for a new name. Open [Manage projects](https://pypi.org/manage/projects/), choose `flahax`, then Publishing, and add a GitHub Actions publisher:
 
-A new PyPI upload needs a new `version` in `pyproject.toml` before the next release. PyPI keeps a filename that was already published.
+| Field | Value |
+|---|---|
+| Owner | `rafatahmed` |
+| Repository | `Flahax` |
+| Workflow | `publish.yml` |
+| Environment | `pypi` |
+
+A published GitHub Release runs `.github/workflows/publish.yml`. The build job makes the archives. The publish job has only `id-token: write` and asks PyPI for a token that lasts about 15 minutes. No long-lived API token is stored in the repository.
+
+PyPI keeps every uploaded filename. The next release needs a new `version` in `pyproject.toml`. Version 0.1.0 stays on the index.
 
 ## Manual upload
 
