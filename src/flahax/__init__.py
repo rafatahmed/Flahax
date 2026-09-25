@@ -37,13 +37,14 @@ from .phosphate_complexes import (
 )
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 from .struvite import struvite_saturation_index
-from .struvite_mixture import StruviteMixtureSpeciation, struvite_mixture_speciation
+from .struvite_mixture import ChargeBalancedStruviteMixture, StruviteMixtureSpeciation, solve_charge_balanced_struvite_mixture, struvite_mixture_speciation
 from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
     "DeliveryError",
     "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
+    "ChargeBalancedStruviteMixture",
     "CalciumMagnesiumPhosphateSpeciation",
     "GypsumEquilibrium",
     "DurationMinutes",
@@ -86,6 +87,7 @@ __all__ = [
     "solve_weights",
     "solve_calcite_co2_equilibrium",
     "solve_gypsum_equilibrium",
+    "solve_charge_balanced_struvite_mixture",
     "struvite_saturation_index",
     "struvite_mixture_speciation",
     "validate_delivery_request",

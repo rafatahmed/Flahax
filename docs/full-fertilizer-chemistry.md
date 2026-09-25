@@ -77,3 +77,5 @@ For ammonium-bearing mixtures, FlahaX now evaluates the explicit 25 °C phase re
 The first nitrogen extension now solves `NH4+ = NH3 + H+` with PHREEQC `log K = -9.252` at 25 °C. It accepts total ammoniacal nitrogen, pH, and ionic strength, returns activity-corrected NH₄⁺ and neutral NH₃, and preserves their molal mass balance.
 
 The checked-in struvite probe is now coupled at fixed pH and ionic strength: magnesium/phosphate and ammonium/ammonia mass balances, sodium association, and the struvite activity product are solved together. The reduced Davies result is `SI = -0.306`, compared with PHREEQC's `-0.30`. It still does not solve pH, ionic strength, solid amount, calcium competition, or sulfate/carbonate interference.
+
+The next reduced-system step now iterates pH and ionic strength to charge closure for stated Mg, total NHx, total phosphate, Na, and Cl inputs. It is deliberately not a general water model: calcium, sulfate, carbonate, other counter-ions, and solid precipitation remain excluded.

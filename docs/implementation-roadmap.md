@@ -96,7 +96,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 | P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
-| P3.7 | Fertilizer acid/base species coverage `[-]` | PHREEQC-sourced phosphate and ammonium acid/base families plus fixed-pH Mg/NH4/P/Na struvite coupling added; pH/ionic-strength solve and broader nitrogen coverage remain |
+| P3.7 | Fertilizer acid/base species coverage `[-]` | PHREEQC-sourced phosphate and ammonium families, fixed-pH Mg/NH4/P/Na coupling, and a reduced charge-balanced pH/I struvite solve added; calcium/sulfate/carbonate competition remains |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** extend the struvite fixture from fixed pH/ionic strength to a charge-balanced pH and ionic-strength solve, then add calcium/sulfate competition as separately specified fixtures. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** add calcium/sulfate competition to separately specified PHREEQC fixtures, then extend the charge-balanced solver only after those reference outputs are checked in. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
