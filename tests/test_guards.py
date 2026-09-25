@@ -44,6 +44,22 @@ class CompositionGuards(unittest.TestCase):
         self.assertTrue(result["feasible"])
         self.assertLess(result["maxAbsDeltaPct"], 1)
 
+    def test_an_overshoot_does_not_admit_chloride_or_borax(self):
+        formula = next(
+            item for item in load_library()["formulas"] if item["name"] == "Pepper (Howard Resh)"
+        )
+        result = recommend(load_library()["salts"], formula["targets"], {"Ca": 20})
+        names = {salt["name"] for salt in result["salts"]}
+        self.assertNotIn("Potassium Chloride", names)
+        self.assertNotIn("Ammonium Chloride", names)
+        self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
+        self.assertIn("Sodium Molybdate (Dihydrate)", names)
+        self.assertFalse(result["feasible"])
+        self.assertAlmostEqual(result["maxAbsDeltaPct"], 37.4264, places=3)
+        self.assertFalse(any("Potassium Chloride" in note for note in result["warnings"]))
+        sulfur = next(row for row in result["rows"] if row["symbol"] == "S")
+        self.assertLess(sulfur["deltaPct"], -30)
+
     def test_a_restricted_ion_is_admitted_only_as_the_sole_source(self):
         salts = [
             salt for salt in load_library()["salts"]

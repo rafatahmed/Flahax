@@ -327,20 +327,26 @@ def _eligible(library: list[dict], targets: dict, allow_ions: frozenset[str], al
     return ready, excluded
 
 
-def _missed(rows: list[dict], targets: dict) -> list[str]:
-    deltas = _delta_map(rows)
+def _short(rows: list[dict], targets: dict) -> list[str]:
+    """Requested ions that finished more than the tolerance below target.
+
+    An overshoot is not a reason to add another salt. A chloride or sodium
+    salt can only add its ions. It cannot pull an element back down.
+    """
+    final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
+    floor = 1.0 - TOLERANCE_PCT / 100.0
     return [
         symbol for symbol, ppm in targets.items()
-        if ppm > 0 and deltas.get(symbol, 0.0) > TOLERANCE_PCT
+        if ppm > 0 and final.get(symbol, 0.0) < ppm * floor
     ]
 
 
-def _recover(library, ready, excluded, targets, missed):
-    """Admit held-back salts only for requested ions the first fit missed."""
+def _recover(library, ready, excluded, targets, short):
+    """Admit a held-back salt only when it is the only source of a short ion."""
     warnings = []
     by_id = {salt.get("id"): salt for salt in library}
     ready_ids = {salt.get("id") for salt in ready}
-    for symbol in missed:
+    for symbol in short:
         holders = []
         for item in excluded:
             salt = by_id.get(item["id"])
@@ -356,14 +362,14 @@ def _recover(library, ready, excluded, targets, missed):
             if not supplied:
                 warnings.append(f"No salt in this library supplies {symbol}.")
             continue
+        already = any(_supplies(item, symbol) for item in ready)
         for salt in holders:
             carried = sorted(RESTRICTED_IONS.intersection(salt["elements"]) - set(targets))
             extra = f" It also carries {', '.join(carried)}." if carried else ""
-            already = any(_supplies(item, symbol) for item in ready)
             if already:
                 warnings.append(
-                    f"{salt['name']} is included because {symbol} stayed outside "
-                    f"{TOLERANCE_PCT:g}% without it.{extra}"
+                    f"{salt['name']} is included because {symbol} stayed more than "
+                    f"{TOLERANCE_PCT:g}% short without it.{extra}"
                 )
             else:
                 warnings.append(
@@ -413,13 +419,18 @@ def recommend(
         raise InputError("no salt remains after the assay and ion checks")
     warnings: list[str] = []
     solved = _simplify(salts, targets, water, _fit(salts, targets, water, ridge), ridge)
-    missed = _missed(solved["rows"], targets)
-    if missed:
-        salts, excluded, recovered = _recover(library, salts, excluded, targets, missed)
+    short = _short(solved["rows"], targets)
+    if short:
+        salts, excluded, recovered = _recover(library, salts, excluded, targets, short)
         warnings.extend(recovered)
         if recovered:
             solved = _simplify(salts, targets, water, _fit(salts, targets, water, ridge), ridge)
     solved["salts"] = _chosen(salts, solved["grams"])
+    chosen_names = {item["name"] for item in solved["salts"]}
+    warnings = [
+        note for note in warnings
+        if " is included" not in note or note.split(" is included", 1)[0] in chosen_names
+    ]
     solved["saltIds"] = [item["id"] for item in solved["salts"]]
     by_id = {salt.get("id"): salt for salt in salts}
     for item in solved["salts"]:
