@@ -49,7 +49,7 @@ The records deliberately preserve their own source/revision metadata. A plan can
 ## Contract rules
 
 - Water analysis requires ion values and temperature. pH and alkalinity may be recorded when available; the future pH planner will require alkalinity before it can calculate a dose.
-- Product assays are elemental percentages, not ppm. They reject total `N`, unknown ions, values outside 0–100%, and sums above 100.5%.
+- Product assays are elemental percentages, not ppm. They reject total `N`, unknown ions, values outside 0–100%, and sums above 100.5%. Acid/base records may also carry sourced `densityKgPerL` and `normalityMeqPerL`; P3 requires both.
 - Compatibility rules currently represent sourced hard `separate` constraints across two or more product IDs.
 - Solubility limits require a product ID, maximum g/L, and minimum/maximum temperature range.
 - Titration curves require at least two strictly increasing acid/base demand points in meq/L. They are measurements for one water/reagent pair, not a generic pH formula.

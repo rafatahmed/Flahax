@@ -149,6 +149,12 @@ def validate_product_assay(payload: Any) -> dict:
         )
         if result["densityKgPerL"] == 0:
             _error("out_of_range", "productAssay.densityKgPerL must be greater than 0")
+    if "normalityMeqPerL" in source:
+        result["normalityMeqPerL"] = _number(
+            source["normalityMeqPerL"], "productAssay.normalityMeqPerL", minimum=0.0
+        )
+        if result["normalityMeqPerL"] == 0:
+            _error("out_of_range", "productAssay.normalityMeqPerL must be greater than 0")
     return result
 
 
@@ -205,6 +211,8 @@ def validate_titration_curve(payload: Any) -> dict:
         _error("invalid_value", "titrationCurve.points must contain at least two points")
     clean_points = []
     previous_demand = -1.0
+    direction: int | None = None
+    previous_p_h: float | None = None
     for index, point in enumerate(points):
         item = _map(point, f"titrationCurve.points[{index}]")
         demand = _number(item.get("demandMeqPerL"), f"titrationCurve.points[{index}].demandMeqPerL", minimum=0.0)
@@ -213,7 +221,16 @@ def validate_titration_curve(payload: Any) -> dict:
             _error("out_of_range", f"titrationCurve.points[{index}].pH cannot exceed 14")
         if demand <= previous_demand:
             _error("invalid_value", "titrationCurve demandMeqPerL values must strictly increase")
+        if previous_p_h is not None:
+            delta = p_h - previous_p_h
+            if delta == 0:
+                _error("invalid_value", "titrationCurve pH values must change between points")
+            point_direction = 1 if delta > 0 else -1
+            if direction is not None and point_direction != direction:
+                _error("invalid_value", "titrationCurve pH values must be strictly monotonic")
+            direction = point_direction
         previous_demand = demand
+        previous_p_h = p_h
         clean_points.append({"demandMeqPerL": demand, "pH": p_h})
     return {
         **record,

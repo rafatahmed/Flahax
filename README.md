@@ -97,6 +97,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/delivery-contracts.md](docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
 | [docs/delivery-quantities.md](docs/delivery-quantities.md) | P1 unit-safe batch adaptation and reagent nutrient contributions |
 | [docs/stock-planning.md](docs/stock-planning.md) | P2 conservative stock-tank planning and bench-validation protocol |
+| [docs/ph-planning.md](docs/ph-planning.md) | P3 titration-bounded pH planning and mandatory verification |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:

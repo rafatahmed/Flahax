@@ -82,17 +82,17 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Decision gate G2:** confirm whether the product catalogue is narrow enough for maintained rule tables. If not, defer arbitrary-product stock planning rather than guess compatibility.
 
-### P3 — pH and alkalinity planning `[ ]`
+### P3 — pH and alkalinity planning `[-]`
 
 **Objective:** calculate a bounded initial reagent dose from measured buffering, then require measurement-based verification.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P3.1 | Alkalinity normalization (`mg/L as CaCO3` to `meq/L`) | Unit and known-value tests using 50.043 mg/meq |
-| P3.2 | Titration-curve record and interpolation | Monotonicity, endpoint, extrapolation-rejection tests |
-| P3.3 | Acid/base dose plan | Dimensional checks; maximum-dose and endpoint guardrails |
-| P3.4 | Reagent addition feedback into nutrient balance | Plan cannot label itself accepted if reagent shifts nutrients outside tolerance |
-| P3.5 | Post-mix verification protocol | Minimum mix time, pH sensor freshness/calibration, and operator acknowledgement requirements |
+| P3.1 | Alkalinity normalization (`mg/L as CaCO3` to `meq/L`) `[x]` | Unit-tested conversion using 50.043 mg/meq; P3 dose remains based on a water-specific titration curve rather than a generic residual-alkalinity assumption. |
+| P3.2 | Titration-curve record and interpolation `[x]` | Monotonicity, endpoint, matched-record, and extrapolation-rejection tests |
+| P3.3 | Acid/base dose plan `[x]` | Dimensional dose calculation; density, normality, and endpoint guardrails |
+| P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
+| P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
@@ -189,4 +189,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** collect and approve P2.5 bench-validation records for the intended product catalogue. In parallel, P3 can begin as a planning-only alkalinity/titration model; it must not create an automatic pH-control loop.
+**Current next action:** collect P2.5 stock evidence and obtain a first approved water/reagent/titration record set for P3.1. P4 may begin independently as a calibration-record and runtime-planning module; it must not perform hardware I/O.
