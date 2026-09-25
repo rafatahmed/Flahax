@@ -37,6 +37,7 @@ from .phosphate_complexes import (
 )
 from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
 from .struvite import struvite_saturation_index
+from .struvite_mixture import StruviteMixtureSpeciation, struvite_mixture_speciation
 from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
@@ -58,6 +59,7 @@ __all__ = [
     "PhPlan",
     "OrthophosphateSpeciation",
     "StockPlan",
+    "StruviteMixtureSpeciation",
     "StockSaltDose",
     "StockTank",
     "StockTankPlan",
@@ -85,6 +87,7 @@ __all__ = [
     "solve_calcite_co2_equilibrium",
     "solve_gypsum_equilibrium",
     "struvite_saturation_index",
+    "struvite_mixture_speciation",
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"
