@@ -44,6 +44,9 @@ from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, 
 from .struvite import struvite_saturation_index
 from .struvite_mixture import ChargeBalancedStruviteMixture, StruviteMixtureSpeciation, solve_charge_balanced_struvite_mixture, struvite_mixture_speciation
 from .thermodynamics import MineralPhase, phase_saturation_index
+from .trace_equilibrium import ChMicroProductDose, ChMicroTotals, TraceEquilibrium, solve_ch_micro_equilibrium
+from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
+from .mixed_equilibrium import MixedFertilizerEquilibrium, solve_mixed_fertilizer_equilibrium
 
 __all__ = [
     "DeliveryError",
@@ -52,6 +55,8 @@ __all__ = [
     "FertilizerTotals",
     "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
+    "ChMicroProductDose",
+    "ChMicroTotals",
     "CalciumSulfateStruviteCompetition",
     "CarbonateCompetition",
     "ChargeBalancedStruviteMixture",
@@ -66,8 +71,10 @@ __all__ = [
     "MassGrams",
     "MineralPhase",
     "MilliEquivalentsPerLitre",
+    "MixedFertilizerEquilibrium",
     "MilligramsPerLitre",
     "PhPlan",
+    "ProductChemistry",
     "NitricAcidTargetPlan",
     "PumpCommand",
     "PhaseAllocation",
@@ -78,13 +85,16 @@ __all__ = [
     "StockTank",
     "StockTankPlan",
     "TemperatureCelsius",
+    "TraceEquilibrium",
     "VolumeLitres",
     "alkalinity_meq_per_litre",
+    "assert_catalogue_coverage",
     "ammonia_speciation",
     "calcite_co2_reference_values",
     "compose_delivery_plan",
     "calcium_sulfate_struvite_competition",
     "carbonate_competition",
+    "chemistry_for_product",
     "calcium_magnesium_phosphate_speciation",
     "hydroxyapatite_hpo4_activity_at_equilibrium",
     "davies_gamma",
@@ -107,6 +117,8 @@ __all__ = [
     "solve_weights",
     "solve_calcite_co2_equilibrium",
     "solve_fertilizer_equilibrium",
+    "solve_mixed_fertilizer_equilibrium",
+    "solve_ch_micro_equilibrium",
     "solve_gypsum_equilibrium",
     "solve_charge_balanced_struvite_mixture",
     "struvite_saturation_index",

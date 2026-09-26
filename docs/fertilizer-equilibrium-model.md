@@ -64,15 +64,36 @@ HNO3 to reach pH 6.0. FlahaX matches its acid amount within `0.0005 mol/kgw`;
 the broader `0.05` fixture tolerance applies to the intentionally reduced
 Davies-versus-ion-association activity comparison.
 
-## Explicit exclusions
+## CH-micro trace blend
 
-The formula library includes EDTA, DTPA, EDDHA, citrate, and an unspecified
-micro blend. Their ligand totals, protonation reactions, metal-ligand stability
-constants, and product assay identities are not represented by `phreeqc.dat`
-or by the current product records. The model therefore must not convert those
-products into free metal ions or certify their precipitation behavior. Adding
-them requires a selected chelate thermodynamic dataset and versioned product
-ligand records, followed by PHREEQC fixtures for each supported chelate family.
+The checked-in `CH - micro` product is now a defined chemical record, based on
+the project-owner's declared composition rather than an inferred trade name:
+
+```text
+Fe 7.00%  as Fe(III)-EDTA     Mn 2.00%  as Mn-EDTA
+Zn 0.40%  as Zn-EDTA          Cu 0.11%  as Cu-EDTA
+B  1.30%  as borax            Mo 0.05%  as sodium molybdate
+```
+
+`ChMicroProductDose(g_per_kg_water).totals()` converts those elemental assays
+to analytical molal totals. One mole of EDTA per mole of Fe, Mn, Zn, or Cu is
+therefore included directly; the model never substitutes free metals for those
+chelates. `solve_ch_micro_equilibrium` solves EDTA mass balance with Fe(III),
+Mn, Zn, Cu, Ca, and Mg competition. It also solves boric-acid/borate and
+molybdate/HMoO4-/H2MoO4 acid-base distributions. As with the macro model, it
+requires a stated pH, 25 C, and Davies-domain ionic strength (`I <= 0.1`).
+
+The EDTA and molybdate constants are from PHREEQC 3.8.6 `minteq.v4.dat`; the
+product component identities are a project-owned product declaration recorded
+on 2026-09-26. Fe is explicitly fixed as Fe(III); this is a redox boundary,
+not an inferred oxidation calculation.
+
+## Remaining product data exclusions
+
+The formula library also includes Fe-DTPA, Fe-EDDHA, citrate, and free-metal
+salts. Their product-specific ligand records and complete mixed-system PHREEQC
+fixtures remain separate requirements. They must not be silently converted to
+free ions or certified for precipitation behavior before that evidence exists.
 
 ## Sources
 
