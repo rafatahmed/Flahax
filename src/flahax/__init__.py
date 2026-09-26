@@ -46,6 +46,7 @@ from .struvite_mixture import ChargeBalancedStruviteMixture, StruviteMixtureSpec
 from .thermodynamics import MineralPhase, phase_saturation_index
 from .trace_equilibrium import ChMicroProductDose, ChMicroTotals, TraceEquilibrium, solve_ch_micro_equilibrium
 from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
+from .product_conversion import ProductAnalyticalTotals, convert_catalogue_product_dose, convert_product_dose
 from .mixed_equilibrium import MixedFertilizerEquilibrium, solve_mixed_fertilizer_equilibrium
 
 __all__ = [
@@ -75,6 +76,7 @@ __all__ = [
     "MilligramsPerLitre",
     "PhPlan",
     "ProductChemistry",
+    "ProductAnalyticalTotals",
     "NitricAcidTargetPlan",
     "PumpCommand",
     "PhaseAllocation",
@@ -95,6 +97,8 @@ __all__ = [
     "calcium_sulfate_struvite_competition",
     "carbonate_competition",
     "chemistry_for_product",
+    "convert_catalogue_product_dose",
+    "convert_product_dose",
     "calcium_magnesium_phosphate_speciation",
     "hydroxyapatite_hpo4_activity_at_equilibrium",
     "davies_gamma",
