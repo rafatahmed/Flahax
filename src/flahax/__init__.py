@@ -4,6 +4,7 @@ from .composition import InputError
 from .competition import CalciumSulfateStruviteCompetition, CarbonateCompetition, calcium_sulfate_struvite_competition, carbonate_competition
 from .ammonia import AmmoniaSpeciation, ammonia_speciation
 from .delivery_contracts import DeliveryError, make_audit_record, validate_delivery_request
+from .fertilizer_equilibrium import FertilizerEquilibrium, FertilizerTotals, NitricAcidTargetPlan, plan_nitric_acid_target, solve_fertilizer_equilibrium
 from .delivery_plan import DeliveryPlan, compose_delivery_plan, delivery_report, transition_plan
 from .delivery_quantities import (
     DurationMinutes,
@@ -47,6 +48,8 @@ from .thermodynamics import MineralPhase, phase_saturation_index
 __all__ = [
     "DeliveryError",
     "DeliveryPlan",
+    "FertilizerEquilibrium",
+    "FertilizerTotals",
     "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
     "CalciumSulfateStruviteCompetition",
@@ -65,6 +68,7 @@ __all__ = [
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
     "PhPlan",
+    "NitricAcidTargetPlan",
     "PumpCommand",
     "PhaseAllocation",
     "OrthophosphateSpeciation",
@@ -93,6 +97,7 @@ __all__ = [
     "load_library",
     "make_audit_record",
     "plan_stocks",
+    "plan_nitric_acid_target",
     "plan_ph",
     "plan_pump_command",
     "phase_allocation",
@@ -101,6 +106,7 @@ __all__ = [
     "recommend",
     "solve_weights",
     "solve_calcite_co2_equilibrium",
+    "solve_fertilizer_equilibrium",
     "solve_gypsum_equilibrium",
     "solve_charge_balanced_struvite_mixture",
     "struvite_saturation_index",

@@ -13,11 +13,16 @@
 
 ## Mathematical evidence still required
 
-The target-pH/reagent reference-equivalence fixture is deliberately not claimed complete. It requires the G2/G3 choices below so that PHREEQC input and FlahaX equations share a stated database version, activity-model validity range, gas boundary, and reagent stoichiometry. Until then, pH planning is bounded by a measured titration curve and requires post-mix verification.
+The macro-ion target-pH/reagent fixture is now checked in: PHREEQC 3.8.6
+`phreeqc.dat`, closed analytical inorganic carbon, 25 °C, and nitric acid.
+The dependency-free Davies solver matches its acid amount within `0.0005
+mol/kgw`; the broader activity/speciation comparison uses the declared `0.05`
+tolerance. Chelated micronutrients and unspecified micro blends remain outside
+this evidence because their ligand data are not present.
 
 ## Required external gates before operational use
 
-- G2/G3: select and approve the thermodynamic database, activity model, gas boundary, and allowed reagent stoichiometry for the operating ionic-strength range.
+- G2/G3: macro-ion reference/model choices are documented; select product-specific ligand data and a compatible thermodynamic dataset before approving chelated/micro products.
 - G6: independent reviewer signs off on numerical evidence and required bench/site validation.
 - P7: define a separate, read-only FlahaFAST interface contract; it is not implemented in the package.
 

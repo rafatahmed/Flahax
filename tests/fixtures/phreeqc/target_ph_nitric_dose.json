@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "reference": {
+    "software": "PHREEQC 3.8.6-17100",
+    "database": "phreeqc.dat",
+    "activityModel": "PHREEQC ion-association aqueous model",
+    "sourceUrl": "https://www.usgs.gov/software/phreeqc-version-3",
+    "sourceDescription": "FlahaX target-pH reference generated with the official USGS PHREEQC 3.8.6-17100 Windows batch release and phreeqc.dat at 25 C. Fix_H+ adds HNO3 to reach pH 6.0 in a complete stated Ca/Mg/P/C/S/K/Na/NO3/Cl solution."
+  },
+  "phreeqcInput": "TITLE FlahaX target-pH nitric-acid reference\nPHASES\nFix_H+\n    H+ = H+\n    -log_k 0\nSOLUTION 1\n    temp 25\n    pH 7.4\n    units mmol/kgw\n    Ca 1\n    Mg 1\n    N(5) 3 as NO3\n    P 1 as H2PO4\n    S(6) 1 as SO4\n    C 2.4 as HCO3\n    K 2\n    Na 3\n    Cl 7\nEQUILIBRIUM_PHASES 1\n    Fix_H+ -6.0 HNO3 1\nSELECTED_OUTPUT\n    -file target_ph_nitric_dose.sel\n    -reset false\n    -pH true\n    -ionic_strength true\n    -totals Ca Mg P C S(6) N(5) K Na Cl\n    -molalities Ca+2 Mg+2 PO4-3 HPO4-2 H2PO4- CO3-2 HCO3- SO4-2 K+ Na+ NO3- Cl-\n    -activities Ca+2 Mg+2 PO4-3 CO3-2 SO4-2 H+\n    -si Calcite Gypsum Hydroxyapatite\n    -equilibrium_phases Fix_H+\nEND\n",
+  "inputSha256": "2a217f9da0cc6e012aece35f6abaabd136d098ec933590b5547e561455a6c774",
+  "expected": {
+    "absoluteTolerance": 0.05,
+    "values": {
+      "ph": 6.0,
+      "ionicStrength": 0.0148123,
+      "nitricAcidMolal": 0.0020866,
+      "freeCalciumMolal": 0.00091821,
+      "freeMagnesiumMolal": 0.00088451,
+      "freePhosphateMolal": 0.000000000064889,
+      "hpo4Molal": 0.000076465,
+      "h2po4Molal": 0.00086018,
+      "freeCarbonateMolal": 0.000000053255,
+      "bicarbonateMolal": 0.00079811,
+      "freeSulfateMolal": 0.00083204,
+      "si.Calcite": -2.2394,
+      "si.Gypsum": -1.9469,
+      "si.Hydroxyapatite": -1.7573
+    }
+  }
+}

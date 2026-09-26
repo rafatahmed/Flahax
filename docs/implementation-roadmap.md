@@ -76,13 +76,13 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.2 | Per-product, temperature-bounded solubility-limit records `[x]` | Missing source/range fails; boundary and safety-margin tests |
 | P2.3 | Tank-assignment constraint solver `[x]` | Deterministic assignment or explicit infeasibility explanation |
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
-| P2.5 | Reference-model verification `[-]` | Dependency-free PHREEQC fixture harness, carbonate/calcium canary, and gypsum/anhydrite Example 2 fixture checked in; mixed nutrient-stock fixture family remains |
-| P2.6 | Activity/speciation saturation model `[-]` | Carbonate/calcium and pure-water calcium/sulfate Davies kernels pass PHREEQC fixtures; phosphate/magnesium and mixed-fertilizer phases remain |
-| P2.7 | Full fertilizer-chemistry data model `[-]` | Ca/Mg/phosphate PHREEQC 3.8.9 fixture, fixed-pH complexation kernel, and hydroxyapatite `SI=0` activity boundary added; precipitation extent, full activity model, and broader mixtures remain |
+| P2.5 | Reference-model verification `[-]` | PHREEQC 3.8.6 `phreeqc.dat` target-pH/mixed-macronutrient fixture is checked in; chelated-micronutrient fixture families remain |
+| P2.6 | Activity/speciation saturation model `[x]` | Bounded Davies macronutrient solver reports mass-balanced species and named phase indices at 25 °C through `I <= 0.1 mol/kgw` |
+| P2.7 | Full fertilizer-chemistry data model `[-]` | Macro-ion precipitation allocation for calcite/gypsum/hydroxyapatite/struvite is implemented; product-specific chelate and unspecified-blend ligand data remain |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
-**Decision gate G2:** select a published thermodynamic database and an activity model appropriate to the intended ionic-strength range. The current rule table is not the long-term scientific authority.
+**Decision gate G2:** for the defined macronutrient scope, PHREEQC 3.8.6 `phreeqc.dat` is the reference and Davies is the dependency-free runtime approximation through `I <= 0.1 mol/kgw`. Chelated/micro products require a separately selected ligand dataset before they enter this model.
 
 ### P3 — pH and alkalinity equilibrium model `[-]`
 
@@ -95,12 +95,12 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.3 | Acid/base dose plan `[x]` | Dimensional dose calculation; density, normality, and endpoint guardrails |
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
-| P3.6 | Aqueous-equilibrium target-pH solver `[-]` | First internal open-CO₂ carbonate/calcium pH kernel passes the PHREEQC canary fixture; reagent mole-balance and fertilizer species remain |
-| P3.7 | Fertilizer acid/base species coverage `[-]` | Carbonate competition fixture plus calcite/gypsum/struvite activity indices added; carbonate complexation and precipitation extent remain |
+| P3.6 | Aqueous-equilibrium target-pH solver `[x]` | Closed-carbon, 25 °C nitric-acid solver passes its stated PHREEQC target-pH/reagent fixture tolerance |
+| P3.7 | Fertilizer acid/base species coverage `[-]` | Macro-ion carbonate/phosphate/ammonium coverage and phase allocation are implemented; chelated/micro ligand families remain |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
-**Decision gate G3:** choose the gas boundary (closed total inorganic carbon or specified CO2 partial pressure), activity model, thermodynamic database, and allowed reagent stoichiometry. These are mathematical model inputs, not laboratory work.
+**Decision gate G3:** for the defined target-pH scope, the gas boundary is closed analytical inorganic carbon and the permitted strong-acid reagent is HNO3. Open-CO2, alternate acids/bases, and chelated-product reactions require their own source-versioned extensions.
 
 ### P4 — Pump calibration and dosing planner `[x]`
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** resolve G2/G3 as an explicit computational-model profile (database version, activity validity range, gas boundary, and reagent stoichiometry), then add the complete target-pH/reagent PHREEQC fixture and comparison. This is source-and-fixture work; it does not require a physical laboratory experiment.
+**Current next action:** add source-versioned chelate and blend-ligand product records, select a thermodynamic dataset that contains those ligands, then add their PHREEQC fixtures. Until then, those products must remain outside automatic equilibrium approval.
