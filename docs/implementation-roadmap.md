@@ -102,44 +102,44 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Decision gate G3:** choose the gas boundary (closed total inorganic carbon or specified CO2 partial pressure), activity model, thermodynamic database, and allowed reagent stoichiometry. These are mathematical model inputs, not laboratory work.
 
-### P4 — Pump calibration and dosing planner `[ ]`
+### P4 — Pump calibration and dosing planner `[x]`
 
 **Objective:** convert a validated stock volume into bounded, auditable pump commands without controlling hardware.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P4.1 | Calibration record with date, stock density, test temperature, mean flow, variation, and valid range | Invalid/stale calibration rejection tests |
-| P4.2 | Volume-to-runtime calculation | Hand-calculated fixtures; `t = V / q` verified |
-| P4.3 | First-order uncertainty calculation | `u(V)^2 = t^2u(q)^2 + q^2u(t)^2` fixtures |
-| P4.4 | Command safety envelope | Reject zero/negative flow, dry-tank, excessive dose, uncalibrated channel, and out-of-range runtime |
-| P4.5 | Hardware-neutral command and verification interfaces | Test doubles demonstrate no device I/O occurs in package code |
+| P4.1 | Calibration record with date, stock density, test temperature, mean flow, variation, and valid range `[x]` | Required fields, invalid-range checks, non-zero density, and a 30-day default calibration-age policy are tested |
+| P4.2 | Volume-to-runtime calculation `[x]` | Hand-calculated `t = V / q` fixture verified |
+| P4.3 | First-order uncertainty calculation `[x]` | Flow/runtime uncertainty equation fixture verified |
+| P4.4 | Command safety envelope `[x]` | Rejects dry tank, invalid flow, zero density, stale calibration, and out-of-range volume |
+| P4.5 | Hardware-neutral command and verification interfaces `[x]` | Planning value only; no device I/O in package code |
 
 **Exit condition:** a command includes requested volume, runtime, calibration provenance, uncertainty, and conditions that prohibit execution.
 
-### P5 — Composed delivery plan `[ ]`
+### P5 — Composed delivery plan `[x]`
 
 **Objective:** combine accepted subsystems into one atomic, reviewable plan.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P5.1 | `DeliveryPlan` aggregate with recipe, stocks, pH plan, commands, warnings, and audit record | Schema snapshot tests |
-| P5.2 | Cross-stage constraint evaluation | Acid addition, stock constraints, tank capacity, and pump bounds evaluated together |
-| P5.3 | Approval state machine | `draft -> validated -> operator-approved -> executed/verified`; no implicit approval |
-| P5.4 | Human-readable report | Lists assumptions, inputs, equations, warnings, rejected options, and required measurements |
+| P5.1 | `DeliveryPlan` aggregate with recipe, stocks, pH plan, commands, warnings, and audit record `[x]` | Aggregate rejects partial validation and requires an audit model version; complete lifecycle fixture is checked in |
+| P5.2 | Cross-stage constraint evaluation `[x]` | Recipe/stock identity and complete pH/pump composition fixture are tested |
+| P5.3 | Approval state machine `[x]` | Explicit state transitions; no implicit approval |
+| P5.4 | Human-readable report `[x]` | State, volume, stock, pump, pH, audit, and warning report implemented |
 
 **Exit condition:** a complete plan is either `validated` with all evidence or `blocked` with actionable reasons. Partial values must never look executable.
 
-### P6 — Simulation, verification, and release evidence `[ ]`
+### P6 — Simulation, verification, and release evidence `[-]`
 
 **Objective:** prove the planner before any external integration.
 
 | ID | Deliverable | Acceptance evidence |
 |---|---|---|
-| P6.1 | Golden test fixtures | Pepper plus at least one high-alkalinity and one incompatibility case |
-| P6.2 | Property tests | Non-negative mass/volume, unit consistency, constraint preservation, deterministic plans |
-| P6.3 | Sensitivity tests | Water alkalinity, temperature, assay, injector ratio, and pump-rate perturbations produce bounded/visible effects |
-| P6.4 | Reference-equivalence evidence set | Golden activities, species, saturation indices, pH/reagent amount, and numerical-tolerance comparison against the cited solver |
-| P6.5 | Release checklist | Documentation, API stability, regression suite, safety review, version/citation update |
+| P6.1 | Golden test fixtures `[x]` | Pepper plus high-alkalinity and incompatible-calcium/phosphate cases pass dependency-free |
+| P6.2 | Property tests `[x]` | Deterministic stock/volume conservation invariant passes |
+| P6.3 | Sensitivity tests `[x]` | Measured-curve demand, assay, temperature validity, injector ratio, and pump-rate perturbations produce bounded or explicitly rejected effects |
+| P6.4 | Reference-equivalence evidence set `[-]` | Activities, species, and saturation-index fixture families are checked in; the complete target-pH/reagent PHREEQC equivalence fixture depends on G2/G3 inputs |
+| P6.5 | Release checklist `[x]` | In-repo release evidence and external-gate checklist are checked in; independent review remains G6 |
 
 **Decision gate G6:** an independent reviewer signs off on test and bench evidence before the planner is advertised for operational use.
 
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** derive calcite phase-mass allocation internally against the checked-in equilibrium fixture, then add additional named phases one fixture at a time. Full fertilizer chemistry advances family-by-family only with sourced thermodynamic data and fixture equivalence.
+**Current next action:** resolve G2/G3 as an explicit computational-model profile (database version, activity validity range, gas boundary, and reagent stoichiometry), then add the complete target-pH/reagent PHREEQC fixture and comparison. This is source-and-fixture work; it does not require a physical laboratory experiment.

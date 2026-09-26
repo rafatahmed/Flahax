@@ -101,6 +101,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/reference-fixtures.md](docs/reference-fixtures.md) | Dependency-free PHREEQC golden-fixture verification baseline |
 | [docs/equilibrium-kernel.md](docs/equilibrium-kernel.md) | First internal activity/speciation kernel verified against PHREEQC |
 | [docs/full-fertilizer-chemistry.md](docs/full-fertilizer-chemistry.md) | Major-ion chemistry coverage and fixture-first expansion plan |
+| [docs/release-evidence.md](docs/release-evidence.md) | Automated delivery-planner evidence, explicit scientific gates, and release boundary |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
 
 From a checkout, the tests are:

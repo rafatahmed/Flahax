@@ -4,6 +4,7 @@ from .composition import InputError
 from .competition import CalciumSulfateStruviteCompetition, CarbonateCompetition, calcium_sulfate_struvite_competition, carbonate_competition
 from .ammonia import AmmoniaSpeciation, ammonia_speciation
 from .delivery_contracts import DeliveryError, make_audit_record, validate_delivery_request
+from .delivery_plan import DeliveryPlan, compose_delivery_plan, delivery_report, transition_plan
 from .delivery_quantities import (
     DurationMinutes,
     FinalSolutionRecipe,
@@ -30,6 +31,7 @@ from .equilibrium import (
     solve_gypsum_equilibrium,
 )
 from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
+from .pump_planning import PumpCommand, plan_pump_command
 from .phase_allocation import PhaseAllocation, phase_allocation
 from .phosphate import OrthophosphateSpeciation, orthophosphate_speciation
 from .phosphate_complexes import (
@@ -44,6 +46,7 @@ from .thermodynamics import MineralPhase, phase_saturation_index
 
 __all__ = [
     "DeliveryError",
+    "DeliveryPlan",
     "AmmoniaSpeciation",
     "CalciteCo2Equilibrium",
     "CalciumSulfateStruviteCompetition",
@@ -62,6 +65,7 @@ __all__ = [
     "MilliEquivalentsPerLitre",
     "MilligramsPerLitre",
     "PhPlan",
+    "PumpCommand",
     "PhaseAllocation",
     "OrthophosphateSpeciation",
     "StockPlan",
@@ -74,11 +78,13 @@ __all__ = [
     "alkalinity_meq_per_litre",
     "ammonia_speciation",
     "calcite_co2_reference_values",
+    "compose_delivery_plan",
     "calcium_sulfate_struvite_competition",
     "carbonate_competition",
     "calcium_magnesium_phosphate_speciation",
     "hydroxyapatite_hpo4_activity_at_equilibrium",
     "davies_gamma",
+    "delivery_report",
     "elemental_contribution",
     "final_solution_recipe",
     "rescore_with_reagent",
@@ -88,6 +94,7 @@ __all__ = [
     "make_audit_record",
     "plan_stocks",
     "plan_ph",
+    "plan_pump_command",
     "phase_allocation",
     "orthophosphate_speciation",
     "phase_saturation_index",
@@ -98,6 +105,7 @@ __all__ = [
     "solve_charge_balanced_struvite_mixture",
     "struvite_saturation_index",
     "struvite_mixture_speciation",
+    "transition_plan",
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"

@@ -255,9 +255,18 @@ def validate_pump_calibration(payload: Any) -> dict:
     maximum_volume = _number(source.get("validMaxLitres"), "pumpCalibration.validMaxLitres", minimum=0.0)
     if maximum_volume < minimum_volume:
         _error("out_of_range", "pumpCalibration.validMaxLitres is below validMinLitres")
+    density = _number(
+        source.get("stockDensityKgPerL"),
+        "pumpCalibration.stockDensityKgPerL",
+        minimum=0.0,
+    )
+    if density == 0:
+        _error("out_of_range", "pumpCalibration.stockDensityKgPerL must be greater than 0")
     return {
         **record,
         "channelId": _text(source.get("channelId"), "pumpCalibration.channelId"),
+        "stockDensityKgPerL": density,
+        "testTemperatureC": _number(source.get("testTemperatureC"), "pumpCalibration.testTemperatureC"),
         "flowLitresPerMinute": flow,
         "standardDeviationLitresPerMinute": deviation,
         "validMinLitres": minimum_volume,

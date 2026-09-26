@@ -68,6 +68,8 @@ def request():
             record(
                 "pump-a-calibration",
                 channelId="A",
+                stockDensityKgPerL=1.1,
+                testTemperatureC=22,
                 flowLitresPerMinute=0.12,
                 standardDeviationLitresPerMinute=0.002,
                 validMinLitres=0.02,
