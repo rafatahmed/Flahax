@@ -26,7 +26,11 @@ class MixedFertilizerEquilibrium:
             values.update(self.trace.species)
         return values
 
-_CHARGES = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "EDTA-4": -4, "B(OH)4-": -1, "MoO4-2": -2, "HMoO4-": -1, "Fe(III)-EDTA": -1, "Mn-EDTA": -2, "Zn-EDTA": -2, "Cu-EDTA": -2, "Ca-EDTA": -2, "Mg-EDTA": -2}
+_CHARGES = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "EDTA-4": -4, "DTPA-free": -5, "o,o-EDDHA-free": -4, "citrate-free": -3, "B(OH)4-": -1, "MoO4-2": -2, "HMoO4-": -1, "Fe(III)-EDTA": -1, "Mn-EDTA": -2, "Zn-EDTA": -2, "Cu-EDTA": -2, "Ca-EDTA": -2, "Mg-EDTA": -2}
+for _metal in ("Fe+3", "Mn+2", "Zn+2", "Cu+2", "Ca+2", "Mg+2"):
+    _CHARGES[f"{_metal}-DTPA"] = -2 if _metal == "Fe+3" else -3
+    _CHARGES[f"{_metal}-o,o-EDDHA"] = -1 if _metal == "Fe+3" else -2
+    _CHARGES[f"{_metal}-citrate"] = 0 if _metal == "Fe+3" else -1
 _MACRO_CHARGES = {"Ca+2": 2, "Mg+2": 2, "PO4-3": -3, "HPO4-2": -2, "H2PO4-": -1, "SO4-2": -2, "NH4+": 1, "NO3-": -1, "K+": 1, "Na+": 1, "Cl-": -1, "CO3-2": -2, "HCO3-": -1}
 
 def _mixed_ionic_strength(macro: Mapping[str, float], trace: Mapping[str, float]) -> float:
@@ -57,7 +61,8 @@ def solve_mixed_fertilizer_equilibrium(totals: FertilizerTotals, ph: float, *, t
         updated = _mixed_ionic_strength(macro_species, trace.species)
         if not math.isfinite(updated) or updated > .1:
             raise DeliveryError("activity_model_out_of_range", "Davies model is limited to I <= 0.1 mol/kgw")
-        next_ca, next_mg = trace.species["Ca-EDTA"], trace.species["Mg-EDTA"]
+        next_ca = sum(amount for name, amount in trace.species.items() if name.startswith("Ca-") and name != "Ca+2")
+        next_mg = sum(amount for name, amount in trace.species.items() if name.startswith("Mg-") and name != "Mg+2")
         if max(abs(updated-ionic_strength), abs(next_ca-bound_ca), abs(next_mg-bound_mg)) < 1e-10:
             macro = FertilizerEquilibrium(available, ph, updated, macro_species, macro_activities, saturation, ())
             return MixedFertilizerEquilibrium(macro, replace(trace, ionic_strength=updated), updated, iteration)

@@ -285,10 +285,19 @@ def _alkalinity(result: FertilizerEquilibrium) -> float:
     return s["HCO3-"] + 2 * s["CO3-2"] + s["HPO4-2"] + 2 * s["PO4-3"] + result.activities["OH-"] / davies_gamma(1, result.ionic_strength) - result.activities["H+"] / davies_gamma(1, result.ionic_strength)
 
 
-def plan_nitric_acid_target(totals: FertilizerTotals, initial_ph: float, target_ph: float) -> NitricAcidTargetPlan:
+def plan_nitric_acid_target(totals: FertilizerTotals, initial_ph: float, target_ph: float, *, trace_totals=None) -> NitricAcidTargetPlan:
     """Return the closed-carbon strong-acid requirement for a lower target pH."""
-    initial = solve_fertilizer_equilibrium(totals, _valid_ph(initial_ph), allow_precipitation=False)
-    target = solve_fertilizer_equilibrium(totals, _valid_ph(target_ph), allow_precipitation=False)
+    # Import locally to avoid an import cycle. With ligands present this is the
+    # same converged macro-plus-trace system used for planning, not a macro-only
+    # acid calculation. Nitrate is retained in the analytical input and the
+    # returned dose is explicitly nitric-acid molality.
+    if trace_totals is None:
+        initial = solve_fertilizer_equilibrium(totals, _valid_ph(initial_ph), allow_precipitation=False)
+        target = solve_fertilizer_equilibrium(totals, _valid_ph(target_ph), allow_precipitation=False)
+    else:
+        from .mixed_equilibrium import solve_mixed_fertilizer_equilibrium
+        initial = solve_mixed_fertilizer_equilibrium(totals, _valid_ph(initial_ph), trace_totals=trace_totals, allow_precipitation=False).macro
+        target = solve_mixed_fertilizer_equilibrium(totals, _valid_ph(target_ph), trace_totals=trace_totals, allow_precipitation=False).macro
     dose = _alkalinity(initial) - _alkalinity(target)
     if dose < 0:
         raise DeliveryError("wrong_reagent_direction", "target needs base rather than nitric acid")

@@ -32,3 +32,19 @@ class TraceEquilibriumTests(unittest.TestCase):
         result = solve_mixed_fertilizer_equilibrium(FertilizerTotals(calcium=.001, nitrate=.002), 6, trace_totals=ChMicroProductDose(.1).totals())
         self.assertIsNotNone(result.trace)
         self.assertEqual(result.macro.ionic_strength, result.trace.ionic_strength)
+
+    def test_all_declared_ligand_families_have_mass_balanced_free_ligand(self):
+        totals = ChMicroProductDose(.1).totals(calcium=.001, magnesium=.001)
+        totals = totals.__class__(**{**{n: getattr(totals, n) for n in totals.__dataclass_fields__}, "dtpa": 1e-5, "eddha": 1e-5, "citrate": 1e-5})
+        result = solve_ch_micro_equilibrium(totals, 6.0, .01)
+        for name in ("DTPA", "o,o-EDDHA", "citrate"):
+            self.assertGreaterEqual(result.species[f"{name}-free"], 0.0)
+
+    def test_dtpa_and_eddha_bind_their_declared_metal_and_preserve_balance(self):
+        for field, ligand, complex_name in (("dtpa", "DTPA", "Fe+3-DTPA"), ("eddha", "o,o-EDDHA", "Fe+3-o,o-EDDHA")):
+            totals = ChMicroProductDose(0).totals()
+            totals = totals.__class__(iron=1e-5, **{field: 1e-5})
+            result = solve_ch_micro_equilibrium(totals, 6.0, .01)
+            self.assertGreater(result.species[complex_name], result.species["Fe+3"])
+            self.assertAlmostEqual(result.species["Fe+3"] + result.species[complex_name], totals.iron, places=15)
+            self.assertLessEqual(result.species[f"{ligand}-free"] + result.species[complex_name], getattr(totals, field))
