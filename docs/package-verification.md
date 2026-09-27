@@ -1,5 +1,11 @@
 # Package verification and equilibrium delivery
 
+## 0.3.0 user manual and retained release artifacts
+
+The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a package resource in both distributions; all four Python examples are executed during source regression and isolated wheel/sdist verification. The verification report records the exact manual hash and example count. `docs/index.md` is the documentation navigation page; historical material is separate.
+
+To retain only artifacts that passed clean-install checks, use `python tools/verify_distribution.py --artifacts-dir dist/0.3.0`. The destination must be new or empty; existing release files are never overwritten. This command builds and tests locally; it does not tag, upload or publish. Afterward, run `python -m twine check dist/0.3.0/*` in a development environment with `twine` installed. The build and metadata tools are not runtime dependencies.
+
 ## P6.6: installed distributions
 
 Run `python -m pip install build` in a development virtual environment, then `python tools/verify_distribution.py`. The tool builds wheel and sdist (wheel from sdist), installs each non-editably in a separate temporary virtual environment, runs from outside the checkout with `-I` and without `PYTHONPATH`, and asserts the imported package is inside that environment. It verifies zero runtime dependencies, 28 catalogue products, the exact chemistry resource hash, catalogue solve, nitric target, equilibrium delivery adapter, and both `python -m flahax` and `flahax` CLI entry points. A JSON report containing distribution hashes and observed numerical values is written to `build/distribution-verification.json`. Nothing is published.

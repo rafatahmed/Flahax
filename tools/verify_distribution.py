@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
 import sys
 import tempfile
 import tarfile
@@ -16,13 +17,20 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = r'''
-import importlib.metadata, json, math, subprocess, sys
+import importlib.metadata, json, math, subprocess, sys, re, contextlib, io
 from importlib.resources import files
 import flahax
 assert all(hasattr(flahax, name) for name in flahax.__all__)
 from flahax import load_library, solve_catalogue_product_doses, plan_catalogue_nitric_target
 import hashlib
 assert not importlib.metadata.requires('flahax'), 'unexpected runtime dependency'
+manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
+assert f'FlahaX {flahax.__version__}' in manual
+examples = re.findall(r'```python\n(.*?)```', manual, re.S)
+assert len(examples) == 4
+for index, example in enumerate(examples):
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
 library = load_library()
 result = solve_catalogue_product_doses({'Iron DTPA': .01}, 6., allow_precipitation=False)
 assert result.aqueous.species['FeDtp-2'] > 0
@@ -48,6 +56,8 @@ assert json.loads(run.stdout)['salts']
 console=subprocess.run([sys.argv[1]],input=payload,text=True,capture_output=True,check=True)
 assert json.loads(console.stdout)==json.loads(run.stdout)
 print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue_count':len(library['salts']),
+ 'manual_examples':len(examples),
+ 'manual_sha256':hashlib.sha256(files('flahax').joinpath('data/USER_GUIDE.md').read_bytes()).hexdigest(),
  'chemistry_sha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
  'library_sha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
  'fe_dtpa':result.aqueous.species['FeDtp-2'],'acid':plan.nitric_acid_molal,
@@ -56,7 +66,9 @@ print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue
 '''
 
 
-def verify(report, interpreter):
+def verify(report, interpreter, artifacts_dir=None):
+    if artifacts_dir is not None and artifacts_dir.exists() and any(artifacts_dir.iterdir()):
+        raise RuntimeError('artifact destination is not empty; refusing to overwrite release files')
     env = dict(os.environ)
     env.pop('PYTHONPATH', None)
     env.pop('PYTHONHOME', None)
@@ -84,6 +96,8 @@ def verify(report, interpreter):
             subprocess.run([str(python),'-m','pip','install','--no-deps',str(artifact)],cwd=folder,env=env,check=True)
             run = subprocess.run([str(python),'-I','-c',SMOKE,str(cli)],cwd=folder,env=env,text=True,capture_output=True,check=True)
             result = json.loads(run.stdout)
+            if result['manual_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/USER_GUIDE.md').read_bytes()).hexdigest():
+                raise RuntimeError('packaged user manual differs from source')
             if not Path(result.pop('module')).resolve().is_relative_to(install.resolve()):
                 raise RuntimeError('smoke imported source checkout rather than installed package')
             if result['catalogue_count'] != 28:
@@ -97,6 +111,10 @@ def verify(report, interpreter):
             results.append({'artifact':artifact.name,'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'result':result})
         if len(results) != 2 or results[0]['result'] != results[1]['result']:
             raise RuntimeError('wheel and sdist smoke results differ')
+        if artifacts_dir is not None:
+            artifacts_dir.mkdir(parents=True, exist_ok=True)
+            for result in results:
+                shutil.copy2(artifacts/result['artifact'], artifacts_dir/result['artifact'])
         report.parent.mkdir(parents=True,exist_ok=True)
         report.write_text(json.dumps({'status':'passed','build_python':sys.version,'installs':results},indent=2)+'\n')
         print('PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points')
@@ -106,5 +124,6 @@ if __name__ == '__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--report',type=Path,default=ROOT/'build/distribution-verification.json')
     parser.add_argument('--python',default=sys.executable,help='interpreter used for clean installs and smoke tests')
+    parser.add_argument('--artifacts-dir',type=Path,help='retain verified artifacts in a new or empty directory; never uploads')
     args=parser.parse_args()
-    verify(args.report,args.python)
+    verify(args.report,args.python,args.artifacts_dir)

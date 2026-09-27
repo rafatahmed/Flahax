@@ -1,11 +1,13 @@
 include README.md
 include LICENSE
 include CITATION.cff
+include CHANGELOG.md
 include INTEGRATION.md
 include pyproject.toml
 recursive-include docs *.md *.jpg *.png *.pdf
 recursive-include src/flahax *.py
 recursive-include src/flahax/data *.json
+recursive-include src/flahax/data *.md
 recursive-include tests *.py
 recursive-include tests/fixtures *.json *.pqi *.out *.sel *.screen *.dat *.md *.inp
 recursive-include tools *.py *.ps1
