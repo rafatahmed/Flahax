@@ -184,7 +184,9 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 
 **Decision gate G6 (owner-amended 2026-09-27):** computational evidence assesses the bounded planning package without laboratory work. Assessor: **Rafat Al Khashan**. The assessment is not independent scientific certification or permission for operational dosing. Hosted release checks remain a separate, open gate.
 
-### P7 — Optional FlahaFAST integration `[ ]`
+### P7 — FlahaFAST integration (external project; not a package release gate)
+
+**Ownership:** the project owner assigns this work to the separate FlahaFAST project. The following requirements are a handoff outline, not in-repository implementation or a prerequisite for FlahaX release.
 
 **Objective:** expose an already-validated plan without changing the existing user flow by default.
 
@@ -238,6 +240,7 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 
 1. **Finish hosted P6.6/P6.7 acceptance.** The implementation and local checks are present. An authorized account owner must resolve the observed GitHub billing lock; then observe successful Python 3.11–3.13 distribution jobs and required live-reference replay. Do not mark blocked jobs as passed or publish to PyPI.
 2. **Review this package increment.** Preserve both pH planning modes, explicit solvent/assay units and all golden/diagnostic evidence. Record review against the computational assessment attributed to Rafat Al Khashan; do not fabricate independent or experimental approval.
-3. **P7 — optional read-only integration.** After package gates pass and the consumer interface is explicitly scoped, expose a versioned boundary behind a default-off flag. No pump control, deployments, credential changes or external data writes are authorized by this roadmap.
+3. **Release preparation and review.** Audit package/API compatibility, documentation and distribution contents; require successful hosted checks before merging. Publication and a new version/tag require separate release authorization.
+4. **P7 — external handoff.** Any FlahaFAST integration is implemented in the separate FlahaFAST project, not here. See `INTEGRATION.md` for the package boundary.
 
-**Suggested next task:** “Once the account owner restores GitHub Actions, run and inspect the supported Python matrix and pinned live-reference workflow. Record actual outcomes before closing P6.6/P6.7. Then scope optional default-off P7 integration without authorizing external writes.”
+**Suggested next task:** “Once the account owner restores GitHub Actions, run and inspect the supported Python matrix and pinned live-reference workflow. Record actual outcomes before closing P6.6/P6.7. Then finish package release review; hand any P7 implementation to the separate FlahaFAST project.”

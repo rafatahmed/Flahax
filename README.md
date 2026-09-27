@@ -28,7 +28,7 @@ See the [runnable equilibrium-delivery example and API contract](docs/package-ve
 
 ## Verification status and next steps
 
-Local verification on Python 3.13 passes **107 tests with zero skips**, including pinned PHREEQC live replay. Clean wheel and source-distribution installs pass outside the checkout, including data hashes, public imports, numerical examples and both CLI entry points. PHREEQC is an external verification tool, not a runtime dependency or bundled executable.
+Local verification on Python 3.13 passes **109 tests with zero skips**, including pinned PHREEQC live replay and release-hygiene checks. Clean wheel and source-distribution installs pass outside the checkout, including data hashes, public imports, numerical examples and both CLI entry points. PHREEQC is an external verification tool, not a runtime dependency or bundled executable.
 
 **Assessor: Rafat Al Khashan.** The owner-amended G6 assessment concerns bounded computational evidence without laboratory work. It is not an independent review, a formal proof for arbitrary inputs, or operational certification. See the [computational assessment](docs/computational-review.md) and [release evidence](docs/release-evidence.md).
 
@@ -36,7 +36,7 @@ Next, in order:
 
 1. Finish **P6.6/P6.7 hosted verification**: observe passing Python 3.11–3.13 distribution jobs and the required pinned live-reference job. The last inspected GitHub run could not start because of an account billing lock; local passes do not close this gate.
 2. Review the package increment with **P5.5 implemented** and the amended **G6 computational assessment** recorded. No automatic merge or release publication is implied.
-3. Scope **optional P7 integration** only after those gates: a default-off, read-only FlahaFAST interface with contract tests, visible warnings and explicit review. No deployment, database writes or pump control.
+3. Hand off **optional P7 integration to the separate FlahaFAST project**. This is not a FlahaX package release requirement. No application deployment, database writes or pump control are included here.
 
 The [implementation roadmap](docs/implementation-roadmap.md) tracks exact acceptance and outstanding work.
 
@@ -69,12 +69,10 @@ for salt in result["salts"]:
     print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
 ```
 
-The same solve accepts one JSON object on standard input:
+The CLI requires an explicit nonempty `salts` array. This example selects the packaged catalogue deliberately and sends one JSON object on standard input:
 
 ```powershell
-@'
-{"targets": {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}, "water": {"Ca": 20}}
-'@ | flahax
+py -c "import json; from flahax import load_library; print(json.dumps({'salts': load_library()['salts'], 'targets': {'N_NO3': 128, 'P': 58, 'K': 211, 'Ca': 104, 'Mg': 40, 'S': 54}, 'water': {'Ca': 20}}))" | flahax
 ```
 
 `result["salts"]` lists each chosen salt and its `gramsPerLitre`. `result["rows"]` lists each element with its target, the final concentration in ppm, and `deltaPct`. Grams are for one litre of the solution the plant sees.
@@ -121,7 +119,7 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 |---|---|
 | [docs/usage.md](docs/usage.md) | Library call, command line, inputs, and result fields |
 | [docs/method.md](docs/method.md) | ppm equation, solver, library file, and the pepper proof |
-| [INTEGRATION.md](INTEGRATION.md) | Calling FlahaX from FlahaFAST without changing the current flow |
+| [INTEGRATION.md](INTEGRATION.md) | Package consumer boundary; integration owned by the separate FlahaFAST project |
 | [docs/delivery-control-design.md](docs/delivery-control-design.md) | Technical frame for future stock tanks, pH, and dosing control |
 | [docs/implementation-roadmap.md](docs/implementation-roadmap.md) | Trackable delivery-system implementation plan and acceptance gates |
 | [docs/delivery-contracts.md](docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
@@ -130,13 +128,14 @@ GitHub reads [`CITATION.cff`](CITATION.cff) for the “Cite this repository” b
 | [docs/ph-planning.md](docs/ph-planning.md) | P3 titration-bounded pH planning and mandatory verification |
 | [docs/reference-fixtures.md](docs/reference-fixtures.md) | Dependency-free PHREEQC golden-fixture verification baseline |
 | [docs/equilibrium-kernel.md](docs/equilibrium-kernel.md) | First internal activity/speciation kernel verified against PHREEQC |
-| [docs/full-fertilizer-chemistry.md](docs/full-fertilizer-chemistry.md) | Major-ion chemistry coverage and fixture-first expansion plan |
-| [docs/fertilizer-equilibrium-model.md](docs/fertilizer-equilibrium-model.md) | P2/P3 macronutrient equilibrium equations, PHREEQC evidence, and explicit chelate boundary |
+| [docs/full-fertilizer-chemistry.md](docs/full-fertilizer-chemistry.md) | Current mixed chemistry coverage plus explicitly historical development notes |
+| [docs/fertilizer-equilibrium-model.md](docs/fertilizer-equilibrium-model.md) | Unified macro/trace equilibrium, PHREEQC evidence and frozen catalogue boundary |
 | [docs/release-evidence.md](docs/release-evidence.md) | Automated delivery-planner evidence, explicit scientific gates, and release boundary |
 | [docs/package-verification.md](docs/package-verification.md) | Clean wheel/sdist verification, pinned live reference tooling, and runnable equilibrium-delivery API example |
 | [docs/computational-review.md](docs/computational-review.md) | Owner-amended G6 computational assessment, named assessor and limits of acceptance |
 | [docs/chemistry-coverage-matrix.md](docs/chemistry-coverage-matrix.md) | Exact aqueous/phase coverage, naming aliases and source-backed definitions |
 | [docs/publishing.md](docs/publishing.md) | Building and releasing a new version |
+| [docs/release-readiness.md](docs/release-readiness.md) | Cleanup findings, preserved compatibility and outstanding merge/release gate |
 
 From a checkout, the tests are:
 

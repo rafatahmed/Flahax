@@ -15,7 +15,7 @@ from flahax import (
     plan_stocks,
 )
 from tests.test_ph_planning import inputs
-from tests.test_pump_planning import calibration
+from tests.test_pump_planning import calibration, CALIBRATION_AS_OF
 from tests.test_stock_planning import limits, recipe, rule
 
 
@@ -84,8 +84,8 @@ class DeliveryReleaseEvidence(unittest.TestCase):
 
         slow = calibration()
         slow["flowLitresPerMinute"] = 0.06
-        baseline_command = plan_pump_command(calibration(), VolumeLitres(0.12), VolumeLitres(1))
-        slow_command = plan_pump_command(slow, VolumeLitres(0.12), VolumeLitres(1))
+        baseline_command = plan_pump_command(calibration(), VolumeLitres(0.12), VolumeLitres(1), as_of=CALIBRATION_AS_OF)
+        slow_command = plan_pump_command(slow, VolumeLitres(0.12), VolumeLitres(1), as_of=CALIBRATION_AS_OF)
         self.assertAlmostEqual(slow_command.runtime.value, 2 * baseline_command.runtime.value)
 
     def test_temperature_outside_a_sourced_solubility_range_fails_closed(self):

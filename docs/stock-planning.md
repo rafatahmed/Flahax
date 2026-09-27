@@ -60,7 +60,7 @@ The planner evaluates valid tank assignments in tank-ID order and chooses one th
 
 ## Mathematical verification is the completion criterion
 
-The current planner is a conservative constraint solver. It is not yet a full aqueous-equilibrium model. P2's scientific completion criterion is regression against an authoritative speciation/saturation calculation, using a named thermodynamic database, activity model, temperature, complete ionic composition, and named solid phases.
+The stock planner is a conservative constraint solver using caller-supplied rules. The separate coupled aqueous model is now verified against pinned PHREEQC; see [the current model](fertilizer-equilibrium-model.md) and [coverage matrix](chemistry-coverage-matrix.md). Dilute equilibrium verification does not certify concentrated stocks outside the Davies range.
 
 For each phase `p`, the reference calculation is:
 
@@ -70,7 +70,7 @@ IAP_p = product_i(a_i ^ nu_i)
 a_i = gamma_i * c_i
 ```
 
-`SI_p > 0` means supersaturation under the selected model. The reference output must retain `SI`, `log IAP`, `log K`, ionic strength, activities, and database identity. PHREEQC reports these quantities and supports activity models including ion-association, Pitzer, and SIT; FlahaX will use it as the independent numerical reference, not as an unexamined black box. [PHREEQC Version 3](https://doi.org/10.3133/tm6A43) documents this model and its inputs.
+`SI_p > 0` means supersaturation under the selected model. The reference output must retain `SI`, `log IAP`, `log K`, ionic strength, activities, and database identity. PHREEQC reports these quantities and supports activity models including ion-association, Pitzer, and SIT; FlahaX uses it as the independent numerical reference, not as an unexamined black box. [PHREEQC Version 3](https://doi.org/10.3133/tm6A43) documents this model and its inputs.
 
 The existing separation rules remain useful as a conservative fallback when a complete equilibrium input is unavailable. They must not be represented as the proof of chemical compatibility.
 

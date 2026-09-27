@@ -4,7 +4,7 @@
 
 FlahaX currently solves a **final working-solution** problem: it chooses non-negative salt masses that make the delivered nutrient concentrations as close as possible to the crop targets. Its output is grams of each salt per litre of water reaching the plant.
 
-This note defines a future, separate delivery layer that can transform an accepted FlahaX recipe into:
+This historical design note motivated the now-implemented planning APIs; current acceptance is recorded in [the roadmap](implementation-roadmap.md). Hardware control and FlahaFAST integration remain outside this package. The original proposal below defines a separate delivery layer that can transform an accepted FlahaX recipe into:
 
 1. compatible concentrated stock-tank recipes;
 2. an acid or base dose based on water buffering; and

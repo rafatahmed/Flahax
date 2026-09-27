@@ -35,12 +35,10 @@ for salt in result["salts"]:
 
 ## Command line
 
-The same solve is available as a program. It reads one JSON object from standard input and writes the `recommend` result to standard output.
+The same solve is available as a program. It requires an explicit nonempty `salts` array, reads one JSON object from standard input and writes the `recommend` result to standard output. Select the shipped catalogue deliberately when that is the intended source:
 
 ```powershell
-@'
-{"targets": {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}, "water": {"Ca": 20}}
-'@ | python -m flahax
+py -c "import json; from flahax import load_library; print(json.dumps({'salts': load_library()['salts'], 'targets': {'N_NO3': 128, 'P': 58, 'K': 211, 'Ca': 104, 'Mg': 40, 'S': 54}, 'water': {'Ca': 20}}))" | python -m flahax
 ```
 
 After installation, `flahax` is the same program. A missing or empty `targets` object exits with status 1 and a message on standard error. `water` may be omitted. A `water` value that is present and is not a JSON object exits with status 1. Unknown ions, total `N`, negative ppm, and non-finite ppm exit with status 1. Optional `allowIons` is a list such as `["Cl"]`. Optional `allowCarbonates` is true or false.

@@ -45,7 +45,7 @@ Branch: `codex/package-verification-delivery`, based on merged main `33febd41e1f
 | P6.6 distributions | `tools/verify_distribution.py`: independent wheel/sdist installations outside checkout; Python 3.13.15 resource hashes, public exports, chemistry/delivery numerical examples and both CLI entry points agree; no required runtime dependencies or bundled executable. Earlier Python 3.14 installs also passed. | Local pass; hosted supported-version matrix outstanding |
 | P6.7 live reference | Full suite runs pinned PHREEQC with zero skips; fresh official MSI extraction verifies installer/executable/base hashes. `tests/test_live_reference_policy.py` confirms required-live absence fails rather than skips. New hosted job retains replay logs. | Local pass; hosted job outstanding |
 | P6.8 / amended G6 | Conservation, convergence, reference agreement, delivery guards and distribution checks recorded in `computational-review.md`; assessor Rafat Al Khashan | Bounded computational assessment passes; not independent review, formal proof or laboratory certification |
-| P7 | No consumer contract or external integration implemented | Optional, not started |
+| P7 | Consumer boundary documented in `INTEGRATION.md`; implementation belongs to separate FlahaFAST project | External; not a package release gate |
 
 Exact final local suite command (PowerShell):
 
@@ -71,6 +71,12 @@ Result: **PASS: isolated wheel and sdist installs, resources, public APIs and bo
 `tools/provision_phreeqc.ps1` was tested both against the existing installation and with a fresh destination under TEMP. It downloads the official pinned MSI, administratively extracts outside the checkout and verifies all three hashes without modifying the base database. This is reference tooling, not a package runtime dependency.
 
 The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run `36322890741`). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the account owner.
+
+## Release-readiness cleanup
+
+The release-readiness cleanup adds metadata/export and documentation-link checks, fixes expired-date-prone test fixtures without changing runtime expiry policy, and archives superseded notes without deleting scientific evidence. Final local validation: `$env:PYTHONPATH='src'; $env:FLAHAX_REQUIRE_PHREEQC='1'; py -3.13 -m unittest discover -s tests -t .` — **109 tests in 142.086 seconds, OK, zero skips**. Clean wheel/sdist verification passes after the packaging changes; compilation and whitespace checks pass. The corrected explicit-salts CLI example returns `feasible: true`.
+
+Hosted PR #3 run `36345628921` was attempted and all four jobs were prevented from starting by the account billing lock. Actions is enabled; P6.6/P6.7 hosted acceptance and merge remain blocked. See [release-readiness audit](release-readiness.md). FlahaFAST implementation is assigned to the separate FlahaFAST project and is not a package release gate.
 
 ## Historical reduced-model evidence (superseded)
 
