@@ -169,6 +169,8 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     electrical charge equals the initial residual charge, after adding nitrate.
     """
     initial=solve(totals,initial_ph,phases=phases)
+    if target_ph == initial_ph:
+        return AcidResult(initial,initial,0.)
     if target_ph>initial_ph:
         raise DeliveryError('wrong_reagent_direction','target requires base')
     lo,hi=0.,.001
