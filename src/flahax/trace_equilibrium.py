@@ -112,89 +112,11 @@ def _valid_ph_and_i(ph: float, ionic_strength: float) -> None:
 
 
 def solve_ch_micro_equilibrium(totals: ChMicroTotals, ph: float, ionic_strength: float) -> TraceEquilibrium:
-    """Solve the declared CH-micro chemistry at fixed pH and ionic strength.
-
-    All declared ligand and metal balances use their product-specific reaction
-    sets. DTPA and o,o-EDDHA are Fe(III)-only catalogue products; Ca/Mg and
-    other trace-metal complexes are intentionally outside this model. Redox is
-    deliberately fixed as Fe(III); no unsupported redox conversion is inferred.
-    """
+    """Fixed-I view of the same simultaneous aqueous mass-action model."""
     if not isinstance(totals, ChMicroTotals):
         raise DeliveryError("invalid_type", "totals must be ChMicroTotals")
     _valid_ph_and_i(ph, ionic_strength)
-    h = 10.0 ** -ph
-    gamma = {charge: davies_gamma(charge, ionic_strength) for charge in range(1, 6)}
-    metals = {
-        "Fe+3": totals.iron, "Mn+2": totals.manganese, "Zn+2": totals.zinc,
-        "Cu+2": totals.copper, "Ca+2": totals.calcium, "Mg+2": totals.magnesium,
-    }
-
-    ligand_totals = {"EDTA": totals.edta, "DTPA": totals.dtpa, "o,o-EDDHA": totals.eddha, "citrate": totals.citrate}
-    def ligand_inventory(name: str, activity: float, available: Mapping[str, float]) -> tuple[float, dict[str, float]]:
-        profile = LIGAND_PROFILES[name]
-        charge = abs(int(profile["charge"]))
-        inventory = activity / gamma[charge]
-        for count, log_beta in enumerate(profile["protonation_log_k"], 1):
-            protonated_charge = abs(charge - count)
-            inventory += 10.0 ** log_beta * activity * h**count / (gamma[protonated_charge] if protonated_charge else 1.0)
-        complexes = {}
-        for metal, amount in available.items():
-            log_beta = profile["metal_log_beta"].get(metal)
-            if log_beta is not None:
-                complex_charge = abs(COMPLEX_CHARGE[name][metal])
-                multiplier = 10.0 ** log_beta * gamma[METAL_CHARGE[metal]] * activity / (gamma[complex_charge] if complex_charge else 1.0)
-                complexes[metal] = amount * multiplier / (1.0 + multiplier)
-        return inventory + sum(complexes.values()), complexes
-
-    # Each ligand balance is monotonic.  The sequence is intentional: a
-    # declared pre-chelate has its own analytical ligand inventory, and the
-    # remaining dissolved-metal inventory is passed to the next declared
-    # ligand. This keeps every analytical balance exact and lets the outer
-    # macro/trace solver couple the resulting Ca/Mg removals.
-    ligand_activities: dict[str, float] = {}
-    ligand_complexes: dict[str, dict[str, float]] = {}
-    available = dict(metals)
-    for name in ("EDTA", "DTPA", "o,o-EDDHA", "citrate"):
-        total = ligand_totals[name]
-        if not total:
-            ligand_activities[name], ligand_complexes[name] = 0.0, {}
-            continue
-        charge = abs(int(LIGAND_PROFILES[name]["charge"]))
-        low, high = 0.0, max(total * gamma[charge], 1e-30)
-        while ligand_inventory(name, high, available)[0] < total:
-            high *= 2.0
-        for _ in range(100):
-            middle = (low + high) / 2.0
-            if ligand_inventory(name, middle, available)[0] < total:
-                low = middle
-            else:
-                high = middle
-        ligand_activities[name] = (low + high) / 2.0
-        ligand_complexes[name] = ligand_inventory(name, ligand_activities[name], available)[1]
-        for metal, amount in ligand_complexes[name].items():
-            available[metal] -= amount
-
-    borate_ratio = 10.0 ** LOG_K_BORIC_ACID / h / gamma[1]
-    boric = totals.boron / (1.0 + borate_ratio)
-    molybdate_factor = 1.0 + 10.0 ** LOG_BETA_MOLYBDATE_H * h / gamma[1] + 10.0 ** LOG_BETA_MOLYBDATE_H2 * h * h
-    mo4 = totals.molybdate / molybdate_factor
-    species = {
-        "EDTA-4": ligand_activities["EDTA"] / gamma[4],
-        "Fe(III)-EDTA": ligand_complexes["EDTA"].get("Fe+3", 0.0), "Mn-EDTA": ligand_complexes["EDTA"].get("Mn+2", 0.0),
-        "Zn-EDTA": ligand_complexes["EDTA"].get("Zn+2", 0.0), "Cu-EDTA": ligand_complexes["EDTA"].get("Cu+2", 0.0),
-        "Ca-EDTA": ligand_complexes["EDTA"].get("Ca+2", 0.0), "Mg-EDTA": ligand_complexes["EDTA"].get("Mg+2", 0.0),
-        **available,
-        "B(OH)3": boric, "B(OH)4-": boric * borate_ratio,
-        "MoO4-2": mo4, "HMoO4-": 10.0 ** LOG_BETA_MOLYBDATE_H * mo4 * h / gamma[1],
-        "H2MoO4": 10.0 ** LOG_BETA_MOLYBDATE_H2 * mo4 * h * h,
-    }
-    for ligand in ("DTPA", "o,o-EDDHA", "citrate"):
-        charge = abs(int(LIGAND_PROFILES[ligand]["charge"]))
-        species[f"{ligand}-free"] = ligand_activities[ligand] / gamma[charge]
-        for metal, amount in ligand_complexes[ligand].items():
-            species[f"{metal}-{ligand}"] = amount
-    activities = {name: amount for name, amount in species.items()}
-    for name, z in {"EDTA-4": 4, "Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "B(OH)4-": 1, "MoO4-2": 2, "HMoO4-": 1}.items():
-        activities[name] *= gamma[z]
-    activities["H+"] = h
-    return TraceEquilibrium(totals, ph, ionic_strength, species, activities)
+    from .aqueous_model import solve
+    from .mixed_equilibrium import TRACE_BASIS, view
+    result=solve({b:getattr(totals,n) for n,b in TRACE_BASIS.items()},ph,ionic_strength=ionic_strength)
+    return TraceEquilibrium(totals,ph,ionic_strength,view(result.species),view(result.activities))

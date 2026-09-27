@@ -1,0 +1,253 @@
+   Input file: struvite.pqi
+  Output file: struvite.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-4r_t8l8f\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX struvite
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 9
+	 units mol/kgw
+	 water 1
+	 Mg 0.002
+	 N(-3) 0.002
+	 P 0.002
+	 Na 0.01 charge
+	 Cl 0.01
+	EQUILIBRIUM_PHASES 1
+	 Struvite 0 0
+	SELECTED_OUTPUT
+	 file struvite.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Mg N(-3) P Na Cl
+	 molalities Cl- H+ Mg+2 Na+ PO4-3 OH- MgOH+ NH3 HPO4-2 H2PO4- H3PO4 MgPO4- MgH2PO4+ MgHPO4 NaHPO4- NH4+
+	 activities Cl- H+ Mg+2 Na+ PO4-3 OH- MgOH+ NH3 HPO4-2 H2PO4- H3PO4 MgPO4- MgH2PO4+ MgHPO4 NaHPO4- NH4+
+	 si Halite Struvite
+	 equilibrium_phases Struvite
+	END
+-----
+TITLE
+-----
+
+ FlahaX struvite
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                1.000e-02   1.000e-02
+	Mg                2.000e-03   2.000e-03
+	N(-3)             2.000e-03   2.000e-03
+	Na                8.683e-03   8.683e-03  Charge balance
+	P                 2.000e-03   2.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   9.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.581e-02
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   2.683e-03
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   1.150e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  11
+                                  Total H  = 1.110230e+02
+                                  Total O  = 5.551485e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             1.145e-05   1.007e-05    -4.941    -4.997    -0.056     (0)  
+   H+              1.134e-09   1.000e-09    -8.945    -9.000    -0.055      0.00
+   H2O             5.551e+01   9.996e-01     1.744    -0.000     0.000     18.07
+Cl            1.000e-02
+   Cl-             1.000e-02   8.820e-03    -2.000    -2.055    -0.055     (0)  
+H(0)          1.411e-29
+   H2              7.054e-30   7.079e-30   -29.152   -29.150     0.002     (0)  
+Mg            2.000e-03
+   Mg+2            1.492e-03   9.028e-04    -2.826    -3.044    -0.218     (0)  
+   MgHPO4          4.867e-04   4.867e-04    -3.313    -3.313     0.000     (0)  
+   MgPO4-          1.654e-05   1.466e-05    -4.781    -4.834    -0.052     (0)  
+   MgOH+           4.064e-06   3.618e-06    -5.391    -5.442    -0.051     (0)  
+   MgH2PO4+        6.619e-07   5.866e-07    -6.179    -6.232    -0.052     (0)  
+N(-3)         2.000e-03
+   NH4+            1.334e-03   1.167e-03    -2.875    -2.933    -0.058     (0)  
+   NH3             6.655e-04   6.655e-04    -3.177    -3.177     0.000     (0)  
+Na            8.683e-03
+   Na+             8.597e-03   7.582e-03    -2.066    -2.120    -0.055     (0)  
+   NaHPO4-         8.587e-05   7.611e-05    -4.066    -4.119    -0.052     (0)  
+O(0)          2.014e-34
+   O2              1.007e-34   1.011e-34   -33.997   -33.995     0.002     (0)  
+P             2.000e-03
+   HPO4-2          1.394e-03   8.543e-04    -2.856    -3.068    -0.213     (0)  
+   MgHPO4          4.867e-04   4.867e-04    -3.313    -3.313     0.000     (0)  
+   NaHPO4-         8.587e-05   7.611e-05    -4.066    -4.119    -0.052     (0)  
+   MgPO4-          1.654e-05   1.466e-05    -4.781    -4.834    -0.052     (0)  
+   H2PO4-          1.521e-05   1.348e-05    -4.818    -4.870    -0.052     (0)  
+   PO4-3           1.116e-06   3.603e-07    -5.952    -6.443    -0.491     (0)  
+   MgH2PO4+        6.619e-07   5.866e-07    -6.179    -6.232    -0.052     (0)  
+   H3PO4           1.895e-12   1.895e-12   -11.722   -11.722     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Brucite          -1.89     14.96   16.84  Mg(OH)2
+  Halite           -5.78     -4.17    1.60  NaCl
+  Mg(OH)2(active)  -3.84     14.96   18.79  Mg(OH)2
+  Mg3(PO4)2         1.26    -22.02  -23.28  Mg3(PO4)2
+  MgHPO4:3H2O      -0.31    -18.49  -18.18  MgHPO4:3H2O
+  O2(g)           -31.09     52.00   83.09  O2
+  Periclase        -6.63     14.96   21.58  MgO
+  Struvite          0.84    -12.42  -13.26  MgNH4PO4:6H2O
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+Struvite          0.00   -13.26    -13.26    0.000e+00   5.605e-04   5.605e-04
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                1.000e-02   1.000e-02
+	Mg                1.440e-03   1.440e-03
+	N                 1.440e-03   1.440e-03
+	Na                8.683e-03   8.683e-03
+	P                 1.440e-03   1.440e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   8.405      Charge balance
+                                       pe  =   1.970      Adjusted to redox equilibrium
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.437e-02
+                       Mass of water (kg)  =   9.999e-01
+                 Total alkalinity (eq/kg)  =   1.562e-03
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -7.885e-15
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =  27
+                                  Total H  = 1.110140e+02
+                                  Total O  = 5.550924e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             2.893e-06   2.557e-06    -5.539    -5.592    -0.054     (0)  
+   H+              4.442e-09   3.937e-09    -8.352    -8.405    -0.052      0.00
+   H2O             5.551e+01   9.996e-01     1.744    -0.000     0.000     18.07
+Cl            1.000e-02
+   Cl-             1.000e-02   8.864e-03    -2.000    -2.052    -0.052     (0)  
+H(0)          2.507e-24
+   H2              1.253e-24   1.258e-24   -23.902   -23.900     0.001     (0)  
+Mg            1.440e-03
+   Mg+2            1.146e-03   7.072e-04    -2.941    -3.150    -0.210     (0)  
+   MgHPO4          2.888e-04   2.888e-04    -3.539    -3.539     0.000     (0)  
+   MgPO4-          2.483e-06   2.211e-06    -5.605    -5.655    -0.050     (0)  
+   MgH2PO4+        1.539e-06   1.371e-06    -5.813    -5.863    -0.050     (0)  
+   MgOH+           8.053e-07   7.199e-07    -6.094    -6.143    -0.049     (0)  
+N(-3)         1.440e-03
+   NH4+            1.277e-03   1.123e-03    -2.894    -2.949    -0.056     (0)  
+   NH3             1.627e-04   1.627e-04    -3.789    -3.789     0.000     (0)  
+N(3)          4.560e-15
+   NO2-            4.560e-15   4.020e-15   -14.341   -14.396    -0.055     (0)  
+N(5)          6.870e-23
+   NO3-            6.870e-23   6.089e-23   -22.163   -22.215    -0.052     (0)  
+Na            8.683e-03
+   Na+             8.618e-03   7.639e-03    -2.065    -2.117    -0.052     (0)  
+   NaHPO4-         6.524e-05   5.809e-05    -4.185    -4.236    -0.050     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -44.496   -44.494     0.001     (0)  
+P             1.440e-03
+   HPO4-2          1.036e-03   6.473e-04    -2.985    -3.189    -0.204     (0)  
+   MgHPO4          2.888e-04   2.888e-04    -3.539    -3.539     0.000     (0)  
+   NaHPO4-         6.524e-05   5.809e-05    -4.185    -4.236    -0.050     (0)  
+   H2PO4-          4.515e-05   4.020e-05    -4.345    -4.396    -0.050     (0)  
+   MgPO4-          2.483e-06   2.211e-06    -5.605    -5.655    -0.050     (0)  
+   MgH2PO4+        1.539e-06   1.371e-06    -5.813    -5.863    -0.050     (0)  
+   PO4-3           2.054e-07   6.933e-08    -6.687    -7.159    -0.472     (0)  
+   H3PO4           2.225e-11   2.225e-11   -10.653   -10.653     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Brucite          -3.19     13.66   16.84  Mg(OH)2
+  Halite           -5.77     -4.17    1.60  NaCl
+  Mg(OH)2(active)  -5.14     13.66   18.79  Mg(OH)2
+  Mg3(PO4)2        -0.49    -23.77  -23.28  Mg3(PO4)2
+  MgHPO4:3H2O      -0.54    -18.71  -18.18  MgHPO4:3H2O
+  O2(g)           -41.59     41.50   83.09  O2
+  Periclase        -7.93     13.66   21.58  MgO
+  Struvite          0.00    -13.26  -13.26  MgNH4PO4:6H2O
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.036 Seconds.
+-------------------------------
+

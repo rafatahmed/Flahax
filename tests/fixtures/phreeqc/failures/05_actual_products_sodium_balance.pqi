@@ -1,0 +1,41 @@
+TITLE Preserved target-pH reduction 05_actual_products_sodium_balance
+PHASES
+Fix_H+
+ H+ = H+
+ log_k 0
+SOLUTION 1
+ temp 25
+ pH 7.4
+ units mol/kgw
+ Ca 0.00071111332900843354
+ N(5) 0.0025313599920038267
+ N(-3) 0.0001178007667759001
+ Mg 0.00040567784406500725
+ S(6) 0.00040580162195882717
+ K 0.0028036257330881398
+ P 0.00036737545797633489
+ Fe(3) 1.7369504879577404e-05
+ Dtp 7.8789506670248004e-06
+ Edd 3.2232070910556004e-06
+ Zn 3.0590394616090553e-07
+ Mn(2) 1.8202322601802133e-06
+ Cu(2) 8.6551474522393241e-08
+ B 6.01295097132285e-06
+ Mo 2.6055237102657637e-08
+ Na 0.002 charge
+ Edta 8.4800348023605141e-06
+ Ure 8.3256584348918744e-05
+ C(4) 0.00072357365921280482
+ Cl 0.002
+EQUILIBRIUM_PHASES 1
+ Fix_H+ -6 HNO3 1
+SELECTED_OUTPUT
+ -file 05_actual_products_sodium_balance.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -percent_error true
+ -pe true
+ -totals Fe(3) Fe(2) N(5) N(-3) Dtp
+ -equilibrium_phases Fix_H+
+END

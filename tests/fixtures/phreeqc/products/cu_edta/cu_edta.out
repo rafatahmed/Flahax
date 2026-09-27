@@ -1,0 +1,162 @@
+   Input file: cu_edta.pqi
+  Output file: cu_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX cu_edta
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Cu(2) 2.2031284423881917e-05
+	 Edta 2.2031284423881917e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file cu_edta.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Cu(2) Edta Na Cl
+	 molalities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
+	 activities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
+	 si Cu(OH)2 Tenorite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX cu_edta
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Cu(2)             2.203e-05   2.203e-05
+	Edta              2.203e-05   2.203e-05
+	Na                2.043e-03   2.043e-03  Charge balance
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.066e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   4.296e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -1.473e-19
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =  10
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.052e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.902e-03    -2.699    -2.721    -0.022     (0)  
+   CuCl+           3.956e-13   3.762e-13   -12.403   -12.425    -0.022     (0)  
+   CuCl2           2.481e-16   2.481e-16   -15.605   -15.605     0.000     (0)  
+   CuCl3-          4.630e-21   4.403e-21   -20.334   -20.356    -0.022     (0)  
+   CuCl4-2         5.119e-26   4.197e-26   -25.291   -25.377    -0.086     (0)  
+Cu(2)         2.203e-05
+   Cu(Edta)-2      2.197e-05   1.775e-05    -4.658    -4.751    -0.093     (0)  
+   CuH(Edta)-      5.920e-08   5.612e-08    -7.228    -7.251    -0.023     (0)  
+   Cu+2            1.526e-10   1.248e-10    -9.816    -9.904    -0.087     (0)  
+   CuOH(Edta)-3    2.869e-11   1.775e-11   -10.542   -10.751    -0.209     (0)  
+   CuH2(Edta)      8.895e-12   8.895e-12   -11.051   -11.051     0.000     (0)  
+   CuOH+           4.179e-12   3.974e-12   -11.379   -11.401    -0.022     (0)  
+   CuCl+           3.956e-13   3.762e-13   -12.403   -12.425    -0.022     (0)  
+   Cu(OH)2         7.983e-15   7.983e-15   -14.098   -14.098     0.000     (0)  
+   CuCl2           2.481e-16   2.481e-16   -15.605   -15.605     0.000     (0)  
+   Cu2(OH)2+2      4.910e-19   3.966e-19   -18.309   -18.402    -0.093     (0)  
+   Cu(OH)3-        1.739e-19   1.649e-19   -18.760   -18.783    -0.023     (0)  
+   CuCl3-          4.630e-21   4.403e-21   -20.334   -20.356    -0.022     (0)  
+   CuCl4-2         5.119e-26   4.197e-26   -25.291   -25.377    -0.086     (0)  
+   Cu(OH)4-2       1.617e-26   1.306e-26   -25.791   -25.884    -0.093     (0)  
+Edta          2.203e-05
+   Cu(Edta)-2      2.197e-05   1.775e-05    -4.658    -4.751    -0.093     (0)  
+   CuH(Edta)-      5.920e-08   5.612e-08    -7.228    -7.251    -0.023     (0)  
+   H2(Edta)-2      9.261e-11   7.480e-11   -10.033   -10.126    -0.093     (0)  
+   H(Edta)-3       6.450e-11   3.990e-11   -10.190   -10.399    -0.209     (0)  
+   CuOH(Edta)-3    2.869e-11   1.775e-11   -10.542   -10.751    -0.209     (0)  
+   CuH2(Edta)      8.895e-12   8.895e-12   -11.051   -11.051     0.000     (0)  
+   H3(Edta)-       1.038e-13   9.838e-14   -12.984   -13.007    -0.023     (0)  
+   Edta-4          1.006e-15   4.497e-16   -14.997   -15.347    -0.350     (0)  
+   Na(Edta)-3      7.079e-16   4.379e-16   -15.150   -15.359    -0.209     (0)  
+   H4(Edta)        1.422e-17   1.422e-17   -16.847   -16.847     0.000     (0)  
+   H5(Edta)+       4.744e-22   4.497e-22   -21.324   -21.347    -0.023     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Na            2.043e-03
+   Na+             2.043e-03   1.943e-03    -2.690    -2.712    -0.022     (0)  
+   Na(Edta)-3      7.079e-16   4.379e-16   -15.150   -15.359    -0.209     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Atacamite       -11.92     -4.53    7.39  Cu2(OH)3Cl
+  Cu(OH)2          -6.58      2.10    8.67  Cu(OH)2
+  Halite           -7.03     -5.43    1.60  NaCl
+  Melanothallite  -21.60    -15.35    6.26  CuCl2
+  O2(g)           -43.09     40.00   83.09  O2
+  Tenorite         -5.55      2.10    7.64  CuO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+------------------------------
+End of Run after 0.04 Seconds.
+------------------------------
+

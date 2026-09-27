@@ -1,0 +1,30 @@
+TITLE Preserved target-pH reduction 01_macro_original
+PHASES
+Fix_H+
+ H+ = H+
+ log_k 0
+SOLUTION 1
+ temp 25
+ pH 7.4 charge
+ units mol/kgw
+ Ca 0.001
+ Mg 0.001
+ N(5) 0.0030000000000000001
+ P 0.001
+ S(6) 0.001
+ C(4) 0.0023999999999999998
+ K 0.002
+ Na 0.0030000000000000001
+ Cl 0.0070000000000000001
+EQUILIBRIUM_PHASES 1
+ Fix_H+ -6 HNO3 1
+SELECTED_OUTPUT
+ -file 01_macro_original.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -percent_error true
+ -pe true
+ -totals Fe(3) Fe(2) N(5) N(-3) Dtp
+ -equilibrium_phases Fix_H+
+END

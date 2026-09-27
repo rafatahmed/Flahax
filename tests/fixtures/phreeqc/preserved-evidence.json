@@ -1,0 +1,323 @@
+{
+  "schema": 1,
+  "artifacts": [
+    {
+      "case": "fe_edta",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 5.001,
+          "mu": 1.00301e-05,
+          "Fe(3)": 1e-05,
+          "Edta": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "fe_edta.pqi": "92faf79656e79265197c48edcd3039e586ab6becab14434af41b83d9fcd0b9cc",
+        "fe_edta.out": "b1bccfca10c455f6594126009543efc8044f6fa6a4b3e5e6cc0a03befc606b6f",
+        "fe_edta.sel": "f05416c27fa8d4d939e620d8438522e54b9ca123f4106097a9c6c5dbeb9ba487"
+      }
+    },
+    {
+      "case": "mn_edta",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 4.73037,
+          "mu": 2.93419e-05,
+          "Mn": 1e-05,
+          "Edta": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "mn_edta.pqi": "b98aee4eea040390cc49800093321957789336fd4624cf5a5befa56eac7fab7f",
+        "mn_edta.out": "4ef9444999d21ed1105eaeef3e806fde73bd5609029e4a520ceb963db0a833fa",
+        "mn_edta.sel": "eceb178dd102c13c6759b181c9cecb3278a31d3054638f8a092665d01ae977d6"
+      }
+    },
+    {
+      "case": "zn_edta",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 4.7128,
+          "mu": 2.91176e-05,
+          "Zn": 1e-05,
+          "Edta": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "zn_edta.pqi": "a0bd96499518f6985f90b9604ed847a2be8fe18f8a8a477d3d9d1b115ab27498",
+        "zn_edta.out": "292a5bc28cfd5f40421f2c44ef1d18a4ce615ca961ca8b50cd563999720082b4",
+        "zn_edta.sel": "e7f66e3b620dc07a93e3030b93046741d2458ed713c3628a9c7149264080146f"
+      }
+    },
+    {
+      "case": "cu_edta",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 4.71427,
+          "mu": 2.88667e-05,
+          "Cu": 1e-05,
+          "Edta": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "cu_edta.pqi": "98a85d480d65c6f0191109b957a546fb00ad51b53b96efc1ac5bb3c114bc3aff",
+        "cu_edta.out": "1bc7ce21f51163b5f0004942c2e52374f134e332b72aadeb892e9ee1454e8b46",
+        "cu_edta.sel": "a00f536d8ec436eb82aeec038ff79537946b57a67994d9db092d9c9b6f05b9ff"
+      }
+    },
+    {
+      "case": "fe_dtpa",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 4.70173,
+          "mu": 3.00012e-05,
+          "Fe(3)": 1e-05,
+          "Dtp": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "fe_dtpa.pqi": "19c7759304bde1389fd8af9fba7218cca0fddf8f95f4e1c3ad9840527cb28a18",
+        "fe_dtpa.out": "6b93713a9484bb20c0257b53e70ea7e1bf458d46ff848c94f92edc070d897e6f",
+        "fe_dtpa.sel": "6ba858409a8e762d0f22a8c60af4a6bf421b2ebc5c6823d6092055cc52194a0c"
+      }
+    },
+    {
+      "case": "fe_eddha",
+      "kind": "historical_success",
+      "selected_rows": [
+        {
+          "pH": 5.00182,
+          "mu": 9.99817e-06,
+          "Fe(3)": 1e-05,
+          "Edd": 1e-05
+        }
+      ],
+      "replay_relative": 0.0001,
+      "replay_absolute": 1e-08,
+      "hashes": {
+        "fe_eddha.pqi": "c1be21e594959efc08830829a62df47bed600a21d480388a5cdfe84b5a4bb8fb",
+        "fe_eddha.out": "b544484ea8669053262d91a17f39ac8c24bf16a0358dd532dfa29733ff239352",
+        "fe_eddha.sel": "2f62c88a4da6c43e4d312c0daa5073919d7e1bbf0e2f63f3789ee9400888740c"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/01_macro_original.json": "aa7ea26ebebdc3e3a544af3aa8bdb8273cb4c688fa5225a0bc6c65ba33f54b28"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/01_macro_original.out": "14e94f0d8d4b276d7b232948f0fb07b4b460c34b8c8a000a4566ae62c4d6561c"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/01_macro_original.pqi": "f2defa21e4b55d788b58cbc190bcaf0cbc52844999a4a1e9c37a6da8802b159e"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/01_macro_original.screen": "35658aebb778d2e9089d82a911f84dd63a69203dd180594d33f5fa4e09dac942"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/01_macro_original.sel": "b8789e4482bce3ba7097f96646399b2a29050252a115e8113d4bb3d739fc0d65"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/02_add_fe_dtpa_original.json": "3f08fdc5ee9a8b4d0448729deb2d69f0cfcb9493c4cb462285235b730d30a382"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/02_add_fe_dtpa_original.out": "e09812d211852727d6b8ed7e3c02674c67097bd32932f039525753977f868aee"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/02_add_fe_dtpa_original.pqi": "87087c468244da34695fd426f5953d7f6886de3a94c0af03fe5ea844ef5f02ce"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/02_add_fe_dtpa_original.screen": "1e65d886946b4a2dca524e700f068ffa78aadd89742b8462ce77a584fd2a6480"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/02_add_fe_dtpa_original.sel": "c9f352f893f9da33d1e8c6d5a0717213d8a7b84b8b032509c9b185703a88b155"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/03_macro_sodium_balance.json": "2d1817e99dc3c5ce18d4a490b8260d21e63f32d27f364308a0fd49a0f38828bd"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/03_macro_sodium_balance.out": "71a4956c3d28ad3c883397d00deddc1414247d5928df33d7b00b94de56be30e9"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/03_macro_sodium_balance.pqi": "518910949cab25ee19da4302d0a468e6d091dec4b005de872f6eba6addf6787f"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/03_macro_sodium_balance.screen": "f2b1b1b782852dbcd627ee034c807d2c7b6e4b998238fd4e6b2b9333c6c7941c"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/03_macro_sodium_balance.sel": "fb8c69a07c29d334a12ffef1ca84c20cfa4ab139850c03239ad304126ce307ad"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/04_add_fe_dtpa_sodium_balance.json": "5427e63e4b6ed3462c0e611ce50d4f51b6d5a56a12ee5a663c784e73562122c8"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/04_add_fe_dtpa_sodium_balance.out": "55a435752cb92f777a03fbae98d6d7589486418f3c30e2e77db64850a54598cc"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/04_add_fe_dtpa_sodium_balance.pqi": "8e86a3b518dd472d8e4b7aab83482e8c963b2339725fbc443e394508c46d1904"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/04_add_fe_dtpa_sodium_balance.screen": "14285e382b20718604a4e0fd1ff53e0d68ffb6633b71444a9a8d28256d06de60"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/04_add_fe_dtpa_sodium_balance.sel": "2db2e81ed9520e436c2a171e39dfb010d3a69d56cbfc523f00a75ae5b60497f3"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/05_actual_products_sodium_balance.json": "bd26bd4c16b41902dac2c8f436e559389e9d065f29552b429a742afc753f1c8f"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/05_actual_products_sodium_balance.out": "86be00f861fee17057e49b3f8b4fffc36af8f8fc9412cd0456fb825a046ce963"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/05_actual_products_sodium_balance.pqi": "0cfbe897e68b9e8cb92cf7ceeef6f1e8ac1c97288c08e384ff001f544b944951"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/05_actual_products_sodium_balance.screen": "f05f3bf8f33489ecf8aef6412a37541acf0247a2bb9e7f57234d343d37a34a45"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/05_actual_products_sodium_balance.sel": "701481e882a50a62dc068bc1d3516b581965a4818044e42439b294500f2fff59"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/error.inp": "0a006f2737508b975123d93456dda0d927d32136460de54c9dd7e7f2272b22b2"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_calcium_phosphate_initial_charge/calcium_phosphate.out": "8c725887a1dbeaeea43d319e30caa7ebba1bbba3c5e74ba75b43e5fad4d54b15"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_calcium_phosphate_initial_charge/calcium_phosphate.pqi": "ce28a1a369c3bb3d5654fd2943a030e3d4bb5acdad6d4713932971e25f299412"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_calcium_phosphate_initial_charge/calcium_phosphate.screen": "506ed35dce53a1a399b7491b298fce6eefb43f1f9e62e2fce93ce3fe08667e8a"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_calcium_phosphate_initial_charge/calcium_phosphate.sel": "78aa29df370f93fffbebccc1b01335a782e16a2ad18922a57395cf1b49d39a62"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_mixed_product_phases_initial_charge/mixed_product_phases.out": "e4642333998ca9b013e2eb1b23a9538bd6bc9fb6df927b1ee99416b99232e204"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_mixed_product_phases_initial_charge/mixed_product_phases.pqi": "14e0298dee816cc7f03707f0506dc6039e1d79bd91dc617436992aa1453b2bb1"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_mixed_product_phases_initial_charge/mixed_product_phases.screen": "551e1fef655fd0f2fc1d0ffc8335d3f44d827c9d40ff0ea453cccc124211646d"
+      }
+    },
+    {
+      "kind": "preserved_diagnostic",
+      "hashes": {
+        "failures/phase_mixed_product_phases_initial_charge/mixed_product_phases.sel": "9531dbfc6125e0d0634c03e7f383d45a20b64e87982a916e136a30907dcbb2e0"
+      }
+    }
+  ]
+}

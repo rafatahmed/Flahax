@@ -1,0 +1,163 @@
+   Input file: fe_edta.pqi
+  Output file: fe_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX fe_edta
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Fe(3) 2.3278717879846002e-05
+	 Edta 2.3278717879846002e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file fe_edta.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Fe(3) Edta Na Cl
+	 molalities Cl- Fe+3 H+ Na+ Edta-4 OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Na(Edta)-3
+	 activities Cl- Fe+3 H+ Na+ Edta-4 OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Na(Edta)-3
+	 si Ferrihydrite Goethite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX fe_edta
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Edta              2.328e-05   2.328e-05
+	Fe(3)             2.328e-05   2.328e-05
+	Na                2.023e-03   2.023e-03  Charge balance
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.024e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -6.166e-07
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -5.715e-19
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =  10
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.051e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.721    -0.022     (0)  
+   FeCl+2          5.224e-19   4.291e-19   -18.282   -18.367    -0.085     (0)  
+   FeCl2+          3.831e-21   3.647e-21   -20.417   -20.438    -0.021     (0)  
+   FeCl3           6.940e-25   6.940e-25   -24.159   -24.159     0.000     (0)  
+Edta          2.328e-05
+   Fe(Edta)-       2.285e-05   2.168e-05    -4.641    -4.664    -0.023     (0)  
+   FeOH(Edta)-2    4.244e-07   3.435e-07    -6.372    -6.464    -0.092     (0)  
+   FeH(Edta)       6.855e-10   6.855e-10    -9.164    -9.164     0.000     (0)  
+   H2(Edta)-2      1.190e-10   9.634e-11    -9.924   -10.016    -0.092     (0)  
+   H(Edta)-3       8.267e-11   5.138e-11   -10.083   -10.289    -0.207     (0)  
+   Fe(OH)2(Edta)-3   4.926e-11   3.062e-11   -10.308   -10.514    -0.207     (0)  
+   H3(Edta)-       1.336e-13   1.267e-13   -12.874   -12.897    -0.023     (0)  
+   Edta-4          1.286e-15   5.792e-16   -14.891   -15.237    -0.346     (0)  
+   Na(Edta)-3      8.987e-16   5.586e-16   -15.046   -15.253    -0.207     (0)  
+   H4(Edta)        1.832e-17   1.832e-17   -16.737   -16.737     0.000     (0)  
+   H5(Edta)+       6.106e-22   5.792e-22   -21.214   -21.237    -0.023     (0)  
+Fe(3)         2.328e-05
+   Fe(Edta)-       2.285e-05   2.168e-05    -4.641    -4.664    -0.023     (0)  
+   FeOH(Edta)-2    4.244e-07   3.435e-07    -6.372    -6.464    -0.092     (0)  
+   FeH(Edta)       6.855e-10   6.855e-10    -9.164    -9.164     0.000     (0)  
+   Fe(OH)2+        1.997e-10   1.902e-10    -9.700    -9.721    -0.021     (0)  
+   Fe(OH)2(Edta)-3   4.926e-11   3.062e-11   -10.308   -10.514    -0.207     (0)  
+   Fe(OH)3         2.056e-12   2.056e-12   -11.687   -11.687     0.000     (0)  
+   FeOH+2          5.911e-14   4.855e-14   -13.228   -13.314    -0.085     (0)  
+   Fe(OH)4-        2.025e-15   1.928e-15   -14.694   -14.715    -0.021     (0)  
+   Fe+3            1.170e-17   7.468e-18   -16.932   -17.127    -0.195     (0)  
+   FeCl+2          5.224e-19   4.291e-19   -18.282   -18.367    -0.085     (0)  
+   FeCl2+          3.831e-21   3.647e-21   -20.417   -20.438    -0.021     (0)  
+   FeCl3           6.940e-25   6.940e-25   -24.159   -24.159     0.000     (0)  
+   Fe2(OH)2+4      1.817e-25   7.804e-26   -24.741   -25.108    -0.367     (0)  
+   Fe3(OH)4+5      8.037e-34   2.145e-34   -33.095   -33.669    -0.574     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Na            2.023e-03
+   Na+             2.023e-03   1.924e-03    -2.694    -2.716    -0.022     (0)  
+   Na(Edta)-3      8.987e-16   5.586e-16   -15.046   -15.253    -0.207     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fe(OH)2.7Cl.3     1.30     -1.74   -3.04  Fe(OH)2.7Cl.3
+  Ferrihydrite     -2.32      0.87    3.19  Fe(OH)3
+  Goethite          0.38      0.87    0.49  FeOOH
+  Halite           -7.04     -5.44    1.60  NaCl
+  Hematite          3.16      1.75   -1.42  Fe2O3
+  Lepidocrocite    -0.50      0.87    1.37  FeOOH
+  Maghemite        -4.64      1.75    6.39  Fe2O3
+  O2(g)           -43.09     40.00   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.037 Seconds.
+-------------------------------
+

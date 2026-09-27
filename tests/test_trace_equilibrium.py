@@ -1,4 +1,8 @@
 import unittest
+from flahax.aqueous_model import chemistry
+
+def conserved(species, basis):
+    return sum(species.get(r['name'],0.)*r['powers'].get(basis,0.) for r in chemistry()['aqueous'])
 
 from flahax import ChMicroProductDose, FertilizerTotals, solve_ch_micro_equilibrium, solve_mixed_fertilizer_equilibrium
 
@@ -8,12 +12,13 @@ class TraceEquilibriumTests(unittest.TestCase):
         totals = ChMicroProductDose(1.0).totals(calcium=.002, magnesium=.001)
         result = solve_ch_micro_equilibrium(totals, 6.0, .01)
         s = result.species
-        self.assertAlmostEqual(s["Fe+3"] + s["Fe(III)-EDTA"], totals.iron, places=15)
-        self.assertAlmostEqual(s["Mn+2"] + s["Mn-EDTA"], totals.manganese, places=15)
-        self.assertAlmostEqual(s["Zn+2"] + s["Zn-EDTA"], totals.zinc, places=15)
-        self.assertAlmostEqual(s["Cu+2"] + s["Cu-EDTA"], totals.copper, places=15)
-        self.assertAlmostEqual(s["B(OH)3"] + s["B(OH)4-"], totals.boron, places=15)
-        self.assertAlmostEqual(s["MoO4-2"] + s["HMoO4-"] + s["H2MoO4"], totals.molybdate, places=15)
+        self.assertAlmostEqual(conserved(s,'Fe+3'), totals.iron, places=12)
+        self.assertAlmostEqual(conserved(s,'Mn+2'), totals.manganese, places=12)
+        self.assertAlmostEqual(conserved(s,'Zn+2'), totals.zinc, places=12)
+        self.assertAlmostEqual(conserved(s,'Cu+2'), totals.copper, places=12)
+        self.assertAlmostEqual(conserved(s,'Edta-4'), totals.edta, places=12)
+        self.assertAlmostEqual(conserved(s,'H3BO3'), totals.boron, places=12)
+        self.assertAlmostEqual(conserved(s,'MoO4-2'), totals.molybdate, places=12)
 
     def test_edta_is_not_treated_as_free_trace_metal(self):
         result = solve_ch_micro_equilibrium(ChMicroProductDose(1.0).totals(), 6.0, .01)
@@ -46,5 +51,5 @@ class TraceEquilibriumTests(unittest.TestCase):
             totals = totals.__class__(iron=1e-5, **{field: 1e-5})
             result = solve_ch_micro_equilibrium(totals, 6.0, .01)
             self.assertGreater(result.species[complex_name], result.species["Fe+3"])
-            self.assertAlmostEqual(result.species["Fe+3"] + result.species[complex_name], totals.iron, places=15)
+            self.assertAlmostEqual(conserved(result.species,'Fe+3'), totals.iron, places=12)
             self.assertLessEqual(result.species[f"{ligand}-free"] + result.species[complex_name], getattr(totals, field))

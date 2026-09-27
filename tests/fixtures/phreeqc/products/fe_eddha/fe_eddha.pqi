@@ -1,0 +1,24 @@
+TITLE FlahaX fe_eddha; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Fe(3) 1.0744023636852e-05
+ Edd 1.0744023636852e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file fe_eddha.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Fe(3) Edd Na Cl
+ -molalities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd-
+ -activities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd-
+ -si Ferrihydrite Goethite Halite
+END

@@ -1,0 +1,153 @@
+   Input file: calcium_phosphate.pqi
+  Output file: calcium_phosphate.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-tqi9lcjz\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX calcium_phosphate
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 7.4000000000000004
+	 units mol/kgw
+	 water 1
+	 Ca 0.002
+	 P 0.001
+	 Na 0.002 charge
+	 Cl 0.002
+	EQUILIBRIUM_PHASES 1
+	 Hydroxylapatite 0 0
+	 CaHPO4:2H2O 0 0
+	 CaHPO4 0 0
+	SELECTED_OUTPUT
+	 file calcium_phosphate.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Ca P Na Cl
+	 molalities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+	 activities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+	 si Halite Hydroxylapatite CaHPO4:2H2O CaHPO4
+	 equilibrium_phases Hydroxylapatite CaHPO4:2H2O CaHPO4
+	END
+-----
+TITLE
+-----
+
+ FlahaX calcium_phosphate
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: The program has failed to converge to a numerical solution.
+
+The following equations were not satisfied:
+ERROR:                   Ca has not converged. Total: 2.000000e-03	Calculated: 1.876108e-03	Residual: 1.238919e-04
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Ca                1.876e-03   1.876e-03
+	Cl                2.000e-03   2.000e-03
+	Na                1.749e-17   1.749e-17  Charge balance
+	P                 1.000e-03   1.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   7.400    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   5.462e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   7.522e-04
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -6.511e-19
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  = 101 (202 overall)
+                                  Total H  = 1.110149e+02
+                                  Total O  = 5.551083e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             2.740e-07   2.529e-07    -6.562    -6.597    -0.035     (0)  
+   H+              4.308e-08   3.981e-08    -7.366    -7.400    -0.034      0.00
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Ca            1.876e-03
+   Ca+2            1.647e-03   1.201e-03    -2.783    -2.920    -0.137     (0)  
+   CaHPO4          2.073e-04   2.073e-04    -3.683    -3.683     0.000     (0)  
+   CaPO4-          1.496e-05   1.386e-05    -4.825    -4.858    -0.033     (0)  
+   CaH2PO4+        6.887e-06   6.378e-06    -5.162    -5.195    -0.033     (0)  
+   CaOH+           6.538e-09   6.061e-09    -8.185    -8.217    -0.033     (0)  
+Cl            2.000e-03
+   Cl-             2.000e-03   1.848e-03    -2.699    -2.733    -0.034     (0)  
+H(0)          2.241e-26
+   H2              1.121e-26   1.122e-26   -25.951   -25.950     0.001     (0)  
+Na            1.749e-17
+   Na+             1.742e-17   1.609e-17   -16.759   -16.793    -0.034     (0)  
+   NaHPO4-         7.711e-20   7.141e-20   -19.113   -19.146    -0.033     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -40.396   -40.395     0.001     (0)  
+P             1.000e-03
+   HPO4-2          5.147e-04   3.776e-04    -3.288    -3.423    -0.134     (0)  
+   H2PO4-          2.561e-04   2.372e-04    -3.592    -3.625    -0.033     (0)  
+   CaHPO4          2.073e-04   2.073e-04    -3.683    -3.683     0.000     (0)  
+   CaPO4-          1.496e-05   1.386e-05    -4.825    -4.858    -0.033     (0)  
+   CaH2PO4+        6.887e-06   6.378e-06    -5.162    -5.195    -0.033     (0)  
+   PO4-3           8.137e-09   4.000e-09    -8.090    -8.398    -0.308     (0)  
+   H3PO4           1.328e-09   1.328e-09    -8.877    -8.877     0.000     (0)  
+   NaHPO4-         7.711e-20   7.141e-20   -19.113   -19.146    -0.033     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Ca3(PO4)2(beta)   3.36    -25.56  -28.92  Ca3(PO4)2
+  Ca4H(PO4)3:3H2O   2.80    -44.28  -47.08  Ca4H(PO4)3:3H2O
+  CaHPO4            0.56    -18.72  -19.27  CaHPO4
+  CaHPO4:2H2O       0.28    -18.72  -19.00  CaHPO4:2H2O
+  Halite          -21.13    -19.53    1.60  NaCl
+  Hydroxylapatite  11.94    -32.40  -44.33  Ca5(PO4)3OH
+  Lime            -20.82     11.88   32.70  CaO
+  O2(g)           -37.49     45.60   83.09  O2
+  Portlandite     -10.92     11.88   22.80  Ca(OH)2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+ERROR: Model failed to converge for initial solution  1.
+Stopping.

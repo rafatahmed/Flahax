@@ -1,0 +1,126 @@
+   Input file: C:\Users\rafat\repo\Flaha\Flahax\tests\fixtures\phreeqc\fe_dtpa.pqi
+  Output file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\fe_dtpa.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX Iron DTPA catalogue product
+	SOLUTION 1
+	 temp 25
+	 pH 6 charge
+	 units mmol/kgw
+	 Fe(3) .01
+	 Dtp .01
+	SELECTED_OUTPUT
+	 file fe_dtpa.sel
+	 reset false
+	 ph true
+	 ionic_strength true
+	 totals Fe(3) Dtp
+	END
+-----
+TITLE
+-----
+
+ FlahaX Iron DTPA catalogue product
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Dtp               1.000e-05   1.000e-05
+	Fe(3)             1.000e-05   1.000e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   4.702      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   3.000e-05
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -4.000e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   1.407e-14
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   6
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              2.000e-05   1.987e-05    -4.699    -4.702    -0.003      0.00
+   OH-             5.099e-10   5.067e-10    -9.292    -9.295    -0.003     (0)  
+   H2O             5.551e+01   1.000e+00     1.744    -0.000     0.000     18.07
+Dtp           1.000e-05
+   FeDtp-2         1.000e-05   9.747e-06    -5.000    -5.011    -0.011     (0)  
+   H2Dtp-3         2.422e-10   2.287e-10    -9.616    -9.641    -0.025     (0)  
+   H3Dtp-2         8.884e-11   8.660e-11   -10.051   -10.062    -0.011     (0)  
+   H4Dtp-          6.896e-13   6.852e-13   -12.161   -12.164    -0.003     (0)  
+   HDtp-4          3.202e-14   2.891e-14   -13.495   -13.539    -0.044     (0)  
+   H5Dtp           1.362e-15   1.362e-15   -14.866   -14.866     0.000     (0)  
+   Dtp-5           5.650e-20   4.817e-20   -19.248   -19.317    -0.069     (0)  
+Fe(3)         1.000e-05
+   FeDtp-2         1.000e-05   9.747e-06    -5.000    -5.011    -0.011     (0)  
+   Fe(OH)2+        3.299e-10   3.278e-10    -9.482    -9.484    -0.003     (0)  
+   FeOH+2          1.706e-12   1.663e-12   -11.768   -11.779    -0.011     (0)  
+   Fe(OH)3         1.784e-13   1.784e-13   -12.749   -12.749     0.000     (0)  
+   Fe+3            5.384e-15   5.083e-15   -14.269   -14.294    -0.025     (0)  
+   Fe(OH)4-        8.470e-18   8.416e-18   -17.072   -17.075    -0.003     (0)  
+   Fe2(OH)2+4      1.015e-22   9.158e-23   -21.994   -22.038    -0.045     (0)  
+   Fe3(OH)4+5      5.096e-31   4.339e-31   -30.293   -30.363    -0.070     (0)  
+H(0)          5.592e-21
+   H2              2.796e-21   2.796e-21   -20.553   -20.553     0.000     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -51.188   -51.188     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Ferrihydrite     -3.38     -0.19    3.19  Fe(OH)3
+  Goethite         -0.68     -0.19    0.49  FeOOH
+  Hematite          1.04     -0.38   -1.42  Fe2O3
+  Lepidocrocite    -1.56     -0.19    1.37  FeOOH
+  Maghemite        -6.76     -0.38    6.39  Fe2O3
+  O2(g)           -48.28     34.81   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.053 Seconds.
+-------------------------------
+

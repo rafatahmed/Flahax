@@ -1,0 +1,246 @@
+   Input file: calcium_phosphate.pqi
+  Output file: calcium_phosphate.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-4r_t8l8f\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX calcium_phosphate
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 7.4000000000000004
+	 units mol/kgw
+	 water 1
+	 Ca 0.002
+	 P 0.001
+	 Na 0.01 charge
+	 Cl 0.01
+	EQUILIBRIUM_PHASES 1
+	 Hydroxylapatite 0 0
+	 CaHPO4:2H2O 0 0
+	 CaHPO4 0 0
+	SELECTED_OUTPUT
+	 file calcium_phosphate.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Ca P Na Cl
+	 molalities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+	 activities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+	 si Halite Hydroxylapatite CaHPO4:2H2O CaHPO4
+	 equilibrium_phases Hydroxylapatite CaHPO4:2H2O CaHPO4
+	END
+-----
+TITLE
+-----
+
+ FlahaX calcium_phosphate
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Ca                2.000e-03   2.000e-03
+	Cl                1.000e-02   1.000e-02
+	Na                7.769e-03   7.769e-03  Charge balance
+	P                 1.000e-03   1.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   7.400    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.370e-02
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   7.688e-04
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.358e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110149e+02
+                                  Total O  = 5.551083e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             2.854e-07   2.528e-07    -6.545    -6.597    -0.053     (0)  
+   H+              4.481e-08   3.981e-08    -7.349    -7.400    -0.051      0.00
+   H2O             5.551e+01   9.997e-01     1.744    -0.000     0.000     18.07
+Ca            2.000e-03
+   Ca+2            1.807e-03   1.126e-03    -2.743    -2.949    -0.205     (0)  
+   CaHPO4          1.744e-04   1.744e-04    -3.759    -3.759     0.000     (0)  
+   CaPO4-          1.306e-05   1.165e-05    -4.884    -4.934    -0.049     (0)  
+   CaH2PO4+        6.010e-06   5.364e-06    -5.221    -5.271    -0.049     (0)  
+   CaOH+           6.351e-09   5.679e-09    -8.197    -8.246    -0.049     (0)  
+Cl            1.000e-02
+   Cl-             1.000e-02   8.885e-03    -2.000    -2.051    -0.051     (0)  
+H(0)          2.237e-26
+   H2              1.118e-26   1.122e-26   -25.951   -25.950     0.001     (0)  
+Na            7.769e-03
+   Na+             7.738e-03   6.875e-03    -2.111    -2.163    -0.051     (0)  
+   NaHPO4-         3.067e-05   2.737e-05    -4.513    -4.563    -0.049     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -40.397   -40.395     0.001     (0)  
+P             1.000e-03
+   HPO4-2          5.374e-04   3.389e-04    -3.270    -3.470    -0.200     (0)  
+   H2PO4-          2.385e-04   2.128e-04    -3.623    -3.672    -0.049     (0)  
+   CaHPO4          1.744e-04   1.744e-04    -3.759    -3.759     0.000     (0)  
+   NaHPO4-         3.067e-05   2.737e-05    -4.513    -4.563    -0.049     (0)  
+   CaPO4-          1.306e-05   1.165e-05    -4.884    -4.934    -0.049     (0)  
+   CaH2PO4+        6.010e-06   5.364e-06    -5.221    -5.271    -0.049     (0)  
+   PO4-3           1.040e-08   3.589e-09    -7.983    -8.445    -0.462     (0)  
+   H3PO4           1.191e-09   1.191e-09    -8.924    -8.924     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Ca3(PO4)2(beta)   3.18    -25.74  -28.92  Ca3(PO4)2
+  Ca4H(PO4)3:3H2O   2.55    -44.53  -47.08  Ca4H(PO4)3:3H2O
+  CaHPO4            0.48    -18.79  -19.27  CaHPO4
+  CaHPO4:2H2O       0.20    -18.79  -19.00  CaHPO4:2H2O
+  Halite           -5.82     -4.21    1.60  NaCl
+  Hydroxylapatite  11.66    -32.68  -44.33  Ca5(PO4)3OH
+  Lime            -20.85     11.85   32.70  CaO
+  O2(g)           -37.49     45.60   83.09  O2
+  Portlandite     -10.95     11.85   22.80  Ca(OH)2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+CaHPO4           -0.96   -20.24    -19.27    0.000e+00           0   0.000e+00
+CaHPO4:2H2O      -1.24   -20.24    -19.00    0.000e+00           0   0.000e+00
+Hydroxylapatite   -0.00   -44.33    -44.33    0.000e+00   1.059e-04   1.059e-04
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Ca                1.471e-03   1.471e-03
+	Cl                1.000e-02   1.000e-02
+	Na                7.769e-03   7.769e-03
+	P                 6.824e-04   6.824e-04
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   5.611      Charge balance
+                                       pe  =  12.177      Adjusted to redox equilibrium
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.216e-02
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   2.772e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.291e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  12
+                                  Total H  = 1.110148e+02
+                                  Total O  = 5.550946e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              2.738e-06   2.447e-06    -5.563    -5.611    -0.049      0.00
+   OH-             4.615e-09   4.114e-09    -8.336    -8.386    -0.050     (0)  
+   H2O             5.551e+01   9.997e-01     1.744    -0.000     0.000     18.07
+Ca            1.471e-03
+   Ca+2            1.451e-03   9.258e-04    -2.838    -3.033    -0.195     (0)  
+   CaH2PO4+        1.323e-05   1.187e-05    -4.878    -4.925    -0.047     (0)  
+   CaHPO4          6.279e-06   6.279e-06    -5.202    -5.202     0.000     (0)  
+   CaPO4-          7.608e-09   6.827e-09    -8.119    -8.166    -0.047     (0)  
+   CaOH+           8.452e-11   7.599e-11   -10.073   -10.119    -0.046     (0)  
+Cl            1.000e-02
+   Cl-             1.000e-02   8.937e-03    -2.000    -2.049    -0.049     (0)  
+H(0)          3.746e-39
+   H2              1.873e-39   1.878e-39   -38.727   -38.726     0.001     (0)  
+Na            7.769e-03
+   Na+             7.767e-03   6.942e-03    -2.110    -2.159    -0.049     (0)  
+   NaHPO4-         1.349e-06   1.210e-06    -5.870    -5.917    -0.047     (0)  
+O(0)          2.863e-15
+   O2              1.432e-15   1.436e-15   -14.844   -14.843     0.001     (0)  
+P             6.824e-04
+   H2PO4-          6.383e-04   5.728e-04    -3.195    -3.242    -0.047     (0)  
+   HPO4-2          2.301e-05   1.484e-05    -4.638    -4.829    -0.190     (0)  
+   CaH2PO4+        1.323e-05   1.187e-05    -4.878    -4.925    -0.047     (0)  
+   CaHPO4          6.279e-06   6.279e-06    -5.202    -5.202     0.000     (0)  
+   NaHPO4-         1.349e-06   1.210e-06    -5.870    -5.917    -0.047     (0)  
+   H3PO4           1.971e-07   1.971e-07    -6.705    -6.705     0.000     (0)  
+   CaPO4-          7.608e-09   6.827e-09    -8.119    -8.166    -0.047     (0)  
+   PO4-3           7.029e-12   2.557e-12   -11.153   -11.592    -0.439     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Ca3(PO4)2(beta)  -3.36    -32.28  -28.92  Ca3(PO4)2
+  Ca4H(PO4)3:3H2O  -5.44    -52.52  -47.08  Ca4H(PO4)3:3H2O
+  CaHPO4           -0.96    -20.24  -19.27  CaHPO4
+  CaHPO4:2H2O      -1.24    -20.24  -19.00  CaHPO4:2H2O
+  Halite           -5.81     -4.21    1.60  NaCl
+  Hydroxylapatite  -0.00    -44.33  -44.33  Ca5(PO4)3OH
+  Lime            -24.51      8.19   32.70  CaO
+  O2(g)           -11.94     71.15   83.09  O2
+  Portlandite     -14.62      8.19   22.80  Ca(OH)2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.038 Seconds.
+-------------------------------
+

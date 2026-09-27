@@ -1,0 +1,28 @@
+TITLE FlahaX magnesium_salts; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Mg 0.001
+ S(6) 0.001
+ Na 0.01 charge
+ Cl 0.01
+EQUILIBRIUM_PHASES 1
+ Epsomite 0 0
+ Kieserite 0 0
+SELECTED_OUTPUT
+ -file magnesium_salts.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Mg S(6) Na Cl
+ -molalities Cl- H+ Mg+2 Na+ SO4-2 OH- MgOH+ HSO4- MgSO4 NaSO4-
+ -activities Cl- H+ Mg+2 Na+ SO4-2 OH- MgOH+ HSO4- MgSO4 NaSO4-
+ -si Halite Epsomite Kieserite
+ -equilibrium_phases Epsomite Kieserite
+END

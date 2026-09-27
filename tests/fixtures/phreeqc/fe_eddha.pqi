@@ -1,0 +1,14 @@
+TITLE FlahaX Iron o,o-EDDHA catalogue product
+SOLUTION 1
+ temp 25
+ pH 6 charge
+ units mmol/kgw
+ Fe(3) .01
+ Edd .01
+SELECTED_OUTPUT
+ -file fe_eddha.sel
+ -reset false
+ -pH true
+ -ionic_strength true
+ -totals Fe(3) Edd
+END

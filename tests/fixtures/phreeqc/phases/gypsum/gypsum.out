@@ -1,0 +1,241 @@
+   Input file: gypsum.pqi
+  Output file: gypsum.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-4r_t8l8f\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX gypsum
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Ca 0.040000000000000001
+	 S(6) 0.040000000000000001
+	 Na 0.01 charge
+	 Cl 0.01
+	EQUILIBRIUM_PHASES 1
+	 Gypsum 0 0
+	 Anhydrite 0 0
+	SELECTED_OUTPUT
+	 file gypsum.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Ca S(6) Na Cl
+	 molalities Ca+2 Cl- H+ Na+ SO4-2 OH- CaOH+ HSO4- CaSO4 NaSO4-
+	 activities Ca+2 Cl- H+ Na+ SO4-2 OH- CaOH+ HSO4- CaSO4 NaSO4-
+	 si Halite Anhydrite Gypsum
+	 equilibrium_phases Gypsum Anhydrite
+	END
+-----
+TITLE
+-----
+
+ FlahaX gypsum
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Ca                4.000e-02   4.000e-02
+	Cl                1.000e-02   1.000e-02
+	Na                9.998e-03   9.998e-03  Charge balance
+	S(6)              4.000e-02   4.000e-02
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   0.999
+                 Ionic strength (mol/kgw)  =   1.023e-01
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -2.334e-06
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   5.343e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.566683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.282e-06   1.000e-06    -5.892    -6.000    -0.108      0.00
+   OH-             1.323e-08   1.006e-08    -7.878    -7.998    -0.119     (0)  
+   H2O             5.551e+01   9.986e-01     1.744    -0.001     0.000     18.07
+Ca            4.000e-02
+   Ca+2            2.330e-02   8.619e-03    -1.633    -2.065    -0.432     (0)  
+   CaSO4           1.670e-02   1.670e-02    -1.777    -1.777     0.000     (0)  
+   CaOH+           2.177e-09   1.729e-09    -8.662    -8.762    -0.100     (0)  
+Cl            1.000e-02
+   Cl-             1.000e-02   7.799e-03    -2.000    -2.108    -0.108     (0)  
+H(0)          1.383e-23
+   H2              6.915e-24   7.079e-24   -23.160   -23.150     0.010     (0)  
+Na            9.998e-03
+   Na+             9.567e-03   7.461e-03    -2.019    -2.127    -0.108     (0)  
+   NaSO4-          4.308e-04   3.390e-04    -3.366    -3.470    -0.104     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -46.007   -45.996     0.010     (0)  
+S(6)          4.000e-02
+   SO4-2           2.286e-02   8.460e-03    -1.641    -2.073    -0.432     (0)  
+   CaSO4           1.670e-02   1.670e-02    -1.777    -1.777     0.000     (0)  
+   NaSO4-          4.308e-04   3.390e-04    -3.366    -3.470    -0.104     (0)  
+   HSO4-           1.067e-06   8.267e-07    -5.972    -6.083    -0.111     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Anhydrite         0.22     -4.14   -4.36  CaSO4
+  Gypsum            0.47     -4.14   -4.61  CaSO4:2H2O
+  Halite           -5.84     -4.24    1.60  NaCl
+  Lime            -22.76      9.93   32.70  CaO
+  Mirabilite       -5.22     -6.33   -1.11  Na2SO4:10H2O
+  O2(g)           -43.09     40.00   83.09  O2
+  Portlandite     -12.87      9.93   22.80  Ca(OH)2
+  Thenardite       -6.65     -6.33    0.32  Na2SO4
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+Anhydrite        -0.25    -4.61     -4.36    0.000e+00           0   0.000e+00
+Gypsum            0.00    -4.61     -4.61    0.000e+00   2.307e-02   2.307e-02
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Ca                1.695e-02   1.693e-02
+	Cl                1.001e-02   1.000e-02
+	Na                1.001e-02   9.998e-03
+	S                 1.695e-02   1.693e-02
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   5.888      Charge balance
+                                       pe  =  11.863      Adjusted to redox equilibrium
+                        Activity of water  =   0.999
+                 Ionic strength (mol/kgw)  =   5.476e-02
+                       Mass of water (kg)  =   9.992e-01
+                 Total alkalinity (eq/kg)  =  -2.336e-06
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   5.412e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  13
+                                  Total H  = 1.109214e+02
+                                  Total O  = 5.552843e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.586e-06   1.294e-06    -5.800    -5.888    -0.088      0.00
+   OH-             9.655e-09   7.775e-09    -8.015    -8.109    -0.094     (0)  
+   H2O             5.551e+01   9.992e-01     1.744    -0.000     0.000     18.07
+Ca            1.695e-02
+   Ca+2            1.132e-02   5.015e-03    -1.946    -2.300    -0.353     (0)  
+   CaSO4           5.633e-03   5.633e-03    -2.249    -2.249     0.000     (0)  
+   CaOH+           9.391e-10   7.781e-10    -9.027    -9.109    -0.082     (0)  
+Cl            1.001e-02
+   Cl-             1.001e-02   8.166e-03    -2.000    -2.088    -0.088     (0)  
+H(0)          4.407e-39
+   H2              2.203e-39   2.231e-39   -38.657   -38.651     0.005     (0)  
+Na            1.001e-02
+   Na+             9.752e-03   7.957e-03    -2.011    -2.099    -0.088     (0)  
+   NaSO4-          2.544e-04   2.095e-04    -3.595    -3.679    -0.084     (0)  
+O(0)          2.008e-15
+   O2              1.004e-15   1.017e-15   -14.998   -14.993     0.005     (0)  
+S(-2)         0.000e+00
+   H2S             0.000e+00   0.000e+00  -115.410  -115.410     0.000     (0)  
+   HS-             0.000e+00   0.000e+00  -116.423  -116.542    -0.119     (0)  
+   S5-2            0.000e+00   0.000e+00  -119.542  -120.019    -0.477     (0)  
+   S6-2            0.000e+00   0.000e+00  -120.058  -120.535    -0.477     (0)  
+   S4-2            0.000e+00   0.000e+00  -120.137  -120.615    -0.477     (0)  
+   S3-2            0.000e+00   0.000e+00  -120.943  -121.421    -0.477     (0)  
+   S2-2            0.000e+00   0.000e+00  -121.959  -122.437    -0.477     (0)  
+   S-2             0.000e+00   0.000e+00  -127.609  -127.954    -0.345     (0)  
+S(6)          1.695e-02
+   SO4-2           1.106e-02   4.902e-03    -1.956    -2.310    -0.353     (0)  
+   CaSO4           5.633e-03   5.633e-03    -2.249    -2.249     0.000     (0)  
+   NaSO4-          2.544e-04   2.095e-04    -3.595    -3.679    -0.084     (0)  
+   HSO4-           7.603e-07   6.199e-07    -6.119    -6.208    -0.089     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Anhydrite        -0.25     -4.61   -4.36  CaSO4
+  Gypsum            0.00     -4.61   -4.61  CaSO4:2H2O
+  H2S(g)         -114.42   -122.43   -8.01  H2S
+  Halite           -5.79     -4.19    1.60  NaCl
+  Lime            -23.22      9.48   32.70  CaO
+  Mirabilite       -5.40     -6.51   -1.11  Na2SO4:10H2O
+  O2(g)           -12.09     71.00   83.09  O2
+  Portlandite     -13.33      9.48   22.80  Ca(OH)2
+  Sulfur          -84.78    -86.93   -2.14  S
+  Thenardite       -6.83     -6.51    0.32  Na2SO4
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.027 Seconds.
+-------------------------------
+

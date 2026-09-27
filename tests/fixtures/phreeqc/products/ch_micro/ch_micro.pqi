@@ -1,0 +1,29 @@
+TITLE FlahaX ch_micro; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Fe(3) 1.2534694242994004e-05
+ Zn 6.1180789232181106e-07
+ Mn(2) 3.6404645203604267e-06
+ Cu(2) 1.7310294904478648e-07
+ B 1.20259019426457e-05
+ Mo 5.2110474205315274e-08
+ Na 0.0020061171719197336 charge
+ Edta 1.6960069604721028e-05
+ Cl 0.002
+SELECTED_OUTPUT
+ -file ch_micro.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Fe(3) Zn Mn(2) Cu(2) B Mo Na Edta Cl
+ -molalities H3BO3 Cl- Cu+2 Fe+3 H+ MoO4-2 Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- H2BO3- H5(BO3)2- H8(BO3)3- NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+ -activities H3BO3 Cl- Cu+2 Fe+3 H+ MoO4-2 Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- H2BO3- H5(BO3)2- H8(BO3)3- NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+ -si Zincite Cu(OH)2 Tenorite Ferrihydrite Goethite Pyrochroite Halite
+END

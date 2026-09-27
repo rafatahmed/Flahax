@@ -1,0 +1,132 @@
+   Input file: C:\Users\rafat\repo\Flaha\Flahax\tests\fixtures\phreeqc\cu_edta.pqi
+  Output file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\cu_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX Copper EDTA catalogue product
+	SOLUTION 1
+	 temp 25
+	 pH 6 charge
+	 units mmol/kgw
+	 Cu .01
+	 Edta .01
+	SELECTED_OUTPUT
+	 file cu_edta.sel
+	 reset false
+	 ph true
+	 ionic_strength true
+	 totals Cu Edta
+	END
+-----
+TITLE
+-----
+
+ FlahaX Copper EDTA catalogue product
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cu                1.000e-05   1.000e-05
+	Edta              1.000e-05   1.000e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   4.714      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.887e-05
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -6.632e-11
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -3.246e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =   6
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.943e-05   1.931e-05    -4.712    -4.714    -0.003      0.00
+   OH-             5.248e-10   5.215e-10    -9.280    -9.283    -0.003     (0)  
+   H2O             5.551e+01   1.000e+00     1.744    -0.000     0.000     18.07
+Cu(1)         6.632e-11
+   Cu+             6.632e-11   6.590e-11   -10.178   -10.181    -0.003     (0)  
+Cu(2)         1.000e-05
+   Cu(Edta)-2      9.432e-06   9.197e-06    -5.025    -5.036    -0.011     (0)  
+   CuH(Edta)-      5.651e-07   5.615e-07    -6.248    -6.251    -0.003     (0)  
+   CuH2(Edta)      1.718e-09   1.718e-09    -8.765    -8.765     0.000     (0)  
+   Cu+2            1.380e-09   1.345e-09    -8.860    -8.871    -0.011     (0)  
+   CuOH+           2.233e-12   2.219e-12   -11.651   -11.654    -0.003     (0)  
+   CuOH(Edta)-3    5.042e-13   4.763e-13   -12.297   -12.322    -0.025     (0)  
+   Cu(OH)2         2.309e-16   2.309e-16   -15.637   -15.637     0.000     (0)  
+   Cu2(OH)2+2      1.268e-19   1.237e-19   -18.897   -18.908    -0.011     (0)  
+   Cu(OH)3-        2.485e-22   2.470e-22   -21.605   -21.607    -0.003     (0)  
+   Cu(OH)4-2       1.040e-30   1.014e-30   -29.983   -29.994    -0.011     (0)  
+Edta          1.000e-05
+   Cu(Edta)-2      9.432e-06   9.197e-06    -5.025    -5.036    -0.011     (0)  
+   CuH(Edta)-      5.651e-07   5.615e-07    -6.248    -6.251    -0.003     (0)  
+   CuH2(Edta)      1.718e-09   1.718e-09    -8.765    -8.765     0.000     (0)  
+   H2(Edta)-2      1.375e-09   1.340e-09    -8.862    -8.873    -0.011     (0)  
+   H(Edta)-3       3.919e-11   3.702e-11   -10.407   -10.432    -0.025     (0)  
+   H3(Edta)-       3.425e-11   3.404e-11   -10.465   -10.468    -0.003     (0)  
+   CuOH(Edta)-3    5.042e-13   4.763e-13   -12.297   -12.322    -0.025     (0)  
+   H4(Edta)        9.499e-14   9.499e-14   -13.022   -13.022     0.000     (0)  
+   H5(Edta)+       5.837e-17   5.800e-17   -16.234   -16.237    -0.003     (0)  
+   Edta-4          2.389e-17   2.162e-17   -16.622   -16.665    -0.044     (0)  
+H(0)          5.278e-21
+   H2              2.639e-21   2.639e-21   -20.579   -20.579     0.000     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -51.138   -51.138     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Cu(OH)2          -8.12      0.56    8.67  Cu(OH)2
+  Cumetal          -5.43    -14.18   -8.76  Cu
+  Cuprite          -9.53    -10.93   -1.41  Cu2O
+  O2(g)           -48.23     34.86   83.09  O2
+  Tenorite         -7.09      0.56    7.64  CuO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.045 Seconds.
+-------------------------------
+

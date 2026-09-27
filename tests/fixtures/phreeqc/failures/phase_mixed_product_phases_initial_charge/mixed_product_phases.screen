@@ -1,0 +1,33 @@
+Input file: mixed_product_phases.pqi
+
+Output file: mixed_product_phases.out
+
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-o4zi15lu\merged.dat
+
+              █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+              ║                                            ║
+              ║             * PHREEQC-3.8.6 *              ║
+              ║                                            ║
+              ║      A hydrogeochemical transport model    ║
+              ║                                            ║
+              ║                    by                      ║
+              ║       D.L. Parkhurst and C.A.J. Appelo     ║
+              ║                                            ║
+              ║              January  7, 2025              ║
+              █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+
+
+Initializing...                                                                 
+WARNING: Element C is contained in Calcite (which has 0.0 mass),	
+but is not in solution or other phases.
+WARNING: Element C is contained in Malachite (which has 0.0 mass),	
+but is not in solution or other phases.
+WARNING: Element C is contained in Rhodochrosite (which has 0.0 mass),	
+but is not in solution or other phases.
+WARNING: Element C is contained in Siderite (which has 0.0 mass),	
+but is not in solution or other phases.
+WARNING: Element C is contained in Smithsonite (which has 0.0 mass),	
+but is not in solution or other phases.
+
+
+End of Run after 0.078 Seconds.

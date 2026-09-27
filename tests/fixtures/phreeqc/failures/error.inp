@@ -1,0 +1,68 @@
+SOLUTION_RAW                 1 
+  -temp                      25
+  -pressure                  1
+  -potential                 0
+  -total_h                   111.02448578519
+  -total_o                   55.531032892597
+  -cb                        -8.673617379884e-19
+  -density                   0.99803627058392
+  -viscosity                 0.89002391811221
+  -viscos_0                  0.89002391811221
+  -totals
+    C(4)                     0.0024
+    Ca                       0.001
+    Cl                       0.007
+    Dtp                      1e-05
+    Fe(3)                    1e-05
+    H(0)                     1.4218354195293e-16
+    K                        0.002
+    Mg                       0.001
+    N(5)                     0.003
+    Na                       0.003
+    P                        0.001
+    S(6)                     0.001
+  -pH                        2.4983437384231
+  -pe                        4
+  -mu                        0.014931900238605
+  -ah2o                      0.99957759563117
+  -mass_water                1
+  -soln_vol                  1.0029657573755
+  -total_alkalinity          -0.00404
+  -activities
+    C(4)                     -14.304170937993
+    Ca                       -3.2455775797425
+    Cl                       -2.2081539686328
+    Dtp                      -24.025950855633
+    E                        -4
+    Fe(3)                    -9.7881110594952
+    H(0)                     -16.146687476161
+    K                        -2.7535814088733
+    Mg                       -3.2424413052424
+    N(5)                     -2.5769266908315
+    Na                       -2.5771624541913
+    O(0)                     -60.002068054808
+    P                        -17.785004938391
+    S(6)                     -3.3517389943235
+  -gammas
+EQUILIBRIUM_PHASES_RAW       1 
+  # EXCHANGE_MODIFY candidates; use new_def=true #
+  -new_def                   0
+  -component                 Fix_H+
+      # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
+      -add_formula           HNO3
+      -si                    -6
+      -moles                 1
+      -force_equality        0
+      -dissolve_only         0
+      -precipitate_only      0
+      # PPassemblage workspace variables #
+      -si_org                -6
+      -delta                 0
+      -initial_moles         0
+      -totals                
+  -eltList                   # List of all elements in phases and alternate reactions
+    H                        2
+    N                        1
+    O                        3
+  # PPassemblage workspace variables #
+  -assemblage_totals

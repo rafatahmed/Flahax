@@ -1,0 +1,155 @@
+   Input file: mn_edta.pqi
+  Output file: mn_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX mn_edta
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Mn(2) 2.366301938234277e-05
+	 Edta 2.366301938234277e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file mn_edta.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Mn(2) Edta Na Cl
+	 molalities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+	 activities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+	 si Pyrochroite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX mn_edta
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Edta              2.366e-05   2.366e-05
+	Mn(2)             2.366e-05   2.366e-05
+	Na                2.046e-03   2.046e-03  Charge balance
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.071e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   4.615e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   7.913e-20
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.052e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.902e-03    -2.699    -2.721    -0.022     (0)  
+   MnCl+           9.233e-11   8.785e-11   -10.035   -10.056    -0.022     (0)  
+   MnCl2           2.360e-13   2.360e-13   -12.627   -12.627     0.000     (0)  
+   MnCl3-          1.299e-16   1.236e-16   -15.886   -15.908    -0.022     (0)  
+Edta          2.366e-05
+   Mn(Edta)-2      2.355e-05   1.902e-05    -4.628    -4.721    -0.093     (0)  
+   MnH(Edta)-      6.345e-08   6.015e-08    -7.198    -7.221    -0.023     (0)  
+   H2(Edta)-2      2.682e-08   2.166e-08    -7.572    -7.664    -0.093     (0)  
+   H(Edta)-3       1.869e-08   1.155e-08    -7.728    -7.937    -0.209     (0)  
+   H3(Edta)-       3.005e-11   2.848e-11   -10.522   -10.545    -0.023     (0)  
+   Edta-4          2.916e-13   1.302e-13   -12.535   -12.885    -0.350     (0)  
+   Na(Edta)-3      2.054e-13   1.270e-13   -12.687   -12.896    -0.209     (0)  
+   H4(Edta)        4.117e-15   4.117e-15   -14.385   -14.385     0.000     (0)  
+   H5(Edta)+       1.373e-19   1.302e-19   -18.862   -18.885    -0.023     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Mn(2)         2.366e-05
+   Mn(Edta)-2      2.355e-05   1.902e-05    -4.628    -4.721    -0.093     (0)  
+   MnH(Edta)-      6.345e-08   6.015e-08    -7.198    -7.221    -0.023     (0)  
+   Mn+2            4.544e-08   3.670e-08    -7.343    -7.435    -0.093     (0)  
+   MnCl+           9.233e-11   8.785e-11   -10.035   -10.056    -0.022     (0)  
+   MnOH+           9.754e-13   9.281e-13   -12.011   -12.032    -0.022     (0)  
+   MnCl2           2.360e-13   2.360e-13   -12.627   -12.627     0.000     (0)  
+   MnCl3-          1.299e-16   1.236e-16   -15.886   -15.908    -0.022     (0)  
+   Mn(OH)3-        6.111e-25   5.815e-25   -24.214   -24.235    -0.022     (0)  
+   Mn(OH)4-2       2.306e-32   1.890e-32   -31.637   -31.724    -0.086     (0)  
+Na            2.046e-03
+   Na+             2.046e-03   1.946e-03    -2.689    -2.711    -0.022     (0)  
+   Na(Edta)-3      2.054e-13   1.270e-13   -12.687   -12.896    -0.209     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Halite           -7.03     -5.43    1.60  NaCl
+  Hausmannite     -27.34     33.69   61.03  Mn3O4
+  Manganite       -10.78     14.56   25.34  MnOOH
+  MnCl2:4H2O      -15.59    -12.88    2.72  MnCl2:4H2O
+  O2(g)           -43.09     40.00   83.09  O2
+  Pyrochroite     -10.63      4.56   15.19  Mn(OH)2
+  Pyrolusite      -16.82     24.56   41.38  MnO2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.043 Seconds.
+-------------------------------
+

@@ -1,0 +1,28 @@
+TITLE FlahaX struvite; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 9
+ units mol/kgw
+ -water 1
+ Mg 0.002
+ N(-3) 0.002
+ P 0.002
+ Na 0.01 charge
+ Cl 0.01
+EQUILIBRIUM_PHASES 1
+ Struvite 0 0
+SELECTED_OUTPUT
+ -file struvite.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Mg N(-3) P Na Cl
+ -molalities Cl- H+ Mg+2 Na+ PO4-3 OH- MgOH+ NH3 HPO4-2 H2PO4- H3PO4 MgPO4- MgH2PO4+ MgHPO4 NaHPO4- NH4+
+ -activities Cl- H+ Mg+2 Na+ PO4-3 OH- MgOH+ NH3 HPO4-2 H2PO4- H3PO4 MgPO4- MgH2PO4+ MgHPO4 NaHPO4- NH4+
+ -si Halite Struvite
+ -equilibrium_phases Struvite
+END

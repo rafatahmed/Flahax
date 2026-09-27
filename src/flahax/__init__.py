@@ -46,7 +46,8 @@ from .struvite_mixture import ChargeBalancedStruviteMixture, StruviteMixtureSpec
 from .thermodynamics import MineralPhase, phase_saturation_index
 from .trace_equilibrium import ChMicroProductDose, ChMicroTotals, TraceEquilibrium, solve_ch_micro_equilibrium
 from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
-from .product_conversion import ProductAnalyticalTotals, convert_catalogue_product_dose, convert_product_dose, solve_catalogue_product_doses
+from .product_conversion import ProductAnalyticalTotals, convert_catalogue_product_dose, convert_product_dose, solve_catalogue_product_doses, catalogue_dose_totals, plan_catalogue_nitric_target
+from .aqueous_model import AqueousResult, AcidResult
 from .mixed_equilibrium import MixedFertilizerEquilibrium, solve_mixed_fertilizer_equilibrium
 
 __all__ = [
@@ -132,3 +133,4 @@ __all__ = [
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"
+__all__ += ["AqueousResult", "AcidResult", "catalogue_dose_totals", "plan_catalogue_nitric_target"]
