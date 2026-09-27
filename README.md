@@ -1,6 +1,6 @@
 # FlahaX
 
-**0.3.0 release preparation** · [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) · [Changelog](https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md) · [Release checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md)
+**Version 0.3.0** · [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) · [Changelog](https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md) · [Release checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md)
 
 Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planning.
 
@@ -8,11 +8,11 @@ Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planni
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
 
-FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. Version 0.3.0 (prepared; not yet published). The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
+FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
 
 The package is separate from the FlahaFAST application. FlahaFAST does not import it.
 
-The repository also provides bounded chemistry and delivery-planning APIs. These extend the nutrient recipe without changing `recommend` or the CLI. Repository capabilities below describe this branch; they do not imply that a new version has been published to PyPI.
+Version 0.3.0 also provides bounded chemistry and delivery-planning APIs. These extend the nutrient recipe without changing `recommend` or the CLI.
 
 ## Chemistry and delivery planning
 
@@ -36,7 +36,7 @@ Local verification on Python 3.13 passes **110 tests with zero skips**, includin
 
 Next, in order:
 
-1. Finish **P6.6/P6.7 hosted verification**: observe passing Python 3.11–3.13 distribution jobs and the required pinned live-reference job. The last inspected GitHub run could not start because of an account billing lock; local passes do not close this gate.
+1. Finish **P6.6/P6.7 hosted verification**: observe passing Python 3.11–3.13 distribution jobs and the required pinned live-reference job. The last inspected GitHub run could not start because of an account billing lock. The owner explicitly approved publishing 0.3.0 using verified local evidence despite this blocker; hosted checks remain unverified, not passed.
 2. Review the package increment with **P5.5 implemented** and the amended **G6 computational assessment** recorded. No automatic merge or release publication is implied.
 3. Hand off **optional P7 integration to the separate FlahaFAST project**. This is not a FlahaX package release requirement. No application deployment, database writes or pump control are included here.
 
@@ -44,7 +44,7 @@ The [implementation roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs
 
 ## Install
 
-The PyPI command below installs the currently published release (0.2.0 at preparation time). To evaluate the prepared 0.3.0, install this reviewed checkout or its built wheel. Do not assume 0.3.0 is available until publication is confirmed.
+For reproducible use, pin the package version: `python -m pip install flahax==0.3.0`. The unpinned command below installs the latest available release. Source checkouts and verified wheel files can also be installed directly.
 
 Python 3.11 or newer. There are no required third-party runtime dependencies. Distribution verification uses development-only build tooling.
 

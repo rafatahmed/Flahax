@@ -10,6 +10,7 @@ authors:
   - family-names: Al Khashan
     given-names: Rafat A.
 version: 0.3.0
+date-released: 2026-09-27
 url: https://pypi.org/project/flahax/
 repository-code: https://github.com/rafatahmed/Flahax
 license-url: https://github.com/rafatahmed/Flahax/blob/main/LICENSE
