@@ -1,0 +1,153 @@
+Input file: 02_add_fe_dtpa_original.pqi
+
+Output file: 02_add_fe_dtpa_original.out
+
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-debug-zi8rq3gp\merged.dat
+
+              █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+              ║                                            ║
+              ║             * PHREEQC-3.8.6 *              ║
+              ║                                            ║
+              ║      A hydrogeochemical transport model    ║
+              ║                                            ║
+              ║                    by                      ║
+              ║       D.L. Parkhurst and C.A.J. Appelo     ║
+              ║                                            ║
+              ║              January  7, 2025              ║
+              █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+
+
+Initializing...                                                                 
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying smaller step size, pe step size 10, 5 ... 
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying reduced tolerance 1e-16 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying increased tolerance 1e-14 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying diagonal scaling ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying diagonal scaling and reduced tolerance 1e-16 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying scaling pure_phase columns 1e-10 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying scaling pure_phase columns and diagonal scale 1e-10 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying delay removal of equilibrium phases 1 ...
+
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying increased scaling 1e-09 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Skipping optimize equations for first 5 iterations ...
+
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Adding inequality to make concentrations greater than zero.
+
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying reduced tolerance 1e-17 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: Trying reduced tolerance 1e-18 ...
+
+
+WARNING: Maximum iterations exceeded, 200
+
+WARNING: Numerical method failed with this set of convergence parameters.
+
+WARNING: The program has failed to converge to a numerical solution.
+
+The following equations were not satisfied:
+ERROR:                    C has not converged. Total: 2.400000e-03	Calculated: 2.400000e-03	Residual: -7.815838e-12
+
+ERROR:                   Ca has not converged. Total: 1.000000e-03	Calculated: 1.000000e-03	Residual: 1.021644e-14
+
+ERROR:                   Cl has not converged. Total: 7.000000e-03	Calculated: 7.000000e-03	Residual: 5.033474e-14
+
+ERROR:                  Dtp has not converged. Total: 1.000000e-05	Calculated: 1.086944e-05	Residual: -8.694391e-07
+
+ERROR:                   Fe has not converged. Total: 1.000000e-05	Calculated: 1.086945e-05	Residual: -8.694522e-07
+
+ERROR:                    K has not converged. Total: 2.000000e-03	Calculated: 2.000000e-03	Residual: 1.429369e-14
+
+ERROR:                   Mg has not converged. Total: 1.000000e-03	Calculated: 1.000000e-03	Residual: 1.080819e-14
+
+ERROR:                   Na has not converged. Total: 3.000000e-03	Calculated: 3.000000e-03	Residual: 2.049706e-14
+
+ERROR:                    P has not converged. Total: 1.000000e-03	Calculated: 1.000167e-03	Residual: -1.667765e-07
+
+ERROR:                    S has not converged. Total: 1.000000e-03	Calculated: 1.000048e-03	Residual: -4.836966e-08
+
+ERROR:                   Mu Ionic strength has not converged. 	Residual: -3.050198e-06
+
+ERROR:               A(H2O) Activity of water has not converged. 	Residual: 2.929831e-08
+
+ERROR:                   pH Charge balance has not converged. 	Residual: 2.067574e-07
+
+ERROR:             Hydrogen Mass of hydrogen has not converged. 	Residual: 2.155993e-03
+
+ERROR:               Oxygen Mass of oxygen has not converged. 	Residual: -1.295213e-03
+
+WARNING: Fix_H+, Pure phase with add formula has not converged.
+	 SI may be a local minimum.	Residual: -6.677069e+00
+
+ERROR: Numerical method failed on all combinations of convergence parameters, cell/soln/mix 1
+Stopping.

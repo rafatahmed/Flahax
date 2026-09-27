@@ -1,0 +1,29 @@
+TITLE FlahaX calcium_phosphate; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 7.4000000000000004
+ units mol/kgw
+ -water 1
+ Ca 0.002
+ P 0.001
+ Na 0.002 charge
+ Cl 0.002
+EQUILIBRIUM_PHASES 1
+ Hydroxylapatite 0 0
+ CaHPO4:2H2O 0 0
+ CaHPO4 0 0
+SELECTED_OUTPUT
+ -file calcium_phosphate.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Ca P Na Cl
+ -molalities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+ -activities Ca+2 Cl- H+ Na+ PO4-3 OH- CaOH+ HPO4-2 H2PO4- H3PO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4-
+ -si Halite Hydroxylapatite CaHPO4:2H2O CaHPO4
+ -equilibrium_phases Hydroxylapatite CaHPO4:2H2O CaHPO4
+END

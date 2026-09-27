@@ -1,0 +1,412 @@
+   Input file: trace_carbonates.pqi
+  Output file: trace_carbonates.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-4r_t8l8f\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX trace_carbonates
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 8.5
+	 units mol/kgw
+	 water 1
+	 Zn 0.0001
+	 Cu(2) 0.0001
+	 Mn(2) 0.0001
+	 C(4) 0.002
+	 Na 0.01 charge
+	 Cl 0.01
+	EQUILIBRIUM_PHASES 1
+	 Smithsonite 0 0
+	 Malachite 0 0
+	 Rhodochrosite 0 0
+	SELECTED_OUTPUT
+	 file trace_carbonates.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Zn Cu(2) Mn(2) C(4) Na Cl
+	 molalities CO3-2 Cl- Cu+2 H+ Na+ Zn+2 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 MnCl+ MnCl2 MnCl3- HCO3- H2CO3 ZnCO3 ZnHCO3+ CuCO3 CuHCO3+ Cu(CO3)2-2 MnHCO3+ NaCO3- NaHCO3 Mn+2
+	 activities CO3-2 Cl- Cu+2 H+ Na+ Zn+2 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 MnCl+ MnCl2 MnCl3- HCO3- H2CO3 ZnCO3 ZnHCO3+ CuCO3 CuHCO3+ Cu(CO3)2-2 MnHCO3+ NaCO3- NaHCO3 Mn+2
+	 si Zincite Cu(OH)2 Tenorite Pyrochroite Halite Smithsonite Malachite Rhodochrosite
+	 equilibrium_phases Smithsonite Malachite Rhodochrosite
+	END
+-----
+TITLE
+-----
+
+ FlahaX trace_carbonates
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	C(4)              2.000e-03   2.000e-03
+	Cl                1.000e-02   1.000e-02
+	Cu(2)             1.000e-04   1.000e-04
+	Mn(2)             1.000e-04   1.000e-04
+	Na                1.161e-02   1.161e-02  Charge balance
+	Zn                1.000e-04   1.000e-04
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   8.500    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.208e-02
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   2.206e-03
+                       Total CO2 (mol/kg)  =   2.000e-03
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.450e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  10
+                                  Total H  = 1.110155e+02
+                                  Total O  = 5.551287e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             3.569e-06   3.183e-06    -5.447    -5.497    -0.050     (0)  
+   H+              3.537e-09   3.162e-09    -8.451    -8.500    -0.049      0.00
+   H2O             5.551e+01   9.996e-01     1.744    -0.000     0.000     18.07
+C(4)          2.000e-03
+   HCO3-           1.800e-03   1.616e-03    -2.745    -2.792    -0.047     (0)  
+   CuCO3           7.818e-05   7.818e-05    -4.107    -4.107     0.000     (0)  
+   ZnCO3           3.780e-05   3.780e-05    -4.423    -4.423     0.000     (0)  
+   CO3-2           3.750e-05   2.395e-05    -4.426    -4.621    -0.195     (0)  
+   H2CO3           1.149e-05   1.149e-05    -4.940    -4.940     0.000     (0)  
+   NaHCO3          9.414e-06   9.414e-06    -5.026    -5.026     0.000     (0)  
+   Cu(CO3)2-2      8.446e-06   5.040e-06    -5.073    -5.298    -0.224     (0)  
+   NaCO3-          5.149e-06   4.621e-06    -5.288    -5.335    -0.047     (0)  
+   MnHCO3+         2.074e-06   1.859e-06    -5.683    -5.731    -0.047     (0)  
+   ZnHCO3+         1.594e-06   1.401e-06    -5.797    -5.854    -0.056     (0)  
+   CuHCO3+         6.429e-08   5.650e-08    -7.192    -7.248    -0.056     (0)  
+Cl            1.000e-02
+   Cl-             9.996e-03   8.936e-03    -2.000    -2.049    -0.049     (0)  
+   ZnOHCl          2.565e-06   2.565e-06    -5.591    -5.591     0.000     (0)  
+   MnCl+           7.240e-07   6.490e-07    -6.140    -6.188    -0.047     (0)  
+   ZnCl+           6.891e-07   6.156e-07    -6.162    -6.211    -0.049     (0)  
+   CuCl+           8.788e-09   7.851e-09    -8.056    -8.105    -0.049     (0)  
+   ZnCl2           8.719e-09   8.719e-09    -8.060    -8.060     0.000     (0)  
+   MnCl2           8.192e-09   8.192e-09    -8.087    -8.087     0.000     (0)  
+   ZnCl3-          6.928e-11   6.189e-11   -10.159   -10.208    -0.049     (0)  
+   CuCl2           2.433e-11   2.433e-11   -10.614   -10.614     0.000     (0)  
+   MnCl3-          2.249e-11   2.016e-11   -10.648   -10.695    -0.047     (0)  
+   ZnCl4-2         4.283e-13   2.765e-13   -12.368   -12.558    -0.190     (0)  
+   CuCl3-          2.271e-15   2.029e-15   -14.644   -14.693    -0.049     (0)  
+   CuCl4-2         1.407e-19   9.087e-20   -18.852   -19.042    -0.190     (0)  
+Cu(2)         1.000e-04
+   CuCO3           7.818e-05   7.818e-05    -4.107    -4.107     0.000     (0)  
+   Cu(CO3)2-2      8.446e-06   5.040e-06    -5.073    -5.298    -0.224     (0)  
+   CuOH+           6.246e-06   5.579e-06    -5.204    -5.253    -0.049     (0)  
+   Cu(OH)2         3.543e-06   3.543e-06    -5.451    -5.451     0.000     (0)  
+   Cu2(OH)2+2      1.310e-06   7.819e-07    -5.883    -6.107    -0.224     (0)  
+   Cu+2            8.678e-07   5.543e-07    -6.062    -6.256    -0.195     (0)  
+   CuHCO3+         6.429e-08   5.650e-08    -7.192    -7.248    -0.056     (0)  
+   Cu(OH)3-        2.632e-08   2.313e-08    -7.580    -7.636    -0.056     (0)  
+   CuCl+           8.788e-09   7.851e-09    -8.056    -8.105    -0.049     (0)  
+   CuCl2           2.433e-11   2.433e-11   -10.614   -10.614     0.000     (0)  
+   Cu(OH)4-2       9.712e-13   5.795e-13   -12.013   -12.237    -0.224     (0)  
+   CuCl3-          2.271e-15   2.029e-15   -14.644   -14.693    -0.049     (0)  
+   CuCl4-2         1.407e-19   9.087e-20   -18.852   -19.042    -0.190     (0)  
+H(0)          1.412e-28
+   H2              7.060e-29   7.079e-29   -28.151   -28.150     0.001     (0)  
+Mn(2)         1.000e-04
+   Mn+2            9.668e-05   5.769e-05    -4.015    -4.239    -0.224     (0)  
+   MnHCO3+         2.074e-06   1.859e-06    -5.683    -5.731    -0.047     (0)  
+   MnCl+           7.240e-07   6.490e-07    -6.140    -6.188    -0.047     (0)  
+   MnOH+           5.145e-07   4.612e-07    -6.289    -6.336    -0.047     (0)  
+   MnCl2           8.192e-09   8.192e-09    -8.087    -8.087     0.000     (0)  
+   MnCl3-          2.249e-11   2.016e-11   -10.648   -10.695    -0.047     (0)  
+   Mn(OH)3-        3.221e-14   2.888e-14   -13.492   -13.539    -0.047     (0)  
+   Mn(OH)4-2       4.595e-19   2.967e-19   -18.338   -18.528    -0.190     (0)  
+Na            1.161e-02
+   Na+             1.159e-02   1.036e-02    -1.936    -1.985    -0.049     (0)  
+   NaHCO3          9.414e-06   9.414e-06    -5.026    -5.026     0.000     (0)  
+   NaCO3-          5.149e-06   4.621e-06    -5.288    -5.335    -0.047     (0)  
+O(0)          2.016e-36
+   O2              1.008e-36   1.011e-36   -35.997   -35.995     0.001     (0)  
+Zn            1.000e-04
+   Zn+2            4.293e-05   2.742e-05    -4.367    -4.562    -0.195     (0)  
+   ZnCO3           3.780e-05   3.780e-05    -4.423    -4.423     0.000     (0)  
+   ZnOH+           9.932e-06   8.729e-06    -5.003    -5.059    -0.056     (0)  
+   Zn(OH)2         4.403e-06   4.403e-06    -5.356    -5.356     0.000     (0)  
+   ZnOHCl          2.565e-06   2.565e-06    -5.591    -5.591     0.000     (0)  
+   ZnHCO3+         1.594e-06   1.401e-06    -5.797    -5.854    -0.056     (0)  
+   ZnCl+           6.891e-07   6.156e-07    -6.162    -6.211    -0.049     (0)  
+   Zn(OH)3-        7.992e-08   7.024e-08    -7.097    -7.153    -0.056     (0)  
+   ZnCl2           8.719e-09   8.719e-09    -8.060    -8.060     0.000     (0)  
+   ZnCl3-          6.928e-11   6.189e-11   -10.159   -10.208    -0.049     (0)  
+   Zn(OH)4-2       1.492e-11   8.901e-12   -10.826   -11.051    -0.224     (0)  
+   ZnCl4-2         4.283e-13   2.765e-13   -12.368   -12.558    -0.190     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Atacamite         3.55     10.94    7.39  Cu2(OH)3Cl
+  Azurite           5.90    -11.01  -16.91  Cu3(OH)2(CO3)2
+  CH4(g)          -80.57   -121.62  -41.05  CH4
+  CO2(g)           -3.47    -21.62  -18.15  CO2
+  Cu(OH)2           2.07     10.74    8.67  Cu(OH)2
+  CuCO3             0.62    -10.88  -11.50  CuCO3
+  Halite           -5.64     -4.03    1.60  NaCl
+  Hausmannite       2.25     63.28   61.03  Mn3O4
+  Malachite         5.17     -0.13   -5.31  Cu2(OH)2CO3
+  Manganite        -0.08     25.26   25.34  MnOOH
+  Melanothallite  -16.61    -10.35    6.26  CuCl2
+  MnCl2:4H2O      -11.05     -8.34    2.72  MnCl2:4H2O
+  Natron           -7.28     -8.59   -1.31  Na2CO3:10H2O
+  O2(g)           -33.09     50.00   83.09  O2
+  Pyrochroite      -2.43     12.76   15.19  Mn(OH)2
+  Pyrolusite       -3.62     37.76   41.38  MnO2
+  Rhodochrosite     1.72     -8.86  -10.58  MnCO3
+  Smithsonite       0.82     -9.18  -10.00  ZnCO3
+  Tenorite          3.10     10.74    7.64  CuO
+  Thermonatrite    -9.23     -8.59    0.64  Na2CO3:H2O
+  Zincite           1.10     12.44   11.33  ZnO
+  Zn(OH)2           0.24     12.44   12.20  Zn(OH)2
+  Zn(OH)2(am)      -0.04     12.44   12.47  Zn(OH)2
+  Zn(OH)2(beta)     0.68     12.44   11.75  Zn(OH)2
+  Zn(OH)2(epsilon)   0.90     12.44   11.53  Zn(OH)2
+  Zn(OH)2(gamma)    0.70     12.44   11.73  Zn(OH)2
+  Zn2(OH)3Cl       -0.86     14.33   15.19  Zn2(OH)3Cl
+  Zn5(OH)8Cl2       2.59     41.09   38.50  Zn5(OH)8Cl2
+  ZnCl2           -15.71     -8.66    7.05  ZnCl2
+  ZnCO3:1H2O        1.08     -9.18  -10.26  ZnCO3:H2O
+  Znmetal         -38.35    -12.56   25.79  Zn
+  ZnO(active)       1.25     12.44   11.19  ZnO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+Malachite         0.00    -5.31     -5.31    0.000e+00   4.968e-05   4.968e-05
+Rhodochrosite     0.00   -10.58    -10.58    0.000e+00   8.534e-05   8.534e-05
+Smithsonite       0.00   -10.00    -10.00    0.000e+00   3.886e-05   3.886e-05
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	C                 1.826e-03   1.826e-03
+	Cl                1.000e-02   1.000e-02
+	Cu                6.481e-07   6.481e-07
+	Mn                1.466e-05   1.466e-05
+	Na                1.161e-02   1.161e-02
+	Zn                6.114e-05   6.114e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   7.628      Charge balance
+                                       pe  =  10.334      Adjusted to redox equilibrium
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   1.180e-02
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   1.759e-03
+                       Total CO2 (mol/kg)  =   1.826e-03
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.391e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  22
+                                  Total H  = 1.110154e+02
+                                  Total O  = 5.551225e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             4.782e-07   4.269e-07    -6.320    -6.370    -0.049     (0)  
+   H+              2.634e-08   2.358e-08    -7.579    -7.628    -0.048      0.00
+   H2O             5.551e+01   9.996e-01     1.744    -0.000     0.000     18.07
+C(4)          1.826e-03
+   HCO3-           1.721e-03   1.547e-03    -2.764    -2.811    -0.046     (0)  
+   H2CO3           8.201e-05   8.201e-05    -4.086    -4.086     0.000     (0)  
+   NaHCO3          9.027e-06   9.027e-06    -5.044    -5.044     0.000     (0)  
+   ZnCO3           5.754e-06   5.754e-06    -5.240    -5.240     0.000     (0)  
+   CO3-2           4.793e-06   3.075e-06    -5.319    -5.512    -0.193     (0)  
+   ZnHCO3+         1.807e-06   1.590e-06    -5.743    -5.799    -0.055     (0)  
+   NaCO3-          6.615e-07   5.944e-07    -6.179    -6.226    -0.046     (0)  
+   CuCO3           5.415e-07   5.415e-07    -6.266    -6.266     0.000     (0)  
+   MnHCO3+         2.941e-07   2.639e-07    -6.532    -6.579    -0.047     (0)  
+   Cu(CO3)2-2      7.467e-09   4.482e-09    -8.127    -8.348    -0.222     (0)  
+   CuHCO3+         3.315e-09   2.918e-09    -8.480    -8.535    -0.055     (0)  
+Cl            1.000e-02
+   Cl-             9.999e-03   8.949e-03    -2.000    -2.048    -0.048     (0)  
+   ZnCl+           8.172e-07   7.309e-07    -6.088    -6.136    -0.048     (0)  
+   ZnOHCl          4.085e-07   4.085e-07    -6.389    -6.389     0.000     (0)  
+   MnCl+           1.074e-07   9.635e-08    -6.969    -7.016    -0.047     (0)  
+   ZnCl2           1.037e-08   1.037e-08    -7.984    -7.984     0.000     (0)  
+   MnCl2           1.218e-09   1.218e-09    -8.914    -8.914     0.000     (0)  
+   CuCl+           4.742e-10   4.241e-10    -9.324    -9.373    -0.048     (0)  
+   ZnCl3-          8.239e-11   7.369e-11   -10.084   -10.133    -0.048     (0)  
+   MnCl3-          3.345e-12   3.002e-12   -11.476   -11.523    -0.047     (0)  
+   CuCl2           1.316e-12   1.316e-12   -11.881   -11.881     0.000     (0)  
+   ZnCl4-2         5.084e-13   3.297e-13   -12.294   -12.482    -0.188     (0)  
+   CuCl2-          1.599e-14   1.430e-14   -13.796   -13.845    -0.048     (0)  
+   CuCl            7.648e-15   7.648e-15   -14.116   -14.116     0.000     (0)  
+   CuCl3-          1.229e-16   1.099e-16   -15.911   -15.959    -0.048     (0)  
+   CuCl3-2         4.218e-17   2.736e-17   -16.375   -16.563    -0.188     (0)  
+   CuCl4-2         7.600e-21   4.929e-21   -20.119   -20.307    -0.188     (0)  
+Cu(1)         2.445e-14
+   CuCl2-          1.599e-14   1.430e-14   -13.796   -13.845    -0.048     (0)  
+   CuCl            7.648e-15   7.648e-15   -14.116   -14.116     0.000     (0)  
+   Cu+             7.712e-16   6.788e-16   -15.113   -15.168    -0.055     (0)  
+   CuCl3-2         4.218e-17   2.736e-17   -16.375   -16.563    -0.188     (0)  
+Cu(2)         6.481e-07
+   CuCO3           5.415e-07   5.415e-07    -6.266    -6.266     0.000     (0)  
+   Cu+2            4.660e-08   2.990e-08    -7.332    -7.524    -0.193     (0)  
+   CuOH+           4.514e-08   4.037e-08    -7.345    -7.394    -0.048     (0)  
+   Cu(CO3)2-2      7.467e-09   4.482e-09    -8.127    -8.348    -0.222     (0)  
+   Cu(OH)2         3.439e-09   3.439e-09    -8.464    -8.464     0.000     (0)  
+   CuHCO3+         3.315e-09   2.918e-09    -8.480    -8.535    -0.055     (0)  
+   CuCl+           4.742e-10   4.241e-10    -9.324    -9.373    -0.048     (0)  
+   Cu2(OH)2+2      6.819e-11   4.093e-11   -10.166   -10.388    -0.222     (0)  
+   Cu(OH)3-        3.421e-12   3.011e-12   -11.466   -11.521    -0.055     (0)  
+   CuCl2           1.316e-12   1.316e-12   -11.881   -11.881     0.000     (0)  
+   CuCl3-          1.229e-16   1.099e-16   -15.911   -15.959    -0.048     (0)  
+   Cu(OH)4-2       1.685e-17   1.012e-17   -16.773   -16.995    -0.222     (0)  
+   CuCl4-2         7.600e-21   4.929e-21   -20.119   -20.307    -0.188     (0)  
+H(0)          1.686e-39
+   H2              8.431e-40   8.454e-40   -39.074   -39.073     0.001     (0)  
+Mn(2)         1.466e-05
+   Mn+2            1.425e-05   8.552e-06    -4.846    -5.068    -0.222     (0)  
+   MnHCO3+         2.941e-07   2.639e-07    -6.532    -6.579    -0.047     (0)  
+   MnCl+           1.074e-07   9.635e-08    -6.969    -7.016    -0.047     (0)  
+   MnOH+           1.022e-08   9.172e-09    -7.991    -8.038    -0.047     (0)  
+   MnCl2           1.218e-09   1.218e-09    -8.914    -8.914     0.000     (0)  
+   MnCl3-          3.345e-12   3.002e-12   -11.476   -11.523    -0.047     (0)  
+   Mn(OH)3-        1.151e-17   1.033e-17   -16.939   -16.986    -0.047     (0)  
+   Mn(OH)4-2       2.196e-23   1.424e-23   -22.658   -22.846    -0.188     (0)  
+Mn(3)         2.236e-20
+   Mn+3            2.236e-20   8.242e-21   -19.650   -20.084    -0.434     (0)  
+Mn(6)         1.131e-21
+   MnO4-2          1.131e-21   7.334e-22   -20.947   -21.135    -0.188     (0)  
+Mn(7)         7.539e-21
+   MnO4-           7.539e-21   6.719e-21   -20.123   -20.173    -0.050     (0)  
+Na            1.161e-02
+   Na+             1.160e-02   1.038e-02    -1.936    -1.984    -0.048     (0)  
+   NaHCO3          9.027e-06   9.027e-06    -5.044    -5.044     0.000     (0)  
+   NaCO3-          6.615e-07   5.944e-07    -6.179    -6.226    -0.046     (0)  
+O(0)          1.413e-14
+   O2              7.067e-15   7.086e-15   -14.151   -14.150     0.001     (0)  
+Zn            6.114e-05
+   Zn+2            5.067e-05   3.252e-05    -4.295    -4.488    -0.193     (0)  
+   ZnCO3           5.754e-06   5.754e-06    -5.240    -5.240     0.000     (0)  
+   ZnHCO3+         1.807e-06   1.590e-06    -5.743    -5.799    -0.055     (0)  
+   ZnOH+           1.577e-06   1.388e-06    -5.802    -5.858    -0.055     (0)  
+   ZnCl+           8.172e-07   7.309e-07    -6.088    -6.136    -0.048     (0)  
+   ZnOHCl          4.085e-07   4.085e-07    -6.389    -6.389     0.000     (0)  
+   Zn(OH)2         9.393e-08   9.393e-08    -7.027    -7.027     0.000     (0)  
+   ZnCl2           1.037e-08   1.037e-08    -7.984    -7.984     0.000     (0)  
+   Zn(OH)3-        2.283e-10   2.010e-10    -9.641    -9.697    -0.055     (0)  
+   ZnCl3-          8.239e-11   7.369e-11   -10.084   -10.133    -0.048     (0)  
+   ZnCl4-2         5.084e-13   3.297e-13   -12.294   -12.482    -0.188     (0)  
+   Zn(OH)4-2       5.690e-15   3.416e-15   -14.245   -14.466    -0.222     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Atacamite        -1.61      5.79    7.39  Cu2(OH)3Cl
+  Azurite          -1.44    -18.34  -16.91  Cu3(OH)2(CO3)2
+  Birnessite        2.67     20.76   18.09  MnO2
+  Bixbyite          6.24      5.60   -0.64  Mn2O3
+  CH4(g)         -123.41   -164.46  -41.05  CH4
+  CO2(g)           -2.62    -20.77  -18.15  CO2
+  Cu(OH)2          -0.94      7.73    8.67  Cu(OH)2
+  CuCO3            -1.54    -13.04  -11.50  CuCO3
+  Cumetal         -16.75    -25.50   -8.76  Cu
+  Cuprite         -13.68    -15.08   -1.41  Cu2O
+  Halite           -5.63     -4.03    1.60  NaCl
+  Hausmannite       5.45     66.48   61.03  Mn3O4
+  Malachite         0.00     -5.31   -5.31  Cu2(OH)2CO3
+  Manganite         2.81     28.15   25.34  MnOOH
+  Melanothallite  -17.88    -11.62    6.26  CuCl2
+  MnCl2:4H2O      -11.88     -9.17    2.72  MnCl2:4H2O
+  Nantokite       -10.49    -17.22   -6.73  CuCl
+  Natron           -8.17     -9.48   -1.31  Na2CO3:10H2O
+  Nsutite           3.26     20.76   17.50  MnO2
+  O2(g)           -11.24     71.85   83.09  O2
+  Pyrochroite      -5.01     10.19   15.19  Mn(OH)2
+  Pyrolusite        4.73     46.11   41.38  MnO2
+  Rhodochrosite     0.00    -10.58  -10.58  MnCO3
+  Smithsonite       0.00    -10.00  -10.00  ZnCO3
+  Tenorite          0.09      7.73    7.64  CuO
+  Thermonatrite   -10.12     -9.48    0.64  Na2CO3:H2O
+  Zincite          -0.57     10.77   11.33  ZnO
+  Zn(OH)2          -1.43     10.77   12.20  Zn(OH)2
+  Zn(OH)2(am)      -1.71     10.77   12.47  Zn(OH)2
+  Zn(OH)2(beta)    -0.99     10.77   11.75  Zn(OH)2
+  Zn(OH)2(epsilon)  -0.77     10.77   11.53  Zn(OH)2
+  Zn(OH)2(gamma)   -0.97     10.77   11.73  Zn(OH)2
+  Zn2(OH)3Cl       -3.33     11.86   15.19  Zn2(OH)3Cl
+  Zn5(OH)8Cl2      -4.02     34.48   38.50  Zn5(OH)8Cl2
+  ZnCl2           -15.63     -8.58    7.05  ZnCl2
+  ZnCO3:1H2O        0.26    -10.00  -10.26  ZnCO3:H2O
+  Znmetal         -50.94    -25.16   25.79  Zn
+  ZnO(active)      -0.42     10.77   11.19  ZnO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.038 Seconds.
+-------------------------------
+

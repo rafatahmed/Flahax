@@ -3,6 +3,7 @@ from pathlib import Path
 
 from flahax import DeliveryError, FertilizerTotals, plan_nitric_acid_target, solve_fertilizer_equilibrium
 from flahax.reference_fixtures import assert_reference_result, load_reference_fixture
+from flahax.fertilizer_equilibrium import solve_legacy_phreeqc_macro, plan_legacy_phreeqc_nitric
 
 
 TOTALS = FertilizerTotals(
@@ -14,8 +15,10 @@ TOTALS = FertilizerTotals(
 class FertilizerEquilibriumTests(unittest.TestCase):
     def test_target_ph_reference_fixture(self):
         fixture = load_reference_fixture(Path(__file__).parent / "fixtures" / "phreeqc" / "target_ph_nitric_dose.json")
-        target = solve_fertilizer_equilibrium(TOTALS, 6.0, allow_precipitation=False)
-        dose = plan_nitric_acid_target(TOTALS, 7.4, 6.0)
+        # Historical phreeqc.dat golden case remains bound to its original
+        # reduced kernel; public planning now uses the pinned MINTEQ model.
+        target = solve_legacy_phreeqc_macro(TOTALS, 6.0, allow_precipitation=False)
+        dose = plan_legacy_phreeqc_nitric(TOTALS, 7.4, 6.0)
         assert_reference_result(fixture, {
             "ph": target.ph,
             "ionicStrength": target.ionic_strength,

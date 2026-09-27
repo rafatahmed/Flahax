@@ -1,0 +1,133 @@
+   Input file: C:\Users\rafat\repo\Flaha\Flahax\tests\fixtures\phreeqc\mn_edta.pqi
+  Output file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\mn_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX Mn EDTA catalogue product
+	SOLUTION 1
+	 temp 25
+	 pH 6 charge
+	 units mmol/kgw
+	 Mn .01
+	 Edta .01
+	SELECTED_OUTPUT
+	 file mn_edta.sel
+	 reset false
+	 ph true
+	 ionic_strength true
+	 totals Mn Edta
+	END
+-----
+TITLE
+-----
+
+ FlahaX Mn EDTA catalogue product
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Edta              1.000e-05   1.000e-05
+	Mn                1.000e-05   1.000e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   4.730      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.934e-05
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -3.416e-14
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   5.946e-14
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.872e-05   1.861e-05    -4.728    -4.730    -0.003      0.00
+   OH-             5.446e-10   5.412e-10    -9.264    -9.267    -0.003     (0)  
+   H2O             5.551e+01   1.000e+00     1.744    -0.000     0.000     18.07
+Edta          1.000e-05
+   Mn(Edta)-2      9.098e-06   8.869e-06    -5.041    -5.052    -0.011     (0)  
+   MnH(Edta)-      5.251e-07   5.218e-07    -6.280    -6.282    -0.003     (0)  
+   H2(Edta)-2      3.579e-07   3.489e-07    -6.446    -6.457    -0.011     (0)  
+   H(Edta)-3       1.059e-08   1.000e-08    -7.975    -8.000    -0.025     (0)  
+   H3(Edta)-       8.593e-09   8.538e-09    -8.066    -8.069    -0.003     (0)  
+   H4(Edta)        2.296e-11   2.296e-11   -10.639   -10.639     0.000     (0)  
+   H5(Edta)+       1.360e-14   1.351e-14   -13.867   -13.869    -0.003     (0)  
+   Edta-4          6.704e-15   6.060e-15   -14.174   -14.218    -0.044     (0)  
+H(0)          4.901e-21
+   H2              2.451e-21   2.451e-21   -20.611   -20.611     0.000     (0)  
+Mn(2)         1.000e-05
+   Mn(Edta)-2      9.098e-06   8.869e-06    -5.041    -5.052    -0.011     (0)  
+   MnH(Edta)-      5.251e-07   5.218e-07    -6.280    -6.282    -0.003     (0)  
+   Mn+2            3.771e-07   3.676e-07    -6.424    -6.435    -0.011     (0)  
+   MnOH+           5.030e-13   4.998e-13   -12.298   -12.301    -0.003     (0)  
+   Mn(OH)3-        9.105e-28   9.047e-28   -27.041   -27.043    -0.003     (0)  
+   Mn(OH)4-2       1.621e-36   1.581e-36   -35.790   -35.801    -0.011     (0)  
+Mn(3)         1.738e-28
+   Mn+3            1.738e-28   1.642e-28   -27.760   -27.785    -0.025     (0)  
+Mn(6)         0.000e+00
+   MnO4-2          0.000e+00   0.000e+00   -71.003   -71.014    -0.011     (0)  
+Mn(7)         0.000e+00
+   MnO4-           0.000e+00   0.000e+00   -76.383   -76.386    -0.003     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -51.074   -51.074     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Birnessite      -22.95     -4.86   18.09  MnO2
+  Bixbyite        -26.54    -27.19   -0.64  Mn2O3
+  Hausmannite     -34.49     26.54   61.03  Mn3O4
+  Manganite       -13.58     11.76   25.34  MnOOH
+  Nsutite         -22.37     -4.86   17.50  MnO2
+  O2(g)           -48.17     34.92   83.09  O2
+  Pyrochroite     -12.17      3.03   15.19  Mn(OH)2
+  Pyrolusite      -20.89     20.49   41.38  MnO2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.043 Seconds.
+-------------------------------
+

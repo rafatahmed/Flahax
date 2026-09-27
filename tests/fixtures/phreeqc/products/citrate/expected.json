@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "case": "citrate",
+  "reference": {
+    "software": "PHREEQC 3.8.6-17100",
+    "base_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+    "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+    "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+    "extensions": {
+      "flahax-chelates-25c.dat": "bc63ebe54ef47bb38a3d3e7a00bb5231850f2de48a0cc661d0a65d1aa787cc0b",
+      "flahax-phases-25c.dat": "0dcec007c1e7c3f475a0e67290876a23d6aaf678d95c9771821deed3c8101a5e"
+    }
+  },
+  "product_doses_g_per_kgw": {
+    "Potassium Citrate": 0.02
+  },
+  "initial_ph": 6.0,
+  "runtime_totals": {
+    "K+": 0.00019581870106884442,
+    "Citrate-3": 6.527290035628147e-05,
+    "Na+": 0.001953387191656,
+    "Cl-": 0.002
+  },
+  "selected_rows": [
+    {
+      "pH": 6.0,
+      "mu": 0.002255705458722,
+      "mass_H2O": 1.0,
+      "charge": 8.470197123645e-19,
+      "pct_err": 1.969984161088e-14,
+      "K": 0.0001958187010688,
+      "Citrate": 6.527290035628e-05,
+      "Na": 0.001953387191656,
+      "Cl": 0.002,
+      "m_Cl-": 0.002,
+      "m_H+": 1.053852454868e-06,
+      "m_K+": 0.000195779756087,
+      "m_Na+": 0.001952979900356,
+      "m_Citrate-3": 2.135938886447e-05,
+      "m_OH-": 1.061543778279e-08,
+      "m_H(Citrate)-2": 4.144417837419e-05,
+      "m_H2(Citrate)-": 2.022058763948e-06,
+      "m_H3(Citrate)": 2.567855131175e-09,
+      "m_Na(Citrate)-2": 3.306598743279e-07,
+      "m_Na2(Citrate)-": 1.529782529693e-09,
+      "m_NaH(Citrate)-": 7.357185983642e-08,
+      "m_K(Citrate)-2": 3.894498185276e-08,
+      "la_Cl-": -2.721749815856,
+      "la_H+": -6.0,
+      "la_K+": -3.731012028415,
+      "la_Na+": -2.732082037873,
+      "la_Citrate-3": -4.87542948119,
+      "la_OH-": -7.997031121202,
+      "la_H(Citrate)-2": -4.47942948119,
+      "la_H2(Citrate)-": -5.71842948119,
+      "la_H3(Citrate)": -8.59042948119,
+      "la_Na(Citrate)-2": -6.577511519063,
+      "la_Na2(Citrate)-": -8.839593556935,
+      "la_NaH(Citrate)-": -7.157511519063,
+      "la_K(Citrate)-2": -7.506441509605,
+      "si_Halite": -7.056331853728,
+      "si_Sylvite": -7.352761844271
+    }
+  ],
+  "nitric_acid_molal": null,
+  "fix_h_nitric_acid_molal": null,
+  "tolerances": {
+    "replay_relative": 1e-08,
+    "replay_absolute": 1e-12,
+    "charge_error_percent": 0.1,
+    "runtime_log_activity_absolute": 0.12,
+    "runtime_molality_relative": 0.15,
+    "runtime_molality_absolute": 1e-10,
+    "runtime_si_absolute": 0.25,
+    "acid_relative": 0.03,
+    "acid_absolute": 2e-06
+  },
+  "hashes": {
+    "citrate.out": "14fbbdd4bfb837d63b218caf9d9f54873c0c203c95c71c1af36ca09a926bdb13",
+    "citrate.pqi": "b911f0b06f9d9ec424c8f67ff0753669b99994a7d691327e90dda0f1a253c545",
+    "citrate.screen": "a8962fe7162159fe94e4643600f8505196c75cb34e12abd01aed05886303d609",
+    "citrate.sel": "fcdb60080b79f098057069cc5a605e085455723fe2f6f00437e4df5a26916be5"
+  }
+}

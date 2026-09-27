@@ -1,0 +1,32 @@
+Input file: calcium_phosphate.pqi
+
+Output file: calcium_phosphate.out
+
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phases-tqi9lcjz\merged.dat
+
+              █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+              ║                                            ║
+              ║             * PHREEQC-3.8.6 *              ║
+              ║                                            ║
+              ║      A hydrogeochemical transport model    ║
+              ║                                            ║
+              ║                    by                      ║
+              ║       D.L. Parkhurst and C.A.J. Appelo     ║
+              ║                                            ║
+              ║              January  7, 2025              ║
+              █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
+
+
+Initializing...                                                                 
+WARNING: Maximum iterations exceeded, 100
+
+
+WARNING: Maximum iterations exceeded, 100
+
+WARNING: The program has failed to converge to a numerical solution.
+
+The following equations were not satisfied:
+ERROR:                   Ca has not converged. Total: 2.000000e-03	Calculated: 1.876108e-03	Residual: 1.238919e-04
+
+ERROR: Model failed to converge for initial solution  1.
+Stopping.

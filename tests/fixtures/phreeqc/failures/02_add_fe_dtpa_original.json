@@ -1,0 +1,14 @@
+{
+  "software": "PHREEQC 3.8.6-17100",
+  "exit_code": 1,
+  "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+  "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+  "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+  "generation_command": "python tools/debug_nitric_phreeqc.py",
+  "hashes": {
+    "02_add_fe_dtpa_original.out": "e09812d211852727d6b8ed7e3c02674c67097bd32932f039525753977f868aee",
+    "02_add_fe_dtpa_original.pqi": "87087c468244da34695fd426f5953d7f6886de3a94c0af03fe5ea844ef5f02ce",
+    "02_add_fe_dtpa_original.screen": "1e65d886946b4a2dca524e700f068ffa78aadd89742b8462ce77a584fd2a6480",
+    "02_add_fe_dtpa_original.sel": "c9f352f893f9da33d1e8c6d5a0717213d8a7b84b8b032509c9b185703a88b155"
+  }
+}

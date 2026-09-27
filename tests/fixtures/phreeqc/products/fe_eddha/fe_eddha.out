@@ -1,0 +1,154 @@
+   Input file: fe_eddha.pqi
+  Output file: fe_eddha.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX fe_eddha
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Fe(3) 1.0744023636852e-05
+	 Edd 1.0744023636852e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file fe_eddha.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Fe(3) Edd Na Cl
+	 molalities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd-
+	 activities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd-
+	 si Ferrihydrite Goethite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX fe_eddha
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Edd               1.074e-05   1.074e-05
+	Fe(3)             1.074e-05   1.074e-05
+	Na                2.010e-03   2.010e-03  Charge balance
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.011e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -2.253e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   1.146e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   8
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.051e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.721    -0.022     (0)  
+   FeCl+2          9.865e-19   8.108e-19   -18.006   -18.091    -0.085     (0)  
+   FeCl2+          7.238e-21   6.892e-21   -20.140   -20.162    -0.021     (0)  
+   FeCl3           1.312e-24   1.312e-24   -23.882   -23.882     0.000     (0)  
+Edd           1.074e-05
+   FeEdd-          1.074e-05   1.022e-05    -4.969    -4.990    -0.022     (0)  
+   H4Edd           2.454e-10   2.455e-10    -9.610    -9.610     0.000     (0)  
+   H3Edd-          1.354e-10   1.289e-10    -9.868    -9.890    -0.022     (0)  
+   H2Edd-2         3.361e-13   2.755e-13   -12.474   -12.560    -0.086     (0)  
+   HEdd-3          6.829e-18   4.366e-18   -17.166   -17.360    -0.194     (0)  
+   Edd-4           1.275e-23   5.756e-24   -22.895   -23.240    -0.345     (0)  
+Fe(3)         1.074e-05
+   FeEdd-          1.074e-05   1.022e-05    -4.969    -4.990    -0.022     (0)  
+   Fe(OH)2+        3.772e-10   3.592e-10    -9.423    -9.445    -0.021     (0)  
+   Fe(OH)3         3.885e-12   3.885e-12   -11.411   -11.411     0.000     (0)  
+   FeOH+2          1.116e-13   9.171e-14   -12.952   -13.038    -0.085     (0)  
+   Fe(OH)4-        3.824e-15   3.642e-15   -14.417   -14.439    -0.021     (0)  
+   Fe+3            2.206e-17   1.411e-17   -16.656   -16.851    -0.194     (0)  
+   FeCl+2          9.865e-19   8.108e-19   -18.006   -18.091    -0.085     (0)  
+   FeCl2+          7.238e-21   6.892e-21   -20.140   -20.162    -0.021     (0)  
+   FeCl3           1.312e-24   1.312e-24   -23.882   -23.882     0.000     (0)  
+   Fe2(OH)2+4      6.468e-25   2.785e-25   -24.189   -24.555    -0.366     (0)  
+   Fe3(OH)4+5      5.395e-33   1.446e-33   -32.268   -32.840    -0.572     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Na            2.010e-03
+   Na+             2.010e-03   1.912e-03    -2.697    -2.718    -0.022     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fe(OH)2.7Cl.3     1.57     -1.47   -3.04  Fe(OH)2.7Cl.3
+  Ferrihydrite     -2.04      1.15    3.19  Fe(OH)3
+  Goethite          0.66      1.15    0.49  FeOOH
+  Halite           -7.04     -5.44    1.60  NaCl
+  Hematite          3.72      2.30   -1.42  Fe2O3
+  Lepidocrocite    -0.22      1.15    1.37  FeOOH
+  Maghemite        -4.09      2.30    6.39  Fe2O3
+  O2(g)           -43.09     40.00   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.037 Seconds.
+-------------------------------
+

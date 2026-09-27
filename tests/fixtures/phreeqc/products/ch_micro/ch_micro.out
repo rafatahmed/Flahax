@@ -1,0 +1,277 @@
+   Input file: ch_micro.pqi
+  Output file: ch_micro.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX ch_micro
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Fe(3) 1.2534694242994004e-05
+	 Zn 6.1180789232181106e-07
+	 Mn(2) 3.6404645203604267e-06
+	 Cu(2) 1.7310294904478648e-07
+	 B 1.20259019426457e-05
+	 Mo 5.2110474205315274e-08
+	 Na 0.0020061171719197336 charge
+	 Edta 1.6960069604721028e-05
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file ch_micro.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Fe(3) Zn Mn(2) Cu(2) B Mo Na Edta Cl
+	 molalities H3BO3 Cl- Cu+2 Fe+3 H+ MoO4-2 Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- H2BO3- H5(BO3)2- H8(BO3)3- NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+	 activities H3BO3 Cl- Cu+2 Fe+3 H+ MoO4-2 Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- H2BO3- H5(BO3)2- H8(BO3)3- NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+	 si Zincite Cu(OH)2 Tenorite Ferrihydrite Goethite Pyrochroite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX ch_micro
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	B                 1.203e-05   1.203e-05
+	Cl                2.000e-03   2.000e-03
+	Cu(2)             1.731e-07   1.731e-07
+	Edta              1.696e-05   1.696e-05
+	Fe(3)             1.253e-05   1.253e-05
+	Mn(2)             3.640e-06   3.640e-06
+	Mo                5.211e-08   5.211e-08
+	Na                2.021e-03   2.021e-03  Charge balance
+	Zn                6.118e-07   6.118e-07
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.026e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   8.005e-06
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   9.305e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =  11
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550687e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.051e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+B             1.203e-05
+   H3BO3           1.202e-05   1.202e-05    -4.920    -4.920     0.000     (0)  
+   H2BO3-          7.348e-09   6.983e-09    -8.134    -8.156    -0.022     (0)  
+   NaH2BO3         2.128e-11   2.128e-11   -10.672   -10.672     0.000     (0)  
+   H5(BO3)2-       7.521e-14   7.147e-14   -13.124   -13.146    -0.022     (0)  
+   H8(BO3)3-       9.043e-17   8.593e-17   -16.044   -16.066    -0.022     (0)  
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.721    -0.022     (0)  
+   MnCl+           3.617e-11   3.443e-11   -10.442   -10.463    -0.021     (0)  
+   MnCl2           9.254e-14   9.254e-14   -13.034   -13.034     0.000     (0)  
+   ZnCl+           4.858e-14   4.622e-14   -13.314   -13.335    -0.022     (0)  
+   ZnOHCl          6.092e-16   6.092e-16   -15.215   -15.215     0.000     (0)  
+   ZnCl2           1.394e-16   1.394e-16   -15.856   -15.856     0.000     (0)  
+   MnCl3-          5.094e-17   4.850e-17   -16.293   -16.314    -0.021     (0)  
+   CuCl+           2.741e-17   2.608e-17   -16.562   -16.584    -0.022     (0)  
+   ZnCl3-          2.214e-19   2.106e-19   -18.655   -18.676    -0.022     (0)  
+   CuCl2           1.720e-20   1.720e-20   -19.764   -19.764     0.000     (0)  
+   FeCl+2          3.189e-21   2.619e-21   -20.496   -20.582    -0.086     (0)  
+   ZnCl4-2         2.440e-22   2.004e-22   -21.613   -21.698    -0.086     (0)  
+   FeCl2+          2.338e-23   2.226e-23   -22.631   -22.653    -0.021     (0)  
+   CuCl3-          3.211e-25   3.055e-25   -24.493   -24.515    -0.022     (0)  
+   FeCl3           4.235e-27   4.235e-27   -26.373   -26.373     0.000     (0)  
+   CuCl4-2         3.547e-30   2.913e-30   -29.450   -29.536    -0.086     (0)  
+Cu(2)         1.731e-07
+   Cu(Edta)-2      1.726e-07   1.397e-07    -6.763    -6.855    -0.092     (0)  
+   CuH(Edta)-      4.659e-10   4.419e-10    -9.332    -9.355    -0.023     (0)  
+   CuOH(Edta)-3    2.249e-13   1.397e-13   -12.648   -12.855    -0.207     (0)  
+   CuH2(Edta)      7.003e-14   7.003e-14   -13.155   -13.155     0.000     (0)  
+   Cu+2            1.056e-14   8.647e-15   -13.976   -14.063    -0.087     (0)  
+   CuOH+           2.894e-16   2.753e-16   -15.538   -15.560    -0.022     (0)  
+   CuCl+           2.741e-17   2.608e-17   -16.562   -16.584    -0.022     (0)  
+   Cu(OH)2         5.531e-19   5.531e-19   -18.257   -18.257     0.000     (0)  
+   CuCl2           1.720e-20   1.720e-20   -19.764   -19.764     0.000     (0)  
+   Cu(OH)3-        1.204e-23   1.142e-23   -22.919   -22.942    -0.023     (0)  
+   CuCl3-          3.211e-25   3.055e-25   -24.493   -24.515    -0.022     (0)  
+   Cu2(OH)2+2      2.352e-27   1.904e-27   -26.628   -26.720    -0.092     (0)  
+   CuCl4-2         3.547e-30   2.913e-30   -29.450   -29.536    -0.086     (0)  
+   Cu(OH)4-2       1.118e-30   9.052e-31   -29.951   -30.043    -0.092     (0)  
+Edta          1.696e-05
+   Fe(Edta)-       1.231e-05   1.167e-05    -4.910    -4.933    -0.023     (0)  
+   Mn(Edta)-2      3.613e-06   2.924e-06    -5.442    -5.534    -0.092     (0)  
+   Zn(Edta)-2      6.105e-07   4.941e-07    -6.214    -6.306    -0.092     (0)  
+   FeOH(Edta)-2    2.285e-07   1.850e-07    -6.641    -6.733    -0.092     (0)  
+   Cu(Edta)-2      1.726e-07   1.397e-07    -6.763    -6.855    -0.092     (0)  
+   H2(Edta)-2      1.050e-08   8.500e-09    -7.979    -8.071    -0.092     (0)  
+   MnH(Edta)-      9.749e-09   9.247e-09    -8.011    -8.034    -0.023     (0)  
+   H(Edta)-3       7.296e-09   4.533e-09    -8.137    -8.344    -0.207     (0)  
+   ZnH(Edta)-      1.309e-09   1.241e-09    -8.883    -8.906    -0.023     (0)  
+   CuH(Edta)-      4.659e-10   4.419e-10    -9.332    -9.355    -0.023     (0)  
+   FeH(Edta)       3.691e-10   3.691e-10    -9.433    -9.433     0.000     (0)  
+   Fe(OH)2(Edta)-3   2.653e-11   1.649e-11   -10.576   -10.783    -0.207     (0)  
+   H3(Edta)-       1.179e-11   1.118e-11   -10.929   -10.952    -0.023     (0)  
+   ZnOH(Edta)-3    5.017e-13   3.118e-13   -12.300   -12.506    -0.207     (0)  
+   CuOH(Edta)-3    2.249e-13   1.397e-13   -12.648   -12.855    -0.207     (0)  
+   Edta-4          1.135e-13   5.110e-14   -12.945   -13.292    -0.347     (0)  
+   Na(Edta)-3      7.923e-14   4.923e-14   -13.101   -13.308    -0.207     (0)  
+   CuH2(Edta)      7.003e-14   7.003e-14   -13.155   -13.155     0.000     (0)  
+   H4(Edta)        1.616e-15   1.616e-15   -14.792   -14.792     0.000     (0)  
+   H5(Edta)+       5.387e-20   5.110e-20   -19.269   -19.292    -0.023     (0)  
+Fe(3)         1.253e-05
+   Fe(Edta)-       1.231e-05   1.167e-05    -4.910    -4.933    -0.023     (0)  
+   FeOH(Edta)-2    2.285e-07   1.850e-07    -6.641    -6.733    -0.092     (0)  
+   FeH(Edta)       3.691e-10   3.691e-10    -9.433    -9.433     0.000     (0)  
+   Fe(OH)2(Edta)-3   2.653e-11   1.649e-11   -10.576   -10.783    -0.207     (0)  
+   Fe(OH)2+        1.219e-12   1.161e-12   -11.914   -11.935    -0.021     (0)  
+   Fe(OH)3         1.255e-14   1.255e-14   -13.901   -13.901     0.000     (0)  
+   FeOH+2          3.608e-16   2.963e-16   -15.443   -15.528    -0.086     (0)  
+   Fe(OH)4-        1.236e-17   1.177e-17   -16.908   -16.929    -0.021     (0)  
+   Fe+3            7.139e-20   4.557e-20   -19.146   -19.341    -0.195     (0)  
+   FeCl+2          3.189e-21   2.619e-21   -20.496   -20.582    -0.086     (0)  
+   FeCl2+          2.338e-23   2.226e-23   -22.631   -22.653    -0.021     (0)  
+   FeCl3           4.235e-27   4.235e-27   -26.373   -26.373     0.000     (0)  
+   Fe2(OH)2+4      6.772e-30   2.907e-30   -29.169   -29.537    -0.367     (0)  
+   Fe3(OH)4+5      1.828e-40   0.000e+00   -39.738   -40.312    -0.574     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Mn(2)         3.640e-06
+   Mn(Edta)-2      3.613e-06   2.924e-06    -5.442    -5.534    -0.092     (0)  
+   Mn+2            1.776e-08   1.437e-08    -7.751    -7.842    -0.092     (0)  
+   MnH(Edta)-      9.749e-09   9.247e-09    -8.011    -8.034    -0.023     (0)  
+   MnCl+           3.617e-11   3.443e-11   -10.442   -10.463    -0.021     (0)  
+   MnOH+           3.819e-13   3.636e-13   -12.418   -12.439    -0.021     (0)  
+   MnCl2           9.254e-14   9.254e-14   -13.034   -13.034     0.000     (0)  
+   MnCl3-          5.094e-17   4.850e-17   -16.293   -16.314    -0.021     (0)  
+   Mn(OH)3-        2.393e-25   2.278e-25   -24.621   -24.642    -0.021     (0)  
+   Mn(OH)4-2       9.016e-33   7.404e-33   -32.045   -32.131    -0.086     (0)  
+Mo            5.211e-08
+   MoO4-2          5.122e-08   4.196e-08    -7.291    -7.377    -0.087     (0)  
+   HMoO4-          8.802e-10   8.349e-10    -9.055    -9.078    -0.023     (0)  
+   H2MoO4          6.116e-12   6.116e-12   -11.214   -11.214     0.000     (0)  
+   HMo7O24-5       0.000e+00   0.000e+00   -45.689   -46.263    -0.574     (0)  
+   Mo7O24-6        0.000e+00   0.000e+00   -45.824   -46.650    -0.827     (0)  
+   H2Mo7O24-4      0.000e+00   0.000e+00   -47.114   -47.481    -0.367     (0)  
+   H3Mo7O24-3      0.000e+00   0.000e+00   -50.028   -50.235    -0.207     (0)  
+Na            2.021e-03
+   Na+             2.021e-03   1.922e-03    -2.695    -2.716    -0.022     (0)  
+   NaH2BO3         2.128e-11   2.128e-11   -10.672   -10.672     0.000     (0)  
+   Na(Edta)-3      7.923e-14   4.923e-14   -13.101   -13.308    -0.207     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+Zn            6.118e-07
+   Zn(Edta)-2      6.105e-07   4.941e-07    -6.214    -6.306    -0.092     (0)  
+   ZnH(Edta)-      1.309e-09   1.241e-09    -8.883    -8.906    -0.023     (0)  
+   Zn+2            1.180e-11   9.670e-12   -10.928   -11.015    -0.087     (0)  
+   ZnOH(Edta)-3    5.017e-13   3.118e-13   -12.300   -12.506    -0.207     (0)  
+   ZnCl+           4.858e-14   4.622e-14   -13.314   -13.335    -0.022     (0)  
+   ZnOH+           1.026e-14   9.736e-15   -13.989   -14.012    -0.023     (0)  
+   ZnOHCl          6.092e-16   6.092e-16   -15.215   -15.215     0.000     (0)  
+   ZnCl2           1.394e-16   1.394e-16   -15.856   -15.856     0.000     (0)  
+   Zn(OH)2         1.554e-17   1.554e-17   -16.809   -16.809     0.000     (0)  
+   ZnCl3-          2.214e-19   2.106e-19   -18.655   -18.676    -0.022     (0)  
+   Zn(OH)3-        8.266e-22   7.840e-22   -21.083   -21.106    -0.023     (0)  
+   ZnCl4-2         2.440e-22   2.004e-22   -21.613   -21.698    -0.086     (0)  
+   Zn(OH)4-2       3.883e-28   3.143e-28   -27.411   -27.503    -0.092     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Atacamite       -20.24    -12.85    7.39  Cu2(OH)3Cl
+  Cu(OH)2         -10.74     -2.06    8.67  Cu(OH)2
+  CuMoO4           -8.36    -21.44  -13.08  CuMoO4
+  Cupricferrite   -10.73     -4.75    5.99  CuFe2O4
+  Fe(OH)2.7Cl.3    -0.92     -3.96   -3.04  Fe(OH)2.7Cl.3
+  Ferrihydrite     -4.53     -1.34    3.19  Fe(OH)3
+  Goethite         -1.83     -1.34    0.49  FeOOH
+  H2MoO4           -6.50    -19.38  -12.88  H2MoO4
+  Halite           -7.04     -5.44    1.60  NaCl
+  Hausmannite     -28.56     32.47   61.03  Mn3O4
+  Hematite         -1.26     -2.68   -1.42  Fe2O3
+  Lepidocrocite    -2.71     -1.34    1.37  FeOOH
+  Maghemite        -9.07     -2.68    6.39  Fe2O3
+  Manganite       -11.18     14.16   25.34  MnOOH
+  Melanothallite  -25.76    -19.50    6.26  CuCl2
+  MnCl2:4H2O      -16.00    -13.28    2.72  MnCl2:4H2O
+  MoO3            -11.38    -19.38   -8.00  MoO3
+  Na2Mo2O7        -15.59    -32.19  -16.60  Na2Mo2O7
+  Na2MoO4         -14.30    -12.81    1.49  Na2MoO4
+  Na2MoO4:2H2O    -14.03    -12.81    1.22  Na2MoO4:2H2O
+  O2(g)           -43.09     40.00   83.09  O2
+  Pyrochroite     -11.04      4.16   15.19  Mn(OH)2
+  Pyrolusite      -17.22     24.16   41.38  MnO2
+  Tenorite         -9.71     -2.06    7.64  CuO
+  Zincite         -10.35      0.99   11.33  ZnO
+  Zn(BO2)2        -17.14     -8.85    8.29  Zn(BO2)2
+  Zn(OH)2         -11.21      0.99   12.20  Zn(OH)2
+  Zn(OH)2(am)     -11.49      0.99   12.47  Zn(OH)2
+  Zn(OH)2(beta)   -10.77      0.99   11.75  Zn(OH)2
+  Zn(OH)2(epsilon) -10.55      0.99   11.53  Zn(OH)2
+  Zn(OH)2(gamma)  -10.75      0.99   11.73  Zn(OH)2
+  Zn2(OH)3Cl      -21.94     -6.75   15.19  Zn2(OH)3Cl
+  Zn5(OH)8Cl2     -51.01    -12.51   38.50  Zn5(OH)8Cl2
+  ZnCl2           -23.51    -16.46    7.05  ZnCl2
+  Znmetal         -44.80    -19.01   25.79  Zn
+  ZnMoO4           -8.27    -18.39  -10.13  ZnMoO4
+  ZnO(active)     -10.20      0.99   11.19  ZnO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.037 Seconds.
+-------------------------------
+

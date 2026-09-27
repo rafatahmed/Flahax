@@ -1,0 +1,14 @@
+{
+  "software": "PHREEQC 3.8.6-17100",
+  "exit_code": 0,
+  "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+  "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+  "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+  "generation_command": "python tools/debug_nitric_phreeqc.py",
+  "hashes": {
+    "04_add_fe_dtpa_sodium_balance.out": "55a435752cb92f777a03fbae98d6d7589486418f3c30e2e77db64850a54598cc",
+    "04_add_fe_dtpa_sodium_balance.pqi": "8e86a3b518dd472d8e4b7aab83482e8c963b2339725fbc443e394508c46d1904",
+    "04_add_fe_dtpa_sodium_balance.screen": "14285e382b20718604a4e0fd1ff53e0d68ffb6633b71444a9a8d28256d06de60",
+    "04_add_fe_dtpa_sodium_balance.sel": "2db2e81ed9520e436c2a171e39dfb010d3a69d56cbfc523f00a75ae5b60497f3"
+  }
+}

@@ -1,0 +1,131 @@
+   Input file: C:\Users\rafat\repo\Flaha\Flahax\tests\fixtures\phreeqc\zn_edta.pqi
+  Output file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\zn_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-phreeqc\preserve\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX Zn EDTA catalogue product
+	SOLUTION 1
+	 temp 25
+	 pH 6 charge
+	 units mmol/kgw
+	 Zn .01
+	 Edta .01
+	SELECTED_OUTPUT
+	 file zn_edta.sel
+	 reset false
+	 ph true
+	 ionic_strength true
+	 totals Zn Edta
+	END
+-----
+TITLE
+-----
+
+ FlahaX Zn EDTA catalogue product
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Edta              1.000e-05   1.000e-05
+	Zn                1.000e-05   1.000e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   4.713      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.912e-05
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   1.612e-17
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -1.597e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =   7
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.950e-05   1.937e-05    -4.710    -4.713    -0.003      0.00
+   OH-             5.230e-10   5.198e-10    -9.281    -9.284    -0.003     (0)  
+   H2O             5.551e+01   1.000e+00     1.744    -0.000     0.000     18.07
+Edta          1.000e-05
+   Zn(Edta)-2      9.520e-06   9.282e-06    -5.021    -5.032    -0.011     (0)  
+   ZnH(Edta)-      4.546e-07   4.517e-07    -6.342    -6.345    -0.003     (0)  
+   H2(Edta)-2      2.405e-08   2.345e-08    -7.619    -7.630    -0.011     (0)  
+   H(Edta)-3       6.835e-10   6.456e-10    -9.165    -9.190    -0.025     (0)  
+   H3(Edta)-       6.013e-10   5.975e-10    -9.221    -9.224    -0.003     (0)  
+   H4(Edta)        1.673e-12   1.673e-12   -11.776   -11.776     0.000     (0)  
+   ZnOH(Edta)-3    3.200e-13   3.023e-13   -12.495   -12.520    -0.025     (0)  
+   H5(Edta)+       1.032e-15   1.025e-15   -14.986   -14.989    -0.003     (0)  
+   Edta-4          4.154e-16   3.756e-16   -15.381   -15.425    -0.044     (0)  
+H(0)          5.314e-21
+   H2              2.657e-21   2.657e-21   -20.576   -20.576     0.000     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -51.144   -51.144     0.000     (0)  
+Zn            1.000e-05
+   Zn(Edta)-2      9.520e-06   9.282e-06    -5.021    -5.032    -0.011     (0)  
+   ZnH(Edta)-      4.546e-07   4.517e-07    -6.342    -6.345    -0.003     (0)  
+   Zn+2            2.534e-08   2.471e-08    -7.596    -7.607    -0.011     (0)  
+   ZnOH+           1.292e-12   1.284e-12   -11.889   -11.891    -0.003     (0)  
+   ZnOH(Edta)-3    3.200e-13   3.023e-13   -12.495   -12.520    -0.025     (0)  
+   Zn(OH)2         1.058e-16   1.058e-16   -15.976   -15.976     0.000     (0)  
+   Zn(OH)3-        2.773e-22   2.756e-22   -21.557   -21.560    -0.003     (0)  
+   Zn(OH)4-2       5.849e-30   5.702e-30   -29.233   -29.244    -0.011     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  O2(g)           -48.24     34.85   83.09  O2
+  Zincite          -9.52      1.82   11.33  ZnO
+  Zn(OH)2         -10.38      1.82   12.20  Zn(OH)2
+  Zn(OH)2(am)     -10.66      1.82   12.47  Zn(OH)2
+  Zn(OH)2(beta)    -9.94      1.82   11.75  Zn(OH)2
+  Zn(OH)2(epsilon)  -9.72      1.82   11.53  Zn(OH)2
+  Zn(OH)2(gamma)   -9.92      1.82   11.73  Zn(OH)2
+  Znmetal         -41.40    -15.61   25.79  Zn
+  ZnO(active)      -9.37      1.82   11.19  ZnO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.045 Seconds.
+-------------------------------
+

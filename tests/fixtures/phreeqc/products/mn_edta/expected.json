@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "case": "mn_edta",
+  "reference": {
+    "software": "PHREEQC 3.8.6-17100",
+    "base_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+    "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+    "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+    "extensions": {
+      "flahax-chelates-25c.dat": "bc63ebe54ef47bb38a3d3e7a00bb5231850f2de48a0cc661d0a65d1aa787cc0b",
+      "flahax-phases-25c.dat": "0dcec007c1e7c3f475a0e67290876a23d6aaf678d95c9771821deed3c8101a5e"
+    }
+  },
+  "product_doses_g_per_kgw": {
+    "Mn EDTA": 0.01
+  },
+  "initial_ph": 6.0,
+  "runtime_totals": {
+    "Mn+2": 2.366301938234277e-05,
+    "Edta-4": 2.366301938234277e-05,
+    "Na+": 0.002046149089399,
+    "Cl-": 0.002
+  },
+  "selected_rows": [
+    {
+      "pH": 6.0,
+      "mu": 0.002070974098026,
+      "mass_H2O": 1.0,
+      "charge": 7.91264430356e-20,
+      "pct_err": 1.932466226129e-15,
+      "Mn(2)": 2.366301938234e-05,
+      "Edta": 2.366301938234e-05,
+      "Na": 0.002046149089399,
+      "Cl": 0.002,
+      "m_Cl-": 0.001999999907194,
+      "m_H+": 1.051678604772e-06,
+      "m_Na+": 0.002046149089194,
+      "m_Edta-4": 2.91566841513e-13,
+      "m_OH-": 1.059317438534e-08,
+      "m_MnOH+": 9.753960150974e-13,
+      "m_Mn(OH)3-": 6.111120730242e-25,
+      "m_Mn(OH)4-2": 2.306103558517e-32,
+      "m_MnCl+": 9.233321768558e-11,
+      "m_MnCl2": 2.359983178833e-13,
+      "m_MnCl3-": 1.299127702905e-16,
+      "m_H(Edta)-3": 1.86853477537e-08,
+      "m_H2(Edta)-2": 2.681947397002e-08,
+      "m_H3(Edta)-": 3.004828555415e-11,
+      "m_H4(Edta)": 4.11727155516e-15,
+      "m_H5(Edta)+": 1.373471644498e-19,
+      "m_Mn(Edta)-2": 2.355403355758e-05,
+      "m_MnH(Edta)-": 6.345045369009e-08,
+      "m_Na(Edta)-3": 2.053787095884e-13,
+      "m_Mn+2": 4.544182633031e-08,
+      "la_Cl-": -2.720853063261,
+      "la_H+": -6.0,
+      "la_Na+": -2.71094576411,
+      "la_Edta-4": -12.88539048811,
+      "la_OH-": -7.997030056666,
+      "la_MnOH+": -12.03241502267,
+      "la_Mn(OH)3-": -24.235475136,
+      "la_Mn(OH)4-2": -31.72350519267,
+      "la_MnCl+": -10.05623802926,
+      "la_MnCl2": -12.62709109252,
+      "la_MnCl3-": -15.90794415578,
+      "la_H(Edta)-3": -7.937390488111,
+      "la_H2(Edta)-2": -7.664390488111,
+      "la_H3(Edta)-": -10.54539048811,
+      "la_H4(Edta)": -14.38539048811,
+      "la_H5(Edta)+": -18.88539048811,
+      "la_Mn(Edta)-2": -4.720775454114,
+      "la_MnH(Edta)-": -7.220775454114,
+      "la_Na(Edta)-3": -12.89633625222,
+      "la_Mn+2": -7.435384966003,
+      "si_Pyrochroite": -10.62944507934,
+      "si_Halite": -7.034298827371
+    }
+  ],
+  "nitric_acid_molal": null,
+  "fix_h_nitric_acid_molal": null,
+  "tolerances": {
+    "replay_relative": 1e-08,
+    "replay_absolute": 1e-12,
+    "charge_error_percent": 0.1,
+    "runtime_log_activity_absolute": 0.12,
+    "runtime_molality_relative": 0.15,
+    "runtime_molality_absolute": 1e-10,
+    "runtime_si_absolute": 0.25,
+    "acid_relative": 0.03,
+    "acid_absolute": 2e-06
+  },
+  "hashes": {
+    "mn_edta.out": "4cf1de83c5b25724eab9281379929afa261debe70d85d77d6f49ea0c548075eb",
+    "mn_edta.pqi": "fabd40cd9b96463ab0e2ce2bcaad3d569c77b8984491de0be3e9d0a9bb693214",
+    "mn_edta.screen": "e1a322620e1051de1a92c878b540cb94fded11338ee45dc9026bff7b3484d204",
+    "mn_edta.sel": "a463f16037f538b9e8f18b18040a45b787188d25a38f49e628d70f16cc10adcd"
+  }
+}

@@ -1,0 +1,28 @@
+TITLE FlahaX gypsum; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Ca 0.040000000000000001
+ S(6) 0.040000000000000001
+ Na 0.01 charge
+ Cl 0.01
+EQUILIBRIUM_PHASES 1
+ Gypsum 0 0
+ Anhydrite 0 0
+SELECTED_OUTPUT
+ -file gypsum.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Ca S(6) Na Cl
+ -molalities Ca+2 Cl- H+ Na+ SO4-2 OH- CaOH+ HSO4- CaSO4 NaSO4-
+ -activities Ca+2 Cl- H+ Na+ SO4-2 OH- CaOH+ HSO4- CaSO4 NaSO4-
+ -si Halite Anhydrite Gypsum
+ -equilibrium_phases Gypsum Anhydrite
+END

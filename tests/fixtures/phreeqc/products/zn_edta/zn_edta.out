@@ -1,0 +1,168 @@
+   Input file: zn_edta.pqi
+  Output file: zn_edta.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX zn_edta
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Zn 2.1413276231263388e-05
+	 Edta 2.1413276231263388e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file zn_edta.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Zn Edta Na Cl
+	 molalities Cl- H+ Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Na(Edta)-3
+	 activities Cl- H+ Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Na(Edta)-3
+	 si Zincite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX zn_edta
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Edta              2.141e-05   2.141e-05
+	Na                2.042e-03   2.042e-03  Charge balance
+	Zn                2.141e-05   2.141e-05
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.064e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   4.174e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   5.329e-16
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.052e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.902e-03    -2.699    -2.721    -0.022     (0)  
+   ZnCl+           1.113e-11   1.058e-11   -10.953   -10.975    -0.022     (0)  
+   ZnOHCl          1.395e-13   1.395e-13   -12.855   -12.855     0.000     (0)  
+   ZnCl2           3.190e-14   3.190e-14   -13.496   -13.496     0.000     (0)  
+   ZnCl3-          5.068e-17   4.820e-17   -16.295   -16.317    -0.022     (0)  
+   ZnCl4-2         5.590e-20   4.583e-20   -19.253   -19.339    -0.086     (0)  
+Edta          2.141e-05
+   Zn(Edta)-2      2.136e-05   1.726e-05    -4.670    -4.763    -0.093     (0)  
+   ZnH(Edta)-      4.573e-08   4.335e-08    -7.340    -7.363    -0.023     (0)  
+   H2(Edta)-2      1.604e-09   1.296e-09    -8.795    -8.887    -0.093     (0)  
+   H(Edta)-3       1.117e-09   6.911e-10    -8.952    -9.160    -0.209     (0)  
+   ZnOH(Edta)-3    1.760e-11   1.089e-11   -10.754   -10.963    -0.209     (0)  
+   H3(Edta)-       1.798e-12   1.704e-12   -11.745   -11.768    -0.023     (0)  
+   Edta-4          1.742e-14   7.790e-15   -13.759   -14.108    -0.350     (0)  
+   Na(Edta)-3      1.225e-14   7.580e-15   -13.912   -14.120    -0.209     (0)  
+   H4(Edta)        2.463e-16   2.463e-16   -15.608   -15.608     0.000     (0)  
+   H5(Edta)+       8.217e-21   7.790e-21   -20.085   -20.108    -0.023     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Na            2.042e-03
+   Na+             2.042e-03   1.942e-03    -2.690    -2.712    -0.022     (0)  
+   Na(Edta)-3      1.225e-14   7.580e-15   -13.912   -14.120    -0.209     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+Zn            2.141e-05
+   Zn(Edta)-2      2.136e-05   1.726e-05    -4.670    -4.763    -0.093     (0)  
+   ZnH(Edta)-      4.573e-08   4.335e-08    -7.340    -7.363    -0.023     (0)  
+   Zn+2            2.709e-09   2.215e-09    -8.567    -8.655    -0.087     (0)  
+   ZnOH(Edta)-3    1.760e-11   1.089e-11   -10.754   -10.963    -0.209     (0)  
+   ZnCl+           1.113e-11   1.058e-11   -10.953   -10.975    -0.022     (0)  
+   ZnOH+           2.353e-12   2.231e-12   -11.628   -11.652    -0.023     (0)  
+   ZnOHCl          1.395e-13   1.395e-13   -12.855   -12.855     0.000     (0)  
+   ZnCl2           3.190e-14   3.190e-14   -13.496   -13.496     0.000     (0)  
+   Zn(OH)2         3.560e-15   3.560e-15   -14.449   -14.449     0.000     (0)  
+   ZnCl3-          5.068e-17   4.820e-17   -16.295   -16.317    -0.022     (0)  
+   Zn(OH)3-        1.895e-19   1.796e-19   -18.722   -18.746    -0.023     (0)  
+   ZnCl4-2         5.590e-20   4.583e-20   -19.253   -19.339    -0.086     (0)  
+   Zn(OH)4-2       8.913e-26   7.200e-26   -25.050   -25.143    -0.093     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Halite           -7.04     -5.43    1.60  NaCl
+  O2(g)           -43.09     40.00   83.09  O2
+  Zincite          -7.99      3.35   11.33  ZnO
+  Zn(OH)2          -8.85      3.35   12.20  Zn(OH)2
+  Zn(OH)2(am)      -9.13      3.35   12.47  Zn(OH)2
+  Zn(OH)2(beta)    -8.41      3.35   11.75  Zn(OH)2
+  Zn(OH)2(epsilon)  -8.19      3.35   11.53  Zn(OH)2
+  Zn(OH)2(gamma)   -8.39      3.35   11.73  Zn(OH)2
+  Zn2(OH)3Cl      -17.22     -2.03   15.19  Zn2(OH)3Cl
+  Zn5(OH)8Cl2     -39.21     -0.71   38.50  Zn5(OH)8Cl2
+  ZnCl2           -21.15    -14.10    7.05  ZnCl2
+  Znmetal         -42.44    -16.65   25.79  Zn
+  ZnO(active)      -7.84      3.35   11.19  ZnO
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+------------------------------
+End of Run after 0.04 Seconds.
+------------------------------
+

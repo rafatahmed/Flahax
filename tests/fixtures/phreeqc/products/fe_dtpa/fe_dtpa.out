@@ -1,0 +1,155 @@
+   Input file: fe_dtpa.pqi
+  Output file: fe_dtpa.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX fe_dtpa
+	 25 C fixed analytical oxidation states
+	SOLUTION 1
+	 temp 25
+	 pH 6
+	 units mol/kgw
+	 water 1
+	 Fe(3) 1.9697376667562004e-05
+	 Dtp 1.9697376667562004e-05
+	 Na 0.002 charge
+	 Cl 0.002
+	SELECTED_OUTPUT
+	 file fe_dtpa.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Fe(3) Dtp Na Cl
+	 molalities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
+	 activities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
+	 si Ferrihydrite Goethite Halite
+	END
+-----
+TITLE
+-----
+
+ FlahaX fe_dtpa
+ 25 C fixed analytical oxidation states
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Dtp               1.970e-05   1.970e-05
+	Fe(3)             1.970e-05   1.970e-05
+	Na                2.038e-03   2.038e-03  Charge balance
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.000    
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.059e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -4.044e-05
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   5.095e-19
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   9
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              1.052e-06   1.000e-06    -5.978    -6.000    -0.022      0.00
+   OH-             1.059e-08   1.007e-08    -7.975    -7.997    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.902e-03    -2.699    -2.721    -0.022     (0)  
+   FeCl+2          1.189e-18   9.749e-19   -17.925   -18.011    -0.086     (0)  
+   FeCl2+          8.704e-21   8.282e-21   -20.060   -20.082    -0.022     (0)  
+   FeCl3           1.575e-24   1.575e-24   -23.803   -23.803     0.000     (0)  
+Dtp           1.970e-05
+   FeDtp-2         1.970e-05   1.611e-05    -4.706    -4.793    -0.087     (0)  
+   H2Dtp-3         4.506e-10   2.867e-10    -9.346    -9.543    -0.196     (0)  
+   H3Dtp-2         6.678e-12   5.462e-12   -11.175   -11.263    -0.087     (0)  
+   HDtp-4          1.609e-12   7.200e-13   -11.793   -12.143    -0.349     (0)  
+   H4Dtp-          2.287e-15   2.174e-15   -14.641   -14.663    -0.022     (0)  
+   Dtp-5           8.374e-17   2.384e-17   -16.077   -16.623    -0.546     (0)  
+   H5Dtp           2.173e-19   2.174e-19   -18.663   -18.663     0.000     (0)  
+Fe(3)         1.970e-05
+   FeDtp-2         1.970e-05   1.611e-05    -4.706    -4.793    -0.087     (0)  
+   Fe(OH)2+        4.541e-10   4.322e-10    -9.343    -9.364    -0.021     (0)  
+   Fe(OH)3         4.674e-12   4.674e-12   -11.330   -11.330     0.000     (0)  
+   FeOH+2          1.345e-13   1.103e-13   -12.871   -12.957    -0.086     (0)  
+   Fe(OH)4-        4.603e-15   4.382e-15   -14.337   -14.358    -0.021     (0)  
+   Fe+3            2.668e-17   1.697e-17   -16.574   -16.770    -0.196     (0)  
+   FeCl+2          1.189e-18   9.749e-19   -17.925   -18.011    -0.086     (0)  
+   FeCl2+          8.704e-21   8.282e-21   -20.060   -20.082    -0.022     (0)  
+   FeCl3           1.575e-24   1.575e-24   -23.803   -23.803     0.000     (0)  
+   Fe2(OH)2+4      9.457e-25   4.031e-25   -24.024   -24.395    -0.370     (0)  
+   Fe3(OH)4+5      9.544e-33   2.518e-33   -32.020   -32.599    -0.579     (0)  
+H(0)          1.415e-23
+   H2              7.076e-24   7.079e-24   -23.150   -23.150     0.000     (0)  
+Na            2.038e-03
+   Na+             2.038e-03   1.938e-03    -2.691    -2.713    -0.022     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -45.995   -45.995     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fe(OH)2.7Cl.3     1.65     -1.39   -3.04  Fe(OH)2.7Cl.3
+  Ferrihydrite     -1.96      1.23    3.19  Fe(OH)3
+  Goethite          0.74      1.23    0.49  FeOOH
+  Halite           -7.04     -5.43    1.60  NaCl
+  Hematite          3.88      2.46   -1.42  Fe2O3
+  Lepidocrocite    -0.14      1.23    1.37  FeOOH
+  Maghemite        -3.93      2.46    6.39  Fe2O3
+  O2(g)           -43.09     40.00   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.035 Seconds.
+-------------------------------
+

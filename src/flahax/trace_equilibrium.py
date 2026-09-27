@@ -19,11 +19,16 @@ from .catalogue_chemistry import LIGAND_PROFILES
 
 # molar masses, g mol-1; used only to convert the declared elemental assay.
 MOLAR_MASS = {"Fe": 55.845, "Mn": 54.938_044, "Zn": 65.38, "Cu": 63.546, "B": 10.81, "Mo": 95.95}
-EDTA_LOG_BETA = LIGAND_PROFILES["EDTA"]["metal_log_beta"]
-EDTA_COMPLEX_CHARGE = {"Fe+3": -1, "Mn+2": -2, "Zn+2": -2, "Cu+2": -2, "Ca+2": -2, "Mg+2": -2}
-EDTA_METAL_CHARGE = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2}
-# H_n(EDTA)^(n-4), written from Edta-4 in minteq.v4.dat.
-EDTA_PROTONATION_LOG_BETA = LIGAND_PROFILES["EDTA"]["protonation_log_k"]
+METAL_CHARGE = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2}
+# Charges are derived directly from the reactions in minteq.v4.dat and the
+# checked-in Dtp/Edd extension.  Citrate is native to minteq and is retained
+# here because it is a catalogue ligand, not an invented generic organic ion.
+COMPLEX_CHARGE = {
+    "EDTA": {"Fe+3": -1, "Mn+2": -2, "Zn+2": -2, "Cu+2": -2, "Ca+2": -2, "Mg+2": -2},
+    "DTPA": {"Fe+3": -2},
+    "o,o-EDDHA": {"Fe+3": -1},
+    "citrate": {"Fe+3": 0, "Mn+2": -1, "Zn+2": -1, "Cu+2": -1, "Ca+2": -1, "Mg+2": -1},
+}
 LOG_BETA_MOLYBDATE_H = 4.2988
 LOG_BETA_MOLYBDATE_H2 = 8.1636
 # B(OH)3 + H2O = B(OH)4- + H+; phreeqc.dat at 25 C.
@@ -45,6 +50,9 @@ class ChMicroTotals:
     zinc: float = 0.0
     copper: float = 0.0
     edta: float = 0.0
+    dtpa: float = 0.0
+    eddha: float = 0.0
+    citrate: float = 0.0
     boron: float = 0.0
     molybdate: float = 0.0
     calcium: float = 0.0
@@ -104,74 +112,11 @@ def _valid_ph_and_i(ph: float, ionic_strength: float) -> None:
 
 
 def solve_ch_micro_equilibrium(totals: ChMicroTotals, ph: float, ionic_strength: float) -> TraceEquilibrium:
-    """Solve the declared CH-micro chemistry at fixed pH and ionic strength.
-
-    The one-dimensional EDTA mass balance is solved by bisection.  It includes
-    competition from supplied Ca and Mg, which is essential in hard water or a
-    calcium-nitrate fertilizer mixture.  Redox is deliberately fixed as Fe(III)
-    because the declared component is Fe-EDTA; no unsupported redox conversion
-    is inferred.
-    """
+    """Fixed-I view of the same simultaneous aqueous mass-action model."""
     if not isinstance(totals, ChMicroTotals):
         raise DeliveryError("invalid_type", "totals must be ChMicroTotals")
     _valid_ph_and_i(ph, ionic_strength)
-    h = 10.0 ** -ph
-    gamma = {charge: davies_gamma(charge, ionic_strength) for charge in (1, 2, 3, 4)}
-    metals = {
-        "Fe+3": totals.iron, "Mn+2": totals.manganese, "Zn+2": totals.zinc,
-        "Cu+2": totals.copper, "Ca+2": totals.calcium, "Mg+2": totals.magnesium,
-    }
-
-    def distribution(edta_activity: float) -> tuple[dict[str, float], float]:
-        complexes: dict[str, float] = {}
-        for metal, total in metals.items():
-            z_metal = EDTA_METAL_CHARGE[metal]
-            z_complex = abs(EDTA_COMPLEX_CHARGE[metal])
-            multiplier = 10.0 ** EDTA_LOG_BETA[metal] * gamma[z_metal] * edta_activity / gamma[z_complex]
-            free = total / (1.0 + multiplier)
-            complexes[metal] = total - free
-            complexes[f"free:{metal}"] = free
-        ligand = edta_activity / gamma[4]
-        for count, log_beta in enumerate(EDTA_PROTONATION_LOG_BETA, 1):
-            charge = abs(4 - count)
-            ligand += 10.0 ** log_beta * edta_activity * h**count / (gamma[charge] if charge else 1.0)
-        return complexes, ligand + sum(complexes[metal] for metal in metals)
-
-    if totals.edta == 0:
-        complexes = {metal: 0.0 for metal in metals}
-        complexes.update({f"free:{metal}": total for metal, total in metals.items()})
-        edta_activity = 0.0
-    else:
-        low, high = 0.0, max(totals.edta * gamma[4], 1e-30)
-        while distribution(high)[1] < totals.edta:
-            high *= 2.0
-        for _ in range(100):
-            middle = (low + high) / 2.0
-            if distribution(middle)[1] < totals.edta:
-                low = middle
-            else:
-                high = middle
-        edta_activity = (low + high) / 2.0
-        complexes, _ = distribution(edta_activity)
-
-    borate_ratio = 10.0 ** LOG_K_BORIC_ACID / h / gamma[1]
-    boric = totals.boron / (1.0 + borate_ratio)
-    molybdate_factor = 1.0 + 10.0 ** LOG_BETA_MOLYBDATE_H * h / gamma[1] + 10.0 ** LOG_BETA_MOLYBDATE_H2 * h * h
-    mo4 = totals.molybdate / molybdate_factor
-    species = {
-        "EDTA-4": edta_activity / gamma[4],
-        "Fe(III)-EDTA": complexes["Fe+3"], "Mn-EDTA": complexes["Mn+2"],
-        "Zn-EDTA": complexes["Zn+2"], "Cu-EDTA": complexes["Cu+2"],
-        "Ca-EDTA": complexes["Ca+2"], "Mg-EDTA": complexes["Mg+2"],
-        "Fe+3": complexes["free:Fe+3"], "Mn+2": complexes["free:Mn+2"],
-        "Zn+2": complexes["free:Zn+2"], "Cu+2": complexes["free:Cu+2"],
-        "Ca+2": complexes["free:Ca+2"], "Mg+2": complexes["free:Mg+2"],
-        "B(OH)3": boric, "B(OH)4-": boric * borate_ratio,
-        "MoO4-2": mo4, "HMoO4-": 10.0 ** LOG_BETA_MOLYBDATE_H * mo4 * h / gamma[1],
-        "H2MoO4": 10.0 ** LOG_BETA_MOLYBDATE_H2 * mo4 * h * h,
-    }
-    activities = {name: amount for name, amount in species.items()}
-    for name, z in {"EDTA-4": 4, "Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "B(OH)4-": 1, "MoO4-2": 2, "HMoO4-": 1}.items():
-        activities[name] *= gamma[z]
-    activities["H+"] = h
-    return TraceEquilibrium(totals, ph, ionic_strength, species, activities)
+    from .aqueous_model import solve
+    from .mixed_equilibrium import TRACE_BASIS, view
+    result=solve({b:getattr(totals,n) for n,b in TRACE_BASIS.items()},ph,ionic_strength=ionic_strength)
+    return TraceEquilibrium(totals,ph,ionic_strength,view(result.species),view(result.activities))

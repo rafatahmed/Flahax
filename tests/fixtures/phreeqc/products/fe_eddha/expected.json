@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "case": "fe_eddha",
+  "reference": {
+    "software": "PHREEQC 3.8.6-17100",
+    "base_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+    "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+    "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+    "extensions": {
+      "flahax-chelates-25c.dat": "bc63ebe54ef47bb38a3d3e7a00bb5231850f2de48a0cc661d0a65d1aa787cc0b",
+      "flahax-phases-25c.dat": "0dcec007c1e7c3f475a0e67290876a23d6aaf678d95c9771821deed3c8101a5e"
+    }
+  },
+  "product_doses_g_per_kgw": {
+    "Iron EDDHA": 0.01
+  },
+  "initial_ph": 6.0,
+  "runtime_totals": {
+    "Fe+3": 1.0744023636852e-05,
+    "Edd-4": 1.0744023636852e-05,
+    "Na+": 0.002009703039223,
+    "Cl-": 0.002
+  },
+  "selected_rows": [
+    {
+      "pH": 6.0,
+      "mu": 0.002010754364687,
+      "mass_H2O": 1.0,
+      "charge": 1.145542908862e-17,
+      "pct_err": 2.848540152978e-13,
+      "Fe(3)": 1.074402363688e-05,
+      "Edd": 1.074402363688e-05,
+      "Na": 0.002009703039223,
+      "Cl": 0.002,
+      "m_Cl-": 0.002,
+      "m_Fe+3": 2.206328618332e-17,
+      "m_H+": 1.050947597594e-06,
+      "m_Na+": 0.002009703039223,
+      "m_OH-": 1.058569274406e-08,
+      "m_FeOH+2": 1.115877544497e-13,
+      "m_Fe(OH)2+": 3.771954066995e-10,
+      "m_Fe(OH)3": 3.884647059171e-12,
+      "m_Fe(OH)4-": 3.823904273957e-15,
+      "m_Fe2(OH)2+4": 6.467639472951e-25,
+      "m_Fe3(OH)4+5": 5.394600103934e-33,
+      "m_FeCl+2": 9.864956256757e-19,
+      "m_FeCl2+": 7.2383554702e-21,
+      "m_FeCl3": 1.311557829092e-24,
+      "m_Edd-4": 1.27475531081e-23,
+      "m_HEdd-3": 6.829035930014e-18,
+      "m_H2Edd-2": 3.360888378314e-13,
+      "m_H3Edd-": 1.354287605121e-10,
+      "m_H4Edd": 2.454306324356e-10,
+      "m_FeEdd-": 1.074364244139e-05,
+      "la_Cl-": -2.720551066089,
+      "la_Fe+3": -16.85055935751,
+      "la_H+": -6.0,
+      "la_Na+": -2.718449172469,
+      "la_OH-": -7.997029691841,
+      "la_FeOH+2": -13.03758904935,
+      "la_Fe(OH)2+": -9.444618741192,
+      "la_Fe(OH)3": -11.41064843303,
+      "la_Fe(OH)4-": -14.43867812487,
+      "la_Fe2(OH)2+4": -24.5551780987,
+      "la_Fe3(OH)4+5": -32.83979683989,
+      "la_FeCl+2": -18.0911104236,
+      "la_FeCl2+": -20.16166148969,
+      "la_FeCl3": -23.88221255578,
+      "la_Edd-4": -23.23987015807,
+      "la_HEdd-3": -17.35987015807,
+      "la_H2Edd-2": -12.55987015807,
+      "la_H3Edd-": -9.889870158074,
+      "la_H4Edd": -9.609870158074,
+      "la_FeEdd-": -4.990429515584,
+      "si_Ferrihydrite": -2.041648433032,
+      "si_Goethite": 0.6583812588083,
+      "si_Halite": -7.041500238558
+    }
+  ],
+  "nitric_acid_molal": null,
+  "fix_h_nitric_acid_molal": null,
+  "tolerances": {
+    "replay_relative": 1e-08,
+    "replay_absolute": 1e-12,
+    "charge_error_percent": 0.1,
+    "runtime_log_activity_absolute": 0.12,
+    "runtime_molality_relative": 0.15,
+    "runtime_molality_absolute": 1e-10,
+    "runtime_si_absolute": 0.25,
+    "acid_relative": 0.03,
+    "acid_absolute": 2e-06
+  },
+  "hashes": {
+    "fe_eddha.out": "d329ff3446995c925135266e25259ed0fe775495069ffb0e37393be4551536fa",
+    "fe_eddha.pqi": "5fc026c593308dae445464a5fcb990da38260b981286d993c20567de6a6db150",
+    "fe_eddha.screen": "67ef48806c3e01dd5b59130e0a8424bde6c0d874b0429b6dc39f8bbb170bc555",
+    "fe_eddha.sel": "47dc13087571b38b69a01b85ade37614a3ec4ed672343eb4c918ad78e2431c2c"
+  }
+}

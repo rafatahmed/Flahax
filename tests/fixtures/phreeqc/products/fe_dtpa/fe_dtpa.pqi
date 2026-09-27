@@ -1,0 +1,24 @@
+TITLE FlahaX fe_dtpa; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Fe(3) 1.9697376667562004e-05
+ Dtp 1.9697376667562004e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file fe_dtpa.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Fe(3) Dtp Na Cl
+ -molalities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
+ -activities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
+ -si Ferrihydrite Goethite Halite
+END
