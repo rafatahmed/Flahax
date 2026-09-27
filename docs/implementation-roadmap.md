@@ -66,7 +66,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 **Exit condition:** a recipe containing salts plus a reagent addition conserves mass and either remains within configured nutrient tolerance or is rejected.
 
-### P2 — Stock-tank compatibility and equilibrium model `[-]`
+### P2 — Stock-tank compatibility and equilibrium model `[x]`
 
 **Objective:** produce safe, explainable A/B/acid stock plans before modelling detailed equilibria.
 
@@ -76,15 +76,15 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P2.2 | Per-product, temperature-bounded solubility-limit records `[x]` | Missing source/range fails; boundary and safety-margin tests |
 | P2.3 | Tank-assignment constraint solver `[x]` | Deterministic assignment or explicit infeasibility explanation |
 | P2.4 | Stock concentration and capacity calculation `[x]` | Hand-checked 1:100 examples; no tank overfill |
-| P2.5 | Reference-model verification `[-]` | PHREEQC 3.8.6 `phreeqc.dat` target-pH/mixed-macronutrient fixture is checked in; chelated-micronutrient fixture families remain |
+| P2.5 | Reference-model verification `[x]` | PHREEQC 3.8.6 pinned MINTEQ + extensions: 10 product/target families, 11 phase families, raw outputs, hashes, tolerances and live replay; `tests/test_product_phreeqc.py` |
 | P2.6 | Activity/speciation saturation model `[x]` | Bounded Davies macronutrient solver reports mass-balanced species and named phase indices at 25 °C through `I <= 0.1 mol/kgw` |
-| P2.7 | Full fertilizer-chemistry data model `[-]` | Macro-ion precipitation allocation for calcite/gypsum/hydroxyapatite/struvite is implemented; product-specific chelate and unspecified-blend ligand data remain |
+| P2.7 | Full fertilizer-chemistry data model `[x]` | All 28 catalogue conversions feed one 197-entry/28-phase mass-action model; alias/source coverage matrix and `tests/test_chemistry_acceptance.py`; frozen Fe-only Dtp/Edd boundary |
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
-**Decision gate G2:** for the defined macronutrient scope, PHREEQC 3.8.6 `phreeqc.dat` is the reference and Davies is the dependency-free runtime approximation through `I <= 0.1 mol/kgw`. Chelated/micro products require a separately selected ligand dataset before they enter this model.
+**Decision gate G2:** the unified 25 C reference is PHREEQC 3.8.6 `minteq.v4.dat` plus the checked-in, source-documented FlahaX extensions. Runtime Davies is restricted to `I <= 0.1 mol/kgw`. The [coverage matrix](chemistry-coverage-matrix.md) identifies exact native aliases, extension gaps, reactions and sources. Acceptance is numerical verification of this bounded selected model, not commercial-lot or bench certification.
 
-### P3 — pH and alkalinity equilibrium model `[-]`
+### P3 — pH and alkalinity equilibrium model `[x]`
 
 **Objective:** calculate a bounded initial reagent dose from measured buffering, then require measurement-based verification.
 
@@ -96,11 +96,11 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P3.4 | Reagent addition feedback into nutrient balance `[x]` | Re-scored nutrient addition is included in every plan |
 | P3.5 | Post-mix verification protocol `[x]` | Required-measurement flag and documented operator protocol |
 | P3.6 | Aqueous-equilibrium target-pH solver `[x]` | Closed-carbon, 25 °C nitric-acid solver passes its stated PHREEQC target-pH/reagent fixture tolerance |
-| P3.7 | Fertilizer acid/base species coverage `[-]` | Macro-ion carbonate/phosphate/ammonium coverage and phase allocation are implemented; chelated/micro ligand families remain |
+| P3.7 | Fertilizer acid/base species coverage `[x]` | Macro + trace + ligand protonation and added nitrate use the same coupled solver; actual-product target agrees with nitrate titration and corrected Fix_H+; measurement flag and charge/component conservation tested |
 
 **Exit condition:** the plan returns an initial dose, explicit validity range, nutrient contribution, and a required post-mix measurement; it never presents pH as exactly predicted.
 
-**Decision gate G3:** for the defined target-pH scope, the gas boundary is closed analytical inorganic carbon and the permitted strong-acid reagent is HNO3. Open-CO2, alternate acids/bases, and chelated-product reactions require their own source-versioned extensions.
+**Decision gate G3:** closed analytical inorganic carbon, fixed product oxidation states, 25 C, and HNO3 define the target-pH scope, including the frozen catalogue chelates. Corrected PHREEQC Amm decoupling enforces the same nitrogen boundary; failed inputs and their full error text are preserved. Open-CO2 and alternate strong acids/bases remain separate future capabilities.
 
 ### P4 — Pump calibration and dosing planner `[x]`
 
@@ -138,7 +138,7 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 | P6.1 | Golden test fixtures `[x]` | Pepper plus high-alkalinity and incompatible-calcium/phosphate cases pass dependency-free |
 | P6.2 | Property tests `[x]` | Deterministic stock/volume conservation invariant passes |
 | P6.3 | Sensitivity tests `[x]` | Measured-curve demand, assay, temperature validity, injector ratio, and pump-rate perturbations produce bounded or explicitly rejected effects |
-| P6.4 | Reference-equivalence evidence set `[-]` | Activities, species, and saturation-index fixture families are checked in; the complete target-pH/reagent PHREEQC equivalence fixture depends on G2/G3 inputs |
+| P6.4 | Reference-equivalence evidence set `[x]` | Full species, activities, phase amounts and target-pH/nitric-dose evidence passes for the bounded mixed-product model; P2/P3 golden suite and live replay are recorded in release evidence |
 | P6.5 | Release checklist `[x]` | In-repo release evidence and external-gate checklist are checked in; independent review remains G6 |
 
 **Decision gate G6:** an independent reviewer signs off on test and bench evidence before the planner is advertised for operational use.
@@ -193,4 +193,4 @@ P2, P3, and P4 may be developed in parallel after P0/P1. P5 must not begin until
 
 ## Next action
 
-**Current next action:** add source-versioned chelate and blend-ligand product records, select a thermodynamic dataset that contains those ligands, then add their PHREEQC fixtures. Until then, those products must remain outside automatic equilibrium approval.
+**Current next action:** obtain independent G6 chemical/bench/site review of the selected source profiles and numerical evidence before operational advertising. P2.5/P2.7/P3.7 implementation and reference acceptance are documented in [release evidence](release-evidence.md); no hardware, deployment or external database approval is implied.

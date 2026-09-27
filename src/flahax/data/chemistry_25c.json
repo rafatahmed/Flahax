@@ -1,0 +1,5531 @@
+{
+  "schema": 1,
+  "temperature_c": 25,
+  "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+  "source_url": "https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat",
+  "bases": [
+    "Ca+2",
+    "Mg+2",
+    "K+",
+    "Na+",
+    "Cl-",
+    "NO3-",
+    "NH4+",
+    "SO4-2",
+    "CO3-2",
+    "PO4-3",
+    "Fe+3",
+    "Fe+2",
+    "Mn+2",
+    "Zn+2",
+    "Cu+2",
+    "H3BO3",
+    "MoO4-2",
+    "Edta-4",
+    "Citrate-3",
+    "Dtp-5",
+    "Edd-4",
+    "Ure"
+  ],
+  "aqueous": [
+    {
+      "name": "H2O",
+      "equation": "H2O = H2O",
+      "left": {
+        "H2O": 1.0
+      },
+      "right": {
+        "H2O": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 132,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "H2O": 1.0
+      },
+      "beta": 0.0,
+      "charge": 0
+    },
+    {
+      "name": "H3BO3",
+      "equation": "H3BO3 = H3BO3",
+      "left": {
+        "H3BO3": 1.0
+      },
+      "right": {
+        "H3BO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 140,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "H3BO3": 1.0
+      },
+      "beta": 0.0,
+      "charge": 0
+    },
+    {
+      "name": "CO3-2",
+      "equation": "CO3-2 = CO3-2",
+      "left": {
+        "CO3-2": 1.0
+      },
+      "right": {
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 148,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "CO3-2": 1.0
+      },
+      "beta": 0.0,
+      "charge": -2
+    },
+    {
+      "name": "Ca+2",
+      "equation": "Ca+2 = Ca+2",
+      "left": {
+        "Ca+2": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 158,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Ca+2": 1.0
+      },
+      "beta": 0.0,
+      "charge": 2
+    },
+    {
+      "name": "Cl-",
+      "equation": "Cl- = Cl-",
+      "left": {
+        "Cl-": 1.0
+      },
+      "right": {
+        "Cl-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 162,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Cl-": 1.0
+      },
+      "beta": 0.0,
+      "charge": -1
+    },
+    {
+      "name": "Cu+2",
+      "equation": "Cu+2 = Cu+2",
+      "left": {
+        "Cu+2": 1.0
+      },
+      "right": {
+        "Cu+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 168,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Cu+2": 1.0
+      },
+      "beta": 0.0,
+      "charge": 2
+    },
+    {
+      "name": "Fe+3",
+      "equation": "Fe+3 = Fe+3",
+      "left": {
+        "Fe+3": 1.0
+      },
+      "right": {
+        "Fe+3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 172,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Fe+3": 1.0
+      },
+      "beta": 0.0,
+      "charge": 3
+    },
+    {
+      "name": "H+",
+      "equation": "H+ = H+",
+      "left": {
+        "H+": 1.0
+      },
+      "right": {
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 174,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "H+": 1.0
+      },
+      "beta": 0.0,
+      "charge": 1
+    },
+    {
+      "name": "K+",
+      "equation": "K+ = K+",
+      "left": {
+        "K+": 1.0
+      },
+      "right": {
+        "K+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 180,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "K+": 1.0
+      },
+      "beta": 0.0,
+      "charge": 1
+    },
+    {
+      "name": "Mg+2",
+      "equation": "Mg+2 = Mg+2",
+      "left": {
+        "Mg+2": 1.0
+      },
+      "right": {
+        "Mg+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 184,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Mg+2": 1.0
+      },
+      "beta": 0.0,
+      "charge": 2
+    },
+    {
+      "name": "MoO4-2",
+      "equation": "MoO4-2 = MoO4-2",
+      "left": {
+        "MoO4-2": 1.0
+      },
+      "right": {
+        "MoO4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 188,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "MoO4-2": 1.0
+      },
+      "beta": 0.0,
+      "charge": -2
+    },
+    {
+      "name": "NO3-",
+      "equation": "NO3- = NO3-",
+      "left": {
+        "NO3-": 1.0
+      },
+      "right": {
+        "NO3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 190,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "NO3-": 1.0
+      },
+      "beta": 0.0,
+      "charge": -1
+    },
+    {
+      "name": "Na+",
+      "equation": "Na+ = Na+",
+      "left": {
+        "Na+": 1.0
+      },
+      "right": {
+        "Na+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 192,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Na+": 1.0
+      },
+      "beta": 0.0,
+      "charge": 1
+    },
+    {
+      "name": "PO4-3",
+      "equation": "PO4-3 = PO4-3",
+      "left": {
+        "PO4-3": 1.0
+      },
+      "right": {
+        "PO4-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 196,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "PO4-3": 1.0
+      },
+      "beta": 0.0,
+      "charge": -3
+    },
+    {
+      "name": "SO4-2",
+      "equation": "SO4-2 = SO4-2",
+      "left": {
+        "SO4-2": 1.0
+      },
+      "right": {
+        "SO4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 200,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "SO4-2": 1.0
+      },
+      "beta": 0.0,
+      "charge": -2
+    },
+    {
+      "name": "Zn+2",
+      "equation": "Zn+2 = Zn+2",
+      "left": {
+        "Zn+2": 1.0
+      },
+      "right": {
+        "Zn+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 224,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Zn+2": 1.0
+      },
+      "beta": 0.0,
+      "charge": 2
+    },
+    {
+      "name": "Citrate-3",
+      "equation": "Citrate-3 = Citrate-3",
+      "left": {
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Citrate-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 244,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Citrate-3": 1.0
+      },
+      "beta": 0.0,
+      "charge": -3
+    },
+    {
+      "name": "Edta-4",
+      "equation": "Edta-4 = Edta-4",
+      "left": {
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Edta-4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 248,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Edta-4": 1.0
+      },
+      "beta": 0.0,
+      "charge": -4
+    },
+    {
+      "name": "OH-",
+      "equation": "H2O = OH- + H+",
+      "left": {
+        "H2O": 1.0
+      },
+      "right": {
+        "OH-": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 534,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -13.997,
+      "gamma": [
+        3.5,
+        0.0
+      ],
+      "powers": {
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -13.997,
+      "charge": -1
+    },
+    {
+      "name": "ZnOH+",
+      "equation": "Zn+2 + H2O = ZnOH+ + H+",
+      "left": {
+        "Zn+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "ZnOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 750,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -8.997,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -8.997,
+      "charge": 1
+    },
+    {
+      "name": "Zn(OH)2",
+      "equation": "Zn+2 + 2 H2O = Zn(OH)2 + 2 H+",
+      "left": {
+        "Zn+2": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Zn(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 758,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -17.794,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -17.794,
+      "charge": 0
+    },
+    {
+      "name": "Zn(OH)3-",
+      "equation": "Zn+2 + 3 H2O = Zn(OH)3- + 3 H+",
+      "left": {
+        "Zn+2": 1.0,
+        "H2O": 3.0
+      },
+      "right": {
+        "Zn(OH)3-": 1.0,
+        "H+": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 766,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -28.091,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": -28.091,
+      "charge": -1
+    },
+    {
+      "name": "Zn(OH)4-2",
+      "equation": "Zn+2 + 4 H2O = Zn(OH)4-2 + 4 H+",
+      "left": {
+        "Zn+2": 1.0,
+        "H2O": 4.0
+      },
+      "right": {
+        "Zn(OH)4-2": 1.0,
+        "H+": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 774,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -40.488,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 4.0,
+        "H+": -4.0
+      },
+      "beta": -40.488,
+      "charge": -2
+    },
+    {
+      "name": "CuOH+",
+      "equation": "Cu+2 + H2O = CuOH+ + H+",
+      "left": {
+        "Cu+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "CuOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 838,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -7.497,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -7.497,
+      "charge": 1
+    },
+    {
+      "name": "Cu(OH)2",
+      "equation": "Cu+2 + 2 H2O = Cu(OH)2 + 2 H+",
+      "left": {
+        "Cu+2": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Cu(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 846,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -16.194,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -16.194,
+      "charge": 0
+    },
+    {
+      "name": "Cu(OH)3-",
+      "equation": "Cu+2 + 3 H2O = Cu(OH)3- + 3 H+",
+      "left": {
+        "Cu+2": 1.0,
+        "H2O": 3.0
+      },
+      "right": {
+        "Cu(OH)3-": 1.0,
+        "H+": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 854,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -26.879,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": -26.879,
+      "charge": -1
+    },
+    {
+      "name": "Cu(OH)4-2",
+      "equation": "Cu+2 + 4 H2O = Cu(OH)4-2 + 4 H+",
+      "left": {
+        "Cu+2": 1.0,
+        "H2O": 4.0
+      },
+      "right": {
+        "Cu(OH)4-2": 1.0,
+        "H+": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 862,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -39.98,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 4.0,
+        "H+": -4.0
+      },
+      "beta": -39.98,
+      "charge": -2
+    },
+    {
+      "name": "Cu2(OH)2+2",
+      "equation": "2 Cu+2 + 2 H2O = Cu2(OH)2+2 + 2 H+",
+      "left": {
+        "Cu+2": 2.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Cu2(OH)2+2": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 870,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -10.594,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 2.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -10.594,
+      "charge": 2
+    },
+    {
+      "name": "FeOH+",
+      "equation": "Fe+2 + H2O = FeOH+ + H+",
+      "left": {
+        "Fe+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "FeOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 982,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.397,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -9.397,
+      "charge": 1
+    },
+    {
+      "name": "Fe(OH)2",
+      "equation": "Fe+2 + 2 H2O = Fe(OH)2 + 2 H+",
+      "left": {
+        "Fe+2": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Fe(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 990,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -20.494,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -20.494,
+      "charge": 0
+    },
+    {
+      "name": "Fe(OH)3-",
+      "equation": "Fe+2 + 3 H2O = Fe(OH)3- + 3 H+",
+      "left": {
+        "Fe+2": 1.0,
+        "H2O": 3.0
+      },
+      "right": {
+        "Fe(OH)3-": 1.0,
+        "H+": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 998,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -28.991,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": -28.991,
+      "charge": -1
+    },
+    {
+      "name": "FeOH+2",
+      "equation": "Fe+3 + H2O = FeOH+2 + H+",
+      "left": {
+        "Fe+3": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "FeOH+2": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1006,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -2.187,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -2.187,
+      "charge": 2
+    },
+    {
+      "name": "Fe(OH)2+",
+      "equation": "Fe+3 + 2 H2O = Fe(OH)2+ + 2 H+",
+      "left": {
+        "Fe+3": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Fe(OH)2+": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1014,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -4.594,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -4.594,
+      "charge": 1
+    },
+    {
+      "name": "Fe(OH)3",
+      "equation": "Fe+3 + 3 H2O = Fe(OH)3 + 3 H+",
+      "left": {
+        "Fe+3": 1.0,
+        "H2O": 3.0
+      },
+      "right": {
+        "Fe(OH)3": 1.0,
+        "H+": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1022,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -12.56,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": -12.56,
+      "charge": 0
+    },
+    {
+      "name": "Fe(OH)4-",
+      "equation": "Fe+3 + 4 H2O = Fe(OH)4- + 4 H+",
+      "left": {
+        "Fe+3": 1.0,
+        "H2O": 4.0
+      },
+      "right": {
+        "Fe(OH)4-": 1.0,
+        "H+": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1030,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -21.588,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 4.0,
+        "H+": -4.0
+      },
+      "beta": -21.588,
+      "charge": -1
+    },
+    {
+      "name": "Fe2(OH)2+4",
+      "equation": "2 Fe+3 + 2 H2O = Fe2(OH)2+4 + 2 H+",
+      "left": {
+        "Fe+3": 2.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Fe2(OH)2+4": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1038,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -2.854,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 2.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -2.854,
+      "charge": 4
+    },
+    {
+      "name": "Fe3(OH)4+5",
+      "equation": "3 Fe+3 + 4 H2O = Fe3(OH)4+5 + 4 H+",
+      "left": {
+        "Fe+3": 3.0,
+        "H2O": 4.0
+      },
+      "right": {
+        "Fe3(OH)4+5": 1.0,
+        "H+": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1046,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -6.288,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 3.0,
+        "H2O": 4.0,
+        "H+": -4.0
+      },
+      "beta": -6.288,
+      "charge": 5
+    },
+    {
+      "name": "MnOH+",
+      "equation": "Mn+2 + H2O = MnOH+ + H+",
+      "left": {
+        "Mn+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "MnOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1054,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -10.597,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -10.597,
+      "charge": 1
+    },
+    {
+      "name": "Mn(OH)3-",
+      "equation": "Mn+2 + 3 H2O = Mn(OH)3- + 3 H+",
+      "left": {
+        "Mn+2": 1.0,
+        "H2O": 3.0
+      },
+      "right": {
+        "Mn(OH)3-": 1.0,
+        "H+": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1062,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -34.8,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": -34.8,
+      "charge": -1
+    },
+    {
+      "name": "Mn(OH)4-2",
+      "equation": "Mn+2 + 4 H2O = Mn(OH)4-2 + 4 H+",
+      "left": {
+        "Mn+2": 1.0,
+        "H2O": 4.0
+      },
+      "right": {
+        "Mn(OH)4-2": 1.0,
+        "H+": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1070,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -48.288,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "H2O": 4.0,
+        "H+": -4.0
+      },
+      "beta": -48.288,
+      "charge": -2
+    },
+    {
+      "name": "MgOH+",
+      "equation": "Mg+2 + H2O = MgOH+ + H+",
+      "left": {
+        "Mg+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "MgOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1310,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -11.397,
+      "gamma": [
+        6.5,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -11.397,
+      "charge": 1
+    },
+    {
+      "name": "CaOH+",
+      "equation": "Ca+2 + H2O = CaOH+ + H+",
+      "left": {
+        "Ca+2": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "CaOH+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1318,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -12.697,
+      "gamma": [
+        6.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -12.697,
+      "charge": 1
+    },
+    {
+      "name": "ZnCl+",
+      "equation": "Zn+2 + Cl- = ZnCl+",
+      "left": {
+        "Zn+2": 1.0,
+        "Cl-": 1.0
+      },
+      "right": {
+        "ZnCl+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1918,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.4,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 0.4,
+      "charge": 1
+    },
+    {
+      "name": "ZnCl2",
+      "equation": "Zn+2 + 2 Cl- = ZnCl2",
+      "left": {
+        "Zn+2": 1.0,
+        "Cl-": 2.0
+      },
+      "right": {
+        "ZnCl2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1926,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.6,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Cl-": 2.0
+      },
+      "beta": 0.6,
+      "charge": 0
+    },
+    {
+      "name": "ZnCl3-",
+      "equation": "Zn+2 + 3 Cl- = ZnCl3-",
+      "left": {
+        "Zn+2": 1.0,
+        "Cl-": 3.0
+      },
+      "right": {
+        "ZnCl3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1934,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.5,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Cl-": 3.0
+      },
+      "beta": 0.5,
+      "charge": -1
+    },
+    {
+      "name": "ZnCl4-2",
+      "equation": "Zn+2 + 4 Cl- = ZnCl4-2",
+      "left": {
+        "Zn+2": 1.0,
+        "Cl-": 4.0
+      },
+      "right": {
+        "ZnCl4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1942,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.199,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Cl-": 4.0
+      },
+      "beta": 0.199,
+      "charge": -2
+    },
+    {
+      "name": "ZnOHCl",
+      "equation": "Zn+2 + H2O + Cl- = ZnOHCl + H+",
+      "left": {
+        "Zn+2": 1.0,
+        "H2O": 1.0,
+        "Cl-": 1.0
+      },
+      "right": {
+        "ZnOHCl": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 1950,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -7.48,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 1.0,
+        "Cl-": 1.0,
+        "H+": -1.0
+      },
+      "beta": -7.48,
+      "charge": 0
+    },
+    {
+      "name": "CuCl+",
+      "equation": "Cu+2 + Cl- = CuCl+",
+      "left": {
+        "Cu+2": 1.0,
+        "Cl-": 1.0
+      },
+      "right": {
+        "CuCl+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2038,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.2,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 0.2,
+      "charge": 1
+    },
+    {
+      "name": "CuCl2",
+      "equation": "Cu+2 + 2 Cl- = CuCl2",
+      "left": {
+        "Cu+2": 1.0,
+        "Cl-": 2.0
+      },
+      "right": {
+        "CuCl2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2046,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -0.26,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Cl-": 2.0
+      },
+      "beta": -0.26,
+      "charge": 0
+    },
+    {
+      "name": "CuCl3-",
+      "equation": "Cu+2 + 3 Cl- = CuCl3-",
+      "left": {
+        "Cu+2": 1.0,
+        "Cl-": 3.0
+      },
+      "right": {
+        "CuCl3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2054,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -2.29,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Cl-": 3.0
+      },
+      "beta": -2.29,
+      "charge": -1
+    },
+    {
+      "name": "CuCl4-2",
+      "equation": "Cu+2 + 4 Cl- = CuCl4-2",
+      "left": {
+        "Cu+2": 1.0,
+        "Cl-": 4.0
+      },
+      "right": {
+        "CuCl4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2062,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -4.59,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Cl-": 4.0
+      },
+      "beta": -4.59,
+      "charge": -2
+    },
+    {
+      "name": "FeCl+2",
+      "equation": "Fe+3 + Cl- = FeCl+2",
+      "left": {
+        "Fe+3": 1.0,
+        "Cl-": 1.0
+      },
+      "right": {
+        "FeCl+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2158,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.48,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 1.48,
+      "charge": 2
+    },
+    {
+      "name": "FeCl2+",
+      "equation": "Fe+3 + 2 Cl- = FeCl2+",
+      "left": {
+        "Fe+3": 1.0,
+        "Cl-": 2.0
+      },
+      "right": {
+        "FeCl2+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2166,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.13,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Cl-": 2.0
+      },
+      "beta": 2.13,
+      "charge": 1
+    },
+    {
+      "name": "FeCl3",
+      "equation": "Fe+3 + 3 Cl- = FeCl3",
+      "left": {
+        "Fe+3": 1.0,
+        "Cl-": 3.0
+      },
+      "right": {
+        "FeCl3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2174,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.13,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Cl-": 3.0
+      },
+      "beta": 1.13,
+      "charge": 0
+    },
+    {
+      "name": "MnCl+",
+      "equation": "Mn+2 + Cl- = MnCl+",
+      "left": {
+        "Mn+2": 1.0,
+        "Cl-": 1.0
+      },
+      "right": {
+        "MnCl+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2182,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.1,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 0.1,
+      "charge": 1
+    },
+    {
+      "name": "MnCl2",
+      "equation": "Mn+2 + 2 Cl- = MnCl2",
+      "left": {
+        "Mn+2": 1.0,
+        "Cl-": 2.0
+      },
+      "right": {
+        "MnCl2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2190,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.25,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Cl-": 2.0
+      },
+      "beta": 0.25,
+      "charge": 0
+    },
+    {
+      "name": "MnCl3-",
+      "equation": "Mn+2 + 3 Cl- = MnCl3-",
+      "left": {
+        "Mn+2": 1.0,
+        "Cl-": 3.0
+      },
+      "right": {
+        "MnCl3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2198,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -0.31,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Cl-": 3.0
+      },
+      "beta": -0.31,
+      "charge": -1
+    },
+    {
+      "name": "HSO4-",
+      "equation": "H+ + SO4-2 = HSO4-",
+      "left": {
+        "H+": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "HSO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2960,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.99,
+      "gamma": [
+        4.5,
+        0.0
+      ],
+      "powers": {
+        "H+": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 1.99,
+      "charge": -1
+    },
+    {
+      "name": "NH4SO4-",
+      "equation": "NH4+ + SO4-2 = NH4SO4-",
+      "left": {
+        "NH4+": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "NH4SO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 2968,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.03,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "NH4+": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 1.03,
+      "charge": -1
+    },
+    {
+      "name": "ZnSO4",
+      "equation": "Zn+2 + SO4-2 = ZnSO4",
+      "left": {
+        "Zn+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "ZnSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3016,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.34,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.34,
+      "charge": 0
+    },
+    {
+      "name": "Zn(SO4)2-2",
+      "equation": "Zn+2 + 2 SO4-2 = Zn(SO4)2-2",
+      "left": {
+        "Zn+2": 1.0,
+        "SO4-2": 2.0
+      },
+      "right": {
+        "Zn(SO4)2-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3024,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 3.28,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "SO4-2": 2.0
+      },
+      "beta": 3.28,
+      "charge": -2
+    },
+    {
+      "name": "CuSO4",
+      "equation": "Cu+2 + SO4-2 = CuSO4",
+      "left": {
+        "Cu+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "CuSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3056,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.36,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.36,
+      "charge": 0
+    },
+    {
+      "name": "FeSO4",
+      "equation": "Fe+2 + SO4-2 = FeSO4",
+      "left": {
+        "Fe+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "FeSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3096,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.39,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.39,
+      "charge": 0
+    },
+    {
+      "name": "FeSO4+",
+      "equation": "Fe+3 + SO4-2 = FeSO4+",
+      "left": {
+        "Fe+3": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "FeSO4+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3104,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.05,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 4.05,
+      "charge": 1
+    },
+    {
+      "name": "Fe(SO4)2-",
+      "equation": "Fe+3 + 2 SO4-2 = Fe(SO4)2-",
+      "left": {
+        "Fe+3": 1.0,
+        "SO4-2": 2.0
+      },
+      "right": {
+        "Fe(SO4)2-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3112,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 5.38,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "SO4-2": 2.0
+      },
+      "beta": 5.38,
+      "charge": -1
+    },
+    {
+      "name": "MnSO4",
+      "equation": "Mn+2 + SO4-2 = MnSO4",
+      "left": {
+        "Mn+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "MnSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3120,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.25,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.25,
+      "charge": 0
+    },
+    {
+      "name": "MgSO4",
+      "equation": "Mg+2 + SO4-2 = MgSO4",
+      "left": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "MgSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3232,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.26,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.26,
+      "charge": 0
+    },
+    {
+      "name": "CaSO4",
+      "equation": "Ca+2 + SO4-2 = CaSO4",
+      "left": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "CaSO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3240,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.36,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 2.36,
+      "charge": 0
+    },
+    {
+      "name": "NaSO4-",
+      "equation": "Na+ + SO4-2 = NaSO4-",
+      "left": {
+        "Na+": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "NaSO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3264,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.73,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 0.73,
+      "charge": -1
+    },
+    {
+      "name": "KSO4-",
+      "equation": "K+ + SO4-2 = KSO4-",
+      "left": {
+        "K+": 1.0,
+        "SO4-2": 1.0
+      },
+      "right": {
+        "KSO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3272,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.85,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "K+": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": 0.85,
+      "charge": -1
+    },
+    {
+      "name": "NH3",
+      "equation": "NH4+ = NH3 + H+",
+      "left": {
+        "NH4+": 1.0
+      },
+      "right": {
+        "NH3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3416,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.244,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "NH4+": 1.0,
+        "H+": -1.0
+      },
+      "beta": -9.244,
+      "charge": 0
+    },
+    {
+      "name": "CuNH3+2",
+      "equation": "Cu+2 + NH4+ = CuNH3+2 + H+",
+      "left": {
+        "Cu+2": 1.0,
+        "NH4+": 1.0
+      },
+      "right": {
+        "CuNH3+2": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3472,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -5.234,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "NH4+": 1.0,
+        "H+": -1.0
+      },
+      "beta": -5.234,
+      "charge": 2
+    },
+    {
+      "name": "CaNH3+2",
+      "equation": "Ca+2 + NH4+ = CaNH3+2 + H+",
+      "left": {
+        "Ca+2": 1.0,
+        "NH4+": 1.0
+      },
+      "right": {
+        "CaNH3+2": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3640,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.144,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "NH4+": 1.0,
+        "H+": -1.0
+      },
+      "beta": -9.144,
+      "charge": 2
+    },
+    {
+      "name": "Ca(NH3)2+2",
+      "equation": "Ca+2 + 2 NH4+ = Ca(NH3)2+2 + 2 H+",
+      "left": {
+        "Ca+2": 1.0,
+        "NH4+": 2.0
+      },
+      "right": {
+        "Ca(NH3)2+2": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3648,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -18.788,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "NH4+": 2.0,
+        "H+": -2.0
+      },
+      "beta": -18.788,
+      "charge": 2
+    },
+    {
+      "name": "CuNO3+",
+      "equation": "Cu+2 + NO3- = CuNO3+",
+      "left": {
+        "Cu+2": 1.0,
+        "NO3-": 1.0
+      },
+      "right": {
+        "CuNO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3792,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "NO3-": 1.0
+      },
+      "beta": 0.5,
+      "charge": 1
+    },
+    {
+      "name": "Cu(NO3)2",
+      "equation": "Cu+2 + 2 NO3- = Cu(NO3)2",
+      "left": {
+        "Cu+2": 1.0,
+        "NO3-": 2.0
+      },
+      "right": {
+        "Cu(NO3)2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3800,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -0.4,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "NO3-": 2.0
+      },
+      "beta": -0.4,
+      "charge": 0
+    },
+    {
+      "name": "ZnNO3+",
+      "equation": "Zn+2 + NO3- = ZnNO3+",
+      "left": {
+        "Zn+2": 1.0,
+        "NO3-": 1.0
+      },
+      "right": {
+        "ZnNO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3808,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.4,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "NO3-": 1.0
+      },
+      "beta": 0.4,
+      "charge": 1
+    },
+    {
+      "name": "Zn(NO3)2",
+      "equation": "Zn+2 + 2 NO3- = Zn(NO3)2",
+      "left": {
+        "Zn+2": 1.0,
+        "NO3-": 2.0
+      },
+      "right": {
+        "Zn(NO3)2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3816,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -0.3,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "NO3-": 2.0
+      },
+      "beta": -0.3,
+      "charge": 0
+    },
+    {
+      "name": "FeNO3+2",
+      "equation": "Fe+3 + NO3- = FeNO3+2",
+      "left": {
+        "Fe+3": 1.0,
+        "NO3-": 1.0
+      },
+      "right": {
+        "FeNO3+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3856,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "NO3-": 1.0
+      },
+      "beta": 1.0,
+      "charge": 2
+    },
+    {
+      "name": "MnNO3+",
+      "equation": "Mn+2 + NO3- = MnNO3+",
+      "left": {
+        "Mn+2": 1.0,
+        "NO3-": 1.0
+      },
+      "right": {
+        "MnNO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3864,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "NO3-": 1.0
+      },
+      "beta": 0.2,
+      "charge": 1
+    },
+    {
+      "name": "Mn(NO3)2",
+      "equation": "Mn+2 + 2 NO3- = Mn(NO3)2",
+      "left": {
+        "Mn+2": 1.0,
+        "NO3-": 2.0
+      },
+      "right": {
+        "Mn(NO3)2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3872,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.6,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "NO3-": 2.0
+      },
+      "beta": 0.6,
+      "charge": 0
+    },
+    {
+      "name": "CaNO3+",
+      "equation": "Ca+2 + NO3- = CaNO3+",
+      "left": {
+        "Ca+2": 1.0,
+        "NO3-": 1.0
+      },
+      "right": {
+        "CaNO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 3904,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "NO3-": 1.0
+      },
+      "beta": 0.5,
+      "charge": 1
+    },
+    {
+      "name": "HPO4-2",
+      "equation": "H+ + PO4-3 = HPO4-2",
+      "left": {
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "HPO4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4256,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.375,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 12.375,
+      "charge": -2
+    },
+    {
+      "name": "H2PO4-",
+      "equation": "2 H+ + PO4-3 = H2PO4-",
+      "left": {
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "H2PO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4264,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 19.573,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "beta": 19.573,
+      "charge": -1
+    },
+    {
+      "name": "H3PO4",
+      "equation": "3 H+ + PO4-3 = H3PO4",
+      "left": {
+        "H+": 3.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "H3PO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4272,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 21.721,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 3.0,
+        "PO4-3": 1.0
+      },
+      "beta": 21.721,
+      "charge": 0
+    },
+    {
+      "name": "FeH2PO4+",
+      "equation": "Fe+2 + 2 H+ + PO4-3 = FeH2PO4+",
+      "left": {
+        "Fe+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "FeH2PO4+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4288,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 22.273,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "beta": 22.273,
+      "charge": 1
+    },
+    {
+      "name": "FeHPO4",
+      "equation": "Fe+2 + H+ + PO4-3 = FeHPO4",
+      "left": {
+        "Fe+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "FeHPO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4296,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 15.975,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 15.975,
+      "charge": 0
+    },
+    {
+      "name": "FeH2PO4+2",
+      "equation": "Fe+3 + 2 H+ + PO4-3 = FeH2PO4+2",
+      "left": {
+        "Fe+3": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "FeH2PO4+2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4304,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 23.8515,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "beta": 23.8515,
+      "charge": 2
+    },
+    {
+      "name": "FeHPO4+",
+      "equation": "Fe+3 + H+ + PO4-3 = FeHPO4+",
+      "left": {
+        "Fe+3": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "FeHPO4+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4312,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 22.292,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 22.292,
+      "charge": 1
+    },
+    {
+      "name": "MgPO4-",
+      "equation": "Mg+2 + PO4-3 = MgPO4-",
+      "left": {
+        "Mg+2": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "MgPO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4408,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.654,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 4.654,
+      "charge": -1
+    },
+    {
+      "name": "MgH2PO4+",
+      "equation": "Mg+2 + 2 H+ + PO4-3 = MgH2PO4+",
+      "left": {
+        "Mg+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "MgH2PO4+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4416,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 21.2561,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "beta": 21.2561,
+      "charge": 1
+    },
+    {
+      "name": "MgHPO4",
+      "equation": "Mg+2 + H+ + PO4-3 = MgHPO4",
+      "left": {
+        "Mg+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "MgHPO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4424,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 15.175,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 15.175,
+      "charge": 0
+    },
+    {
+      "name": "CaHPO4",
+      "equation": "Ca+2 + H+ + PO4-3 = CaHPO4",
+      "left": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "CaHPO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4432,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 15.035,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 15.035,
+      "charge": 0
+    },
+    {
+      "name": "CaPO4-",
+      "equation": "Ca+2 + PO4-3 = CaPO4-",
+      "left": {
+        "Ca+2": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "CaPO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4440,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.46,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 6.46,
+      "charge": -1
+    },
+    {
+      "name": "CaH2PO4+",
+      "equation": "Ca+2 + 2 H+ + PO4-3 = CaH2PO4+",
+      "left": {
+        "Ca+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "CaH2PO4+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4448,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 20.923,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "H+": 2.0,
+        "PO4-3": 1.0
+      },
+      "beta": 20.923,
+      "charge": 1
+    },
+    {
+      "name": "NaHPO4-",
+      "equation": "Na+ + H+ + PO4-3 = NaHPO4-",
+      "left": {
+        "Na+": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "NaHPO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4472,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 13.445,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 13.445,
+      "charge": -1
+    },
+    {
+      "name": "KHPO4-",
+      "equation": "K+ + H+ + PO4-3 = KHPO4-",
+      "left": {
+        "K+": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "right": {
+        "KHPO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4480,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 13.255,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "K+": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": 13.255,
+      "charge": -1
+    },
+    {
+      "name": "HCO3-",
+      "equation": "H+ + CO3-2 = HCO3-",
+      "left": {
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "HCO3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4600,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.329,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 10.329,
+      "charge": -1
+    },
+    {
+      "name": "H2CO3",
+      "equation": "2 H+ + CO3-2 = H2CO3",
+      "left": {
+        "H+": 2.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "H2CO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4608,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 16.681,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 2.0,
+        "CO3-2": 1.0
+      },
+      "beta": 16.681,
+      "charge": 0
+    },
+    {
+      "name": "ZnCO3",
+      "equation": "Zn+2 + CO3-2 = ZnCO3",
+      "left": {
+        "Zn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "ZnCO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4640,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.76,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 4.76,
+      "charge": 0
+    },
+    {
+      "name": "ZnHCO3+",
+      "equation": "Zn+2 + H+ + CO3-2 = ZnHCO3+",
+      "left": {
+        "Zn+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "ZnHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4648,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.829,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 11.829,
+      "charge": 1
+    },
+    {
+      "name": "CuCO3",
+      "equation": "Cu+2 + CO3-2 = CuCO3",
+      "left": {
+        "Cu+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "CuCO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4704,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.77,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 6.77,
+      "charge": 0
+    },
+    {
+      "name": "CuHCO3+",
+      "equation": "Cu+2 + H+ + CO3-2 = CuHCO3+",
+      "left": {
+        "Cu+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "CuHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4712,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.129,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 12.129,
+      "charge": 1
+    },
+    {
+      "name": "Cu(CO3)2-2",
+      "equation": "Cu+2 + 2 CO3-2 = Cu(CO3)2-2",
+      "left": {
+        "Cu+2": 1.0,
+        "CO3-2": 2.0
+      },
+      "right": {
+        "Cu(CO3)2-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4720,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "CO3-2": 2.0
+      },
+      "beta": 10.2,
+      "charge": -2
+    },
+    {
+      "name": "FeHCO3+",
+      "equation": "Fe+2 + H+ + CO3-2 = FeHCO3+",
+      "left": {
+        "Fe+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "FeHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4760,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.429,
+      "gamma": [
+        6.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 11.429,
+      "charge": 1
+    },
+    {
+      "name": "MnHCO3+",
+      "equation": "Mn+2 + H+ + CO3-2 = MnHCO3+",
+      "left": {
+        "Mn+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "MnHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4768,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.629,
+      "gamma": [
+        5.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 11.629,
+      "charge": 1
+    },
+    {
+      "name": "MgCO3",
+      "equation": "Mg+2 + CO3-2 = MgCO3",
+      "left": {
+        "Mg+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "MgCO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4808,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.92,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 2.92,
+      "charge": 0
+    },
+    {
+      "name": "MgHCO3+",
+      "equation": "Mg+2 + H+ + CO3-2 = MgHCO3+",
+      "left": {
+        "Mg+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "MgHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4816,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.339,
+      "gamma": [
+        4.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 11.339,
+      "charge": 1
+    },
+    {
+      "name": "CaHCO3+",
+      "equation": "Ca+2 + H+ + CO3-2 = CaHCO3+",
+      "left": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "CaHCO3+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4824,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.599,
+      "gamma": [
+        6.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 11.599,
+      "charge": 1
+    },
+    {
+      "name": "CaCO3",
+      "equation": "CO3-2 + Ca+2 = CaCO3",
+      "left": {
+        "CO3-2": 1.0,
+        "Ca+2": 1.0
+      },
+      "right": {
+        "CaCO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4832,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 3.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "CO3-2": 1.0,
+        "Ca+2": 1.0
+      },
+      "beta": 3.2,
+      "charge": 0
+    },
+    {
+      "name": "NaCO3-",
+      "equation": "Na+ + CO3-2 = NaCO3-",
+      "left": {
+        "Na+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "NaCO3-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4872,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.27,
+      "gamma": [
+        5.4,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 1.27,
+      "charge": -1
+    },
+    {
+      "name": "NaHCO3",
+      "equation": "Na+ + H+ + CO3-2 = NaHCO3",
+      "left": {
+        "Na+": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "right": {
+        "NaHCO3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4880,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.079,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "H+": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": 10.079,
+      "charge": 0
+    },
+    {
+      "name": "H2BO3-",
+      "equation": "H3BO3 = H2BO3- + H+",
+      "left": {
+        "H3BO3": 1.0
+      },
+      "right": {
+        "H2BO3-": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4912,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.236,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "H3BO3": 1.0,
+        "H+": -1.0
+      },
+      "beta": -9.236,
+      "charge": -1
+    },
+    {
+      "name": "H5(BO3)2-",
+      "equation": "2 H3BO3 = H5(BO3)2- + H+",
+      "left": {
+        "H3BO3": 2.0
+      },
+      "right": {
+        "H5(BO3)2-": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4920,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.306,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "H3BO3": 2.0,
+        "H+": -1.0
+      },
+      "beta": -9.306,
+      "charge": -1
+    },
+    {
+      "name": "H8(BO3)3-",
+      "equation": "3 H3BO3 = H8(BO3)3- + H+",
+      "left": {
+        "H3BO3": 3.0
+      },
+      "right": {
+        "H8(BO3)3-": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4928,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -7.306,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "H3BO3": 3.0,
+        "H+": -1.0
+      },
+      "beta": -7.306,
+      "charge": -1
+    },
+    {
+      "name": "MgH2BO3+",
+      "equation": "Mg+2 + H3BO3 = MgH2BO3+ + H+",
+      "left": {
+        "Mg+2": 1.0,
+        "H3BO3": 1.0
+      },
+      "right": {
+        "MgH2BO3+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4944,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -7.696,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "H3BO3": 1.0,
+        "H+": -1.0
+      },
+      "beta": -7.696,
+      "charge": 1
+    },
+    {
+      "name": "CaH2BO3+",
+      "equation": "Ca+2 + H3BO3 = CaH2BO3+ + H+",
+      "left": {
+        "Ca+2": 1.0,
+        "H3BO3": 1.0
+      },
+      "right": {
+        "CaH2BO3+": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4952,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -7.476,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "H3BO3": 1.0,
+        "H+": -1.0
+      },
+      "beta": -7.476,
+      "charge": 1
+    },
+    {
+      "name": "NaH2BO3",
+      "equation": "Na+ + H3BO3 = NaH2BO3 + H+",
+      "left": {
+        "Na+": 1.0,
+        "H3BO3": 1.0
+      },
+      "right": {
+        "NaH2BO3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 4976,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -9.036,
+      "gamma": [
+        2.5,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "H3BO3": 1.0,
+        "H+": -1.0
+      },
+      "beta": -9.036,
+      "charge": 0
+    },
+    {
+      "name": "HMoO4-",
+      "equation": "MoO4-2 + H+ = HMoO4-",
+      "left": {
+        "MoO4-2": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "HMoO4-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5056,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.2988,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 1.0,
+        "H+": 1.0
+      },
+      "beta": 4.2988,
+      "charge": -1
+    },
+    {
+      "name": "H2MoO4",
+      "equation": "MoO4-2 + 2 H+ = H2MoO4",
+      "left": {
+        "MoO4-2": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "H2MoO4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5064,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 8.1636,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 1.0,
+        "H+": 2.0
+      },
+      "beta": 8.1636,
+      "charge": 0
+    },
+    {
+      "name": "Mo7O24-6",
+      "equation": "7 MoO4-2 + 8 H+ = Mo7O24-6 + 4 H2O",
+      "left": {
+        "MoO4-2": 7.0,
+        "H+": 8.0
+      },
+      "right": {
+        "Mo7O24-6": 1.0,
+        "H2O": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5072,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 52.99,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 7.0,
+        "H+": 8.0,
+        "H2O": -4.0
+      },
+      "beta": 52.99,
+      "charge": -6
+    },
+    {
+      "name": "HMo7O24-5",
+      "equation": "7 MoO4-2 + 9 H+ = HMo7O24-5 + 4 H2O",
+      "left": {
+        "MoO4-2": 7.0,
+        "H+": 9.0
+      },
+      "right": {
+        "HMo7O24-5": 1.0,
+        "H2O": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5080,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 59.3768,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 7.0,
+        "H+": 9.0,
+        "H2O": -4.0
+      },
+      "beta": 59.3768,
+      "charge": -5
+    },
+    {
+      "name": "H2Mo7O24-4",
+      "equation": "7 MoO4-2 + 10 H+ = H2Mo7O24-4 + 4 H2O",
+      "left": {
+        "MoO4-2": 7.0,
+        "H+": 10.0
+      },
+      "right": {
+        "H2Mo7O24-4": 1.0,
+        "H2O": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5088,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 64.159,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 7.0,
+        "H+": 10.0,
+        "H2O": -4.0
+      },
+      "beta": 64.159,
+      "charge": -4
+    },
+    {
+      "name": "H3Mo7O24-3",
+      "equation": "7 MoO4-2 + 11 H+ = H3Mo7O24-3 + 4 H2O",
+      "left": {
+        "MoO4-2": 7.0,
+        "H+": 11.0
+      },
+      "right": {
+        "H3Mo7O24-3": 1.0,
+        "H2O": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 5096,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 67.405,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "MoO4-2": 7.0,
+        "H+": 11.0,
+        "H2O": -4.0
+      },
+      "beta": 67.405,
+      "charge": -3
+    },
+    {
+      "name": "H(Citrate)-2",
+      "equation": "H+ + Citrate-3 = H(Citrate)-2",
+      "left": {
+        "H+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "H(Citrate)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6400,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.396,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 6.396,
+      "charge": -2
+    },
+    {
+      "name": "H2(Citrate)-",
+      "equation": "2 H+ + Citrate-3 = H2(Citrate)-",
+      "left": {
+        "H+": 2.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "H2(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6408,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.157,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 2.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 11.157,
+      "charge": -1
+    },
+    {
+      "name": "H3(Citrate)",
+      "equation": "3 H+ + Citrate-3 = H3(Citrate)",
+      "left": {
+        "H+": 3.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "H3(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6416,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 14.285,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 3.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 14.285,
+      "charge": 0
+    },
+    {
+      "name": "Zn(Citrate)-",
+      "equation": "Zn+2 + Citrate-3 = Zn(Citrate)-",
+      "left": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Zn(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6472,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.21,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 6.21,
+      "charge": -1
+    },
+    {
+      "name": "Zn(Citrate)2-4",
+      "equation": "Zn+2 + 2 Citrate-3 = Zn(Citrate)2-4",
+      "left": {
+        "Zn+2": 1.0,
+        "Citrate-3": 2.0
+      },
+      "right": {
+        "Zn(Citrate)2-4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6480,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 7.4,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Citrate-3": 2.0
+      },
+      "beta": 7.4,
+      "charge": -4
+    },
+    {
+      "name": "ZnH(Citrate)",
+      "equation": "Zn+2 + Citrate-3 + H+ = ZnH(Citrate)",
+      "left": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "ZnH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6488,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 10.2,
+      "charge": 0
+    },
+    {
+      "name": "ZnH2(Citrate)+",
+      "equation": "Zn+2 + Citrate-3 + 2 H+ = ZnH2(Citrate)+",
+      "left": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "ZnH2(Citrate)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6496,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.84,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "beta": 12.84,
+      "charge": 1
+    },
+    {
+      "name": "Cu(Citrate)-",
+      "equation": "Cu+2 + Citrate-3 = Cu(Citrate)-",
+      "left": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Cu(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6544,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 7.57,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 7.57,
+      "charge": -1
+    },
+    {
+      "name": "Cu(Citrate)2-4",
+      "equation": "Cu+2 + 2 Citrate-3 = Cu(Citrate)2-4",
+      "left": {
+        "Cu+2": 1.0,
+        "Citrate-3": 2.0
+      },
+      "right": {
+        "Cu(Citrate)2-4": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6552,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 8.9,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Citrate-3": 2.0
+      },
+      "beta": 8.9,
+      "charge": -4
+    },
+    {
+      "name": "CuH(Citrate)",
+      "equation": "Cu+2 + Citrate-3 + H+ = CuH(Citrate)",
+      "left": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "CuH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6560,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.87,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 10.87,
+      "charge": 0
+    },
+    {
+      "name": "CuH2(Citrate)+",
+      "equation": "Cu+2 + Citrate-3 + 2 H+ = CuH2(Citrate)+",
+      "left": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "CuH2(Citrate)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6568,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 13.23,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "beta": 13.23,
+      "charge": 1
+    },
+    {
+      "name": "Cu2(Citrate)2-2",
+      "equation": "2 Cu+2 + 2 Citrate-3 = Cu2(Citrate)2-2",
+      "left": {
+        "Cu+2": 2.0,
+        "Citrate-3": 2.0
+      },
+      "right": {
+        "Cu2(Citrate)2-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6576,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 16.9,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 2.0,
+        "Citrate-3": 2.0
+      },
+      "beta": 16.9,
+      "charge": -2
+    },
+    {
+      "name": "Fe(Citrate)-",
+      "equation": "Fe+2 + Citrate-3 = Fe(Citrate)-",
+      "left": {
+        "Fe+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Fe(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6648,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.1,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 6.1,
+      "charge": -1
+    },
+    {
+      "name": "FeH(Citrate)",
+      "equation": "Fe+2 + Citrate-3 + H+ = FeH(Citrate)",
+      "left": {
+        "Fe+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "FeH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6656,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 10.2,
+      "charge": 0
+    },
+    {
+      "name": "Fe(Citrate)",
+      "equation": "Fe+3 + Citrate-3 = Fe(Citrate)",
+      "left": {
+        "Fe+3": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Fe(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6664,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 13.1,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 13.1,
+      "charge": 0
+    },
+    {
+      "name": "FeH(Citrate)+",
+      "equation": "Fe+3 + Citrate-3 + H+ = FeH(Citrate)+",
+      "left": {
+        "Fe+3": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "FeH(Citrate)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6672,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 14.4,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 14.4,
+      "charge": 1
+    },
+    {
+      "name": "Mn(Citrate)-",
+      "equation": "Mn+2 + Citrate-3 = Mn(Citrate)-",
+      "left": {
+        "Mn+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Mn(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6680,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.28,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 4.28,
+      "charge": -1
+    },
+    {
+      "name": "MnH(Citrate)",
+      "equation": "Mn+2 + Citrate-3 + H+ = MnH(Citrate)",
+      "left": {
+        "Mn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "MnH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6688,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 9.6,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 9.6,
+      "charge": 0
+    },
+    {
+      "name": "Ca(Citrate)-",
+      "equation": "Ca+2 + Citrate-3 = Ca(Citrate)-",
+      "left": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Ca(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6712,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.87,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 4.87,
+      "charge": -1
+    },
+    {
+      "name": "CaH(Citrate)",
+      "equation": "Ca+2 + Citrate-3 + H+ = CaH(Citrate)",
+      "left": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "CaH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6720,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 9.26,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 9.26,
+      "charge": 0
+    },
+    {
+      "name": "CaH2(Citrate)+",
+      "equation": "Ca+2 + Citrate-3 + 2 H+ = CaH2(Citrate)+",
+      "left": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "CaH2(Citrate)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6728,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.257,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "beta": 12.257,
+      "charge": 1
+    },
+    {
+      "name": "Mg(Citrate)-",
+      "equation": "Mg+2 + Citrate-3 = Mg(Citrate)-",
+      "left": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Mg(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6736,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 4.89,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 4.89,
+      "charge": -1
+    },
+    {
+      "name": "MgH(Citrate)",
+      "equation": "Mg+2 + Citrate-3 + H+ = MgH(Citrate)",
+      "left": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "MgH(Citrate)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6744,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 8.91,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 8.91,
+      "charge": 0
+    },
+    {
+      "name": "MgH2(Citrate)+",
+      "equation": "Mg+2 + Citrate-3 + 2 H+ = MgH2(Citrate)+",
+      "left": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "MgH2(Citrate)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6752,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 2.0
+      },
+      "beta": 12.2,
+      "charge": 1
+    },
+    {
+      "name": "Na(Citrate)-2",
+      "equation": "Na+ + Citrate-3 = Na(Citrate)-2",
+      "left": {
+        "Na+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Na(Citrate)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6808,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.03,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 1.03,
+      "charge": -2
+    },
+    {
+      "name": "Na2(Citrate)-",
+      "equation": "2 Na+ + Citrate-3 = Na2(Citrate)-",
+      "left": {
+        "Na+": 2.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "Na2(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6816,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Na+": 2.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 1.5,
+      "charge": -1
+    },
+    {
+      "name": "NaH(Citrate)-",
+      "equation": "Na+ + Citrate-3 + H+ = NaH(Citrate)-",
+      "left": {
+        "Na+": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "NaH(Citrate)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6824,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.45,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "Citrate-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": 6.45,
+      "charge": -1
+    },
+    {
+      "name": "K(Citrate)-2",
+      "equation": "K+ + Citrate-3 = K(Citrate)-2",
+      "left": {
+        "K+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "right": {
+        "K(Citrate)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 6832,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.1,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "K+": 1.0,
+        "Citrate-3": 1.0
+      },
+      "beta": 1.1,
+      "charge": -2
+    },
+    {
+      "name": "H(Edta)-3",
+      "equation": "H+ + Edta-4 = H(Edta)-3",
+      "left": {
+        "H+": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "H(Edta)-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7224,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.948,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 10.948,
+      "charge": -3
+    },
+    {
+      "name": "H2(Edta)-2",
+      "equation": "2 H+ + Edta-4 = H2(Edta)-2",
+      "left": {
+        "H+": 2.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "H2(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7232,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 17.221,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 2.0,
+        "Edta-4": 1.0
+      },
+      "beta": 17.221,
+      "charge": -2
+    },
+    {
+      "name": "H3(Edta)-",
+      "equation": "3 H+ + Edta-4 = H3(Edta)-",
+      "left": {
+        "H+": 3.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "H3(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7240,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 20.34,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 3.0,
+        "Edta-4": 1.0
+      },
+      "beta": 20.34,
+      "charge": -1
+    },
+    {
+      "name": "H4(Edta)",
+      "equation": "4 H+ + Edta-4 = H4(Edta)",
+      "left": {
+        "H+": 4.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "H4(Edta)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7248,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 22.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 4.0,
+        "Edta-4": 1.0
+      },
+      "beta": 22.5,
+      "charge": 0
+    },
+    {
+      "name": "H5(Edta)+",
+      "equation": "5 H+ + Edta-4 = H5(Edta)+",
+      "left": {
+        "H+": 5.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "H5(Edta)+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7256,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 24.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "H+": 5.0,
+        "Edta-4": 1.0
+      },
+      "beta": 24.0,
+      "charge": 1
+    },
+    {
+      "name": "Zn(Edta)-2",
+      "equation": "Zn+2 + Edta-4 = Zn(Edta)-2",
+      "left": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Zn(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7352,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 18.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 18.0,
+      "charge": -2
+    },
+    {
+      "name": "ZnH(Edta)-",
+      "equation": "Zn+2 + Edta-4 + H+ = ZnH(Edta)-",
+      "left": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "ZnH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7360,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 21.4,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 21.4,
+      "charge": -1
+    },
+    {
+      "name": "ZnOH(Edta)-3",
+      "equation": "Zn+2 + Edta-4 + H2O = ZnOH(Edta)-3 + H+",
+      "left": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "ZnOH(Edta)-3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7368,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 5.8,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Zn+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": 5.8,
+      "charge": -3
+    },
+    {
+      "name": "Cu(Edta)-2",
+      "equation": "Cu+2 + Edta-4 = Cu(Edta)-2",
+      "left": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Cu(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7408,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 20.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 20.5,
+      "charge": -2
+    },
+    {
+      "name": "CuH(Edta)-",
+      "equation": "Cu+2 + Edta-4 + H+ = CuH(Edta)-",
+      "left": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "CuH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7416,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 24.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 24.0,
+      "charge": -1
+    },
+    {
+      "name": "CuH2(Edta)",
+      "equation": "Cu+2 + Edta-4 + 2 H+ = CuH2(Edta)",
+      "left": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "CuH2(Edta)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7424,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 26.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 2.0
+      },
+      "beta": 26.2,
+      "charge": 0
+    },
+    {
+      "name": "CuOH(Edta)-3",
+      "equation": "Cu+2 + Edta-4 + H2O = CuOH(Edta)-3 + H+",
+      "left": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "CuOH(Edta)-3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7432,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 8.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Cu+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": 8.5,
+      "charge": -3
+    },
+    {
+      "name": "Fe(Edta)-2",
+      "equation": "Fe+2 + Edta-4 = Fe(Edta)-2",
+      "left": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Fe(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7520,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 16.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 16.0,
+      "charge": -2
+    },
+    {
+      "name": "FeH(Edta)-",
+      "equation": "Fe+2 + Edta-4 + H+ = FeH(Edta)-",
+      "left": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "FeH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7528,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 19.06,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 19.06,
+      "charge": -1
+    },
+    {
+      "name": "FeOH(Edta)-3",
+      "equation": "Fe+2 + Edta-4 + H2O = FeOH(Edta)-3 + H+",
+      "left": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "FeOH(Edta)-3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7536,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 6.5,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": 6.5,
+      "charge": -3
+    },
+    {
+      "name": "Fe(OH)2(Edta)-4",
+      "equation": "Fe+2 + Edta-4 + 2 H2O = Fe(OH)2(Edta)-4 + 2 H+",
+      "left": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Fe(OH)2(Edta)-4": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7544,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": -4.0,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+2": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": -4.0,
+      "charge": -4
+    },
+    {
+      "name": "Fe(Edta)-",
+      "equation": "Fe+3 + Edta-4 = Fe(Edta)-",
+      "left": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Fe(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7552,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 27.7,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 27.7,
+      "charge": -1
+    },
+    {
+      "name": "FeH(Edta)",
+      "equation": "Fe+3 + Edta-4 + H+ = FeH(Edta)",
+      "left": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "FeH(Edta)": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7560,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 29.2,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 29.2,
+      "charge": 0
+    },
+    {
+      "name": "FeOH(Edta)-2",
+      "equation": "Fe+3 + Edta-4 + H2O = FeOH(Edta)-2 + H+",
+      "left": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0
+      },
+      "right": {
+        "FeOH(Edta)-2": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7568,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 19.9,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": 19.9,
+      "charge": -2
+    },
+    {
+      "name": "Fe(OH)2(Edta)-3",
+      "equation": "Fe+3 + Edta-4 + 2 H2O = Fe(OH)2(Edta)-3 + 2 H+",
+      "left": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 2.0
+      },
+      "right": {
+        "Fe(OH)2(Edta)-3": 1.0,
+        "H+": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7576,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 9.85,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Fe+3": 1.0,
+        "Edta-4": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": 9.85,
+      "charge": -3
+    },
+    {
+      "name": "Mn(Edta)-2",
+      "equation": "Mn+2 + Edta-4 = Mn(Edta)-2",
+      "left": {
+        "Mn+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Mn(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7584,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 15.6,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 15.6,
+      "charge": -2
+    },
+    {
+      "name": "MnH(Edta)-",
+      "equation": "Mn+2 + Edta-4 + H+ = MnH(Edta)-",
+      "left": {
+        "Mn+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "MnH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7592,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 19.1,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mn+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 19.1,
+      "charge": -1
+    },
+    {
+      "name": "Mg(Edta)-2",
+      "equation": "Mg+2 + Edta-4 = Mg(Edta)-2",
+      "left": {
+        "Mg+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Mg(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7648,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.57,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 10.57,
+      "charge": -2
+    },
+    {
+      "name": "MgH(Edta)-",
+      "equation": "Mg+2 + Edta-4 + H+ = MgH(Edta)-",
+      "left": {
+        "Mg+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "MgH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7656,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 14.97,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Mg+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 14.97,
+      "charge": -1
+    },
+    {
+      "name": "Ca(Edta)-2",
+      "equation": "Ca+2 + Edta-4 = Ca(Edta)-2",
+      "left": {
+        "Ca+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Ca(Edta)-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7664,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 12.42,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 12.42,
+      "charge": -2
+    },
+    {
+      "name": "CaH(Edta)-",
+      "equation": "Ca+2 + Edta-4 + H+ = CaH(Edta)-",
+      "left": {
+        "Ca+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "CaH(Edta)-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7672,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 15.9,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Ca+2": 1.0,
+        "Edta-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 15.9,
+      "charge": -1
+    },
+    {
+      "name": "Na(Edta)-3",
+      "equation": "Na+ + Edta-4 = Na(Edta)-3",
+      "left": {
+        "Na+": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "Na(Edta)-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7704,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 2.7,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "Na+": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 2.7,
+      "charge": -3
+    },
+    {
+      "name": "K(Edta)-3",
+      "equation": "K+ + Edta-4 = K(Edta)-3",
+      "left": {
+        "K+": 1.0,
+        "Edta-4": 1.0
+      },
+      "right": {
+        "K(Edta)-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 7712,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 1.7,
+      "gamma": [
+        0.0,
+        0.0
+      ],
+      "powers": {
+        "K+": 1.0,
+        "Edta-4": 1.0
+      },
+      "beta": 1.7,
+      "charge": -3
+    },
+    {
+      "name": "Dtp-5",
+      "equation": "Dtp-5 = Dtp-5",
+      "left": {
+        "Dtp-5": 1.0
+      },
+      "right": {
+        "Dtp-5": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 9,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Dtp-5": 1.0
+      },
+      "beta": 0.0,
+      "charge": -5
+    },
+    {
+      "name": "HDtp-4",
+      "equation": "Dtp-5 + H+ = HDtp-4",
+      "left": {
+        "Dtp-5": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "HDtp-4": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 11,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 10.48,
+      "powers": {
+        "Dtp-5": 1.0,
+        "H+": 1.0
+      },
+      "beta": 10.48,
+      "charge": -4
+    },
+    {
+      "name": "H2Dtp-3",
+      "equation": "Dtp-5 + 2 H+ = H2Dtp-3",
+      "left": {
+        "Dtp-5": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "H2Dtp-3": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 13,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 19.08,
+      "powers": {
+        "Dtp-5": 1.0,
+        "H+": 2.0
+      },
+      "beta": 19.08,
+      "charge": -3
+    },
+    {
+      "name": "H3Dtp-2",
+      "equation": "Dtp-5 + 3 H+ = H3Dtp-2",
+      "left": {
+        "Dtp-5": 1.0,
+        "H+": 3.0
+      },
+      "right": {
+        "H3Dtp-2": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 15,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 23.36,
+      "powers": {
+        "Dtp-5": 1.0,
+        "H+": 3.0
+      },
+      "beta": 23.36,
+      "charge": -2
+    },
+    {
+      "name": "H4Dtp-",
+      "equation": "Dtp-5 + 4 H+ = H4Dtp-",
+      "left": {
+        "Dtp-5": 1.0,
+        "H+": 4.0
+      },
+      "right": {
+        "H4Dtp-": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 17,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 25.96,
+      "powers": {
+        "Dtp-5": 1.0,
+        "H+": 4.0
+      },
+      "beta": 25.96,
+      "charge": -1
+    },
+    {
+      "name": "H5Dtp",
+      "equation": "Dtp-5 + 5 H+ = H5Dtp",
+      "left": {
+        "Dtp-5": 1.0,
+        "H+": 5.0
+      },
+      "right": {
+        "H5Dtp": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 19,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 27.96,
+      "powers": {
+        "Dtp-5": 1.0,
+        "H+": 5.0
+      },
+      "beta": 27.96,
+      "charge": 0
+    },
+    {
+      "name": "FeDtp-2",
+      "equation": "Fe+3 + Dtp-5 = FeDtp-2",
+      "left": {
+        "Fe+3": 1.0,
+        "Dtp-5": 1.0
+      },
+      "right": {
+        "FeDtp-2": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 21,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 28.6,
+      "powers": {
+        "Fe+3": 1.0,
+        "Dtp-5": 1.0
+      },
+      "beta": 28.6,
+      "charge": -2
+    },
+    {
+      "name": "Edd-4",
+      "equation": "Edd-4 = Edd-4",
+      "left": {
+        "Edd-4": 1.0
+      },
+      "right": {
+        "Edd-4": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 23,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Edd-4": 1.0
+      },
+      "beta": 0.0,
+      "charge": -4
+    },
+    {
+      "name": "HEdd-3",
+      "equation": "Edd-4 + H+ = HEdd-3",
+      "left": {
+        "Edd-4": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "HEdd-3": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 25,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 11.88,
+      "powers": {
+        "Edd-4": 1.0,
+        "H+": 1.0
+      },
+      "beta": 11.88,
+      "charge": -3
+    },
+    {
+      "name": "H2Edd-2",
+      "equation": "Edd-4 + 2 H+ = H2Edd-2",
+      "left": {
+        "Edd-4": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "H2Edd-2": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 27,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 22.68,
+      "powers": {
+        "Edd-4": 1.0,
+        "H+": 2.0
+      },
+      "beta": 22.68,
+      "charge": -2
+    },
+    {
+      "name": "H3Edd-",
+      "equation": "Edd-4 + 3 H+ = H3Edd-",
+      "left": {
+        "Edd-4": 1.0,
+        "H+": 3.0
+      },
+      "right": {
+        "H3Edd-": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 29,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 31.35,
+      "powers": {
+        "Edd-4": 1.0,
+        "H+": 3.0
+      },
+      "beta": 31.35,
+      "charge": -1
+    },
+    {
+      "name": "H4Edd",
+      "equation": "Edd-4 + 4 H+ = H4Edd",
+      "left": {
+        "Edd-4": 1.0,
+        "H+": 4.0
+      },
+      "right": {
+        "H4Edd": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 31,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 37.63,
+      "powers": {
+        "Edd-4": 1.0,
+        "H+": 4.0
+      },
+      "beta": 37.63,
+      "charge": 0
+    },
+    {
+      "name": "FeEdd-",
+      "equation": "Fe+3 + Edd-4 = FeEdd-",
+      "left": {
+        "Fe+3": 1.0,
+        "Edd-4": 1.0
+      },
+      "right": {
+        "FeEdd-": 1.0
+      },
+      "source": "flahax-chelates-25c.dat",
+      "line": 33,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 35.1,
+      "powers": {
+        "Fe+3": 1.0,
+        "Edd-4": 1.0
+      },
+      "beta": 35.1,
+      "charge": -1
+    },
+    {
+      "name": "Ure",
+      "equation": "Ure = Ure",
+      "left": {
+        "Ure": 1.0
+      },
+      "right": {
+        "Ure": 1.0
+      },
+      "source": "flahax-phases-25c.dat",
+      "line": 21,
+      "kind": "SOLUTION_SPECIES",
+      "log_k": 0.0,
+      "powers": {
+        "Ure": 1.0
+      },
+      "beta": 0.0,
+      "charge": 0
+    },
+    {
+      "name": "NH4+",
+      "equation": "NH4+ = NH4+",
+      "powers": {
+        "NH4+": 1.0
+      },
+      "beta": 0.0,
+      "log_k": 0.0,
+      "charge": 1,
+      "line": 0,
+      "source": "fixed-valence analytical basis"
+    },
+    {
+      "name": "Fe+2",
+      "equation": "Fe+2 = Fe+2",
+      "powers": {
+        "Fe+2": 1.0
+      },
+      "beta": 0.0,
+      "log_k": 0.0,
+      "charge": 2,
+      "line": 0,
+      "source": "fixed-valence analytical basis"
+    },
+    {
+      "name": "Mn+2",
+      "equation": "Mn+2 = Mn+2",
+      "powers": {
+        "Mn+2": 1.0
+      },
+      "beta": 0.0,
+      "log_k": 0.0,
+      "charge": 2,
+      "line": 0,
+      "source": "fixed-valence analytical basis"
+    }
+  ],
+  "phases": [
+    {
+      "name": "Zincite",
+      "equation": "ZnO + 2 H+ = Zn+2 + H2O",
+      "left": {
+        "ZnO": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Zn+2": 1.0,
+        "H2O": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 10922,
+      "kind": "PHASES",
+      "log_k": 11.334,
+      "powers": {
+        "Zn+2": 1.0,
+        "H2O": 1.0,
+        "H+": -2.0
+      },
+      "beta": 11.334
+    },
+    {
+      "name": "Cu(OH)2",
+      "equation": "Cu(OH)2 + 2 H+ = Cu+2 + 2 H2O",
+      "left": {
+        "Cu(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Cu+2": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 10954,
+      "kind": "PHASES",
+      "log_k": 8.674,
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": 8.674
+    },
+    {
+      "name": "Tenorite",
+      "equation": "CuO + 2 H+ = Cu+2 + H2O",
+      "left": {
+        "CuO": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Cu+2": 1.0,
+        "H2O": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 10958,
+      "kind": "PHASES",
+      "log_k": 7.644,
+      "powers": {
+        "Cu+2": 1.0,
+        "H2O": 1.0,
+        "H+": -2.0
+      },
+      "beta": 7.644
+    },
+    {
+      "name": "Fe(OH)2",
+      "equation": "Fe(OH)2 + 2 H+ = Fe+2 + 2 H2O",
+      "left": {
+        "Fe(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Fe+2": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 10990,
+      "kind": "PHASES",
+      "log_k": 13.564,
+      "powers": {
+        "Fe+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": 13.564
+    },
+    {
+      "name": "Ferrihydrite",
+      "equation": "Fe(OH)3 + 3 H+ = Fe+3 + 3 H2O",
+      "left": {
+        "Fe(OH)3": 1.0,
+        "H+": 3.0
+      },
+      "right": {
+        "Fe+3": 1.0,
+        "H2O": 3.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 10994,
+      "kind": "PHASES",
+      "log_k": 3.191,
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 3.0,
+        "H+": -3.0
+      },
+      "beta": 3.191
+    },
+    {
+      "name": "Goethite",
+      "equation": "FeOOH + 3 H+ = Fe+3 + 2 H2O",
+      "left": {
+        "FeOOH": 1.0,
+        "H+": 3.0
+      },
+      "right": {
+        "Fe+3": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11002,
+      "kind": "PHASES",
+      "log_k": 0.491,
+      "powers": {
+        "Fe+3": 1.0,
+        "H2O": 2.0,
+        "H+": -3.0
+      },
+      "beta": 0.491
+    },
+    {
+      "name": "Pyrochroite",
+      "equation": "Mn(OH)2 + 2 H+ = Mn+2 + 2 H2O",
+      "left": {
+        "Mn(OH)2": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Mn+2": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11018,
+      "kind": "PHASES",
+      "log_k": 15.194,
+      "powers": {
+        "Mn+2": 1.0,
+        "H2O": 2.0,
+        "H+": -2.0
+      },
+      "beta": 15.194
+    },
+    {
+      "name": "Halite",
+      "equation": "NaCl = Na+ + Cl-",
+      "left": {
+        "NaCl": 1.0
+      },
+      "right": {
+        "Na+": 1.0,
+        "Cl-": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11466,
+      "kind": "PHASES",
+      "log_k": 1.6025,
+      "powers": {
+        "Na+": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 1.6025
+    },
+    {
+      "name": "Smithsonite",
+      "equation": "ZnCO3 = Zn+2 + CO3-2",
+      "left": {
+        "ZnCO3": 1.0
+      },
+      "right": {
+        "Zn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11618,
+      "kind": "PHASES",
+      "log_k": -10.0,
+      "powers": {
+        "Zn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": -10.0
+    },
+    {
+      "name": "Malachite",
+      "equation": "Cu2(OH)2CO3 + 2 H+ = 2 Cu+2 + 2 H2O + CO3-2",
+      "left": {
+        "Cu2(OH)2CO3": 1.0,
+        "H+": 2.0
+      },
+      "right": {
+        "Cu+2": 2.0,
+        "H2O": 2.0,
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11642,
+      "kind": "PHASES",
+      "log_k": -5.306,
+      "powers": {
+        "Cu+2": 2.0,
+        "H2O": 2.0,
+        "CO3-2": 1.0,
+        "H+": -2.0
+      },
+      "beta": -5.306
+    },
+    {
+      "name": "Siderite",
+      "equation": "FeCO3 = Fe+2 + CO3-2",
+      "left": {
+        "FeCO3": 1.0
+      },
+      "right": {
+        "Fe+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11662,
+      "kind": "PHASES",
+      "log_k": -10.24,
+      "powers": {
+        "Fe+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": -10.24
+    },
+    {
+      "name": "Rhodochrosite",
+      "equation": "MnCO3 = Mn+2 + CO3-2",
+      "left": {
+        "MnCO3": 1.0
+      },
+      "right": {
+        "Mn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11666,
+      "kind": "PHASES",
+      "log_k": -10.58,
+      "powers": {
+        "Mn+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": -10.58
+    },
+    {
+      "name": "Calcite",
+      "equation": "CaCO3 = Ca+2 + CO3-2",
+      "left": {
+        "CaCO3": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11694,
+      "kind": "PHASES",
+      "log_k": -8.48,
+      "powers": {
+        "Ca+2": 1.0,
+        "CO3-2": 1.0
+      },
+      "beta": -8.48
+    },
+    {
+      "name": "Epsomite",
+      "equation": "MgSO4:7H2O = Mg+2 + SO4-2 + 7 H2O",
+      "left": {
+        "MgSO4:7H2O": 1.0
+      },
+      "right": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 7.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11958,
+      "kind": "PHASES",
+      "log_k": -2.1265,
+      "powers": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 7.0
+      },
+      "beta": -2.1265
+    },
+    {
+      "name": "Anhydrite",
+      "equation": "CaSO4 = Ca+2 + SO4-2",
+      "left": {
+        "CaSO4": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11962,
+      "kind": "PHASES",
+      "log_k": -4.36,
+      "powers": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0
+      },
+      "beta": -4.36
+    },
+    {
+      "name": "Gypsum",
+      "equation": "CaSO4:2H2O = Ca+2 + SO4-2 + 2 H2O",
+      "left": {
+        "CaSO4:2H2O": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 11966,
+      "kind": "PHASES",
+      "log_k": -4.61,
+      "powers": {
+        "Ca+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 2.0
+      },
+      "beta": -4.61
+    },
+    {
+      "name": "Zn3(PO4)2:4H2O",
+      "equation": "Zn3(PO4)2:4H2O = 3 Zn+2 + 2 PO4-3 + 4 H2O",
+      "left": {
+        "Zn3(PO4)2:4H2O": 1.0
+      },
+      "right": {
+        "Zn+2": 3.0,
+        "PO4-3": 2.0,
+        "H2O": 4.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12294,
+      "kind": "PHASES",
+      "log_k": -35.42,
+      "powers": {
+        "Zn+2": 3.0,
+        "PO4-3": 2.0,
+        "H2O": 4.0
+      },
+      "beta": -35.42
+    },
+    {
+      "name": "Cu3(PO4)2",
+      "equation": "Cu3(PO4)2 = 3 Cu+2 + 2 PO4-3",
+      "left": {
+        "Cu3(PO4)2": 1.0
+      },
+      "right": {
+        "Cu+2": 3.0,
+        "PO4-3": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12306,
+      "kind": "PHASES",
+      "log_k": -36.85,
+      "powers": {
+        "Cu+2": 3.0,
+        "PO4-3": 2.0
+      },
+      "beta": -36.85
+    },
+    {
+      "name": "Vivianite",
+      "equation": "Fe3(PO4)2:8H2O = 3 Fe+2 + 2 PO4-3 + 8 H2O",
+      "left": {
+        "Fe3(PO4)2:8H2O": 1.0
+      },
+      "right": {
+        "Fe+2": 3.0,
+        "PO4-3": 2.0,
+        "H2O": 8.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12330,
+      "kind": "PHASES",
+      "log_k": -36.0,
+      "powers": {
+        "Fe+2": 3.0,
+        "PO4-3": 2.0,
+        "H2O": 8.0
+      },
+      "beta": -36.0
+    },
+    {
+      "name": "Strengite",
+      "equation": "FePO4:2H2O = Fe+3 + PO4-3 + 2 H2O",
+      "left": {
+        "FePO4:2H2O": 1.0
+      },
+      "right": {
+        "Fe+3": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12334,
+      "kind": "PHASES",
+      "log_k": -26.4,
+      "powers": {
+        "Fe+3": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 2.0
+      },
+      "beta": -26.4
+    },
+    {
+      "name": "Mn3(PO4)2",
+      "equation": "Mn3(PO4)2 = 3 Mn+2 + 2 PO4-3",
+      "left": {
+        "Mn3(PO4)2": 1.0
+      },
+      "right": {
+        "Mn+2": 3.0,
+        "PO4-3": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12338,
+      "kind": "PHASES",
+      "log_k": -23.827,
+      "powers": {
+        "Mn+2": 3.0,
+        "PO4-3": 2.0
+      },
+      "beta": -23.827
+    },
+    {
+      "name": "MnHPO4",
+      "equation": "MnHPO4 = Mn+2 + PO4-3 + H+",
+      "left": {
+        "MnHPO4": 1.0
+      },
+      "right": {
+        "Mn+2": 1.0,
+        "PO4-3": 1.0,
+        "H+": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12342,
+      "kind": "PHASES",
+      "log_k": -25.4,
+      "powers": {
+        "Mn+2": 1.0,
+        "PO4-3": 1.0,
+        "H+": 1.0
+      },
+      "beta": -25.4
+    },
+    {
+      "name": "Hydroxylapatite",
+      "equation": "Ca5(PO4)3OH + H+ = 5 Ca+2 + 3 PO4-3 + H2O",
+      "left": {
+        "Ca5(PO4)3OH": 1.0,
+        "H+": 1.0
+      },
+      "right": {
+        "Ca+2": 5.0,
+        "PO4-3": 3.0,
+        "H2O": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12362,
+      "kind": "PHASES",
+      "log_k": -44.333,
+      "powers": {
+        "Ca+2": 5.0,
+        "PO4-3": 3.0,
+        "H2O": 1.0,
+        "H+": -1.0
+      },
+      "beta": -44.333
+    },
+    {
+      "name": "CaHPO4:2H2O",
+      "equation": "CaHPO4:2H2O = Ca+2 + H+ + PO4-3 + 2 H2O",
+      "left": {
+        "CaHPO4:2H2O": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 2.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12366,
+      "kind": "PHASES",
+      "log_k": -18.995,
+      "powers": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 2.0
+      },
+      "beta": -18.995
+    },
+    {
+      "name": "CaHPO4",
+      "equation": "CaHPO4 = Ca+2 + H+ + PO4-3",
+      "left": {
+        "CaHPO4": 1.0
+      },
+      "right": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "source": "minteq.v4.dat",
+      "line": 12370,
+      "kind": "PHASES",
+      "log_k": -19.275,
+      "powers": {
+        "Ca+2": 1.0,
+        "H+": 1.0,
+        "PO4-3": 1.0
+      },
+      "beta": -19.275
+    },
+    {
+      "name": "Sylvite",
+      "equation": "KCl = K+ + Cl-",
+      "left": {
+        "KCl": 1.0
+      },
+      "right": {
+        "K+": 1.0,
+        "Cl-": 1.0
+      },
+      "source": "flahax-phases-25c.dat",
+      "line": 8,
+      "kind": "PHASES",
+      "log_k": 0.9,
+      "powers": {
+        "K+": 1.0,
+        "Cl-": 1.0
+      },
+      "beta": 0.9
+    },
+    {
+      "name": "Struvite",
+      "equation": "MgNH4PO4:6H2O = Mg+2 + NH4+ + PO4-3 + 6 H2O",
+      "left": {
+        "MgNH4PO4:6H2O": 1.0
+      },
+      "right": {
+        "Mg+2": 1.0,
+        "NH4+": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 6.0
+      },
+      "source": "flahax-phases-25c.dat",
+      "line": 11,
+      "kind": "PHASES",
+      "log_k": -13.26,
+      "powers": {
+        "Mg+2": 1.0,
+        "NH4+": 1.0,
+        "PO4-3": 1.0,
+        "H2O": 6.0
+      },
+      "beta": -13.26
+    },
+    {
+      "name": "Kieserite",
+      "equation": "MgSO4:H2O = Mg+2 + SO4-2 + H2O",
+      "left": {
+        "MgSO4:H2O": 1.0
+      },
+      "right": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 1.0
+      },
+      "source": "flahax-phases-25c.dat",
+      "line": 14,
+      "kind": "PHASES",
+      "log_k": -0.123,
+      "powers": {
+        "Mg+2": 1.0,
+        "SO4-2": 1.0,
+        "H2O": 1.0
+      },
+      "beta": -0.123
+    }
+  ],
+  "aliases": {
+    "Hydroxyapatite": "Hydroxylapatite",
+    "Hopeite": "Zn3(PO4)2:4H2O",
+    "Brushite": "CaHPO4:2H2O",
+    "B(OH)3": "H3BO3",
+    "B(OH)4-": "H2BO3-"
+  }
+}

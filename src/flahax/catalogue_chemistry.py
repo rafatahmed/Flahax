@@ -33,12 +33,31 @@ PHREEQC_MINTEQ_V4 = "USGS PHREEQC 3.8.6 minteq.v4.dat, 25 C"
 # The canonical, fully deprotonated ligand forms used by the unified solver.
 # EDDHA is explicitly the o,o form selected for the otherwise unspecific
 # catalogue product; it is not interchangeable with o,p-EDDHA.
-LIGAND_PROFILES = {
-    "EDTA": {"charge": -4, "protonation_log_k": (10.948, 17.221, 20.34, 22.5, 24.0), "metal_log_beta": {"Fe+3": 27.7, "Mn+2": 15.6, "Zn+2": 18.0, "Cu+2": 20.5, "Ca+2": 12.42, "Mg+2": 10.57}, "source": PHREEQC_MINTEQ_V4},
-    "DTPA": {"charge": -5, "protonation_log_k": (10.48, 19.08, 23.36, 25.96, 27.96), "metal_log_beta": {"Fe+3": 28.6}, "source": "Martell and Smith Fe(III)-DTPA product profile, 25 C"},
-    "o,o-EDDHA": {"charge": -4, "protonation_log_k": (11.88, 22.68, 31.35, 37.63), "metal_log_beta": {"Fe+3": 35.1}, "source": "Yunta et al. 2003 Fe(III)-o,o-EDDHA product profile, 25 C"},
-    "citrate": {"charge": -3, "protonation_log_k": (6.40, 11.20, 14.30), "metal_log_beta": {"Fe+3": 13.1, "Mn+2": 4.28, "Zn+2": 5.0, "Cu+2": 7.4, "Ca+2": 4.87, "Mg+2": 4.89}, "source": "USGS PHREEQC 3.8.6 minteq.v4.dat citrate reactions, 25 C"},
-}
+def _ligand_profiles():
+    # Public summaries must be derived from the actual reaction set, not a
+    # second, independently rounded table of equilibrium constants.
+    from .aqueous_model import chemistry
+    result = {}
+    for label, basis, charge in (("EDTA", "Edta-4", -4), ("DTPA", "Dtp-5", -5),
+                                  ("o,o-EDDHA", "Edd-4", -4), ("citrate", "Citrate-3", -3)):
+        protonation, metals = {}, {}
+        sources = set()
+        for record in chemistry()['aqueous']:
+            powers = record['powers']
+            if powers.get(basis) != 1:
+                continue
+            sources.add(record['source'])
+            other = set(powers) - {basis}
+            if other == {'H+'} and powers['H+'] > 0:
+                protonation[powers['H+']] = record['beta']
+            if len(other) == 1 and next(iter(other)) in {'Fe+3','Fe+2','Mn+2','Zn+2','Cu+2','Ca+2','Mg+2'}:
+                metals[next(iter(other))] = record['beta']
+        result[label] = dict(charge=charge, protonation_log_k=tuple(protonation[k] for k in sorted(protonation)),
+                             metal_log_beta=metals, source='; '.join(sorted(sources)))
+    return result
+
+
+LIGAND_PROFILES = _ligand_profiles()
 PRODUCT_CHEMISTRY: Mapping[str, ProductChemistry] = {
     "Ammonium Dibasic Phosphate": ProductChemistry("Ammonium Dibasic Phosphate", "macro_salt", ("NH4+", "HPO4-2"), PHREEQC_MINTEQ_V4),
     "Ammonium Monobasic Phosphate": ProductChemistry("Ammonium Monobasic Phosphate", "macro_salt", ("NH4+", "H2PO4-"), PHREEQC_MINTEQ_V4),

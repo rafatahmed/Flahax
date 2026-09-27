@@ -33,3 +33,6 @@ pip-wheel-metadata/
 Thumbs.db
 Desktop.ini
 *.swp
+
+# PHREEQC creates empty scratch logs beside captures; evidence uses .screen/.out.
+tests/fixtures/phreeqc/**/phreeqc.log

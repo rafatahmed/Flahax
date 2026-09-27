@@ -1,0 +1,22 @@
+# Only definitions absent from the pinned MINTEQ database.
+# Struvite: Ronteltap, Maurer & Gujer (2007), Water Research 41, 977-984.
+# DOI 10.1016/j.watres.2006.11.046; standard pKsp 13.26 at 25 C.
+# Kieserite: USGS PHREEQC 3.8.6 pitzer.dat, log K -0.123 at 25 C.
+# Both reactions use unit solid activity. H2O activity remains explicit.
+PHASES
+Sylvite
+ KCl = K+ + Cl-
+ log_k 0.9
+Struvite
+ MgNH4PO4:6H2O = Mg+2 + NH4+ + PO4-3 + 6 H2O
+ log_k -13.26
+Kieserite
+ MgSO4:H2O = Mg+2 + SO4-2 + H2O
+ log_k -0.123
+# Urea is an unhydrolysed neutral product inventory. Identity reaction only:
+# no urease kinetics, ammonium conversion or acid/base constant is invented.
+SOLUTION_MASTER_SPECIES
+ Ure Ure 0 CO(NH2)2 60.0553
+SOLUTION_SPECIES
+Ure = Ure
+ log_k 0

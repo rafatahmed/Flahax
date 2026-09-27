@@ -1,0 +1,39 @@
+TITLE FlahaX mixed_products; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Ca 0.00071111332900843354
+ N(5) 0.0025313599920038267
+ N(-3) 0.0001178007667759001
+ Mg 0.00040567784406500725
+ S(6) 0.00040580162195882717
+ K 0.0013564784146625302
+ P 0.00036737545797633489
+ Fe(3) 1.7369504879577404e-05
+ Dtp 7.8789506670248004e-06
+ Edd 3.2232070910556004e-06
+ Zn 3.0590394616090553e-07
+ Mn(2) 1.8202322601802133e-06
+ Cu(2) 8.6551474522393241e-08
+ B 6.01295097132285e-06
+ Mo 2.6055237102657637e-08
+ Na 0.0020030585859598668 charge
+ Edta 8.4800348023605141e-06
+ Ure 8.3256584348918744e-05
+ Cl 0.002
+SELECTED_OUTPUT
+ -file mixed_products.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Ca N(5) N(-3) Mg S(6) K P Fe(3) Dtp Edd Zn Mn(2) Cu(2) B Mo Na Edta Ure Cl
+ -molalities H3BO3 Ca+2 Cl- Cu+2 Fe+3 H+ K+ Mg+2 MoO4-2 NO3- Na+ PO4-3 SO4-2 Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 MgOH+ CaOH+ ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HSO4- NH4SO4- ZnSO4 Zn(SO4)2-2 CuSO4 FeSO4+ Fe(SO4)2- MnSO4 MgSO4 CaSO4 NaSO4- KSO4- NH3 CuNH3+2 CaNH3+2 Ca(NH3)2+2 CuNO3+ Cu(NO3)2 ZnNO3+ Zn(NO3)2 FeNO3+2 MnNO3+ Mn(NO3)2 CaNO3+ HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ MgPO4- MgH2PO4+ MgHPO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4- KHPO4- H2BO3- H5(BO3)2- H8(BO3)3- MgH2BO3+ CaH2BO3+ NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Mg(Edta)-2 MgH(Edta)- Ca(Edta)-2 CaH(Edta)- Na(Edta)-3 K(Edta)-3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd- Ure NH4+ Mn+2
+ -activities H3BO3 Ca+2 Cl- Cu+2 Fe+3 H+ K+ Mg+2 MoO4-2 NO3- Na+ PO4-3 SO4-2 Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 MgOH+ CaOH+ ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HSO4- NH4SO4- ZnSO4 Zn(SO4)2-2 CuSO4 FeSO4+ Fe(SO4)2- MnSO4 MgSO4 CaSO4 NaSO4- KSO4- NH3 CuNH3+2 CaNH3+2 Ca(NH3)2+2 CuNO3+ Cu(NO3)2 ZnNO3+ Zn(NO3)2 FeNO3+2 MnNO3+ Mn(NO3)2 CaNO3+ HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ MgPO4- MgH2PO4+ MgHPO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4- KHPO4- H2BO3- H5(BO3)2- H8(BO3)3- MgH2BO3+ CaH2BO3+ NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Mg(Edta)-2 MgH(Edta)- Ca(Edta)-2 CaH(Edta)- Na(Edta)-3 K(Edta)-3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd- Ure NH4+ Mn+2
+ -si Zincite Cu(OH)2 Tenorite Ferrihydrite Goethite Pyrochroite Halite Epsomite Anhydrite Gypsum Zn3(PO4)2:4H2O Cu3(PO4)2 Strengite Mn3(PO4)2 MnHPO4 Hydroxylapatite CaHPO4:2H2O CaHPO4 Sylvite Struvite Kieserite
+END
