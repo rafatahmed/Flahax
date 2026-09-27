@@ -1,6 +1,6 @@
 # Delivery Planning Contracts (P0)
 
-`flahax.delivery_contracts` is the development foundation for future stock-tank, pH, and dosing planning. It validates data and records provenance. It does **not** calculate a stock recipe, pH dose, or pump command, and it does not connect to hardware.
+`flahax.delivery_contracts` provides input validation and provenance for stock-tank, pH, and dosing planning. It validates data and records provenance. It does **not** calculate a stock recipe, pH dose, or pump command, and it does not connect to hardware.
 
 ## Current supported mode
 
@@ -48,7 +48,7 @@ The records deliberately preserve their own source/revision metadata. A plan can
 
 ## Contract rules
 
-- Water analysis requires ion values and temperature. pH and alkalinity may be recorded when available; the future pH planner will require alkalinity before it can calculate a dose.
+- Water analysis requires ion values and temperature. pH and alkalinity may be recorded when available; the measured-curve pH planner requires alkalinity; the separate equilibrium adapter requires complete analytical totals and measured initial pH.
 - Product assays are elemental percentages, not ppm. They reject total `N`, unknown ions, values outside 0–100%, and sums above 100.5%. Acid/base records may also carry sourced `densityKgPerL` and `normalityMeqPerL`; P3 requires both.
 - Compatibility rules currently represent sourced hard `separate` constraints across two or more product IDs.
 - Solubility limits require a product ID, maximum g/L, and minimum/maximum temperature range.

@@ -27,4 +27,4 @@ The accepted object is a bounded numerical implementation of the selected source
 
 **Remote release/merge gate remains separate:** GitHub Actions previously could not start because the repository account was billing-locked. Local results do not turn those failed remote checks into passes. Supported Python 3.11/3.12 remote validation and the new hosted jobs must be observed before claiming the entire CI gate complete. Python 3.13 local tests and installed-distribution checks provide evidence for that interpreter only; Python 3.14 checks are additional.
 
-No publishing, automatic merging, deployment, external database write, pump action, or laboratory certification follows from this document. Optional P7 remains a future default-off, read-only consumer boundary after the remaining CI gate and an explicit interface scope are settled.
+No publishing, automatic merging, deployment, external database write, pump action, or laboratory certification follows from this document. Optional P7 implementation belongs to the separate FlahaFAST project; it is not a FlahaX package release gate. This repository documents only its consumer boundary.
