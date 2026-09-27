@@ -1,0 +1,17 @@
+TITLE FlahaX Dtp charge-balanced extension probe
+# Generated against minteq.v4.dat plus flahax-chelates-25c.dat at 25 C.
+# Na is tuned for this fixed-pH analytical solution; PHREEQC reports -0.01%
+# charge error, below the 0.1% fixture gate.
+SOLUTION 1
+    temp 25
+    pH 6
+    units mmol/kgw
+    Dtp 0.01
+    Na 0.02884
+SELECTED_OUTPUT
+    -file dtpa_charge_balanced.sel
+    -reset false
+    -pH true
+    -ionic_strength true
+    -molalities Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp
+END

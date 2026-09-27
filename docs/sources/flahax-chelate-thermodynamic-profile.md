@@ -5,6 +5,12 @@ This extension is appended to the unmodified USGS PHREEQC 3.8.6
 the PHREEQC convention `log_k = log10(a_product / a_reactants)` at 25 C.
 It is restricted to the Davies runtime domain, I <= 0.1 mol/kgw.
 
+`minteq.v4.dat` ends with the PHREEQC database `END` keyword. The fixture
+generator removes only that final keyword in its temporary merged copy, adds
+this extension, and writes a new final `END`. Appending after `END` is invalid:
+PHREEQC silently ignores the additional master species. The installed base
+database is never copied into the repository or modified.
+
 `Dtp-5` represents DTPA (C14H23N3O10, 393.35 g/mol). The Fe, Ca, Mg, Mn, Zn,
 and Cu formation constants and five protonation constants are the
 25 C Martell and Smith stability-constant profile recorded in
