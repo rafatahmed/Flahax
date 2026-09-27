@@ -46,7 +46,7 @@ from .struvite_mixture import ChargeBalancedStruviteMixture, StruviteMixtureSpec
 from .thermodynamics import MineralPhase, phase_saturation_index
 from .trace_equilibrium import ChMicroProductDose, ChMicroTotals, TraceEquilibrium, solve_ch_micro_equilibrium
 from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
-from .product_conversion import ProductAnalyticalTotals, convert_catalogue_product_dose, convert_product_dose
+from .product_conversion import ProductAnalyticalTotals, convert_catalogue_product_dose, convert_product_dose, solve_catalogue_product_doses
 from .mixed_equilibrium import MixedFertilizerEquilibrium, solve_mixed_fertilizer_equilibrium
 
 __all__ = [
@@ -123,6 +123,7 @@ __all__ = [
     "solve_fertilizer_equilibrium",
     "solve_mixed_fertilizer_equilibrium",
     "solve_ch_micro_equilibrium",
+    "solve_catalogue_product_doses",
     "solve_gypsum_equilibrium",
     "solve_charge_balanced_struvite_mixture",
     "struvite_saturation_index",

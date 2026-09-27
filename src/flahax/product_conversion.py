@@ -88,3 +88,29 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
 def convert_catalogue_product_dose(product: Mapping[str, object], dose_g_per_kg_water: float) -> ProductAnalyticalTotals:
     """Catalogue adapter. Equilibrium callers should retain the returned profile."""
     return convert_product_dose(product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water)
+
+
+def solve_catalogue_product_doses(doses: Mapping[str, float], ph: float):
+    """Convert stated library product doses and solve their one mixed system."""
+    from .engine import load_library
+    from .fertilizer_equilibrium import FertilizerTotals
+    from .mixed_equilibrium import solve_mixed_fertilizer_equilibrium
+    from .trace_equilibrium import ChMicroTotals
+    library = {str(item["name"]): item for item in load_library()["salts"]}
+    macro = {name: 0.0 for name in FertilizerTotals.__dataclass_fields__}
+    trace = {name: 0.0 for name in ChMicroTotals.__dataclass_fields__}
+    for name, dose in doses.items():
+        if name not in library:
+            raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
+        converted = convert_catalogue_product_dose(library[name], dose)
+        for source in (converted.totals, converted.counterions):
+            for key, amount in source.items():
+                if key in macro:
+                    macro[key] += amount
+        for key, field in (("Fe", "iron"), ("Mn", "manganese"), ("Zn", "zinc"), ("Cu", "copper"), ("boron", "boron"), ("molybdate", "molybdate")):
+            trace[field] += converted.totals.get(key, 0.0)
+        trace["edta"] += converted.ligands.get("EDTA", 0.0)
+        trace["dtpa"] += converted.ligands.get("DTPA", 0.0)
+        trace["eddha"] += converted.ligands.get("o,o-EDDHA", 0.0)
+        trace["citrate"] += converted.ligands.get("citrate", 0.0)
+    return solve_mixed_fertilizer_equilibrium(FertilizerTotals(**macro), ph, trace_totals=ChMicroTotals(**trace))
