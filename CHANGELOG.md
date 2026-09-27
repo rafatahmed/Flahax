@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — prepared, not yet published
+## 0.3.0 — 2026-09-27, publication authorized
 
 ### Added
 
@@ -23,7 +23,7 @@
 - Public nitric-target functions return `AcidResult`; use `EquilibriumPhPlan` for reagent-volume planning. Earlier reduced-model fixtures retain explicitly named legacy solvers.
 - The chemistry boundary is 25 °C, Davies I <= 0.1 mol/kg water, fixed product oxidation states and closed analytical inorganic carbon. No universal solubility, laboratory validation or equipment-control claim.
 - Delivery record schema version `0.1` and chemistry model identifiers are independent of package version `0.3.0` and are not automatically renumbered.
-- Hosted checks are blocked by account billing. No release tag, PyPI upload or merge approval is implied by this preparation.
+- Hosted checks are blocked by account billing. The owner explicitly approved publication based on verified local evidence; the exception does not mark hosted checks as passed. Upload success is recorded separately after verification.
 
 ## 0.2.0
 

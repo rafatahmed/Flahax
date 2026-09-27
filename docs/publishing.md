@@ -1,5 +1,9 @@
 # Publishing
 
+## Owner-authorized 0.3.0 exception — 2026-09-27
+
+The owner explicitly approved publishing based on verified local evidence despite the billing blocker. For **0.3.0 only**, this supersedes the hosted-CI publication prerequisite below. Evidence: 110 local tests with zero skips, pinned live PHREEQC, clean wheel/sdist installs, four shipped-manual examples and strict Twine checks. Hosted Python 3.11/3.12 checks remain unverified; no pass is inferred. Manual Twine upload is authorized, subject to final artifact validation and available local authentication. Upload success must be confirmed separately.
+
 ## Release readiness before publication
 
 Preparing or merging a branch is not permission to publish. The owner requested preparation of `0.3.0`; metadata, citation and manual now use that version. Public PyPI metadata was checked during preparation: latest `0.2.0`, no `0.3.0` release. Recheck availability before upload; add the actual release date to `CITATION.cff` only when publication is authorized. Do not reuse an existing uploaded version.

@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Release status:** prepared for 0.3.0; publication and hosted verification are separate gates. This manual describes the 0.3.0 source and built distributions, not an assertion that PyPI already serves this version.
+**Version:** 0.3.0. The project owner approved publication using verified local evidence despite the GitHub billing blocker. Hosted checks remain unverified; this exception is not a claim that they passed.
 
 ## Contents
 
