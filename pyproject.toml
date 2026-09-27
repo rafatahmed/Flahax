@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flahax"
-version = "0.2.0"
-description = "Choose fertilizer salts and weights that minimize crop-formula percentage error."
+version = "0.3.0"
+description = "Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planning."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "LicenseRef-Flaha-Free-Use"
@@ -37,4 +37,4 @@ flahax = "flahax.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-flahax = ["data/*.json"]
+flahax = ["data/*.json", "data/*.md"]
