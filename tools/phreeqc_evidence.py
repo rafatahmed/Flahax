@@ -19,7 +19,7 @@ from flahax.product_conversion import catalogue_dose_totals
 
 ROOT=Path(__file__).resolve().parents[1]
 FIXTURES=ROOT/'tests/fixtures/phreeqc/products'
-INSTALL=Path(os.environ.get('TEMP',tempfile.gettempdir()))/'flahax-phreeqc/installed/phreeqc-3.8.6-17100-x64'
+INSTALL=Path(os.environ.get('FLAHAX_PHREEQC_ROOT',str(Path(os.environ.get('TEMP',tempfile.gettempdir()))/'flahax-phreeqc/installed/phreeqc-3.8.6-17100-x64')))
 BASIS_NAMES=dict(zip(chemistry()['bases'],['Ca','Mg','K','Na','Cl','N(5)','N(-3)','S(6)',
     'C(4)','P','Fe(3)','Fe(2)','Mn(2)','Zn','Cu(2)','B','Mo','Edta','Citrate','Dtp','Edd','Ure']))
 CASES={
