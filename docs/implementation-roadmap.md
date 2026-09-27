@@ -10,6 +10,8 @@ This roadmap tracks package capabilities and their evidence, not deployment or h
 
 ## Package audit baseline — 2026-09-27
 
+This section preserves the pre-increment audit. See the continuation below for the current implementation and verification status; its identified P5.5 and local packaging gaps are now addressed.
+
 Audited against chemistry closure commit `20c41c43f785940c5045276bb47925159a119bca`, package version `0.2.0`, runtime modules, tests and checked-in workflows. The closure records 100 passing tests with live PHREEQC, 10 product/target and 11 phase fixture families. [Release evidence](release-evidence.md), [exact chemistry coverage](chemistry-coverage-matrix.md), [source assumptions](sources/flahax-chelate-thermodynamic-profile.md) and [reproduction instructions](reference-fixtures.md) are the acceptance record, not a claim that all future work is finished.
 
 | Audited area | What the package actually provides | Evidence / outstanding boundary |
@@ -32,6 +34,14 @@ Audited against chemistry closure commit `20c41c43f785940c5045276bb47925159a119b
 - A green generic CI run can skip the live PHREEQC test. Numerical-reference acceptance requires a separate recorded zero-skip live run with the pinned database/executable.
 
 ## Operating assumptions
+
+### Verification continuation — 2026-09-27
+
+P5.5 now provides the explicit catalogue-equilibrium delivery adapter. The complete Python 3.13 suite passes **107 tests with zero skips**, including pinned live PHREEQC. Clean wheel and sdist installs pass outside the checkout on Python 3.13 and were also exercised on Python 3.14. Fresh hash-pinned PHREEQC provisioning succeeds outside the repository. [Package verification](package-verification.md) documents commands, inputs, units and public return types.
+
+P6.6/P6.7 remain active until the supported Python 3.11–3.13 hosted jobs actually pass; the previously observed GitHub account billing lock prevented execution. Local success is not hosted-CI acceptance.
+
+At the project owner's request, G6 for this **planning-package release** uses computational evidence without laboratory work. **Assessor: Rafat Al Khashan.** The [computational assessment](computational-review.md) records passing numerical evidence and its limits, not an independent human review, fabricated signature or operational certification. Physical validation is not a prerequisite for this bounded computational assessment. No hardware or external integration is authorized by this amendment.
 
 1. FlahaX remains a Python package with no required third-party runtime dependencies.
 2. The current `recommend` output—grams per litre of final working solution—remains the canonical nutrient recipe.
@@ -61,7 +71,7 @@ P0 boundaries/data contracts
                                                           +--> P7 optional FlahaFAST adapter
 ```
 
-P2/P3/P4 have bounded numerical implementations. The measured-curve P5 composition is implemented; the newly tracked equilibrium-result bridge must pass its own end-to-end checks before that path is called composed. P6 package hardening and G6 review precede operational advertising. P7 remains deliberately last and optional.
+P2/P3/P4 have bounded numerical implementations. Both measured-curve and equilibrium P5 composition now have end-to-end tests. P6 hosted validation remains open. G6's amended computational scope does not authorize operational advertising. P7 remains deliberately last and optional.
 
 ## Work packages
 
@@ -141,7 +151,7 @@ P2/P3/P4 have bounded numerical implementations. The measured-curve P5 compositi
 
 **Exit condition:** a command includes requested volume, runtime, calibration provenance, uncertainty, and conditions that prohibit execution.
 
-### P5 — Composed delivery plan `[-]`
+### P5 — Composed delivery plan `[x]`
 
 **Objective:** combine accepted subsystems into one atomic, reviewable plan.
 
@@ -151,9 +161,9 @@ P2/P3/P4 have bounded numerical implementations. The measured-curve P5 compositi
 | P5.2 | Cross-stage constraint evaluation `[x]` | Recipe/stock identity and complete pH/pump composition fixture are tested |
 | P5.3 | Approval state machine `[x]` | Explicit state transitions; no implicit approval |
 | P5.4 | Human-readable report `[x]` | State, volume, stock, pump, pH, audit, and warning report implemented |
-| P5.5 | Catalogue-equilibrium result to composed delivery adapter `[ ]` | Explicit g/L-to-g/kg-water conversion; water mass and reagent assay/density; molal HNO3 to bounded mass/volume; nitrate feedback and recipe rescoring; source/model hashes; missing-data and out-of-domain rejection; one integration test from recipe through reviewed delivery plan |
+| P5.5 | Catalogue-equilibrium result to composed delivery adapter `[x]` | `src/flahax/equilibrium_delivery.py`, `tests/test_equilibrium_delivery.py`: explicit water-mass conversion, assayed HNO3 mass/volume, nitrate rescoring, source hashes, dedicated acid channel, rejection guards, PHREEQC target agreement and recipe-to-reviewed-plan integration; `docs/package-verification.md` |
 
-P5.1–P5.4 remain accepted for the measured-curve path. P5.5 is an audit-discovered integration gap, not a claim that the P2/P3 numerical solver failed. It must retain both planning modes explicitly rather than silently substituting one for the other.
+P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integration gap with a distinct `EquilibriumPhPlan`; it preserves the existing `PhPlan` and low-level `AcidResult` contracts. The caller supplies fixed final solvent mass and final make-up volume; the model does not silently simulate dynamic dilution. Supersaturation or formed solids block delivery validation.
 
 **Exit condition:** a complete plan is either `validated` with all evidence or `blocked` with actionable reasons. Partial values must never look executable.
 
@@ -167,12 +177,12 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 is an audit-discov
 | P6.2 | Property tests `[x]` | Deterministic stock/volume conservation invariant passes |
 | P6.3 | Sensitivity tests `[x]` | Measured-curve demand, assay, temperature validity, injector ratio, and pump-rate perturbations produce bounded or explicitly rejected effects |
 | P6.4 | Reference-equivalence evidence set `[x]` | Full species, activities, phase amounts and target-pH/nitric-dose evidence passes for the bounded mixed-product model; P2/P3 golden suite and live replay are recorded in release evidence |
-| P6.5 | Release checklist `[x]` | In-repo release evidence and external-gate checklist are checked in; independent review remains G6 |
-| P6.6 | Installed-distribution and public API verification `[ ]` | Build wheel/sdist; install in a clean environment outside the source tree; verify bundled `chemistry_25c.json`/library, public imports, CLI, catalogue solve and target-pH examples; document return-type changes and supported Python versions; no PHREEQC runtime dependency |
-| P6.7 | Reproducible live-reference validation job `[ ]` | Provision pinned PHREEQC outside the package; verify database/executable hashes; run every golden case with zero skips; retain logs; ordinary dependency-free tests must still work without PHREEQC |
-| P6.8 | Independent scientific and bench/site acceptance `[ ]` | Named reviewer, reviewed ligand activity/concentration and stereoisomer assumptions, lot/water records, predeclared uncertainty/tolerances, measured pH and precipitation observations, investigated deviations, dated sign-off; satisfies G6 |
+| P6.5 | Release checklist `[x]` | In-repo release evidence and outstanding hosted-CI gate; G6 scope amendment is explicit |
+| P6.6 | Installed-distribution and public API verification `[-]` | `tools/verify_distribution.py` passes isolated wheel/sdist imports, data hashes, exports, CLI and numerical delivery checks on Python 3.13; earlier Python 3.14 checks also pass. Supported-version hosted matrix still unverified. |
+| P6.7 | Reproducible live-reference validation job `[-]` | `tools/provision_phreeqc.ps1` fresh pinned extraction passes; full local suite runs live with zero skips. Workflow retains logs and requires reference availability; `tests/test_live_reference_policy.py` tests fail-not-skip policy. Hosted job still unverified. |
+| P6.8 | Computational assessment under owner-amended scope `[x]` | `docs/computational-review.md`, `docs/release-evidence.md`; named assessor Rafat Al Khashan; numerical conservation, convergence, reference equivalence, units and guards pass. No laboratory or independent-review claim. This status records numerical acceptance, not a fabricated personal signature. |
 
-**Decision gate G6:** an independent reviewer signs off on test and bench evidence before the planner is advertised for operational use.
+**Decision gate G6 (owner-amended 2026-09-27):** computational evidence assesses the bounded planning package without laboratory work. Assessor: **Rafat Al Khashan**. The assessment is not independent scientific certification or permission for operational dosing. Hosted release checks remain a separate, open gate.
 
 ### P7 — Optional FlahaFAST integration `[ ]`
 
@@ -191,10 +201,9 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 is an audit-discov
 
 | Priority | IDs | Why now |
 |---|---|---|
-| Preserve / regression protect | P0–P4, P5.1–P5.4, P6.1–P6.5 | Accepted bounded capabilities; retain core formulation behavior and all chemistry evidence |
-| Next package increment | P6.6, P6.7 | Prove the distributed package and make live reference verification repeatable, rather than relying only on a source checkout |
-| Next integration increment | P5.5 | Bridge verified equilibrium results to the existing composed delivery API with explicit units, assay and audit semantics |
-| Required for operational claims | P6.8 / G6 | Numerical agreement alone cannot establish scientific calibration or site safety |
+| Preserve / regression protect | P0–P5, P6.1–P6.5, P6.8 | Accepted bounded capabilities and computational assessment; retain core formulation behavior and all chemistry evidence |
+| Outstanding package verification | P6.6, P6.7 | Observe successful supported-version and live-reference hosted jobs; implementations and local evidence are present |
+| Separate operational boundary | Physical validation | Not required for the owner-amended computational release; numerical agreement still cannot establish site safety |
 | Later / optional | P7 | Begin only after the package interface and relevant release gates are accepted; no implicit FlahaFAST writes |
 | Explicitly deferred | Full PHREEQC runtime integration; autonomous recirculating ion correction; cost optimization; pump actuation | The reference-equivalence harness comes first; runtime coupling needs a separate dependency and architecture decision |
 
@@ -210,7 +219,7 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 is an audit-discov
 | Package distribution | Clean installed wheel/sdist includes chemistry data, exports and working examples without source-tree imports or PHREEQC runtime dependency |
 | Reference validation | Golden tests pass independently of PHREEQC; release evidence additionally includes a zero-skip pinned live replay |
 | Pump plan | Current calibration, bounded uncertainty, and no command outside valid range |
-| Bench validation | Measured versus predicted results within pre-approved tolerances, with deviations investigated |
+| Physical validation (operational claims only) | Outside this computational release; any future operational claims need separately authorized measurement evidence |
 | Safety | Every unsafe or incomplete input produces a blocked plan and a clear reason |
 
 ## Risk register
@@ -227,10 +236,8 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 is an audit-discov
 
 ## Next execution plan
 
-1. **Review and merge the current branch by pull request.** Review core API compatibility, source-profile limitations and all preserved fixture evidence; require repository CI. Opening the PR is not approval to merge or publish a release. Do not regenerate or discard passing fixtures merely to make a review smaller.
-2. **P6.6/P6.7 — package verification.** Add clean-distribution smoke tests, public Python/CLI examples and a pinned live-reference validation job. Exit when the installable package and source checkout agree, supported Python CI passes, and the live evidence has zero skips. Do not publish to PyPI as part of this work without separate release authorization.
-3. **P5.5 — explicit equilibrium delivery bridge.** Specify the return-type/units contract, implement reagent assay and density conversion plus recipe rescoring, then test one complete catalogue-dose-to-delivery path and every missing-input rejection. Preserve the existing measured-curve path.
-4. **P6.8/G6 — independent review and bench/site evidence.** Assign scientific and operations reviewers; agree the protocol and tolerances before measurement; record discrepancies and sign-off. Prepare the review dossier alongside package hardening, but do not mark the gate accepted without external evidence.
-5. **P7 — optional read-only integration.** Only after those gates, expose a versioned package boundary behind a default-off flag. No pump control, deployments, credential changes or external data writes are authorized by this roadmap.
+1. **Finish hosted P6.6/P6.7 acceptance.** The implementation and local checks are present. An authorized account owner must resolve the observed GitHub billing lock; then observe successful Python 3.11–3.13 distribution jobs and required live-reference replay. Do not mark blocked jobs as passed or publish to PyPI.
+2. **Review this package increment.** Preserve both pH planning modes, explicit solvent/assay units and all golden/diagnostic evidence. Record review against the computational assessment attributed to Rafat Al Khashan; do not fabricate independent or experimental approval.
+3. **P7 — optional read-only integration.** After package gates pass and the consumer interface is explicitly scoped, expose a versioned boundary behind a default-off flag. No pump control, deployments, credential changes or external data writes are authorized by this roadmap.
 
-**Suggested next task:** “Complete P6.6/P6.7 package verification: clean wheel/sdist installation, public chemistry API and CLI smoke tests, supported Python CI, and reproducible pinned PHREEQC live replay. Preserve all golden and diagnostic evidence; do not alter the frozen product chemistry, publish a release, or implement external integration.”
+**Suggested next task:** “Once the account owner restores GitHub Actions, run and inspect the supported Python matrix and pinned live-reference workflow. Record actual outcomes before closing P6.6/P6.7. Then scope optional default-off P7 integration without authorizing external writes.”
