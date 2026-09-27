@@ -78,6 +78,14 @@ The release-readiness cleanup adds metadata/export and documentation-link checks
 
 Hosted PR #3 run `36345628921` was attempted and all four jobs were prevented from starting by the account billing lock. Actions is enabled; P6.6/P6.7 hosted acceptance and merge remain blocked. See [release-readiness audit](release-readiness.md). FlahaFAST implementation is assigned to the separate FlahaFAST project and is not a package release gate.
 
+## 0.3.0 preparation evidence
+
+Version metadata and citation now identify the owner-requested **0.3.0** candidate; no publication date is asserted. The user manual is a bundled package resource, and all four Python examples execute in source tests and both clean installed distributions. The build report includes the manual SHA-256, version, example count and distribution hashes. The documentation index and changelog distinguish current guidance from historical provenance.
+
+Final candidate source run: `$env:PYTHONPATH='src'; $env:FLAHAX_REQUIRE_PHREEQC='1'; py -3.13 -m unittest discover -s tests -t .` — **110 tests in 127.103 seconds, OK, zero skips**. Compilation and whitespace checks pass. `tools/verify_distribution.py --python <Python-3.13-executable> --artifacts-dir <new-empty-output-directory>` passes independent wheel/sdist installation, all manual examples and numerical/resource checks. `python -m twine check dist/0.3.0/*` passes for both first candidate archives. These are local build/metadata checks, not a PyPI upload or hosted-CI pass.
+
+Public PyPI metadata checked during preparation lists 0.2.0 and no 0.3.0 release. Recheck before publication. Final review, hosted verification and explicit publication authorization remain required; no scientific fixture or runtime chemistry was changed in this version/manual preparation.
+
 ## Historical reduced-model evidence (superseded)
 
 The macro-ion target-pH/reagent fixture is now checked in: PHREEQC 3.8.6
