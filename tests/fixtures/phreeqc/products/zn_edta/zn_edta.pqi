@@ -1,0 +1,24 @@
+TITLE FlahaX zn_edta; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Zn 2.1413276231263388e-05
+ Edta 2.1413276231263388e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file zn_edta.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Zn Edta Na Cl
+ -molalities Cl- H+ Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Na(Edta)-3
+ -activities Cl- H+ Na+ Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Na(Edta)-3
+ -si Zincite Halite
+END

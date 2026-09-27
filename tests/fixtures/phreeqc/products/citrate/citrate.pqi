@@ -1,0 +1,24 @@
+TITLE FlahaX citrate; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ K 0.00019581870106884442
+ Citrate 6.5272900356281468e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file citrate.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals K Citrate Na Cl
+ -molalities Cl- H+ K+ Na+ Citrate-3 OH- H(Citrate)-2 H2(Citrate)- H3(Citrate) Na(Citrate)-2 Na2(Citrate)- NaH(Citrate)- K(Citrate)-2
+ -activities Cl- H+ K+ Na+ Citrate-3 OH- H(Citrate)-2 H2(Citrate)- H3(Citrate) Na(Citrate)-2 Na2(Citrate)- NaH(Citrate)- K(Citrate)-2
+ -si Halite Sylvite
+END

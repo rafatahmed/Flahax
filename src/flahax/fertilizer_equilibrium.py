@@ -235,7 +235,7 @@ def _phase_limit(totals: FertilizerTotals, phase: str) -> float:
     return min(getattr(totals, name) / coefficient for name, coefficient in coefficients)
 
 
-def solve_fertilizer_equilibrium(totals: FertilizerTotals, ph: float, *, allow_precipitation: bool = True) -> FertilizerEquilibrium:
+def solve_legacy_phreeqc_macro(totals: FertilizerTotals, ph: float, *, allow_precipitation: bool = True) -> FertilizerEquilibrium:
     """Solve the declared 25 °C system at a specified pH.
 
     ``allow_precipitation`` applies named equilibrium allocations only for
@@ -285,11 +285,28 @@ def _alkalinity(result: FertilizerEquilibrium) -> float:
     return s["HCO3-"] + 2 * s["CO3-2"] + s["HPO4-2"] + 2 * s["PO4-3"] + result.activities["OH-"] / davies_gamma(1, result.ionic_strength) - result.activities["H+"] / davies_gamma(1, result.ionic_strength)
 
 
-def plan_nitric_acid_target(totals: FertilizerTotals, initial_ph: float, target_ph: float) -> NitricAcidTargetPlan:
-    """Return the closed-carbon strong-acid requirement for a lower target pH."""
-    initial = solve_fertilizer_equilibrium(totals, _valid_ph(initial_ph), allow_precipitation=False)
-    target = solve_fertilizer_equilibrium(totals, _valid_ph(target_ph), allow_precipitation=False)
+def plan_legacy_phreeqc_nitric(totals: FertilizerTotals, initial_ph: float, target_ph: float, *, trace_totals=None) -> NitricAcidTargetPlan:
+    """Historical reduced phreeqc.dat fixture only; not mixed-product planning."""
+    if trace_totals is not None:
+        raise DeliveryError('unsupported_legacy_input','use plan_nitric_acid_target for trace chemistry')
+    initial = solve_legacy_phreeqc_macro(totals, _valid_ph(initial_ph), allow_precipitation=False)
+    target = solve_legacy_phreeqc_macro(totals, _valid_ph(target_ph), allow_precipitation=False)
     dose = _alkalinity(initial) - _alkalinity(target)
     if dose < 0:
         raise DeliveryError("wrong_reagent_direction", "target needs base rather than nitric acid")
     return NitricAcidTargetPlan(initial, target, dose)
+
+
+def solve_fertilizer_equilibrium(totals, ph, *, allow_precipitation=True):
+    """Public macro entry point; uses the same model as product/mixed solves."""
+    from .mixed_equilibrium import solve_mixed_fertilizer_equilibrium
+    return solve_mixed_fertilizer_equilibrium(totals,ph,allow_precipitation=allow_precipitation).macro
+
+
+def plan_nitric_acid_target(totals, initial_ph, target_ph, *, trace_totals=None):
+    """Nitric acid adds conserved nitrate in the full mixed aqueous model."""
+    from .aqueous_model import nitric_target
+    from .mixed_equilibrium import analytical_basis
+    if not isinstance(totals,FertilizerTotals):
+        raise DeliveryError('invalid_type','totals must be FertilizerTotals')
+    return nitric_target(analytical_basis(totals,trace_totals),initial_ph,target_ph)

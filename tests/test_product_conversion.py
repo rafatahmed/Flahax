@@ -1,6 +1,6 @@
 import unittest
 
-from flahax import (convert_catalogue_product_dose, convert_product_dose,
+from flahax import (convert_catalogue_product_dose, convert_product_dose, solve_catalogue_product_doses,
                     chemistry_for_product, load_library)
 
 
@@ -22,3 +22,9 @@ class ProductConversionTests(unittest.TestCase):
         product = next(p for p in load_library()["salts"] if p["name"] == "Urea")
         with self.assertRaises(Exception):
             convert_product_dose(product, chemistry_for_product("Iron EDTA"), 1.0)
+
+    def test_actual_catalogue_chelate_doses_share_one_mixed_solver(self):
+        result = solve_catalogue_product_doses({"Iron DTPA": .01, "Iron EDDHA": .01, "CH - micro": .01}, 6.0)
+        self.assertIsNotNone(result.trace)
+        self.assertGreater(result.trace.totals.dtpa, 0)
+        self.assertGreater(result.trace.totals.eddha, 0)

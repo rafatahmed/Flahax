@@ -17,3 +17,7 @@ class CatalogueChemistryTests(unittest.TestCase):
     def test_remaining_catalogue_chelate_families_have_source_profiles(self):
         self.assertGreater(LIGAND_PROFILES["DTPA"]["metal_log_beta"]["Fe+3"], 28)
         self.assertGreater(LIGAND_PROFILES["o,o-EDDHA"]["metal_log_beta"]["Fe+3"], 35)
+
+    def test_iron_dtpa_and_eddha_do_not_invent_other_metal_products(self):
+        self.assertEqual(set(LIGAND_PROFILES["DTPA"]["metal_log_beta"]), {"Fe+3"})
+        self.assertEqual(set(LIGAND_PROFILES["o,o-EDDHA"]["metal_log_beta"]), {"Fe+3"})

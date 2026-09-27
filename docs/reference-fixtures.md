@@ -2,6 +2,55 @@
 
 FlahaX uses checked-in PHREEQC golden fixtures as its dependency-free scientific verification baseline. PHREEQC is **not** a runtime dependency of the package.
 
+## Current P2/P3 golden suite
+
+The authoritative mixed-model evidence uses installed **PHREEQC 3.8.6-17100**, unmodified `minteq.v4.dat`, and the temporary FlahaX merge. The earlier reduced `phreeqc.dat` references below remain historical regressions, not the full mixed-model acceptance suite.
+
+| Directory below `tests/fixtures/phreeqc/` | Cases |
+|---|---|
+| `products/` | fe_edta, mn_edta, zn_edta, cu_edta, fe_dtpa, fe_eddha, ch_micro, citrate, mixed_products, mixed_target_ph_nitric |
+| `phases/` | calcite, calcium_phosphate, gypsum, trace_hydroxides, trace_phosphates, trace_carbonates, magnesium_salts, zero_stock, struvite, ferrous_phases, mixed_product_phases |
+| `failures/` | Full target-pH reduction ladder, failed initial-charge phase input, and zero-inventory-phase warning input |
+
+Every golden case contains `.pqi`, complete `.out`, `.screen`, high-precision `.sel`, and `expected.json`. The JSON retains numeric selected output, exact analytical totals, numerical tolerances and SHA-256 of all artifacts and the reference database. Product JSON also records actual catalogue g/kg-water doses, executable hash and extension hashes. The target case includes initial, nitrate-titration and corrected Fix_H+ inputs/outputs. The original six individually converged root chelate captures remain intact, protected by `preserved-evidence.json` and regression tests.
+
+Base SHA-256: `ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7`.
+Executable SHA-256: `d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006`.
+No executable or merged database is checked in.
+
+### Reproduction (PowerShell)
+
+```powershell
+$root = Join-Path $env:TEMP 'flahax-phreeqc\installed\phreeqc-3.8.6-17100-x64'
+$exe = Join-Path $root 'bin\Release\phreeqc.exe'
+$database = Join-Path $root 'database\minteq.v4.dat'
+$env:PYTHONPATH = 'src'
+python tools/build_chemistry_model.py $database
+python tools/phreeqc_evidence.py --exe $exe --database $database
+python tools/phreeqc_phase_evidence.py
+python tools/debug_nitric_phreeqc.py
+python tools/archive_evidence_manifest.py
+python -m unittest discover -s tests -t .
+python -m compileall -q src
+git diff --check
+git status
+```
+
+The merger removes only the terminal END from a temporary copy, appends `database/flahax-chelates-25c.dat` and `database/flahax-phases-25c.dat`, then writes END. It verifies the base hash is unchanged. `Dtp` and `Edd` are independent custom components; neither carbon valence nor native database entries are repurposed. Failures are retained with full text, not deleted because a later case fails. Successful output paths are excluded from text normalization so recorded hashes survive checkout.
+
+### Tolerances and validation
+
+- PHREEQC generation rejects errors, warnings and **absolute charge error > 0.1% on every selected row**.
+- Live replay: every selected numeric field, 1e-8 relative + 1e-12 absolute. The live test skips only when the stated executable/database is genuinely unavailable; no skipped live test counts as release acceptance.
+- Runtime product molality: 15% relative + 1e-10 mol/kgw; log activity: 0.12 for species above 1e-10 mol/kgw; SI: 0.25; ionic strength: 3% + 1e-9. These bound Davies versus native ion-specific coefficients, not measurement error or universal stock safety.
+- Runtime phase fixtures: 15% + 2e-8 mol/kgw aqueous; precipitated amount 8% + 2e-8 mol/kgw; SI 0.25. Total/solid inventories are normalized to the selected final kg water, including crystal hydration water.
+- Nitric dose: 3% + 2e-6 mol/kgw against both independent target methods. Expected titration is 0.0006712882238301735 and Fix_H+ is 0.0006712943408644 mol/kgw.
+- Internal component conservation: 1e-9 relative + 1e-15 mol/kgw; phase complementarity SI <= 1e-7; present-phase SI = 0 within 1e-7; finite iteration bounds and explicit domain/nonconvergence errors.
+
+`tests/test_product_phreeqc.py` verifies hashes, every product conversion path, full species/activity/SI comparisons, acid equivalence, phase allocation, conservation and live replay. `tests/test_chemistry_acceptance.py` independently checks all 28 products, ligand mass action/order independence, frozen product boundaries, zero/dilute cases, Davies/temperature limits and nitrate conservation. `tests/test_preserved_chemistry_evidence.py` protects successes and diagnostic reproducers.
+
+## Historical reduced fixture contract
+
 ## Fixture contract
 
 Each fixture is a JSON document under `tests/fixtures/phreeqc/` and contains:

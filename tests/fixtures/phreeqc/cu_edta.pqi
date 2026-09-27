@@ -1,0 +1,14 @@
+TITLE FlahaX Copper EDTA catalogue product
+SOLUTION 1
+ temp 25
+ pH 6 charge
+ units mmol/kgw
+ Cu .01
+ Edta .01
+SELECTED_OUTPUT
+ -file cu_edta.sel
+ -reset false
+ -pH true
+ -ionic_strength true
+ -totals Cu Edta
+END

@@ -1,0 +1,24 @@
+TITLE FlahaX mn_edta; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Mn(2) 2.366301938234277e-05
+ Edta 2.366301938234277e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file mn_edta.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Mn(2) Edta Na Cl
+ -molalities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+ -activities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
+ -si Pyrochroite Halite
+END

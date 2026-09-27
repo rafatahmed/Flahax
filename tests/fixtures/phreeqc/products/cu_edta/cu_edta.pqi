@@ -1,0 +1,24 @@
+TITLE FlahaX cu_edta; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Cu(2) 2.2031284423881917e-05
+ Edta 2.2031284423881917e-05
+ Na 0.002 charge
+ Cl 0.002
+SELECTED_OUTPUT
+ -file cu_edta.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Cu(2) Edta Na Cl
+ -molalities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
+ -activities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
+ -si Cu(OH)2 Tenorite Halite
+END

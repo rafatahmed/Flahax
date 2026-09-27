@@ -51,7 +51,7 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     # Normalize nitrogen form to the analytical species vocabulary.
     if "N_NO3" in totals: totals["nitrate"] = totals.pop("N_NO3")
     if "N_NH4" in totals: totals["ammonium"] = totals.pop("N_NH4")
-    if "N_UREA" in totals: totals["urea"] = totals.pop("N_UREA")
+    if "N_UREA" in totals: totals["urea"] = totals.pop("N_UREA") / 2.0
     if "P" in totals: totals["phosphate"] = totals.pop("P")
     if "S" in totals: totals["sulfate"] = totals.pop("S")
     if "B" in totals: totals["boron"] = totals.pop("B")
@@ -82,9 +82,57 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
         elif "SO4-2" in chemistry.components:
             counterions["sulfate"] = (totals.get("Mg", 0.0) + totals.get("Fe", 0.0) + totals.get("Zn", 0.0)
                                           + 0.5 * totals.get("ammonium", 0.0))
+    # Assayed totals are authoritative; formula-inferred counterions fill only
+    # absent fields. They must never be added a second time to an assay total.
+    counterions = {k:v for k,v in counterions.items() if k not in totals and not (k=='sodium' and 'Na' in totals)}
+    if chemistry.name == 'Potassium Carbonate':
+        counterions['carbonate'] = totals.get('K',0.0) / 2.0
     inert = max(0.0, 1.0 - sum(float(v) for v in assay.values()) / 100.0)
     return ProductAnalyticalTotals(chemistry, dose, totals, counterions, ligands, inert)
 
 def convert_catalogue_product_dose(product: Mapping[str, object], dose_g_per_kg_water: float) -> ProductAnalyticalTotals:
     """Catalogue adapter. Equilibrium callers should retain the returned profile."""
     return convert_product_dose(product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water)
+
+
+def catalogue_dose_totals(doses: Mapping[str, float]):
+    """Convert every assayed catalogue element into one conserved basis.
+
+    Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
+    retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
+    unhydrolysed. Rounded product assays do not establish unassayed counterions.
+    """
+    from .engine import load_library
+    library = {str(item["name"]): item for item in load_library()["salts"]}
+    result = {}
+    mapping = {'Ca':'Ca+2','Mg':'Mg+2','K':'K+','Na':'Na+','sodium':'Na+',
+               'Fe':'Fe+3','Mn':'Mn+2','Zn':'Zn+2','Cu':'Cu+2','boron':'H3BO3',
+               'molybdate':'MoO4-2','phosphate':'PO4-3','sulfate':'SO4-2',
+               'nitrate':'NO3-','ammonium':'NH4+','carbonate':'CO3-2','urea':'Ure',
+               'EDTA':'Edta-4','DTPA':'Dtp-5','o,o-EDDHA':'Edd-4','citrate':'Citrate-3'}
+    for name, dose in doses.items():
+        if name not in library:
+            raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
+        converted = convert_catalogue_product_dose(library[name], dose)
+        for source in (converted.totals, converted.counterions, converted.ligands):
+            for key, amount in source.items():
+                basis = 'Fe+2' if key=='Fe' and name=='Iron II Sulfate (Hepahydrate)' else mapping[key]
+                result[basis]=result.get(basis,0.)+amount
+    return result
+
+
+def solve_catalogue_product_doses(doses: Mapping[str, float], ph: float, *, water_totals=None, allow_precipitation=True):
+    """Solve the actual catalogue doses and stated water through one model."""
+    from .mixed_equilibrium import from_basis
+    totals=dict(water_totals or {})
+    for b,v in catalogue_dose_totals(doses).items():
+        totals[b]=totals.get(b,0.)+v
+    return from_basis(totals,ph,allow_precipitation=allow_precipitation)
+
+
+def plan_catalogue_nitric_target(doses, initial_ph, target_ph, *, water_totals=None, phases=()):
+    from .aqueous_model import nitric_target
+    totals=dict(water_totals or {})
+    for b,v in catalogue_dose_totals(doses).items():
+        totals[b]=totals.get(b,0.)+v
+    return nitric_target(totals,initial_ph,target_ph,phases=phases)

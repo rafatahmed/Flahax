@@ -18,3 +18,11 @@ LICENSE text eol=lf
 # Leave these out of `git archive` source snapshots.
 .gitignore     export-ignore
 .gitattributes export-ignore
+
+# Raw reference bytes are hashed. Preserve PHREEQC tabs, CRLF and final blanks.
+tests/fixtures/phreeqc/**/*.pqi -text whitespace=-blank-at-eol,-blank-at-eof
+tests/fixtures/phreeqc/**/*.out -text whitespace=-blank-at-eol,-blank-at-eof
+tests/fixtures/phreeqc/**/*.sel -text whitespace=-blank-at-eol,-blank-at-eof
+tests/fixtures/phreeqc/**/*.screen -text whitespace=-blank-at-eol,-blank-at-eof
+tests/fixtures/phreeqc/**/error.inp -text whitespace=-blank-at-eol,-blank-at-eof
+tests/fixtures/phreeqc/**/*.json -text whitespace=cr-at-eol

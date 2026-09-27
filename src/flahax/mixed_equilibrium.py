@@ -1,66 +1,70 @@
-"""Coupled 25 C Davies-domain macro/trace equilibrium entry point.
-
-This iterates the shared ionic strength and the Ca/Mg inventory available
-after ligand binding; it is not a completed macro solve followed by trace.
-"""
-from __future__ import annotations
-from dataclasses import dataclass, replace
-import math
+"""Compatibility views over the single simultaneous MINTEQ reaction model."""
+from dataclasses import dataclass
 from typing import Mapping
-
+from .aqueous_model import AqueousResult, chemistry, solve
 from .delivery_contracts import DeliveryError
-from .fertilizer_equilibrium import FertilizerTotals, FertilizerEquilibrium, _at_fixed_ionic_strength, _fixed_ph_equilibrium, _valid_ph
-from .trace_equilibrium import ChMicroTotals, TraceEquilibrium, solve_ch_micro_equilibrium
+from .fertilizer_equilibrium import FertilizerTotals, FertilizerEquilibrium
+from .trace_equilibrium import ChMicroTotals, TraceEquilibrium
+from .phase_allocation import phase_allocation
 
-@dataclass(frozen=True, slots=True)
+MACRO_BASIS = dict(calcium='Ca+2',magnesium='Mg+2',phosphate='PO4-3',carbonate='CO3-2',
+                   sulfate='SO4-2',ammonium='NH4+',nitrate='NO3-',potassium='K+',sodium='Na+',chloride='Cl-')
+TRACE_BASIS = dict(iron='Fe+3',manganese='Mn+2',zinc='Zn+2',copper='Cu+2',edta='Edta-4',
+                   dtpa='Dtp-5',eddha='Edd-4',citrate='Citrate-3',boron='H3BO3',molybdate='MoO4-2',
+                   calcium='Ca+2',magnesium='Mg+2')
+ALIASES = {'EDTA-4':'Edta-4','Fe(III)-EDTA':'Fe(Edta)-','Mn-EDTA':'Mn(Edta)-2',
+           'Zn-EDTA':'Zn(Edta)-2','Cu-EDTA':'Cu(Edta)-2','Ca-EDTA':'Ca(Edta)-2','Mg-EDTA':'Mg(Edta)-2',
+           'DTPA-free':'Dtp-5','o,o-EDDHA-free':'Edd-4','citrate-free':'Citrate-3',
+           'Fe+3-DTPA':'FeDtp-2','Fe+3-o,o-EDDHA':'FeEdd-',
+           'B(OH)3':'H3BO3','B(OH)4-':'H2BO3-'}
+
+def view(values):
+    result=dict(values)
+    result.update({alias:values.get(native,0.) for alias,native in ALIASES.items()})
+    for name in chemistry()['bases']+['OH-','H+','HPO4-2','H2PO4-','HCO3-','CO2','HMoO4-','H2MoO4']:
+        result.setdefault(name,0.)
+    return result
+
+@dataclass(frozen=True)
 class MixedFertilizerEquilibrium:
     macro: FertilizerEquilibrium
     trace: TraceEquilibrium | None
     ionic_strength: float
     iterations: int
+    aqueous: AqueousResult
 
     @property
-    def species(self) -> Mapping[str, float]:
-        values = dict(self.macro.species)
-        if self.trace:
-            values.update(self.trace.species)
-        return values
+    def species(self) -> Mapping[str,float]:
+        return view(self.aqueous.species)
 
-_CHARGES = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "EDTA-4": -4, "B(OH)4-": -1, "MoO4-2": -2, "HMoO4-": -1, "Fe(III)-EDTA": -1, "Mn-EDTA": -2, "Zn-EDTA": -2, "Cu-EDTA": -2, "Ca-EDTA": -2, "Mg-EDTA": -2}
-_MACRO_CHARGES = {"Ca+2": 2, "Mg+2": 2, "PO4-3": -3, "HPO4-2": -2, "H2PO4-": -1, "SO4-2": -2, "NH4+": 1, "NO3-": -1, "K+": 1, "Na+": 1, "Cl-": -1, "CO3-2": -2, "HCO3-": -1}
+def analytical_basis(totals, trace_totals=None):
+    result={b:getattr(totals,n) for n,b in MACRO_BASIS.items()}
+    if trace_totals:
+        for n,b in TRACE_BASIS.items():
+            result[b]=result.get(b,0.)+getattr(trace_totals,n)
+    return result
 
-def _mixed_ionic_strength(macro: Mapping[str, float], trace: Mapping[str, float]) -> float:
-    value = .5 * sum(macro.get(key, 0.0) * z * z for key, z in _MACRO_CHARGES.items() if key not in {"Ca+2", "Mg+2"})
-    return value + .5 * sum(trace.get(key, 0.0) * z * z for key, z in _CHARGES.items())
+def from_basis(totals,ph,*,allow_precipitation=True):
+    phases=[r['name'] for r in chemistry()['phases']] if allow_precipitation else ()
+    result=solve(totals,ph,phases=phases)
+    species,activities=view(result.species),view(result.activities)
+    saturation=dict(result.saturation_indices)
+    saturation['Hydroxyapatite']=saturation.get('Hydroxylapatite',float('-inf'))
+    for p in ('Calcite','Gypsum','Struvite'):
+        saturation.setdefault(p,float('-inf'))
+    dissolved=dict(totals)
+    for r in chemistry()['phases']:
+        for b,v in r['powers'].items():
+            if b in dissolved:
+                dissolved[b]-=result.precipitated.get(r['name'],0.)*v
+    macro_totals=FertilizerTotals(**{n:max(0.,dissolved.get(b,0.)) for n,b in MACRO_BASIS.items()})
+    trace_totals=ChMicroTotals(**{n:max(0.,dissolved.get(b,0.)) for n,b in TRACE_BASIS.items()})
+    macro=FertilizerEquilibrium(macro_totals,ph,result.ionic_strength,species,activities,saturation,
+                                tuple(phase_allocation(p,0.,v) for p,v in result.precipitated.items() if v>0))
+    trace=TraceEquilibrium(trace_totals,ph,result.ionic_strength,species,activities)
+    return MixedFertilizerEquilibrium(macro,trace,result.ionic_strength,result.iterations,result)
 
-def solve_mixed_fertilizer_equilibrium(totals: FertilizerTotals, ph: float, *, trace_totals: ChMicroTotals | None = None, allow_precipitation: bool = True) -> MixedFertilizerEquilibrium:
-    """Jointly converge macro ions, EDTA/B/Mo species, and ionic strength.
-
-    Existing macro phase allocations are preserved for macro-only calls. Trace
-    phases are omitted rather than invented: no compatible trace phase dataset
-    is currently source-backed.
-    """
-    if not isinstance(totals, FertilizerTotals):
-        raise DeliveryError("invalid_type", "totals must be FertilizerTotals")
-    ph = _valid_ph(ph)
-    if trace_totals is None:
-        macro = _fixed_ph_equilibrium(totals, ph)
-        return MixedFertilizerEquilibrium(macro, None, macro.ionic_strength, 1)
-    if not isinstance(trace_totals, ChMicroTotals):
-        raise DeliveryError("invalid_type", "trace_totals must be ChMicroTotals")
-    ionic_strength = .01
-    bound_ca = bound_mg = 0.0
-    for iteration in range(1, 81):
-        available = replace(totals, calcium=max(0.0, totals.calcium-bound_ca), magnesium=max(0.0, totals.magnesium-bound_mg))
-        macro_species, macro_activities, saturation = _at_fixed_ionic_strength(available, ph, ionic_strength)
-        trace = solve_ch_micro_equilibrium(replace(trace_totals, calcium=trace_totals.calcium + macro_species["Ca+2"], magnesium=trace_totals.magnesium + macro_species["Mg+2"]), ph, ionic_strength)
-        updated = _mixed_ionic_strength(macro_species, trace.species)
-        if not math.isfinite(updated) or updated > .1:
-            raise DeliveryError("activity_model_out_of_range", "Davies model is limited to I <= 0.1 mol/kgw")
-        next_ca, next_mg = trace.species["Ca-EDTA"], trace.species["Mg-EDTA"]
-        if max(abs(updated-ionic_strength), abs(next_ca-bound_ca), abs(next_mg-bound_mg)) < 1e-10:
-            macro = FertilizerEquilibrium(available, ph, updated, macro_species, macro_activities, saturation, ())
-            return MixedFertilizerEquilibrium(macro, replace(trace, ionic_strength=updated), updated, iteration)
-        ionic_strength = (ionic_strength + updated) / 2
-        bound_ca, bound_mg = next_ca, next_mg
-    raise DeliveryError("nonconvergent", "coupled macro/trace ionic-strength iteration did not converge")
+def solve_mixed_fertilizer_equilibrium(totals,ph,*,trace_totals=None,allow_precipitation=True):
+    if not isinstance(totals,FertilizerTotals) or (trace_totals is not None and not isinstance(trace_totals,ChMicroTotals)):
+        raise DeliveryError('invalid_type','expected FertilizerTotals and optional ChMicroTotals')
+    return from_basis(analytical_basis(totals,trace_totals),ph,allow_precipitation=allow_precipitation)

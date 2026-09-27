@@ -1,0 +1,33 @@
+TITLE FlahaX trace_phosphates; 25 C fixed analytical oxidation states
+SOLUTION 1
+ temp 25
+ pH 6
+ units mol/kgw
+ -water 1
+ Fe(3) 0.0001
+ Zn 0.0001
+ Cu(2) 0.0001
+ Mn(2) 0.0001
+ P 0.001
+ Na 0.01 charge
+ Cl 0.01
+EQUILIBRIUM_PHASES 1
+ Strengite 0 0
+ Zn3(PO4)2:4H2O 0 0
+ Cu3(PO4)2 0 0
+ Mn3(PO4)2 0 0
+SELECTED_OUTPUT
+ -file trace_phosphates.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Fe(3) Zn Cu(2) Mn(2) P Na Cl
+ -molalities Cl- Cu+2 Fe+3 H+ Na+ PO4-3 Zn+2 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ NaHPO4- Mn+2
+ -activities Cl- Cu+2 Fe+3 H+ Na+ PO4-3 Zn+2 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ NaHPO4- Mn+2
+ -si Zincite Cu(OH)2 Tenorite Ferrihydrite Goethite Pyrochroite Halite Zn3(PO4)2:4H2O Cu3(PO4)2 Strengite Mn3(PO4)2 MnHPO4
+ -equilibrium_phases Strengite Zn3(PO4)2:4H2O Cu3(PO4)2 Mn3(PO4)2
+END
