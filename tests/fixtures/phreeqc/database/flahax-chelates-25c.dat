@@ -20,16 +20,6 @@ Dtp-5 + 5 H+ = H5Dtp
     log_k 27.96
 Fe+3 + Dtp-5 = FeDtp-2
     log_k 28.60
-Ca+2 + Dtp-5 = CaDtp-3
-    log_k 10.70
-Mg+2 + Dtp-5 = MgDtp-3
-    log_k 9.30
-Mn+2 + Dtp-5 = MnDtp-3
-    log_k 15.60
-Zn+2 + Dtp-5 = ZnDtp-3
-    log_k 18.40
-Cu+2 + Dtp-5 = CuDtp-3
-    log_k 21.40
 Edd-4 = Edd-4
     log_k 0
 Edd-4 + H+ = HEdd-3
@@ -42,7 +32,3 @@ Edd-4 + 4 H+ = H4Edd
     log_k 37.63
 Fe+3 + Edd-4 = FeEdd-
     log_k 35.10
-Ca+2 + Edd-4 = CaEdd-2
-    log_k 7.99
-Mg+2 + Edd-4 = MgEdd-2
-    log_k 10.13

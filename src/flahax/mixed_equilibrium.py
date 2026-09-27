@@ -28,8 +28,9 @@ class MixedFertilizerEquilibrium:
 
 _CHARGES = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2, "EDTA-4": -4, "DTPA-free": -5, "o,o-EDDHA-free": -4, "citrate-free": -3, "B(OH)4-": -1, "MoO4-2": -2, "HMoO4-": -1, "Fe(III)-EDTA": -1, "Mn-EDTA": -2, "Zn-EDTA": -2, "Cu-EDTA": -2, "Ca-EDTA": -2, "Mg-EDTA": -2}
 for _metal in ("Fe+3", "Mn+2", "Zn+2", "Cu+2", "Ca+2", "Mg+2"):
-    _CHARGES[f"{_metal}-DTPA"] = -2 if _metal == "Fe+3" else -3
-    _CHARGES[f"{_metal}-o,o-EDDHA"] = -1 if _metal == "Fe+3" else -2
+    if _metal == "Fe+3":
+        _CHARGES[f"{_metal}-DTPA"] = -2
+        _CHARGES[f"{_metal}-o,o-EDDHA"] = -1
     _CHARGES[f"{_metal}-citrate"] = 0 if _metal == "Fe+3" else -1
 _MACRO_CHARGES = {"Ca+2": 2, "Mg+2": 2, "PO4-3": -3, "HPO4-2": -2, "H2PO4-": -1, "SO4-2": -2, "NH4+": 1, "NO3-": -1, "K+": 1, "Na+": 1, "Cl-": -1, "CO3-2": -2, "HCO3-": -1}
 

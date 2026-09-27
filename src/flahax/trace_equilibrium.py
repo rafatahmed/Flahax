@@ -25,8 +25,8 @@ METAL_CHARGE = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2
 # here because it is a catalogue ligand, not an invented generic organic ion.
 COMPLEX_CHARGE = {
     "EDTA": {"Fe+3": -1, "Mn+2": -2, "Zn+2": -2, "Cu+2": -2, "Ca+2": -2, "Mg+2": -2},
-    "DTPA": {"Fe+3": -2, "Mn+2": -3, "Zn+2": -3, "Cu+2": -3, "Ca+2": -3, "Mg+2": -3},
-    "o,o-EDDHA": {"Fe+3": -1, "Ca+2": -2, "Mg+2": -2},
+    "DTPA": {"Fe+3": -2},
+    "o,o-EDDHA": {"Fe+3": -1},
     "citrate": {"Fe+3": 0, "Mn+2": -1, "Zn+2": -1, "Cu+2": -1, "Ca+2": -1, "Mg+2": -1},
 }
 LOG_BETA_MOLYBDATE_H = 4.2988
@@ -114,9 +114,9 @@ def _valid_ph_and_i(ph: float, ionic_strength: float) -> None:
 def solve_ch_micro_equilibrium(totals: ChMicroTotals, ph: float, ionic_strength: float) -> TraceEquilibrium:
     """Solve the declared CH-micro chemistry at fixed pH and ionic strength.
 
-    All declared ligand and metal balances are solved together.  This includes
-    protonated free ligand forms and Ca/Mg competition, rather than applying
-    DTPA or EDDHA as a post-processing removal from an EDTA result. Redox is
+    All declared ligand and metal balances use their product-specific reaction
+    sets. DTPA and o,o-EDDHA are Fe(III)-only catalogue products; Ca/Mg and
+    other trace-metal complexes are intentionally outside this model. Redox is
     deliberately fixed as Fe(III); no unsupported redox conversion is inferred.
     """
     if not isinstance(totals, ChMicroTotals):
