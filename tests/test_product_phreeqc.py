@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -63,6 +64,8 @@ class LiveProductPhreeqcTests(unittest.TestCase):
         exe=INSTALL/'bin/Release/phreeqc.exe'
         base=INSTALL/'database/minteq.v4.dat'
         if not exe.is_file() or not base.is_file():
+            if os.environ.get('FLAHAX_REQUIRE_PHREEQC') == '1':
+                self.fail('required pinned PHREEQC installation unavailable')
             self.skipTest('live PHREEQC installation unavailable; golden tests remain mandatory')
         with tempfile.TemporaryDirectory(prefix='flahax-replay-') as tmp:
             folder=Path(tmp)
@@ -71,6 +74,8 @@ class LiveProductPhreeqcTests(unittest.TestCase):
             for path in cases()+sorted((FIXTURES.parent/'phases').glob('*/expected.json')):
                 data=json.loads(path.read_text())
                 self.assertEqual(hashlib.sha256(base.read_bytes()).hexdigest(),data['reference']['base_sha256'])
+                if 'executable_sha256' in data['reference']:
+                    self.assertEqual(hashlib.sha256(exe.read_bytes()).hexdigest(),data['reference']['executable_sha256'])
                 self.assertEqual(hashlib.sha256(db.read_bytes()).hexdigest(),data['reference']['merged_sha256'])
                 for pqi in path.parent.glob('*.pqi'):
                     with self.subTest(input=pqi.name):

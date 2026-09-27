@@ -133,4 +133,6 @@ __all__ = [
     "validate_delivery_request",
 ]
 __version__ = "0.2.0"
+from .equilibrium_delivery import EquilibriumPhPlan, plan_equilibrium_delivery
+__all__ += ["EquilibriumPhPlan", "plan_equilibrium_delivery"]
 __all__ += ["AqueousResult", "AcidResult", "catalogue_dose_totals", "plan_catalogue_nitric_target"]

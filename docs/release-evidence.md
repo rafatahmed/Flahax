@@ -33,7 +33,44 @@ git status
 
 The complete unittest run passes **100 tests with zero failures/errors/skips**, including installed-PHREEQC live execution. Compilation and whitespace validation pass. Numerical tolerances and regeneration commands are in `reference-fixtures.md`; executable/base/extension and output hashes are in each fixture's JSON. The closure commit is the commit containing this acceptance record (not an invented self-referential hash).
 
-This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in `sources/flahax-chelate-thermodynamic-profile.md`. Independent review and lot-specific experimental validation remain G6, not silently inferred from two solvers agreeing.
+This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in `sources/flahax-chelate-thermodynamic-profile.md`. The original closure left independent review and lot-specific experimental validation to G6. The owner-amended computational scope below supersedes that release requirement without claiming experimental validation.
+
+## Package and delivery continuation — 2026-09-27
+
+Branch: `codex/package-verification-delivery`, based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the project owner. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
+
+| Requirement | Observed evidence | Acceptance |
+|---|---|---|
+| P5.5 equilibrium delivery | `tests/test_equilibrium_delivery.py`: explicit g/L-to-g/kg-water mapping, HNO3 assay/density, nitrate rescoring, source hashes, dedicated acid command, composed-plan transitions, target reference and rejection guards | Pass |
+| P6.6 distributions | `tools/verify_distribution.py`: independent wheel/sdist installations outside checkout; Python 3.13.15 resource hashes, public exports, chemistry/delivery numerical examples and both CLI entry points agree; no required runtime dependencies or bundled executable. Earlier Python 3.14 installs also passed. | Local pass; hosted supported-version matrix outstanding |
+| P6.7 live reference | Full suite runs pinned PHREEQC with zero skips; fresh official MSI extraction verifies installer/executable/base hashes. `tests/test_live_reference_policy.py` confirms required-live absence fails rather than skips. New hosted job retains replay logs. | Local pass; hosted job outstanding |
+| P6.8 / amended G6 | Conservation, convergence, reference agreement, delivery guards and distribution checks recorded in `computational-review.md`; assessor Rafat Al Khashan | Bounded computational assessment passes; not independent review, formal proof or laboratory certification |
+| P7 | No consumer contract or external integration implemented | Optional, not started |
+
+Exact final local suite command (PowerShell):
+
+```powershell
+$env:PYTHONPATH = 'src'
+$env:FLAHAX_REQUIRE_PHREEQC = '1'
+py -3.13 -m unittest discover -s tests -t .
+```
+
+Result: **107 tests in 108.796 seconds, OK, zero skips**. This includes the original chemistry evidence and new delivery/live-reference policy regressions.
+
+Pre-commit replay after the README update: **107 tests in 129.919 seconds, OK, zero skips**. A preceding sandboxed run was blocked from writing its temporary merged database; rerunning with temporary-directory permission resolved that environmental error without changing chemistry or tests. `python -m compileall -q src tools`, `git diff --check` and the staged whitespace check also pass.
+
+Clean distribution verification:
+
+```powershell
+$testPython = py -3.13 -c "import sys; print(sys.executable)"
+.\.venv-verification\Scripts\python.exe tools/verify_distribution.py --python $testPython
+```
+
+Result: **PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points**. The development environment contains the `build` frontend; see `package-verification.md` to reproduce. The generated local `build/distribution-verification.json` records artifact hashes and observations. Both installs reported 28 catalogue products, chemistry SHA-256 `aeb264a4edf1177102bc1a68fb4dc87de6c1ea9c94cd45ff462dcfc06a0ee575`, library SHA-256 `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343`, and synthetic delivery reagent volume `0.0003095719864150872 L`. Artifact hashes identify the tested build, not a promise of byte-identical future archive timestamps.
+
+`tools/provision_phreeqc.ps1` was tested both against the existing installation and with a fresh destination under TEMP. It downloads the official pinned MSI, administratively extracts outside the checkout and verifies all three hashes without modifying the base database. This is reference tooling, not a package runtime dependency.
+
+The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run `36322890741`). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the account owner.
 
 ## Historical reduced-model evidence (superseded)
 
@@ -47,9 +84,9 @@ this evidence because their ligand data are not present.
 ## Required external gates before operational use
 
 - G2/G3: bounded mixed-product reference/model choices are implemented and numerically verified above; preserve their declared conditions and source-profile limitations.
-- G6: independent reviewer signs off on numerical evidence and required bench/site validation.
+- G6: for this planning-package release, the owner explicitly requested computational evidence without laboratory work; see the amended assessment above. Independent and physical validation are not claimed.
 - P7: define a separate, read-only FlahaFAST interface contract; it is not implemented in the package.
 
 ## Release decision
 
-The package may be released as a dependency-free **planning and verification prototype**. P2/P3 numerical acceptance does not authorize autonomous dosing, pump control, deployment or universal chemical certification. P6's independent G6 review and bench/site evidence remain external release gates; P7 integration remains unimplemented.
+The package remains a dependency-free **planning and verification prototype**. P2/P3 and owner-amended G6 computational acceptance do not authorize autonomous dosing, pump control, deployment or universal chemical certification. The supported-version hosted verification gate remains outstanding; this record does not authorize publication or automatic merging. P7 integration remains unimplemented.
