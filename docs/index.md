@@ -24,8 +24,9 @@
 - [Chelate parameter assumptions](sources/flahax-chelate-thermodynamic-profile.md)
 - [Computational assessment](computational-review.md), [release evidence](release-evidence.md) and [roadmap](implementation-roadmap.md)
 
-## Maintainers and release preparation
+## Maintainers and development
 
+- [Development roadmap](development-roadmap.md): post-0.3.0 priorities, hardening gates and expansion opportunities.
 - [Distribution verification](package-verification.md)
 - [Release-readiness audit](release-readiness.md)
 - [Publication checklist](publishing.md)

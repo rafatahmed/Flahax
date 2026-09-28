@@ -1,5 +1,9 @@
 # FlahaX Package: Trackable Implementation Roadmap
 
+## Current status — 2026-09-28
+
+0.3.0 was published to PyPI on 2026-09-27 under the documented owner exception for local verification. PRs #3 and #4 are merged. P6.6/P6.7 hosted acceptance remains open. The [development roadmap](development-roadmap.md) is the active post-release plan; the dated audits and P0–P7 ledger below preserve implementation history, including earlier test counts and superseded release prerequisites.
+
 ## Purpose
 
 This roadmap tracks package capabilities and their evidence, not deployment or hardware control. FlahaX's dependency-free nutrient formulation API and CLI remain the core product. Optional chemistry and delivery-planning APIs extend a feasible working-solution recipe without weakening that existing contract. FlahaFAST is a later consumer of the package, not a prerequisite for its usefulness or release.
@@ -238,9 +242,4 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 
 ## Next execution plan
 
-1. **Finish hosted P6.6/P6.7 acceptance.** The implementation and local checks are present. An authorized account owner must resolve the observed GitHub billing lock; then observe successful Python 3.11–3.13 distribution jobs and required live-reference replay. Do not mark blocked jobs as passed or publish to PyPI.
-2. **Review this package increment.** Preserve both pH planning modes, explicit solvent/assay units and all golden/diagnostic evidence. Record review against the computational assessment attributed to Rafat Al Khashan; do not fabricate independent or experimental approval.
-3. **Release preparation and review.** Audit package/API compatibility, documentation and distribution contents; require successful hosted checks before merging. Publication and a new version/tag require separate release authorization.
-4. **P7 — external handoff.** Any FlahaFAST integration is implemented in the separate FlahaFAST project, not here. See `INTEGRATION.md` for the package boundary.
-
-**Suggested next task:** “Once the account owner restores GitHub Actions, run and inspect the supported Python matrix and pinned live-reference workflow. Record actual outcomes before closing P6.6/P6.7. Then finish package release review; hand any P7 implementation to the separate FlahaFAST project.”
+Follow [the post-0.3.0 development roadmap](development-roadmap.md). First close P6.6/P6.7 with successful hosted artifacts, then expand boundary regressions and contract coverage. Publication of 0.3.0 is complete; its local-evidence exception does not waive verification gates for future releases. P7 remains an optional handoff to the separate FlahaFAST project.
