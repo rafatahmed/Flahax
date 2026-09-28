@@ -34,13 +34,9 @@ Local verification on Python 3.13 passes **110 tests with zero skips**, includin
 
 **Assessor: Rafat Al Khashan.** The owner-amended G6 assessment concerns bounded computational evidence without laboratory work. It is not an independent review, a formal proof for arbitrary inputs, or operational certification. See the [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md) and [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
 
-Next, in order:
+Version **0.3.0 is published on [PyPI](https://pypi.org/project/flahax/0.3.0/)** (2026-09-27). The release used the owner's documented local-evidence exception; hosted verification remains open.
 
-1. Finish **P6.6/P6.7 hosted verification**: observe passing Python 3.11–3.13 distribution jobs and the required pinned live-reference job. The last inspected GitHub run could not start because of an account billing lock. The owner explicitly approved publishing 0.3.0 using verified local evidence despite this blocker; hosted checks remain unverified, not passed.
-2. Review the package increment with **P5.5 implemented** and the amended **G6 computational assessment** recorded. No automatic merge or release publication is implied.
-3. Hand off **optional P7 integration to the separate FlahaFAST project**. This is not a FlahaX package release requirement. No application deployment, database writes or pump control are included here.
-
-The [implementation roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) tracks exact acceptance and outstanding work.
+Next priorities are supported-version CI, broader numerical and input-boundary testing, and stable consumer contracts. The [development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md) defines proposed milestones, acceptance gates and expansion opportunities. The [implementation ledger](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) preserves P0–P7 evidence and historical decisions.
 
 ## Install
 
@@ -141,7 +137,7 @@ Start with the [0.3.0 User Manual](https://github.com/rafatahmed/Flahax/blob/mai
 | [docs/computational-review.md](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md) | Owner-amended G6 computational assessment, named assessor and limits of acceptance |
 | [docs/chemistry-coverage-matrix.md](https://github.com/rafatahmed/Flahax/blob/main/docs/chemistry-coverage-matrix.md) | Exact aqueous/phase coverage, naming aliases and source-backed definitions |
 | [docs/publishing.md](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md) | Building and releasing a new version |
-| [docs/release-readiness.md](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md) | Cleanup findings, preserved compatibility and outstanding merge/release gate |
+| [docs/release-readiness.md](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md) | Cleanup findings, publication status and outstanding verification |
 
 From a checkout, the tests are:
 

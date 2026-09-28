@@ -2,7 +2,7 @@
 
 ## Authorized publication exception — 0.3.0
 
-On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. Final archives must still pass clean-install/manual/metadata checks. Publication is not confirmed until PyPI serves the uploaded artifacts and a fresh installed-package check succeeds.
+On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the post-release audit in `release-readiness.md`; candidate-sdist evidence remains separate.
 
 ## Automated evidence
 
