@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.1 - Unreleased
+
+- Clarify every pepper product's candidate Tank A/B/acid destination or unresolved status; display actual contents of synthetic stock examples, preserve recipe mass and prevent interpreting recipe acid as an additional pH dose.
+- Document current capability limits and next steps; preserve supplied manufacturer PDFs locally while excluding them from versioned/package artifacts and retaining reviewed source hashes.
+
+- Add interactive/JSON workflow, EC-screening and injector-sizing CLI commands; retain the legacy stdin contract. Require explicit source water and restrict standard workflow acids to nitric/phosphoric, preserving lower-level scientific references.
+- Review four supplied fertilizer PDFs; add exact-SQM-brand pre-acid EC screening with unknown accuracy and unsupported-stock boundaries, plus channel volume/flow requirements for pump, venturi and Dosatron sizing. No fabricated equipment model selection.
+
+- Add an offline HTML capability report with accessible SVG charts, explicit units and nutrient/chemistry/acid/EC/injection tables; keep synthetic evidence and missing-input statuses visible.
+
+- Add recipe-calibrated EC25 estimation for separate concentrated stock tanks and combined irrigation solution, explicit meter-TDS conversion, and recipe-preserving injection/pump planning. Missing calibration never yields a fabricated EC value; no real calibration dataset or universal concentrated-stock predictor is claimed.
+
+- Add runnable `examples/` capability scenarios and a combined JSON/Markdown report, with explicit synthetic-data boundaries and regression coverage; include examples in source distributions.
+
+- Separate zero-target incidental nutrients from positive-target fit and explicit maximum concentrations; preserve real catalogue materials.
+- Add explicit source-water-to-formulation orchestration, complete-analysis calculated pH, measured-curve/stock delegation and single-acid candidate planning for nitric, phosphoric, sulfuric and citric acids.
+- Add four charge-balanced PHREEQC acid references with hashes, conservation/equivalence tests and live replay. These development APIs are not in the published 0.3.0 artifacts; see `docs/water-to-delivery.md` for assumptions and input requirements.
+
 ## 0.3.0 — 2026-09-27
 
 ### Added

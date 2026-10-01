@@ -2,11 +2,29 @@
 
 import json
 import sys
+import argparse
 
 from flahax import InputError, recommend
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description='FlahaX nutrient recommendation and site planning')
+    parser.add_argument('command', nargs='?', default='recommend', choices=('recommend', 'workflow', 'ec', 'size'))
+    parser.add_argument('--interactive', action='store_true', help='Request site inputs (workflow, ec or size)')
+    args = parser.parse_args()
+    if args.command != 'recommend':
+        from .planning_cli import execute, interactive, serializable
+        try:
+            payload = interactive(args.command) if args.interactive else json.load(sys.stdin)
+            result = execute(args.command, payload)
+            json.dump(serializable(result), sys.stdout, allow_nan=False)
+            sys.stdout.write('\n')
+            return 0
+        except (ValueError, TypeError, KeyError, OSError, EOFError) as exc:
+            print(f'Invalid planning input: {exc}', file=sys.stderr)
+            return 1
+    if args.interactive:
+        parser.error('Use workflow --interactive to request site-specific inputs')
     try:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError:

@@ -23,6 +23,7 @@ from .composition import (
     is_carbonate,
     validate_profile,
 )
+from .nutrient_acceptance import assess_incidental
 
 EPS = 1e-10
 # Grams below this do not appear in the recipe.
@@ -390,6 +391,7 @@ def _report(rows: list[dict], grams: list[float], warnings: list[str]) -> dict:
     ]
     return {
         "feasible": bool(deltas) and max(deltas) <= TOLERANCE_PCT,
+        **assess_incidental(rows),
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
         "undesiredIons": undesired,
         "totalGramsPerLitre": round(sum(gram for gram in grams if gram > 0), 6),

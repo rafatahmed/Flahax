@@ -1,0 +1,49 @@
+{
+  "formula": "C6H8O7",
+  "totals": {
+    "Na+": 0.002,
+    "Cl-": 0.002
+  },
+  "target_ph": 6.5,
+  "selected_rows": [
+    {
+      "pH": 6.998431271739,
+      "mu": 0.002000105461967,
+      "mass_H2O": 1.0,
+      "charge": 2.934175068848e-20,
+      "pct_err": 7.335050887674e-16,
+      "Na": 0.002,
+      "Cl": 0.002,
+      "Citrate": 0.0
+    },
+    {
+      "pH": 6.5,
+      "mu": 0.00200058367397,
+      "mass_H2O": 1.000000001297,
+      "charge": -1.920647207899e-19,
+      "pct_err": -4.800823265329e-15,
+      "Na": 0.001999999997406,
+      "Cl": 0.001999999997406,
+      "Citrate": 1.144707971208e-07
+    }
+  ],
+  "acid_molal": 1.144707971208e-07,
+  "tolerances": {
+    "ph_absolute": 0.01,
+    "dose_relative": 0.03,
+    "dose_absolute": 1e-09,
+    "charge_error_percent": 0.1
+  },
+  "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+  "merged_database_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd",
+  "executable_sha256": "d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006",
+  "version": "3.8.6-17100",
+  "regeneration": "python tools/acid_selection_evidence.py",
+  "notes": "Synthetic NaCl background; no agronomic acceptance implied. H3Citrate preserves the organic citrate component, not inorganic carbon.",
+  "hashes": {
+    "reference.out": "c2a5de494bfb8b332f2c43a3c44c8abb5b5433b3586ff307d10262c137b9c57e",
+    "reference.pqi": "07d5fafdada374b62061f8a8e48c62429bd708a9e4da94d62bf12ef34b9aaf63",
+    "reference.screen": "3018e24845e21c459a9f2e7594554507866440162231c3de0210f483773c5394",
+    "reference.sel": "64a86c954e28de8a23e63063beb6d1d8093bd9dd03674ccd1ab06d9db9db2200"
+  }
+}

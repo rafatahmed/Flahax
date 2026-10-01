@@ -14,6 +14,7 @@ from .delivery_contracts import DeliveryError, validate_product_assay
 from .delivery_quantities import FinalSolutionRecipe, MassGrams, VolumeLitres, elemental_contribution, rescore_with_reagent
 from .engine import load_library, forward
 from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
+from .nutrient_acceptance import assess_incidental
 
 
 def _number(value, name, *, positive=False):
@@ -42,13 +43,15 @@ class EquilibriumPhPlan:
     warnings: tuple[str, ...]
     post_mix_measurement_required: bool = True
     mode: str = 'catalogue-equilibrium-nitric'
+    incidental_assessment: dict | None = None
 
 
 def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
                               water_analysis_id, initial_ph, target_ph, reagent,
                               reagent_channel_id,
                               maximum_reagent_volume, targets,
-                              maximum_nutrient_error_percent, temperature_c=25., phases=()):
+                              maximum_nutrient_error_percent, temperature_c=25., phases=(),
+                              maximum_concentrations=None):
     """Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
 
     `water_mass_kg` is the explicitly defined final solvent inventory, including
@@ -135,10 +138,14 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
     loss, rows = rescore_with_reagent(achieved,targets,contribution)
     for row in rows:
         target = row['target']
-        if target is not None and ((target == 0 and row['final']>1e-12) or
-                                  (row['deltaPct'] is not None and abs(row['deltaPct'])>tolerance)):
+        if target is not None and row['deltaPct'] is not None and abs(row['deltaPct'])>tolerance:
             raise DeliveryError('nutrient_tolerance_exceeded',f'final nutrient {row["symbol"]} exceeds the specified tolerance')
+    assessment = assess_incidental(rows, maximum_concentrations)
+    if assessment['limitViolations']:
+        raise DeliveryError('nutrient_limit_exceeded','final composition exceeds an explicit nutrient maximum')
     warnings = ['Initial dose only; measure pH after mixing before any correction.']
+    if assessment['requiresReview']:
+        warnings.append('Incidental nutrient additions require review or explicit maximum-concentration limits.')
     if any(v>1e-12 for v in result.target.precipitated.values()) or any(si>1e-7 for si in result.target.saturation_indices.values()):
         warnings.append('Precipitation risk: target has formed solids or positive saturation indices; not valid for delivery approval.')
     audit = {'modelVersion':'minteq-flahax-25c-v1','waterAnalysisId':water_analysis_id,
@@ -147,8 +154,10 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
              'waterTotalsMolal':water,'initialPh':initial_ph,'targetPh':target_ph,
              'finalVolumeLitres':recipe.final_volume.value,'productDosesGPerKgWater':doses,
              'temperatureC':temperature_c,'phases':list(phases),'maximumNutrientErrorPercent':tolerance,
+             'maximumConcentrationsPpm':dict(maximum_concentrations or {}),
              'sourceDatabaseSha256':chemistry()['database_sha256'],
              'chemistrySha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
              'catalogueSha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest()}
     return EquilibriumPhPlan(recipe,water_analysis_id,water_mass,assay['id'],reagent_channel_id,target_ph,result,
-                             mass,volume,contribution,loss,tuple(rows),audit,tuple(warnings))
+                             mass,volume,contribution,loss,tuple(rows),audit,tuple(warnings),
+                             incidental_assessment=assessment)

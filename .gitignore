@@ -37,3 +37,9 @@ Desktop.ini
 
 # PHREEQC creates empty scratch logs beside captures; evidence uses .screen/.out.
 tests/fixtures/phreeqc/**/phreeqc.log
+
+# User-supplied manufacturer references retained locally; findings/hashes are versioned.
+docs/sources/04_Fertilizer.pdf
+docs/sources/165357805552.pdf
+docs/sources/215057776303.pdf
+docs/sources/215726931002.pdf

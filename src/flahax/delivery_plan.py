@@ -57,6 +57,8 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
         result=plan.ph_plan.equilibrium.target
         if any(v>1e-12 for v in result.precipitated.values()) or any(si>1e-7 for si in result.saturation_indices.values()):
             raise DeliveryError('precipitation_risk','equilibrium target cannot be approved with solids or positive SI')
+        if plan.ph_plan.incidental_assessment and plan.ph_plan.incidental_assessment['requiresReview']:
+            raise DeliveryError('incidental_review_required','incidental nutrient contributions need explicit limits before validation')
     if target == "operator-approved" and any(c.requires_operator_verification for c in plan.commands):
         # The explicit transition is the approval; commands remain verification-required at execution.
         pass

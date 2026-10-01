@@ -35,7 +35,7 @@ def arguments():
                 reagent=record('nitric',name='Nitric acid',kind='acid',chemicalFormula='HNO3',
                                elements={'N_NO3':13.8},densityKgPerL=1.4),
                 maximum_reagent_volume=VolumeLitres(.1),targets={'K':12.72},
-                maximum_nutrient_error_percent=1.)
+                maximum_nutrient_error_percent=1., maximum_concentrations={'Na':50, 'Cl':100, 'N_NO3':20})
 
 
 class EquilibriumDeliveryTests(unittest.TestCase):
@@ -87,7 +87,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
                    {'targets':{}},{'maximum_nutrient_error_percent':float('nan')},
                    {'water_totals':{'Na+':.2,'Cl-':.2}}, {'target_ph':8.},
                    {'water_totals':{'Na+':.01,'Cl-':.001}},
-                   {'targets':{'K':0.}}, {'targets':{'K':1.}},
+                   {'targets':{'K':0.}, 'maximum_concentrations':{'K':0.}}, {'targets':{'K':1.}},
                    {'maximum_reagent_volume':VolumeLitres(1e-9)}]
         for mutation in mutations:
             with self.subTest(mutation=mutation), self.assertRaises(DeliveryError):
@@ -124,7 +124,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         data=json.loads(fixture.read_text())
         doses=data['product_doses_g_per_kgw']
         converted=catalogue_dose_totals(doses)
-        args=self.args|{'recipe':recipe_for(doses),'water_totals':{
+        args=self.args|{'recipe':recipe_for(doses),'maximum_concentrations':{'N_NO3':100},'water_totals':{
             'Na+':data['runtime_totals']['Na+']-converted.get('Na+',0.),'Cl-':data['runtime_totals']['Cl-']},
             'targets':{'K':converted['K+']*39.0983*.95*1000}}
         p=plan_equilibrium_delivery(**args)

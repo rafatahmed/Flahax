@@ -1,6 +1,15 @@
 # FlahaX
 
-**Version 0.3.0** · [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) · [Changelog](https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md) · [Release checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md)
+Unreleased site-input additions: [interactive CLI, calculated EC screening and
+injector flow sizing](docs/site-planning.md). Source water is user-specific;
+standard workflow acids are nitric and phosphoric. Manufacturer EC screening
+does not claim validated concentrated-stock prediction or select an equipment
+model without operating data.
+
+See the [unreleased capability/status matrix](docs/development-status.md) for
+the exact implemented boundaries, source handling and next development steps.
+
+**Preparing 0.3.1 - not yet published** · [User manual](src/flahax/data/USER_GUIDE.md) · [Changelog](CHANGELOG.md) · [Release checklist](docs/publishing.md)
 
 Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planning.
 
@@ -12,7 +21,7 @@ FlahaX selects a fertilizer combination and the grams of each salt for a fixed c
 
 The package is separate from the FlahaFAST application. FlahaFAST does not import it.
 
-Version 0.3.0 also provides bounded chemistry and delivery-planning APIs. These extend the nutrient recipe without changing `recommend` or the CLI.
+The 0.3.0 chemistry and delivery APIs are retained. The 0.3.1 preparation adds site-input planning commands while preserving the no-argument recommendation CLI.
 
 ## Chemistry and delivery planning
 
@@ -98,14 +107,14 @@ The ppm equation, the Lawson–Hanson solve, the library counts, and the regress
 
 Please cite FlahaX when the package, or a recommendation it produced, is used in a report or a paper.
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.0) [Computer software]. https://pypi.org/project/flahax/
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.1, release preparation) [Computer software]. Cite the version actually used; 0.3.0 remains the previous published baseline.
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: fertilizer salt selection for a fixed crop formula},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.3.1},
   url     = {https://pypi.org/project/flahax/},
   license = {Flaha Free Use License}
 }
@@ -115,7 +124,17 @@ GitHub reads [`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CIT
 
 ## Documentation
 
-Start with the [0.3.0 User Manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) for installation, tested examples, units, chemistry, pH/delivery planning, troubleshooting and upgrades. It ships inside the wheel and source distribution and can be read offline with `importlib.resources`. The [documentation index](https://github.com/rafatahmed/Flahax/blob/main/docs/index.md) separates user guidance, scientific evidence, contributor tools and historical notes.
+Runnable examples for the current checkout are in `examples/`. From the repository
+root, set `PYTHONPATH=src` and run `python -m examples.run_all --output build/my-examples`
+to generate HTML, JSON and Markdown capability reports. See `examples/README.md`
+for individual scenarios and the distinction between pepper inputs and synthetic evidence.
+
+Unreleased development: `docs/water-to-delivery.md` in this checkout
+separates crop targets, source-water contributions and incidental nutrients,
+and documents calculated-pH and standard nitric/phosphoric candidate planning. These additions
+are not included in the published 0.3.0 artifacts.
+
+Start with the [0.3.1 preparation manual](src/flahax/data/USER_GUIDE.md) for installation, tested examples, units, chemistry, pH/delivery planning, troubleshooting and upgrades. It ships inside the wheel and source distribution and can be read offline with `importlib.resources`. The [documentation index](docs/index.md) separates user guidance, scientific evidence, contributor tools and historical notes.
 
 | Document | Contents |
 |---|---|
@@ -159,11 +178,11 @@ git diff --check
 
 For isolated distribution checks, use a development virtual environment with `build` installed and run `python tools/verify_distribution.py`. It creates temporary wheel/sdist installations and writes `build/distribution-verification.json`; nothing is published. Without PHREEQC, ordinary runs still execute checked-in golden regressions but may skip live replay.
 
-## Scope of version 0.3.0
+## Core formulation scope
 
 This version returns grams for one litre of working solution. A salt is dosed from the shipped library only when its assay uses known ions and its formula does not rule the assay out. Default recipes leave out carbonate salts, and they leave out sodium and chloride unless the formula asks for that ion or the caller allows it. The result reports whether every requested ion landed inside 1%, plus warnings.
 
-The core `recommend` and CLI contract does not split tanks, adjust pH, price the mix, or apply a concentration factor. Separate Python planning APIs provide stock assignment, bounded pH calculations and reviewed delivery composition as described above. They do not physically adjust pH, execute dosing commands or write to the FlahaFAST database.
+The core `recommend` and no-argument CLI contract does not split tanks, adjust pH, price the mix, or apply a concentration factor. Separate planning APIs and explicit planning subcommands provide the bounded capabilities documented above. They do not physically adjust pH, execute dosing commands or write to the FlahaFAST database.
 
 ## License
 

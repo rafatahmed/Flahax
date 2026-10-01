@@ -1,0 +1,201 @@
+   Input file: reference.pqi
+  Output file: reference.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-acids-ybovr75w\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX single-acid reference HNO3
+	 closed, 25 C
+	PHASES
+	Fix_H+
+	 H+ = H+
+	 log_k 0
+	SOLUTION 1
+	 temp 25
+	 pH 7 charge
+	 units mol/kgw
+	 water 1
+	 Na 0.002
+	 Cl 0.002
+	EQUILIBRIUM_PHASES 1
+	 Fix_H+ -6.5 HNO3 1
+	SELECTED_OUTPUT
+	 file reference.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Na Cl N(5)
+	END
+-----
+TITLE
+-----
+
+ FlahaX single-acid reference HNO3
+ closed, 25 C
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Na                2.000e-03   2.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.998      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.000e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   1.452e-19
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.934e-20
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   4
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             1.055e-07   1.003e-07    -6.977    -6.999    -0.022     (0)  
+   H+              1.055e-07   1.004e-07    -6.977    -6.998    -0.022      0.00
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+H(0)          1.426e-25
+   H2              7.128e-26   7.131e-26   -25.147   -25.147     0.000     (0)  
+Na            2.000e-03
+   Na+             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -42.002   -42.001     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fix_H+           -7.00     -7.00    0.00  H+
+  Halite           -7.04     -5.44    1.60  NaCl
+  O2(g)           -39.10     43.99   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+Fix_H+           -6.50    -6.50      0.00
+	 HNO3               is reactant       1.000e+00   1.000e+00  -2.988e-07
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	N                 2.988e-07   2.988e-07
+	Na                2.000e-03   2.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.500      Charge balance
+                                       pe  =  11.442      Adjusted to redox equilibrium
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.000e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -2.988e-07
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -2.458e-17
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =  28
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              3.323e-07   3.162e-07    -6.478    -6.500    -0.022      0.00
+   OH-             3.347e-08   3.184e-08    -7.475    -7.497    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+H(0)          1.845e-39
+   H2              9.226e-40   9.231e-40   -39.035   -39.035     0.000     (0)  
+N(-3)         0.000e+00
+   NH4+            0.000e+00   0.000e+00   -43.986   -44.008    -0.022     (0)  
+   NH3             0.000e+00   0.000e+00   -46.752   -46.752     0.000     (0)  
+N(3)          1.449e-14
+   NO2-            1.449e-14   1.378e-14   -13.839   -13.861    -0.022     (0)  
+N(5)          2.988e-07
+   NO3-            2.988e-07   2.844e-07    -6.525    -6.546    -0.022     (0)  
+Na            2.000e-03
+   Na+             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+O(0)          1.189e-14
+   O2              5.946e-15   5.948e-15   -14.226   -14.226     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fix_H+           -6.50     -6.50    0.00  H+
+  Halite           -7.04     -5.44    1.60  NaCl
+  O2(g)           -11.32     71.77   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.043 Seconds.
+-------------------------------
+
