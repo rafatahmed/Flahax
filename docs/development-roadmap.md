@@ -1,5 +1,12 @@
 # FlahaX development roadmap after 0.3.0
 
+Release-preparation update (2026-10-01): [site planning](site-planning.md) and
+[source review](source-sheet-review.md). User-specific CLI inputs,
+nitric/phosphoric standard workflow, manufacturer-anchor dilute screening and
+injector flow arithmetic are implemented. General concentrated A/B EC,
+acid-adjusted full-recipe conductivity and manufacturer-qualified equipment
+model selection remain open; brochure anchors do not close these gaps.
+
 Updated 2026-09-28. Status: proposed priorities, not scheduled releases. The published baseline is [0.3.0](https://pypi.org/project/flahax/0.3.0/). The [implementation ledger](implementation-roadmap.md) retains P0–P7 acceptance and historical audits.
 
 ## Assumptions and baseline
@@ -11,6 +18,20 @@ The repository already implements catalogue conversion, coupled equilibrium, mea
 The release record reports 110 local tests with live PHREEQC. Hosted acceptance P6.6/P6.7 remains open: the latest inspected main workflow (`36348839031`) reports failure. Publication under the 0.3.0 local-evidence exception does not close those tasks.
 
 ## Milestones and acceptance
+
+Current local increment: explicit water-to-delivery orchestration and separate
+incidental-nutrient assessment, with four single-acid candidate calculations.
+See [water-to-delivery](water-to-delivery.md) for contracts and reference scope.
+This is unreleased work and does not close hosted P6.6/P6.7 or authorize a
+commercial dose from incomplete water analysis. Existing reaction data and
+frozen catalogue chelate boundaries are unchanged.
+
+An additional unreleased [EC/injection planner](conductivity.md) now accepts
+recipe- and water-source-matched measured EC profiles for stock tanks and the
+combined irrigation mixture. Real calibration packs and hold-out validation
+remain outstanding; synthetic interpolation tests are not physical accuracy
+evidence. Automatic EC-setpoint dosing and a universal concentrated-stock
+conductivity model are not claimed.
 
 Version labels below are proposals. Assign an owner before starting each milestone; publish only after review and explicit release authorization.
 
@@ -53,6 +74,10 @@ These are test and review targets, not claims that the inspected code is defecti
 Prioritize explainability and evidence packs before expanding the chemical domain. Their likely value is inferred from the current caller-supplied data burden and API boundaries; customer demand and effort have not yet been measured. Autonomous dosing and unrestricted concentrated-stock chemistry require separate scope and validation decisions.
 
 ## Working and release policy
+
+Use phase-, issue-, stage- or release-based branch names under the
+[development conventions](../CONTRIBUTING.md). Current release preparation:
+`release/0.3.1-site-planning`; see [current status](development-status.md).
 
 Keep one focused branch per increment. Delete merged branches only after checking for unique commits and active worktrees. Preserve source-backed scientific captures, failed-reference reproducers and released-artifact evidence; ignored build outputs and environments are not automatically disposable.
 

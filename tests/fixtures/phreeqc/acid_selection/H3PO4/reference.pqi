@@ -1,0 +1,25 @@
+TITLE FlahaX single-acid reference H3PO4; closed, 25 C
+PHASES
+Fix_H+
+ H+ = H+
+ log_k 0
+SOLUTION 1
+ temp 25
+ pH 7 charge
+ units mol/kgw
+ -water 1
+ Na 0.002
+ Cl 0.002
+EQUILIBRIUM_PHASES 1
+ Fix_H+ -6.5 H3PO4 1
+SELECTED_OUTPUT
+ -file reference.sel
+ -reset false
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -charge_balance true
+ -percent_error true
+ -water true
+ -totals Na Cl P
+END

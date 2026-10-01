@@ -1,5 +1,22 @@
 # Release-readiness audit — 2026-09-27
 
+## Current preparation - 0.3.1 / 2026-10-01
+
+Current branch: `release/0.3.1-site-planning`. Package metadata, citation and
+the shipped manual now identify the unreleased 0.3.1 preparation; no release
+date or publication is claimed. The audit below is retained as 0.3.0 history.
+
+Current cleanup removes stale branch branding and contradictory current-version
+descriptions, adds explicit CLI/report boundaries, and retains public
+compatibility kernels and scientific fixtures. Local manufacturer PDFs remain
+untouched and excluded from versioned/distribution artifacts. Branch conventions
+are recorded in [CONTRIBUTING](../CONTRIBUTING.md).
+
+See [current capability status](development-status.md) and
+[verification evidence](release-evidence.md). Remaining release gates are
+hosted supported-version verification, review and explicit publication approval.
+No historical CI exception is inherited by 0.3.1.
+
 ## Changes and retained boundaries
 
 | Finding | Resolution |
@@ -18,7 +35,7 @@ PR #3 and PR #4 are merged; remote main was inspected at `25bfcb397b523bd538fde0
 
 The owner authorized this release using local evidence despite the hosted billing blocker. The latest inspected main run, `36348839031`, reports failure; P6.6/P6.7 remain open. The earlier run `36345628921` recorded an account billing lock. No successful hosted validation is inferred from publication or merging.
 
-The retired `codex/package-verification-delivery` branch contained one post-merge authorization commit, `96ce35c`. It was preserved on `codex/post-release-roadmap`, together with main's merge history, before the old local and remote refs were deleted. Existing scientific captures, failure reproducers, public compatibility modules and local release artifacts were retained.
+The retired package-verification branch contained one post-merge authorization commit, `96ce35c`. It was preserved in the post-release roadmap history, together with main's merge history, before the old local and remote refs were deleted. Existing scientific captures, failure reproducers, public compatibility modules and local release artifacts were retained.
 
 Local release results remain in [release evidence](release-evidence.md); automated and computational acceptance are not independent human review. Assessor: Rafat Al Khashan. Future work follows the [development roadmap](development-roadmap.md).
 
@@ -30,4 +47,4 @@ Local release results remain in [release evidence](release-evidence.md); automat
 - `git diff --check`: passed. Runtime code, model data and scientific fixtures were unchanged.
 - The obsolete local `p2p3-chemistry-completion` branch was also removed after confirming it was an ancestor of main and its remote ref was already gone.
 
-The roadmap and documentation updates are local work on `codex/post-release-roadmap`; no new publication, hosted workflow run or application deployment was performed.
+At that audit, the roadmap and documentation updates were local work in the post-release roadmap branch; no new publication, hosted workflow run or application deployment was performed.

@@ -55,8 +55,17 @@ run=subprocess.run([sys.executable,'-I','-m','flahax'],input=payload,text=True,c
 assert json.loads(run.stdout)['salts']
 console=subprocess.run([sys.argv[1]],input=payload,text=True,capture_output=True,check=True)
 assert json.loads(console.stdout)==json.loads(run.stdout)
+ec_payload = json.dumps({'doses_g_per_litre':{'Ultrasol K Plus':.5},'water_ec_ms_cm':.5})
+ec_run = subprocess.run([sys.argv[1], 'ec'], input=ec_payload, text=True, capture_output=True, check=True)
+assert math.isclose(json.loads(ec_run.stdout)['ec_ms_cm'], 1.15)
+size = flahax.size_injection_requirements(duration_hours=2, equipment_type='venturi',
+ final_volume_litres=10000, channels={'A':{'final_litres_per_stock_litre':100,'available_stock_litres':100}})
+assert size['channels']['A']['required_flow_litres_per_hour']==50
+workflow = flahax.plan_fertilizer_workflow([salt], {'K':10}, {}, 6.5)
+assert workflow.stages['chemistry'].status=='needs_input'
 print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue_count':len(library['salts']),
  'manual_examples':len(examples),
+ 'planning_cli_ec_ms_cm':json.loads(ec_run.stdout)['ec_ms_cm'],
  'manual_sha256':hashlib.sha256(files('flahax').joinpath('data/USER_GUIDE.md').read_bytes()).hexdigest(),
  'chemistry_sha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
  'library_sha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
@@ -88,6 +97,9 @@ def verify(report, interpreter, artifacts_dir=None):
                     raise RuntimeError('sdist is missing its reference evidence')
             if any(Path(n).suffix.lower() in ('.exe','.dll','.msi') for n in names):
                 raise RuntimeError('unexpected binary in package distribution')
+            local_sources = {'04_Fertilizer.pdf', '165357805552.pdf', '215057776303.pdf', '215726931002.pdf'}
+            if any(Path(n).name in local_sources for n in names):
+                raise RuntimeError('local-only manufacturer PDF leaked into a distribution')
             install = folder/f'install-{index}'
             subprocess.run([interpreter,'-m','venv',str(install)],cwd=folder,env=env,check=True)
             scripts = install/('Scripts' if os.name == 'nt' else 'bin')
