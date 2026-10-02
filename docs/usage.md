@@ -93,7 +93,12 @@ A salt is a dictionary:
 }
 ```
 
-`grams` lines up with the salt list that entered the solve, and it includes the zeros. `salts` contains only the salts that received a positive weight. `deltaPct` is `None` when the formula has no target for that symbol or its target is zero.
+For `solve_weights`, `grams` follows the supplied salt list, including zeros.
+For `recommend`, filtering and recovery change that order: do not zip its raw
+`grams` vector with the original catalogue. Use the identity-bearing `salts`
+records and their `gramsPerLitre` for downstream mapping. `salts` contains only
+products with a retained positive weight. `deltaPct` is `None` when the formula
+has no target for that symbol or its target is zero.
 
 In the unreleased water-to-delivery workflow, `feasible` measures positive-target
 fit; it is not an assertion that every incidental addition is acceptable.
