@@ -4,6 +4,13 @@
 
 PyPI metadata confirms the wheel and sdist were uploaded on **2026-09-27**. PRs #3 and #4 are merged. Version 0.3.0 is already used and must not be uploaded again. See the [post-release audit](release-readiness.md).
 
+The historical [GitHub release v0.3.0](https://github.com/rafatahmed/Flahax/releases/tag/v0.3.0)
+was published on **2026-10-01**, using the exact existing PyPI artifacts and
+source-verified tag, not the current 0.3.1 preparation branch. See the
+[release provenance and SHA-256 record](releases/0.3.0.md). The uploader was
+temporarily disabled with owner approval and restored to active after publication;
+this did not re-upload PyPI or resolve the hosted-verification billing blocker.
+
 The owner explicitly approved manual Twine publication based on verified local evidence despite the GitHub billing blocker. The exception applies only to 0.3.0. Release evidence records 110 local tests with zero skips, pinned live PHREEQC, clean candidate wheel/sdist installs, four shipped-manual examples and strict Twine checks. Hosted verification remains open; neither merging nor publication establishes a hosted pass.
 
 A fresh isolated Python 3.13 installation from PyPI passed version/import checks, all four bundled manual examples and both CLI entry points on 2026-09-28. See the post-release audit for the distinction between published-wheel and candidate-sdist evidence.
