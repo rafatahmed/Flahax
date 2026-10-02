@@ -44,6 +44,13 @@ def ppm_per_gram(percent: float) -> float:
 
 
 def gap_for(targets: dict, water: dict | None = None) -> dict:
+    """Return target minus water in elemental mg/L, without clipping deficits.
+
+    Missing water concentrations default to zero in this low-level helper.
+    Water-only symbols have a None gap; negative gaps mean water exceeds the
+    target, not that fertilizer can remove the excess. Invalid nutrient maps
+    raise InputError. This is nutrient accounting, not an acid/base analysis.
+    """
     targets = validate_profile(targets, "targets")
     water = validate_profile(water or {}, "water")
     gap = {}
@@ -408,7 +415,31 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.02,
 ) -> dict:
-    """Solve against every salt the formula and the assays allow."""
+    """Select eligible products and fit non-negative product g/L.
+
+    Args:
+        library: Product records with id, name, formula and elemental mass
+            percentages in elements. Use load_library()['salts'] deliberately.
+        targets: Required nonempty elemental mg/L map; nitrogen forms are
+            separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
+        water: Source-water elemental mg/L; omitted entries default to zero.
+        allow_ions: Explicit exceptions to the default restricted-ion filter.
+        allow_carbonates: Permit carbonate products in nutrient fitting only;
+            this does not establish dissolution or stock compatibility.
+        ridge: L2 dose penalty, not a limit on the number of products.
+
+    Returns:
+        Dictionary containing identity-bearing salts with gramsPerLitre,
+        nutrient rows, feasibility, incidental review, warnings and exclusions.
+        The raw grams vector follows the internal eligible/recovered product
+        order, NOT necessarily the original library order. Use salts for
+        product-to-dose mapping. Feasible is positive-target fit within 1%,
+        not chemical, stock or operational approval.
+
+    Raises:
+        InputError: Invalid targets/water or no eligible products. Inspect
+            exclusions and warnings for skipped or recovered candidates.
+    """
     targets = validate_profile(targets, "targets")
     if not targets:
         raise InputError("targets are required")

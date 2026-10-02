@@ -39,7 +39,11 @@ See the [runnable equilibrium-delivery example and API contract](https://github.
 
 ## Verification status and next steps
 
-Local verification on Python 3.13 passes **110 tests with zero skips**, including pinned PHREEQC live replay, release-hygiene checks and all four shipped-manual examples. Clean wheel and source-distribution installs pass outside the checkout, including manual/data hashes, public imports, numerical examples and both CLI entry points. PHREEQC is an external verification tool, not a runtime dependency or bundled executable.
+Verification results are versioned in the [release evidence](docs/release-evidence.md),
+not inferred from the latest published version. Local checks include pinned
+PHREEQC replay, executable manual examples, public API documentation coverage,
+and clean wheel/sdist installations. Hosted CI is a separate publication gate.
+PHREEQC is an external verification tool, not a runtime dependency or bundled executable.
 
 **Assessor: Rafat Al Khashan.** The owner-amended G6 assessment concerns bounded computational evidence without laboratory work. It is not an independent review, a formal proof for arbitrary inputs, or operational certification. See the [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md) and [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
 
@@ -123,6 +127,17 @@ Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.1, release preparation) [Compute
 GitHub reads [`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff) for the “Cite this repository” button. That file carries the same record.
 
 ## Documentation
+
+Choose the document for your task:
+
+- **First use:** [shipped user manual](src/flahax/data/USER_GUIDE.md), including seven executable examples and result-status interpretation.
+- **Function lookup:** [complete public API reference](src/flahax/data/API_REFERENCE.md), with exact signatures and result-record fields.
+- **Site inputs and CLI:** [planning schemas](docs/site-planning.md), including water, acid, EC and A/B injection requirements.
+- **Scientific assurance:** [model and boundaries](docs/fertilizer-equilibrium-model.md) and [versioned test evidence](docs/release-evidence.md).
+
+The manual and API reference are available offline in installed packages;
+graphical report examples require the source checkout. No recipe, calculated
+pH or EC screening value is an automatic authorization to operate equipment.
 
 Runnable examples for the current checkout are in `examples/`. From the repository
 root, set `PYTHONPATH=src` and run `python -m examples.run_all --output build/my-examples`

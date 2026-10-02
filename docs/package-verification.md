@@ -2,7 +2,7 @@
 
 ## 0.3.0 user manual and retained release artifacts
 
-The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a package resource in both distributions; all four Python examples are executed during source regression and isolated wheel/sdist verification. The verification report records the exact manual hash and example count. `docs/index.md` is the documentation navigation page; historical material is separate.
+The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a package resource in both distributions; all seven Python examples are executed during source regression and isolated wheel/sdist verification. The verification report records the exact manual hash and example count. The bundled `API_REFERENCE.md` covers every top-level public export; source tests reject signature drift and clean installs check export coverage and record its hash. `docs/index.md` is the documentation navigation page; historical material is separate.
 
 To retain only artifacts that passed clean-install checks, use `python tools/verify_distribution.py --artifacts-dir dist/0.3.0`. The destination must be new or empty; existing release files are never overwritten. This command builds and tests locally; it does not tag, upload or publish. Afterward, run `python -m twine check dist/0.3.0/*` in a development environment with `twine` installed. The build and metadata tools are not runtime dependencies.
 

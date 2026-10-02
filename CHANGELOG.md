@@ -2,6 +2,8 @@
 
 ## 0.3.1 - Unreleased
 
+- Ship a complete generated public API inventory, expand the manual to seven executable examples, and check documentation drift in source and installed-package tests. Clarify product-dose mapping after recommendation filtering, stage statuses and unpublished-version installation.
+
 - Clarify every pepper product's candidate Tank A/B/acid destination or unresolved status; display actual contents of synthetic stock examples, preserve recipe mass and prevent interpreting recipe acid as an additional pH dose.
 - Document current capability limits and next steps; preserve supplied manufacturer PDFs locally while excluding them from versioned/package artifacts and retaining reviewed source hashes.
 
