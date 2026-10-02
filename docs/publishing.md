@@ -1,24 +1,32 @@
 # Publishing
 
-## Release readiness before publication
+## Published 0.3.0 record
 
-Preparing or merging a branch is not permission to publish. The owner requested preparation of `0.3.0`; metadata, citation and manual now use that version. Public PyPI metadata was checked during preparation: latest `0.2.0`, no `0.3.0` release. Recheck availability before upload; add the actual release date to `CITATION.cff` only when publication is authorized. Do not reuse an existing uploaded version.
+PyPI metadata confirms the wheel and sdist were uploaded on **2026-09-27**. PRs #3 and #4 are merged. Version 0.3.0 is already used and must not be uploaded again. See the [post-release audit](release-readiness.md).
 
-Before release, require successful hosted Python 3.11–3.13 distribution checks and pinned live PHREEQC replay for the reviewed revision. Local tests do not substitute for billing-blocked hosted jobs. Use [package verification](package-verification.md), [release evidence](release-evidence.md) and [release-readiness audit](release-readiness.md). Archive historical documentation rather than deleting scientific evidence. FlahaFAST integration is separate project work, not a package publication prerequisite.
+The historical [GitHub release v0.3.0](https://github.com/rafatahmed/Flahax/releases/tag/v0.3.0)
+was published on **2026-10-01**, using the exact existing PyPI artifacts and
+source-verified tag, not the current 0.3.1 preparation branch. See the
+[release provenance and SHA-256 record](releases/0.3.0.md). The uploader was
+temporarily disabled with owner approval and restored to active after publication;
+this did not re-upload PyPI or resolve the hosted-verification billing blocker.
 
-After explicit publication authorization, build from the reviewed commit, inspect metadata and distribution contents, and follow the publishing procedure below. No publishing command is part of the cleanup/merge task.
+The owner explicitly approved manual Twine publication based on verified local evidence despite the GitHub billing blocker. The exception applies only to 0.3.0. Release evidence records 110 local tests with zero skips, pinned live PHREEQC, clean candidate wheel/sdist installs, four shipped-manual examples and strict Twine checks. Hosted verification remains open; neither merging nor publication establishes a hosted pass.
 
-### 0.3.0 checklist
+A fresh isolated Python 3.13 installation from PyPI passed version/import checks, all four bundled manual examples and both CLI entry points on 2026-09-28. See the post-release audit for the distinction between published-wheel and candidate-sdist evidence.
 
-- [x] Align package metadata, runtime version, citation and changelog.
-- [x] Ship the user manual in wheel and source distribution; test all four Python examples in each installed artifact.
-- [x] Pass 110 local tests including live PHREEQC, isolated distribution checks and Twine metadata validation.
-- [ ] Resolve GitHub account billing and pass all hosted checks on the final reviewed revision.
-- [ ] Review and merge the release branch without bypassing failed checks.
-- [ ] Obtain explicit publication approval; confirm PyPI version availability, set the actual citation release date and review the release/tag.
-- [ ] Publish and verify the installed PyPI version in a new environment.
+## Checklist for the next release
 
-The preserved local candidate archives are build evidence, not an instruction to skip rebuilding from the final approved release revision. FlahaFAST integration remains outside this checklist.
+- [ ] Choose a new version and align metadata, runtime version, citation, manual and changelog.
+- [ ] Review compatibility, scientific provenance and distribution contents.
+- [ ] Pass relevant local tests, required pinned live replay and isolated wheel/sdist verification.
+- [ ] Observe successful hosted Python 3.11–3.13 checks and pinned live-reference replay on the reviewed revision.
+- [ ] Obtain explicit publication authorization and check that the new version is unused on PyPI.
+- [ ] Build and strictly validate the exact approved artifacts; record their hashes.
+- [ ] Upload through the approved release route; verify PyPI metadata and a fresh installed-package check.
+- [ ] Record the actual publication date and retain release evidence.
+
+Preparing or merging a branch does not authorize publication. Use [package verification](package-verification.md) and [release evidence](release-evidence.md). FlahaFAST integration is separate work. The commands below preserve the historical 0.3.0 procedure; substitute a newly approved version and artifact directory for future releases.
 
 This follows the [Python packaging tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/). The project already uses the `src` layout, `pyproject.toml`, `README.md`, `LICENSE`, and `tests/`.
 
@@ -43,13 +51,13 @@ py -m twine check dist/*
 
 ## Manual Twine upload — selected release method
 
-The project owner selected local Twine upload for 0.3.0. This does not require GitHub Trusted Publishing or an account-level pending publisher. It also does not, by itself, waive the hosted verification requirement above.
+The project owner selected local Twine upload for 0.3.0. This does not require GitHub Trusted Publishing or an account-level pending publisher. The separate owner exception waived the hosted publication prerequisite for that release only.
 
 Once release approval and verification gates are resolved, upload only the exact approved wheel and source distribution, not every file in an old `dist` folder. The locally verified candidate paths are:
 
 ```powershell
 .\.venv-verification\Scripts\python.exe -m twine check --strict dist/0.3.0-final/flahax-0.3.0.tar.gz dist/0.3.0-final/flahax-0.3.0-py3-none-any.whl
-# Run only after release approval and final artifact review:
+# Historical example only: 0.3.0 is already published; do not rerun this upload.
 .\.venv-verification\Scripts\python.exe -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/0.3.0-final/flahax-0.3.0.tar.gz dist/0.3.0-final/flahax-0.3.0-py3-none-any.whl
 ```
 

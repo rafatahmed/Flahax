@@ -1,8 +1,8 @@
-# FlahaX 0.3.0 — User Manual
+# FlahaX 0.3.1 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Release status:** prepared for 0.3.0; publication and hosted verification are separate gates. This manual describes the 0.3.0 source and built distributions, not an assertion that PyPI already serves this version.
+**Version:** 0.3.1, release preparation; not yet published. The earlier 0.3.0 publication exception does not authorize this release or establish hosted verification for it.
 
 ## Contents
 
@@ -39,7 +39,7 @@ python -m pip install .
 python -c "import flahax; print(flahax.__version__)"
 ```
 
-After 0.3.0 is actually published, the corresponding command is `python -m pip install flahax==0.3.0`. Never interpret an unavailable version as permission to install an unreviewed substitute.
+After 0.3.1 is actually published, the corresponding command is `python -m pip install flahax==0.3.1`. Until then use the reviewed checkout or verified local artifacts. Never interpret an unavailable version as permission to install an unreviewed substitute.
 
 This complete example also converts the result into a 100 L batch:
 
@@ -97,6 +97,44 @@ print(answer['feasible'])
 ```
 
 A nonzero process exit is an error; inspect stderr rather than treating it as an empty recommendation. A successful process may still return an infeasible recipe. The CLI is a formulation interface, not a stock or pump executor.
+
+### Additional planning commands in 0.3.1
+
+The original no-argument CLI above remains unchanged. New commands accept
+JSON on stdin or request inputs interactively; they never operate hardware:
+
+```text
+python -m flahax workflow --interactive
+python -m flahax ec --interactive
+python -m flahax size --interactive
+```
+
+`workflow` requires actual fertilizer records, crop targets, explicit water
+nutrients, target pH and final volume. Missing chemistry remains `needs_input`;
+Ca = 20 mg/L alone does not identify alkalinity or calculate pH. The standard
+acid choices are nitric and phosphoric, with user-supplied assay/density and
+nutrient/dose limits. Zero nutrient targets are reviewed separately from
+positive-target fit; hard maximum concentrations remain enforceable.
+
+`ec` supplies an explicitly approximate, pre-acid manufacturer-anchor estimate
+for supported exact SQM products at 25 C. No new measurements are required
+for this screening calculation. It rejects concentrated stock channels,
+unsupported products and out-of-scope loadings rather than fabricate total
+EC. Numerical accuracy is unknown. The separate measured-profile API is
+optional, not a prerequisite for the screening command.
+
+`size` calculates channel stock volumes and flow rates from final batch
+volume or active area, gross irrigation depth and duration. It supports pump,
+venturi and Dosatron design categories but cannot select a model without
+manufacturer operating data. Stock-to-final and stock-to-carrier ratios differ.
+
+The source-checkout examples generate HTML/Markdown/JSON reports with tank
+contents, acid accounting and unresolved product assignments. Candidate A/B
+groupings are not approved concentrated-stock recipes. Recipe phosphoric
+acid must not be counted again as an additional pH-correction dose.
+
+Detailed schemas and examples are in the repository's `docs/site-planning.md`
+and `examples/README.md`; both are included in the source distribution.
 
 ## 5. Catalogue equilibrium
 
@@ -189,10 +227,10 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 ## 10. Upgrading, integration and citation
 
-0.3.0 preserves the core recipe/CLI contract and public compatibility kernels. Check the nitric-result types when upgrading from development snapshots: use `AcidResult` for numerical states and `EquilibriumPhPlan` for reagent-volume composition. Package, record-schema and thermodynamic-model versions are distinct identifiers.
+0.3.1 preserves the no-argument recipe/CLI contract and public compatibility kernels, and adds explicit planning subcommands. Check the nitric-result types when upgrading from development snapshots: use `AcidResult` for numerical states and `EquilibriumPhPlan` for reagent-volume composition. Package, record-schema and thermodynamic-model versions are distinct identifiers.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.0. Use the repository's `CITATION.cff` when citing the prepared version and distinguish it from previously published artifacts. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1 (release preparation). Use the repository's `CITATION.cff` when citing the prepared version and distinguish it from previously published artifacts. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
