@@ -2,14 +2,20 @@ include README.md
 include LICENSE
 include CITATION.cff
 include CHANGELOG.md
+include CONTRIBUTING.md
 include INTEGRATION.md
 include pyproject.toml
 recursive-include docs *.md *.jpg *.png *.pdf
+exclude docs/sources/04_Fertilizer.pdf
+exclude docs/sources/165357805552.pdf
+exclude docs/sources/215057776303.pdf
+exclude docs/sources/215726931002.pdf
 recursive-include src/flahax *.py
 recursive-include src/flahax/data *.json
 recursive-include src/flahax/data *.md
 recursive-include tests *.py
 recursive-include tests/fixtures *.json *.pqi *.out *.sel *.screen *.dat *.md *.inp
 recursive-include tools *.py *.ps1
+recursive-include examples *.py *.md
 global-exclude __pycache__
 global-exclude *.py[cod]

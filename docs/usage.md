@@ -93,7 +93,35 @@ A salt is a dictionary:
 }
 ```
 
-`grams` lines up with the salt list that entered the solve, and it includes the zeros. `salts` contains only the salts that received a positive weight. `deltaPct` is `None` when the formula has no target for that symbol.
+`grams` lines up with the salt list that entered the solve, and it includes the zeros. `salts` contains only the salts that received a positive weight. `deltaPct` is `None` when the formula has no target for that symbol or its target is zero.
+
+In the unreleased water-to-delivery workflow, `feasible` measures positive-target
+fit; it is not an assertion that every incidental addition is acceptable.
+`incidentalContributions` and `requiresReview` report zero/omitted-target
+nutrients separately. Explicit `maximum_concentrations` in the workflow or
+acid adapters enforce absolute nutrient limits, including a true zero limit.
+See [water-to-delivery](water-to-delivery.md). This does not change the
+optimizer's existing penalties or invent different fertilizer materials.
+
+## Additional planning commands (unreleased checkout)
+
+The no-argument JSON recommendation command remains backward compatible.
+Site planning has explicit commands; prompts go to stderr and JSON results
+go to stdout:
+
+```powershell
+python -m flahax workflow --interactive
+python -m flahax ec --interactive
+python -m flahax size --interactive
+```
+
+Each command also accepts its documented JSON object on stdin without
+`--interactive`. The workflow requires user-specific water and offers nitric
+or phosphoric acid. EC is bounded manufacturer-anchor screening, not a
+general concentrated-stock model. Equipment sizing gives flow/volume
+requirements, not a manufacturer model or actuator commands.
+See [site inputs and schemas](site-planning.md), [source-sheet review](source-sheet-review.md)
+and [current development status](development-status.md).
 
 ## Tests
 

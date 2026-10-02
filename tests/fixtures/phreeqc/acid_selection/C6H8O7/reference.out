@@ -1,0 +1,205 @@
+   Input file: reference.pqi
+  Output file: reference.out
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-acids-ybovr75w\merged.dat
+
+------------------
+Reading data base.
+------------------
+
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	PHASES
+	SURFACE_MASTER_SPECIES
+	SURFACE_SPECIES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	PHASES
+	SOLUTION_MASTER_SPECIES
+	SOLUTION_SPECIES
+	END
+------------------------------------
+Reading input data for simulation 1.
+------------------------------------
+
+	TITLE FlahaX single-acid reference C6H8O7
+	 closed, 25 C
+	PHASES
+	Fix_H+
+	 H+ = H+
+	 log_k 0
+	SOLUTION 1
+	 temp 25
+	 pH 7 charge
+	 units mol/kgw
+	 water 1
+	 Na 0.002
+	 Cl 0.002
+	EQUILIBRIUM_PHASES 1
+	 Fix_H+ -6.5 H3Citrate 1
+	SELECTED_OUTPUT
+	 file reference.sel
+	 reset false
+	 high_precision true
+	 ph true
+	 ionic_strength true
+	 charge_balance true
+	 percent_error true
+	 water true
+	 totals Na Cl Citrate
+	END
+-----
+TITLE
+-----
+
+ FlahaX single-acid reference C6H8O7
+ closed, 25 C
+
+-------------------------------------------
+Beginning of initial solution calculations.
+-------------------------------------------
+
+Initial solution 1.	
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Cl                2.000e-03   2.000e-03
+	Na                2.000e-03   2.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.998      Charge balance
+                                       pe  =   4.000    
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.000e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =   1.452e-19
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =   2.934e-20
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
+                               Iterations  =   4
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   OH-             1.055e-07   1.003e-07    -6.977    -6.999    -0.022     (0)  
+   H+              1.055e-07   1.004e-07    -6.977    -6.998    -0.022      0.00
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+H(0)          1.426e-25
+   H2              7.128e-26   7.131e-26   -25.147   -25.147     0.000     (0)  
+Na            2.000e-03
+   Na+             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -42.002   -42.001     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fix_H+           -7.00     -7.00    0.00  H+
+  Halite           -7.04     -5.44    1.60  NaCl
+  O2(g)           -39.10     43.99   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+-----------------------------------------
+Beginning of batch-reaction calculations.
+-----------------------------------------
+
+Reaction step 1.
+
+Using solution 1.	
+Using pure phase assemblage 1.	
+
+-------------------------------Phase assemblage--------------------------------
+
+                                                      Moles in assemblage
+Phase               SI  log IAP  log K(T, P)   Initial       Final       Delta
+
+Fix_H+           -6.50    -6.50      0.00
+	 H3Citrate          is reactant       1.000e+00   1.000e+00  -1.145e-07
+
+-----------------------------Solution composition------------------------------
+
+	Elements           Molality       Moles
+
+	Citrate           1.145e-07   1.145e-07
+	Cl                2.000e-03   2.000e-03
+	Na                2.000e-03   2.000e-03
+
+----------------------------Description of solution----------------------------
+
+                                       pH  =   6.500      Charge balance
+                                       pe  =  -0.789      Adjusted to redox equilibrium
+                        Activity of water  =   1.000
+                 Ionic strength (mol/kgw)  =   2.001e-03
+                       Mass of water (kg)  =   1.000e+00
+                 Total alkalinity (eq/kg)  =  -1.145e-07
+                         Temperature (°C)  =  25.00
+                  Electrical balance (eq)  =  -1.921e-19
+ Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
+                               Iterations  =  13
+                                  Total H  = 1.110137e+02
+                                  Total O  = 5.550683e+01
+
+----------------------------Distribution of species----------------------------
+
+                                               Log       Log       Log    mole V
+   Species          Molality    Activity  Molality  Activity     Gamma   cm³/mol
+
+   H+              3.323e-07   3.162e-07    -6.478    -6.500    -0.022      0.00
+   OH-             3.347e-08   3.184e-08    -7.475    -7.497    -0.022     (0)  
+   H2O             5.551e+01   9.999e-01     1.744    -0.000     0.000     18.07
+Citrate       1.145e-07
+   Citrate-3       6.944e-08   4.444e-08    -7.158    -7.352    -0.194     (0)  
+   H(Citrate)-2    4.316e-08   3.498e-08    -7.365    -7.456    -0.091     (0)  
+   Na(Citrate)-2   1.118e-09   9.064e-10    -8.951    -9.043    -0.091     (0)  
+   H2(Citrate)-    6.724e-10   6.380e-10    -9.172    -9.195    -0.023     (0)  
+   NaH(Citrate)-   7.946e-11   7.539e-11   -10.100   -10.123    -0.023     (0)  
+   Na2(Citrate)-   5.366e-12   5.091e-12   -11.270   -11.293    -0.023     (0)  
+   H3(Citrate)     2.709e-13   2.709e-13   -12.567   -12.567     0.000     (0)  
+Cl            2.000e-03
+   Cl-             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+H(0)          5.354e-15
+   H2              2.677e-15   2.678e-15   -14.572   -14.572     0.000     (0)  
+Na            2.000e-03
+   Na+             2.000e-03   1.903e-03    -2.699    -2.720    -0.022     (0)  
+   Na(Citrate)-2   1.118e-09   9.064e-10    -8.951    -9.043    -0.091     (0)  
+   NaH(Citrate)-   7.946e-11   7.539e-11   -10.100   -10.123    -0.023     (0)  
+   Na2(Citrate)-   5.366e-12   5.091e-12   -11.270   -11.293    -0.023     (0)  
+O(0)          0.000e+00
+   O2              0.000e+00   0.000e+00   -63.151   -63.151     0.000     (0)  
+
+------------------------------Saturation indices-------------------------------
+
+  Phase               SI** log IAP   log K(298 K,   1 atm)
+
+  Fix_H+           -6.50     -6.50    0.00  H+
+  Halite           -7.04     -5.44    1.60  NaCl
+  O2(g)           -60.25     22.84   83.09  O2
+
+**For a gas, SI = log10(fugacity). Fugacity = pressure * phi / 1 atm.
+  For ideal gases, phi = 1.
+
+------------------
+End of simulation.
+------------------
+
+------------------------------------
+Reading input data for simulation 2.
+------------------------------------
+
+-------------------------------
+End of Run after 0.039 Seconds.
+-------------------------------
+

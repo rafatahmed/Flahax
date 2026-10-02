@@ -132,7 +132,17 @@ __all__ = [
     "transition_plan",
     "validate_delivery_request",
 ]
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 from .equilibrium_delivery import EquilibriumPhPlan, plan_equilibrium_delivery
 __all__ += ["EquilibriumPhPlan", "plan_equilibrium_delivery"]
 __all__ += ["AqueousResult", "AcidResult", "catalogue_dose_totals", "plan_catalogue_nitric_target"]
+from .calculated_ph import calculate_equilibrium_ph
+from .fertilizer_workflow import FertilizerWorkflow, WorkflowStage, plan_fertilizer_workflow
+__all__ += ["calculate_equilibrium_ph", "FertilizerWorkflow", "WorkflowStage", "plan_fertilizer_workflow"]
+from .acid_selection import AcidCandidate, AcidSelection, plan_acid_options
+__all__ += ["AcidCandidate", "AcidSelection", "plan_acid_options"]
+from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
+__all__ += ["ECPrediction", "ECDeliveryPlan", "water_ec25", "ec_recipe_key", "plan_ec_delivery"]
+from .calculated_ec import estimate_manufacturer_ec
+from .injector_sizing import size_injection_requirements
+__all__ += ["estimate_manufacturer_ec", "size_injection_requirements"]

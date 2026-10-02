@@ -1,5 +1,51 @@
 # Delivery Planner Release Evidence
 
+## 0.3.1 preparation - 2026-10-01
+
+Branch: `release/0.3.1-site-planning`. This is local preparation, not a new
+published release or a hosted-CI pass. See [current status](development-status.md)
+for capability boundaries and [conventions](../CONTRIBUTING.md) for branch policy.
+
+Validation commands (PowerShell; pinned PHREEQC remains outside the checkout):
+
+```powershell
+$env:PYTHONPATH = 'src'
+$env:FLAHAX_REQUIRE_PHREEQC = '1'
+py -3.13 -m unittest discover -s tests -t .
+py -3.13 -m compileall -q src examples tools
+git diff --check
+.venv-verification/Scripts/python.exe tools/verify_distribution.py --python C:/Users/rafat/AppData/Local/Programs/Python/Python313/python.exe --report build/release-0.3.1-distribution.json
+```
+
+The distribution check passed: isolated wheel and sdist installations on
+Python 3.13.15, four shipped manual examples, all public exports, both original
+CLI entry points, the EC planning command, injector sizing, and missing-water-
+chemistry rejection. The build interpreter was Python 3.14.0. No runtime
+dependency was added. The check also verified byte-identical catalogue/model
+resources and exclusion of the four local-only manufacturer PDFs.
+
+Full regression result: **151 tests passed in 290.462 seconds on Python
+3.13.15, zero skips**, with `FLAHAX_REQUIRE_PHREEQC=1`. This includes the
+preserved product/phase references, four additional acid replays, conservation,
+workflow, EC boundary, stock-report, CLI and release-hygiene checks. A separate
+final manual/export/documentation-link check passed all three tests.
+
+Development-build hashes (before this final documentation record; these are
+not publication artifacts and must be rebuilt from the reviewed release revision):
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.3.1-py3-none-any.whl` | `e05951bfe6a9be5cd329d297c35d9d46178293ea97e052f09c3ef7db9f8b1512` |
+| `flahax-0.3.1.tar.gz` | `00624d1530d0bf5d89a3aa05b4340eb667ea9f7be92bc9e61951d0f6459121c8` |
+
+Compilation, final documentation-link/manual/export checks and whitespace
+validation passed. The catalogue and thermodynamic data are unchanged. The
+historical evidence below is retained, not reclassified as a 0.3.1 result.
+
+## Authorized publication exception — 0.3.0
+
+On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the post-release audit in `release-readiness.md`; candidate-sdist evidence remains separate.
+
 ## Automated evidence
 
 - Existing nutrient-solver regression suite passes unchanged.
@@ -37,7 +83,7 @@ This accepts the explicitly selected project parameterization, not universal che
 
 ## Package and delivery continuation — 2026-09-27
 
-Branch: `codex/package-verification-delivery`, based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the project owner. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
+Package-verification work was based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the project owner. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
 
 | Requirement | Observed evidence | Acceptance |
 |---|---|---|
