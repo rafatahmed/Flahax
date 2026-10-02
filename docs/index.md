@@ -5,6 +5,7 @@
 - [0.3.1 User Manual (release preparation)](../src/flahax/data/USER_GUIDE.md): the canonical, self-contained guide shipped inside the package.
 - [Changelog](../CHANGELOG.md): new capabilities, compatibility notes and release status.
 - [Core API and CLI](usage.md): formulation inputs and output fields.
+- [Complete public API reference](../src/flahax/data/API_REFERENCE.md): generated signatures, source docstrings and result-record fields for every top-level export; shipped offline.
 
 ## Planning API reference
 
@@ -38,6 +39,7 @@
 ## Maintainers and development
 
 - [Development and branch conventions](../CONTRIBUTING.md)
+- [Documentation maintenance](documentation-maintenance.md): canonical sources, function-documentation checks and the 0.3.1 audit findings.
 
 - [Development roadmap](development-roadmap.md): post-0.3.0 priorities, hardening gates and expansion opportunities.
 - [Distribution verification](package-verification.md)

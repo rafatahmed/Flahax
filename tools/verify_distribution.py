@@ -27,7 +27,9 @@ assert not importlib.metadata.requires('flahax'), 'unexpected runtime dependency
 manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
 assert f'FlahaX {flahax.__version__}' in manual
 examples = re.findall(r'```python\n(.*?)```', manual, re.S)
-assert len(examples) == 4
+assert len(examples) == 7
+api_reference = files('flahax').joinpath('data/API_REFERENCE.md').read_text(encoding='utf-8')
+assert sorted(re.findall(r'^### `([^`]+)`$', api_reference, re.M)) == sorted(flahax.__all__)
 for index, example in enumerate(examples):
     with contextlib.redirect_stdout(io.StringIO()):
         exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
@@ -65,6 +67,7 @@ workflow = flahax.plan_fertilizer_workflow([salt], {'K':10}, {}, 6.5)
 assert workflow.stages['chemistry'].status=='needs_input'
 print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue_count':len(library['salts']),
  'manual_examples':len(examples),
+ 'api_reference_sha256':hashlib.sha256(files('flahax').joinpath('data/API_REFERENCE.md').read_bytes()).hexdigest(),
  'planning_cli_ec_ms_cm':json.loads(ec_run.stdout)['ec_ms_cm'],
  'manual_sha256':hashlib.sha256(files('flahax').joinpath('data/USER_GUIDE.md').read_bytes()).hexdigest(),
  'chemistry_sha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
@@ -115,6 +118,8 @@ def verify(report, interpreter, artifacts_dir=None):
             if result['catalogue_count'] != 28:
                 raise RuntimeError('missing packaged catalogue data')
             # Verify the builder retained the resource bytes from this checkout.
+            if result['api_reference_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/API_REFERENCE.md').read_bytes()).hexdigest():
+                raise RuntimeError('packaged API reference differs from source')
             source = (ROOT/'src/flahax/data/chemistry_25c.json').read_bytes()
             if result['chemistry_sha256'] != hashlib.sha256(source).hexdigest():
                 raise RuntimeError('packaged chemistry data differs from source')

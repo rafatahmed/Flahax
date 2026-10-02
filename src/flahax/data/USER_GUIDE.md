@@ -16,6 +16,11 @@ Fertilizer formulation • bounded chemistry • reviewed delivery planning
 8. Errors and troubleshooting
 9. Verification and reproducibility
 10. Upgrading, integration and citation
+11. Site workflow, EC and injection examples
+
+For exact public signatures and result-record fields, see the bundled
+[Public API reference](API_REFERENCE.md). Both documents are installed under
+`flahax/data/`; neither requires network access to read.
 
 ## 1. Purpose and boundaries
 
@@ -74,7 +79,13 @@ This is a numerical demonstration, not a universal crop prescription. Review eve
 
 Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
 
-`result['salts']` contains selected products and doses. `result['rows']` contains `symbol`, `target`, `final` and `deltaPct`. The full `grams` vector follows the original input salt order, including zeros. `feasible` reports the formulation acceptance; it is not stock or delivery approval. Avoid rounding before any constraint checks.
+`result['salts']` contains selected products and doses. `result['rows']` contains
+`symbol`, `target`, `final` and `deltaPct`. Use identity-bearing `salts` records
+for product-to-dose mapping. Only `solve_weights` preserves the input salt order
+in its raw `grams` vector; `recommend` filters and may recover products before
+fitting. Do not zip its `grams` with the original catalogue. `feasible` reports
+positive-target fit; it is not stock or delivery approval. Avoid additional
+rounding before constraint checks.
 
 ## 4. Command-line use
 
@@ -234,3 +245,106 @@ FlahaFAST integration is owned by the separate FlahaFAST project. No host paths,
 Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1 (release preparation). Use the repository's `CITATION.cff` when citing the prepared version and distinguish it from previously published artifacts. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
+
+## 11. Site workflow, EC and injection examples
+
+Each Python block in this manual is a complete, independently executed example.
+The following three examples cover the 0.3.1 additions without inventing site
+chemistry, EC calibration or manufacturer operating curves.
+
+### Nutrient water is not an acid/base analysis
+
+```python
+from flahax import load_library, plan_fertilizer_workflow, VolumeLitres
+
+workflow = plan_fertilizer_workflow(
+    load_library()['salts'],
+    {'N_NO3': 128, 'P': 58, 'K': 211, 'Ca': 104, 'Mg': 40, 'S': 54},
+    {'Ca': 20}, 6.5, final_volume=VolumeLitres(100),
+)
+assert workflow.nutrient_gap['Ca'] == 84
+assert workflow.stages['chemistry'].status == 'needs_input'
+print(workflow.stages['chemistry'].required_inputs)
+```
+
+This subtracts water Ca from the crop target; it does not calculate pH from Ca.
+Supply the complete `equilibrium` record to proceed. Read all stages, not only
+`recommendation['feasible']`:
+
+| Stage status | Meaning | Next action |
+|---|---|---|
+| `calculated` | That stage returned a numerical result | Inspect warnings and dependent stages |
+| `needs_input` | Required evidence is absent | Provide the named `required_inputs` |
+| `requires_review` | Incidental nutrient contribution needs assessment | Review absolute mg/L and hard caps |
+| `blocked` | That stage was rejected | Read `error_code` and `message`; correct inputs |
+
+A zero NH4 target has no meaningful percentage deviation. Real products may
+add NH4: report the absolute addition separately; never relabel it as zero.
+Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
+relax those caps or replace the product assay to obtain a feasible fit.
+
+### Restricted calculated irrigation EC
+
+```python
+import math
+from flahax import estimate_manufacturer_ec
+
+doses = {'Ultrasol K Plus': 0.5, 'Ultrasol Calcium': 0.25, 'Ultrasol MKP': 0.1}
+estimate = estimate_manufacturer_ec(doses, water_ec_ms_cm=0.5)
+assert estimate['status'] == 'screening_estimate'
+assert math.isclose(estimate['ec_ms_cm'], 1.52)
+stock = estimate_manufacturer_ec(doses, water_ec_ms_cm=0.5, channel='tank:A')
+assert stock['status'] == 'not_supported'
+assert stock['ec_ms_cm'] is None
+print(estimate['ec_ms_cm'], estimate['uncertainty_ms_cm'])
+```
+
+Expected: 1.52 mS/cm, with unknown uncertainty (`None`), not a validated
+accuracy interval. This synthetic recipe uses exact supported commercial
+identities. It is not the pepper recipe. Supply either water EC at 25 C or
+meter TDS plus its explicit conversion factor, never both. Unknown products,
+acid addition, other temperatures, stock channels and loadings above 1 g/L
+return `not_supported`; a null EC is unavailable, not zero conductivity.
+
+### A/B stock volumes and injection flow
+
+```python
+from flahax import size_injection_requirements
+
+sizing = size_injection_requirements(
+    equipment_type='dosatron', active_area_m2=2000, gross_depth_mm=5,
+    duration_hours=2,
+    channels={name: {'final_litres_per_stock_litre': 100,
+                     'available_stock_litres': 100} for name in ('A', 'B')},
+)
+assert sizing['final_volume_litres'] == 10000
+assert sizing['carrier_water_litres'] == 9800
+assert sizing['channels']['A']['required_flow_litres_per_hour'] == 50
+assert sizing['selected_model'] is None
+print(sizing['channels'])
+```
+
+Each channel needs 100 L prepared stock at 50 L/h. The final 10,000 L already
+includes both stocks; do not add their volumes twice. This sizes flows only:
+it does not assign fertilizer to tanks or establish compatibility. Use
+`plan_stocks` with actual product records and sourced rules for allocation.
+Put additional equilibrium acid on its separate approved channel; phosphoric
+acid already present in the nutrient recipe must not be dosed a second time.
+Include every injected channel in volume accounting. Equipment model selection
+still needs pressures, layout, liquid properties and manufacturer curves.
+
+### CLI files and reports
+
+For JSON-file input in PowerShell use
+`Get-Content -Raw request.json | python -m flahax workflow`; on POSIX shells use
+`python -m flahax workflow < request.json`. Use `ec` or `size` for the other
+commands. Interactive prompts go to stderr; results go to stdout. Exit success
+means the request was processed, not that every stage passed. Retain the full
+JSON, including blocked stages, provenance and assumptions.
+
+The graphical report generator is a **source-checkout example**, not a wheel
+CLI command: `python -m examples.run_all --output build/my-examples`. Install
+the checkout first or set `PYTHONPATH=src`. Reports must distinguish final
+irrigation from A/B stock concentrations, recipe acid from additional acid,
+candidate tank assignments from approved stock plans, and unavailable values
+from zero. Never use synthetic example records as site measurements.
