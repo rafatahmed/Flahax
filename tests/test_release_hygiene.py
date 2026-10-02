@@ -13,15 +13,30 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReleaseHygieneTests(unittest.TestCase):
+    def test_readme_quick_start(self):
+        readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+        examples = re.findall(r'```python\n(.*?)```', readme, re.S)
+        self.assertTrue(examples)
+        for index, example in enumerate(examples):
+            with self.subTest(example=index), contextlib.redirect_stdout(io.StringIO()):
+                exec(compile(example, f'README example {index}', 'exec'), {'__name__': '__readme__'})
+
     def test_shipped_manual_examples(self):
         from importlib.resources import files
         manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
         self.assertIn(f'FlahaX {flahax.__version__}', manual)
         examples = re.findall(r'```python\n(.*?)```', manual, re.S)
-        self.assertEqual(len(examples), 4)
+        self.assertEqual(len(examples), 7)
         for index, example in enumerate(examples):
             with self.subTest(example=index + 1), contextlib.redirect_stdout(io.StringIO()):
                 exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
+
+    def test_public_api_reference_is_current(self):
+        from tools.generate_api_reference import DESTINATION, render
+        reference = DESTINATION.read_text(encoding='utf-8')
+        self.assertEqual(reference, render())
+        names = re.findall(r'^### `([^`]+)`$', reference, re.M)
+        self.assertEqual(sorted(names), sorted(flahax.__all__))
 
     def test_public_exports_and_release_version(self):
         project = tomllib.loads((ROOT / 'pyproject.toml').read_text(encoding='utf-8'))['project']

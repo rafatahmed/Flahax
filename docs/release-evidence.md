@@ -1,5 +1,39 @@
 # Delivery Planner Release Evidence
 
+## 0.3.1 documentation audit - 2026-10-02
+
+The merged preparation branch was audited on `release/0.3.1-documentation`.
+See [audit findings and maintenance policy](documentation-maintenance.md).
+No numerical algorithm, thermodynamic data, fixture or product scope changed.
+
+The offline user manual now contains seven independently executed Python
+examples. The generated API reference covers all 100 top-level public exports,
+including signatures and result-record fields. Tests detect reference drift
+and execute the README quick start. The recommendation dose-order contract
+was corrected in the guide and source docstring.
+
+Clean wheel and sdist checks passed on Python 3.13.15 (builder: Python 3.14.0),
+using `tools/verify_distribution.py --report build/documentation-0.3.1-distribution.json`
+with the explicit Python 3.13 interpreter. Both installations executed all seven
+manual examples and checked API coverage and byte-identical reference resources.
+Resource SHA-256 values:
+
+| Resource | SHA-256 |
+|---|---|
+| `USER_GUIDE.md` | `b88bf40e5eba2818c0631c60c2342ebe741c1135eac323f0870e3153e91c0c21` |
+| `API_REFERENCE.md` | `14f33ef90cd3d5e2ae744109603659891bfd8bceb4bc7f7b21bb7a12f35ecea2` |
+
+Full regression (before adding the README-only test):
+`PYTHONPATH=src FLAHAX_REQUIRE_PHREEQC=1 py -3.13 -m unittest discover -s tests -t .`
+passed **152 tests in 190.122 seconds, zero skips**, including live PHREEQC.
+Set these variables with `$env:...` in PowerShell as shown below.
+
+The subsequent README test and maintenance-page additions were checked with
+`PYTHONPATH=src py -3.13 -m unittest tests.test_release_hygiene`: **5 passed**.
+The reference freshness check passed on Python 3.13 and 3.14. Compilation and
+`git diff --check` passed. These are local checks, not a hosted-CI result or
+publication authorization. Version 0.3.1 remains unpublished.
+
 ## 0.3.1 preparation - 2026-10-01
 
 Branch: `release/0.3.1-site-planning`. This is local preparation, not a new
