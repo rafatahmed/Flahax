@@ -18,6 +18,8 @@ env/
 # Packaging artifacts
 build/
 dist/
+# Local-only video tutorials: scripts, virtual environments and rendered media.
+examples/tutorial/
 *.egg-info/
 .eggs/
 *.egg
