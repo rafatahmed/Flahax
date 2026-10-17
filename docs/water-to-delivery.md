@@ -1,7 +1,7 @@
 # Water, nutrient targets and acid selection
 
-Development API, not part of the published 0.3.0 artifacts. This workflow plans;
-it does not operate equipment or certify agronomic suitability.
+Released in 0.3.1; measured-pH water balancing added in 0.4.0. This workflow
+plans; it does not operate equipment or certify agronomic suitability.
 
 ## Separate inputs and separate acceptance
 
@@ -180,7 +180,7 @@ During water-to-delivery development, Windows / Python 3.14.0:
 | `.venv-verification/Scripts/python.exe tools/verify_distribution.py --report build/water-workflow-distribution-verification.json` | Clean wheel and sdist installs passed, including four existing manual examples, exports and CLI checks |
 | `python -m compileall -q src tools`; `git diff --check` | Passed |
 
-The distribution check preceded final documentation-only edits. Its report is
+Historical record from the 0.3.1 development increment. The distribution check preceded final documentation-only edits. Its report is
 local build evidence, not a release artifact manifest. No new version was
 published, no hosted acceptance was claimed and the published 0.3.0 files were
 not replaced. Run the current complete suite again before release; these local

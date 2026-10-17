@@ -1,4 +1,4 @@
-# Site inputs, calculated EC screening and injector sizing (unreleased)
+# Site inputs, calculated EC screening and injector sizing
 
 The source water belongs to the user/site: there is **no default water
 analysis**. Crop Ca target 104 mg/L minus measured water Ca 20 mg/L gives an

@@ -1,26 +1,133 @@
 name: Publish to PyPI
 
+# A published GitHub Release is the only trigger. Nothing is uploaded unless:
+#   1. the release tag is exactly v<version in pyproject.toml>,
+#   2. that version is not already on PyPI (an existing version is skipped,
+#      not re-uploaded, so a release note for an old tag is safe),
+#   3. the full test suite, clean wheel/sdist installs and the pinned live
+#      PHREEQC replay pass on the tagged commit, and
+#   4. a required reviewer approves the `pypi` environment deployment.
+# Upload uses PyPI Trusted Publishing (OIDC); no API token is stored.
+
 on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
+  guard:
+    name: Check tag and PyPI
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - id: check
+        name: Tag matches version; version is new on PyPI
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'EOF'
+          import os, sys, tomllib, urllib.error, urllib.request
+          version = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
+          tag = os.environ["TAG"]
+          out = open(os.environ["GITHUB_OUTPUT"], "a")
+          out.write(f"version={version}\n")
+          if tag != f"v{version}":
+              sys.exit(f"::error::Release tag {tag} does not match package version v{version}")
+          try:
+              urllib.request.urlopen(f"https://pypi.org/pypi/flahax/{version}/json", timeout=30)
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise
+              print(f"flahax {version} is not on PyPI; continuing to verification")
+              out.write("publish=true\n")
+          else:
+              print(f"::notice::flahax {version} is already on PyPI; nothing will be uploaded")
+              out.write("publish=false\n")
+          EOF
+
+  test:
+    name: Test (${{ matrix.python-version }})
+    needs: guard
+    if: needs.guard.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: python -m pip install -e . build
+      - name: Unit tests
+        run: python -m unittest discover -s tests -t .
+      - name: Clean wheel and sdist verification
+        run: python tools/verify_distribution.py
+
+  phreeqc-live:
+    name: Live PHREEQC replay
+    needs: guard
+    if: needs.guard.outputs.publish == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package
+        run: python -m pip install .
+      - name: Provision hash-pinned external PHREEQC
+        shell: pwsh
+        run: ./tools/provision_phreeqc.ps1
+      - name: Required live reference replay
+        shell: pwsh
+        run: |
+          python -m unittest tests.test_product_phreeqc tests.test_acid_reference -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
   build:
     name: Build distribution
+    needs: [guard, test, phreeqc-live]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - name: Install build tools
-        run: python -m pip install --upgrade build
+          python-version: "3.13"
       - name: Build sdist and wheel
-        run: python -m build
-      - name: Check metadata
         run: |
-          python -m pip install --upgrade twine
-          python -m twine check dist/*
+          python -m pip install --upgrade build twine
+          python -m build
+      - name: Check artifacts
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+        run: |
+          python -m twine check --strict dist/*
+          test "$(ls dist)" = "$(printf 'flahax-%s-py3-none-any.whl\nflahax-%s.tar.gz' "$VERSION" "$VERSION")"
+          { echo "### Artifacts for flahax $VERSION"; echo '```'; sha256sum dist/*; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions

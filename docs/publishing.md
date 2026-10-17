@@ -1,96 +1,107 @@
 # Publishing
 
-## Published 0.3.1 record
+From 0.4.0, a release reaches PyPI through one route: publishing a GitHub
+Release runs the hardened [`publish.yml`](../.github/workflows/publish.yml)
+workflow. Preparing or merging a branch never publishes, and neither does
+pushing a tag.
 
-0.3.1 was uploaded with Twine on **2026-10-17** from `main` at `586eddb`,
-tagged `v0.3.1`, and verified by a fresh installation from PyPI. Hosted CI
-passed on the release content; no publication exception was needed. See the
-[0.3.1 publication evidence](release-evidence.md#031-publication---2026-10-17)
-for hashes. Version 0.3.1 is now used and must not be uploaded again.
+## What the workflow enforces
 
-## Published 0.3.0 record
+| Gate | Job | Effect |
+|---|---|---|
+| Release tag is exactly `v<version in pyproject.toml>` | `guard` | A mismatch fails the run; nothing is built |
+| Version is not already on PyPI | `guard` | An existing version is skipped with a notice, never re-uploaded. A release note for an old tag is therefore safe |
+| Full test suite and clean wheel/sdist installs on Python 3.11, 3.12 and 3.13 | `test` | Runs on the tagged commit |
+| Pinned live PHREEQC replay | `phreeqc-live` | Hash-pinned PHREEQC 3.8.6 on Windows |
+| One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Artifact SHA-256 values appear in the run summary |
+| Owner approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
+| Upload | `publish` | PyPI Trusted Publishing (OIDC). No API token is stored in GitHub |
 
-PyPI metadata confirms the wheel and sdist were uploaded on **2026-09-27**. PRs #3 and #4 are merged. Version 0.3.0 is already used and must not be uploaded again. See the [post-release audit](release-readiness.md).
+## One-time setup
 
-The historical [GitHub release v0.3.0](https://github.com/rafatahmed/Flahax/releases/tag/v0.3.0)
-was published on **2026-10-01**, using the exact existing PyPI artifacts and
-source-verified tag, not the current 0.3.1 preparation branch. See the
-[release provenance and SHA-256 record](releases/0.3.0.md). The uploader was
-temporarily disabled with owner approval and restored to active after publication;
-this did not re-upload PyPI or resolve the hosted-verification billing blocker.
+1. **Trusted Publishing on PyPI** (owner, on pypi.org). `flahax` already
+   exists, so the publisher is added on the project: open
+   [Manage projects](https://pypi.org/manage/projects/), choose `flahax`, then
+   Publishing, and add a GitHub Actions publisher:
 
-The owner explicitly approved manual Twine publication based on verified local evidence despite the GitHub billing blocker. The exception applies only to 0.3.0. Release evidence records 110 local tests with zero skips, pinned live PHREEQC, clean candidate wheel/sdist installs, four shipped-manual examples and strict Twine checks. Hosted verification remains open; neither merging nor publication establishes a hosted pass.
+   | Field | Value |
+   |---|---|
+   | Owner | `rafatahmed` |
+   | Repository | `Flahax` |
+   | Workflow | `publish.yml` |
+   | Environment | `pypi` |
 
-A fresh isolated Python 3.13 installation from PyPI passed version/import checks, all four bundled manual examples and both CLI entry points on 2026-09-28. See the post-release audit for the distinction between published-wheel and candidate-sdist evidence.
+   Without it, the `publish` job fails after approval and nothing is uploaded.
+2. **`pypi` environment** (GitHub): required reviewer `rafatahmed`;
+   deployment restricted to tags matching `v*`.
+3. **Branch protection on `main`**: changes arrive by pull request, and the
+   `Test` workflow's checks must pass before merging.
 
-## Checklist for the next release
+## Releasing a version
 
-Release in preparation: **0.4.0** (branch `release/0.4.0`). The 0.3.1 run of
-this checklist was completed on 2026-10-17.
+1. On a `release/<version>` branch, align the version in `pyproject.toml`,
+   `flahax.__version__`, `CITATION.cff`, README, user manual and API
+   reference; write the changelog section; record readiness and evidence.
+   Merge it by pull request after CI passes.
+2. Confirm the publication decision with the owner. Merging is not approval.
+3. Create the GitHub Release for tag `v<version>` on the merged `main`
+   commit, with the changelog section as its notes. Publishing it starts the
+   workflow.
+4. Review the run: the guard notice, all test jobs, the live replay and the
+   artifact hashes in the build summary. Then approve the `pypi` deployment.
+5. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
+   environment, run the manual's examples and both CLI entry points, and
+   record the date, run URL and hashes in [release evidence](release-evidence.md).
 
-- [x] Choose a new version and align metadata, runtime version, citation, manual and changelog.
+Withdrawn versions are **yanked** on PyPI, never deleted: PyPI keeps every
+uploaded filename, so a version number can be used only once.
+
+## Checklist for 0.4.0
+
+- [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
-- [x] Pass relevant local tests and isolated wheel/sdist verification.
-- [ ] Pass the required pinned live replay and observe successful hosted Python 3.11–3.13 checks on the reviewed revision.
-- [ ] Obtain explicit publication authorization and check that the new version is unused on PyPI.
-- [ ] Build and strictly validate the exact approved artifacts; record their hashes.
-- [ ] Upload through the approved release route; verify PyPI metadata and a fresh installed-package check.
-- [ ] Record the actual publication date, create the `v0.4.0` tag and retain release evidence.
+- [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
+- [x] Observe successful hosted Python 3.11–3.13 checks on the merged revision.
+- [ ] Complete the one-time setup above.
+- [ ] Obtain explicit publication authorization.
+- [ ] Publish the `v0.4.0` GitHub Release; review the run; approve the deployment.
+- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
 
-Preparing or merging a branch does not authorize publication. Use [package verification](package-verification.md) and [release evidence](release-evidence.md). FlahaFAST integration is separate work. The commands below preserve the historical 0.3.0 procedure; substitute a newly approved version and artifact directory for future releases.
+## Fallback: manual Twine upload
 
-This follows the [Python packaging tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/). The project already uses the `src` layout, `pyproject.toml`, `README.md`, `LICENSE`, and `tests/`.
-
-Build from the repository root, in the same directory as `pyproject.toml`:
-
-```powershell
-py -m pip install --upgrade build
-py -m build
-```
-
-That writes two files under `dist/`:
-
-- `flahax-0.3.0.tar.gz`, the source distribution
-- `flahax-0.3.0-py3-none-any.whl`, the built distribution
-
-Check them before uploading:
+Use only if the workflow route is unavailable, and only with the owner's
+explicit approval for that version. Build in a clean checkout of the tagged
+commit, run `tools/verify_distribution.py --artifacts-dir <new empty dir>`,
+`twine check --strict`, then upload only those two files:
 
 ```powershell
-py -m pip install --upgrade twine
-py -m twine check dist/*
+py -m twine upload <dir>/flahax-<version>.tar.gz <dir>/flahax-<version>-py3-none-any.whl
 ```
 
-## Manual Twine upload — selected release method
-
-The project owner selected local Twine upload for 0.3.0. This does not require GitHub Trusted Publishing or an account-level pending publisher. The separate owner exception waived the hosted publication prerequisite for that release only.
-
-Once release approval and verification gates are resolved, upload only the exact approved wheel and source distribution, not every file in an old `dist` folder. The locally verified candidate paths are:
-
-```powershell
-.\.venv-verification\Scripts\python.exe -m twine check --strict dist/0.3.0-final/flahax-0.3.0.tar.gz dist/0.3.0-final/flahax-0.3.0-py3-none-any.whl
-# Historical example only: 0.3.0 is already published; do not rerun this upload.
-.\.venv-verification\Scripts\python.exe -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/0.3.0-final/flahax-0.3.0.tar.gz dist/0.3.0-final/flahax-0.3.0-py3-none-any.whl
-```
-
-Use a PyPI token authorized for the existing `flahax` project through Twine's secure prompt or operating-system keyring. Never paste tokens into chat, commit them, or put them directly in shell command arguments. Do not inspect or print credential files. See [Twine configuration and keyring guidance](https://twine.readthedocs.io/en/stable/).
-
-After upload, verify the version on PyPI and install `flahax==0.3.0` in a new environment; check imports, CLI and the bundled manual again. A TestPyPI rehearsal is a separate upload with its own credentials and authorization.
-
-## Optional GitHub Trusted Publishing — not the selected 0.3.0 route
-
-`flahax` already exists on PyPI, so the publisher is added on the project, not as a pending publisher for a new name. Open [Manage projects](https://pypi.org/manage/projects/), choose `flahax`, then Publishing, and add a GitHub Actions publisher:
-
-| Field | Value |
-|---|---|
-| Owner | `rafatahmed` |
-| Repository | `Flahax` |
-| Workflow | `publish.yml` |
-| Environment | `pypi` |
-
-A published GitHub Release currently triggers `.github/workflows/publish.yml`. Do not trigger this automatic uploader for a version uploaded manually; duplicate publication is not part of this procedure. The workflow and external publisher settings have not been changed by selecting the manual route.
-
-PyPI keeps every uploaded filename. The next release needs a new `version` in `pyproject.toml`. Version 0.1.0 stays on the index.
+Use a PyPI token through Twine's secure prompt or the operating-system
+keyring. Never paste tokens into chat, commit them, or put them in command
+arguments. A version uploaded manually must not also get a workflow run; the
+guard would skip it anyway.
 
 ## PyPI README validation
 
-The built metadata declares `Description-Content-Type: text/markdown`. README links use absolute repository URLs so they work from the PyPI project page. Both 0.3.0 candidate archives pass `twine check --strict`. This follows the [PyPA README guidance](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/); metadata validation does not assert that the package has been uploaded.
+The built metadata declares `Description-Content-Type: text/markdown`. README
+links use absolute repository URLs so they work on the PyPI project page.
+`twine check --strict` validates the metadata; it does not show that a
+package was uploaded.
+
+## Release history
+
+- **0.3.1**, 2026-10-17: uploaded manually with Twine from `main` at
+  `586eddb`, tagged `v0.3.1`, verified by a fresh installation from PyPI;
+  hosted CI passed. See the
+  [0.3.1 publication evidence](release-evidence.md#031-publication---2026-10-17).
+- **0.3.0**, 2026-09-27: uploaded manually with Twine under an owner exception
+  for local-only verification while hosted CI was blocked by billing.
+  **Yanked on 2026-10-17** because its sdist contained a third-party PDF. The
+  [GitHub release v0.3.0](https://github.com/rafatahmed/Flahax/releases/tag/v0.3.0)
+  of 2026-10-01 used the existing PyPI artifacts; see the
+  [release provenance and SHA-256 record](releases/0.3.0.md) and the
+  [post-release audit](release-readiness.md).
+- **0.2.0** and **0.1.0**, 2026-09-25: early releases; their files stay on
+  PyPI.
