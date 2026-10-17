@@ -5,7 +5,7 @@ equilibrium chemistry and auditable delivery planning.**
 
 [![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
-[![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
 FlahaX turns a crop's nutrient formula and the grower's actual water into a
@@ -158,7 +158,7 @@ https://pypi.org/project/flahax/
   year    = {2026},
   version = {0.3.1},
   url     = {https://pypi.org/project/flahax/},
-  license = {Flaha Free Use License}
+  license = {Apache-2.0}
 }
 ```
 
@@ -167,7 +167,12 @@ GitHub's "Cite this repository" button reads
 
 ## License
 
-FlahaX is free to install and use for any purpose, including commercial
-work and research, under the
-[Flaha Free Use License](https://github.com/rafatahmed/Flahax/blob/main/LICENSE).
-It is not open source: modification and redistribution are not permitted.
+FlahaX is open source under the
+[Apache License 2.0](https://github.com/rafatahmed/Flahax/blob/main/LICENSE).
+You may use, modify and redistribute it for any purpose, including commercial
+products and research. Redistributions must keep the copyright notice and the
+[`NOTICE`](https://github.com/rafatahmed/Flahax/blob/main/NOTICE) file. If you
+use FlahaX in published work, please cite it as shown above.
+
+Releases up to and including 0.3.1 were published under the Flaha Free Use
+License 1.0; later releases use Apache-2.0.

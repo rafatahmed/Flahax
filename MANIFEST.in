@@ -1,5 +1,6 @@
 include README.md
 include LICENSE
+include NOTICE
 include CITATION.cff
 include CHANGELOG.md
 include CONTRIBUTING.md
@@ -23,3 +24,4 @@ recursive-include examples *.py *.md
 prune examples/tutorial
 global-exclude __pycache__
 global-exclude *.py[cod]
+prune docs/publication
