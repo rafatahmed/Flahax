@@ -2,12 +2,12 @@
 
 The current preparation comes first; dated audits below it are history.
 
-## Current preparation - 0.4.0 / 2026-10-17
+## 0.4.0 - published 2026-10-17
 
-Current branch: `release/0.4.0`, cut from `main` at `00d855a` (merge of PR
-#15). Package metadata, runtime version, citation, shipped manual and API
-reference identify 0.4.0; the changelog section is `0.4.0 — Unreleased`. No
-release date, tag or publication is claimed.
+Prepared on `release/0.4.0` from `main` at `00d855a`, finalized in PR #18 and
+published from `3610a59` (tag `v0.4.0`). See the
+[publication evidence](release-evidence.md#040-publication---2026-10-17).
+The preparation record follows.
 
 0.4.0 is the first release under the Apache License 2.0 (PR #13) and adds
 measured-pH water balancing (PR #15). Evidence is in

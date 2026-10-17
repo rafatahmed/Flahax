@@ -18,8 +18,9 @@ the end.
    growers' advisers. The JOSS paper and field article are for researchers.
 2. **Claim.** No "complete solution" or "once for all". The claim is that the
    calculations behind a good recipe are now open, checkable and reproducible.
-3. **Licence.** FlahaX moves to Apache-2.0 (rafatahmed/Flahax PR 13). Say
-   "open source" only once a release under Apache-2.0 is on PyPI.
+3. **Licence.** FlahaX moved to Apache-2.0 (rafatahmed/Flahax PR 13); 0.4.0,
+   published 2026-10-17, is the first Apache-2.0 release, so "open source" is
+   accurate when citing 0.4.0 or later.
 4. **No "first" in any headline.** Peers (hydrosolver, HydroBuddy,
    NutrientMixingAlgorithm, NUTRISENSE, PHREEQC) are compared fairly in the
    body. The only priority wording allowed is the cautious one: "to our

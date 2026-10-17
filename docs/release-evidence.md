@@ -1,5 +1,42 @@
 # Delivery Planner Release Evidence
 
+## 0.4.0 publication - 2026-10-17
+
+0.4.0 was published to PyPI on **2026-10-17** by the hardened release workflow
+(run [`39043172800`](https://github.com/rafatahmed/Flahax/actions/runs/39043172800)),
+triggered by the GitHub Release for tag `v0.4.0` on `main` at `3610a59`
+(merge of PR #18). It is the first release under the Apache License 2.0 and the
+first published through PyPI Trusted Publishing. The owner authorized
+publication and approved the `pypi` environment deployment.
+
+| Check | Result |
+|---|---|
+| Release guard | Tag `v0.4.0` matched `pyproject.toml`; 0.4.0 was absent from PyPI |
+| Workflow gates on `3610a59` | Tests on Python 3.11, 3.12 and 3.13 with clean wheel/sdist verification, live PHREEQC replay, one build with `twine check --strict`: all passed before the approval gate |
+| Pre-approval artifact review | The workflow's artifacts were downloaded and inspected before approval: version 0.4.0, `License-Expression: Apache-2.0`, `LICENSE` and `NOTICE`, `measured_water.py` present, manual states "released 2026-10-17"; sdist 392 files with no PDF, image or `docs/publication/` file |
+| PyPI upload | Wheel 2026-10-17 15:08:40 UTC; sdist 15:08:41 UTC. PyPI reports 0.4.0 as the latest version, licence `Apache-2.0`, `Requires-Python >=3.11` |
+| Hash identity | The SHA-256 values on PyPI equal those of the reviewed workflow artifacts, and a fresh `pip download` of the wheel matches |
+| Fresh install from PyPI | New Python 3.13.15 virtual environment outside the checkout, `pip install flahax==0.4.0`. The release smoke test from `tools/verify_distribution.py` passed: version, all 103 exports, eight manual examples, 28 catalogue products, both CLI entry points, planning EC 1.15 mS/cm |
+| Measured-pH check on the installed package | Shomar et al. (2024) station 104 balances at pH 7.8, imbalance -3.52%, chloride adjusted -9.52% |
+| Publication worked example | `docs/publication/example/qatar_tomato.py` reproduces every number in the drafts on the installed 0.4.0 (output identical to the pre-release run apart from one-decimal dose display) |
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.4.0-py3-none-any.whl` | `7da1db2cb06c3ea6e9174726f1897e48d2ab59e0d5f848f0759a0c4108ec14ee` |
+| `flahax-0.4.0.tar.gz` | `70568d7266e889d51d93e4ecb3a24e82016b4ec2af5bc1f7c288f929a404d5f4` |
+
+Installed resources: `USER_GUIDE.md` `5fd398582e1994e547c43e719282da92684bbad0db802957d56391e56d58542b`;
+`API_REFERENCE.md` `0da9b7ca85eed173f0308007fcceb4682662b132dd6d2248eea7c303265cd81e`;
+`chemistry_25c.json` `ad87363818ccc2471c1343a0791f9ae63798bc0b3530b5b710344aff3077188f`;
+`library.json` `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343`.
+The chemistry hash is the LF form because the workflow builds on Linux; the
+Windows-built candidates recorded `aeb264a...`, the same data with CRLF line
+endings. The thermodynamic data are unchanged since 0.3.1.
+
+The `v0.3.1` GitHub Release note was published the same day. Its tag carries
+the old workflow, which started a build that stopped at the approval gate; that
+run (`39042767902`) was cancelled and nothing was uploaded.
+
 ## 0.4.0 preparation - 2026-10-17
 
 Prepared revision: `release/0.4.0`, cut from `main` at `00d855a` (merge of
