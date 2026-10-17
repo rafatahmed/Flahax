@@ -1,5 +1,31 @@
 # Delivery Planner Release Evidence
 
+## 0.3.1 publication - 2026-10-17
+
+The owner authorized publication of 0.3.1 in the Claude Code session of
+2026-10-17. Released revision: `main` at `586eddb` (merge of PR #10), tagged
+`v0.3.1`. Route: manual Twine upload with the owner's PyPI token from the
+Windows credential store; the token was never displayed or committed. No
+GitHub Release was created, so the automatic publish workflow did not run.
+
+| Step | Result |
+|---|---|
+| Version unused | `https://pypi.org/pypi/flahax/0.3.1/json` returned 404 before upload |
+| Hosted CI on the release content | PR #10 run `39028824252` passed: Python 3.11-3.13 and `phreeqc-live` |
+| Local regression | 153 tests, zero skips, live PHREEQC, Python 3.13.15, on `122a942` (same tree as `586eddb` except the merge) |
+| Exact artifacts | Built by `tools/verify_distribution.py --artifacts-dir dist/0.3.1-final` from `586eddb`; clean wheel and sdist installs passed on Python 3.13.15 (builder 3.14.0); no PDF in the sdist |
+| Metadata | `twine check --strict` passed for both files |
+| Upload | 2026-10-17 11:34 UTC; PyPI simple index hashes match the local files |
+| Fresh install from PyPI | New Python 3.13 environment, `pip install --no-cache-dir flahax==0.3.1`: version 0.3.1, 100 exports, packaged manual readable, `recommend` quick start returned six salts, `flahax --help` ran |
+
+| Published file | SHA-256 |
+|---|---|
+| `flahax-0.3.1-py3-none-any.whl` | `508fabae05fcf4790fda9aab4ebbbe897a36a2158228d61242c845112345ce7b` |
+| `flahax-0.3.1.tar.gz` | `526c1e770fdb10a1e5006348594a5ccbf1595061d2f96428ab9983bd3eccbddd` |
+
+The audit-candidate hashes in the next section came from an earlier revision
+and are superseded by these.
+
 ## 0.3.1 release audit - 2026-10-17
 
 Audited revision: `main` at `2e257d5` (merge of PR #7), then the audit commit
