@@ -10,7 +10,7 @@ pushing a tag.
 | Gate | Job | Effect |
 |---|---|---|
 | Release tag is exactly `v<version in pyproject.toml>` | `guard` | A mismatch fails the run; nothing is built |
-| Version is not already on PyPI | `guard` | An existing version is skipped with a notice, never re-uploaded. A release note for an old tag is therefore safe |
+| Version is not already on PyPI | `guard` | An existing version is skipped with a notice, never re-uploaded |
 | Full test suite and clean wheel/sdist installs on Python 3.11, 3.12 and 3.13 | `test` | Runs on the tagged commit |
 | Pinned live PHREEQC replay | `phreeqc-live` | Hash-pinned PHREEQC 3.8.6 on Windows |
 | One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Artifact SHA-256 values appear in the run summary |
@@ -52,6 +52,13 @@ pushing a tag.
 5. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
    environment, run the manual's examples and both CLI entry points, and
    record the date, run URL and hashes in [release evidence](release-evidence.md).
+
+**Old tags run old workflows.** For a Release event, GitHub runs
+`publish.yml` as it exists at the tagged commit. Tags before `v0.4.0` carry the
+old, unguarded workflow: a Release note for one of them starts a build that
+waits at the `pypi` approval gate. Cancel that run; never approve it. (This
+happened for the `v0.3.1` note on 2026-10-17; the run was cancelled and nothing
+was uploaded.)
 
 Withdrawn versions are **yanked** on PyPI, never deleted: PyPI keeps every
 uploaded filename, so a version number can be used only once.
@@ -96,6 +103,8 @@ package was uploaded.
   `586eddb`, tagged `v0.3.1`, verified by a fresh installation from PyPI;
   hosted CI passed. See the
   [0.3.1 publication evidence](release-evidence.md#031-publication---2026-10-17).
+  Its GitHub Release note was added on 2026-10-17; the old-workflow run it
+  started was cancelled before approval.
 - **0.3.0**, 2026-09-27: uploaded manually with Twine under an owner exception
   for local-only verification while hosted CI was blocked by billing.
   **Yanked on 2026-10-17** because its sdist contained a third-party PDF. The

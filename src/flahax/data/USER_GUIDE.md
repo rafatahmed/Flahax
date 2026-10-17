@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.4.0, release candidate prepared 2026-10-17; not yet published. 0.4.0 is the first release under the Apache License 2.0. See the repository's release evidence.
+**Version:** 0.4.0, released 2026-10-17, the first release under the Apache License 2.0. The release workflow ran the Python 3.11–3.13 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
 
 ## Contents
 
