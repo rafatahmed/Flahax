@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "operation": "predict",
+  "ok": true,
+  "model": { "id": "speciation-conductivity", "version": "SYNTHETIC-CONTRACT-EXAMPLE", "profile": "none", "validation_status": "validated_in_range" },
+  "inputHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "results": [
+    {
+      "channel_id": "A",
+      "dilutions": [
+        { "dilution": 1, "status": "not_supported", "reason": "ionic_strength_outside_validated_range",
+          "validity": { "in_range": false, "ionic_strength_mol_kg": 1.0, "max_validated_ionic_strength_mol_kg": 0.1, "minimum_trusted_dilution": 12 } },
+        { "dilution": 100, "status": "estimated",
+          "ec_ms_cm_25": 0.5,
+          "ec_ms_cm_at_temperature": 0.46,
+          "uncertainty": { "value_ms_cm": 0.025, "relative": 0.05, "basis": "validated_range" },
+          "validity": { "in_range": true, "ionic_strength_mol_kg": 0.01, "max_validated_ionic_strength_mol_kg": 0.1, "minimum_trusted_dilution": 100 },
+          "diagnostics": { "density_kg_l": 1.0, "water_mass_kg_per_l": 1.0, "contribution_ms_cm": { "Ca2+": 0.2, "NO3-": 0.3 } },
+          "warnings": ["Values in this file are synthetic and show the contract shape only."] }
+      ]
+    }
+  ]
+}

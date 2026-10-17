@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "operation": "evaluate_measurements",
+  "temperature_c": 20,
+  "channels": [
+    { "id": "A", "volume_l": 10, "salts": [ { "id": "kn", "name": "Potassium Nitrate", "grams": 356.05, "elements": { "K": 38.67, "N_NO3": 13.856 } } ] }
+  ],
+  "measurements": [
+    { "channel_id": "A", "dilution": 100, "ec_ms_cm": 0.64, "temperature_c": 21, "ph": 5.9 }
+  ]
+}
