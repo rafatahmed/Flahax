@@ -1,8 +1,12 @@
 # FlahaX Package: Trackable Implementation Roadmap
 
-## Current status — 2026-09-28
+## Current status — 2026-10-17
 
-0.3.0 was published to PyPI on 2026-09-27 under the documented owner exception for local verification. PRs #3 and #4 are merged. P6.6/P6.7 hosted acceptance remains open. The [development roadmap](development-roadmap.md) is the active post-release plan; the dated audits and P0–P7 ledger below preserve implementation history, including earlier test counts and superseded release prerequisites.
+This ledger is historical. 0.3.1 is the published release, 0.4.0 is prepared,
+and P6.6/P6.7 hosted acceptance is closed. The
+[development roadmap](development-roadmap.md) is the active plan; the dated
+audits and P0–P7 ledger below preserve implementation history, including
+earlier test counts and superseded release prerequisites.
 
 ## Purpose
 
@@ -242,4 +246,4 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 
 ## Next execution plan
 
-Follow [the post-0.3.0 development roadmap](development-roadmap.md). First close P6.6/P6.7 with successful hosted artifacts, then expand boundary regressions and contract coverage. Publication of 0.3.0 is complete; its local-evidence exception does not waive verification gates for future releases. P7 remains an optional handoff to the separate FlahaFAST project.
+Follow [the development roadmap](development-roadmap.md). P6.6/P6.7 are closed; the next work is boundary regressions and contract coverage. The 0.3.0 local-evidence exception does not waive verification gates for any later release. P7 remains an optional handoff to the separate FlahaFAST project.

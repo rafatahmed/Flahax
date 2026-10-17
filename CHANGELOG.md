@@ -6,6 +6,8 @@
 - Add `balance_water_analysis`: speciate a laboratory water analysis at its measured pH, take inorganic carbon from the analysis or from titrated alkalinity, and close the remaining charge on Cl- or Na+ with the imbalance and adjustment recorded. Imbalances above 5% (configurable) are rejected. The workflow's `equilibrium` record accepts `measured_ph` and reports `water_balance`. Charge balance alone turned a 3.5% analytical imbalance on a published Qatar well into a 4-unit pH error.
 - Add publication drafts under `docs/publication/` (JOSS paper, field-trial article, story piece in English and Arabic, worked example); they are excluded from the source distribution.
 - Add the author's ORCID to `CITATION.cff`.
+- Harden the release workflow: a GitHub Release uploads only when its tag matches the package version and that version is new on PyPI, after the full test matrix, clean installs and the live PHREEQC replay pass, and after reviewer approval, via PyPI Trusted Publishing.
+- Bring the documentation up to date with 0.3.1 and 0.4.0, and remove two unreferenced 0.2.0 images from `docs/` (and so from the sdist).
 
 ## 0.3.1 — 2026-10-17
 

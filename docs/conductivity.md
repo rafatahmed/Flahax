@@ -1,4 +1,4 @@
-# Stock and irrigation EC planning (unreleased)
+# Stock and irrigation EC planning
 
 For the new **no-new-measurements** manufacturer-anchor screening path and
 interactive CLI, see [site planning](site-planning.md) and the
