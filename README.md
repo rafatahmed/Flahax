@@ -6,6 +6,7 @@ equilibrium chemistry and auditable delivery planning.**
 [![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
 FlahaX turns a crop's nutrient formula and the grower's actual water into a
 fertilizer recipe, then checks what that recipe does in solution: which ions
