@@ -15,6 +15,7 @@
 - [Fertilizer sheet review](source-sheet-review.md): exact-brand data, source hashes and applicability limits.
 
 - [Stock and irrigation EC planning (unreleased)](conductivity.md): recipe-calibrated conductivity, meter TDS scale and injection/pump connection.
+- [Stock conductivity service (design, not implemented)](stock-conductivity-service-design.md): proposed contract, model layers, evidence and test plan for conductivity of concentrated stocks and their dilutions.
 
 - [Runnable capability examples](../examples/README.md): pepper formulation, chemistry, acids, stocks, titration, delivery and CLI reports (current checkout).
 

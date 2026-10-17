@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1",
+  "operation": "predict",
+  "ok": false,
+  "error": { "code": "invalid_value", "message": "dilutions must be whole numbers from 1 to 100000", "path": "/dilutions/1" }
+}

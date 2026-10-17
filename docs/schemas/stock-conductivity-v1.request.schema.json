@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flahax.local/schemas/stock-conductivity-v1.request.schema.json",
+  "title": "FlahaX stock conductivity request, schema version 1 (design)",
+  "description": "One JSON object on standard input of `python -m flahax conductivity`. Design contract: no implementation exists yet (see docs/stock-conductivity-service-design.md).",
+  "type": "object",
+  "required": ["schemaVersion", "operation"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "operation": { "enum": ["predict", "describe_model", "reference_check", "evaluate_measurements"] }
+  },
+  "oneOf": [
+    {
+      "properties": { "operation": { "const": "predict" } },
+      "required": ["temperature_c", "channels", "dilutions"],
+      "allOf": [{ "$ref": "#/$defs/predictFields" }]
+    },
+    {
+      "properties": { "schemaVersion": true, "operation": { "const": "describe_model" } },
+      "additionalProperties": false,
+      "$comment": "Only schemaVersion and operation are allowed."
+    },
+    {
+      "properties": { "schemaVersion": true, "operation": { "const": "reference_check" }, "reference_set": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false,
+      "$comment": "reference_set is optional; omitted means all packaged reference sets."
+    },
+    {
+      "properties": { "operation": { "const": "evaluate_measurements" } },
+      "required": ["channels", "measurements"],
+      "allOf": [{ "$ref": "#/$defs/evaluateFields" }]
+    }
+  ],
+  "$defs": {
+    "symbol": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9_]{0,15}$", "description": "FlahaX element symbol, including N_NO3 and N_NH4." },
+    "percentByMass": { "type": "number", "minimum": 0, "maximum": 100 },
+    "salt": {
+      "type": "object",
+      "required": ["id", "name", "grams", "elements"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "formula": { "type": "string", "maxLength": 200 },
+        "grams": { "type": "number", "minimum": 0, "description": "Mass of this product put into the channel's final volume." },
+        "purity": { "type": "number", "exclusiveMinimum": 0, "maximum": 100, "description": "Assay in percent. Omitted means the element percentages are already as dispensed." },
+        "elements": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 40,
+          "propertyNames": { "$ref": "#/$defs/symbol" },
+          "additionalProperties": { "$ref": "#/$defs/percentByMass" },
+          "description": "Percent by mass of the product, at its stated assay."
+        }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "required": ["id", "volume_l", "salts"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "volume_l": { "type": "number", "exclusiveMinimum": 0, "description": "Final volume of the made-up solution (grams are made up to this volume, not added to it)." },
+        "salts": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/salt" } }
+      }
+    },
+    "water": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "elements": {
+          "type": "object",
+          "maxProperties": 40,
+          "propertyNames": { "$ref": "#/$defs/symbol" },
+          "additionalProperties": { "type": "number", "minimum": 0, "description": "mg/L" }
+        },
+        "ec_ms_cm": { "type": "number", "minimum": 0, "description": "Measured EC25 of the source water; used only to check consistency, never to replace composition." }
+      }
+    },
+    "predictFields": {
+      "properties": {
+        "temperature_c": { "type": "number", "minimum": -5, "maximum": 80 },
+        "channels": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/channel" } },
+        "dilutions": {
+          "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1, "maximum": 100000 },
+          "description": "1:N dilutions of each channel to predict (1 = the solution as made)."
+        },
+        "water": { "$ref": "#/$defs/water" },
+        "options": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "include_diagnostics": { "type": "boolean", "default": false },
+            "include_speciation": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "required": ["channel_id", "dilution", "ec_ms_cm"],
+      "additionalProperties": false,
+      "properties": {
+        "channel_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "dilution": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "ec_ms_cm": { "type": "number", "minimum": 0, "maximum": 200, "description": "As read on the meter, not scaled by the dilution." },
+        "temperature_c": { "type": "number", "minimum": -5, "maximum": 80 },
+        "ph": { "type": "number", "minimum": 0, "maximum": 14 },
+        "note": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "evaluateFields": {
+      "properties": {
+        "temperature_c": { "type": "number", "minimum": -5, "maximum": 80, "description": "Default for measurements without their own temperature; omitted means 25." },
+        "channels": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/channel" } },
+        "water": { "$ref": "#/$defs/water" },
+        "measurements": { "type": "array", "minItems": 1, "maxItems": 500, "items": { "$ref": "#/$defs/measurement" } }
+      }
+    }
+  }
+}

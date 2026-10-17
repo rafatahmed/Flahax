@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flahax.local/schemas/stock-conductivity-v1.response.schema.json",
+  "title": "FlahaX stock conductivity response, schema version 1 (design)",
+  "description": "One JSON object on standard output. Exit status 0 with `ok: true` even when individual points are not_supported; exit status 2 with `ok: false` and `error` when the request itself is refused.",
+  "type": "object",
+  "required": ["schemaVersion", "operation", "ok"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "operation": { "enum": ["predict", "describe_model", "reference_check", "evaluate_measurements"] },
+    "ok": { "type": "boolean" }
+  },
+  "oneOf": [
+    {
+      "properties": { "ok": { "const": false }, "error": { "$ref": "#/$defs/error" } },
+      "required": ["error"]
+    },
+    {
+      "properties": { "ok": { "const": true }, "model": { "$ref": "#/$defs/model" } },
+      "required": ["model", "inputHash"],
+      "allOf": [
+        {
+          "if": { "properties": { "operation": { "const": "predict" } } },
+          "then": { "required": ["results"], "properties": { "results": { "type": "array", "items": { "$ref": "#/$defs/channelResult" } } } }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "describe_model" } } },
+          "then": { "required": ["capabilities"], "properties": { "capabilities": { "$ref": "#/$defs/capabilities" } } }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "reference_check" } } },
+          "then": { "required": ["reference"], "properties": { "reference": { "$ref": "#/$defs/referenceReport" } } }
+        },
+        {
+          "if": { "properties": { "operation": { "const": "evaluate_measurements" } } },
+          "then": { "required": ["evaluation"], "properties": { "evaluation": { "$ref": "#/$defs/evaluation" } } }
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "enum": ["invalid_json", "invalid_schema_version", "invalid_type", "invalid_value", "unknown_operation", "limit_exceeded", "unknown_channel", "internal_error"] },
+        "message": { "type": "string" },
+        "path": { "type": "string", "description": "JSON pointer to the offending input, when there is one." }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "description": "Stable model identifier, for example `speciation-conductivity`." },
+        "version": { "type": "string", "description": "Changes whenever any number this model returns could change." },
+        "profile": { "type": "string", "description": "Thermodynamic and mobility parameter profile identifier." },
+        "validation_status": { "enum": ["unvalidated", "validated_in_range"], "description": "`unvalidated` means no number from this model may be presented as a prediction." }
+      }
+    },
+    "reasonCode": {
+      "enum": [
+        "no_validated_model",
+        "ionic_strength_outside_validated_range",
+        "temperature_outside_validated_range",
+        "unknown_ion",
+        "unsupported_chemistry",
+        "composition_incomplete",
+        "precipitation_expected",
+        "water_ec_inconsistent"
+      ]
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["basis"],
+      "properties": {
+        "value_ms_cm": { "type": "number", "minimum": 0 },
+        "relative": { "type": "number", "minimum": 0 },
+        "basis": { "enum": ["validated_range", "reference_fit", "unknown"], "description": "`unknown` means no bound is asserted; it is never zero." }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "required": ["in_range", "ionic_strength_mol_kg", "max_validated_ionic_strength_mol_kg", "minimum_trusted_dilution"],
+      "properties": {
+        "in_range": { "type": "boolean" },
+        "ionic_strength_mol_kg": { "type": "number", "minimum": 0 },
+        "max_validated_ionic_strength_mol_kg": { "type": "number", "minimum": 0 },
+        "minimum_trusted_dilution": { "type": ["integer", "null"], "minimum": 1, "description": "Smallest whole dilution (not below the one asked) at which the model is validated; null when no dilution qualifies." }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "density_kg_l": { "type": "number", "minimum": 0 },
+        "water_mass_kg_per_l": { "type": "number", "minimum": 0 },
+        "contribution_ms_cm": { "type": "object", "additionalProperties": { "type": "number" }, "description": "By species." },
+        "species_molality": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0 }, "description": "Free ions and ion pairs; present only with include_speciation." }
+      }
+    },
+    "dilutionResult": {
+      "type": "object",
+      "required": ["dilution", "status"],
+      "properties": {
+        "dilution": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["estimated", "not_supported", "needs_input"] },
+        "reason": { "$ref": "#/$defs/reasonCode" },
+        "ec_ms_cm_25": { "type": "number", "minimum": 0, "description": "Unrounded EC at 25 C. Absent unless status is estimated." },
+        "ec_ms_cm_at_temperature": { "type": "number", "minimum": 0 },
+        "uncertainty": { "$ref": "#/$defs/uncertainty" },
+        "validity": { "$ref": "#/$defs/validity" },
+        "diagnostics": { "$ref": "#/$defs/diagnostics" },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "estimated" } } }, "then": { "required": ["ec_ms_cm_25", "uncertainty", "validity"] } },
+        { "if": { "properties": { "status": { "enum": ["not_supported", "needs_input"] } } }, "then": { "required": ["reason"], "not": { "required": ["ec_ms_cm_25"] } } }
+      ]
+    },
+    "channelResult": {
+      "type": "object",
+      "required": ["channel_id", "dilutions"],
+      "properties": {
+        "channel_id": { "type": "string" },
+        "dilutions": { "type": "array", "items": { "$ref": "#/$defs/dilutionResult" } }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["supported_elements", "temperature_range_c", "max_validated_ionic_strength_mol_kg", "supports"],
+      "properties": {
+        "supported_elements": { "type": "array", "items": { "type": "string" } },
+        "temperature_range_c": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "max_validated_ionic_strength_mol_kg": { "type": "number", "minimum": 0 },
+        "supports": {
+          "type": "object",
+          "properties": {
+            "chelates": { "type": "boolean" },
+            "acid_adjusted_solutions": { "type": "boolean" },
+            "ion_pairing": { "type": "boolean" }
+          }
+        },
+        "limits": { "type": "object", "properties": { "max_channels": { "type": "integer" }, "max_dilutions": { "type": "integer" }, "max_salts_per_channel": { "type": "integer" } } }
+      }
+    },
+    "referenceReport": {
+      "type": "object",
+      "required": ["sets"],
+      "properties": {
+        "sets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "source", "points"],
+            "properties": {
+              "id": { "type": "string" },
+              "source": { "type": "string", "description": "Citation or provenance of the reference values." },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["description", "reference_ms_cm", "model_ms_cm", "gap_percent"],
+                  "properties": {
+                    "description": { "type": "string" },
+                    "ionic_strength_mol_kg": { "type": "number" },
+                    "reference_ms_cm": { "type": "number" },
+                    "model_ms_cm": { "type": "number" },
+                    "gap_percent": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "required": ["points"],
+      "properties": {
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["channel_id", "dilution", "measured_ms_cm", "status"],
+            "properties": {
+              "channel_id": { "type": "string" },
+              "dilution": { "type": "integer" },
+              "measured_ms_cm": { "type": "number" },
+              "predicted_ms_cm": { "type": "number" },
+              "gap_percent": { "type": "number" },
+              "status": { "enum": ["compared", "not_supported"] },
+              "reason": { "$ref": "#/$defs/reasonCode" }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "compared": { "type": "integer", "minimum": 0 },
+            "mean_gap_percent": { "type": "number" },
+            "median_gap_percent": { "type": "number" },
+            "worst_abs_gap_percent": { "type": "number" }
+          },
+          "description": "Descriptive statistics of this request only. Nothing is stored and no model parameter changes."
+        }
+      }
+    }
+  }
+}

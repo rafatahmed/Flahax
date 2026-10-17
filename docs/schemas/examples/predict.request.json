@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "operation": "predict",
+  "temperature_c": 20,
+  "channels": [
+    {
+      "id": "A",
+      "volume_l": 10,
+      "salts": [
+        { "id": "ca-nitrate", "name": "Calcium Nitrate", "formula": "5Ca(NO3)2.NH4NO3.10H2O", "grams": 546.98, "purity": 98,
+          "elements": { "Ca": 19, "N_NO3": 14.4, "N_NH4": 1.1 } },
+        { "id": "fe-edta", "name": "Iron EDTA", "grams": 38.46, "elements": { "Fe": 13 } }
+      ]
+    }
+  ],
+  "dilutions": [1, 10, 100],
+  "water": { "elements": { "Ca": 40, "Mg": 10 }, "ec_ms_cm": 0.45 },
+  "options": { "include_diagnostics": true }
+}
