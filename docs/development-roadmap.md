@@ -1,13 +1,16 @@
-# FlahaX development roadmap after 0.3.0
+# FlahaX development roadmap
 
-Release-preparation update (2026-10-01): [site planning](site-planning.md) and
-[source review](source-sheet-review.md). User-specific CLI inputs,
-nitric/phosphoric standard workflow, manufacturer-anchor dilute screening and
-injector flow arithmetic are implemented. General concentrated A/B EC,
-acid-adjusted full-recipe conductivity and manufacturer-qualified equipment
-model selection remain open; brochure anchors do not close these gaps.
+Updated 2026-10-17. Status: proposed priorities, not scheduled releases. The
+published baseline is [0.3.1](https://pypi.org/project/flahax/0.3.1/); 0.4.0
+(Apache-2.0, measured-pH water balancing) is prepared and awaits publication.
+The [implementation ledger](implementation-roadmap.md) retains P0–P7
+acceptance and historical audits.
 
-Updated 2026-09-28. Status: proposed priorities, not scheduled releases. The published baseline is [0.3.0](https://pypi.org/project/flahax/0.3.0/). The [implementation ledger](implementation-roadmap.md) retains P0–P7 acceptance and historical audits.
+Site planning ([site planning](site-planning.md), [source review](source-sheet-review.md)),
+the water-to-delivery workflow and the EC/injection planner shipped in 0.3.1.
+General concentrated A/B EC, acid-adjusted full-recipe conductivity and
+manufacturer-qualified equipment model selection remain open; brochure anchors
+do not close these gaps.
 
 ## Assumptions and baseline
 
@@ -15,21 +18,17 @@ FlahaX remains a dependency-free Python planning library and CLI. Preserve the e
 
 The repository already implements catalogue conversion, coupled equilibrium, measured-curve and nitric-acid pH planning, stocks, pump-planning values and composed delivery plans. It has golden PHREEQC evidence, failure reproducers and isolated distribution checks. Hardening should extend these assets instead of replacing them with a new solver or removing older exported compatibility APIs.
 
-The release record reports 110 local tests with live PHREEQC. Hosted acceptance P6.6/P6.7 remains open: the latest inspected main workflow (`36348839031`) reports failure. Publication under the 0.3.0 local-evidence exception does not close those tasks.
+Hosted acceptance P6.6/P6.7 is closed: Python 3.11–3.13 jobs and the pinned live PHREEQC replay pass on `main` (first on `2e257d5`, run `38967066279`). The 0.4.0 candidate passes 162 local tests with live PHREEQC. From 0.4.0, publication runs the same checks inside the [hardened release workflow](publishing.md).
 
 ## Milestones and acceptance
 
-Current local increment: explicit water-to-delivery orchestration and separate
-incidental-nutrient assessment, with four single-acid candidate calculations.
-See [water-to-delivery](water-to-delivery.md) for contracts and reference scope.
-This is unreleased work and does not close hosted P6.6/P6.7 or authorize a
-commercial dose from incomplete water analysis. Existing reaction data and
-frozen catalogue chelate boundaries are unchanged.
-
-An additional unreleased [EC/injection planner](conductivity.md) now accepts
-recipe- and water-source-matched measured EC profiles for stock tanks and the
-combined irrigation mixture. Real calibration packs and hold-out validation
-remain outstanding; synthetic interpolation tests are not physical accuracy
+The [water-to-delivery](water-to-delivery.md) workflow (0.3.1) does not
+authorize a commercial dose from an incomplete water analysis. 0.4.0 anchors
+source water at its measured pH; a field evaluation against measured pH, acid
+demand and laboratory nutrient analyses is planned
+([publication drafts](publication/README.md)). The
+[EC/injection planner](conductivity.md) still lacks real calibration packs and
+hold-out validation; synthetic interpolation tests are not physical accuracy
 evidence. Automatic EC-setpoint dosing and a universal concentrated-stock
 conductivity model are not claimed.
 
@@ -37,25 +36,25 @@ Version labels below are proposals. Assign an owner before starting each milesto
 
 | Order / candidate | Work and code anchors | Acceptance before completion | Suggested accountable role |
 |---|---|---|---|
-| M1 / next patch, 0.3.1 | Close P6.6/P6.7; `.github/workflows/test.yml`, `tools/verify_distribution.py`; reconcile release records | Successful Python 3.11–3.13 hosted distribution jobs and required pinned PHREEQC replay for the reviewed revision; retain run URLs, artifact hashes and actual skip counts; fresh PyPI install verification recorded | Maintainer; account owner for billing |
+| M1 / 0.3.1 — done | Close P6.6/P6.7; `.github/workflows/test.yml`, `tools/verify_distribution.py`; reconcile release records | Successful Python 3.11–3.13 hosted distribution jobs and required pinned PHREEQC replay for the reviewed revision; retain run URLs, artifact hashes and actual skip counts; fresh PyPI install verification recorded | Maintainer; account owner for billing |
 | M2 / 0.3.x | Expand input and numerical robustness in `aqueous_model.py`, `product_conversion.py`, `equilibrium_delivery.py` and planning contracts | Reproducible edge-case corpus; finite-input rejection, conservation, phase complementarity and convergence checks; failure cases return documented errors; existing golden tolerances and source provenance preserved | Numerical/model maintainer |
-| M3 / 0.4.0 candidate | Stabilize consumer contracts, diagnostics and repeatable reports; `delivery_contracts.py`, `delivery_plan.py`, public exports | Documented serialization/version policy, round-trip and invalid-record tests, stable error codes and migration notes; compatibility tests for existing API/CLI examples | API maintainer |
+| M3 / 0.5.0 candidate | Stabilize consumer contracts, diagnostics and repeatable reports; `delivery_contracts.py`, `delivery_plan.py`, public exports | Documented serialization/version policy, round-trip and invalid-record tests, stable error codes and migration notes; compatibility tests for existing API/CLI examples | API maintainer |
 | M4 / later minor releases | Choose one validated capability extension from the opportunity table | Approved scope and source data first; independent reference cases and rejection boundaries; documented compatibility and performance impact | Product owner with model reviewer |
 
-M1 status (2026-10-17): the hosted part is met on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17)); fresh PyPI install verification follows an authorized 0.3.1 upload. M2 can progress locally in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
+M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
 
 ## Hardening backlog
 
 | Priority / ID | Concrete next increment | Evidence required |
 |---|---|---|
-| P0 H1 | Inspect the failed hosted jobs, resolve the account restriction through its owner, then rerun verification | Passing jobs with full logs, supported-version artifact checks and zero-skip required reference replay |
+| Done H1 | Hosted jobs failing on an account restriction | Resolved for 0.3.1: passing jobs with supported-version artifact checks and zero-skip reference replay |
 | P1 H2 | Extend tests for NaN/infinity, negative/zero values, unknown ions, pH endpoints, I near 0.1, temperature rejection and extreme assay/volume inputs | Parameterized public-entry-point cases assert documented results/errors; no incidental traceback or plausible-looking invalid plan |
 | P1 H3 | Exercise phase onset, disappearance, near-zero totals, competing phases and difficult Newton/active-set cases | Seeded generated cases; component residuals within declared tolerances, nonnegative solids and phase complementarity; retain minimized failures |
 | P1 H4 | Improve convergence diagnostics around the existing iteration limits and line search | Failures identify stage, iteration count and residual without changing successful return contracts; deterministic regression cases |
 | P1 H5 | Expand composed-plan rejection tests across mismatched record IDs, assay changes, stale calibration, acid-channel conflicts and altered recipe/stock data | Complete measured-curve and equilibrium paths reject inconsistent evidence and preserve atomic validation |
 | P2 H6 | Establish benchmark baselines for formulation, mixed equilibrium and nitric-target planning | Fixed representative fixtures, machine/Python metadata, median and tail timing plus iteration counts; agree budgets after measurement, then compare changes |
 | P2 H7 | Add development-only lint/type checks incrementally around public contracts and numerical code | Reviewed annotations/check configuration, clean selected modules and full regression pass; no new mandatory runtime dependency |
-| P2 H8 | Review release supply-chain reproducibility and workflow permissions | Reviewed build-tool constraints, action pinning/update policy and artifact provenance; distribution verification still passes; publishing settings changed only with approval |
+| P2 H8 | Release supply chain. Done for 0.4.0: tag/version guard, no re-upload, tests and live replay before build, reviewer-gated Trusted Publishing, protected `main`. Open: pin actions by commit SHA and record build-tool versions | Reviewed action-pinning/update policy and artifact provenance; distribution verification still passes |
 
 These are test and review targets, not claims that the inspected code is defective. Existing tests already cover many guards; each increment should document the additional cases it contributes. Do not loosen scientific tolerances merely to make a new test pass.
 
@@ -76,8 +75,8 @@ Prioritize explainability and evidence packs before expanding the chemical domai
 ## Working and release policy
 
 Use phase-, issue-, stage- or release-based branch names under the
-[development conventions](../CONTRIBUTING.md). Current release preparation:
-`release/0.3.1-site-planning`; see [current status](development-status.md).
+[development conventions](../CONTRIBUTING.md). See [current status](development-status.md)
+for the release in preparation.
 
 Keep one focused branch per increment. Delete merged branches only after checking for unique commits and active worktrees. Preserve source-backed scientific captures, failed-reference reproducers and released-artifact evidence; ignored build outputs and environments are not automatically disposable.
 
@@ -87,6 +86,6 @@ Before the next release, require the [publishing checklist](publishing.md), revi
 
 ## First three work items
 
-1. Close H1 and record successful hosted evidence, or retain a precise external blocker with an assigned account owner.
-2. Add H2/H3 cases around current numerical boundaries and retain every reproducible failure before changing solver behavior.
-3. Specify M3 serialization and error contracts, then select an explainability increment with a concrete user example.
+1. Publish 0.4.0 through the hardened workflow and record its evidence.
+2. Add H2/H3 cases around current numerical boundaries, including measured-pH balancing near its imbalance limit, and retain every reproducible failure before changing solver behavior.
+3. Specify M3 serialization and error contracts, then select an explainability increment with a concrete user example (for example, why the best mass balance can be chemically wrong).

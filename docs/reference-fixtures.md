@@ -18,7 +18,7 @@ Base SHA-256: `ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7`
 Executable SHA-256: `d1cc2ad3ae66af8a95c3fbb605affc4d22149c8d5aab4239919792c524635006`.
 No executable or merged database is checked in.
 
-### Additional unreleased acid-selection references
+### Additional acid-selection references (since 0.3.1)
 
 `acid_selection/` adds four synthetic NaCl-background cases (HNO3, H3PO4,
 H2SO4 and C6H8O7) with `Fix_H+` at pH 6.5, initially charge-balanced pH,

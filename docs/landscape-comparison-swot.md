@@ -16,7 +16,7 @@ what FlahaX does? If not, what can the article truthfully claim?
 
 | Tool | What it is | Form and language | Licence | Activity seen |
 |---|---|---|---|---|
-| **FlahaX** | Fertilizer formulation, bounded aqueous chemistry and auditable delivery planning | Python library + CLI on PyPI, no runtime dependencies | Apache-2.0 from the release after 0.3.1 (0.3.1 and earlier: Flaha Free Use 1.0) | 0.3.0 on PyPI 2026-09-27; 0.3.1 in preparation |
+| **FlahaX** | Fertilizer formulation, bounded aqueous chemistry and auditable delivery planning | Python library + CLI on PyPI, no runtime dependencies | Apache-2.0 from 0.4.0 (0.3.1 and earlier: Flaha Free Use 1.0) | 0.3.1 on PyPI 2026-10-17 (0.3.0 yanked); 0.4.0 prepared |
 | **hydrosolver** | Optimisation-driven hydroponic nutrient calculator and small DSL (`Composition`, `Solution`, `solve_lstsq`) | Python package on PyPI | GPLv3 | Single release 0.1, 2021-10-17 |
 | **NutrientMixingAlgorithm** (TU Chemnitz ACSD lab) | Convex optimisation of water-source volumes and fertilizer masses into a mixing tank; aquaponics focus | Python 3.11 script, XML tables, CasADi + IPOPT; not on PyPI | Open source (repo) | Last push 2024-11-14; companion paper Kobelski et al., *Appl. Sci.* 2024, 14, 8140 |
 | **HydroBuddy** | Best-known free nutrient calculator: salt weights from target elements, water quality input, 1:100 A/B stocks, empirical EC estimate, acid for alkalinity | Desktop program, Lazarus/Pascal | GPL | v1.100 described as last release |
@@ -116,8 +116,6 @@ Candidate claim wording, strongest defensible first:
 - **Narrow validity window.** 25 °C only, dilute ionic strength, fixed
   oxidation states; concentrated stock tanks (the real operating condition)
   are outside the validated model.
-- **Hosted CI still open.** 0.3.0 shipped under a local-evidence exception;
-  supported-version CI is unresolved.
 - **High data burden on the user.** Water analysis, product assays,
   compatibility and solubility records must be supplied; no crop database.
 - **No grower-friendly interface yet.** CLI and reports only until FlahaFAST
