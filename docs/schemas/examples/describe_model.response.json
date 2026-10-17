@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "operation": "describe_model",
+  "ok": true,
+  "model": { "id": "speciation-conductivity", "version": "0.0.0-contract", "profile": "none", "validation_status": "unvalidated" },
+  "inputHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "capabilities": {
+    "supported_elements": ["Ca", "K", "Mg", "N_NO3", "N_NH4", "P", "S", "Cl", "Na"],
+    "temperature_range_c": [15, 30],
+    "max_validated_ionic_strength_mol_kg": 0,
+    "supports": { "chelates": false, "acid_adjusted_solutions": false, "ion_pairing": false },
+    "limits": { "max_channels": 8, "max_dilutions": 16, "max_salts_per_channel": 64 }
+  }
+}

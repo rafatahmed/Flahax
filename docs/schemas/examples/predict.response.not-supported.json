@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "operation": "predict",
+  "ok": true,
+  "model": { "id": "speciation-conductivity", "version": "0.0.0-contract", "profile": "none", "validation_status": "unvalidated" },
+  "inputHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "results": [
+    {
+      "channel_id": "A",
+      "dilutions": [
+        { "dilution": 1, "status": "not_supported", "reason": "no_validated_model" },
+        { "dilution": 10, "status": "not_supported", "reason": "no_validated_model" },
+        { "dilution": 100, "status": "not_supported", "reason": "no_validated_model" }
+      ]
+    }
+  ]
+}
