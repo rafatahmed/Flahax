@@ -26,6 +26,12 @@ GitHub Release was created, so the automatic publish workflow did not run.
 The audit-candidate hashes in the next section came from an earlier revision
 and are superseded by these.
 
+**0.3.0 yanked on 2026-10-17** by the owner in the PyPI web interface, after
+0.3.1 was live, with the public reason "Superseded by 0.3.1". The project's
+management page lists 0.3.0 under yanked releases. The yank was made because
+the 0.3.0 sdist contains the YaraVita PDF; yanked files stay downloadable by
+exact pin (`flahax==0.3.0`).
+
 ## 0.3.1 release audit - 2026-10-17
 
 Audited revision: `main` at `2e257d5` (merge of PR #7), then the audit commit
