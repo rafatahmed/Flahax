@@ -93,14 +93,14 @@ buffered. <!-- TODO: confirm from the lab analyses in 2.3 -->
 be run through FlahaX before planting. If the resulting solution exceeds the
 model's ionic strength limit, that site cannot test in-range predictions.
 This will be reported, and the site's role in the study will be decided
-before measurements begin. <!-- See decisions.md, open item 2. Typical Qatar
-well water reported in a 205-well survey is close to this limit before any
-fertilizer is added. -->
+before measurements begin. <!-- See decisions.md, open item 2. A median
+well in the Shomar (2024) survey stays inside the limit, but already exceeds
+tomato's Ca and S targets; saltier wells exceed the limit. -->
 
 ### 2.3 Irrigation water analysis
 
 Before the trial, each water source is sampled and analysed by an accredited
-laboratory for pH, EC, Ca, Mg, Na, K, HCO₃, CO₃, Cl, SO₄, NO₃, NH₄, P and B,
+laboratory for measured pH, total alkalinity by titration, EC, Ca, Mg, Na, K, HCO₃, CO₃, Cl, SO₄, NO₃, NH₄, P and B,
 with Fe, Mn, Zn and Cu where available. Bicarbonate is required: without it,
 pH and acid cannot be predicted. Sampling is repeated <!-- TODO: frequency,
 e.g. monthly --> to capture variation in the water over the season.
