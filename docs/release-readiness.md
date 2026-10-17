@@ -1,5 +1,19 @@
 # Release-readiness audit — 2026-09-27
 
+## Current preparation - 0.4.0 / 2026-10-17
+
+Current branch: `release/0.4.0`, cut from `main` at `00d855a` (merge of PR
+#15). Package metadata, runtime version, citation, shipped manual and API
+reference identify 0.4.0; the changelog section is `0.4.0 — Unreleased`. No
+release date, tag or publication is claimed.
+
+0.4.0 is the first release under the Apache License 2.0 (PR #13) and adds
+measured-pH water balancing (PR #15). Evidence is in
+[release evidence](release-evidence.md#040-preparation---2026-10-17).
+Remaining gates: hosted Python 3.11–3.13 checks and live replay on the final
+revision, review, explicit owner publication authorization, and a final build
+of the exact approved artifacts with recorded hashes.
+
 ## Current preparation - 0.3.1 / 2026-10-01
 
 Current branch: `release/0.3.1-site-planning`. Package metadata, citation and

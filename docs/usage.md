@@ -4,9 +4,18 @@ FlahaX chooses fertilizer salts and the grams of each salt for one litre of work
 
 Python 3.11 or newer is required. The package has no third-party dependencies.
 
+FlahaX is open source under the Apache License 2.0 from version 0.4.0.
+
 ## Install
 
-From a checkout of this repository, inside a virtual environment:
+From PyPI, inside a virtual environment (pin the version for reproducible
+work):
+
+```powershell
+python -m pip install flahax==0.4.0
+```
+
+From a checkout of this repository:
 
 ```powershell
 python -m pip install -e .
@@ -100,7 +109,7 @@ records and their `gramsPerLitre` for downstream mapping. `salts` contains only
 products with a retained positive weight. `deltaPct` is `None` when the formula
 has no target for that symbol or its target is zero.
 
-In the unreleased water-to-delivery workflow, `feasible` measures positive-target
+In the water-to-delivery workflow, `feasible` measures positive-target
 fit; it is not an assertion that every incidental addition is acceptable.
 `incidentalContributions` and `requiresReview` report zero/omitted-target
 nutrients separately. Explicit `maximum_concentrations` in the workflow or
@@ -108,7 +117,7 @@ acid adapters enforce absolute nutrient limits, including a true zero limit.
 See [water-to-delivery](water-to-delivery.md). This does not change the
 optimizer's existing penalties or invent different fertilizer materials.
 
-## Additional planning commands (unreleased checkout)
+## Additional planning commands (since 0.3.1)
 
 The no-argument JSON recommendation command remains backward compatible.
 Site planning has explicit commands; prompts go to stderr and JSON results
@@ -128,6 +137,27 @@ requirements, not a manufacturer model or actuator commands.
 See [site inputs and schemas](site-planning.md), [source-sheet review](source-sheet-review.md)
 and [current development status](development-status.md).
 
+## Source water chemistry from a laboratory analysis (0.4.0)
+
+`feasible` says nothing about pH or precipitation. For that, the water's
+complete analysis goes into the equilibrium model. A real analysis is never
+exactly charge-balanced, and solving pH from charge balance alone turns that
+small error into a large pH error. Start from the measured pH instead:
+
+```python
+from flahax import balance_water_analysis
+
+# mol/kg water; CO3-2 is total inorganic carbon
+balanced = balance_water_analysis(analysis_totals, measured_ph=7.8)
+print(balanced.imbalance_percent, balanced.balance_ion, balanced.balance_adjustment_molal)
+```
+
+The remaining charge is closed on `Cl-` (or `Na+`) and reported. An imbalance
+above 5% is rejected. Titrated alkalinity can replace inorganic carbon via
+`alkalinity_eq_per_kg`. In `plan_fertilizer_workflow`, add `measured_ph` to the
+`equilibrium` record. See the user manual, section 11, and
+[water-to-delivery](water-to-delivery.md#measured-ph-water-balancing).
+
 ## Tests
 
 From the repository root, after the package is installed:
@@ -136,4 +166,4 @@ From the repository root, after the package is installed:
 python -m unittest discover -s tests -t .
 ```
 
-`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the example export has 28 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula. A live call passes the salts saved in FlahaFAST.
+`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the example export has 28 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
