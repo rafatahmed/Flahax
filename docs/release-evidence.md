@@ -1,5 +1,44 @@
 # Delivery Planner Release Evidence
 
+## 0.4.0 preparation - 2026-10-17
+
+Prepared revision: `release/0.4.0`, cut from `main` at `00d855a` (merge of
+PR #15). Hosted CI passed on `00d855a`. Assessor: Rafat Al Khashan with
+Claude Code assistance. This is release-readiness evidence, not publication
+authorization. Version 0.4.0 is unpublished; PyPI's latest release is 0.3.1.
+
+| Check | Result |
+|---|---|
+| Version alignment | `0.4.0` in `pyproject.toml`, `flahax.__version__`, `CITATION.cff`, README, user manual and API reference; changelog section `0.4.0 — Unreleased`; tag `v0.4.0` not yet created |
+| Licence | First release under Apache-2.0 (PR #13). Wheel metadata `License-Expression: Apache-2.0`, with `LICENSE` and `NOTICE` as licence files; `NOTICE` is also in the sdist. 0.3.1 and earlier remain under the Flaha Free Use License 1.0 |
+| Local regression | 162 tests passed in 210.0 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1`; also 162 passed on Python 3.14.0. `compileall` and `git diff --check` passed |
+| Public API compatibility against the published 0.3.1 wheel | 100 exports retained, none removed, no signature changed; 3 added (`BalancedWaterAnalysis`, `balance_water_analysis`, `carbonate_alkalinity`; 103 total). The workflow `equilibrium` record gains optional keys only (`measured_ph`, `alkalinity_eq_per_kg`, `balance_ion`, `maximum_imbalance_percent`) |
+| Isolated distribution check | `tools/verify_distribution.py` passed: clean wheel and sdist installs on Python 3.13.15 (builder 3.14.0), eight manual examples, 28 catalogue products, all public exports, both CLI entry points. Sdist 394 files, 3,397,413 bytes; no PDF; `docs/publication/` excluded |
+| Metadata | `twine check --strict` passed for both artifacts |
+| Packaged resources | `USER_GUIDE.md` `fa54d6389b479f02f048b2bb54c8c228fc40bf5de7872f4e2a757d86448dc5e1`; `API_REFERENCE.md` `0da9b7ca85eed173f0308007fcceb4682662b132dd6d2248eea7c303265cd81e`; `chemistry_25c.json` `aeb264a4edf1177102bc1a68fb4dc87de6c1ea9c94cd45ff462dcfc06a0ee575`; `library.json` `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343` |
+| Thermodynamic data | Unchanged since 0.3.1. The installed `chemistry_25c.json` is byte-identical to the published 0.3.1 wheel's (`aeb264a…`). The `ad87363…` value in the 0.3.1 audit below is the same file as stored in Git with LF line endings |
+
+Candidate hashes, built before this evidence record was written (the record
+changes the sdist, so the publication artifacts must be rebuilt from the final
+reviewed revision and hashed again):
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.4.0-py3-none-any.whl` | `25f919d7cd91dadd9abb4237cba2ea0b5ac5e1e68f7f6121d5a739ee559a8943` |
+| `flahax-0.4.0.tar.gz` | `08d5ca638dd0661f3cbf446fa84027a7e98282eb5861b7d59b98d8964aa2c583` |
+
+What 0.4.0 changes scientifically: source water can be speciated at its
+measured pH, with the analysis's charge imbalance closed on Cl- or Na+ and
+recorded. On a published Qatar well (Shomar et al. 2024, station 104), charge
+balance alone gave pH 3.8 against a measured 7.80. No reaction constant,
+phase, catalogue product or existing default changed.
+
+Remaining before publication, per the [publishing checklist](publishing.md):
+hosted CI and the pinned live replay on the final revision; explicit owner
+authorization; a final build of the exact approved artifacts with recorded
+hashes; upload through the approved route; PyPI metadata and fresh-install
+verification; and the publication date and `v0.4.0` tag.
+
 ## 0.3.1 publication - 2026-10-17
 
 The owner authorized publication of 0.3.1 in the Claude Code session of

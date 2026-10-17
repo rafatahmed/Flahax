@@ -25,16 +25,17 @@ A fresh isolated Python 3.13 installation from PyPI passed version/import checks
 
 ## Checklist for the next release
 
-All items were completed for 0.3.1 on 2026-10-17. Clear the boxes when starting the next release.
+Release in preparation: **0.4.0** (branch `release/0.4.0`). The 0.3.1 run of
+this checklist was completed on 2026-10-17.
 
 - [x] Choose a new version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
-- [x] Pass relevant local tests, required pinned live replay and isolated wheel/sdist verification.
-- [x] Observe successful hosted Python 3.11–3.13 checks and pinned live-reference replay on the reviewed revision.
-- [x] Obtain explicit publication authorization and check that the new version is unused on PyPI.
-- [x] Build and strictly validate the exact approved artifacts; record their hashes.
-- [x] Upload through the approved release route; verify PyPI metadata and a fresh installed-package check.
-- [x] Record the actual publication date and retain release evidence.
+- [x] Pass relevant local tests and isolated wheel/sdist verification.
+- [ ] Pass the required pinned live replay and observe successful hosted Python 3.11–3.13 checks on the reviewed revision.
+- [ ] Obtain explicit publication authorization and check that the new version is unused on PyPI.
+- [ ] Build and strictly validate the exact approved artifacts; record their hashes.
+- [ ] Upload through the approved release route; verify PyPI metadata and a fresh installed-package check.
+- [ ] Record the actual publication date, create the `v0.4.0` tag and retain release evidence.
 
 Preparing or merging a branch does not authorize publication. Use [package verification](package-verification.md) and [release evidence](release-evidence.md). FlahaFAST integration is separate work. The commands below preserve the historical 0.3.0 procedure; substitute a newly approved version and artifact directory for future releases.
 
