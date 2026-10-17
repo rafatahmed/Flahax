@@ -10,7 +10,7 @@ tags:
 authors:
   - given-names: Rafat A.
     surname: Al Khashan
-    orcid: 0000-0000-0000-0000  # TODO: author's ORCID iD
+    orcid: 0009-0009-4692-4552
     affiliation: 1
 affiliations:
   - index: 1
