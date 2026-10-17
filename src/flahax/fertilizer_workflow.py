@@ -8,6 +8,7 @@ from .composition import validate_profile
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import VolumeLitres, final_solution_recipe
 from .engine import recommend, gap_for, load_library
+from .measured_water import DEFAULT_MAXIMUM_IMBALANCE_PERCENT, balance_water_analysis
 from .equilibrium_delivery import plan_equilibrium_delivery
 from .ph_planning import plan_ph
 from .product_conversion import catalogue_dose_totals, MOLAR_MASS
@@ -120,7 +121,28 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 if not isinstance(config['water_analysis_id'], str) or not config['water_analysis_id'].strip():
                     raise DeliveryError('missing_field', 'water_analysis_id is required')
                 kwargs = {key: config[key] for key in ('complete_analysis', 'carbon_boundary', 'temperature_c', 'phases')}
-                water_state = calculate_equilibrium_ph(config['water_totals'], **kwargs)
+                balance = None
+                if config.get('measured_ph') is None:
+                    water_state = calculate_equilibrium_ph(config['water_totals'], **kwargs)
+                    water_totals = dict(config['water_totals'])
+                else:
+                    # Speciate at the laboratory's measured pH and close the charge
+                    # on a named ion, instead of letting analytical error set the pH.
+                    if config['complete_analysis'] is not True:
+                        raise DeliveryError('incomplete_water_analysis',
+                                            'complete analytical totals must be explicitly declared')
+                    if config['carbon_boundary'] != 'closed':
+                        raise DeliveryError('unsupported_carbon_boundary',
+                                            'calculated pH requires closed analytical inorganic carbon')
+                    balance = balance_water_analysis(
+                        config['water_totals'], measured_ph=config['measured_ph'],
+                        alkalinity_eq_per_kg=config.get('alkalinity_eq_per_kg'),
+                        balance_ion=config.get('balance_ion', 'Cl-'),
+                        maximum_imbalance_percent=config.get('maximum_imbalance_percent',
+                                                             DEFAULT_MAXIMUM_IMBALANCE_PERCENT),
+                        phases=config['phases'], temperature_c=config['temperature_c'])
+                    water_state = balance.state
+                    water_totals = dict(balance.totals)
                 expected = _water_ppm(config['water_totals'], mass, final_volume.value)
                 for ion in set(expected) | set(water):
                     if not math.isclose(expected.get(ion, 0), water.get(ion, 0), rel_tol=1e-6, abs_tol=1e-6):
@@ -138,12 +160,13 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                     if product is None or product['name'] != salt.name:
                         raise DeliveryError('product_chemistry_mismatch', 'chemistry requires exact catalogue identities')
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
-                totals = dict(config['water_totals'])
+                totals = dict(water_totals)
                 for basis, amount in catalogue_dose_totals(doses).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 mixed = calculate_equilibrium_ph(totals, **kwargs)
                 return {'water': water_state, 'mixed': mixed, 'product_doses_g_per_kg_water': doses,
-                        'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary']}
+                        'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
+                        'water_totals': water_totals, 'water_balance': balance}
             run('chemistry', chemical_states)
 
     if not missing('nitric', nitric, ('reagent', 'reagent_channel_id', 'maximum_reagent_volume', 'maximum_nutrient_error_percent')):
@@ -151,7 +174,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             stages['nitric'] = WorkflowStage('blocked', error_code='chemistry_required', message='complete calculated chemistry is required')
         else:
             run('nitric', lambda: plan_equilibrium_delivery(
-                recipe, water_mass_kg=equilibrium['water_mass_kg'], water_totals=equilibrium['water_totals'],
+                recipe, water_mass_kg=equilibrium['water_mass_kg'],
+                water_totals=stages['chemistry'].value['water_totals'],
                 water_analysis_id=equilibrium['water_analysis_id'], initial_ph=stages['chemistry'].value['mixed'].ph,
                 target_ph=target_ph, targets=targets, temperature_c=equilibrium['temperature_c'], phases=equilibrium['phases'],
                 maximum_concentrations=maximum_concentrations,

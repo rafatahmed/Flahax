@@ -26,7 +26,7 @@ class ReleaseHygieneTests(unittest.TestCase):
         manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
         self.assertIn(f'FlahaX {flahax.__version__}', manual)
         examples = re.findall(r'```python\n(.*?)```', manual, re.S)
-        self.assertEqual(len(examples), 7)
+        self.assertEqual(len(examples), 8)
         for index, example in enumerate(examples):
             with self.subTest(example=index + 1), contextlib.redirect_stdout(io.StringIO()):
                 exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
