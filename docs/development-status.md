@@ -1,10 +1,8 @@
 # Water-to-delivery development status
 
-Updated 2026-10-17 (0.3.1 release audit). The 0.3.1 preparation is merged on
-`main`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17).
-These changes prepare **0.3.1, not yet published**. Version 0.3.0 is the
-previous published baseline. Local verification artifacts are not a release
-authorization; hosted checks, review and publication approval remain separate.
+Updated 2026-10-17. **0.3.1 is published on PyPI** (tag `v0.3.1`); see the
+[publication evidence](release-evidence.md#031-publication---2026-10-17).
+The matrix below describes the 0.3.1 capabilities and their boundaries.
 
 ## Capability and boundary matrix
 
@@ -46,10 +44,10 @@ See [site planning](site-planning.md), [water-to-delivery](water-to-delivery.md)
 
 ## Next work, in order
 
-1. Hosted verification passed on `main` at `2e257d5` (run `38967066279`,
-   2026-10-16): Python 3.11-3.13 and the required live PHREEQC replay. The
-   remaining 0.3.1 release steps are explicit publication authorization, the
-   exact-artifact build and upload, and the fresh PyPI installation check.
+1. 0.3.1 is published and 0.3.0 is yanked (both 2026-10-17). A yank stops
+   unpinned installs from choosing 0.3.0 but leaves its files, including the
+   YaraVita PDF in its sdist, downloadable by exact pin. Deleting the release
+   would be permanent and remains an owner decision.
 2. Resolve exact commercial product assays and trace co-storage evidence for
    the pepper recipe; define volumes, ratios, temperature and acid hardware
    layout before promoting the candidate grouping to an approved stock plan.
