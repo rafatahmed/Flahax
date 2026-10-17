@@ -13,6 +13,7 @@ type: software
 authors:
   - family-names: Al Khashan
     given-names: Rafat A.
+    orcid: https://orcid.org/0009-0009-4692-4552
 version: 0.3.1
 url: https://pypi.org/project/flahax/
 repository-code: https://github.com/rafatahmed/Flahax
@@ -32,6 +33,7 @@ preferred-citation:
   authors:
     - family-names: Al Khashan
       given-names: Rafat A.
+      orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
   version: 0.3.1
   url: https://pypi.org/project/flahax/
