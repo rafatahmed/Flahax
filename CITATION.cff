@@ -1,10 +1,14 @@
 cff-version: 1.2.0
 message: "If you use FlahaX, please cite it as below."
-title: "FlahaX: fertilizer salt selection for a fixed crop formula"
+title: "FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning"
 abstract: >-
-  FlahaX chooses fertilizer salts and the grams of each salt so that a fixed
-  crop formula, after subtraction of the season's water, is met with the
-  smallest percentage error the salt library allows.
+  FlahaX is a Python package for plant nutrition. It chooses fertilizer salts
+  and grams so that a fixed crop formula, after subtraction of the source
+  water, is met; models the resulting solution with fertilizer-specific
+  aqueous equilibrium chemistry (speciation, precipitation and pH); plans the
+  acid dose to a target pH; and plans stock tanks and injection with
+  auditable units, model identifiers and source hashes. Chemistry results are
+  verified against PHREEQC.
 type: software
 authors:
   - family-names: Al Khashan
@@ -19,9 +23,12 @@ keywords:
   - nutrient solution
   - formulation
   - non-negative least squares
+  - fertigation
+  - aqueous equilibrium
+  - plant nutrition
 preferred-citation:
   type: software
-  title: "FlahaX: fertilizer salt selection for a fixed crop formula"
+  title: "FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning"
   authors:
     - family-names: Al Khashan
       given-names: Rafat A.

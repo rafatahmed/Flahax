@@ -11,6 +11,8 @@ exclude docs/sources/165357805552.pdf
 exclude docs/sources/215057776303.pdf
 exclude docs/sources/215726931002.pdf
 exclude docs/sources/yaravita-micronutrients-products-and-services-guide.pdf
+# Every manufacturer PDF stays local-only until redistribution is permitted.
+recursive-exclude docs/sources *.pdf
 recursive-include src/flahax *.py
 recursive-include src/flahax/data *.json
 recursive-include src/flahax/data *.md

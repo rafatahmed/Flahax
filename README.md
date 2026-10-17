@@ -1,73 +1,53 @@
 # FlahaX
 
-Unreleased site-input additions: [interactive CLI, calculated EC screening and
-injector flow sizing](docs/site-planning.md). Source water is user-specific;
-standard workflow acids are nitric and phosphoric. Manufacturer EC screening
-does not claim validated concentrated-stock prediction or select an equipment
-model without operating data.
-
-See the [unreleased capability/status matrix](docs/development-status.md) for
-the exact implemented boundaries, source handling and next development steps.
-
-**Preparing 0.3.1 - not yet published** · [User manual](src/flahax/data/USER_GUIDE.md) · [Changelog](CHANGELOG.md) · [Release checklist](docs/publishing.md)
-
-Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planning.
+**Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
+equilibrium chemistry and auditable delivery planning.**
 
 [![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Flaha%20Free%20Use-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
 
-FlahaX selects a fertilizer combination and the grams of each salt for a fixed crop formula. The formula stays as written. This season’s water is subtracted from it, and the salts cover the gap that remains. Every real salt in the shipped library is a candidate. Non-negative grams decide which salts stay in the mix.
+FlahaX turns a crop's nutrient formula and the grower's actual water into a
+fertilizer recipe, then checks what that recipe does in solution: which ions
+pair up, whether anything precipitates, what the pH will be, how much acid
+reaches a target pH, and how the recipe splits into stock tanks and injector
+flows. Every plan carries its units, model identifiers and source hashes, so
+a result can be reviewed and reproduced.
 
-The package is separate from the FlahaFAST application. FlahaFAST does not import it.
+To our knowledge, FlahaX is the first Python package to unite fertilizer
+formulation, fertilizer-specific aqueous equilibrium chemistry and auditable
+delivery planning in one dependency-free library, verified against PHREEQC.
 
-The 0.3.0 chemistry and delivery APIs are retained. The 0.3.1 preparation adds site-input planning commands while preserving the no-argument recommendation CLI.
+**Who it is for**
 
-## Chemistry and delivery planning
+- **Researchers** who need reproducible nutrient-solution chemistry with
+  stated validity limits.
+- **Agronomists and consultants** who design recipes against real water
+  analyses and real commercial products.
+- **Growers** with technical support, through the interactive command line.
+- **Developers** building nutrition and fertigation software on a tested,
+  dependency-free engine.
 
-| Capability | Verified boundary |
-|---|---|
-| Mixed fertilizer equilibrium (P2/P3) | All 28 catalogue conversions feed one model with 197 aqueous entries and 28 phases; 25 °C, Davies ionic strength <= 0.1 mol/kg water, fixed oxidation states. |
-| Catalogue trace products | Fe-DTPA and Fe-o,o-EDDHA are Fe-only 1:1 products; Fe/Mn/Zn/Cu-EDTA retain their declared forms. CH-micro adds those EDTA forms, borax and sodium molybdate. |
-| Nitric-acid target pH | Initial and target states use the same mixed solver, with added nitrate and closed analytical inorganic carbon. The result is an initial dose estimate requiring post-mix measurement. |
-| Equilibrium-to-delivery adapter (P5.5) | `plan_equilibrium_delivery` returns `EquilibriumPhPlan`: explicit water mass, catalogue doses, HNO3 assay/density, bounded reagent volume, nutrient rescoring and auditable source hashes. |
-| Reviewed delivery composition | Both equilibrium and measured-curve pH plans compose with stock and calibrated pump-planning values. Missing inputs, incompatible commands, target supersaturation or formed solids prevent validation. No hardware is operated. |
-
-Recipes use **g/L of final solution**; chemistry uses **g/kg water** and molal analytical totals. They are not interchangeable. The delivery adapter requires explicit final solvent mass and make-up volume, including reagent carrier water. Stock rules, solubility limits, water records and reagent assays are caller-supplied evidence—not universally certified catalogue data.
-
-See the [runnable equilibrium-delivery example and API contract](https://github.com/rafatahmed/Flahax/blob/main/docs/package-verification.md), [chemistry coverage matrix](https://github.com/rafatahmed/Flahax/blob/main/docs/chemistry-coverage-matrix.md), and [reference fixtures](https://github.com/rafatahmed/Flahax/blob/main/docs/reference-fixtures.md).
-
-## Verification status and next steps
-
-Verification results are versioned in the [release evidence](docs/release-evidence.md),
-not inferred from the latest published version. Local checks include pinned
-PHREEQC replay, executable manual examples, public API documentation coverage,
-and clean wheel/sdist installations. Hosted CI is a separate publication gate.
-PHREEQC is an external verification tool, not a runtime dependency or bundled executable.
-
-**Assessor: Rafat Al Khashan.** The owner-amended G6 assessment concerns bounded computational evidence without laboratory work. It is not an independent review, a formal proof for arbitrary inputs, or operational certification. See the [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md) and [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
-
-Version **0.3.0 is published on [PyPI](https://pypi.org/project/flahax/0.3.0/)** (2026-09-27). The release used the owner's documented local-evidence exception; hosted verification remains open.
-
-Hosted Python 3.11–3.13 checks and the required live PHREEQC replay pass on `main` as of 2026-10-16. Next priorities are an authorized 0.3.1 publication, broader numerical and input-boundary testing, and stable consumer contracts. The [development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md) defines proposed milestones, acceptance gates and expansion opportunities. The [implementation ledger](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) preserves P0–P7 evidence and historical decisions.
+**FlahaX and FlahaFAST.** FlahaX is developed as the chemistry engine for
+the FlahaFAST application, where it is planned to provide formulation, pH
+and conductivity planning. That integration is not yet in place: FlahaFAST
+does not currently import FlahaX, and FlahaX stays a standalone package
+with its own releases.
 
 ## Install
 
-For reproducible use, pin the package version: `python -m pip install flahax==0.3.0`. The unpinned command below installs the latest available release. Source checkouts and verified wheel files can also be installed directly.
+Python 3.11 or newer. There are no third-party runtime dependencies.
 
-Python 3.11 or newer. There are no required third-party runtime dependencies. Distribution verification uses development-only build tooling.
-
-```powershell
-py -m pip install flahax
+```bash
+python -m pip install flahax==0.3.1
 ```
 
-A checkout of this repository can be installed for local work:
-
-```powershell
-py -m pip install -e .
-```
+Pin the version for reproducible work. `python -m pip install flahax`
+installs the latest release.
 
 ## Quick start
+
+Select salts for a crop formula, with 20 mg/L of calcium already in the water:
 
 ```python
 from flahax import load_library, recommend
@@ -82,41 +62,98 @@ for salt in result["salts"]:
     print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
 ```
 
-The CLI requires an explicit nonempty `salts` array. This example selects the packaged catalogue deliberately and sends one JSON object on standard input:
+`result["salts"]` lists each chosen salt with grams per litre of the
+solution the plant receives. `result["rows"]` gives each element's target,
+final concentration (mg/L) and percentage difference. Element keys are
+`N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`
+and `Mo`.
 
-```powershell
-py -c "import json; from flahax import load_library; print(json.dumps({'salts': load_library()['salts'], 'targets': {'N_NO3': 128, 'P': 58, 'K': 211, 'Ca': 104, 'Mg': 40, 'S': 54}, 'water': {'Ca': 20}}))" | flahax
+## Command line
+
+```bash
+flahax --help
+flahax workflow --interactive   # water + crop targets -> recipe, pH and acid plan
+flahax ec --interactive         # approximate EC screening for supported products
+flahax size --interactive       # stock-channel volume and injector flow sizing
 ```
 
-`result["salts"]` lists each chosen salt and its `gramsPerLitre`. `result["rows"]` lists each element with its target, the final concentration in ppm, and `deltaPct`. Grams are for one litre of the solution the plant sees.
+With no subcommand, `flahax` reads one JSON object (`salts`, `targets`,
+`water`) on standard input and writes the recommendation as JSON. Commands
+plan; they never operate pumps, valves or other hardware.
 
-Element symbols follow the formula database: `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`.
+## What it does
 
-## Worked example
+| Layer | Capability | Boundary |
+|---|---|---|
+| Formulation | Chooses salts and grams from the full shipped library to meet a fixed crop formula after subtracting the source water | Non-negative least squares; the formula is not altered |
+| Equilibrium chemistry | One mixed aqueous model for all 28 catalogue products: 197 aqueous species, 28 solid phases, ion pairs, chelates and saturation indices | 25 °C, Davies activities up to ionic strength 0.1 mol/kg, fixed oxidation states, closed inorganic carbon |
+| pH and acid | Calculated initial pH; nitric-acid dose to a target pH; standard workflow with nitric and phosphoric acid, using supplied assay and density | An initial dose estimate; measure after mixing |
+| Delivery planning | Stock-tank grouping with compatibility and solubility checks, reagent volumes, pump and injector flow sizing, composed delivery plans | Uses caller-supplied product, compatibility and equipment records; no equipment model selection |
+| Conductivity | Approximate EC screening for supported products; EC from a measured calibration profile | Dilute, pre-acid screening with unknown accuracy; no validated concentrated-stock model yet |
+| Audit trail | Explicit units (g/L of final solution versus g/kg water), model identifiers, source hashes, `needs_input` instead of guessed values | Plans are reviewable records, not operating authorizations |
 
-Edited pepper targets, with 20 ppm calcium already in the water, stay inside 1% on every targeted element. The fit uses six salts:
+## Verification
 
-| Salt | g/L |
-|---|---:|
-| Potassium nitrate | 0.546 |
-| Magnesium nitrate | 0.415 |
-| Calcium sulfate | 0.290 |
-| Phosphoric acid (75%) | 0.146 |
-| Calcium nitrate (ag grade) | 0.046 |
-| Calcium monobasic phosphate | 0.048 |
+- 153 automated tests, including live replay of every catalogue product,
+  phase and acid case against pinned PHREEQC 3.8.6 (USGS).
+- Hosted checks on Python 3.11, 3.12 and 3.13, plus clean wheel and source
+  installation checks.
+- Evidence is versioned per release in the
+  [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
 
-The ppm equation, the Lawson–Hanson solve, the library counts, and the regression case are in [docs/method.md](https://github.com/rafatahmed/Flahax/blob/main/docs/method.md).
+This is computational evidence. FlahaX has not been validated in the
+laboratory or in the field, and its owner's
+[computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
+is not an independent review. No recipe, pH or EC value is an authorization
+to operate equipment.
+
+## Roadmap
+
+Next work, in order: broader numerical and input-boundary testing, stable
+consumer contracts, and a validated
+[conductivity model](https://github.com/rafatahmed/Flahax/blob/main/docs/stock-conductivity-service-design.md)
+covering irrigation-strength solutions first and concentrated stock tanks
+second. See the
+[development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md)
+and [current status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md).
+
+## Documentation
+
+| Document | For |
+|---|---|
+| [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) | Installation, seven tested examples, units, chemistry, pH and delivery planning; also ships inside the package |
+| [API reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/API_REFERENCE.md) | Every public function and result record, with signatures |
+| [Site planning and CLI](https://github.com/rafatahmed/Flahax/blob/main/docs/site-planning.md) | Water, acid, EC and injection inputs |
+| [Chemistry model](https://github.com/rafatahmed/Flahax/blob/main/docs/fertilizer-equilibrium-model.md) | Equilibrium model, PHREEQC evidence and boundaries |
+| [Formulation method](https://github.com/rafatahmed/Flahax/blob/main/docs/method.md) | The ppm equation, solver and worked pepper example |
+| [Documentation index](https://github.com/rafatahmed/Flahax/blob/main/docs/index.md) | All user, scientific and contributor documents |
+| [Changelog](https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md) | Changes by release |
+
+The manual can be read offline from an installed package through
+`importlib.resources` (`flahax/data/USER_GUIDE.md`).
+
+## Development
+
+From a source checkout:
+
+```bash
+python -m pip install -e .
+PYTHONPATH=src python -m unittest discover -s tests -t .
+```
+
+Live PHREEQC replay, distribution verification and branch conventions are in
+[package verification](https://github.com/rafatahmed/Flahax/blob/main/docs/package-verification.md)
+and [CONTRIBUTING](https://github.com/rafatahmed/Flahax/blob/main/CONTRIBUTING.md).
 
 ## Citation
 
-Please cite FlahaX when the package, or a recommendation it produced, is used in a report or a paper.
-
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.1, release preparation) [Computer software]. Cite the version actually used; 0.3.0 remains the previous published baseline.
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.1) [Computer software].
+https://pypi.org/project/flahax/
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
-  title   = {FlahaX: fertilizer salt selection for a fixed crop formula},
+  title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
   version = {0.3.1},
   url     = {https://pypi.org/project/flahax/},
@@ -124,81 +161,12 @@ Al Khashan, R. A. (2026). *FlahaX* (Version 0.3.1, release preparation) [Compute
 }
 ```
 
-GitHub reads [`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff) for the “Cite this repository” button. That file carries the same record.
-
-## Documentation
-
-Choose the document for your task:
-
-- **First use:** [shipped user manual](src/flahax/data/USER_GUIDE.md), including seven executable examples and result-status interpretation.
-- **Function lookup:** [complete public API reference](src/flahax/data/API_REFERENCE.md), with exact signatures and result-record fields.
-- **Site inputs and CLI:** [planning schemas](docs/site-planning.md), including water, acid, EC and A/B injection requirements.
-- **Scientific assurance:** [model and boundaries](docs/fertilizer-equilibrium-model.md) and [versioned test evidence](docs/release-evidence.md).
-
-The manual and API reference are available offline in installed packages;
-graphical report examples require the source checkout. No recipe, calculated
-pH or EC screening value is an automatic authorization to operate equipment.
-
-Runnable examples for the current checkout are in `examples/`. From the repository
-root, set `PYTHONPATH=src` and run `python -m examples.run_all --output build/my-examples`
-to generate HTML, JSON and Markdown capability reports. See `examples/README.md`
-for individual scenarios and the distinction between pepper inputs and synthetic evidence.
-
-Unreleased development: `docs/water-to-delivery.md` in this checkout
-separates crop targets, source-water contributions and incidental nutrients,
-and documents calculated-pH and standard nitric/phosphoric candidate planning. These additions
-are not included in the published 0.3.0 artifacts.
-
-Start with the [0.3.1 preparation manual](src/flahax/data/USER_GUIDE.md) for installation, tested examples, units, chemistry, pH/delivery planning, troubleshooting and upgrades. It ships inside the wheel and source distribution and can be read offline with `importlib.resources`. The [documentation index](docs/index.md) separates user guidance, scientific evidence, contributor tools and historical notes.
-
-| Document | Contents |
-|---|---|
-| [docs/usage.md](https://github.com/rafatahmed/Flahax/blob/main/docs/usage.md) | Library call, command line, inputs, and result fields |
-| [docs/method.md](https://github.com/rafatahmed/Flahax/blob/main/docs/method.md) | ppm equation, solver, library file, and the pepper proof |
-| [INTEGRATION.md](https://github.com/rafatahmed/Flahax/blob/main/INTEGRATION.md) | Package consumer boundary; integration owned by the separate FlahaFAST project |
-| [docs/delivery-control-design.md](https://github.com/rafatahmed/Flahax/blob/main/docs/delivery-control-design.md) | Technical frame for future stock tanks, pH, and dosing control |
-| [docs/implementation-roadmap.md](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) | Trackable delivery-system implementation plan and acceptance gates |
-| [docs/delivery-contracts.md](https://github.com/rafatahmed/Flahax/blob/main/docs/delivery-contracts.md) | P0 versioned delivery-planning input contracts and audit records |
-| [docs/delivery-quantities.md](https://github.com/rafatahmed/Flahax/blob/main/docs/delivery-quantities.md) | P1 unit-safe batch adaptation and reagent nutrient contributions |
-| [docs/stock-planning.md](https://github.com/rafatahmed/Flahax/blob/main/docs/stock-planning.md) | P2 conservative stock-tank planning and bench-validation protocol |
-| [docs/ph-planning.md](https://github.com/rafatahmed/Flahax/blob/main/docs/ph-planning.md) | P3 titration-bounded pH planning and mandatory verification |
-| [docs/reference-fixtures.md](https://github.com/rafatahmed/Flahax/blob/main/docs/reference-fixtures.md) | Dependency-free PHREEQC golden-fixture verification baseline |
-| [docs/equilibrium-kernel.md](https://github.com/rafatahmed/Flahax/blob/main/docs/equilibrium-kernel.md) | First internal activity/speciation kernel verified against PHREEQC |
-| [docs/full-fertilizer-chemistry.md](https://github.com/rafatahmed/Flahax/blob/main/docs/full-fertilizer-chemistry.md) | Current mixed chemistry coverage plus explicitly historical development notes |
-| [docs/fertilizer-equilibrium-model.md](https://github.com/rafatahmed/Flahax/blob/main/docs/fertilizer-equilibrium-model.md) | Unified macro/trace equilibrium, PHREEQC evidence and frozen catalogue boundary |
-| [docs/release-evidence.md](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md) | Automated delivery-planner evidence, explicit scientific gates, and release boundary |
-| [docs/package-verification.md](https://github.com/rafatahmed/Flahax/blob/main/docs/package-verification.md) | Clean wheel/sdist verification, pinned live reference tooling, and runnable equilibrium-delivery API example |
-| [docs/computational-review.md](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md) | Owner-amended G6 computational assessment, named assessor and limits of acceptance |
-| [docs/chemistry-coverage-matrix.md](https://github.com/rafatahmed/Flahax/blob/main/docs/chemistry-coverage-matrix.md) | Exact aqueous/phase coverage, naming aliases and source-backed definitions |
-| [docs/publishing.md](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md) | Building and releasing a new version |
-| [docs/release-readiness.md](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md) | Cleanup findings, publication status and outstanding verification |
-
-From a checkout, the tests are:
-
-```powershell
-$env:PYTHONPATH = 'src'
-py -m unittest discover -s tests -t .
-```
-
-For required live-reference verification on Windows, provision the pinned external tool and fail rather than skip if unavailable:
-
-```powershell
-./tools/provision_phreeqc.ps1
-$env:FLAHAX_REQUIRE_PHREEQC = '1'
-$env:PYTHONPATH = 'src'
-py -3.13 -m unittest discover -s tests -t .
-py -m compileall -q src tools
-git diff --check
-```
-
-For isolated distribution checks, use a development virtual environment with `build` installed and run `python tools/verify_distribution.py`. It creates temporary wheel/sdist installations and writes `build/distribution-verification.json`; nothing is published. Without PHREEQC, ordinary runs still execute checked-in golden regressions but may skip live replay.
-
-## Core formulation scope
-
-This version returns grams for one litre of working solution. A salt is dosed from the shipped library only when its assay uses known ions and its formula does not rule the assay out. Default recipes leave out carbonate salts, and they leave out sodium and chloride unless the formula asks for that ion or the caller allows it. The result reports whether every requested ion landed inside 1%, plus warnings.
-
-The core `recommend` and no-argument CLI contract does not split tanks, adjust pH, price the mix, or apply a concentration factor. Separate planning APIs and explicit planning subcommands provide the bounded capabilities documented above. They do not physically adjust pH, execute dosing commands or write to the FlahaFAST database.
+GitHub's "Cite this repository" button reads
+[`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff).
 
 ## License
 
-Use of FlahaX is free of charge, including commercial use, under the [Flaha Free Use License](https://github.com/rafatahmed/Flahax/blob/main/LICENSE). That license permits installation and running of an official copy. Modification, forking, republishing, and giving copies to anyone else require permission from the copyright holder. The license is a proprietary free-use license.
+FlahaX is free to install and use for any purpose, including commercial
+work and research, under the
+[Flaha Free Use License](https://github.com/rafatahmed/Flahax/blob/main/LICENSE).
+It is not open source: modification and redistribution are not permitted.

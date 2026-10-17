@@ -1,16 +1,44 @@
 # Normalize text to LF so source distributions are identical on every OS.
 * text=auto eol=lf
 
-*.py   text eol=lf
-*.pyi  text eol=lf
+*.py   text eol=lf diff=python
+*.pyi  text eol=lf diff=python
 *.toml text eol=lf
 *.cfg  text eol=lf
 *.ini  text eol=lf
+*.in   text eol=lf
+*.cff  text eol=lf
 *.json text eol=lf
-*.md   text eol=lf
+*.md   text eol=lf diff=markdown
 *.txt  text eol=lf
 *.yml  text eol=lf
 *.yaml text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.svg  text eol=lf
+*.csv  text eol=lf
+*.sh   text eol=lf
+*.ps1  text eol=lf
+
+# Windows command scripts need CRLF to run.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files: never normalize line endings or attempt text diffs.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.mp4  binary
+*.zip  binary
+*.gz   binary
+*.whl  binary
+*.msi  binary
+*.exe  binary
+*.dll  binary
 
 # Keep the license byte-for-byte as stored.
 LICENSE text eol=lf
@@ -18,6 +46,10 @@ LICENSE text eol=lf
 # Leave these out of `git archive` source snapshots.
 .gitignore     export-ignore
 .gitattributes export-ignore
+.github/       export-ignore
+
+# Generated from the public API; review the generator, not the output.
+src/flahax/data/API_REFERENCE.md linguist-generated=true
 
 # Raw reference bytes are hashed. Preserve PHREEQC tabs, CRLF and final blanks.
 tests/fixtures/phreeqc/**/*.pqi -text whitespace=-blank-at-eol,-blank-at-eof

@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.3.1, release preparation; not yet published. The earlier 0.3.0 publication exception does not authorize this release or establish hosted verification for it.
+**Version:** 0.3.1, released 2026-10-17. Hosted Python 3.11–3.13 checks and live PHREEQC replay passed on the release revision; see the repository's release evidence.
 
 ## Contents
 
@@ -34,17 +34,17 @@ Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-ED
 
 Python 3.11 or newer is required. The hosted verification matrix targets 3.11–3.13; local checks do not replace that matrix.
 
-Before publication, install the reviewed checkout in a virtual environment:
+Install the published package in a virtual environment. From a source checkout, `python -m pip install .` installs the same version:
 
 ```text
 python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # POSIX shell: source .venv/bin/activate
-python -m pip install .
+python -m pip install flahax==0.3.1
 python -c "import flahax; print(flahax.__version__)"
 ```
 
-After 0.3.1 is actually published, the corresponding command is `python -m pip install flahax==0.3.1`. Until then use the reviewed checkout or verified local artifacts. Never interpret an unavailable version as permission to install an unreviewed substitute.
+Pin the version for reproducible work. Never treat an unavailable version as permission to install an unreviewed substitute.
 
 This complete example also converts the result into a 100 L batch:
 
@@ -242,7 +242,7 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1 (release preparation). Use the repository's `CITATION.cff` when citing the prepared version and distinguish it from previously published artifacts. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 
