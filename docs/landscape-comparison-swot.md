@@ -16,7 +16,7 @@ what FlahaX does? If not, what can the article truthfully claim?
 
 | Tool | What it is | Form and language | Licence | Activity seen |
 |---|---|---|---|---|
-| **FlahaX** | Fertilizer formulation, bounded aqueous chemistry and auditable delivery planning | Python library + CLI on PyPI, no runtime dependencies | Flaha Free Use 1.0: free use, **no modification or redistribution** | 0.3.0 on PyPI 2026-09-27; 0.3.1 in preparation |
+| **FlahaX** | Fertilizer formulation, bounded aqueous chemistry and auditable delivery planning | Python library + CLI on PyPI, no runtime dependencies | Apache-2.0 from the release after 0.3.1 (0.3.1 and earlier: Flaha Free Use 1.0) | 0.3.0 on PyPI 2026-09-27; 0.3.1 in preparation |
 | **hydrosolver** | Optimisation-driven hydroponic nutrient calculator and small DSL (`Composition`, `Solution`, `solve_lstsq`) | Python package on PyPI | GPLv3 | Single release 0.1, 2021-10-17 |
 | **NutrientMixingAlgorithm** (TU Chemnitz ACSD lab) | Convex optimisation of water-source volumes and fertilizer masses into a mixing tank; aquaponics focus | Python 3.11 script, XML tables, CasADi + IPOPT; not on PyPI | Open source (repo) | Last push 2024-11-14; companion paper Kobelski et al., *Appl. Sci.* 2024, 14, 8140 |
 | **HydroBuddy** | Best-known free nutrient calculator: salt weights from target elements, water quality input, 1:100 A/B stocks, empirical EC estimate, acid for alkalinity | Desktop program, Lazarus/Pascal | GPL | v1.100 described as last release |
@@ -63,9 +63,10 @@ evidence](release-evidence.md) and the README.
 2. **"First plant nutrition Python package" is not defensible.** hydrosolver
    (PyPI, 2021) is a Python plant-nutrition package, and NutrientMixingAlgorithm
    is Python research code with a peer-reviewed paper.
-3. **"Open source" is not accurate for FlahaX.** Its licence permits free use
-   but forbids modification and redistribution. "Free to use" or
-   "source-available" are accurate.
+3. **"Open source" is accurate only from the Apache-2.0 relicence.** Releases
+   up to 0.3.1 used the Flaha Free Use Licence, which forbade modification and
+   redistribution; the main branch is now Apache-2.0. Say "open source" only
+   once a release under Apache-2.0 is published.
 4. **The audience claim needs care.** FlahaX serves developers and
    researchers well today. Agronomists and growers are served only through the
    CLI and reports; HydroBuddy, NUTRISENSE and NutriNet are easier for them.
@@ -105,9 +106,9 @@ Candidate claim wording, strongest defensible first:
 
 ### Weaknesses
 
-- **Licence blocks open-source use.** No modification or redistribution:
-  researchers cannot fork or extend it, developers cannot ship it inside their
-  products, and venues such as JOSS that require an OSI licence are closed.
+- **Licence history.** Releases up to 0.3.1 forbade modification and
+  redistribution. The move to Apache-2.0 removes this weakness for later
+  releases, but only once a release under Apache-2.0 is on PyPI.
 - **No laboratory or field validation.** Evidence is computational; EC
   accuracy is unknown and no grower trial exists, unlike NUTRISENSE. The
   [route to accurate EC](#route-to-accurate-ec) sets out how to close the EC
@@ -131,7 +132,7 @@ Candidate claim wording, strongest defensible first:
   chemistry tools are generic. FlahaX can own "chemistry-aware nutrient
   planning in Python".
 - **Peer-reviewed software paper** (for example *SoftwareX*, *Computers and
-  Electronics in Agriculture*, or JOSS if the licence changes) establishes
+  Electronics in Agriculture*, or JOSS now that the licence is Apache-2.0) establishes
   priority and citation.
 - **Research collaborations** for laboratory and greenhouse validation —
   NUTRISENSE's group, TU Chemnitz's lab and horticulture departments are
@@ -161,8 +162,6 @@ Candidate claim wording, strongest defensible first:
   the project's careful evidence earns.
 - **Liability perception.** Any plan that leads to crop damage reflects on the
   tool; the boundaries must stay visible in FlahaFAST too.
-- **Licence-driven non-adoption.** Researchers may prefer an inferior open
-  tool they can modify, or build an open competitor on PHREEQC.
 - **Bus factor.** Single-maintainer projects lose trust if releases stall.
 
 ## Route to accurate EC
@@ -264,7 +263,7 @@ does not require. Revisit only if T2 fails its target on real stocks.
 
 - Lead with the combination and the verification, not with "first".
 - Name the peers fairly; the comparison makes FlahaX look stronger, not weaker.
-- State the licence plainly as free to use and avoid "open source".
+- Say "open source (Apache-2.0)" only after a release under that licence is published.
 - Say clearly that FlahaX is the planned engine for FlahaFAST and that
   FlahaFAST does not use it yet.
 - Keep the validity boundaries in the article; they are a differentiator.
