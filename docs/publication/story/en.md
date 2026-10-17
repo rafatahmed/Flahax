@@ -113,9 +113,22 @@ If you use Python:
 python -m pip install flahax
 ```
 
-<!-- TODO: a 10-15 line example with the published tomato + Gulf water
-example, run on the released version, with its output. Readers must get
-exactly the same numbers. Link to the source of the water analysis. -->
+Then run the worked example from the repository. It takes a published Qatar
+well (Shomar et al., 2024) and a standard tomato solution (De Kreij, Voogt
+and Baas, 1999), and shows the whole story in a few lines of output:
+
+- The well water alone already carries more calcium and sulfate than tomato
+  needs. No recipe can fix that, and FlahaX says so.
+- Blended 1:3 with desalinated water, a pure mass balance hits every
+  nutrient within 0.25%. It also drops the tank to pH 3.3, because it used
+  phosphoric acid for phosphorus. The arithmetic looked perfect; the
+  chemistry didn't.
+- With monopotassium phosphate instead, the mix sits at pH 6.2, and
+  43 mL of 60% nitric acid per 1,000 L brings it to pH 5.5, supplying the
+  last bit of nitrate on the way.
+
+<!-- TODO: replace with the exact command and output from the released
+version; every number must match docs/publication/example/qatar_tomato.py. -->
 
 The user manual ships inside the package, and the documentation is at
 [github.com/rafatahmed/Flahax](https://github.com/rafatahmed/Flahax).

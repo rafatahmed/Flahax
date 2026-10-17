@@ -93,24 +93,56 @@ the end.
 - **JOSS paper sections.** Summary, Statement of need, State of the field,
   Software design, Research impact statement and AI usage disclosure.
   750–1,750 words.
-- **Typical Qatar groundwater is outside FlahaX's model.** A 205-well survey
-  (Shomar 2024) reports average TDS of about 4,600 mg/L, with Ca 345,
-  Mg 127, Na 923, Cl 1,472 and SO₄ 1,064 mg/L. Those ions alone give an ionic
-  strength of about 0.09 mol/L before bicarbonate and fertilizer are added.
-  FlahaX's equilibrium model is valid up to 0.1 mol/kg, so a tomato recipe on
-  that water would be refused. This affects decision 9 and the open-field
-  trial site.
+- **Typical Qatar groundwater is close to FlahaX's model limit, and often
+  unusable for tomato on its own.** A survey (Shomar 2024) reports average
+  TDS of about 4,600 mg/L (Ca 345, Mg 127, Na 923, Cl 1,472, SO₄ 1,064 mg/L).
+  *Corrected after running real data:* a median well (station 104,
+  I = 0.061) stays inside the 0.1 mol/kg limit even with fertilizer added
+  (I = 0.073). But its calcium and sulfate already exceed tomato targets, so
+  no recipe fits without blending. Saltier wells will exceed the limit.
+- **Calculated pH needed an engine change.** Charge balance alone turned a
+  3.5% analytical imbalance into a 4-unit pH error. Fixed in PR 15
+  (measured-pH balancing).
 
 ## Open items
 
-1. **Example water.** Choose between the options in the compile report
-   (a lower-salinity published sample, or the survey average as a
-   demonstration that FlahaX refuses out-of-range water).
+1. **Worked example: done, pending a release.** Script:
+   [example/qatar_tomato.py](example/qatar_tomato.py). It needs measured-pH
+   water balancing (rafatahmed/Flahax PR 15). Rerun it on the released
+   version and check every number in the drafts against its output.
+   - **Water:** Shomar et al. (2024), *Groundwater*, doi:10.1111/gwat.13411,
+     supplementary Table S1 (197 stations; the abstract says 205 wells).
+     Station 104 was chosen as the charge-balanced well closest to the median
+     TDS. The survey mean can't be used, because averaging wells breaks the
+     charge balance; only 26 of 197 wells balance within 5%. Blended 1 part
+     well water to 3 parts desalinated water, which is treated as ion-free.
+   - **Targets:** De Kreij, Voogt and Baas (1999), Brochure 196, Supplement
+     2, tomato, open system, p. 32 (https://edepot.wur.nl/273945), the source
+     behind Sonneveld and Voogt (2009). Target pH 5.5 from the same table.
+   - **Result:** well imbalance −3.5% at pH 7.80, closed by −9.5% Cl.
+     (1) Well alone: Ca 244 and S 241 mg/L already exceed the targets, so
+     the best recipe misses by 73%. (2) Blend, pure mass balance: within
+     0.25%, but phosphoric acid as the P source puts the mix at pH 3.34.
+     (3) Blend with MKP: mix pH 6.24; 43 mL of 60% nitric acid per 1,000 L
+     (0.56 mmol/kg) reaches pH 5.5 and adds 7.9 mg N/L, so nitrate goes from
+     214.5 to 222.3 mg/L (target 224.1). Ionic strength 0.042. Calcite,
+     gypsum and brushite are undersaturated; hydroxylapatite SI 1.9 (a risk
+     flag, not a rate). Na 170 and Cl 290 mg/L come from the water.
+   - **For the author to review:** the solver chose iron(II) sulfate, which
+     is not chelated, as the Fe source; at pH 5.5 a chelate is usual. The
+     60% / 1.37 kg/L nitric acid is an illustrative grade. Na at 7.4 mmol/L
+     is close to the brochure's root-environment limit (< 8 mmol/L).
+   - **Found on the way:** formulation is pH-blind. The best mass balance can
+     be chemically wrong, which is the article's central point. The
+     catalogue also has no nitric acid product, so the acid step uses the
+     lower-level `nitric_target` solver.
 2. **Open-field well.** If its lab analysis puts the recipe above ionic
    strength 0.1, FlahaX will refuse it. Decide before the trial whether that
    site still tests in-scope predictions.
-3. Lab analyses of both trial waters (with bicarbonate), the meter models and
-   calibration, and the trial season.
+3. Lab analyses of both trial waters, the meter models and calibration, and
+   the trial season. Each analysis must include the **measured pH and
+   alkalinity by titration**, and the lab's charge-balance error must be
+   reported. Without them the ±0.3 pH threshold can't be met (see item 1).
 4. Field article co-authors and acknowledgements.
 5. Ask Prof. Khalid Hameed before naming him anywhere (he is not named in
    the current drafts).

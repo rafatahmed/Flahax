@@ -134,11 +134,20 @@ catalogue product, solid phase and acid case against a pinned build of
 PHREEQC 3.8.6, with stored reference outputs. This evidence is
 computational. Field evaluation is under way (see below).
 
-<!-- TODO: once the example water is chosen, add a short worked example here:
-     tomato targets + published Gulf groundwater -> recipe, saturation
-     indices, initial pH, nitric acid dose, A/B split. Run it on the
-     released Apache-2.0 version and paste the output, with the source of
-     the water analysis cited. Keep it under ~150 words. -->
+**Example.** A published brackish well from Qatar [@shomar2024] (station
+104, measured pH 7.80) has a charge imbalance of 3.5%. Solving its pH from
+charge balance alone gives 3.8. FlahaX therefore fixes the measured pH and
+closes the charge on chloride, recording the adjustment (−9.5%). On its own,
+this water already exceeds the calcium and sulfur of a standard tomato
+solution [@dekreij1999], and the best recipe misses by 73%. Blended 1:3 with
+desalinated water, a mass balance alone meets every target within 0.25%, but
+it uses phosphoric acid as the phosphorus source, and the equilibrium model
+shows the mixture at pH 3.3. With monopotassium phosphate instead, the mix
+is at pH 6.2. A nitric acid dose of 0.56 mmol/kg brings it to the target
+pH 5.5 and supplies the last 8 mg/L of nitrate-N, while gypsum, calcite and
+brushite stay undersaturated. The script is in the repository.
+<!-- TODO: rerun docs/publication/example/qatar_tomato.py on the released
+     version and check every number above against its output. -->
 
 # Research impact statement
 
