@@ -242,7 +242,7 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX uses the proprietary Flaha Free Use License; free use does not imply unrestricted modification or redistribution.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 

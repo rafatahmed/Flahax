@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Relicense FlahaX under the Apache License 2.0 and add a `NOTICE` file. Releases up to and including 0.3.1 remain under the Flaha Free Use License 1.0.
 - Add `balance_water_analysis`: speciate a laboratory water analysis at its measured pH, take inorganic carbon from the analysis or from titrated alkalinity, and close the remaining charge on Cl- or Na+ with the imbalance and adjustment recorded. Imbalances above 5% (configurable) are rejected. The workflow's `equilibrium` record accepts `measured_ph` and reports `water_balance`. Charge balance alone turned a 3.5% analytical imbalance on a published Qatar well into a 4-unit pH error.
 
 ## 0.3.1 — 2026-10-17
