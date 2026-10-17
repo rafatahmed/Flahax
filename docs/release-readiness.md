@@ -1,4 +1,6 @@
-# Release-readiness audit — 2026-09-27
+# Release readiness
+
+The current preparation comes first; dated audits below it are history.
 
 ## Current preparation - 0.4.0 / 2026-10-17
 

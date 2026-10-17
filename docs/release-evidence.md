@@ -33,6 +33,12 @@ recorded. On a published Qatar well (Shomar et al. 2024, station 104), charge
 balance alone gave pH 3.8 against a measured 7.80. No reaction constant,
 phase, catalogue product or existing default changed.
 
+Changes after this record, before publication: the release workflow was
+hardened (tag/version guard, no re-upload, tests and live replay before build,
+reviewer-gated Trusted Publishing), the documentation was brought up to date,
+and two unreferenced 0.2.0 images were removed from `docs/`, so the sdist
+shrinks. No runtime code or packaged resource changed.
+
 Remaining before publication, per the [publishing checklist](publishing.md):
 hosted CI and the pinned live replay on the final revision; explicit owner
 authorization; a final build of the exact approved artifacts with recorded
