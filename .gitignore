@@ -5,44 +5,64 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
+.ipynb_checkpoints/
 
 # Virtual environments
 .venv/
-.venv-verification/
+.venv-*/
 venv/
 env/
 
-# Packaging artifacts
+# Packaging artifacts (verified release artifacts are kept outside the repository)
 build/
 dist/
-# Local-only video tutorials: scripts, virtual environments and rendered media.
-examples/tutorial/
 *.egg-info/
 .eggs/
 *.egg
+*.whl
+*.tar.gz
 pip-wheel-metadata/
 
-# Local secrets and environment
+# Local-only video tutorials: scripts, virtual environments and rendered media.
+examples/tutorial/
+
+# Local secrets, credentials and environment. Never commit tokens or keys.
 .env
 .env.*
 .pypirc
+*.pem
+*.key
+*.p12
+*.pfx
+*token*.txt
+secrets/
 
-# Editors and OS files
+# Editors, OS files and merge leftovers
 .idea/
 .vscode/
+*.code-workspace
+.DS_Store
 Thumbs.db
 Desktop.ini
 *.swp
+*.swo
+*~
+*.orig
+*.rej
+*.bak
 
 # PHREEQC creates empty scratch logs beside captures; evidence uses .screen/.out.
 tests/fixtures/phreeqc/**/phreeqc.log
 
-# User-supplied manufacturer references retained locally; findings/hashes are versioned.
-docs/sources/04_Fertilizer.pdf
-docs/sources/165357805552.pdf
-docs/sources/215057776303.pdf
-docs/sources/215726931002.pdf
-docs/sources/yaravita-micronutrients-products-and-services-guide.pdf
+# User-supplied manufacturer references are local-only until redistribution
+# permission is established; findings and SHA-256 hashes are versioned in
+# docs/source-sheet-review.md. This covers every PDF in docs/sources/.
+docs/sources/*.pdf
