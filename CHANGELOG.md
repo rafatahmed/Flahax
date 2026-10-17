@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Relicense FlahaX under the Apache License 2.0 and add a `NOTICE` file. Releases up to and including 0.3.1 remain under the Flaha Free Use License 1.0.
+
 ## 0.3.1 — 2026-10-17
 
 - Reframe the README, package summary and citation around FlahaX as a plant-nutrient chemistry engine (planned for FlahaFAST, not yet integrated); harden `.gitignore`, `.gitattributes` and the distribution PDF leak check.
