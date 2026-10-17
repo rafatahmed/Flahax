@@ -146,3 +146,5 @@ __all__ += ["ECPrediction", "ECDeliveryPlan", "water_ec25", "ec_recipe_key", "pl
 from .calculated_ec import estimate_manufacturer_ec
 from .injector_sizing import size_injection_requirements
 __all__ += ["estimate_manufacturer_ec", "size_injection_requirements"]
+from .measured_water import BalancedWaterAnalysis, balance_water_analysis, carbonate_alkalinity
+__all__ += ["BalancedWaterAnalysis", "balance_water_analysis", "carbonate_alkalinity"]

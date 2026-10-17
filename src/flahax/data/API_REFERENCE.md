@@ -807,6 +807,49 @@ not necessarily the whole farm. Gross depth already includes losses.
 
 Source module: `flahax.injector_sizing`. Import with `from flahax import size_injection_requirements`.
 
+## flahax.measured_water
+
+### `BalancedWaterAnalysis`
+
+```text
+BalancedWaterAnalysis(totals: dict, measured_ph: float, state: flahax.aqueous_model.AqueousResult, balance_ion: str, analysed_balance_ion_molal: float, balance_adjustment_molal: float, imbalance_percent: float, inorganic_carbon_molal: float, carbon_source: str) -> None
+```
+
+Analytical totals (mol/kg water) closed at the measured pH, with their audit.
+
+Record fields: `totals`, `measured_ph`, `state`, `balance_ion`, `analysed_balance_ion_molal`, `balance_adjustment_molal`, `imbalance_percent`, `inorganic_carbon_molal`, `carbon_source`.
+
+Source module: `flahax.measured_water`. Import with `from flahax import BalancedWaterAnalysis`.
+
+### `balance_water_analysis`
+
+```text
+balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, balance_ion='Cl-', maximum_imbalance_percent=5.0, phases=(), temperature_c=25.0)
+```
+
+Close a complete water analysis at its measured pH.
+
+``totals`` are analytical totals in mol/kg water. Supply inorganic carbon
+either as ``totals['CO3-2']`` or as ``alkalinity_eq_per_kg`` (titrated total
+alkalinity treated as carbonate alkalinity), never both. The charge left at
+the measured pH is closed by changing ``balance_ion``. An imbalance above
+``maximum_imbalance_percent`` is rejected: fix the analysis, do not force it.
+
+Source module: `flahax.measured_water`. Import with `from flahax import balance_water_analysis`.
+
+### `carbonate_alkalinity`
+
+```text
+carbonate_alkalinity(state)
+```
+
+Carbonate alkalinity (eq/kg water) of a solved state.
+
+Each carbon species counts 2 x carbon - H+ relative to H2CO3; OH- and H+
+count +1 and -1. Phosphate, borate and organic bases are not included.
+
+Source module: `flahax.measured_water`. Import with `from flahax import carbonate_alkalinity`.
+
 ## flahax.mixed_equilibrium
 
 ### `MixedFertilizerEquilibrium`

@@ -122,7 +122,7 @@ and [current status](https://github.com/rafatahmed/Flahax/blob/main/docs/develop
 
 | Document | For |
 |---|---|
-| [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) | Installation, seven tested examples, units, chemistry, pH and delivery planning; also ships inside the package |
+| [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) | Installation, eight tested examples, units, chemistry, pH and delivery planning; also ships inside the package |
 | [API reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/API_REFERENCE.md) | Every public function and result record, with signatures |
 | [Site planning and CLI](https://github.com/rafatahmed/Flahax/blob/main/docs/site-planning.md) | Water, acid, EC and injection inputs |
 | [Chemistry model](https://github.com/rafatahmed/Flahax/blob/main/docs/fertilizer-equilibrium-model.md) | Equilibrium model, PHREEQC evidence and boundaries |
