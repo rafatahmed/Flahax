@@ -1,6 +1,7 @@
 # Water-to-delivery development status
 
-Updated 2026-10-01. Branch: `release/0.3.1-site-planning`.
+Updated 2026-10-17 (0.3.1 release audit). The 0.3.1 preparation is merged on
+`main`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17).
 These changes prepare **0.3.1, not yet published**. Version 0.3.0 is the
 previous published baseline. Local verification artifacts are not a release
 authorization; hosted checks, review and publication approval remain separate.
@@ -39,13 +40,16 @@ See [site planning](site-planning.md), [water-to-delivery](water-to-delivery.md)
 - Page 66's acid-containing B concept is distinguished from the proposed
   dedicated acid channel. Recipe phosphoric acid is not counted again as
   extra pH correction. A two-tank-only full pepper system is not yet established.
-- No new PyPI release, deployment, hardware operation, main-branch merge or
-  independent scientific sign-off is part of this increment.
+- No new PyPI release, deployment, hardware operation or independent
+  scientific sign-off is part of this increment. The preparation branches were
+  merged to `main` through PRs #6 and #7.
 
 ## Next work, in order
 
-1. Review the branch and obtain hosted verification on the reviewed revision;
-   local results do not resolve the historical GitHub Actions billing gate.
+1. Hosted verification passed on `main` at `2e257d5` (run `38967066279`,
+   2026-10-16): Python 3.11-3.13 and the required live PHREEQC replay. The
+   remaining 0.3.1 release steps are explicit publication authorization, the
+   exact-artifact build and upload, and the fresh PyPI installation check.
 2. Resolve exact commercial product assays and trace co-storage evidence for
    the pepper recipe; define volumes, ratios, temperature and acid hardware
    layout before promoting the candidate grouping to an approved stock plan.

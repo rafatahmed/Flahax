@@ -49,7 +49,7 @@ PHREEQC is an external verification tool, not a runtime dependency or bundled ex
 
 Version **0.3.0 is published on [PyPI](https://pypi.org/project/flahax/0.3.0/)** (2026-09-27). The release used the owner's documented local-evidence exception; hosted verification remains open.
 
-Next priorities are supported-version CI, broader numerical and input-boundary testing, and stable consumer contracts. The [development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md) defines proposed milestones, acceptance gates and expansion opportunities. The [implementation ledger](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) preserves P0–P7 evidence and historical decisions.
+Hosted Python 3.11–3.13 checks and the required live PHREEQC replay pass on `main` as of 2026-10-16. Next priorities are an authorized 0.3.1 publication, broader numerical and input-boundary testing, and stable consumer contracts. The [development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md) defines proposed milestones, acceptance gates and expansion opportunities. The [implementation ledger](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md) preserves P0–P7 evidence and historical decisions.
 
 ## Install
 

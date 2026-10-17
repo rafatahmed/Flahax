@@ -17,10 +17,12 @@ A fresh isolated Python 3.13 installation from PyPI passed version/import checks
 
 ## Checklist for the next release
 
-- [ ] Choose a new version and align metadata, runtime version, citation, manual and changelog.
-- [ ] Review compatibility, scientific provenance and distribution contents.
-- [ ] Pass relevant local tests, required pinned live replay and isolated wheel/sdist verification.
-- [ ] Observe successful hosted Python 3.11–3.13 checks and pinned live-reference replay on the reviewed revision.
+Status for 0.3.1 as of the [2026-10-17 audit](release-evidence.md#031-release-audit---2026-10-17): the first four items are met; publication authorization and the remaining steps are open.
+
+- [x] Choose a new version and align metadata, runtime version, citation, manual and changelog.
+- [x] Review compatibility, scientific provenance and distribution contents.
+- [x] Pass relevant local tests, required pinned live replay and isolated wheel/sdist verification.
+- [x] Observe successful hosted Python 3.11–3.13 checks and pinned live-reference replay on the reviewed revision.
 - [ ] Obtain explicit publication authorization and check that the new version is unused on PyPI.
 - [ ] Build and strictly validate the exact approved artifacts; record their hashes.
 - [ ] Upload through the approved release route; verify PyPI metadata and a fresh installed-package check.
