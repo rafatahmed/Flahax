@@ -63,16 +63,18 @@ was uploaded.)
 Withdrawn versions are **yanked** on PyPI, never deleted: PyPI keeps every
 uploaded filename, so a version number can be used only once.
 
-## Checklist for 0.4.0
+## Checklist (last run: 0.4.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
 - [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
 - [x] Observe successful hosted Python 3.11–3.13 checks on the merged revision.
-- [ ] Complete the one-time setup above.
-- [ ] Obtain explicit publication authorization.
-- [ ] Publish the `v0.4.0` GitHub Release; review the run; approve the deployment.
-- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+- [x] Complete the one-time setup above.
+- [x] Obtain explicit publication authorization.
+- [x] Publish the `v0.4.0` GitHub Release; review the run; approve the deployment.
+- [x] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+
+Completed 2026-10-17. Copy this checklist for the next release.
 
 ## Fallback: manual Twine upload
 
@@ -99,6 +101,10 @@ package was uploaded.
 
 ## Release history
 
+- **0.4.0**, 2026-10-17: first Apache-2.0 release and first upload through the
+  hardened workflow with Trusted Publishing (run `39043172800`), approved by
+  the owner, verified by a fresh installation from PyPI. See the
+  [0.4.0 publication evidence](release-evidence.md#040-publication---2026-10-17).
 - **0.3.1**, 2026-10-17: uploaded manually with Twine from `main` at
   `586eddb`, tagged `v0.3.1`, verified by a fresh installation from PyPI;
   hosted CI passed. See the

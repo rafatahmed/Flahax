@@ -1,8 +1,8 @@
 # FlahaX development roadmap
 
 Updated 2026-10-17. Status: proposed priorities, not scheduled releases. The
-published baseline is [0.3.1](https://pypi.org/project/flahax/0.3.1/); 0.4.0
-(Apache-2.0, measured-pH water balancing) is prepared and awaits publication.
+published baseline is [0.4.0](https://pypi.org/project/flahax/0.4.0/)
+(Apache-2.0, measured-pH water balancing).
 The [implementation ledger](implementation-roadmap.md) retains P0–P7
 acceptance and historical audits.
 
@@ -86,6 +86,6 @@ Before the next release, require the [publishing checklist](publishing.md), revi
 
 ## First three work items
 
-1. Publish 0.4.0 through the hardened workflow and record its evidence.
+1. Prepare the field-trial protocol inputs (water analyses with measured pH and alkalinity) and pin action versions by commit SHA (H8).
 2. Add H2/H3 cases around current numerical boundaries, including measured-pH balancing near its imbalance limit, and retain every reproducible failure before changing solver behavior.
 3. Specify M3 serialization and error contracts, then select an explainability increment with a concrete user example (for example, why the best mass balance can be chemically wrong).
