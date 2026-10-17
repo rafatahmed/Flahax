@@ -16,9 +16,17 @@ database was changed.
 | `215057776303.pdf` | `fff47a7e24dd86edf605b2d2b61802fa881b65e9f1dabf3f134b72a2e4870c07` |
 | `215726931002.pdf` | `1f1a6200c54883b24d55a41bfee559fe8bd56f52c716a4c5654a563cb634d6ee` |
 
+| `yaravita-micronutrients-products-and-services-guide.pdf` | `5bd3b20555a40a3737e41443b67392edbebc079e42f3c3edd876d27af661f854` |
+
 All files are under `docs/sources/`. They are local review inputs; permission
 to redistribute manufacturer PDFs in a release has not been established.
 Runtime calculation does not require these PDFs to be installed.
+
+The YaraVita guide was committed on 2026-09-26 and shipped inside the
+published 0.3.0 source distribution. The 0.3.1 audit (2026-10-17) removed it
+from Git tracking and from the source distribution under the same policy as
+the other four files; earlier Git history and the already-uploaded 0.3.0
+sdist still contain it. No finding in this review depends on it.
 
 ## Findings and use
 

@@ -2,6 +2,7 @@
 
 ## 0.3.1 - Unreleased
 
+- Exclude the user-supplied YaraVita micronutrient guide from Git tracking and the source distribution, matching the other manufacturer PDFs; its SHA-256 is recorded in the source review. The published 0.3.0 sdist still contains it.
 - Ship a complete generated public API inventory, expand the manual to seven executable examples, and check documentation drift in source and installed-package tests. Clarify product-dose mapping after recommendation filtering, stage statuses and unpublished-version installation.
 
 - Clarify every pepper product's candidate Tank A/B/acid destination or unresolved status; display actual contents of synthetic stock examples, preserve recipe mass and prevent interpreting recipe acid as an additional pH dose.
