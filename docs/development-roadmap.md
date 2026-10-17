@@ -54,7 +54,7 @@ M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; 
 | P1 H5 | Expand composed-plan rejection tests across mismatched record IDs, assay changes, stale calibration, acid-channel conflicts and altered recipe/stock data | Complete measured-curve and equilibrium paths reject inconsistent evidence and preserve atomic validation |
 | P2 H6 | Establish benchmark baselines for formulation, mixed equilibrium and nitric-target planning | Fixed representative fixtures, machine/Python metadata, median and tail timing plus iteration counts; agree budgets after measurement, then compare changes |
 | P2 H7 | Add development-only lint/type checks incrementally around public contracts and numerical code | Reviewed annotations/check configuration, clean selected modules and full regression pass; no new mandatory runtime dependency |
-| P2 H8 | Release supply chain. Done for 0.4.0: tag/version guard, no re-upload, tests and live replay before build, reviewer-gated Trusted Publishing, protected `main`. Open: pin actions by commit SHA and record build-tool versions | Reviewed action-pinning/update policy and artifact provenance; distribution verification still passes |
+| P2 H8 | Release supply chain. Done for 0.4.0: tag/version guard, no re-upload, tests and live replay before build, reviewer-gated Trusted Publishing, protected `main`. Actions are pinned by full commit SHA (version in a trailing comment) and `.github/dependabot.yml` opens monthly update PRs; pins take effect for tags created after the change. Open: record or pin build-tool versions (`build`, `twine`) | Reviewed build-tool pinning policy and artifact provenance; distribution verification still passes |
 
 These are test and review targets, not claims that the inspected code is defective. Existing tests already cover many guards; each increment should document the additional cases it contributes. Do not loosen scientific tolerances merely to make a new test pass.
 
@@ -86,6 +86,6 @@ Before the next release, require the [publishing checklist](publishing.md), revi
 
 ## First three work items
 
-1. Prepare the field-trial protocol inputs (water analyses with measured pH and alkalinity) and pin action versions by commit SHA (H8).
+1. Prepare the field-trial protocol inputs (water analyses with measured pH and alkalinity) and record build-tool versions (H8).
 2. Add H2/H3 cases around current numerical boundaries, including measured-pH balancing near its imbalance limit, and retain every reproducible failure before changing solver behavior.
 3. Specify M3 serialization and error contracts, then select an explainability increment with a concrete user example (for example, why the best mass balance can be chemically wrong).
