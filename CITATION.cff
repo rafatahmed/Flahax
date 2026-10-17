@@ -16,7 +16,7 @@ authors:
 version: 0.3.1
 url: https://pypi.org/project/flahax/
 repository-code: https://github.com/rafatahmed/Flahax
-license-url: https://github.com/rafatahmed/Flahax/blob/main/LICENSE
+license: Apache-2.0
 keywords:
   - fertilizer
   - hydroponics
@@ -35,4 +35,4 @@ preferred-citation:
   year: 2026
   version: 0.3.1
   url: https://pypi.org/project/flahax/
-  license-url: https://github.com/rafatahmed/Flahax/blob/main/LICENSE
+  license: Apache-2.0
