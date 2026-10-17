@@ -47,7 +47,7 @@ Contract files (JSON Schema draft 2020-12), with examples that validate against 
 
 - Request: [stock-conductivity-v1.request.schema.json](schemas/stock-conductivity-v1.request.schema.json)
 - Response: [stock-conductivity-v1.response.schema.json](schemas/stock-conductivity-v1.response.schema.json)
-- Examples: [schemas/examples/](schemas/examples/) (the "synthetic" example shows shape only and carries no real numbers)
+- Examples in `schemas/examples/`: [predict request](schemas/examples/predict.request.json), [not-supported response](schemas/examples/predict.response.not-supported.json), [synthetic estimated response](schemas/examples/predict.response.estimated-synthetic.json) (shape only; it carries no real numbers), [describe_model](schemas/examples/describe_model.response.json), [evaluate_measurements request](schemas/examples/evaluate_measurements.request.json) and [error response](schemas/examples/error.response.json)
 
 ### 4.1 Operations
 
