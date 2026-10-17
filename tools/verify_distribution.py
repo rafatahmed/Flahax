@@ -100,7 +100,7 @@ def verify(report, interpreter, artifacts_dir=None):
                     raise RuntimeError('sdist is missing its reference evidence')
             if any(Path(n).suffix.lower() in ('.exe','.dll','.msi') for n in names):
                 raise RuntimeError('unexpected binary in package distribution')
-            local_sources = {'04_Fertilizer.pdf', '165357805552.pdf', '215057776303.pdf', '215726931002.pdf'}
+            local_sources = {'04_Fertilizer.pdf', '165357805552.pdf', '215057776303.pdf', '215726931002.pdf', 'yaravita-micronutrients-products-and-services-guide.pdf'}
             if any(Path(n).name in local_sources for n in names):
                 raise RuntimeError('local-only manufacturer PDF leaked into a distribution')
             install = folder/f'install-{index}'
