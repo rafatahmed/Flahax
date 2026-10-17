@@ -22,7 +22,9 @@
 - Add explicit source-water-to-formulation orchestration, complete-analysis calculated pH, measured-curve/stock delegation and single-acid candidate planning for nitric, phosphoric, sulfuric and citric acids.
 - Add four charge-balanced PHREEQC acid references with hashes, conservation/equivalence tests and live replay. These development APIs are not in the published 0.3.0 artifacts; see `docs/water-to-delivery.md` for assumptions and input requirements.
 
-## 0.3.0 — 2026-09-27
+## 0.3.0 — 2026-09-27 (yanked 2026-10-17)
+
+Yanked on PyPI after 0.3.1 was published: its source distribution contained a third-party PDF. Use 0.3.1.
 
 ### Added
 
