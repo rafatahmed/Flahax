@@ -2,7 +2,7 @@
 
 ## Current status — 2026-10-17
 
-This ledger is historical. 0.3.1 is the published release, 0.4.0 is prepared,
+This ledger is historical. 0.4.0 is the published release,
 and P6.6/P6.7 hosted acceptance is closed. The
 [development roadmap](development-roadmap.md) is the active plan; the dated
 audits and P0–P7 ledger below preserve implementation history, including
