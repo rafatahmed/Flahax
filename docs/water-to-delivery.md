@@ -63,7 +63,7 @@ configurations are mappings:
 
 | Configuration | Required entries | Meaning |
 |---|---|---|
-| `equilibrium` | `water_totals`, `water_mass_kg`, `water_analysis_id`, `complete_analysis`, `carbon_boundary`, `temperature_c`, `phases` | Complete fixed-valence analytical component totals in mol/kg-water; explicit final solvent inventory, 25 C, closed carbon, explicit phase list |
+| `equilibrium` | `water_totals`, `water_mass_kg`, `water_analysis_id`, `complete_analysis`, `carbon_boundary`, `temperature_c`, `phases` | Complete fixed-valence analytical component totals in mol/kg-water; explicit final solvent inventory, 25 C, closed carbon, explicit phase list ; optional `measured_ph` (with `alkalinity_eq_per_kg`, `balance_ion`, `maximum_imbalance_percent`) speciates the water at its measured pH and closes the charge on one ion instead of solving pH from charge balance |
 | `acids` | `products`, `maximum_nutrient_error_percent`, `maximum_reagent_volume_litres` | Evaluate single-acid candidates; optional `preferred_product_id` forbids automatic fallback |
 | `nitric` | `reagent`, `reagent_channel_id`, `maximum_reagent_volume`, `maximum_nutrient_error_percent` | Existing assay-qualified HNO3 delivery adapter; volume is `VolumeLitres` |
 | `titration` | `water_analysis`, `curve`, `reagent`, `maximum_reagent_volume` | Existing matched-record measured-curve API; optional positive-target tolerance defaults to 1% |
@@ -76,6 +76,27 @@ they do not approve that formulation. A measured water titration curve is not
 a measurement of the final fertilizer mixture; post-mix verification remains
 mandatory. Nitric equilibrium plans with unreviewed incidental additions
 cannot pass `validated_equilibrium` delivery composition.
+
+## Measured-pH water balancing
+
+`balance_water_analysis(totals, measured_ph=..., alkalinity_eq_per_kg=None,
+balance_ion='Cl-', maximum_imbalance_percent=5, phases=(), temperature_c=25)`
+speciates a laboratory analysis at its measured pH. Inorganic carbon comes
+from `totals['CO3-2']` or from titrated alkalinity (carbonate alkalinity:
+each carbon species counts 2 x C - H+ relative to H2CO3, plus OH- - H+), never
+both. The charge left at the measured pH is closed by changing `Cl-` or `Na+`,
+as PHREEQC's `charge` option does. The result records the analysed and
+adjusted balance-ion totals and the imbalance in percent of total
+equivalents. An imbalance above the limit is rejected
+(`charge_imbalance_exceeded`); the balance ion is never driven to zero
+(`balance_ion_exhausted`).
+
+Why: calculated pH from charge balance alone is extremely sensitive to
+analytical error in brackish water. For Shomar et al. (2024) station 104
+(measured pH 7.80), charge balance alone gives pH 3.8. Matching the measured
+pH needs 9.5% less chloride, and after that a further 0.5% change in chloride
+still moves the calculated pH by about 0.45 units. Routine analyses carry
+errors of that size, so only the measured pH can anchor the water.
 
 ## Calculated pH and model boundary
 
