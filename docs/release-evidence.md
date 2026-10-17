@@ -1,5 +1,40 @@
 # Delivery Planner Release Evidence
 
+## 0.3.1 release audit - 2026-10-17
+
+Audited revision: `main` at `2e257d5` (merge of PR #7), then the audit commit
+`7d4ef15` on `release/0.3.1-audit`, which only excludes the YaraVita PDF and
+updates status documents. Assessor: Rafat Al Khashan with Claude Code
+assistance. This is release-readiness evidence, not publication authorization.
+Version 0.3.1 remains unpublished; PyPI's latest release is 0.3.0.
+
+| Check | Result |
+|---|---|
+| Version alignment | `0.3.1` in `pyproject.toml`, `flahax.__version__`, `CITATION.cff`, user manual and API reference; changelog section `0.3.1 - Unreleased`; tag `v0.3.1` not yet created |
+| Hosted CI on `2e257d5` | Run `38967066279` (2026-10-16) passed: Python 3.11, 3.12 and 3.13 each ran 153 tests, OK with 2 skips (live replay, covered by the dedicated job) plus isolated wheel/sdist verification; `phreeqc-live` ran 6 tests, OK, zero skips, with hash-pinned PHREEQC 3.8.6 |
+| Local regression, `2e257d5` | 153 tests passed in 352.243 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1` |
+| Local regression, `7d4ef15` | 153 tests passed in 297.943 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1`; `compileall` passed |
+| Public API compatibility against the published 0.3.0 wheel | 86 exports retained, none removed; 14 added (100 total). Only `EquilibriumPhPlan` (new trailing field `incidental_assessment`, default `None`) and `plan_equilibrium_delivery` (new keyword-only `maximum_concentrations`, default `None`) changed, both backward compatible |
+| Distribution contents | Finding: the YaraVita micronutrient guide PDF (3.6 MB) was tracked in Git since 2026-09-26 and shipped in the published 0.3.0 sdist, contrary to the local-only policy for manufacturer PDFs. Fixed in `7d4ef15`: untracked, excluded in `MANIFEST.in`, added to the verifier's leak check, hash recorded in the [source review](source-sheet-review.md). Git history and the uploaded 0.3.0 sdist still contain it |
+| Isolated distribution check, `7d4ef15` | `tools/verify_distribution.py` passed with the local PDFs present in the checkout: clean wheel and sdist installs on Python 3.13.15 (builder 3.14.0), seven manual examples, 28 catalogue products, all public exports, both CLI entry points; no PDF in either artifact (sdist 389 files, 3,373,066 bytes) |
+| Metadata | `twine check --strict` passed for both artifacts |
+| Packaged resources | `USER_GUIDE.md` `b88bf40e5eba2818c0631c60c2342ebe741c1135eac323f0870e3153e91c0c21`; `API_REFERENCE.md` `14f33ef90cd3d5e2ae744109603659891bfd8bceb4bc7f7b21bb7a12f35ecea2`; `chemistry_25c.json` `ad87363818ccc2471c1343a0791f9ae63798bc0b3530b5b710344aff3077188f`; `library.json` `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343` |
+
+Audit-candidate hashes from `7d4ef15` (this evidence record changes the sdist,
+so the publication artifacts must be rebuilt from the final reviewed revision
+and hashed again):
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.3.1-py3-none-any.whl` | `5645c8fb79ccf22144c77afec6704ed477a80e7e2c4388314619dcde3f28d9e2` |
+| `flahax-0.3.1.tar.gz` | `45c2a729602456ba6ece6007c8b0095d69df15342d4630b8230cb1cae4106731` |
+
+Remaining before publication, per the [publishing checklist](publishing.md):
+explicit owner authorization; a final build of the exact approved artifacts
+with recorded hashes; upload through the approved route; PyPI metadata and
+fresh-install verification; and the publication date and `v0.3.1` tag. Hosted
+CI must also pass on the final revision that includes this audit.
+
 ## 0.3.1 documentation audit - 2026-10-02
 
 The merged preparation branch was audited on `release/0.3.1-documentation`.
