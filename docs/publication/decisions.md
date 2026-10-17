@@ -114,4 +114,3 @@ the end.
 4. Field article co-authors and acknowledgements.
 5. Ask Prof. Khalid Hameed before naming him anywhere (he is not named in
    the current drafts).
-6. ORCID iD to insert in the JOSS paper.
