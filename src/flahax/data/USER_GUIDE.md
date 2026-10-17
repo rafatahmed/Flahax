@@ -1,8 +1,8 @@
-# FlahaX 0.3.1 — User Manual
+# FlahaX 0.4.0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.3.1, released 2026-10-17. Hosted Python 3.11–3.13 checks and live PHREEQC replay passed on the release revision; see the repository's release evidence.
+**Version:** 0.4.0, release candidate prepared 2026-10-17; not yet published. 0.4.0 is the first release under the Apache License 2.0. See the repository's release evidence.
 
 ## Contents
 
@@ -26,6 +26,8 @@ For exact public signatures and result-record fields, see the bundled
 
 FlahaX selects fertilizer salts and their grams per litre for fixed nutrient targets after accounting for source water. Optional Python APIs evaluate one mixed aqueous system and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
 
+Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). FlahaX is open source under the Apache License 2.0.
+
 The mixed model covers 28 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
 Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. CH-micro includes those EDTA forms, borax and sodium molybdate. Do not substitute arbitrary product chemistry based on a similar name.
@@ -40,7 +42,7 @@ Install the published package in a virtual environment. From a source checkout, 
 python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # POSIX shell: source .venv/bin/activate
-python -m pip install flahax==0.3.1
+python -m pip install flahax==0.4.0
 python -c "import flahax; print(flahax.__version__)"
 ```
 
@@ -160,7 +162,7 @@ assert state.aqueous.species['FeDtp-2'] > 0
 print(state.aqueous.ionic_strength)
 ```
 
-This is fixed-pH product speciation, not a complete source-water prescription. Supply measured, complete analytical water totals for real mixtures. The solver does not invent missing counterions to make a deficient analysis acceptable. Inspect component residuals, activities, saturation indices and precipitated amounts; never infer safety from pH alone.
+This is fixed-pH product speciation, not a complete source-water prescription. Supply measured, complete analytical water totals for real mixtures, and anchor them at the measured pH with `balance_water_analysis` (section 11). The solver does not invent missing counterions to make a deficient analysis acceptable. Inspect component residuals, activities, saturation indices and precipitated amounts; never infer safety from pH alone.
 
 ## 6. Nitric-acid delivery planning
 
@@ -215,6 +217,10 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `feasible` is false | Inspect all nutrient rows and available assays; do not force approval by hiding residuals. |
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
 | `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
+| `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |
+| `missing_carbon` or `ambiguous_carbon` | Measured-pH balancing needs inorganic carbon (`CO3-2`) or titrated alkalinity, exactly one of them. |
+| `alkalinity_out_of_range` | The alkalinity is not consistent with the measured pH and ions, or needs carbon beyond the dilute model. Check units (eq/kg, not mg/L as CaCO3). |
+| `missing_balance_ion`, `balance_ion_exhausted` or `unsupported_balance_ion` | Balance on `Cl-` or `Na+`, which must be present in the analysis and large enough to absorb the imbalance. |
 | `activity_model_out_of_range` | The solution exceeds the accepted dilute model; do not extrapolate to concentrated stock. |
 | `wrong_reagent_direction` | Nitric acid cannot reach a target requiring base. |
 | `nutrient_tolerance_exceeded` | Review nitrate feedback and selected targets; changing tolerance needs a justified decision. |
@@ -238,19 +244,20 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 ## 10. Upgrading, integration and citation
 
-0.3.1 preserves the no-argument recipe/CLI contract and public compatibility kernels, and adds explicit planning subcommands. Check the nitric-result types when upgrading from development snapshots: use `AcidResult` for numerical states and `EquilibriumPhPlan` for reagent-volume composition. Package, record-schema and thermodynamic-model versions are distinct identifiers.
+0.4.0 preserves every 0.3.1 public export and the no-argument recipe/CLI contract. It adds `balance_water_analysis` and an optional `measured_ph` entry in the workflow's `equilibrium` record; without it, behaviour is unchanged. 0.3.1 added the explicit planning subcommands. Check the nitric-result types when upgrading from development snapshots: use `AcidResult` for numerical states and `EquilibriumPhPlan` for reagent-volume composition. Package, record-schema and thermodynamic-model versions are distinct identifiers.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.3.1. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.4.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 
 ## 11. Site workflow, EC and injection examples
 
 Each Python block in this manual is a complete, independently executed example.
-The following three examples cover the 0.3.1 additions without inventing site
-chemistry, EC calibration or manufacturer operating curves.
+The following examples cover the 0.3.1 and 0.4.0 additions without inventing
+site chemistry, EC calibration or manufacturer operating curves. The
+measured-pH example uses a published well analysis, cited in the code.
 
 ### Nutrient water is not an acid/base analysis
 

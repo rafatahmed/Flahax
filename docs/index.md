@@ -2,7 +2,7 @@
 
 ## Start here
 
-- [0.3.1 User Manual (release preparation)](../src/flahax/data/USER_GUIDE.md): the canonical, self-contained guide shipped inside the package.
+- [0.4.0 User Manual (release preparation)](../src/flahax/data/USER_GUIDE.md): the canonical, self-contained guide shipped inside the package.
 - [Changelog](../CHANGELOG.md): new capabilities, compatibility notes and release status.
 - [Core API and CLI](usage.md): formulation inputs and output fields.
 - [Complete public API reference](../src/flahax/data/API_REFERENCE.md): generated signatures, source docstrings and result-record fields for every top-level export; shipped offline.
