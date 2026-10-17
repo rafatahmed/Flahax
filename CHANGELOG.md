@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.3.1 - Unreleased
+## 0.3.1 — 2026-10-17
 
+- Reframe the README, package summary and citation around FlahaX as a plant-nutrient chemistry engine (planned for FlahaFAST, not yet integrated); harden `.gitignore`, `.gitattributes` and the distribution PDF leak check.
 - Exclude the user-supplied YaraVita micronutrient guide from Git tracking and the source distribution, matching the other manufacturer PDFs; its SHA-256 is recorded in the source review. The published 0.3.0 sdist still contains it.
 - Ship a complete generated public API inventory, expand the manual to seven executable examples, and check documentation drift in source and installed-package tests. Clarify product-dose mapping after recommendation filtering, stage statuses and unpublished-version installation.
 

@@ -5,15 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flahax"
 version = "0.3.1"
-description = "Fertilizer formulation, bounded aqueous chemistry, and auditable delivery planning."
+description = "Plant-nutrient chemistry engine: fertilizer formulation, aqueous equilibrium chemistry and auditable delivery planning."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "LicenseRef-Flaha-Free-Use"
 license-files = ["LICEN[CS]E*"]
 authors = [{ name = "Flaha" }]
-keywords = ["fertilizer", "hydroponics", "nutrient-solution", "formulation"]
+keywords = ["fertilizer", "hydroponics", "fertigation", "nutrient-solution", "plant-nutrition", "formulation", "aqueous-chemistry", "equilibrium"]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -21,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
 ]
 dependencies = []
 
