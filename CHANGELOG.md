@@ -3,6 +3,11 @@
 ## Unreleased
 
 - Add experimental irrigation EC25 from speciation (McCleskey 2012 Eq. 8) with explicit partial results, envelope checks and provenance; no accuracy claim.
+- Link every catalogue product in `library.json` to its chemical identity (`identityId`) and record its `analysisBasis` (`declared_catalogue`, `identity_theoretical` or `grade_typical`) and `source` document reference. Product `id` and `name` values are unchanged.
+- Correct Mg Nitrate to Mg(NO3)2·6H2O theory (owner decision D1): formula `Mg(NO3)2` → `Mg(NO3)2.6H2O`; N_NO3 11 → 10.92564 %, Mg 9.65 → 9.47931 %; basis `identity_theoretical`. Its declared-form charge residual at 1 g/kg water goes from +0.5532 % to ~0 %, so it no longer trips the EC O5 gate on its own.
+- Correct Phosphoric Acid (75%) to the 75 % w/w solution: P 31.61 → 23.706035 % (0.75 × 31.608046, product-mass dosing); PO4 delivered per gram falls to 0.74995 × the old value. Its stored assay is now reported as drifting from the H3PO4 formula, as intended for a solution.
+- Calcium Nitrate (ag grade) keeps N_NO3 14.4 / N_NH4 1.1 / Ca 19 % and now cites the Haifa Cal NG technical data sheet (October 2018) with basis `grade_typical`. Metadata: Urea formula `Urea` → `CO(NH2)2` (the formula check now reads urea's amide N as N_UREA, so Urea stays eligible); display names "Iron(II) Sulfate (Heptahydrate)" and "Potassium Citrate (anhydrous)".
+- Recommended doses (g/L, `recommend` with all eligible products and the formula's water) change for 20 of the 26 shipped formulas: Chilli, DEFAULT, Generic Bloom, Generic Dry Season, Generic Grow, Generic Wet Season, Generic for Berries, Hoagland, Lettuce 2, Lettuce General, Melons, Pepper (Howard Resh), Rice, Strawberry Drip Irrigation, Strawberry Fruiting, Tomato (Howard Resh), Tomatoes Fourth/Third Cluster and to termination, Tropical Lettuce. Pepper regression recipe (Test01, Ca 20 ppm water): Mg Nitrate 0.414486 → 0.421953, Phosphoric Acid (75%) 0.117392 → 0.151738; pepper water workflow: Mg Nitrate 0.414483 → 0.421949, Phosphoric Acid (75%) 0.098687 → 0.126809, incidental N_NH4 4.845114 → 4.845193 ppm.
 
 ## 0.4.0 — 2026-10-17
 

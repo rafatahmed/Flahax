@@ -28,14 +28,13 @@ not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
 
 With the supplied pepper targets, twelve selected catalogue products and
-water Ca 20 mg/L, the regression recipe has approximately 4.845114 mg/L NH4-N
+water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
 and 0.047919 mg/L Na. Positive targets fit within 1%, but these incidental
 amounts require review. These are catalogue-assay calculations, not a dosing
-authorization. In particular, `Phosphoric Acid (75%)` currently lists 31.61%
-P, approximately the pure-acid fraction rather than a 75% aqueous product
-fraction. That commercial-grade ambiguity and the Mg nitrate formula/assay
-warning require confirmation before physical use. This change does not alter
-the catalogue or silently replace its materials.
+authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`
+lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
+Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
+requires confirmation before physical use.
 
 ## Public orchestration
 
