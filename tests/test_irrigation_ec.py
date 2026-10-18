@@ -8,10 +8,11 @@ from flahax.aqueous_model import chemistry
 from flahax.delivery_contracts import DeliveryError
 from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER, DeclaredPureWater,
                                   assay_charge_residual, calculate_ec_from_totals,
-                                  calculate_irrigation_ec, compare_measured_ec, covered_species,
+                                  calculate_irrigation_ec, calculate_irrigation_ec_band,
+                                  compare_measured_ec, covered_species,
                                   ionic_molal_conductivity,
                                   load_conductivity_coefficients)
-from flahax import plan_equilibrium_delivery
+from flahax import make_grade, plan_equilibrium_delivery, resolve_material
 from flahax.irrigation_ec import calculate_irrigation_ec_from_plan
 from flahax.measured_water import balance_water_analysis
 
@@ -348,6 +349,73 @@ class ComparisonTests(unittest.TestCase):
             with self.assertRaises(DeliveryError) as c:
                 compare_measured_ec(pred, measured_ec25_ms_cm=measured, meter_reference_temperature_c=ref)
             self.assertEqual(c.exception.code, code)
+
+
+class BandChemistryTests(unittest.TestCase):
+    PURE = dict(recipe_id='band', water=DeclaredPureWater('ro-1'), ph_mode='calculated',
+                phase_policy='dissolved')
+
+    @staticmethod
+    def _material(name, identity_id, product, nutrients):
+        # Each nutrient moves by the same fraction at its band ends, so both ends stay charge balanced.
+        analysis = {key: {'minimum': v * .98, 'typical': v, 'maximum': v * 1.02}
+                    for key, v in nutrients.items()}
+        grade = make_grade({'grade_id': 'band-' + product, 'identity_id': identity_id, 'supplier': 'S',
+                            'product': product, 'analysis': analysis,
+                            'document': {'supplier': 'S', 'title': 'TDS', 'issued': '2026-01-01',
+                                         'entered': '2026-10-19'}})
+        return resolve_material(name, grade=grade)
+
+    def _materials(self):
+        return {'Potassium Nitrate': self._material('Potassium Nitrate', 'idn-potassium-nitrate', 'KNO3',
+                                                    {'K': 38.67, 'N_NO3': 13.856}),
+                'Potassium Sulfate': self._material('Potassium Sulfate', 'idn-potassium-sulfate', 'K2SO4',
+                                                    {'K': 44.873, 'S': 18.402})}
+
+    def test_shipped_only_band_ends_open(self):
+        result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)
+        self.assertEqual(result['nominal'].status, 'estimated')
+        for end in ('minimum', 'maximum'):
+            r = result[end]
+            self.assertEqual((r.status, r.reason), ('not_supported', 'band_end_open'))
+            self.assertIsNone(r.ec25_ms_cm)
+            self.assertIsNone(r.ph)
+            self.assertIsNone(r.ionic_strength)
+            self.assertEqual(r.audit['band_end'], end)
+
+    def test_open_end_still_validates_inputs(self):
+        with self.assertRaises(DeliveryError) as caught:
+            calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **{**self.PURE, 'ph_mode': 'bogus'})
+        self.assertEqual(caught.exception.code, 'invalid_ph_input')
+
+    def test_band_ends_bracket_ec(self):
+        doses = {'Potassium Nitrate': 1.0, 'Potassium Sulfate': 0.5}
+        result = calculate_irrigation_ec_band(doses, materials=self._materials(), **self.PURE)
+        low, mid, high = (result[k] for k in ('minimum', 'nominal', 'maximum'))
+        for r in (low, mid, high):
+            self.assertEqual(r.status, 'estimated')
+        self.assertLess(low.ec25_ms_cm, mid.ec25_ms_cm)
+        self.assertLess(mid.ec25_ms_cm, high.ec25_ms_cm)
+        self.assertEqual((low.audit['band_end'], high.audit['band_end']), ('minimum', 'maximum'))
+        self.assertNotIn('band_end', mid.audit)
+        self.assertEqual(mid.ec25_ms_cm,
+                         calculate_irrigation_ec(doses, materials=self._materials(), **self.PURE).ec25_ms_cm)
+
+    def test_band_end_outside_domain(self):
+        # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are inside the I < 0.1 domain, maximum is not.
+        doses = {'Potassium Nitrate': 4.4, 'Potassium Sulfate': 3.6}
+        result = calculate_irrigation_ec_band(doses, materials=self._materials(), **self.PURE)
+        self.assertEqual(result['nominal'].status, 'estimated')
+        self.assertEqual(result['minimum'].status, 'estimated')
+        high = result['maximum']
+        self.assertEqual((high.status, high.reason), ('not_supported', 'ionic_strength_outside_domain'))
+        self.assertIsNone(high.ec25_ms_cm)
+        self.assertEqual(high.audit['band_end'], 'maximum')
+
+    def test_note_text(self):
+        result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)
+        self.assertEqual(result['note'], 'Band ends are corner cases (every product at its minimum, or every '
+                                         'product at its maximum), not statistical bounds.')
 
 
 if __name__ == '__main__':
