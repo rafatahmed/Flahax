@@ -235,10 +235,28 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(none.audit['reagent_additions_molal'], {})
 
     def test_chelate_residual_reported_not_crash(self):
+        # 2026-10-18 chelate sodium counterions (D2): was not_supported /
+        # assay_charge_residual_too_large (declared percent < -0.1) because the
+        # chelate sodium was missing; the residual is still reported in the audit.
         r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
                                     ph_mode='calculated', phase_policy='dissolved')
-        self.assertEqual(r.status, 'not_supported'); self.assertEqual(r.reason, 'assay_charge_residual_too_large')
-        self.assertLess(r.audit['assay_charge_residual_declared_percent'], -0.1)
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertIn('assay_charge_residual_declared_percent', r.audit)
+        self.assertLessEqual(abs(r.audit['assay_charge_residual_declared_percent']), 0.1)
+        self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+
+    def test_borax_declared_residual_near_zero(self):
+        # Borax boron is declared at -0.5 per B (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3).
+        r = assay_charge_residual({'Sodium Borate (Decahydrate) (borax)': 1.0})
+        self.assertLessEqual(abs(r['percent']), 0.1)
+
+    def test_chelate_residuals_within_limit(self):
+        for name in ('Iron EDTA', 'Zn EDTA', 'Mn EDTA', 'Copper EDTA', 'Iron DTPA', 'Iron EDDHA', 'CH - micro'):
+            with self.subTest(name=name):
+                self.assertLessEqual(abs(assay_charge_residual({name: 1.0})['percent']), 0.1)
+        r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
+                                    ph_mode='calculated', phase_policy='dissolved')
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
 
     def test_zero_doses_in_pure_water(self):
         r = calculate_irrigation_ec({}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')

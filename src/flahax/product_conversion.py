@@ -61,16 +61,26 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     family = chemistry.family
     # These relations follow the stated dissolved formula/profile, not label
     # text. Assay values remain the authoritative analytical metal totals.
+    # D2: chelate sodium counterions per formula unit (NaFe(III)EDTA,
+    # Na2M(II)EDTA, Na2Fe(III)DTPA, NaFe(III)-o,o-EDDHA). They enter chemistry
+    # totals only and are never added to the product assay ``elements``.
+    edta_sodium = totals.get("Fe", 0.0) + 2 * sum(totals.get(k, 0.0) for k in ("Mn", "Zn", "Cu"))
     if family == "edta_chelate":
         ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-    elif family == "dtpa_chelate": ligands["DTPA"] = totals.get("Fe", 0.0)
-    elif family == "eddha_chelate": ligands["o,o-EDDHA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = edta_sodium
+    elif family == "dtpa_chelate":
+        ligands["DTPA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = 2 * totals.get("Fe", 0.0)
+    elif family == "eddha_chelate":
+        ligands["o,o-EDDHA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = totals.get("Fe", 0.0)
     elif family == "citrate_salt":
         ligands["citrate"] = totals.get("K", 0.0) / 3.0
     elif family == "edta_borax_molybdate_blend":
         ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-        counterions["sodium"] = 0.5 * totals.get("boron", 0.0) + 2 * totals.get("molybdate", 0.0)
-    elif family == "boron" and "borax" in chemistry.components:
+        counterions["sodium"] = (edta_sodium + 0.5 * totals.get("boron", 0.0)
+                                 + 2 * totals.get("molybdate", 0.0))
+    elif family == "boron" and "B(OH)4-" in chemistry.components:
         counterions["sodium"] = 0.5 * totals.get("boron", 0.0)
     elif family == "molybdate": counterions["sodium"] = 2 * totals.get("molybdate", 0.0)
     elif family == "free_metal_sulfate": counterions["sulfate"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
