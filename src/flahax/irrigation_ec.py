@@ -19,7 +19,10 @@ import json
 
 from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
+from .catalogue_chemistry import chemistry_for_product
 from .delivery_contracts import DeliveryError
+from .measured_water import BalancedWaterAnalysis
+from .product_conversion import catalogue_dose_totals
 
 _RESOURCE = 'data/conductivity_mccleskey2012.json'
 _RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
@@ -256,3 +259,110 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
         return _not_supported_unsolved('ionic_strength_outside_domain', ph=ph,
                                        carbon_boundary=carbon_boundary, **common)
     return _ec_from_state(state, **common)
+
+
+_ASSAY_CHARGES = {
+    'Ca+2': 2, 'Mg+2': 2, 'Fe+2': 2, 'Mn+2': 2, 'Zn+2': 2, 'Cu+2': 2, 'Fe+3': 3,
+    'K+': 1, 'Na+': 1, 'NH4+': 1, 'NO3-': -1, 'Cl-': -1,
+    'SO4-2': -2, 'MoO4-2': -2, 'CO3-2': -2, 'Edta-4': -4, 'Edd-4': -4, 'Dtp-5': -5,
+    'Citrate-3': -3, 'H3BO3': 0, 'Ure': 0}
+_PHOSPHATE_FORM_CHARGES = {'H2PO4-': -1, 'HPO4-2': -2, 'H3PO4': 0}
+
+
+@dataclass(frozen=True)
+class DeclaredPureWater:
+    """EXPERIMENTAL (M1): declared ion-free water (RO or distilled) with an id."""
+    water_id: str
+    kind: str = 'RO'
+
+    def __post_init__(self):
+        if not isinstance(self.water_id, str) or not self.water_id.strip():
+            raise DeliveryError('missing_field', 'DeclaredPureWater needs a nonempty water_id')
+        if self.kind not in ('RO', 'distilled'):
+            raise DeliveryError('invalid_value', "DeclaredPureWater kind must be 'RO' or 'distilled'")
+
+
+def _validate_doses(doses):
+    if not isinstance(doses, Mapping):
+        raise DeliveryError('invalid_value', 'doses must be a mapping of product name to g/kg water')
+    for name, dose in doses.items():
+        if not _is_number(dose) or dose < 0:
+            raise DeliveryError('invalid_value', f'dose for {name!r} must be a finite number >= 0')
+
+
+def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float]) -> dict:
+    """EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
+
+    Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
+    pH-independent, computed from each product's declared ion forms.
+    """
+    _validate_doses(doses_g_per_kg_water)
+    net = absolute = 0.0
+    for name, dose in doses_g_per_kg_water.items():
+        components = chemistry_for_product(name).components
+        phosphate_z = next((z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None)
+        for basis, amount in catalogue_dose_totals({name: dose}).items():
+            if basis == 'PO4-3':
+                if phosphate_z is None:
+                    raise DeliveryError('unsupported_product_chemistry',
+                                        f'{name!r} has phosphate but no declared phosphate form')
+                z = phosphate_z
+            elif basis in _ASSAY_CHARGES:
+                z = _ASSAY_CHARGES[basis]
+            else:
+                raise DeliveryError('unsupported_product_chemistry', f'no assay charge for {basis!r}')
+            net += z * amount
+            absolute += abs(z) * amount
+    return {'eq_per_kgw': net, 'percent': 100 * net / absolute if absolute > 0 else 0.0}
+
+
+def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe_id: str,
+                            water: BalancedWaterAnalysis | DeclaredPureWater,
+                            water_analysis_id: str | None = None,
+                            reagent_additions_molal: Mapping[str, float] | None = None,
+                            reagent_id: str | None = None, ph_mode: str, ph: float | None = None,
+                            phase_policy: str, phases: Sequence[str] = (),
+                            carbon_boundary: str = 'closed',
+                            temperature_c: float = 25.0) -> IrrigationECResult:
+    """EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
+
+    Water is a BalancedWaterAnalysis (with water_analysis_id) or a
+    DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
+    implicit) and are excluded from the assay residual. Accuracy on fertilizer
+    mixtures has not been established.
+    """
+    if isinstance(water, BalancedWaterAnalysis):
+        if not isinstance(water_analysis_id, str) or not water_analysis_id.strip():
+            raise DeliveryError('incomplete_water_analysis', 'water_analysis_id is required with a BalancedWaterAnalysis')
+        totals = dict(water.totals)
+        water_kind, water_id = 'balanced_analysis', water_analysis_id
+    elif isinstance(water, DeclaredPureWater):
+        if water_analysis_id is not None:
+            raise DeliveryError('incomplete_water_analysis', 'DeclaredPureWater takes no water_analysis_id')
+        totals = {}
+        water_kind, water_id = f'declared_pure:{water.kind}', water.water_id
+    else:
+        raise DeliveryError('incomplete_water_analysis',
+                            'supply a balanced complete analysis or DeclaredPureWater')
+    _validate_doses(doses_g_per_kg_water)
+    additions = dict(reagent_additions_molal or {})
+    if bool(additions) != (reagent_id is not None):
+        raise DeliveryError('missing_field', 'reagent_id is required if and only if reagent additions are given')
+    bases = set(chemistry()['bases'])
+    for name, amount in additions.items():
+        if name not in bases or not _is_number(amount) or amount < 0:
+            raise DeliveryError('invalid_value', f'reagent addition {name!r} must be a catalogue base with a finite amount >= 0')
+    for basis, amount in catalogue_dose_totals(doses_g_per_kg_water).items():
+        totals[basis] = totals.get(basis, 0.0) + amount
+    for basis, amount in additions.items():
+        totals[basis] = totals.get(basis, 0.0) + amount
+    residual = assay_charge_residual(doses_g_per_kg_water)
+    audit_inputs = {
+        'recipe_id': recipe_id, 'water_kind': water_kind, 'water_id': water_id,
+        'reagent_id': reagent_id, 'doses_g_per_kg_water': dict(doses_g_per_kg_water),
+        'catalogueSha256': hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
+        'assay_charge_residual_declared_percent': residual['percent']}
+    return calculate_ec_from_totals(
+        totals, solution_id=recipe_id, ph_mode=ph_mode, ph=ph, phase_policy=phase_policy,
+        phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,
+        assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'], audit_inputs=audit_inputs)

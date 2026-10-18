@@ -6,7 +6,9 @@ import unittest
 
 from flahax.aqueous_model import chemistry
 from flahax.delivery_contracts import DeliveryError
-from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER,
+from flahax.measured_water import balance_water_analysis
+from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER, DeclaredPureWater,
+                                  assay_charge_residual, calculate_irrigation_ec,
                                   calculate_ec_from_totals, covered_species,
                                   ionic_molal_conductivity,
                                   load_conductivity_coefficients)
@@ -117,3 +119,49 @@ class TotalsTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+PURE = DeclaredPureWater('ro-test')
+
+
+class CatalogueTests(unittest.TestCase):
+    def test_mg_nitrate_assay_residual(self):
+        self.assertAlmostEqual(assay_charge_residual({'Mg Nitrate': 1.0})['percent'], 0.5532, places=3)
+
+    def test_residual_gate_by_mode(self):
+        c = calculate_irrigation_ec({'Mg Nitrate': 1.0}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual((c.status, c.reason), ('not_supported', 'assay_charge_residual_too_large'))
+        s = calculate_irrigation_ec({'Mg Nitrate': 1.0}, recipe_id='r', water=PURE, ph_mode='supplied', ph=6.0, phase_policy='dissolved')
+        self.assertEqual((s.status, s.reason), ('partial', 'unrecorded_counterions'))
+
+    def test_chelate_residual_reported_not_crash(self):
+        r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
+                                    ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual(r.status, 'not_supported'); self.assertEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertLess(r.audit['assay_charge_residual_declared_percent'], -0.1)
+
+    def test_zero_doses_in_pure_water(self):
+        r = calculate_irrigation_ec({}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual(r.status, 'estimated'); self.assertAlmostEqual(r.ec25_ms_cm, 5.48e-5, delta=2e-6)
+
+    def test_water_input_contract(self):
+        for water, wid in (({}, None), ({'K+': .001}, None), (PURE, 'x')):
+            with self.subTest(water=water), self.assertRaises(DeliveryError):
+                calculate_irrigation_ec({'Potassium Nitrate': .5}, recipe_id='r', water=water, water_analysis_id=wid,
+                                        ph_mode='calculated', phase_policy='dissolved')
+        with self.assertRaises(DeliveryError):
+            DeclaredPureWater('')
+
+    def test_balanced_water_and_reagent_recorded(self):
+        bw = balance_water_analysis({'Na+': .002, 'Cl-': .002}, measured_ph=7.0, alkalinity_eq_per_kg=1e-4)
+        r = calculate_irrigation_ec({'Potassium Nitrate': .5}, recipe_id='r', water=bw, water_analysis_id='lab-1',
+                                    reagent_additions_molal={'NO3-': 1e-4}, reagent_id='nitric',
+                                    ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual(r.status, 'estimated')
+        self.assertEqual((r.audit['water_id'], r.audit['reagent_id'], r.audit['water_kind']), ('lab-1', 'nitric', 'balanced_analysis'))
+        self.assertLess(r.ph, 7.0)
+
+    def test_unknown_product_and_bad_dose_raise(self):
+        for doses in ({'Unobtainium': 1.}, {'Potassium Nitrate': -1.}, {'Potassium Nitrate': float('nan')}):
+            with self.subTest(doses=doses), self.assertRaises(DeliveryError):
+                calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
