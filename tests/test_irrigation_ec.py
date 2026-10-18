@@ -6,12 +6,12 @@ import unittest
 
 from flahax.aqueous_model import chemistry
 from flahax.delivery_contracts import DeliveryError
-from flahax.measured_water import balance_water_analysis
 from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER, DeclaredPureWater,
-                                  assay_charge_residual, calculate_irrigation_ec,
-                                  calculate_ec_from_totals, covered_species,
+                                  assay_charge_residual, calculate_ec_from_totals,
+                                  calculate_irrigation_ec, covered_species,
                                   ionic_molal_conductivity,
                                   load_conductivity_coefficients)
+from flahax.measured_water import balance_water_analysis
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'conductivity'
 
@@ -116,11 +116,6 @@ class TotalsTests(unittest.TestCase):
             with self.subTest(kw=kw), self.assertRaises(DeliveryError):
                 self.calc({'K+': .01, 'Cl-': .01}, **kw)
 
-
-if __name__ == '__main__':
-    unittest.main()
-
-
 PURE = DeclaredPureWater('ro-test')
 
 
@@ -165,3 +160,7 @@ class CatalogueTests(unittest.TestCase):
         for doses in ({'Unobtainium': 1.}, {'Potassium Nitrate': -1.}, {'Potassium Nitrate': float('nan')}):
             with self.subTest(doses=doses), self.assertRaises(DeliveryError):
                 calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+
+
+if __name__ == '__main__':
+    unittest.main()
