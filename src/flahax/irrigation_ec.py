@@ -325,12 +325,17 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float]) -> dict:
     for name, dose in doses_g_per_kg_water.items():
         components = chemistry_for_product(name).components
         phosphate_z = next((z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None)
+        # Borax (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3) declares -0.5 per B;
+        # equilibrium totals keep the neutral H3BO3 basis and pH forms borate.
+        boron_z = -0.5 if ('B(OH)4-' in components or 'borax' in components) else 0
         for basis, amount in catalogue_dose_totals({name: dose}).items():
             if basis == 'PO4-3':
                 if phosphate_z is None:
                     raise DeliveryError('unsupported_product_chemistry',
                                         f'{name!r} has phosphate but no declared phosphate form')
                 z = phosphate_z
+            elif basis == 'H3BO3':
+                z = boron_z
             elif basis in _ASSAY_CHARGES:
                 z = _ASSAY_CHARGES[basis]
             else:
