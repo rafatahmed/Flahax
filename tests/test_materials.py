@@ -838,5 +838,59 @@ class BandTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
 
+class FormulationProvenanceTests(unittest.TestCase):
+    """F1: every salt on a formulation result carries the provenance of its own record."""
+    TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
+
+    def entries(self, library):
+        from flahax.engine import recommend
+        result = recommend(library, self.TARGETS)
+        return result, {item['id']: item for item in result['salts']}
+
+    def test_shipped_recommend_has_catalogue_provenance(self):
+        result, entries = self.entries(load_library()['salts'])
+        self.assertTrue(entries)
+        for item in entries.values():
+            self.assertTrue(item['provenance']['identityId'].startswith('idn-'), item['name'])
+            self.assertEqual(item['provenance']['recordId'], item['id'])
+        can = next(i for i in entries.values() if i['name'] == 'Calcium Nitrate (ag grade)')
+        self.assertEqual(can['provenance']['analysisBasis'], 'grade_typical')
+        self.assertEqual(can['provenance']['documents'][0]['supplier'], 'Haifa Group')
+        self.assertIsInstance(can['provenance']['flags'], list)
+
+    def test_resolved_record_provenance_flows(self):
+        g = grade(grade_id='grd-kno3', identity_id='idn-potassium-nitrate',
+                  analysis={'K': {'typical': 38.0}, 'N_NO3': {'typical': 13.0}})
+        material = resolve_material('Potassium Nitrate', grade=g)
+        library = [material.record if s['name'] == 'Potassium Nitrate' else s
+                   for s in load_library()['salts']]
+        _, entries = self.entries(library)
+        resolved = entries[material.record['id']]
+        self.assertEqual(resolved['provenance']['recordId'], f"{material.record['id']}")
+        self.assertIn('+grd-kno3', resolved['provenance']['recordId'])
+        self.assertEqual(resolved['provenance']['analysisBasis'], material.basis)
+        self.assertEqual(resolved['provenance']['analysisBasis']['K'], 'grade_typical')
+        self.assertEqual(resolved['provenance']['documents'][0]['title'], DOC['title'])
+        for key, item in entries.items():
+            if key != material.record['id']:
+                self.assertTrue(item['provenance']['identityId'].startswith('idn-'))
+                self.assertNotIsInstance(item['provenance']['analysisBasis'], dict)
+
+    def test_unattributed_record(self):
+        from flahax.engine import recommend
+        record = {'id': 'hand', 'name': 'Hand KNO3', 'formula': 'KNO3',
+                  'elements': {'K': 38.67, 'N_NO3': 13.85}}
+        result = recommend([record], {'K': 38.0, 'N_NO3': 13.0})
+        provenance = result['salts'][0]['provenance']
+        self.assertEqual(provenance['analysisBasis'], 'unattributed')
+        self.assertIsNone(provenance['identityId'])
+        self.assertEqual(provenance['documents'], [])
+        self.assertEqual(provenance['recordId'], 'hand')
+
+    def test_identities_hash_on_result(self):
+        result, _ = self.entries(load_library()['salts'])
+        self.assertEqual(result['identitiesSha256'], IDENTITIES_SHA256)
+
+
 if __name__ == '__main__':
     unittest.main()

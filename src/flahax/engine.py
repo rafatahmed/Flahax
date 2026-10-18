@@ -389,6 +389,40 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
+def _documents(value) -> list[dict]:
+    """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
+    if isinstance(value, dict) and value and all(
+            item is None or isinstance(item, dict) for item in value.values()):
+        value = list(value.values())
+    if isinstance(value, dict):
+        return [dict(value)]
+    return [dict(item) for item in (value or ()) if item]
+
+
+def _provenance(record: dict) -> dict:
+    """Provenance of the record that produced a salt entry; never guessed when absent."""
+    own = record.get("provenance")
+    if own:
+        documents = own.get("documents")
+        return {
+            "recordId": own.get("recordId", record["id"]),
+            "identityId": own.get("identityId"),
+            "analysisBasis": own.get("analysisBasis", "unattributed"),
+            "documents": _documents(documents),
+            "flags": list(own.get("flags") or ()),
+        }
+    if record.get("identityId") or record.get("analysisBasis"):
+        return {
+            "recordId": record["id"],
+            "identityId": record.get("identityId"),
+            "analysisBasis": record.get("analysisBasis") or "unattributed",
+            "documents": _documents(record.get("source")),
+            "flags": [],
+        }
+    return {"recordId": record["id"], "identityId": None, "analysisBasis": "unattributed",
+            "documents": [], "flags": []}
+
+
 def _report(rows: list[dict], grams: list[float], warnings: list[str]) -> dict:
     deltas = [abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None]
     undesired = [
@@ -431,6 +465,9 @@ def recommend(
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
         nutrient rows, feasibility, incidental review, warnings and exclusions.
+        Each salt carries provenance (recordId, identityId, analysisBasis,
+        documents, flags) taken from the record that produced it, or
+        analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
         product-to-dose mapping. Feasible is positive-target fit within 1%,
@@ -467,9 +504,12 @@ def recommend(
     solved["saltIds"] = [item["id"] for item in solved["salts"]]
     by_id = {salt.get("id"): salt for salt in salts}
     for item in solved["salts"]:
+        item["provenance"] = _provenance(by_id[item["id"]])
         drift = assay_drift(by_id[item["id"]])
         if drift:
             warnings.append(drift)
+    from .materials import IDENTITIES_SHA256  # local: keeps engine importable without the catalogue at load
+    solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
     solved.update(_report(solved["rows"], solved["grams"], warnings))
     return solved
