@@ -892,5 +892,99 @@ class FormulationProvenanceTests(unittest.TestCase):
         self.assertEqual(result['identitiesSha256'], IDENTITIES_SHA256)
 
 
+class ChelateSodiumReportTests(unittest.TestCase):
+    """F2: chelate counterion sodium (D2) is reported in rows, never fitted."""
+    NO_CHELATE_TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
+    # Captured from recommend() before F2 (no chelate chosen).
+    NO_CHELATE_ROWS = [
+        {'symbol': 'N_NO3', 'target': 150.0, 'final': 150.00426635374635, 'deltaPct': 0.0028442358308969538},
+        {'symbol': 'K', 'target': 200.0, 'final': 199.9932778479975, 'deltaPct': -0.0033610760012550145},
+        {'symbol': 'Ca', 'target': 120.0, 'final': 119.40257151155895, 'deltaPct': -0.497857073700878},
+        {'symbol': 'P', 'target': 40.0, 'final': 39.99986923316647, 'deltaPct': -0.00032691708382159845},
+        {'symbol': 'Mg', 'target': 40.0, 'final': 39.996801591822894, 'deltaPct': -0.007996020442764262},
+        {'symbol': 'N_NH4', 'target': None, 'final': 6.91278045593236, 'deltaPct': None},
+    ]
+    NO_CHELATE_INCIDENTAL = [
+        {'symbol': 'N_NH4', 'ppm': 6.91278045593236, 'target': None, 'maximumPpm': None,
+         'assessment': 'requires_review'},
+    ]
+
+    def chilli(self):
+        library = load_library()
+        formula = next(f for f in library['formulas'] if f['name'].startswith('Chilli'))
+        return library['salts'], formula['targets']
+
+    def test_chelate_sodium_reported_not_fitted(self):
+        from unittest import mock
+        from flahax import engine
+        salts, targets = self.chilli()
+        base = engine.recommend(salts, targets)
+        with mock.patch.object(engine, 'chelate_sodium_mg_per_l', return_value=0.0):
+            off = engine.recommend(salts, targets)
+        names = {s['name'] for s in base['salts']}
+        self.assertIn('Mn EDTA', names)
+        self.assertEqual(base['grams'], off['grams'])
+        self.assertEqual(names, {s['name'] for s in off['salts']})
+        doses = {s['name']: s['gramsPerLitre'] for s in base['salts']}
+        from flahax.product_conversion import chelate_sodium_mg_per_l
+        extra = chelate_sodium_mg_per_l([(next(r for r in salts if r['name'] == n), g)
+                                         for n, g in doses.items()])
+        self.assertGreater(extra, 0)
+        na = lambda res: next(r for r in res['rows'] if r['symbol'] == 'Na')
+        self.assertAlmostEqual(na(base)['final'] - na(off)['final'], extra, places=9)
+        self.assertIsNone(na(base)['target'])
+        entry = next(i for i in base['incidentalContributions'] if i['symbol'] == 'Na')
+        self.assertAlmostEqual(entry['ppm'], na(base)['final'], places=9)
+        self.assertEqual(entry['assessment'], 'requires_review')
+        self.assertIn(f'Incidental Na includes chelate sodium counterions (D2): {extra:.4f} mg/L.',
+                      base['warnings'])
+        self.assertFalse(any('chelate sodium' in w for w in off['warnings']))
+
+    def test_na_row_created_when_absent(self):
+        from flahax.engine import recommend
+        library = load_library()['salts']
+        chosen = {'Mn EDTA'}
+        pool = [s for s in library if s['name'] in chosen]
+        result = recommend(pool, {'Mn': 2.0})
+        row = next(r for r in result['rows'] if r['symbol'] == 'Na')
+        self.assertIsNone(row['target'])
+        self.assertGreater(row['final'], 0)
+
+    def test_no_chelate_recipe_unchanged(self):
+        from flahax.engine import recommend
+        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS)
+        self.assertNotIn('Mn EDTA', {s['name'] for s in result['salts']})
+        self.assertEqual(len(result['rows']), len(self.NO_CHELATE_ROWS))
+        for got, want in zip(result['rows'], self.NO_CHELATE_ROWS):
+            self.assertEqual(got['symbol'], want['symbol'])
+            self.assertEqual(got['target'], want['target'])
+            self.assertAlmostEqual(got['final'], want['final'], places=9)
+        self.assertEqual(result['incidentalContributions'][0]['symbol'], 'N_NH4')
+        self.assertEqual(len(result['incidentalContributions']), 1)
+        self.assertAlmostEqual(result['incidentalContributions'][0]['ppm'],
+                               self.NO_CHELATE_INCIDENTAL[0]['ppm'], places=9)
+        self.assertEqual(result['warnings'], [])
+
+    def test_helper_matches_chemistry(self):
+        from flahax.product_conversion import catalogue_dose_totals, chelate_sodium_mg_per_l
+        by_name = {s['name']: s for s in load_library()['salts']}
+        doses = {'Iron EDTA': 0.05, 'Mn EDTA': 0.02, 'Zn EDTA': 0.01, 'Copper EDTA': 0.004,
+                 'Iron DTPA': 0.03, 'Iron EDDHA': 0.04}
+        expected = catalogue_dose_totals(doses)['Na+'] * 22.98977 * 1000.0
+        got = chelate_sodium_mg_per_l([(by_name[n], d) for n, d in doses.items()])
+        self.assertGreater(got, 0)
+        self.assertAlmostEqual(got, expected, places=6)
+
+    def test_helper_counts_only_chelate_share_of_micro_blend(self):
+        from flahax.product_conversion import catalogue_dose_totals, chelate_sodium_mg_per_l
+        by_name = {s['name']: s for s in load_library()['salts']}
+        got = chelate_sodium_mg_per_l([(by_name['CH - micro'], 1.0)])
+        full = catalogue_dose_totals({'CH - micro': 1.0})['Na+'] * 22.98977 * 1000.0
+        self.assertGreater(got, 0)
+        self.assertLess(got, full)
+        self.assertEqual(chelate_sodium_mg_per_l([(by_name['Boric Acid'], 1.0),
+                                                  (by_name['Sodium Molybdate (Dihydrate)'], 1.0)]), 0.0)
+
+
 if __name__ == '__main__':
     unittest.main()

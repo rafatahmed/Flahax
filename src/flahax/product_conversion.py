@@ -177,6 +177,35 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
     return units
 
 
+_CHELATE_SODIUM_FAMILIES = ("edta_chelate", "dtpa_chelate", "eddha_chelate")
+_NA_MG_PER_MOL = 22.98977 * 1000.0
+
+
+def chelate_sodium_mg_per_l(salts_with_doses) -> float:
+    """Chelate counterion sodium (D2) in mg/L for ``[(product record, g/L), ...]``.
+
+    Doses in g/L are treated as g/kg water. Only the chelate counterion sodium of
+    the EDTA, DTPA and EDDHA products and the chelate share of the CH - micro
+    blend counts; borax and molybdate sodium are already elemental Na in the
+    product assay. Records without catalogue chemistry contribute nothing.
+    """
+    moles = 0.0
+    for product, dose in salts_with_doses:
+        if dose <= 0:
+            continue
+        try:
+            converted = convert_catalogue_product_dose(product, dose)
+        except DeliveryError:
+            continue
+        family = converted.chemistry.family
+        if family in _CHELATE_SODIUM_FAMILIES:
+            moles += converted.counterions.get("sodium", 0.0)
+        elif family == "edta_borax_molybdate_blend":
+            t = converted.totals
+            moles += t.get("Fe", 0.0) + 2 * sum(t.get(k, 0.0) for k in ("Mn", "Zn", "Cu"))
+    return moles * _NA_MG_PER_MOL
+
+
 def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None):
     """Convert every assayed catalogue element into one conserved basis.
 

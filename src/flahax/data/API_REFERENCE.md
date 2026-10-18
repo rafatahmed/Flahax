@@ -556,6 +556,8 @@ Returns:
     Each salt carries provenance (recordId, identityId, analysisBasis,
     documents, flags) taken from the record that produced it, or
     analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
+    Chelate counterion sodium (D2) is added to the Na row and incidental
+    review after the fit; it never affects eligibility, the fit or grams.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
     product-to-dose mapping. Feasible is positive-target fit within 1%,

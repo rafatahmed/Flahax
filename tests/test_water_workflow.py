@@ -39,7 +39,8 @@ class WaterWorkflowTests(unittest.TestCase):
         violations = {r['symbol']: r['ppm'] for r in result.recommendation['incidentalContributions']}
         # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 4.84511367294
         self.assertAlmostEqual(violations['N_NH4'], 4.84519260402, places=8)
-        self.assertAlmostEqual(violations['Na'], .0479192828162, places=10)
+        # F2 chelate sodium reported (D2): was .0479192828162 (molybdate Na only)
+        self.assertAlmostEqual(violations['Na'], 1.7218299698621453, places=10)
         self.assertEqual(result.stages['chemistry'].status, 'needs_input')
         self.assertIsNone(result.stages['chemistry'].value)
         self.assertIn('water_totals', result.stages['chemistry'].required_inputs)
@@ -57,7 +58,7 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})
         result = plan_fertilizer_workflow(products(), TARGETS, {'Ca':20}, 6.5,
-                                         maximum_concentrations={'N_NH4':6, 'Na':.1})
+                                         maximum_concentrations={'N_NH4':6, 'Na':2})  # F2 chelate sodium reported (D2): Na limit was .1
         self.assertTrue(result.recommendation['feasible'])
         self.assertFalse(result.recommendation['requiresReview'])
         blocked = plan_fertilizer_workflow(products(), TARGETS, {'Ca':20}, 6.5,
