@@ -1,0 +1,732 @@
+{
+  "schema": "flahax.material_identities/1",
+  "source": "docs/audit/2026-10-18-materials-identity (materials-audit.csv, review.md); owner decisions D1, D2",
+  "identities": [
+    {
+      "id": "idn-ammonium-calcium-nitrate",
+      "products": [
+        "Calcium Nitrate (ag grade)"
+      ],
+      "name": "Ammonium calcium nitrate double salt (ideal)",
+      "formula": "5Ca(NO3)2.NH4NO3.10H2O",
+      "hydration": "10 H2O per double-salt formula unit (assumed; not proved by the comparator TDS)",
+      "molecular_weight": 1080.62,
+      "cas": null,
+      "ion_forms": {
+        "Ca+2": 5,
+        "NH4+": 1,
+        "NO3-": 11
+      },
+      "theoretical_analysis": {
+        "Ca": 18.544060202131462,
+        "N_NO3": 14.257956826014981,
+        "N_NH4": 1.296177893274089
+      },
+      "comparator": {
+        "product": "Haifa Cal NG TDS, updated October 2018",
+        "url": "https://www.haifa-group.com/sites/default/files/2024-04/Haifa%2520Cal%2520NG%2520-%2520New%2520TDS.PDF",
+        "accessed": "2026-10-18"
+      },
+      "status": "commercial_double_salt",
+      "notes": "Ideal double-salt identity; molecular weight is calculated for the ideal formula (no single measured product MW). CAS 15245-12-2 is a related ammonium-calcium-nitrate registry identity, not established for the product; confirm with the actual SDS. The commercial analysis (Haifa Cal NG typical) belongs in a reference grade."
+    },
+    {
+      "id": "idn-ammonium-nitrate",
+      "products": [
+        "Ammonium Nitrate"
+      ],
+      "name": "Ammonium nitrate",
+      "formula": "NH4NO3",
+      "hydration": "anhydrous",
+      "molecular_weight": 80.04,
+      "cas": "6484-52-2",
+      "ion_forms": {
+        "NH4+": 1,
+        "NO3-": 1
+      },
+      "theoretical_analysis": {
+        "N_NO3": 17.49924039651302,
+        "N_NH4": 17.49924039651302
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 221244",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/221244",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-ammonium-sulfate",
+      "products": [
+        "Ammonium Sulfate"
+      ],
+      "name": "Ammonium sulfate",
+      "formula": "(NH4)2SO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 132.14,
+      "cas": "7783-20-2",
+      "ion_forms": {
+        "NH4+": 2,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "S": 24.263593136929913,
+        "N_NH4": 21.201052401187535
+      },
+      "comparator": {
+        "product": "Merck 1.17395",
+        "url": "https://www.sigmaaldrich.com/CA/en/product/mm/117395",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-borax-decahydrate",
+      "products": [
+        "Sodium Borate (Decahydrate) (borax)"
+      ],
+      "name": "Sodium tetraborate decahydrate (borax)",
+      "formula": "Na2B4O7.10H2O",
+      "hydration": "decahydrate",
+      "molecular_weight": 381.37,
+      "cas": "1303-96-4",
+      "ion_forms": {
+        "Na+": 2,
+        "B(OH)4-": 2,
+        "B(OH)3": 2
+      },
+      "theoretical_analysis": {
+        "Na": 12.056748955233397,
+        "B": 11.338387628520586
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich S9640",
+        "url": "https://www.sigmaaldrich.com/PM/en/product/sigald/s9640",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Ion forms per Na2B4O7.10H2O dissolution: 2 Na+ + 2 B(OH)4- + 2 B(OH)3 (charge balanced)."
+    },
+    {
+      "id": "idn-boric-acid",
+      "products": [
+        "Boric Acid"
+      ],
+      "name": "Boric acid",
+      "formula": "H3BO3",
+      "hydration": "anhydrous",
+      "molecular_weight": 61.83,
+      "cas": "10043-35-3",
+      "ion_forms": {
+        "B(OH)3": 1
+      },
+      "theoretical_analysis": {
+        "B": 17.48327524982808
+      },
+      "comparator": {
+        "product": "Sigma B6768",
+        "url": "https://www.sigmaaldrich.com/GB/en/product/sigma/b6768",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-ch-micro-assumed-blend",
+      "products": [
+        "CH - micro"
+      ],
+      "name": "CH - micro assumed micronutrient blend",
+      "formula": null,
+      "hydration": "not applicable (blend)",
+      "molecular_weight": null,
+      "cas": null,
+      "ion_forms": {
+        "Na+": 2.750261689,
+        "Fe(III)-EDTA": 1.253469424,
+        "Mn-EDTA": 0.364046452,
+        "Zn-EDTA": 0.061180789,
+        "Cu-EDTA": 0.017310295,
+        "B(OH)4-": 0.601295097,
+        "B(OH)3": 0.601295097,
+        "MoO4-2": 0.005211047
+      },
+      "theoretical_analysis": {},
+      "comparator": {
+        "product": "Repository declaration only",
+        "url": null,
+        "accessed": "2026-10-18"
+      },
+      "status": "assumed_blend",
+      "notes": "Not an identified product (audit: unresolved blend). No formula, molecular weight, CAS or theoretical analysis exists. ion_forms are mol per kg of product (not per formula unit), derived from the declared catalogue analysis (B 1.3, Fe 7, Zn 0.4, Mn 2, Cu 0.11, Mo 0.05 %) under the project-declared composition: Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts (D2), B as borax (2 Na+ + 2 B(OH)4- + 2 B(OH)3 per Na2B4O7), Mo as Na2MoO4. A project assumption, not a disclosed composition."
+    },
+    {
+      "id": "idn-copper-sulfate-pentahydrate",
+      "products": [
+        "Copper Sulfate (pentahydrate)"
+      ],
+      "name": "Copper(II) sulfate pentahydrate",
+      "formula": "CuSO4.5H2O",
+      "hydration": "pentahydrate",
+      "molecular_weight": 249.69,
+      "cas": "7758-99-8",
+      "ion_forms": {
+        "Cu+2": 1,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "Cu": 25.451446157691144,
+        "S": 12.84067232895191
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 209198",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/209198",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-diammonium-phosphate",
+      "products": [
+        "Ammonium Dibasic Phosphate"
+      ],
+      "name": "Diammonium hydrogen phosphate",
+      "formula": "(NH4)2HPO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 132.06,
+      "cas": "7783-28-0",
+      "ion_forms": {
+        "NH4+": 2,
+        "HPO4-2": 1
+      },
+      "theoretical_analysis": {
+        "P": 23.455425209446197,
+        "N_NH4": 21.21363909757879
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 215996",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/215996",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent. Comparator grade is an example, not the FlahaX product."
+    },
+    {
+      "id": "idn-dipotassium-phosphate",
+      "products": [
+        "Potassium Dibasic Phosphate"
+      ],
+      "name": "Dipotassium hydrogen phosphate",
+      "formula": "K2HPO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 174.18,
+      "cas": "7758-11-4",
+      "ion_forms": {
+        "K+": 2,
+        "HPO4-2": 1
+      },
+      "theoretical_analysis": {
+        "K": 44.89562696546759,
+        "P": 17.783208790013575
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich P3786",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/p3786",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-disodium-copper-edta",
+      "products": [
+        "Copper EDTA"
+      ],
+      "name": "EDTA copper(II) disodium salt",
+      "formula": "C10H12CuN2Na2O8",
+      "hydration": "dry formula basis; water up to 15 %, no fixed hydrate number established",
+      "molecular_weight": 397.74,
+      "cas": "39208-15-6",
+      "ion_forms": {
+        "Na+": 2,
+        "Cu-EDTA": 1
+      },
+      "theoretical_analysis": {
+        "Cu": 15.97696886724719,
+        "Na": 11.560344430120056
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 03668",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sial/03668",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. CAS is that of the Sigma comparator product."
+    },
+    {
+      "id": "idn-disodium-iron-dtpa",
+      "products": [
+        "Iron DTPA"
+      ],
+      "name": "DTPA iron(III) disodium salt",
+      "formula": "C14H18FeN3Na2O10",
+      "hydration": "dry formula basis; not established",
+      "molecular_weight": null,
+      "cas": null,
+      "ion_forms": {
+        "Na+": 2,
+        "Fe(III)-DTPA": 1
+      },
+      "theoretical_analysis": {
+        "Fe": 11.393921525572827,
+        "Na": 9.381094954858872
+      },
+      "comparator": {
+        "product": "Nouryon iron chelates for greenhouse crops",
+        "url": "https://www.nouryon.com/globalassets/inriver/resources/article-micronutrients-nutrient-solutions-for-greenhouse-crops-global-5-en.pdf",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. Na2FeDTPA is the sodium salt that balances the ligand charge (D2); the audit did not establish a molecular weight or CAS for the product, so both are null (formula mass of the dry salt calculates to about 490.1)."
+    },
+    {
+      "id": "idn-disodium-manganese-edta",
+      "products": [
+        "Mn EDTA"
+      ],
+      "name": "EDTA manganese(II) disodium salt",
+      "formula": "C10H12MnN2Na2O8",
+      "hydration": "dry reference salt; actual catalogue hydration unknown",
+      "molecular_weight": 389.13,
+      "cas": "15375-84-5",
+      "ion_forms": {
+        "Na+": 2,
+        "Mn-EDTA": 1
+      },
+      "theoretical_analysis": {
+        "Mn": 14.118278928644651,
+        "Na": 11.816073074866225
+      },
+      "comparator": {
+        "product": "YaraTera REXOLIN Mn13",
+        "url": "https://www.yara.co.uk/crop-nutrition/fertiliser/soluble/yaratera-rexolin-mn13/",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. Molecular weight and CAS are those of the defined reference salt."
+    },
+    {
+      "id": "idn-disodium-zinc-edta",
+      "products": [
+        "Zn EDTA"
+      ],
+      "name": "EDTA zinc disodium salt",
+      "formula": "C10H12N2Na2O8Zn",
+      "hydration": "hydrate, x unspecified (loss on drying 8-15 %); dry formula basis",
+      "molecular_weight": 399.57,
+      "cas": "14025-21-9",
+      "ion_forms": {
+        "Na+": 2,
+        "Zn-EDTA": 1
+      },
+      "theoretical_analysis": {
+        "Na": 11.507283079690628,
+        "Zn": 16.362629997503962
+      },
+      "comparator": {
+        "product": "Thermo Scientific 022426.14 specification",
+        "url": "https://assets.thermofisher.com/chem-specs-pdf/retrievePdf?rootSku=022426&sku=022426.14",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. Molecular weight excludes the variable water."
+    },
+    {
+      "id": "idn-iron-ii-sulfate-heptahydrate",
+      "products": [
+        "Iron II Sulfate (Hepahydrate)"
+      ],
+      "name": "Iron(II) sulfate heptahydrate",
+      "formula": "FeSO4.7H2O",
+      "hydration": "heptahydrate",
+      "molecular_weight": 278.01,
+      "cas": "7782-63-0",
+      "ion_forms": {
+        "Fe+2": 1,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "Fe": 20.08785780451315,
+        "S": 11.53221812539514
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 215422",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/215422",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: metadata correction only (catalogue name misspells heptahydrate); identity consistent."
+    },
+    {
+      "id": "idn-magnesium-nitrate-hexahydrate",
+      "products": [
+        "Mg Nitrate"
+      ],
+      "name": "Magnesium nitrate hexahydrate",
+      "formula": "Mg(NO3)2.6H2O",
+      "hydration": "hexahydrate",
+      "molecular_weight": 256.41,
+      "cas": "13446-18-9",
+      "ion_forms": {
+        "Mg+2": 1,
+        "NO3-": 2
+      },
+      "theoretical_analysis": {
+        "Mg": 9.479311427186095,
+        "N_NO3": 10.92564257290002
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 237175",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/237175",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Owner decision D1: pure Mg(NO3)2.6H2O. The catalogue formula Mg(NO3)2 and analysis N 11 / Mg 9.65 fit neither the anhydrous nor the hydrated salt (audit: formula/assay conflict)."
+    },
+    {
+      "id": "idn-magnesium-sulfate-heptahydrate",
+      "products": [
+        "Magnesium Sulfate (Heptahydrate)"
+      ],
+      "name": "Magnesium sulfate heptahydrate",
+      "formula": "MgSO4.7H2O",
+      "hydration": "heptahydrate",
+      "molecular_weight": 246.47,
+      "cas": "10034-99-8",
+      "ion_forms": {
+        "Mg+2": 1,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "Mg": 9.861490387065425,
+        "S": 13.007997605814339
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich M1880",
+        "url": "https://www.sigmaaldrich.com/SG/en/product/sigald/m1880",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-monoammonium-phosphate",
+      "products": [
+        "Ammonium Monobasic Phosphate"
+      ],
+      "name": "Ammonium dihydrogen phosphate",
+      "formula": "(NH4)H2PO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 115.03,
+      "cas": "7722-76-1",
+      "ion_forms": {
+        "NH4+": 1,
+        "H2PO4-": 1
+      },
+      "theoretical_analysis": {
+        "P": 26.928202898917124,
+        "N_NH4": 12.177250523984219
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 216003",
+        "url": "https://www.sigmaaldrich.com/GB/en/product/sigald/216003",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-monopotassium-phosphate",
+      "products": [
+        "Potassium Monobasic Phosphate"
+      ],
+      "name": "Potassium dihydrogen phosphate",
+      "formula": "KH2PO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 136.09,
+      "cas": "7778-77-0",
+      "ion_forms": {
+        "K+": 1,
+        "H2PO4-": 1
+      },
+      "theoretical_analysis": {
+        "K": 28.7310588505128,
+        "P": 22.760810031223276
+      },
+      "comparator": {
+        "product": "Sigma P5655 specification",
+        "url": "https://www.sigmaaldrich.com/specification-sheets/144/381/P5655-BULK________SIGMA____.pdf",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-phosphoric-acid",
+      "products": [
+        "Phosphoric Acid (75%)"
+      ],
+      "name": "Orthophosphoric acid (aqueous solution)",
+      "formula": "H3PO4",
+      "hydration": "aqueous solution, not a crystal hydrate",
+      "molecular_weight": null,
+      "cas": "7664-38-2",
+      "ion_forms": {
+        "H3PO4": 1
+      },
+      "theoretical_analysis": {
+        "P": 31.608046355667526
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 438081 (85% comparator)",
+        "url": "https://www.sigmaaldrich.com/AW/en/product/sigald/438081",
+        "accessed": "2026-10-18"
+      },
+      "status": "aqueous_solution",
+      "notes": "Identity is the H3PO4 solute; theoretical analysis is the pure-acid value (P 31.61 %). A 75 % w/w solution is P about 23.71 % and belongs in a reference grade with its concentration basis. Molecular weight is null because a solution has none (solute 98.00). CAS is the acid component."
+    },
+    {
+      "id": "idn-potassium-carbonate",
+      "products": [
+        "Potassium Carbonate"
+      ],
+      "name": "Potassium carbonate",
+      "formula": "K2CO3",
+      "hydration": "anhydrous",
+      "molecular_weight": 138.21,
+      "cas": "584-08-7",
+      "ion_forms": {
+        "K+": 2,
+        "CO3-2": 1
+      },
+      "theoretical_analysis": {
+        "K": 56.58031642940974
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 209619",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/209619",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-potassium-nitrate",
+      "products": [
+        "Potassium Nitrate"
+      ],
+      "name": "Potassium nitrate",
+      "formula": "KNO3",
+      "hydration": "anhydrous",
+      "molecular_weight": 101.1,
+      "cas": "7757-79-1",
+      "ion_forms": {
+        "K+": 1,
+        "NO3-": 1
+      },
+      "theoretical_analysis": {
+        "K": 38.67213309331171,
+        "N_NO3": 13.854028604775376
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 221295",
+        "url": "https://www.sigmaaldrich.com/DE/en/product/sigald/221295",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-potassium-sulfate",
+      "products": [
+        "Potassium Sulfate"
+      ],
+      "name": "Potassium sulfate",
+      "formula": "K2SO4",
+      "hydration": "anhydrous",
+      "molecular_weight": 174.26,
+      "cas": "7778-80-5",
+      "ion_forms": {
+        "K+": 2,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "K": 44.87542797065869,
+        "S": 18.39857769697554
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 223492",
+        "url": "https://www.sigmaaldrich.com/ES/en/product/sigald/223492",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-sodium-iron-edta",
+      "products": [
+        "Iron EDTA"
+      ],
+      "name": "EDTA iron(III) sodium salt",
+      "formula": "C10H12FeN2NaO8",
+      "hydration": "anhydrous reference formula; catalogue hydration unresolved",
+      "molecular_weight": 367.05,
+      "cas": "15708-41-5",
+      "ion_forms": {
+        "Na+": 1,
+        "Fe(III)-EDTA": 1
+      },
+      "theoretical_analysis": {
+        "Fe": 15.214786814436643,
+        "Na": 6.263487048941611
+      },
+      "comparator": {
+        "product": "Sigma E6760",
+        "url": "https://www.sigmaaldrich.com/DO/en/product/sigma/e6760",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. CAS is the reference anhydrous identity."
+    },
+    {
+      "id": "idn-sodium-iron-oo-eddha",
+      "products": [
+        "Iron EDDHA"
+      ],
+      "name": "o,o-EDDHA iron(III) sodium salt",
+      "formula": "C18H16FeN2NaO6",
+      "hydration": "dry formula basis; not established",
+      "molecular_weight": null,
+      "cas": null,
+      "ion_forms": {
+        "Na+": 1,
+        "Fe(III)-o,o-EDDHA": 1
+      },
+      "theoretical_analysis": {
+        "Fe": 12.833045361358048,
+        "Na": 5.28299307769976
+      },
+      "comparator": {
+        "product": "YaraTera REXOLIN Q48",
+        "url": "https://www.yara.co.uk/crop-nutrition/fertiliser/soluble/yaratera-rexolin-q48/",
+        "accessed": "2026-10-18"
+      },
+      "status": "chelate_salt_defined",
+      "notes": "Theoretical analysis of the defined dry sodium salt (D2). The catalogue metal percentage is a grade assay, not this value. NaFeEDDHA (o,o isomer) is the sodium salt that balances the ligand charge (D2); commercial products are mixtures/grades. The audit did not establish a molecular weight or CAS, so both are null (formula mass of the dry salt calculates to about 435.2)."
+    },
+    {
+      "id": "idn-sodium-molybdate-dihydrate",
+      "products": [
+        "Sodium Molybdate (Dihydrate)"
+      ],
+      "name": "Sodium molybdate dihydrate",
+      "formula": "Na2MoO4.2H2O",
+      "hydration": "dihydrate",
+      "molecular_weight": 241.95,
+      "cas": "10102-40-6",
+      "ion_forms": {
+        "Na+": 2,
+        "MoO4-2": 1
+      },
+      "theoretical_analysis": {
+        "Na": 19.00335078151631,
+        "Mo": 39.656151122842736
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 331058",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/331058",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-tripotassium-citrate",
+      "products": [
+        "Potassium Citrate"
+      ],
+      "name": "Tripotassium citrate (anhydrous)",
+      "formula": "C6H5K3O7",
+      "hydration": "anhydrous",
+      "molecular_weight": 306.39,
+      "cas": "866-84-2",
+      "ion_forms": {
+        "K+": 3,
+        "citrate": 1
+      },
+      "theoretical_analysis": {
+        "K": 38.282487431995044
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 25107 (monohydrate comparator)",
+        "url": "https://www.sigmaaldrich.com/AI/en/product/sial/25107",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Hydration made explicit: the catalogue product is anhydrous (CAS 866-84-2). The comparator is the monohydrate C6H5K3O7.H2O (CAS 6100-05-6, MW 324.41, K 36.16 %), a different identity."
+    },
+    {
+      "id": "idn-urea",
+      "products": [
+        "Urea"
+      ],
+      "name": "Urea (carbamide)",
+      "formula": "CO(NH2)2",
+      "hydration": "anhydrous",
+      "molecular_weight": 60.06,
+      "cas": "57-13-6",
+      "ion_forms": {
+        "CO(NH2)2": 1
+      },
+      "theoretical_analysis": {
+        "N_UREA": 46.64642736062887
+      },
+      "comparator": {
+        "product": "Sigma U5378",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigma/u5378",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: metadata correction only (catalogue formula text \"Urea\"). N_UREA is the audit theoretical value; composition.theoretical_assay does not report amide N."
+    },
+    {
+      "id": "idn-zinc-sulfate-monohydrate",
+      "products": [
+        "Zinc Sulfate (Monohydrate)"
+      ],
+      "name": "Zinc sulfate monohydrate",
+      "formula": "ZnSO4.H2O",
+      "hydration": "monohydrate",
+      "molecular_weight": 179.47,
+      "cas": "7446-19-7",
+      "ion_forms": {
+        "Zn+2": 1,
+        "SO4-2": 1
+      },
+      "theoretical_analysis": {
+        "Zn": 36.433408889840926,
+        "S": 17.865633053048338
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 96495",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/96495",
+        "accessed": "2026-10-18"
+      },
+      "status": "identity_consistent",
+      "notes": "Audit: identity consistent."
+    }
+  ]
+}
