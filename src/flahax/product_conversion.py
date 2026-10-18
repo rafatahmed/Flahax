@@ -112,8 +112,11 @@ _BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+',
           'EDTA': 'Edta-4', 'DTPA': 'Dtp-5', 'o,o-EDDHA': 'Edd-4', 'citrate': 'Citrate-3'}
 
 
-def _check_materials(doses: Mapping[str, float], materials) -> dict:
-    """Validate the optional resolved-material mapping against the dosed products."""
+def _check_materials(doses: Mapping[str, float], materials, *, allow_undisclosed: bool = False) -> dict:
+    """Validate the optional resolved-material mapping against the dosed products.
+
+    Chemistry refuses an undisclosed blend; nutrient amounts (the band) may keep it.
+    """
     from .materials import ResolvedMaterial
     if materials is None:
         return {}
@@ -124,7 +127,7 @@ def _check_materials(doses: Mapping[str, float], materials) -> dict:
             raise DeliveryError("material_mismatch", f"material {name!r} is not a dosed product")
         if not isinstance(material, ResolvedMaterial) or material.name != name:
             raise DeliveryError("material_mismatch", f"materials[{name!r}] must be the ResolvedMaterial of {name!r}")
-    for name, material in materials.items():
+    for name, material in ({} if allow_undisclosed else materials).items():
         if material.composition == 'undisclosed':
             raise DeliveryError("composition_undisclosed",
                                 f"{name!r} is a blend of undisclosed composition; chemistry is not supported")
