@@ -4,8 +4,10 @@ import unittest
 
 from flahax.delivery_contracts import DeliveryError
 from flahax.engine import load_library
-from flahax.materials import (IDENTITIES_SHA256, IDENTITY_STATUSES, identity_for_product,
-                              load_identities)
+from flahax.composition import ATOMIC
+from flahax.materials import (IDENTITIES_SHA256, IDENTITY_STATUSES, OXIDE_FACTORS, Grade, Lot,
+                              identity_for_product, load_identities, make_grade, make_lot,
+                              resolve_material)
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 
@@ -107,6 +109,240 @@ class IdentityTests(unittest.TestCase):
 
     def test_identities_file_is_pinned(self):
         self.assertEqual(IDENTITIES_SHA256, '7713f20cc7e8eb83ea4fa9e90bf36b875c81599c2965f9ddf96818e4c372c891')
+
+
+DOC = {'supplier': 'Example Supplier', 'title': 'Technical data sheet TDS-1', 'issued': '2026-01-15',
+       'entered': '2026-10-18'}
+COA = {'supplier': 'Example Supplier', 'title': 'Certificate of analysis L-77', 'issued': '2026-09-01',
+       'entered': '2026-10-18', 'sha256': 'a' * 64}
+MKP = 'idn-monopotassium-phosphate'
+CAN = 'idn-ammonium-calcium-nitrate'
+
+
+def grade(**overrides):
+    record = {'grade_id': 'grd-test', 'identity_id': MKP, 'supplier': 'Example Supplier',
+              'product': 'MKP 0-52-34', 'composition': 'single',
+              'analysis': {'P2O5': {'minimum': 52.0}}, 'document': DOC}
+    record.update(overrides)
+    return make_grade(record)
+
+
+def lot(**overrides):
+    record = {'lot_id': 'L-77', 'grade_id': 'grd-test', 'measured': {'K': 28.5},
+              'uncertainty': {'K': 0.3}, 'document': COA}
+    record.update(overrides)
+    return make_lot(record)
+
+
+class GradeLotTests(unittest.TestCase):
+    def test_oxide_factors(self):
+        o = ATOMIC['O']
+        derived = {
+            'P2O5': 2 * ATOMIC['P'] / (2 * ATOMIC['P'] + 5 * o),
+            'K2O': 2 * ATOMIC['K'] / (2 * ATOMIC['K'] + o),
+            'CaO': ATOMIC['Ca'] / (ATOMIC['Ca'] + o),
+            'MgO': ATOMIC['Mg'] / (ATOMIC['Mg'] + o),
+            'SO3': ATOMIC['S'] / (ATOMIC['S'] + 3 * o),
+        }
+        elements = {'P2O5': 'P', 'K2O': 'K', 'CaO': 'Ca', 'MgO': 'Mg', 'SO3': 'S'}
+        # Brief values (0.436421, 0.830148, 0.714701, 0.603036, 0.400496) come from older
+        # atomic masses (O 15.9994, S 32.065, Ca 40.08). composition.ATOMIC (O 15.999,
+        # S 32.06, Ca 40.078) gives the from_atomic values, which agree with the brief to 4
+        # places only. Factors are computed from ATOMIC, never hard-coded.
+        brief = {'P2O5': 0.436421, 'K2O': 0.830148, 'CaO': 0.714701, 'MgO': 0.603036, 'SO3': 0.400496}
+        from_atomic = {'P2O5': 0.436427, 'K2O': 0.830151, 'CaO': 0.714696, 'MgO': 0.603042,
+                       'SO3': 0.400465}
+        self.assertEqual(set(OXIDE_FACTORS), set(derived))
+        for oxide, (element, factor) in OXIDE_FACTORS.items():
+            self.assertEqual(element, elements[oxide])
+            self.assertEqual(factor, derived[oxide])
+            self.assertAlmostEqual(factor, from_atomic[oxide], places=6)
+            self.assertAlmostEqual(factor, brief[oxide], places=4)
+        g = grade(analysis={'P2O5': {'typical': 52.0}, 'K2O': {'typical': 34.0}})
+        self.assertEqual(g.oxide_conversions, {'P2O5': {'element': 'P', 'factor': derived['P2O5']},
+                                               'K2O': {'element': 'K', 'factor': derived['K2O']}})
+        self.assertAlmostEqual(g.typical['K'], 34.0 * derived['K2O'], places=12)
+        with self.assertRaises(DeliveryError) as caught:
+            grade(analysis={'P2O5': {'typical': 52.0}, 'P': {'typical': 22.7}})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+
+    def test_grade_requires_document_reference(self):
+        for document in (None, {}, {**DOC, 'issued': ''}, {k: v for k, v in DOC.items() if k != 'entered'}):
+            record = {'grade_id': 'grd-test', 'identity_id': MKP, 'supplier': 'S', 'product': 'P',
+                      'composition': 'single', 'analysis': {'P': {'typical': 22.7}}}
+            if document is not None:
+                record['document'] = document
+            with self.assertRaises(DeliveryError) as caught:
+                make_grade(record)
+            self.assertEqual(caught.exception.code, 'missing_document_reference')
+        with self.assertRaises(DeliveryError) as caught:
+            make_lot({'lot_id': 'L', 'identity_id': MKP, 'measured': {'K': 28.0}})
+        self.assertEqual(caught.exception.code, 'missing_document_reference')
+        g = grade()
+        self.assertEqual(g.document.supplier, 'Example Supplier')
+        self.assertIsNone(g.document.url)
+
+    def test_invalid_values_rejected(self):
+        for bad in (float('nan'), float('inf'), -1.0, 100.5, 'x', True):
+            with self.assertRaises(DeliveryError) as caught:
+                grade(analysis={'P': {'typical': bad}})
+            self.assertEqual(caught.exception.code, 'invalid_value', bad)
+        for analysis in ({'Xx': {'typical': 1.0}}, {'P': {'typical': 22.0, 'minimum': 23.0}},
+                         {'P': {'average': 22.0}}, {'P': {}}):
+            with self.assertRaises(DeliveryError) as caught:
+                grade(analysis=analysis)
+            self.assertEqual(caught.exception.code, 'invalid_value', analysis)
+        with self.assertRaises(DeliveryError) as caught:
+            lot(measured={'K': -0.1})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+        with self.assertRaises(DeliveryError) as caught:
+            lot(uncertainty={'P': 0.1})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+        with self.assertRaises(DeliveryError) as caught:
+            grade(identity_id='idn-unobtainium')
+        self.assertEqual(caught.exception.code, 'unknown_identity')
+        with self.assertRaises(DeliveryError) as caught:
+            lot(grade_id=None, identity_id='idn-unobtainium')
+        self.assertEqual(caught.exception.code, 'unknown_identity')
+
+    def test_minimum_only_grade_is_lower_bound(self):
+        g = grade()
+        self.assertIsInstance(g, Grade)
+        resolved = resolve_material('Potassium Monobasic Phosphate', grade=g)
+        self.assertEqual(resolved.basis['P'], 'grade_minimum')
+        self.assertIn('lower_bound_grade_assay', resolved.flags)
+        self.assertAlmostEqual(resolved.record['elements']['P'], 22.6939, places=3)
+        self.assertEqual(resolved.record['elements']['P'], 52.0 * OXIDE_FACTORS['P2O5'][1])
+        self.assertEqual(resolved.band_minimum['P'], resolved.record['elements']['P'])
+        self.assertIn('P', resolved.band_maximum)
+        self.assertIsNone(resolved.band_maximum['P'])
+        # K is not stated by the grade: identity theoretical, no band.
+        self.assertEqual(resolved.basis['K'], 'identity_theoretical')
+        self.assertIsNone(resolved.band_minimum['K'])
+        self.assertIsNone(resolved.band_maximum['K'])
+        shipped = next(s for s in load_library()['salts'] if s['name'] == 'Potassium Monobasic Phosphate')
+        self.assertEqual(resolved.record['id'], shipped['id'])
+        self.assertEqual(resolved.record['name'], shipped['name'])
+        self.assertEqual(resolved.record['formula'], 'KH2PO4')
+        self.assertEqual(resolved.provenance['gradeId'], 'grd-test')
+        self.assertEqual(resolved.provenance['identitiesSha256'], IDENTITIES_SHA256)
+
+    def test_partial_lot_falls_back_per_nutrient(self):
+        g = grade(grade_id='grd-can', identity_id=CAN, product='Calcium nitrate ag grade',
+                  analysis={'N_NO3': {'typical': 14.4, 'minimum': 14.0, 'maximum': 14.8},
+                            'N_NH4': {'typical': 1.1}, 'Ca': {'typical': 19.0, 'minimum': 18.5}})
+        l = lot(grade_id='grd-can', measured={'N_NO3': 14.6}, uncertainty={'N_NO3': 0.2})
+        self.assertIsInstance(l, Lot)
+        resolved = resolve_material('Calcium Nitrate (ag grade)', grade=g, lot=l)
+        self.assertEqual(resolved.basis, {'N_NO3': 'lot_measured', 'N_NH4': 'grade_typical',
+                                          'Ca': 'grade_typical'})
+        self.assertEqual(resolved.record['elements'], {'N_NO3': 14.6, 'N_NH4': 1.1, 'Ca': 19.0})
+        self.assertAlmostEqual(resolved.band_minimum['N_NO3'], 14.4, places=12)
+        self.assertAlmostEqual(resolved.band_maximum['N_NO3'], 14.8, places=12)
+        self.assertEqual(resolved.band_minimum['Ca'], 18.5)
+        self.assertIsNone(resolved.band_maximum['Ca'])
+        self.assertIsNone(resolved.band_minimum['N_NH4'])
+        self.assertNotIn('lower_bound_grade_assay', resolved.flags)
+        self.assertEqual(resolved.provenance['lotId'], 'L-77')
+        self.assertEqual(resolved.provenance['documents']['lot']['sha256'], 'a' * 64)
+
+    def test_lot_against_identity_without_grade(self):
+        l = lot(grade_id=None, identity_id=MKP)
+        resolved = resolve_material('Potassium Monobasic Phosphate', lot=l)
+        self.assertEqual(resolved.basis, {'K': 'lot_measured', 'P': 'identity_theoretical'})
+        self.assertEqual(resolved.record['elements']['K'], 28.5)
+        self.assertEqual(resolved.record['elements']['P'],
+                         identity_for_product('Potassium Monobasic Phosphate')['theoretical_analysis']['P'])
+        self.assertAlmostEqual(resolved.band_minimum['K'], 28.2, places=12)
+        self.assertAlmostEqual(resolved.band_maximum['K'], 28.8, places=12)
+        self.assertIsNone(resolved.provenance['gradeId'])
+        self.assertIsNone(resolved.provenance['documents']['grade'])
+        for linkage in ({'grade_id': 'grd-test', 'identity_id': MKP}, {'grade_id': None}):
+            with self.assertRaises(DeliveryError) as caught:
+                lot(**linkage)
+            self.assertEqual(caught.exception.code, 'material_mismatch')
+        with self.assertRaises(DeliveryError) as caught:
+            resolve_material('Potassium Nitrate', lot=l)
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+        with self.assertRaises(DeliveryError) as caught:
+            resolve_material('Potassium Monobasic Phosphate', lot=lot())
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+
+    def test_lot_grade_mismatch_raises(self):
+        with self.assertRaises(DeliveryError) as caught:
+            resolve_material('Potassium Monobasic Phosphate', grade=grade(), lot=lot(grade_id='grd-other'))
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+        with self.assertRaises(DeliveryError) as caught:
+            resolve_material('Potassium Monobasic Phosphate', grade=grade(),
+                             lot=lot(grade_id=None, identity_id=MKP))
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+        with self.assertRaises(DeliveryError) as caught:
+            resolve_material('Potassium Nitrate', grade=grade())
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+
+    def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
+        old = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}})
+        self.assertIn('identity_inconsistent', old.flags)
+        theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
+        close = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'N_NO3': {'typical': theory['N_NO3']}, 'Mg': {'typical': theory['Mg'] * 1.0009}})
+        self.assertNotIn('identity_inconsistent', close.flags)
+        # Typical within 0.1 % but the grade's own range excludes the theoretical value.
+        excluded = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'Mg': {'typical': theory['Mg'] * 1.0005, 'minimum': theory['Mg'] * 1.0002}})
+        self.assertIn('identity_inconsistent', excluded.flags)
+        resolved = resolve_material('Mg Nitrate', grade=old)
+        self.assertIn('identity_inconsistent', resolved.flags)
+
+    def test_disclosed_blend_fractions_validated(self):
+        components = [{'identity_id': 'idn-sodium-iron-edta', 'mass_fraction': 0.6},
+                      {'identity_id': 'idn-borax-decahydrate', 'mass_fraction': 0.3}]
+        g = grade(grade_id='grd-blend', identity_id=None, composition='disclosed', components=components,
+                  analysis={'Fe': {'typical': 7.0}})
+        self.assertEqual(g.components, (('idn-sodium-iron-edta', 0.6), ('idn-borax-decahydrate', 0.3)))
+        for bad in ([{**components[0], 'mass_fraction': 0.8}, components[1]], [],
+                    [{**components[0], 'mass_fraction': 0.0}]):
+            with self.assertRaises(DeliveryError) as caught:
+                grade(identity_id=None, composition='disclosed', components=bad)
+            self.assertEqual(caught.exception.code, 'invalid_composition')
+        with self.assertRaises(DeliveryError) as caught:
+            grade(identity_id=None, composition='disclosed',
+                  components=[{'identity_id': 'idn-nope', 'mass_fraction': 0.5}])
+        self.assertEqual(caught.exception.code, 'unknown_identity')
+        with self.assertRaises(DeliveryError) as caught:
+            grade(identity_id=None)
+        self.assertEqual(caught.exception.code, 'invalid_composition')
+        with self.assertRaises(DeliveryError) as caught:
+            grade(composition='mystery')
+        self.assertEqual(caught.exception.code, 'invalid_composition')
+
+    def test_undisclosed_blend_has_composition_undisclosed(self):
+        g = grade(grade_id='grd-secret', identity_id=None, composition='undisclosed',
+                  analysis={'Fe': {'typical': 7.0}, 'Zn': {'typical': 0.4}})
+        self.assertEqual(g.components, ())
+        resolved = resolve_material('CH - micro', grade=g)
+        self.assertEqual(resolved.composition, 'undisclosed')
+        self.assertEqual(resolved.basis, {'Fe': 'grade_typical', 'Zn': 'grade_typical'})
+        with self.assertRaises(DeliveryError) as caught:
+            grade(identity_id=None, composition='undisclosed',
+                  components=[{'identity_id': MKP, 'mass_fraction': 0.5}])
+        self.assertEqual(caught.exception.code, 'invalid_composition')
+
+    def test_shipped_product_without_grade_or_lot(self):
+        resolved = resolve_material('Mg Nitrate')
+        self.assertEqual(resolved.record['elements'], {'N_NO3': 11, 'Mg': 9.65})
+        self.assertEqual(resolved.basis, {'N_NO3': 'declared_catalogue', 'Mg': 'declared_catalogue'})
+        self.assertEqual(resolved.band_minimum, {'N_NO3': None, 'Mg': None})
+        self.assertEqual(resolved.band_maximum, {'N_NO3': None, 'Mg': None})
+        self.assertEqual(resolved.record['formula'], 'Mg(NO3)2.6H2O')
+        self.assertEqual(resolved.identity_id, 'idn-magnesium-nitrate-hexahydrate')
+        self.assertIsNone(resolved.provenance['lotId'])
+
+    def test_chelate_sodium_not_added_to_elements(self):
+        resolved = resolve_material('Iron EDTA', grade=grade(
+            identity_id='idn-sodium-iron-edta', analysis={'Fe': {'typical': 13.0}}))
+        self.assertEqual(resolved.record['elements'], {'Fe': 13.0})
 
 
 if __name__ == '__main__':
