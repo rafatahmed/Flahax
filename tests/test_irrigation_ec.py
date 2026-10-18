@@ -8,7 +8,7 @@ from flahax.aqueous_model import chemistry
 from flahax.delivery_contracts import DeliveryError
 from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER, DeclaredPureWater,
                                   assay_charge_residual, calculate_ec_from_totals,
-                                  calculate_irrigation_ec, covered_species,
+                                  calculate_irrigation_ec, compare_measured_ec, covered_species,
                                   ionic_molal_conductivity,
                                   load_conductivity_coefficients)
 from flahax import plan_equilibrium_delivery
@@ -189,6 +189,37 @@ class PlanTests(unittest.TestCase):
         with self.assertRaises(DeliveryError) as c:
             calculate_irrigation_ec_from_plan(self.plan, phase_policy='equilibrated')
         self.assertEqual(c.exception.code, 'invalid_phase_policy')
+
+
+class ComparisonTests(unittest.TestCase):
+    def test_difference_only_no_verdict(self):
+        p = calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id='kcl', ph_mode='calculated', phase_policy='dissolved')
+        c = compare_measured_ec(p, measured_ec25_ms_cm=1.413, meter_reference_temperature_c=25)
+        self.assertEqual(set(c), {'predicted_ec25_ms_cm', 'measured_ec25_ms_cm', 'difference_ms_cm',
+                                  'relative_difference_percent', 'audit', 'qualifier'})
+        self.assertAlmostEqual(c['difference_ms_cm'], 1.413 - p.ec25_ms_cm, places=12)
+        self.assertAlmostEqual(c['relative_difference_percent'], 100 * (1.413 - p.ec25_ms_cm) / p.ec25_ms_cm, places=9)
+        self.assertEqual(c['qualifier'], p.qualifier)
+        self.assertEqual(c['audit'], p.audit)
+        self.assertIsNot(c['audit'], p.audit)
+
+    def test_refusals(self):                                         # Review Focus 5
+        p = calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id='kcl', ph_mode='calculated', phase_policy='dissolved')
+        partial = calculate_ec_from_totals({'K+': .007, 'PO4-3': .007}, solution_id='mkp', ph_mode='calculated', phase_policy='dissolved')
+        cases = [(partial, 1.0, 25), (p, 1.0, 20), (p, -1.0, 25), (p, float('nan'), 25), (p, True, 25)]
+        for pred, measured, ref in cases:
+            with self.subTest(measured=measured, ref=ref), self.assertRaises(DeliveryError):
+                compare_measured_ec(pred, measured_ec25_ms_cm=measured, meter_reference_temperature_c=ref)
+
+    def test_refusal_codes(self):
+        p = calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id='kcl', ph_mode='calculated', phase_policy='dissolved')
+        partial = calculate_ec_from_totals({'K+': .007, 'PO4-3': .007}, solution_id='mkp', ph_mode='calculated', phase_policy='dissolved')
+        for pred, measured, ref, code in [(partial, 1.0, 25, 'incomplete_prediction'),
+                                          (p, 1.0, 20, 'temperature_reference_mismatch'),
+                                          (p, -1.0, 25, 'invalid_value'), (p, True, 25, 'invalid_value')]:
+            with self.assertRaises(DeliveryError) as c:
+                compare_measured_ec(pred, measured_ec25_ms_cm=measured, meter_reference_temperature_c=ref)
+            self.assertEqual(c.exception.code, code)
 
 
 if __name__ == '__main__':
