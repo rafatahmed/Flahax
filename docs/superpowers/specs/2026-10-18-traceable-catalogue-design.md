@@ -196,6 +196,41 @@ File layout and JSON schema of identity, grade and lot records; the
 validation error codes; the alias mechanism; how the band is attached to
 existing result types.
 
+## 12. Follow-ups (addendum, 2026-10-19)
+
+The three follow-ups listed below are now in scope. These are designer's
+calls, made for owner review.
+
+**F1. Provenance on formulation results.** Each entry in `recommend()`'s
+`salts` list gains `provenance`: `recordId`, `identityId`, `analysisBasis`
+(the per-nutrient `basis` for resolved materials), `source` or the
+document references, and `flags`. Shipped records take these from
+`library.json`. Resolved materials carry them in `record['provenance']`,
+which `resolve_material` now sets. A record with neither is recorded as
+`analysisBasis: "unattributed"`, never guessed. The `recommend` result also
+gains `identitiesSha256`. `forward()` stays a pure mapping of achieved
+nutrients, because its inputs are the caller's own records. Documented, not
+changed.
+
+**F2. Chelate sodium in formulation rows.** After the fit, `recommend` adds
+the D2 chelate sodium for the chosen doses to the `Na` row and to
+`incidentalContributions`. It is computed with the same counterion rule as
+the chemistry, treating dose g/L as g/kg water for this report only. It
+never enters eligibility or the fit, so Na stays a restricted ion and
+chelates stay eligible. A warning line names the sodium source.
+
+**F3. Chemistry at the band ends.** `calculate_irrigation_ec_band(...)` has
+the same inputs as `calculate_irrigation_ec`. It returns `nominal`,
+`minimum` and `maximum` results, each a full `IrrigationECResult` with pH,
+supersaturation warnings and EC.
+- The minimum end sets **every** product to its band minimum, and the
+  maximum end sets every product to its band maximum. These are corner
+  cases, not statistical bounds, and the docs say so.
+- If any dosed product has an open band end, that end returns
+  `not_supported` / `band_end_open`. It is never computed from a
+  substituted value.
+- Each end's audit records which end it is.
+
 ## Related, out of scope
 
 - Chemistry evaluated at band ends (pH, precipitation, EC).
