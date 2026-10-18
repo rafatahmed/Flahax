@@ -11,6 +11,8 @@ from flahax.irrigation_ec import (COEFFICIENTS_SHA256, QUALIFIER, DeclaredPureWa
                                   calculate_irrigation_ec, covered_species,
                                   ionic_molal_conductivity,
                                   load_conductivity_coefficients)
+from flahax import plan_equilibrium_delivery
+from flahax.irrigation_ec import calculate_irrigation_ec_from_plan
 from flahax.measured_water import balance_water_analysis
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'conductivity'
@@ -160,6 +162,33 @@ class CatalogueTests(unittest.TestCase):
         for doses in ({'Unobtainium': 1.}, {'Potassium Nitrate': -1.}, {'Potassium Nitrate': float('nan')}):
             with self.subTest(doses=doses), self.assertRaises(DeliveryError):
                 calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+
+
+class PlanTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from tests.test_equilibrium_delivery import arguments
+        cls.plan = plan_equilibrium_delivery(**arguments())
+
+    def test_plan_target_state_is_used_without_resolving(self):
+        r = calculate_irrigation_ec_from_plan(self.plan)
+        self.assertEqual(r.status, 'estimated')
+        self.assertEqual(r.ph, self.plan.target_ph)
+        self.assertEqual(r.audit['ph_mode'], 'supplied')
+        self.assertEqual((r.audit['water_id'], r.audit['reagent_id']), ('synthetic-complete-water-v1', 'nitric'))
+        self.assertAlmostEqual(r.ionic_strength, self.plan.equilibrium.target.ionic_strength, places=15)
+        self.assertGreater(r.ec25_ms_cm, 0)
+
+    def test_audit_identity_and_policy(self):
+        r = calculate_irrigation_ec_from_plan(self.plan)
+        self.assertTrue(r.audit['recipe_id'].startswith('plan-recipe:'))
+        self.assertEqual(r.audit['solution_id'], r.audit['recipe_id'])
+        self.assertEqual(r.audit['reagent_molal'], self.plan.equilibrium.nitric_acid_molal)
+        self.assertEqual(r.audit['water_kind'], 'balanced_analysis')
+        self.assertEqual(r.audit['doses_g_per_kg_water'], self.plan.audit['productDosesGPerKgWater'])
+        with self.assertRaises(DeliveryError) as c:
+            calculate_irrigation_ec_from_plan(self.plan, phase_policy='equilibrated')
+        self.assertEqual(c.exception.code, 'invalid_phase_policy')
 
 
 if __name__ == '__main__':

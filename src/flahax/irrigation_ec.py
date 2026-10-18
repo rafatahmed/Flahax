@@ -21,6 +21,7 @@ from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .catalogue_chemistry import chemistry_for_product
 from .delivery_contracts import DeliveryError
+from .equilibrium_delivery import EquilibriumPhPlan
 from .measured_water import BalancedWaterAnalysis
 from .product_conversion import catalogue_dose_totals
 
@@ -366,3 +367,34 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
         totals, solution_id=recipe_id, ph_mode=ph_mode, ph=ph, phase_policy=phase_policy,
         phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,
         assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'], audit_inputs=audit_inputs)
+
+
+def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
+                                      phase_policy: str = 'dissolved') -> IrrigationECResult:
+    """EXPERIMENTAL (M1): irrigation EC25 on an EquilibriumPhPlan's own target state.
+
+    The plan's solved target state is used as supplied at plan.target_ph and is
+    never re-solved; carbon boundary is closed. A plan that carries phases needs
+    phase_policy='equilibrated'. Accuracy on fertilizer mixtures has not been
+    established.
+    """
+    plan_audit = plan.audit
+    doses = dict(plan_audit['productDosesGPerKgWater'])
+    recipe_id = 'plan-recipe:' + hashlib.sha256(json.dumps(
+        {'productDosesGPerKgWater': plan_audit['productDosesGPerKgWater'],
+         'finalVolumeLitres': plan_audit['finalVolumeLitres']}, sort_keys=True).encode('utf-8')).hexdigest()
+    residual = assay_charge_residual(doses)
+    phases, reason = _validate_request(
+        ph_mode='supplied', ph=plan.target_ph, phase_policy=phase_policy,
+        phases=tuple(plan_audit['phases']), temperature_c=plan_audit['temperatureC'],
+        carbon_boundary='closed', assay_residual_eq=residual['eq_per_kgw'])
+    audit_inputs = {
+        'solution_id': recipe_id, 'recipe_id': recipe_id, 'water_kind': 'balanced_analysis',
+        'water_id': plan.water_analysis_id, 'reagent_id': plan.reagent_id,
+        'reagent_molal': plan.equilibrium.nitric_acid_molal, 'doses_g_per_kg_water': doses,
+        'assay_charge_residual_declared_percent': residual['percent']}
+    common = dict(ph_mode='supplied', phase_policy=phase_policy, phases=phases,
+                  assay_residual_eq=residual['eq_per_kgw'], audit_inputs=audit_inputs)
+    if reason is not None:
+        return _not_supported_unsolved(reason, ph=plan.target_ph, carbon_boundary='closed', **common)
+    return _ec_from_state(plan.equilibrium.target, **common)
