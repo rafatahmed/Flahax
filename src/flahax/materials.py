@@ -117,6 +117,12 @@ COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed'})
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
 _CHARGE_RESIDUAL_LIMIT_PERCENT = 0.1
+# Theory is the pure compound, not the commercial solution or the chelate product as sold,
+# so a grade range of these identities is not compared with it (the charge test still applies).
+_RANGE_TEST_EXEMPT = frozenset({'aqueous_solution', 'chelate_salt_defined'})
+# Disclosed blend: declared vs component-implied analysis, relative and absolute (% points).
+_BLEND_RELATIVE_TOLERANCE = 0.05
+_BLEND_ABSOLUTE_TOLERANCE = 0.05
 _FRACTION_TOLERANCE = 1e-9
 
 # Dissolved ion form -> (nutrient form it carries, charge per nutrient atom). Each listed
@@ -394,7 +400,8 @@ def make_grade(record: Mapping) -> Grade:
                     if key not in inferred}
         residual = _charge_residual_percent(identity, declared)
         if ((residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT)
-                or _range_excludes_theory(identity, bands['minimum'], bands['maximum'])):
+                or (identity['status'] not in _RANGE_TEST_EXEMPT
+                    and _range_excludes_theory(identity, bands['minimum'], bands['maximum']))):
             flags = ('identity_inconsistent',)
     return Grade(grade_id=grade_id, identity_id=identity_id, supplier=supplier, product=product,
                  typical=bands['typical'], minimum=bands['minimum'], maximum=bands['maximum'],
@@ -441,6 +448,23 @@ def _unique(items) -> tuple:
     return tuple(dict.fromkeys(items))
 
 
+def _blend_implied(grade: Grade) -> tuple[dict, bool]:
+    """Component-implied % of each declared nutrient, and whether any disagrees with the declaration.
+
+    Implied = sum(mass fraction x component's shipped catalogue assay). A difference above
+    max(5 % of declared, 0.05 % points) is unreconciled; it is reported, never rejected.
+    """
+    declared = {**grade.minimum, **grade.typical}
+    assays = [(_shipped_salt(load_identities()[identity_id]['products'][0])['elements'], fraction)
+              for identity_id, fraction in grade.components]
+    implied = {key: sum(fraction * elements.get(key, 0.0) for elements, fraction in assays)
+               for key in declared}
+    unreconciled = any(abs(implied[key] - value) > max(_BLEND_RELATIVE_TOLERANCE * value,
+                                                        _BLEND_ABSOLUTE_TOLERANCE)
+                       for key, value in declared.items())
+    return implied, unreconciled
+
+
 def _check_linkage(product_name: str, identity_id: str, grade: Grade | None, lot: Lot | None) -> None:
     if grade is not None and grade.identity_id is not None and grade.identity_id != identity_id:
         raise DeliveryError('material_mismatch',
@@ -462,6 +486,9 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
     """Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
 
     With neither grade nor lot, the shipped catalogue record is used with its declared basis.
+    With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
+    ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
+    stays the product name.
     """
     identity = identity_for_product(product_name)
     identity_id = identity['id']
@@ -479,6 +506,7 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         flags: tuple = ()
         components: tuple = ()  # the shipped assumed blend keeps its own chemistry profile
         source = salt.get('source')
+        implied = None
     else:
         theory = {}
         if grade is None or grade.identity_id == identity_id:
@@ -491,6 +519,7 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         minimum = grade.minimum if grade is not None else {}
         maximum = grade.maximum if grade is not None else {}
         elements, basis, band_minimum, band_maximum = {}, {}, {}, {}
+        outside = False
         for key in _unique([*measured, *typical, *minimum, *theory]):
             low = high = None
             if key in measured:
@@ -500,6 +529,11 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
                     high = min(100.0, value + uncertainty[key])
                 else:
                     low, high = minimum.get(key), maximum.get(key)
+                    # The certificate outranks the data sheet: widen the band to include it.
+                    if low is not None and value < low:
+                        low, outside = value, True
+                    if high is not None and value > high:
+                        high, outside = value, True
             elif key in typical:
                 value, basis[key] = typical[key], 'grade_typical'
                 low, high = minimum.get(key), maximum.get(key)
@@ -511,15 +545,29 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
             elements[key], band_minimum[key], band_maximum[key] = value, low, high
         composition = grade.composition if grade is not None else 'single'
         components = grade.components if grade is not None else ()
+        implied = None
         source = None  # the catalogue document does not describe a user grade or lot
         lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
-        flags = _unique([*(grade.flags if grade is not None else ()), *lower_bound])
+        flags = _unique([*(grade.flags if grade is not None else ()), *lower_bound,
+                         *(('lot_outside_grade_range',) if outside else ())])
+        if grade is not None and grade.components:
+            implied, unreconciled = _blend_implied(grade)
+            if unreconciled:
+                flags = _unique([*flags, 'blend_analysis_unreconciled'])
     assumed = identity['status'] == 'assumed_blend'
     if assumed:
         flags = _unique([*flags, 'assumed_composition'])
 
+    # A grade or lot is not the shipped product: it gets its own record id. The name stays the
+    # shipped product's, which chemistry and materials= keying rely on.
+    record_id = salt['id']
+    if grade is not None:
+        record_id += f'+{grade.grade_id}' + (f'+{lot.lot_id}' if lot is not None else '')
+    elif lot is not None:
+        record_id += f'+lot:{lot.lot_id}'
+    blend = grade is not None and grade.identity_id is None
     provenance = {
-        'identityId': identity_id,
+        'identityId': None if blend else identity_id,
         'gradeId': grade.grade_id if grade is not None else None,
         'lotId': lot.lot_id if lot is not None else None,
         'documents': {'grade': asdict(grade.document) if grade is not None else None,
@@ -530,8 +578,13 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         'assumed': assumed,
         'identitiesSha256': IDENTITIES_SHA256,
     }
-    record = {'id': salt['id'], 'name': salt['name'], 'formula': identity['formula'] or salt.get('formula'),
-              'elements': elements}
+    if blend:
+        provenance['hostProduct'] = product_name  # the catalogue name the blend is dosed under
+    if implied is not None:
+        provenance['blendImpliedAnalysis'] = implied
+    # A blend has no single formula; the host's would make assay checks compare the wrong compound.
+    formula = None if blend else identity['formula'] or salt.get('formula')
+    record = {'id': record_id, 'name': salt['name'], 'formula': formula, 'elements': elements}
     return ResolvedMaterial(name=product_name, identity_id=identity_id, record=record, basis=basis,
                             band_minimum=band_minimum, band_maximum=band_maximum,
                             composition=composition, provenance=provenance, flags=flags,
@@ -562,7 +615,7 @@ def nutrient_band(doses_g_per_litre: Mapping[str, float], *,
     whose contributor has an open band end gets ``None`` for that end of the total.
     Products without a resolved material use the shipped record with no band.
     """
-    from .product_conversion import _check_materials
+    from .product_conversion import _check_materials  # deferred: avoids a circular import with product_conversion
     resolved = _check_materials(doses_g_per_litre, materials, allow_undisclosed=True)
     nutrients: dict = {}
     basis: dict = {}

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add experimental irrigation EC25 from speciation (McCleskey 2012 Eq. 8) with explicit partial results, envelope checks and provenance; no accuracy claim.
+- Add the material traceability API (`docs/materials.md`): shipped identity records (`load_identities`, `identity_for_product`), user grades and lots (`make_grade`, `make_lot`), `resolve_material` (per-nutrient basis, band ends, flags, provenance) and `nutrient_band`; `catalogue_dose_totals` and `calculate_irrigation_ec` take `materials=`, undisclosed blends raise or report `composition_undisclosed` in chemistry, and EC and equilibrium-delivery audits carry material provenance.
 - Link every catalogue product in `library.json` to its chemical identity (`identityId`) and record its `analysisBasis` (`declared_catalogue`, `identity_theoretical` or `grade_typical`) and `source` document reference. Product `id` and `name` values are unchanged.
 - Correct Mg Nitrate to Mg(NO3)2·6H2O theory (owner decision D1): formula `Mg(NO3)2` → `Mg(NO3)2.6H2O`; N_NO3 11 → 10.92564 %, Mg 9.65 → 9.47931 %; basis `identity_theoretical`. Its declared-form charge residual at 1 g/kg water goes from +0.5532 % to ~0 %, so it no longer trips the EC O5 gate on its own.
 - Correct Phosphoric Acid (75%) to the 75 % w/w solution: P 31.61 → 23.706035 % (0.75 × 31.608046, product-mass dosing); PO4 delivered per gram falls to 0.74995 × the old value. Its stored assay is now reported as drifting from the H3PO4 formula, as intended for a solution.

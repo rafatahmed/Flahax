@@ -8,6 +8,7 @@ analytical totals. Units are mS kg cm-1 mol-1 x mol/kgw (no density
 conversion). Not validated for concentrated nutrient solutions; every result
 carries QUALIFIER.
 """
+import copy
 import hashlib
 import math
 from collections.abc import Mapping, Sequence
@@ -459,7 +460,10 @@ def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
         'catalogueSha256': plan_audit['catalogueSha256'],
         'waterTotalsMolal': dict(plan_audit['waterTotalsMolal']),
         'initialPh': plan_audit['initialPh'],
-        'assay_charge_residual_declared_percent': residual['percent']}
+        'assay_charge_residual_declared_percent': residual['percent'],
+        # The plan's own material provenance, copied so the EC audit stands on its own.
+        'materials': copy.deepcopy(plan_audit['materials']),
+        'identitiesSha256': plan_audit['identitiesSha256']}
     common = dict(ph_mode='supplied', phase_policy=phase_policy, phases=phases,
                   assay_residual_eq=residual['eq_per_kgw'], assay_residual_percent=residual['percent'],
                   audit_inputs=audit_inputs)

@@ -1014,6 +1014,9 @@ resolve_material(product_name: str, *, grade: flahax.materials.Grade | None = No
 Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
 
 With neither grade nor lot, the shipped catalogue record is used with its declared basis.
+With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
+ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
+stays the product name.
 
 Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 

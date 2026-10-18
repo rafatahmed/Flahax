@@ -310,6 +310,10 @@ class PlanTests(unittest.TestCase):
         for key in ('catalogueSha256', 'waterTotalsMolal', 'initialPh'):
             self.assertEqual(r.audit[key], self.plan.audit[key], key)
         self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+        # Material provenance travels from the plan into the EC audit, as a copy.
+        self.assertEqual(r.audit['materials'], self.plan.audit['materials'])
+        self.assertIsNot(r.audit['materials'], self.plan.audit['materials'])
+        self.assertEqual(r.audit['identitiesSha256'], self.plan.audit['identitiesSha256'])
         with self.assertRaises(DeliveryError) as c:
             calculate_irrigation_ec_from_plan(self.plan, phase_policy='equilibrated')
         self.assertEqual(c.exception.code, 'invalid_phase_policy')
