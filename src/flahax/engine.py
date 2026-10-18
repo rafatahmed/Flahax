@@ -24,6 +24,7 @@ from .composition import (
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental
+from .product_conversion import chelate_sodium_mg_per_l
 
 EPS = 1e-10
 # Grams below this do not appear in the recipe.
@@ -468,6 +469,8 @@ def recommend(
         Each salt carries provenance (recordId, identityId, analysisBasis,
         documents, flags) taken from the record that produced it, or
         analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
+        Chelate counterion sodium (D2) is added to the Na row and incidental
+        review after the fit; it never affects eligibility, the fit or grams.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
         product-to-dose mapping. Feasible is positive-target fit within 1%,
@@ -511,5 +514,14 @@ def recommend(
     from .materials import IDENTITIES_SHA256  # local: keeps engine importable without the catalogue at load
     solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
+    chelate_na = chelate_sodium_mg_per_l(
+        [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]])
+    if chelate_na > 0:
+        na_row = next((row for row in solved["rows"] if row["symbol"] == "Na"), None)
+        if na_row is None:
+            na_row = {"symbol": "Na", "target": None, "final": 0.0, "deltaPct": None}
+            solved["rows"].append(na_row)
+        na_row["final"] += chelate_na
+        warnings.append(f"Incidental Na includes chelate sodium counterions (D2): {chelate_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings))
     return solved
