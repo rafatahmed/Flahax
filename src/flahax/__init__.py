@@ -148,3 +148,7 @@ from .injector_sizing import size_injection_requirements
 __all__ += ["estimate_manufacturer_ec", "size_injection_requirements"]
 from .measured_water import BalancedWaterAnalysis, balance_water_analysis, carbonate_alkalinity
 __all__ += ["BalancedWaterAnalysis", "balance_water_analysis", "carbonate_alkalinity"]
+from .irrigation_ec import (IrrigationECResult, DeclaredPureWater, calculate_irrigation_ec,
+    calculate_irrigation_ec_from_plan, calculate_ec_from_totals, compare_measured_ec, assay_charge_residual)
+__all__ += ["IrrigationECResult", "DeclaredPureWater", "calculate_irrigation_ec",
+    "calculate_irrigation_ec_from_plan", "calculate_ec_from_totals", "compare_measured_ec", "assay_charge_residual"]
