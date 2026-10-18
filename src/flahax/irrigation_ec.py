@@ -398,3 +398,20 @@ def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
     if reason is not None:
         return _not_supported_unsolved(reason, ph=plan.target_ph, carbon_boundary='closed', **common)
     return _ec_from_state(plan.equilibrium.target, **common)
+
+
+def compare_measured_ec(prediction: IrrigationECResult, *, measured_ec25_ms_cm: float,
+                        meter_reference_temperature_c: float) -> dict:
+    """EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict or tolerance."""
+    if prediction.status != 'estimated':
+        raise DeliveryError('incomplete_prediction', 'only an estimated prediction can be compared')
+    if not _is_number(meter_reference_temperature_c) or meter_reference_temperature_c != 25:
+        raise DeliveryError('temperature_reference_mismatch', 'meter reference temperature must be 25 C')
+    if not _is_number(measured_ec25_ms_cm) or measured_ec25_ms_cm < 0:
+        raise DeliveryError('invalid_value', 'measured_ec25_ms_cm must be a finite non-negative number')
+    predicted = prediction.ec25_ms_cm
+    difference = measured_ec25_ms_cm - predicted
+    return {'predicted_ec25_ms_cm': predicted, 'measured_ec25_ms_cm': measured_ec25_ms_cm,
+            'difference_ms_cm': difference,
+            'relative_difference_percent': 100 * difference / predicted if predicted else None,
+            'audit': dict(prediction.audit), 'qualifier': prediction.qualifier}
