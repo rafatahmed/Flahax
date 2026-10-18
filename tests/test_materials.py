@@ -400,8 +400,9 @@ class GradeLotTests(unittest.TestCase):
 
     def test_shipped_product_without_grade_or_lot(self):
         resolved = resolve_material('Mg Nitrate')
-        self.assertEqual(resolved.record['elements'], {'N_NO3': 11, 'Mg': 9.65})
-        self.assertEqual(resolved.basis, {'N_NO3': 'declared_catalogue', 'Mg': 'declared_catalogue'})
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %)
+        self.assertEqual(resolved.record['elements'], {'N_NO3': 10.92564, 'Mg': 9.47931})
+        self.assertEqual(resolved.basis, {'N_NO3': 'identity_theoretical', 'Mg': 'identity_theoretical'})
         self.assertEqual(resolved.band_minimum, {'N_NO3': None, 'Mg': None})
         self.assertEqual(resolved.band_maximum, {'N_NO3': None, 'Mg': None})
         self.assertEqual(resolved.record['formula'], 'Mg(NO3)2.6H2O')
@@ -412,6 +413,92 @@ class GradeLotTests(unittest.TestCase):
         resolved = resolve_material('Iron EDTA', grade=grade(
             identity_id='idn-sodium-iron-edta', analysis={'Fe': {'typical': 13.0}}))
         self.assertEqual(resolved.record['elements'], {'Fe': 13.0})
+
+
+class CatalogueMigrationTests(unittest.TestCase):
+    """Task 3: library.json references identities and carries the 2026-10-18 corrections."""
+
+    BASES = {'declared_catalogue', 'identity_theoretical', 'grade_typical'}
+
+    def salts(self):
+        return {salt['name']: salt for salt in load_library()['salts']}
+
+    def test_every_salt_links_to_identity(self):
+        salts = self.salts()
+        self.assertEqual(len(salts), 28)
+        for name, salt in salts.items():
+            with self.subTest(name=name):
+                self.assertEqual(salt['identityId'], identity_for_product(name)['id'])
+                self.assertIn(salt['analysisBasis'], self.BASES)
+                self.assertIn('source', salt)
+                if salt['source'] is not None:
+                    self.assertEqual(set(salt['source']),
+                                     {'supplier', 'title', 'issued', 'entered', 'url', 'sha256'})
+        expected = {'Mg Nitrate': 'identity_theoretical', 'Calcium Nitrate (ag grade)': 'grade_typical'}
+        for name, salt in salts.items():
+            self.assertEqual(salt['analysisBasis'], expected.get(name, 'declared_catalogue'), name)
+
+    def test_phosphoric_acid_is_75_percent_basis(self):
+        salt = self.salts()['Phosphoric Acid (75%)']
+        self.assertAlmostEqual(salt['elements']['P'], 31.608046 * 0.75, places=6)
+        self.assertAlmostEqual(salt['elements']['P'], 23.706035, places=6)
+        self.assertEqual(salt['formula'], 'H3PO4')
+        self.assertEqual(salt['analysisBasis'], 'declared_catalogue')
+        self.assertIsNone(salt['source'])
+        self.assertEqual(salt['notes'], '75 % w/w aqueous solution; product-mass dosing')
+
+    def test_mg_nitrate_uses_hexahydrate(self):
+        salt = self.salts()['Mg Nitrate']
+        theory = identity_for_product('Mg Nitrate')['theoretical_analysis']
+        self.assertEqual(salt['formula'], 'Mg(NO3)2.6H2O')
+        self.assertEqual(set(salt['elements']), {'N_NO3', 'Mg'})
+        self.assertAlmostEqual(salt['elements']['N_NO3'], 10.92564, places=5)
+        self.assertAlmostEqual(salt['elements']['Mg'], 9.47931, places=5)
+        for key in ('N_NO3', 'Mg'):
+            self.assertAlmostEqual(salt['elements'][key], theory[key], places=4)
+        self.assertEqual(salt['analysisBasis'], 'identity_theoretical')
+
+    def test_phosphoric_regression(self):
+        from flahax.product_conversion import catalogue_dose_totals
+        before = 0.010205411922516871  # PO4-3 mol/kg water for 1 g/kg, captured before the 75 % correction
+        after = catalogue_dose_totals({'Phosphoric Acid (75%)': 1.0})['PO4-3']
+        # The old row stored P 31.61 (rounded); the new one is 0.75 x the exact 31.608046,
+        # so the ratio is 23.706035 / 31.61 = 0.749954, i.e. 0.75 to 1e-4 relative.
+        self.assertAlmostEqual(after / before, 23.706035 / 31.61, places=12)
+        self.assertAlmostEqual(after / before, 0.75, delta=1e-4)
+
+    def test_calcium_nitrate_cites_haifa_cal_ng(self):
+        salt = self.salts()['Calcium Nitrate (ag grade)']
+        self.assertEqual(salt['elements'], {'N_NO3': 14.4, 'N_NH4': 1.1, 'Ca': 19})
+        source = salt['source']
+        self.assertEqual(source['supplier'], 'Haifa Group')
+        self.assertEqual(source['issued'], '2018-10-01')
+        self.assertEqual(source['entered'], '2026-10-18')
+        self.assertTrue(source['url'].startswith('https://www.haifa-group.com/'))
+        # The reference has the same shape materials.make_grade accepts.
+        make_grade({'grade_id': 'grd-check', 'identity_id': salt['identityId'], 'supplier': source['supplier'],
+                    'product': 'Haifa Cal NG', 'document': source,
+                    'analysis': {key: {'typical': value} for key, value in salt['elements'].items()}})
+
+    def test_metadata_fixes(self):
+        salts = self.salts()
+        self.assertEqual(salts['Urea']['formula'], 'CO(NH2)2')
+        self.assertEqual(salts['Iron II Sulfate (Hepahydrate)']['displayName'], 'Iron(II) Sulfate (Heptahydrate)')
+        self.assertEqual(salts['Potassium Citrate']['displayName'], 'Potassium Citrate (anhydrous)')
+
+    def test_urea_formula_still_doses(self):
+        from flahax.composition import assay_conflict, assay_drift
+        urea = self.salts()['Urea']
+        self.assertIsNone(assay_conflict(urea))
+        self.assertIsNone(assay_drift(urea))
+
+    def test_resolve_material_reports_catalogue_basis(self):
+        for name, salt in self.salts().items():
+            with self.subTest(name=name):
+                resolved = resolve_material(name)
+                self.assertEqual(set(resolved.basis.values()), {salt['analysisBasis']})
+        self.assertEqual(resolve_material('Calcium Nitrate (ag grade)').basis,
+                         {'N_NO3': 'grade_typical', 'N_NH4': 'grade_typical', 'Ca': 'grade_typical'})
 
 
 if __name__ == '__main__':

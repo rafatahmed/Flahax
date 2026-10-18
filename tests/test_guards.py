@@ -70,8 +70,14 @@ class CompositionGuards(unittest.TestCase):
         self.assertIn("Na", {item["symbol"] for item in result["undesiredIons"]})
 
     def test_hydrate_formula_drift_is_reported_from_the_stored_assay(self):
-        notes = [assay_drift(salt) for salt in load_library()["salts"]]
-        self.assertTrue(any(note and note.startswith("Mg Nitrate") for note in notes))
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate
+        # is now Mg(NO3)2.6H2O theory and no longer drifts; the retired row keeps the hydrate case.
+        retired = {"name": "Mg Nitrate", "formula": "Mg(NO3)2", "elements": {"N_NO3": 11, "Mg": 9.65}}
+        self.assertTrue(assay_drift(retired).startswith("Mg Nitrate"))
+        notes = {salt["name"]: assay_drift(salt) for salt in load_library()["salts"]}
+        self.assertIsNone(notes["Mg Nitrate"])
+        # The 75 % acid is dosed from its stored solution assay, below the H3PO4 formula value.
+        self.assertIn("P assay 23.706% vs formula 31.61%", notes["Phosphoric Acid (75%)"])
 
     def test_the_fertilizer_list_has_no_chloride_salts(self):
         chloride = [
