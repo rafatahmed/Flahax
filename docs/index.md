@@ -23,6 +23,7 @@
 
 - [Quantities and batch recipes](delivery-quantities.md)
 - [Input contracts and audit records](delivery-contracts.md)
+- [Traceable materials: identity, grade, lot and nutrient band](materials.md)
 - [Stock assignment](stock-planning.md)
 - [Measured-curve pH planning](ph-planning.md)
 - [Equilibrium-to-delivery API and runnable example](package-verification.md)
