@@ -284,16 +284,85 @@ class GradeLotTests(unittest.TestCase):
         old = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
             'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}})
         self.assertIn('identity_inconsistent', old.flags)
-        theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
-        close = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
-            'N_NO3': {'typical': theory['N_NO3']}, 'Mg': {'typical': theory['Mg'] * 1.0009}})
-        self.assertNotIn('identity_inconsistent', close.flags)
-        # Typical within 0.1 % but the grade's own range excludes the theoretical value.
-        excluded = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
-            'Mg': {'typical': theory['Mg'] * 1.0005, 'minimum': theory['Mg'] * 1.0002}})
-        self.assertIn('identity_inconsistent', excluded.flags)
+        self.assertAlmostEqual(old.charge_residual_percent, 0.553, places=3)
         resolved = resolve_material('Mg Nitrate', grade=old)
         self.assertIn('identity_inconsistent', resolved.flags)
+        theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
+        exact = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'N_NO3': {'typical': theory['N_NO3']}, 'Mg': {'typical': theory['Mg']}})
+        self.assertAlmostEqual(exact.charge_residual_percent, 0.0, places=9)
+        self.assertNotIn('identity_inconsistent', exact.flags)
+
+    def test_charge_residual_not_flagged_for_balanced_or_one_sided_grades(self):
+        mkp = grade()
+        self.assertIsNone(mkp.charge_residual_percent)  # P only: no cation stated
+        self.assertNotIn('identity_inconsistent', mkp.flags)
+        can = grade(identity_id=CAN, analysis={'N_NO3': {'typical': 14.4}, 'N_NH4': {'typical': 1.1},
+                                               'Ca': {'typical': 19.0}})
+        self.assertAlmostEqual(can.charge_residual_percent, -0.068, places=3)
+        self.assertNotIn('identity_inconsistent', can.flags)
+        # Minimum is used for a form with no typical.
+        mkp_min = grade(analysis={'K': {'minimum': 28.0}, 'P': {'minimum': 22.7}})
+        self.assertIsNotNone(mkp_min.charge_residual_percent)
+        # Chelate metal is carried by the anionic complex; Fe alone has no cation.
+        self.assertIsNone(grade(identity_id='idn-sodium-iron-edta',
+                                analysis={'Fe': {'typical': 13.0}}).charge_residual_percent)
+
+    def test_identity_inconsistent_when_range_excludes_theory(self):
+        theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
+        excluded = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'Mg': {'typical': theory['Mg'] * 1.03, 'minimum': theory['Mg'] * 1.02,
+                   'maximum': theory['Mg'] * 1.04}})
+        self.assertIsNone(excluded.charge_residual_percent)
+        self.assertIn('identity_inconsistent', excluded.flags)
+        # A minimum alone above theory is not a range: not flagged.
+        open_ended = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'Mg': {'minimum': theory['Mg'] * 1.02}})
+        self.assertNotIn('identity_inconsistent', open_ended.flags)
+        inside = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'Mg': {'minimum': theory['Mg'] * 0.99, 'maximum': theory['Mg'] * 1.01}})
+        self.assertNotIn('identity_inconsistent', inside.flags)
+
+    def test_total_n_split_by_identity_ratio(self):
+        theory = load_identities()[CAN]['theoretical_analysis']
+        total = theory['N_NO3'] + theory['N_NH4']
+        g = grade(identity_id=CAN, analysis={'N': {'typical': 15.5}, 'Ca': {'typical': 19.0}})
+        self.assertEqual(g.form_split, {'N': {'N_NO3': theory['N_NO3'] / total,
+                                              'N_NH4': theory['N_NH4'] / total}})
+        self.assertAlmostEqual(g.typical['N_NO3'], 15.5 * theory['N_NO3'] / total, places=12)
+        self.assertAlmostEqual(g.typical['N_NH4'], 15.5 * theory['N_NH4'] / total, places=12)
+        self.assertAlmostEqual(g.typical['N_NO3'] + g.typical['N_NH4'], 15.5, places=12)
+        self.assertNotIn('N', g.typical)
+        resolved = resolve_material('Calcium Nitrate (ag grade)', grade=g)
+        self.assertEqual(resolved.basis, {'N_NO3': 'grade_typical', 'N_NH4': 'grade_typical',
+                                          'Ca': 'grade_typical'})
+        for analysis in ({'N': {'typical': 15.5}, 'N_NO3': {'typical': 14.4}},
+                         {'N_UREA': {'typical': 1.0}, 'N': {'typical': 15.5}}):
+            with self.assertRaises(DeliveryError) as caught:
+                grade(identity_id=CAN, analysis=analysis)
+            self.assertEqual(caught.exception.code, 'invalid_value')
+        with self.assertRaises(DeliveryError) as caught:
+            grade(analysis={'N': {'typical': 1.0}})  # MKP has no nitrogen
+        self.assertEqual(caught.exception.code, 'invalid_value')
+
+    def test_maximum_only_analysis_rejected(self):
+        with self.assertRaises(DeliveryError) as caught:
+            grade(analysis={'P': {'typical': 22.7}, 'K': {'maximum': 29.0}})
+        self.assertEqual(caught.exception.code, 'invalid_value')
+
+    def test_assumed_blend_is_labelled(self):
+        shipped = resolve_material('CH - micro')
+        self.assertIn('assumed_composition', shipped.flags)
+        self.assertIs(shipped.provenance['assumed'], True)
+        graded = resolve_material('CH - micro', grade=grade(
+            grade_id='grd-ch', identity_id='idn-ch-micro-assumed-blend', composition='disclosed',
+            components=[{'identity_id': 'idn-sodium-iron-edta', 'mass_fraction': 0.5}],
+            analysis={'Fe': {'typical': 7.0}}))
+        self.assertIn('assumed_composition', graded.flags)
+        self.assertIs(graded.provenance['assumed'], True)
+        plain = resolve_material('Potassium Nitrate')
+        self.assertNotIn('assumed_composition', plain.flags)
+        self.assertIs(plain.provenance['assumed'], False)
 
     def test_disclosed_blend_fractions_validated(self):
         components = [{'identity_id': 'idn-sodium-iron-edta', 'mass_fraction': 0.6},

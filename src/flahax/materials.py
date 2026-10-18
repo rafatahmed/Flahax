@@ -114,9 +114,22 @@ OXIDE_FACTORS = {
     'SO3': ('S', _oxide_factor('S', 1, 3)),
 }
 COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed'})
+N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
-_RELATIVE_IDENTITY_TOLERANCE = 0.001
+_CHARGE_RESIDUAL_LIMIT_PERCENT = 0.1
 _FRACTION_TOLERANCE = 1e-9
+
+# Dissolved ion form -> (nutrient form it carries, charge per nutrient atom). Each listed
+# form carries one atom of its nutrient. Forms without a nutrient (CO3-2, citrate) are absent.
+_ION_NUTRIENT_CHARGE = {
+    'NO3-': ('N_NO3', -1), 'NH4+': ('N_NH4', 1), 'CO(NH2)2': ('N_UREA', 0),
+    'K+': ('K', 1), 'Na+': ('Na', 1), 'Ca+2': ('Ca', 2), 'Mg+2': ('Mg', 2),
+    'Fe+2': ('Fe', 2), 'Cu+2': ('Cu', 2), 'Zn+2': ('Zn', 2),
+    'SO4-2': ('S', -2), 'H2PO4-': ('P', -1), 'HPO4-2': ('P', -2), 'H3PO4': ('P', 0),
+    'MoO4-2': ('Mo', -2), 'B(OH)4-': ('B', -1), 'B(OH)3': ('B', 0),
+    'Fe(III)-EDTA': ('Fe', -1), 'Mn-EDTA': ('Mn', -2), 'Zn-EDTA': ('Zn', -2), 'Cu-EDTA': ('Cu', -2),
+    'Fe(III)-DTPA': ('Fe', -2), 'Fe(III)-o,o-EDDHA': ('Fe', -1),
+}
 
 
 @dataclass(frozen=True)
@@ -144,6 +157,8 @@ class Grade:
     oxide_conversions: dict
     document: DocumentReference
     flags: tuple = ()
+    form_split: dict = field(default_factory=dict)
+    charge_residual_percent: float | None = None
 
 
 @dataclass(frozen=True)
@@ -269,19 +284,55 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
     return tuple(pairs)
 
 
-def _identity_inconsistent(identity_id: str, typical: dict, minimum: dict, maximum: dict) -> bool:
-    """A stated value off the theoretical by > 0.1 % relative, or a range that excludes it."""
-    theory = load_identities()[identity_id]['theoretical_analysis']
+def _nutrient_charges(identity: dict) -> dict:
+    """Mean charge per nutrient atom, from the identity's dissolved ion forms."""
+    totals: dict = {}
+    for ion, count in identity['ion_forms'].items():
+        if ion in _ION_NUTRIENT_CHARGE:
+            nutrient, charge = _ION_NUTRIENT_CHARGE[ion]
+            weighted, atoms = totals.get(nutrient, (0.0, 0.0))
+            totals[nutrient] = (weighted + charge * count, atoms + count)
+    return {nutrient: weighted / atoms for nutrient, (weighted, atoms) in totals.items()}
+
+
+def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
+    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion."""
+    charges = _nutrient_charges(identity)
+    signed = absolute = 0.0
+    has_cation = has_anion = False
+    for nutrient, percent in declared.items():
+        charge = charges.get(nutrient, 0.0)
+        if charge == 0:
+            continue
+        has_cation, has_anion = has_cation or charge > 0, has_anion or charge < 0
+        moles = percent / ATOMIC['N' if nutrient in N_FORMS else nutrient]
+        signed += charge * moles
+        absolute += abs(charge) * moles
+    if not (has_cation and has_anion) or absolute <= 0:
+        return None
+    return 100.0 * signed / absolute
+
+
+def _range_excludes_theory(identity: dict, minimum: dict, maximum: dict) -> bool:
+    theory = identity['theoretical_analysis']
     if not theory:
         return False
-    for key in set(typical) | set(minimum) | set(maximum):
-        expected = theory.get(key, 0.0)
-        stated = typical.get(key, minimum.get(key))
-        if stated is not None and abs(stated - expected) > _RELATIVE_IDENTITY_TOLERANCE * expected:
-            return True
-        if (key in minimum and minimum[key] > expected) or (key in maximum and maximum[key] < expected):
-            return True
-    return False
+    return any(not minimum[key] <= theory.get(key, 0.0) <= maximum[key]
+               for key in set(minimum) & set(maximum))
+
+
+def _analysis_targets(key: Any, label: str, identity_id: str | None, conversions: dict,
+                      split: dict) -> list:
+    """Elemental forms an analysis key feeds, each with its multiplier."""
+    if key != 'N':
+        return [_nutrient_key(key, label, conversions)]
+    theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
+    forms = {form: theory[form] for form in N_FORMS if theory.get(form, 0) > 0}
+    if not forms:
+        raise DeliveryError('invalid_value', f'{label}: total N needs an identity whose theory states N forms')
+    total = sum(forms.values())
+    split['N'] = {form: value / total for form, value in forms.items()}
+    return list(split['N'].items())
 
 
 def make_grade(record: Mapping) -> Grade:
@@ -307,19 +358,25 @@ def make_grade(record: Mapping) -> Grade:
     analysis = record.get('analysis')
     if not isinstance(analysis, Mapping) or not analysis:
         raise DeliveryError('invalid_value', f'{label}: analysis must be a non-empty mapping')
+    if 'N' in analysis and set(analysis) & set(N_FORMS):
+        raise DeliveryError('invalid_value', f'{label}: state total N or its forms, not both')
     conversions: dict = {}
+    split: dict = {}
     bands: dict = {band: {} for band in _BANDS}
     for key, stated in analysis.items():
-        element, factor = _nutrient_key(key, label, conversions)
-        if not isinstance(stated, Mapping) or not stated or set(stated) - set(_BANDS):
-            raise DeliveryError('invalid_value', f'{label} {key}: state typical, minimum and/or maximum')
-        if any(element in bands[band] for band in _BANDS):
-            raise DeliveryError('invalid_value', f'{label}: {element} stated twice (elemental and oxide)')
-        for band, raw in stated.items():
-            bands[band][element] = _number(raw, f'{label} {key} {band}') * factor
-        ordered = [bands[band][element] for band in ('minimum', 'typical', 'maximum') if element in bands[band]]
-        if ordered != sorted(ordered):
-            raise DeliveryError('invalid_value', f'{label} {key}: needs minimum <= typical <= maximum')
+        targets = _analysis_targets(key, label, identity_id, conversions, split)
+        if not isinstance(stated, Mapping) or set(stated) - set(_BANDS) or not set(stated) & {'typical', 'minimum'}:
+            raise DeliveryError('invalid_value', f'{label} {key}: state a typical or minimum value '
+                                '(a maximum alone is not an assay)')
+        for element, factor in targets:
+            if any(element in bands[band] for band in _BANDS):
+                raise DeliveryError('invalid_value', f'{label}: {element} stated twice')
+            for band, raw in stated.items():
+                bands[band][element] = _number(raw, f'{label} {key} {band}') * factor
+            ordered = [bands[band][element] for band in ('minimum', 'typical', 'maximum')
+                       if element in bands[band]]
+            if ordered != sorted(ordered):
+                raise DeliveryError('invalid_value', f'{label} {key}: needs minimum <= typical <= maximum')
 
     impurities = record.get('impurity_limits') or {}
     if not isinstance(impurities, Mapping):
@@ -327,14 +384,22 @@ def make_grade(record: Mapping) -> Grade:
     impurity_limits = {str(key): _number(value, f'{label} impurity {key}', ceiling=None)
                        for key, value in impurities.items()}
 
-    flags = ()
-    if composition == 'single' and _identity_inconsistent(identity_id, bands['typical'],
-                                                          bands['minimum'], bands['maximum']):
-        flags = ('identity_inconsistent',)
+    flags, residual = (), None
+    if composition == 'single':
+        identity = load_identities()[identity_id]
+        # Declared forms only: typical, else minimum; forms split from total N are inferred, not declared.
+        inferred = set(split.get('N', ()))
+        declared = {key: value for key, value in {**bands['minimum'], **bands['typical']}.items()
+                    if key not in inferred}
+        residual = _charge_residual_percent(identity, declared)
+        if ((residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT)
+                or _range_excludes_theory(identity, bands['minimum'], bands['maximum'])):
+            flags = ('identity_inconsistent',)
     return Grade(grade_id=grade_id, identity_id=identity_id, supplier=supplier, product=product,
                  typical=bands['typical'], minimum=bands['minimum'], maximum=bands['maximum'],
                  impurity_limits=impurity_limits, composition=composition, components=components,
-                 oxide_conversions=conversions, document=document, flags=flags)
+                 oxide_conversions=conversions, document=document, flags=flags, form_split=split,
+                 charge_residual_percent=residual)
 
 
 def make_lot(record: Mapping) -> Lot:
@@ -444,6 +509,9 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         composition = grade.composition if grade is not None else 'single'
         lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
         flags = _unique([*(grade.flags if grade is not None else ()), *lower_bound])
+    assumed = identity['status'] == 'assumed_blend'
+    if assumed:
+        flags = _unique([*flags, 'assumed_composition'])
 
     provenance = {
         'identityId': identity_id,
@@ -453,6 +521,7 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
                       'lot': asdict(lot.document) if lot is not None else None},
         'oxideConversions': {'grade': dict(grade.oxide_conversions) if grade is not None else {},
                              'lot': dict(lot.oxide_conversions) if lot is not None else {}},
+        'assumed': assumed,
         'identitiesSha256': IDENTITIES_SHA256,
     }
     record = {'id': salt['id'], 'name': salt['name'], 'formula': identity['formula'] or salt.get('formula'),
