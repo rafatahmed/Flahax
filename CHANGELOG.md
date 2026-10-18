@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add experimental irrigation EC25 from speciation (McCleskey 2012 Eq. 8) with explicit partial results, envelope checks and provenance; no accuracy claim.
+
 ## 0.4.0 — 2026-10-17
 
 - Relicense FlahaX under the Apache License 2.0 and add a `NOTICE` file. Releases up to and including 0.3.1 remain under the Flaha Free Use License 1.0.
