@@ -107,8 +107,13 @@ def _is_number(value):
     return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
 
 
+def _require_id(value, name):
+    if not isinstance(value, str) or not value.strip():
+        raise DeliveryError('missing_field', f'{name} must be a nonempty string')
+
+
 def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbon_boundary,
-                      assay_residual_eq):
+                      assay_residual_eq, assay_residual_percent=None):
     """Validate mode inputs; return (phases tuple, not_supported reason or None).
 
     Invalid input raises DeliveryError. Temperature and carbon boundary outside
@@ -132,6 +137,8 @@ def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbo
                             "phase_policy 'dissolved' needs phases=(); 'equilibrated' needs a nonempty phase list")
     if not _is_number(assay_residual_eq):
         raise DeliveryError('invalid_value', 'assay charge residual must be a finite number')
+    if assay_residual_percent is not None and not _is_number(assay_residual_percent):
+        raise DeliveryError('invalid_value', 'assay charge residual percent must be a finite number')
     if not _is_number(temperature_c):
         raise DeliveryError('invalid_value', 'temperature_c must be a finite number')
     if temperature_c != 25:
@@ -161,31 +168,36 @@ def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_i
 
 
 def _not_supported_unsolved(reason, *, ph_mode, ph, phase_policy, phases, carbon_boundary,
-                            assay_residual_eq, audit_inputs):
+                            assay_residual_eq, assay_residual_percent, audit_inputs):
     return IrrigationECResult(
         status='not_supported', ec25_ms_cm=None, known_species_subtotal_ms_cm=None,
         contributions_ms_cm={}, transport_numbers={}, missing_species=(),
         unrecorded_counterions_eq_per_kgw=None,
-        assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': None},
+        assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': assay_residual_percent},
         reason=reason, ph=ph, ionic_strength=None, precipitated_molal={}, warnings=(),
         audit=_audit(ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
                      carbon_boundary=carbon_boundary, state=None, audit_inputs=audit_inputs))
 
 
 def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay_residual_eq,
-                   audit_inputs) -> IrrigationECResult:
+                   assay_residual_percent, audit_inputs) -> IrrigationECResult:
     """EXPERIMENTAL (M1): EC25 from an already-solved 25 C, closed-carbon state.
 
     The caller has validated the mode inputs (see _validate_request). Status
     order: O5 assay gate, then (supplied only) unrecorded counterions, then
-    missing species coverage. Supersaturation warnings (dissolved policy) are
-    reported whatever the status.
+    missing species coverage. The O5 gate uses assay_residual_percent (the
+    declared-form percent) when given, else the residual over the speciated
+    absolute equivalents. A not_supported result carries no contributions.
+    Supersaturation warnings (dissolved policy) are reported whatever the status.
     """
     charges = _charges()
     species_map = _load()['species_map']
     strength = state.ionic_strength
     equivalents = sum(abs(charges[n]) * m for n, m in state.species.items() if charges.get(n))
-    percent = 100 * assay_residual_eq / equivalents if equivalents else 0.
+    if assay_residual_percent is not None:
+        percent = assay_residual_percent
+    else:
+        percent = 100 * assay_residual_eq / equivalents if equivalents else 0.
     contributions, missing = {}, []
     for name in sorted(state.species):
         molal, charge = state.species[name], charges.get(name, 0)
@@ -200,17 +212,21 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
         warnings = tuple(f'{phase} supersaturated (SI {si:.3f}); no kinetic interpretation'
                          for phase, si in sorted(state.saturation_indices.items()) if si > 0)
     unrecorded = None
-    if ph_mode == 'supplied':
-        unrecorded = state.charge_balance - assay_residual_eq
+    excess = state.charge_balance - assay_residual_eq
     if abs(percent) > _ASSAY_LIMIT_PERCENT:
-        status, reason = (('not_supported', 'assay_charge_residual_too_large') if ph_mode == 'calculated'
-                          else ('partial', 'unrecorded_counterions'))
-    elif ph_mode == 'supplied' and abs(unrecorded) > max(1e-12, 0.001 * equivalents):
-        status, reason = 'partial', 'unrecorded_counterions'
+        if ph_mode == 'calculated':
+            status, reason = 'not_supported', 'assay_charge_residual_too_large'
+        else:
+            status, reason = 'partial', 'unrecorded_counterions'
+            unrecorded = state.charge_balance
+    elif ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
+        status, reason, unrecorded = 'partial', 'unrecorded_counterions', excess
     elif missing:
         status, reason = 'partial', 'missing_species_contributions'
     else:
         status, reason = 'estimated', None
+    if status == 'not_supported':
+        contributions = {}
     subtotal = sum(contributions.values())
     ec = subtotal if status == 'estimated' else None
     transport = {n: c / subtotal for n, c in contributions.items()} if ec else {}
@@ -231,21 +247,28 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
                              ph: float | None = None, phase_policy: str, phases: Sequence[str] = (),
                              carbon_boundary: str = 'closed', temperature_c: float = 25.0,
                              assay_charge_residual_eq_per_kgw: float = 0.0,
+                             assay_charge_residual_percent: float | None = None,
                              audit_inputs: Mapping | None = None) -> IrrigationECResult:
     """EXPERIMENTAL (M1): irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
     speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
-    or 'not_supported'; invalid input raises DeliveryError. Accuracy on
-    fertilizer mixtures has not been established.
+    or 'not_supported'; invalid input raises DeliveryError. The 0.1 % O5
+    assay gate uses assay_charge_residual_percent when given (the declared-form
+    percent, as from assay_charge_residual()); when None (raw totals without
+    declared forms) it uses the residual over the speciated absolute
+    equivalents. Accuracy on fertilizer mixtures has not been established.
     """
+    _require_id(solution_id, 'solution_id')
     phases, reason = _validate_request(
         ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
         temperature_c=temperature_c, carbon_boundary=carbon_boundary,
-        assay_residual_eq=assay_charge_residual_eq_per_kgw)
+        assay_residual_eq=assay_charge_residual_eq_per_kgw,
+        assay_residual_percent=assay_charge_residual_percent)
     inputs = {**dict(audit_inputs or {}), 'solution_id': solution_id}
     common = dict(ph_mode=ph_mode, phase_policy=phase_policy, phases=phases,
-                  assay_residual_eq=assay_charge_residual_eq_per_kgw, audit_inputs=inputs)
+                  assay_residual_eq=assay_charge_residual_eq_per_kgw,
+                  assay_residual_percent=assay_charge_residual_percent, audit_inputs=inputs)
     if reason is not None:
         return _not_supported_unsolved(reason, ph=ph, carbon_boundary=carbon_boundary, **common)
     try:
@@ -332,6 +355,7 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
     implicit) and are excluded from the assay residual. Accuracy on fertilizer
     mixtures has not been established.
     """
+    _require_id(recipe_id, 'recipe_id')
     if isinstance(water, BalancedWaterAnalysis):
         if not isinstance(water_analysis_id, str) or not water_analysis_id.strip():
             raise DeliveryError('incomplete_water_analysis', 'water_analysis_id is required with a BalancedWaterAnalysis')
@@ -349,6 +373,8 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
     additions = dict(reagent_additions_molal or {})
     if bool(additions) != (reagent_id is not None):
         raise DeliveryError('missing_field', 'reagent_id is required if and only if reagent additions are given')
+    if additions:
+        _require_id(reagent_id, 'reagent_id')
     bases = set(chemistry()['bases'])
     for name, amount in additions.items():
         if name not in bases or not _is_number(amount) or amount < 0:
@@ -360,13 +386,15 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
     residual = assay_charge_residual(doses_g_per_kg_water)
     audit_inputs = {
         'recipe_id': recipe_id, 'water_kind': water_kind, 'water_id': water_id,
-        'reagent_id': reagent_id, 'doses_g_per_kg_water': dict(doses_g_per_kg_water),
+        'reagent_id': reagent_id, 'reagent_additions_molal': dict(additions),
+        'doses_g_per_kg_water': dict(doses_g_per_kg_water),
         'catalogueSha256': hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
         'assay_charge_residual_declared_percent': residual['percent']}
     return calculate_ec_from_totals(
         totals, solution_id=recipe_id, ph_mode=ph_mode, ph=ph, phase_policy=phase_policy,
         phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,
-        assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'], audit_inputs=audit_inputs)
+        assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'],
+        assay_charge_residual_percent=residual['percent'], audit_inputs=audit_inputs)
 
 
 def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
@@ -387,14 +415,19 @@ def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
     phases, reason = _validate_request(
         ph_mode='supplied', ph=plan.target_ph, phase_policy=phase_policy,
         phases=tuple(plan_audit['phases']), temperature_c=plan_audit['temperatureC'],
-        carbon_boundary='closed', assay_residual_eq=residual['eq_per_kgw'])
+        carbon_boundary='closed', assay_residual_eq=residual['eq_per_kgw'],
+        assay_residual_percent=residual['percent'])
     audit_inputs = {
-        'solution_id': recipe_id, 'recipe_id': recipe_id, 'water_kind': 'balanced_analysis',
+        'solution_id': recipe_id, 'recipe_id': recipe_id, 'water_kind': 'plan_water_totals',
         'water_id': plan.water_analysis_id, 'reagent_id': plan.reagent_id,
         'reagent_molal': plan.equilibrium.nitric_acid_molal, 'doses_g_per_kg_water': doses,
+        'catalogueSha256': plan_audit['catalogueSha256'],
+        'waterTotalsMolal': dict(plan_audit['waterTotalsMolal']),
+        'initialPh': plan_audit['initialPh'],
         'assay_charge_residual_declared_percent': residual['percent']}
     common = dict(ph_mode='supplied', phase_policy=phase_policy, phases=phases,
-                  assay_residual_eq=residual['eq_per_kgw'], audit_inputs=audit_inputs)
+                  assay_residual_eq=residual['eq_per_kgw'], assay_residual_percent=residual['percent'],
+                  audit_inputs=audit_inputs)
     if reason is not None:
         return _not_supported_unsolved(reason, ph=plan.target_ph, carbon_boundary='closed', **common)
     return _ec_from_state(plan.equilibrium.target, **common)

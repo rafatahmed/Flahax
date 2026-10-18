@@ -142,11 +142,14 @@ applied.
 | Status | Meaning |
 |---|---|
 | `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient. `ec25_ms_cm` is the estimate. |
-| `partial` | Some charged species have no coefficient (listed in `missing_species`). Only a known-species subtotal is reported, with no total. |
+| `partial` | Some charged species have no coefficient (listed in `missing_species`), or, with a `supplied` pH, there are unrecorded counterions (`unrecorded_counterions`, rule O5) reported in eq/kgw. Only a known-species subtotal is reported, with no total. |
 | `not_supported` | Outside the envelope (temperature, ionic strength, non-closed carbon) or the assay charge residual is too large. `reason` says which; no EC is reported. |
 
 Assay charge residual (rule O5): a residual up to 0.1 % of the absolute
-equivalents is reported and does not block. Above it, a `supplied` pH gives
+equivalents is reported and does not block. For catalogue and plan inputs
+the percent is over the declared-form absolute equivalents (each product's
+declared ion forms, independent of pH); for raw totals without declared forms
+it is over the speciated absolute equivalents. Above it, a `supplied` pH gives
 `partial` (`unrecorded_counterions`) and a `calculated` pH gives
 `not_supported` (`assay_charge_residual_too_large`).
 
