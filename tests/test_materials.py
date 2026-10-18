@@ -501,5 +501,183 @@ class CatalogueMigrationTests(unittest.TestCase):
                          {'N_NO3': 'grade_typical', 'N_NH4': 'grade_typical', 'Ca': 'grade_typical'})
 
 
+PURE_WATER_ID = 'ro-test'
+HAIFA = {'N_NO3': {'typical': 14.4}, 'N_NH4': {'typical': 1.1}, 'Ca': {'typical': 19.0}}
+
+
+def _old_totals(doses):
+    """Pre-Task-5 catalogue_dose_totals: shipped records through their own chemistry."""
+    from flahax.product_conversion import convert_catalogue_product_dose
+    library = {s['name']: s for s in load_library()['salts']}
+    mapping = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+',
+               'Fe': 'Fe+3', 'Mn': 'Mn+2', 'Zn': 'Zn+2', 'Cu': 'Cu+2', 'boron': 'H3BO3',
+               'molybdate': 'MoO4-2', 'phosphate': 'PO4-3', 'sulfate': 'SO4-2',
+               'nitrate': 'NO3-', 'ammonium': 'NH4+', 'carbonate': 'CO3-2', 'urea': 'Ure',
+               'EDTA': 'Edta-4', 'DTPA': 'Dtp-5', 'o,o-EDDHA': 'Edd-4', 'citrate': 'Citrate-3'}
+    out = {}
+    for name, dose in doses.items():
+        c = convert_catalogue_product_dose(library[name], dose)
+        for source in (c.totals, c.counterions, c.ligands):
+            for key, amount in source.items():
+                basis = 'Fe+2' if key == 'Fe' and name == 'Iron II Sulfate (Hepahydrate)' else mapping[key]
+                out[basis] = out.get(basis, 0.0) + amount
+    return out
+
+
+class ChemistryUseTests(unittest.TestCase):
+    """Task 5: resolved materials in chemistry, undisclosed blends and provenance."""
+
+    def ec(self, doses, **kw):
+        from flahax.irrigation_ec import DeclaredPureWater, calculate_irrigation_ec
+        return calculate_irrigation_ec(doses, recipe_id='r', water=DeclaredPureWater(PURE_WATER_ID),
+                                       ph_mode='calculated', phase_policy='dissolved', **kw)
+
+    def test_user_lot_changes_chemistry_totals(self):
+        from flahax.product_conversion import catalogue_dose_totals
+        name = 'Calcium Nitrate (ag grade)'
+        g = grade(grade_id='grd-can', identity_id=CAN, analysis=HAIFA)
+        material = resolve_material(name, grade=g, lot=lot(grade_id='grd-can', measured={'Ca': 18.5},
+                                                           uncertainty={}))
+        self.assertEqual(material.basis['Ca'], 'lot_measured')
+        shipped = catalogue_dose_totals({name: 1.0})
+        user = catalogue_dose_totals({name: 1.0}, materials={name: material})
+        self.assertAlmostEqual(user['Ca+2'], shipped['Ca+2'] * 18.5 / 19.0, places=15)
+        self.assertNotEqual(user['Ca+2'], shipped['Ca+2'])
+        for basis in ('NO3-', 'NH4+'):
+            self.assertAlmostEqual(user[basis], shipped[basis], places=15)
+
+    def test_undisclosed_blend_refuses_chemistry(self):
+        from flahax.irrigation_ec import assay_charge_residual
+        from flahax.product_conversion import catalogue_dose_totals
+        secret = resolve_material('CH - micro', grade=grade(
+            grade_id='grd-secret', identity_id=None, composition='undisclosed',
+            analysis={'Fe': {'typical': 7.0}}))
+        doses = {'CH - micro': 0.05, 'Potassium Nitrate': 1.0}
+        materials = {'CH - micro': secret}
+        for call in (lambda: catalogue_dose_totals(doses, materials=materials),
+                     lambda: assay_charge_residual(doses, materials=materials)):
+            with self.assertRaises(DeliveryError) as caught:
+                call()
+            self.assertEqual(caught.exception.code, 'composition_undisclosed')
+        r = self.ec(doses, materials=materials)
+        self.assertEqual((r.status, r.reason), ('not_supported', 'composition_undisclosed'))
+        self.assertIsNone(r.ec25_ms_cm)
+        self.assertEqual(r.contributions_ms_cm, {})
+        self.assertEqual(r.audit['materials']['CH - micro']['composition'], 'undisclosed')
+        # Invalid mode input still raises before the refusal.
+        with self.assertRaises(DeliveryError) as caught:
+            self.ec(doses, materials=materials, ph=6.0)
+        self.assertEqual(caught.exception.code, 'invalid_ph_input')
+
+    def test_disclosed_blend_converts_components(self):
+        from flahax.product_conversion import catalogue_dose_totals
+        blend = resolve_material('CH - micro', grade=grade(
+            grade_id='grd-blend', identity_id='idn-ch-micro-assumed-blend', composition='disclosed',
+            components=[{'identity_id': 'idn-sodium-iron-edta', 'mass_fraction': 0.6},
+                        {'identity_id': 'idn-borax-decahydrate', 'mass_fraction': 0.3}],
+            analysis={'Fe': {'typical': 7.0}}))
+        got = catalogue_dose_totals({'CH - micro': 2.0}, materials={'CH - micro': blend})
+        expected = _old_totals({'Iron EDTA': 1.2, 'Sodium Borate (Decahydrate) (borax)': 0.6})
+        self.assertEqual(set(got), set(expected))
+        for basis, amount in expected.items():
+            self.assertAlmostEqual(got[basis], amount, places=15, msg=basis)
+        # The shipped assumed blend (no listed components) keeps its own chemistry profile.
+        shipped = resolve_material('CH - micro')
+        self.assertEqual(catalogue_dose_totals({'CH - micro': 2.0}, materials={'CH - micro': shipped}),
+                         _old_totals({'CH - micro': 2.0}))
+
+    def test_irrigation_ec_reports_material_provenance(self):
+        from flahax.materials import IDENTITIES_SHA256 as SHA
+        name = 'Calcium Nitrate (ag grade)'
+        material = resolve_material(name, grade=grade(grade_id='grd-can', identity_id=CAN, analysis=HAIFA))
+        r = self.ec({name: 1.0, 'Potassium Nitrate': 0.5}, materials={name: material})
+        self.assertEqual(set(r.audit['materials']), {name, 'Potassium Nitrate'})
+        user = r.audit['materials'][name]
+        self.assertEqual(user['identityId'], CAN)
+        self.assertEqual(user['gradeId'], 'grd-can')
+        self.assertEqual(user['documents']['grade']['title'], DOC['title'])
+        self.assertEqual(user['basis'], {'N_NO3': 'grade_typical', 'N_NH4': 'grade_typical',
+                                         'Ca': 'grade_typical'})
+        shipped = r.audit['materials']['Potassium Nitrate']
+        self.assertEqual(shipped['identityId'], 'idn-potassium-nitrate')
+        self.assertIsNone(shipped['gradeId'])
+        self.assertEqual(set(shipped['basis'].values()), {'declared_catalogue'})
+        self.assertEqual(shipped['analysisBasis'], 'declared_catalogue')
+        self.assertEqual(r.audit['identitiesSha256'], SHA)
+        # A shipped product dosed without materials carries its library basis and source document.
+        plain = self.ec({name: 1.0})
+        entry = plain.audit['materials'][name]
+        self.assertEqual(entry['analysisBasis'], 'grade_typical')
+        self.assertEqual(entry['source']['supplier'], 'Haifa Group')
+
+    def test_shipped_provenance_carries_source_document(self):
+        can = resolve_material('Calcium Nitrate (ag grade)')
+        salt = {s['name']: s for s in load_library()['salts']}['Calcium Nitrate (ag grade)']
+        self.assertEqual(can.provenance['source'], salt['source'])
+        self.assertIsNone(resolve_material('Potassium Nitrate').provenance['source'])
+        graded = resolve_material('Calcium Nitrate (ag grade)',
+                                  grade=grade(grade_id='grd-can', identity_id=CAN, analysis=HAIFA))
+        self.assertIsNone(graded.provenance['source'])
+
+    def test_materials_key_mismatch(self):
+        from flahax.product_conversion import catalogue_dose_totals
+        kno3 = resolve_material('Potassium Nitrate')
+        doses = {'Potassium Nitrate': 1.0, 'Potassium Sulfate': 1.0}
+        for materials in ({'Mg Nitrate': resolve_material('Mg Nitrate')},  # not dosed
+                          {'Potassium Sulfate': kno3},  # name differs from key
+                          {'Potassium Nitrate': 'not a material'}):
+            with self.subTest(materials=materials):
+                with self.assertRaises(DeliveryError) as caught:
+                    catalogue_dose_totals(doses, materials=materials)
+                self.assertEqual(caught.exception.code, 'material_mismatch')
+                with self.assertRaises(DeliveryError) as caught:
+                    self.ec(doses, materials=materials)
+                self.assertEqual(caught.exception.code, 'material_mismatch')
+
+    def test_no_materials_is_unchanged(self):
+        from flahax.irrigation_ec import assay_charge_residual
+        from flahax.product_conversion import catalogue_dose_totals
+        doses = {'Calcium Nitrate (ag grade)': 0.9, 'Potassium Nitrate': 0.4, 'Iron EDTA': 0.02,
+                 'Iron II Sulfate (Hepahydrate)': 0.01, 'CH - micro': 0.03,
+                 'Ammonium Monobasic Phosphate': 0.15, 'Magnesium Sulfate (Heptahydrate)': 0.5}
+        before = _old_totals(doses)
+        self.assertEqual(catalogue_dose_totals(doses), before)
+        self.assertEqual(catalogue_dose_totals(doses, materials={}), before)
+        self.assertEqual(catalogue_dose_totals(doses, materials=None), before)
+        shipped = {name: resolve_material(name) for name in doses}
+        self.assertEqual(catalogue_dose_totals(doses, materials=shipped), before)
+        self.assertEqual(assay_charge_residual(doses, materials=shipped), assay_charge_residual(doses))
+        plain, explicit = self.ec(doses), self.ec(doses, materials=shipped)
+        self.assertEqual((plain.status, plain.ec25_ms_cm), (explicit.status, explicit.ec25_ms_cm))
+        self.assertEqual(plain.audit['materials'], explicit.audit['materials'])
+
+    def test_user_grade_drives_o5_gate(self):
+        # Controller ruling (Task 3): the retired Mg Nitrate analysis as a user grade.
+        from flahax.irrigation_ec import assay_charge_residual
+        retired = resolve_material('Mg Nitrate', grade=grade(
+            grade_id='grd-old-mgn', identity_id='idn-magnesium-nitrate-hexahydrate',
+            analysis={'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}}))
+        residual = assay_charge_residual({'Mg Nitrate': 1.0}, materials={'Mg Nitrate': retired})
+        self.assertAlmostEqual(residual['percent'], 0.5532, places=3)
+        r = self.ec({'Mg Nitrate': 1.0}, materials={'Mg Nitrate': retired})
+        self.assertEqual((r.status, r.reason), ('not_supported', 'assay_charge_residual_too_large'))
+        self.assertIn('identity_inconsistent', r.audit['materials']['Mg Nitrate']['flags'])
+        shipped = self.ec({'Mg Nitrate': 1.0})
+        self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
+
+    def test_equilibrium_plan_audits_materials(self):
+        from flahax import plan_equilibrium_delivery
+        from flahax.materials import IDENTITIES_SHA256 as SHA
+        from tests.test_equilibrium_delivery import arguments
+        plan = plan_equilibrium_delivery(**arguments())
+        self.assertEqual(plan.audit['identitiesSha256'], SHA)
+        self.assertEqual(set(plan.audit['materials']), set(plan.audit['productDosesGPerKgWater']))
+        salts = {s['name']: s for s in load_library()['salts']}
+        for name, entry in plan.audit['materials'].items():
+            self.assertEqual(entry['identityId'], salts[name]['identityId'])
+            self.assertEqual(entry['analysisBasis'], salts[name]['analysisBasis'])
+            self.assertEqual(entry['source'], salts[name]['source'])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -19,11 +19,11 @@ import json
 
 from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
-from .catalogue_chemistry import chemistry_for_product
 from .delivery_contracts import DeliveryError
 from .equilibrium_delivery import EquilibriumPhPlan
+from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
 from .measured_water import BalancedWaterAnalysis
-from .product_conversion import catalogue_dose_totals
+from .product_conversion import catalogue_dose_contributions, catalogue_dose_totals
 
 _RESOURCE = 'data/conductivity_mccleskey2012.json'
 _RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
@@ -314,21 +314,24 @@ def _validate_doses(doses):
             raise DeliveryError('invalid_value', f'dose for {name!r} must be a finite number >= 0')
 
 
-def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float]) -> dict:
+def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, materials=None) -> dict:
     """EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
 
     Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
-    pH-independent, computed from each product's declared ion forms.
+    pH-independent, computed from each product's declared ion forms. Products in
+    ``materials`` (resolved user grades or lots) use their own assays, so the O5
+    gate tests the analysis actually dosed.
     """
     _validate_doses(doses_g_per_kg_water)
     net = absolute = 0.0
-    for name, dose in doses_g_per_kg_water.items():
-        components = chemistry_for_product(name).components
+    for name, product_chemistry, totals in catalogue_dose_contributions(doses_g_per_kg_water,
+                                                                        materials=materials):
+        components = product_chemistry.components
         phosphate_z = next((z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None)
         # Borax (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3) declares -0.5 per B;
         # equilibrium totals keep the neutral H3BO3 basis and pH forms borate.
         boron_z = -0.5 if ('B(OH)4-' in components or 'borax' in components) else 0
-        for basis, amount in catalogue_dose_totals({name: dose}).items():
+        for basis, amount in totals.items():
             if basis == 'PO4-3':
                 if phosphate_z is None:
                     raise DeliveryError('unsupported_product_chemistry',
@@ -345,6 +348,12 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float]) -> dict:
     return {'eq_per_kgw': net, 'percent': 100 * net / absolute if absolute > 0 else 0.0}
 
 
+def _materials_audit(doses: Mapping[str, float], materials) -> dict:
+    """Provenance with per-nutrient basis for every dosed product (shipped unless in materials)."""
+    chosen = dict(materials or {})
+    return {name: material_audit_entry(chosen.get(name) or resolve_material(name)) for name in doses}
+
+
 def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe_id: str,
                             water: BalancedWaterAnalysis | DeclaredPureWater,
                             water_analysis_id: str | None = None,
@@ -352,13 +361,17 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
                             reagent_id: str | None = None, ph_mode: str, ph: float | None = None,
                             phase_policy: str, phases: Sequence[str] = (),
                             carbon_boundary: str = 'closed',
-                            temperature_c: float = 25.0) -> IrrigationECResult:
+                            temperature_c: float = 25.0,
+                            materials: Mapping | None = None) -> IrrigationECResult:
     """EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
 
     Water is a BalancedWaterAnalysis (with water_analysis_id) or a
     DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
-    implicit) and are excluded from the assay residual. Accuracy on fertilizer
-    mixtures has not been established.
+    implicit) and are excluded from the assay residual. ``materials`` optionally
+    maps dosed product names to ResolvedMaterial (user grade or lot); the audit
+    records every dosed product's provenance under 'materials'. A blend of
+    undisclosed composition gives not_supported / composition_undisclosed.
+    Accuracy on fertilizer mixtures has not been established.
     """
     _require_id(recipe_id, 'recipe_id')
     if isinstance(water, BalancedWaterAnalysis):
@@ -384,17 +397,34 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
     for name, amount in additions.items():
         if name not in bases or not _is_number(amount) or amount < 0:
             raise DeliveryError('invalid_value', f'reagent addition {name!r} must be a catalogue base with a finite amount >= 0')
-    for basis, amount in catalogue_dose_totals(doses_g_per_kg_water).items():
-        totals[basis] = totals.get(basis, 0.0) + amount
-    for basis, amount in additions.items():
-        totals[basis] = totals.get(basis, 0.0) + amount
-    residual = assay_charge_residual(doses_g_per_kg_water)
     audit_inputs = {
         'recipe_id': recipe_id, 'water_kind': water_kind, 'water_id': water_id,
         'reagent_id': reagent_id, 'reagent_additions_molal': dict(additions),
         'doses_g_per_kg_water': dict(doses_g_per_kg_water),
         'catalogueSha256': hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
-        'assay_charge_residual_declared_percent': residual['percent']}
+        'identitiesSha256': IDENTITIES_SHA256}
+    try:
+        dose_totals = catalogue_dose_totals(doses_g_per_kg_water, materials=materials)
+        residual = assay_charge_residual(doses_g_per_kg_water, materials=materials)
+    except DeliveryError as error:
+        if error.code != 'composition_undisclosed':
+            raise
+        # Mode inputs are still validated; then the whole chemistry result is refused.
+        phases, _ = _validate_request(ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
+                                      temperature_c=temperature_c, carbon_boundary=carbon_boundary,
+                                      assay_residual_eq=0.0)
+        audit_inputs.update(materials=_materials_audit(doses_g_per_kg_water, materials),
+                            assay_charge_residual_declared_percent=None, solution_id=recipe_id)
+        return _not_supported_unsolved('composition_undisclosed', ph_mode=ph_mode, ph=ph,
+                                       phase_policy=phase_policy, phases=phases,
+                                       carbon_boundary=carbon_boundary, assay_residual_eq=None,
+                                       assay_residual_percent=None, audit_inputs=audit_inputs)
+    for basis, amount in dose_totals.items():
+        totals[basis] = totals.get(basis, 0.0) + amount
+    for basis, amount in additions.items():
+        totals[basis] = totals.get(basis, 0.0) + amount
+    audit_inputs.update(materials=_materials_audit(doses_g_per_kg_water, materials),
+                        assay_charge_residual_declared_percent=residual['percent'])
     return calculate_ec_from_totals(
         totals, solution_id=recipe_id, ph_mode=ph_mode, ph=ph, phase_policy=phase_policy,
         phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,

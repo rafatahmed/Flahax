@@ -836,13 +836,15 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import Irrigatio
 ### `assay_charge_residual`
 
 ```text
-assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float]) -> dict
+assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials=None) -> dict
 ```
 
 EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
 
 Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
-pH-independent, computed from each product's declared ion forms.
+pH-independent, computed from each product's declared ion forms. Products in
+``materials`` (resolved user grades or lots) use their own assays, so the O5
+gate tests the analysis actually dosed.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_charge_residual`.
 
@@ -867,15 +869,18 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 ### `calculate_irrigation_ec`
 
 ```text
-calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0) -> flahax.irrigation_ec.IrrigationECResult
+calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, materials: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
 EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
 
 Water is a BalancedWaterAnalysis (with water_analysis_id) or a
 DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
-implicit) and are excluded from the assay residual. Accuracy on fertilizer
-mixtures has not been established.
+implicit) and are excluded from the assay residual. ``materials`` optionally
+maps dosed product names to ResolvedMaterial (user grade or lot); the audit
+records every dosed product's provenance under 'materials'. A blend of
+undisclosed composition gives not_supported / composition_undisclosed.
+Accuracy on fertilizer mixtures has not been established.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec`.
 
@@ -1114,7 +1119,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import Prod
 ### `catalogue_dose_totals`
 
 ```text
-catalogue_dose_totals(doses: 'Mapping[str, float]')
+catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None)
 ```
 
 Convert every assayed catalogue element into one conserved basis.
@@ -1122,6 +1127,8 @@ Convert every assayed catalogue element into one conserved basis.
 Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
 retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
 unhydrolysed. Rounded product assays do not establish unassayed counterions.
+``materials`` optionally maps dosed product names to ``ResolvedMaterial``
+(user grade or lot); see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 
