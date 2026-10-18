@@ -549,3 +549,33 @@ def material_audit_entry(material: ResolvedMaterial) -> dict:
             'analysisBasis': bases.pop() if len(bases) == 1 else None,
             'composition': material.composition, 'flags': list(material.flags),
             'components': [list(pair) for pair in material.components]}
+
+
+BAND_NOTE = 'Band applies to nutrient amounts only; chemistry is reported at the nominal assay.'
+
+
+def nutrient_band(doses_g_per_litre: Mapping[str, float], *,
+                  materials: Mapping[str, ResolvedMaterial] | None = None) -> dict:
+    """Delivered nutrient (mg/L) at nominal and band-end assays for the same doses.
+
+    Linear re-evaluation (mg/L = g/L x % x 10); the solver is never called. A nutrient
+    whose contributor has an open band end gets ``None`` for that end of the total.
+    Products without a resolved material use the shipped record with no band.
+    """
+    from .product_conversion import _check_materials
+    resolved = _check_materials(doses_g_per_litre, materials, allow_undisclosed=True)
+    nutrients: dict = {}
+    basis: dict = {}
+    for name, dose in doses_g_per_litre.items():
+        material = resolved.get(name) or resolve_material(name)
+        basis[name] = dict(material.basis)
+        for key, percent in material.record['elements'].items():
+            entry = nutrients.setdefault(key, {'nominal_mg_per_l': 0.0, 'minimum_mg_per_l': 0.0,
+                                               'maximum_mg_per_l': 0.0})
+            entry['nominal_mg_per_l'] += dose * percent * 10
+            for end, edge in (('minimum_mg_per_l', material.band_minimum),
+                              ('maximum_mg_per_l', material.band_maximum)):
+                bound = edge.get(key)
+                if entry[end] is not None:
+                    entry[end] = None if bound is None else entry[end] + dose * bound * 10
+    return {'nutrients': nutrients, 'basis': basis, 'note': BAND_NOTE}

@@ -679,5 +679,78 @@ class ChemistryUseTests(unittest.TestCase):
             self.assertEqual(entry['source'], salts[name]['source'])
 
 
+KNO3 = 'idn-potassium-nitrate'
+
+
+class BandTests(unittest.TestCase):
+    """Task 6: delivered-nutrient band re-evaluates the same doses at band-end assays."""
+
+    def banded(self):
+        mkp = resolve_material('Potassium Monobasic Phosphate', grade=grade(
+            grade_id='grd-mkp', analysis={'K': {'typical': 28.0, 'minimum': 27.0, 'maximum': 29.0},
+                                          'P': {'typical': 22.5, 'minimum': 22.0, 'maximum': 23.0}}))
+        kno3 = resolve_material('Potassium Nitrate', grade=grade(
+            grade_id='grd-kno3', identity_id=KNO3,
+            analysis={'K': {'typical': 38.0, 'minimum': 37.0, 'maximum': 38.5},
+                      'N_NO3': {'typical': 13.0, 'minimum': 12.5, 'maximum': 13.5}}))
+        return {'Potassium Monobasic Phosphate': mkp, 'Potassium Nitrate': kno3}
+
+    def test_band_is_linear_reevaluation(self):
+        from flahax.materials import nutrient_band
+        doses = {'Potassium Monobasic Phosphate': 1.0, 'Potassium Nitrate': 2.0}
+        result = nutrient_band(doses, materials=self.banded())
+        k = result['nutrients']['K']
+        self.assertAlmostEqual(k['nominal_mg_per_l'], (1.0 * 28.0 + 2.0 * 38.0) * 10)
+        self.assertAlmostEqual(k['minimum_mg_per_l'], (1.0 * 27.0 + 2.0 * 37.0) * 10)
+        self.assertAlmostEqual(k['maximum_mg_per_l'], (1.0 * 29.0 + 2.0 * 38.5) * 10)
+        p = result['nutrients']['P']
+        self.assertAlmostEqual(p['minimum_mg_per_l'], 220.0)
+        self.assertAlmostEqual(p['maximum_mg_per_l'], 230.0)
+        self.assertEqual(result['basis']['Potassium Nitrate']['K'], 'grade_typical')
+        self.assertIn('nutrient amounts only', result['note'])
+
+    def test_open_bound_propagates(self):
+        from flahax.materials import nutrient_band
+        doses = {'Potassium Monobasic Phosphate': 1.0, 'Potassium Nitrate': 2.0}
+        materials = self.banded()
+        del materials['Potassium Nitrate']  # shipped record: K has no band
+        k = nutrient_band(doses, materials=materials)['nutrients']['K']
+        self.assertIsNone(k['minimum_mg_per_l'])
+        self.assertIsNone(k['maximum_mg_per_l'])
+        self.assertIsNotNone(k['nominal_mg_per_l'])
+        # a nutrient only the banded product supplies keeps its band
+        p = nutrient_band(doses, materials=materials)['nutrients']['P']
+        self.assertAlmostEqual(p['minimum_mg_per_l'], 220.0)
+
+    def test_shipped_only_has_no_band(self):
+        from flahax.materials import nutrient_band
+        library = {s['name']: s for s in load_library()['salts']}
+        result = nutrient_band({'Potassium Nitrate': 1.5})
+        for symbol, entry in result['nutrients'].items():
+            self.assertIsNone(entry['minimum_mg_per_l'])
+            self.assertIsNone(entry['maximum_mg_per_l'])
+            nominal = 1.5 * library['Potassium Nitrate']['elements'][symbol] * 10
+            self.assertAlmostEqual(entry['nominal_mg_per_l'], nominal)
+        self.assertEqual(set(result['basis']), {'Potassium Nitrate'})
+
+    def test_band_does_not_call_solver(self):
+        from unittest import mock
+        from flahax.materials import nutrient_band
+        with mock.patch('flahax.engine.recommend', side_effect=AssertionError('solver called')):
+            nutrient_band({'Potassium Monobasic Phosphate': 1.0, 'Potassium Nitrate': 2.0},
+                          materials=self.banded())
+
+    def test_material_mismatch(self):
+        from flahax.materials import nutrient_band
+        materials = self.banded()
+        with self.assertRaises(DeliveryError) as caught:
+            nutrient_band({'Potassium Nitrate': 1.0}, materials=materials)
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+        with self.assertRaises(DeliveryError) as caught:
+            nutrient_band({'Potassium Nitrate': 1.0},
+                          materials={'Potassium Nitrate': materials['Potassium Monobasic Phosphate']})
+        self.assertEqual(caught.exception.code, 'material_mismatch')
+
+
 if __name__ == '__main__':
     unittest.main()
