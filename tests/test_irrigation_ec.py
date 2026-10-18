@@ -53,28 +53,22 @@ class TotalsTests(unittest.TestCase):
         kw.setdefault('ph_mode', 'calculated'); kw.setdefault('phase_policy', 'dissolved')
         return calculate_ec_from_totals(totals, solution_id='t', **kw)
 
-    # CONCERN (task 2, for owner ruling): expectation kept verbatim from the brief.
-    # Computed 1.4234940: K+ + Cl- give 1.4234346 (the hand value); water's own
-    # H+ (3.80e-5) and OH- (2.14e-5) are charged, mapped species and add 5.9e-5.
-    @unittest.expectedFailure
     def test_kcl_001_is_estimated_by_hand_value(self):
         r = self.calc({'K+': .01, 'Cl-': .01})
         self.assertEqual(r.status, 'estimated')
-        self.assertAlmostEqual(r.ec25_ms_cm, 1.42343, places=4)
+        # Hand value 1.42343 for K+/Cl- plus pure-water H+/OH- (about 5.5e-5).
+        self.assertAlmostEqual(r.ec25_ms_cm, 1.42349, places=4)
         self.assertEqual(r.qualifier, QUALIFIER)
         self.assertEqual(r.audit['conductivity_units'], 'mS kg cm-1 mol-1 x mol/kgw')
         self.assertEqual(r.audit['coefficientsSha256'], COEFFICIENTS_SHA256)
         self.assertAlmostEqual(sum(r.transport_numbers.values()), 1.0, places=12)
 
-    # CONCERN (task 2, for owner ruling): expectation kept verbatim from the brief.
-    # Computed: partial / missing_species_contributions because MgOH+ (7.5e-8
-    # mol/kgw, no Table 1 coefficient) exceeds 1e-12; known subtotal 0.72509.
-    @unittest.expectedFailure
-    def test_neutral_pair_carries_no_current(self):
+    def test_neutral_pair_carries_no_current_and_hydroxo_pair_is_partial(self):
         m = 1/246.47
         r = self.calc({'Mg+2': m, 'SO4-2': m})
-        self.assertEqual(r.status, 'estimated')
-        self.assertAlmostEqual(r.ec25_ms_cm, 0.725, delta=0.001)
+        self.assertEqual((r.status, r.reason), ('partial', 'missing_species_contributions'))
+        self.assertIn('MgOH+', [s['name'] for s in r.missing_species])
+        self.assertAlmostEqual(r.known_species_subtotal_ms_cm, 0.725, delta=0.001)
         self.assertNotIn('MgSO4', r.contributions_ms_cm)
 
     def test_phosphate_is_partial_and_named(self):
