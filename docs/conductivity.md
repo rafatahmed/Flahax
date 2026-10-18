@@ -125,6 +125,53 @@ still be reported when EC evidence is missing; that does not approve the recipe
 or authorize EC-driven correction. Verify EC after preparation/dilution using
 meters rated for the relevant stock and irrigation ranges.
 
+## Calculated irrigation EC (experimental, M1)
+
+Purpose: estimate the EC of an irrigation solution before mixing, and compare
+it with a meter reading after mixing. This is **experimental (M1)** and Python
+only: there is no CLI flag and no grower-facing number. It is separate from the
+calibration-based planner above.
+
+The EC is the sum of species molal conductivities over one speciation
+(McCleskey et al. 2012, Eq. 8), taken at 25 C. The computational envelope is
+25 C and a speciated ionic strength I <= 0.1 mol/kgw (equality allowed);
+outside it the result is `not_supported`. Units are recorded on every result as
+`conductivity_units = "mS kg cm-1 mol-1 x mol/kgw"`; no density conversion is
+applied.
+
+| Status | Meaning |
+|---|---|
+| `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient. `ec25_ms_cm` is the estimate. |
+| `partial` | Some charged species have no coefficient (listed in `missing_species`). Only a known-species subtotal is reported, with no total. |
+| `not_supported` | Outside the envelope (temperature, ionic strength, non-closed carbon) or the assay charge residual is too large. `reason` says which; no EC is reported. |
+
+Assay charge residual (rule O5): a residual up to 0.1 % of the absolute
+equivalents is reported and does not block. Above it, a `supplied` pH gives
+`partial` (`unrecorded_counterions`) and a `calculated` pH gives
+`not_supported` (`assay_charge_residual_too_large`).
+
+Phosphate recipes are `partial` in M1: H2PO4-, and also MgOH+, CaOH+ and
+charged chelates, have no McCleskey coefficient, so most phosphate, Mg and Ca
+solutions return `partial` until M2.
+
+```python
+from flahax import calculate_ec_from_totals
+
+result = calculate_ec_from_totals(
+    {"K+": 0.01, "Cl-": 0.01}, solution_id="kcl-0.01",
+    ph_mode="calculated", phase_policy="dissolved")
+print(result.status, round(result.ec25_ms_cm, 4))   # estimated 1.4235
+print(result.qualifier)
+```
+
+The 1.4235 mS/cm includes water's own H+ and OH-. Every result carries the
+qualifier "Accuracy on this fertilizer mixture has not yet been established."
+No measured accuracy is claimed. `compare_measured_ec` reports the difference
+between a prediction and a measured EC25 without a pass/fail verdict.
+
+Design and decisions:
+[irrigation EC design](superpowers/specs/2026-10-18-irrigation-ec-mccleskey-design.md).
+
 ## Evidence boundary
 
 `tests/test_conductivity.py` checks known bilinear results, independent tank and

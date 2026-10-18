@@ -97,3 +97,7 @@ Local copy: `docs/sources/mccleskey_nordstrom_etal_2012.pdf`, SHA-256
 `17002c4eeedef68ddb62048f3b1b0c77a96b03d5f9dc51b167fc05e9f145ce1f`. Not
 versioned or distributed (publisher copyright), under the same rule as the
 other files in `docs/sources/`.
+
+## Owner sign-off
+
+Table 1 transcription: owner sign-off pending
