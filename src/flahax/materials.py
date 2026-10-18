@@ -183,6 +183,7 @@ class ResolvedMaterial:
     composition: str
     provenance: dict
     flags: tuple = ()
+    components: tuple = ()  # disclosed blend: (identity_id, mass_fraction) pairs
 
 
 def _text(record: Mapping, key: str, label: str) -> str:
@@ -476,6 +477,8 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         composition = salt.get('composition') or (
             'disclosed' if identity['status'] == 'assumed_blend' else 'single')
         flags: tuple = ()
+        components: tuple = ()  # the shipped assumed blend keeps its own chemistry profile
+        source = salt.get('source')
     else:
         theory = {}
         if grade is None or grade.identity_id == identity_id:
@@ -507,6 +510,8 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
                 value, basis[key] = theory[key], 'identity_theoretical'
             elements[key], band_minimum[key], band_maximum[key] = value, low, high
         composition = grade.composition if grade is not None else 'single'
+        components = grade.components if grade is not None else ()
+        source = None  # the catalogue document does not describe a user grade or lot
         lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
         flags = _unique([*(grade.flags if grade is not None else ()), *lower_bound])
     assumed = identity['status'] == 'assumed_blend'
@@ -519,6 +524,7 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         'lotId': lot.lot_id if lot is not None else None,
         'documents': {'grade': asdict(grade.document) if grade is not None else None,
                       'lot': asdict(lot.document) if lot is not None else None},
+        'source': dict(source) if source is not None else None,
         'oxideConversions': {'grade': dict(grade.oxide_conversions) if grade is not None else {},
                              'lot': dict(lot.oxide_conversions) if lot is not None else {}},
         'assumed': assumed,
@@ -528,4 +534,18 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
               'elements': elements}
     return ResolvedMaterial(name=product_name, identity_id=identity_id, record=record, basis=basis,
                             band_minimum=band_minimum, band_maximum=band_maximum,
-                            composition=composition, provenance=provenance, flags=flags)
+                            composition=composition, provenance=provenance, flags=flags,
+                            components=components)
+
+
+def material_audit_entry(material: ResolvedMaterial) -> dict:
+    """Audit record of one dosed material: provenance plus per-nutrient basis.
+
+    ``analysisBasis`` is the basis shared by every nutrient (always one for a shipped
+    product), else None.
+    """
+    bases = set(material.basis.values())
+    return {**material.provenance, 'basis': dict(material.basis),
+            'analysisBasis': bases.pop() if len(bases) == 1 else None,
+            'composition': material.composition, 'flags': list(material.flags),
+            'components': [list(pair) for pair in material.components]}
