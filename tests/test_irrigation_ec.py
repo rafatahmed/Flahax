@@ -43,8 +43,10 @@ class CoefficientTests(unittest.TestCase):
         self.assertAlmostEqual(ionic_molal_conductivity('Cl-', 0.01), 76.800625 - 49.51375*0.1/1.15, places=9)
 
     def test_coefficient_file_is_pinned(self):
+        pinned = '3eecd89688f8be46ada86cd1d55763648b729167c74c88f9f36f897da4ae5c9b'
+        self.assertEqual(COEFFICIENTS_SHA256, pinned)
         raw = files('flahax').joinpath('data/conductivity_mccleskey2012.json').read_bytes()
-        self.assertEqual(COEFFICIENTS_SHA256, hashlib.sha256(raw).hexdigest())
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), pinned)
 
     def test_lambda_rejects_unknown_ion_and_bad_strength(self):
         for args in (('Li2+', .01), ('K+', -1.), ('K+', float('nan'))):
@@ -85,6 +87,11 @@ class TotalsTests(unittest.TestCase):
 
     def test_ionic_strength_envelope(self):
         self.assertEqual(self.calc({'K+': .0995, 'Cl-': .0995}).status, 'estimated')
+        # At 0.1: totals found by bisection give speciated I within 1e-6 of 0.1.
+        at = self.calc({'K+': 0.09999975, 'Cl-': 0.09999975})
+        self.assertEqual(at.status, 'estimated')
+        self.assertLessEqual(at.ionic_strength, 0.1)
+        self.assertLess(abs(at.ionic_strength - 0.1), 1e-6)
         r = self.calc({'K+': .12, 'Cl-': .12})
         self.assertEqual((r.status, r.reason, r.ec25_ms_cm), ('not_supported', 'ionic_strength_outside_domain', None))
 
@@ -97,12 +104,48 @@ class TotalsTests(unittest.TestCase):
         r = self.calc({'K+': .01, 'Cl-': .01}, ph_mode='supplied', ph=4.0)
         self.assertEqual((r.status, r.reason), ('partial', 'unrecorded_counterions'))
         self.assertGreater(r.unrecorded_counterions_eq_per_kgw, 0)
+        excess = r.audit['charge_balance'] - r.assay_charge_residual['eq_per_kgw']
+        self.assertEqual(r.unrecorded_counterions_eq_per_kgw, excess)
+
+    def test_unrecorded_counterions_by_status(self):
+        tot = {'K+': .01, 'Cl-': .01}
+        est = self.calc(tot, ph_mode='supplied', ph=7.0)
+        self.assertEqual(est.status, 'estimated'); self.assertIsNone(est.unrecorded_counterions_eq_per_kgw)
+        self.assertIsNone(self.calc(tot).unrecorded_counterions_eq_per_kgw)
+        # Supplied-mode O5 gate: the whole speciated imbalance is reported.
+        o5 = self.calc(tot, ph_mode='supplied', ph=7.0, assay_charge_residual_eq_per_kgw=1e-4)
+        self.assertEqual((o5.status, o5.reason), ('partial', 'unrecorded_counterions'))
+        self.assertEqual(o5.unrecorded_counterions_eq_per_kgw, o5.audit['charge_balance'])
+        self.assertTrue(o5.contributions_ms_cm)
 
     def test_assay_residual_gate(self):
         tot = {'K+': .01, 'Cl-': .01}
         ok = self.calc(tot, assay_charge_residual_eq_per_kgw=1e-5)       # 0.05 %
         self.assertEqual(ok.status, 'estimated'); self.assertAlmostEqual(ok.assay_charge_residual['percent'], 0.05, places=3)
         self.assertEqual(self.calc(tot, assay_charge_residual_eq_per_kgw=1e-4).reason, 'assay_charge_residual_too_large')
+
+    def test_not_supported_carries_no_contributions(self):
+        r = self.calc({'K+': .01, 'Cl-': .01}, assay_charge_residual_eq_per_kgw=1e-4)
+        self.assertEqual((r.status, r.reason), ('not_supported', 'assay_charge_residual_too_large'))
+        self.assertEqual((r.contributions_ms_cm, r.transport_numbers), ({}, {}))
+        self.assertIsNone(r.known_species_subtotal_ms_cm); self.assertIsNone(r.ec25_ms_cm)
+
+    def test_declared_percent_overrides_speciated_percent(self):
+        tot = {'K+': .01, 'Cl-': .01}
+        r = self.calc(tot, assay_charge_residual_eq_per_kgw=1e-4, assay_charge_residual_percent=0.05)
+        self.assertEqual(r.status, 'estimated')
+        self.assertEqual(r.assay_charge_residual, {'eq_per_kgw': 1e-4, 'percent': 0.05})
+        self.assertEqual(self.calc(tot, assay_charge_residual_percent=0.2).reason, 'assay_charge_residual_too_large')
+        for bad in (float('nan'), True, '0.05'):
+            with self.subTest(bad=bad), self.assertRaises(DeliveryError):
+                self.calc(tot, assay_charge_residual_percent=bad)
+
+    def test_solution_id_must_be_nonempty_string(self):
+        for sid in ('', '  ', None, 3):
+            with self.subTest(sid=sid), self.assertRaises(DeliveryError) as c:
+                calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id=sid,
+                                         ph_mode='calculated', phase_policy='dissolved')
+            self.assertEqual(c.exception.code, 'missing_field')
 
     def test_phase_policy_recorded_and_supersaturation_warned(self):
         tot = {'Ca+2': .004, 'SO4-2': .004, 'PO4-3': .001, 'K+': .003}
@@ -130,6 +173,36 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual((c.status, c.reason), ('not_supported', 'assay_charge_residual_too_large'))
         s = calculate_irrigation_ec({'Mg Nitrate': 1.0}, recipe_id='r', water=PURE, ph_mode='supplied', ph=6.0, phase_policy='dissolved')
         self.assertEqual((s.status, s.reason), ('partial', 'unrecorded_counterions'))
+
+    def test_gate_uses_declared_form_percent(self):
+        doses = {'Mg Nitrate': 0.40, 'Magnesium Sulfate (Heptahydrate)': 1.0, 'Potassium Sulfate': 0.5}
+        r = calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertAlmostEqual(r.audit['assay_charge_residual_declared_percent'], 0.0914, places=4)
+        self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+
+    def test_recipe_and_reagent_ids_must_be_nonempty_strings(self):
+        for rid in ('', ' ', None, 7):
+            with self.subTest(recipe_id=rid), self.assertRaises(DeliveryError) as c:
+                calculate_irrigation_ec({'Potassium Nitrate': .5}, recipe_id=rid, water=PURE,
+                                        ph_mode='calculated', phase_policy='dissolved')
+            self.assertEqual(c.exception.code, 'missing_field')
+        for gid in ('', '  ', 5):
+            with self.subTest(reagent_id=gid), self.assertRaises(DeliveryError) as c:
+                calculate_irrigation_ec({'Potassium Nitrate': .5}, recipe_id='r', water=PURE,
+                                        reagent_additions_molal={'NO3-': 1e-4}, reagent_id=gid,
+                                        ph_mode='calculated', phase_policy='dissolved')
+            self.assertEqual(c.exception.code, 'missing_field')
+
+    def test_reagent_additions_recorded_as_copy(self):
+        additions = {'NO3-': 1e-4}
+        r = calculate_irrigation_ec({'Potassium Nitrate': .5}, recipe_id='r', water=PURE,
+                                    reagent_additions_molal=additions, reagent_id='nitric',
+                                    ph_mode='supplied', ph=6.0, phase_policy='dissolved')
+        self.assertEqual(r.audit['reagent_additions_molal'], {'NO3-': 1e-4})
+        self.assertIsNot(r.audit['reagent_additions_molal'], additions)
+        none = calculate_irrigation_ec({}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual(none.audit['reagent_additions_molal'], {})
 
     def test_chelate_residual_reported_not_crash(self):
         r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
@@ -184,8 +257,11 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(r.audit['recipe_id'].startswith('plan-recipe:'))
         self.assertEqual(r.audit['solution_id'], r.audit['recipe_id'])
         self.assertEqual(r.audit['reagent_molal'], self.plan.equilibrium.nitric_acid_molal)
-        self.assertEqual(r.audit['water_kind'], 'balanced_analysis')
+        self.assertEqual(r.audit['water_kind'], 'plan_water_totals')
         self.assertEqual(r.audit['doses_g_per_kg_water'], self.plan.audit['productDosesGPerKgWater'])
+        for key in ('catalogueSha256', 'waterTotalsMolal', 'initialPh'):
+            self.assertEqual(r.audit[key], self.plan.audit[key], key)
+        self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
         with self.assertRaises(DeliveryError) as c:
             calculate_irrigation_ec_from_plan(self.plan, phase_policy='equilibrated')
         self.assertEqual(c.exception.code, 'invalid_phase_policy')
