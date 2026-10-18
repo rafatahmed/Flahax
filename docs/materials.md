@@ -187,8 +187,64 @@ Band applies to nutrient amounts only; chemistry is reported at the nominal assa
 The lot supplies N-NO3 (`lot_measured`); K comes from the grade typical. The
 lot gave no uncertainty, so the band is the grade's minimum to maximum.
 
-## Follow-ups (not in this release)
+## Provenance, chelate sodium and band-end chemistry
 
-- Provenance on `recommend` and forward formulation results.
-- Reporting chelate sodium in formulation rows.
-- Chemistry (pH, precipitation, EC) at the band ends.
+**Provenance on formulation results.** `recommend` and the forward formulation
+results attach `provenance` to every salt entry: `recordId`, `identityId`,
+`analysisBasis`, `documents` and `flags`, taken from the record that produced
+the salt. A record without provenance reports `analysisBasis: "unattributed"`;
+a basis is never guessed. The result also carries `identitiesSha256`, which
+pins the shipped catalogue. `forward()` is unchanged.
+
+**Chelate sodium in formulation rows.** Chelate counterion sodium (D2) is added
+to the `Na` row and to the incidental-ion review after the fit, with a warning
+naming the amount. It never enters `elements`, eligibility, the fit or the
+grams. Na stays a restricted ion, so a tight Na maximum can make a recipe with
+chelates require review or be infeasible.
+
+**Chemistry at the band ends.** `calculate_irrigation_ec_band` takes the
+arguments of `calculate_irrigation_ec` and returns `nominal`, `minimum` and
+`maximum` results (each with its own pH, warnings and EC) plus a `note`. The
+minimum end sets every dosed product to its band minimum and the maximum end
+to its band maximum.
+
+- The ends are corner cases (every product at its minimum, or every product at
+  its maximum), not statistical bounds.
+- A non-proportional grade (nutrients that do not move together) can leave an
+  end charge-unbalanced, so that end returns `assay_charge_residual_too_large`.
+- Each end's `audit['materials']` shows the nominal provenance; `audit['band_end']`
+  tells which end it is.
+- An end where any dosed product has an open band end (a shipped product has
+  none) returns `not_supported` / `band_end_open`. Nothing is substituted.
+
+```python
+from flahax import make_grade, resolve_material, calculate_irrigation_ec_band
+from flahax.irrigation_ec import DeclaredPureWater
+
+doc = {"supplier": "Example Fertilisers Ltd", "title": "Potassium nitrate TDS rev 3",
+       "issued": "2026-03-01", "entered": "2026-10-19"}
+grade = make_grade({
+    "grade_id": "example-kno3-tds", "identity_id": "idn-potassium-nitrate",
+    "supplier": "Example Fertilisers Ltd", "product": "KNO3 crystal", "document": doc,
+    "analysis": {"N_NO3": {"minimum": 13.8, "typical": 13.85, "maximum": 13.9},
+                 "K2O": {"minimum": 46.4, "typical": 46.6, "maximum": 46.8}},
+})
+material = resolve_material("Potassium Nitrate", grade=grade)
+band = calculate_irrigation_ec_band(
+    {"Potassium Nitrate": 0.5}, materials={"Potassium Nitrate": material},
+    recipe_id="band-example", water=DeclaredPureWater("ro-1"),
+    ph_mode="calculated", phase_policy="dissolved")
+for end in ("minimum", "nominal", "maximum"):
+    r = band[end]
+    print(end, r.status, r.ec25_ms_cm, r.ph, r.audit.get("band_end"))
+print(band["note"])
+```
+
+Output:
+
+```text
+minimum estimated 0.6892812265428483 6.515030771493912 minimum
+nominal estimated 0.6924419215785783 8.454879373311996 None
+maximum estimated 0.6957751961226507 8.77560493350029 maximum
+Band ends are corner cases (every product at its minimum, or every product at its maximum), not statistical bounds.
+```
