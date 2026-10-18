@@ -553,6 +553,9 @@ Args:
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
     nutrient rows, feasibility, incidental review, warnings and exclusions.
+    Each salt carries provenance (recordId, identityId, analysisBasis,
+    documents, flags) taken from the record that produced it, or
+    analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
     product-to-dose mapping. Feasible is positive-target fit within 1%,
