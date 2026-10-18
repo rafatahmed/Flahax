@@ -60,17 +60,44 @@ maximum is not an assay.
 | Shipped catalogue analysis | Catalogue value | `declared_catalogue` | |
 
 Selection follows the table, per nutrient. Other flags:
-`identity_inconsistent` (the grade's charge residual exceeds 0.1 % or its range
-excludes the identity's theory; chemistry stages then apply the existing
-assay-residual rule, nothing is rejected silently) and `assumed_composition`
-(the shipped CH - micro project-assumed blend).
+
+- `identity_inconsistent`: the grade's charge residual exceeds 0.1 %, or its
+  range excludes the identity's theory. The range test is skipped for
+  `aqueous_solution` and `chelate_salt_defined` identities, whose theory is
+  the pure compound rather than the product as sold (a 75 % phosphoric acid
+  at P2O5 54.0–54.6 % or an Fe-EDTA at Fe 12.8–13.2 % is not flagged); the
+  charge-residual test still applies to them. Chemistry stages then apply the
+  existing assay-residual rule; nothing is rejected silently.
+- `lot_outside_grade_range`: a lot measured outside the grade's minimum or
+  maximum, with no uncertainty stated. The certificate value is used and the
+  band end is widened to include it (grade N-NO3 13.5–13.9 % with a lot at
+  14.3 % gives the band 13.5–14.3 %).
+- `blend_analysis_unreconciled`: see disclosed blends below.
+- `assumed_composition`: the shipped CH - micro project-assumed blend.
 
 ## Using materials in calculations
 
 `catalogue_dose_totals(..., materials=)` and `calculate_irrigation_ec(...,
 materials=)` accept a mapping of product name to `ResolvedMaterial`. The
-provenance (identity, grade and lot ids, documents, basis, identities hash)
-appears in the irrigation EC audit and in `plan_equilibrium_delivery` audits.
+provenance (identity, grade and lot ids, documents, basis, flags, identities
+hash) appears in the irrigation EC audit and in `plan_equilibrium_delivery`
+audits; `calculate_irrigation_ec_from_plan` copies the plan's `materials` and
+`identitiesSha256` into its own audit.
+
+A resolved grade or lot is not the shipped product, so its `record['id']` is
+distinct: `<catalogue id>+<grade_id>`, `<catalogue id>+<grade_id>+<lot_id>`,
+or `<catalogue id>+lot:<lot_id>` for a lot without a grade. `record['name']`
+stays the shipped product name. To formulate with a grade or blend, pass
+`resolved.record` in the product list given to `recommend`. That recipe's
+chemistry goes through `calculate_irrigation_ec(..., materials=)`.
+`plan_equilibrium_delivery` accepts shipped catalogue products only: a recipe
+carrying a resolved record fails closed with `product_chemistry_mismatch`
+instead of silently using the shipped assay.
+
+A blend grade (no identity) records `identityId: None` and
+`hostProduct` (the catalogue name it is dosed under) in its provenance, and
+its record has `formula: None`, so the host product's formula is never
+checked against the blend's analysis.
 
 ## Delivered-nutrient band
 
@@ -93,7 +120,15 @@ ingredients and counterions.
   `composition_undisclosed`. The blend is never dropped while the rest is
   computed.
 - A `disclosed` blend lists component identities with proportions and
-  proceeds through chemistry normally.
+  proceeds through chemistry normally. Its declared analysis is reconciled
+  with the components: for each declared nutrient, implied % = sum of mass
+  fraction x the component's shipped catalogue assay. If |implied − declared|
+  exceeds max(5 % of declared, 0.05 % points) for any nutrient, the material
+  gets `blend_analysis_unreconciled` and the implied analysis is recorded in
+  provenance (`blendImpliedAnalysis`). The blend is never rejected for this;
+  the flag reaches the irrigation EC audit.
+- An undisclosed blend is accepted by `recommend` (its record) and by
+  `nutrient_band`.
 
 ## Decisions
 

@@ -90,11 +90,11 @@ contain chelates or Mg Nitrate.
   limits, with its source document.
 - Material-level corrections (findings 1–4) change numbers and need their
   own reviewed change with regression evidence. None is made by this review.
+- Resolved by the traceable-catalogue change (branch `feat/traceable-catalogue`): identity,
+  grade and lot layers ([materials](../../materials.md)); Mg Nitrate D1, phosphoric acid 75 %,
+  chelate sodium D2 and the borax declared form.
 
 ## Source
 
 Audit file received 2026-10-18, accessed dates per row. Reference URLs are
 in the CSV; manufacturer documents are not stored in the repository.
-- Resolved by the traceable-catalogue change (branch `feat/traceable-catalogue`): identity,
-  grade and lot layers ([materials](../../materials.md)); Mg Nitrate D1, phosphoric acid 75 %,
-  chelate sodium D2 and the borax declared form.
