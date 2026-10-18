@@ -36,6 +36,7 @@
 - [Reference fixture reproduction](reference-fixtures.md)
 - [Chelate parameter assumptions](sources/flahax-chelate-thermodynamic-profile.md)
 - [Computational assessment](computational-review.md), [release evidence](release-evidence.md) and [roadmap](implementation-roadmap.md)
+- [Audits](audit/README.md): dated independent assessments with maintainer reviews, starting with the 2026-10-17 FlahaX vs Horticalc benchmark.
 
 ## Maintainers and development
 
