@@ -909,6 +909,114 @@ EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict o
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
+## flahax.materials
+
+### `DocumentReference`
+
+```text
+DocumentReference(supplier: str, title: str, issued: str, entered: str, url: str | None = None, sha256: str | None = None) -> None
+```
+
+Record fields: `supplier`, `title`, `issued`, `entered`, `url`, `sha256`.
+
+Source module: `flahax.materials`. Import with `from flahax import DocumentReference`.
+
+### `Grade`
+
+```text
+Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None) -> None
+```
+
+Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`.
+
+Source module: `flahax.materials`. Import with `from flahax import Grade`.
+
+### `Lot`
+
+```text
+Lot(lot_id: str, grade_id: str | None, identity_id: str | None, measured: dict, uncertainty: dict, document: flahax.materials.DocumentReference, oxide_conversions: dict = <factory>) -> None
+```
+
+Record fields: `lot_id`, `grade_id`, `identity_id`, `measured`, `uncertainty`, `document`, `oxide_conversions`.
+
+Source module: `flahax.materials`. Import with `from flahax import Lot`.
+
+### `ResolvedMaterial`
+
+```text
+ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = ()) -> None
+```
+
+Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`.
+
+Source module: `flahax.materials`. Import with `from flahax import ResolvedMaterial`.
+
+### `identity_for_product`
+
+```text
+identity_for_product(name: str) -> dict
+```
+
+Return the identity record of a catalogue product name, or fail closed.
+
+Source module: `flahax.materials`. Import with `from flahax import identity_for_product`.
+
+### `load_identities`
+
+```text
+load_identities() -> dict
+```
+
+Return the cached identity records keyed by id (treat as read-only).
+
+Source module: `flahax.materials`. Import with `from flahax import load_identities`.
+
+### `make_grade`
+
+```text
+make_grade(record: collections.abc.Mapping) -> flahax.materials.Grade
+```
+
+Validate a technical-data-sheet grade; oxide inputs are converted to elemental %.
+
+Source module: `flahax.materials`. Import with `from flahax import make_grade`.
+
+### `make_lot`
+
+```text
+make_lot(record: collections.abc.Mapping) -> flahax.materials.Lot
+```
+
+Validate a certificate-of-analysis lot linked to exactly one grade or one identity.
+
+Source module: `flahax.materials`. Import with `from flahax import make_lot`.
+
+### `nutrient_band`
+
+```text
+nutrient_band(doses_g_per_litre: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping[str, flahax.materials.ResolvedMaterial] | None = None) -> dict
+```
+
+Delivered nutrient (mg/L) at nominal and band-end assays for the same doses.
+
+Linear re-evaluation (mg/L = g/L x % x 10); the solver is never called. A nutrient
+whose contributor has an open band end gets ``None`` for that end of the total.
+Products without a resolved material use the shipped record with no band.
+
+Source module: `flahax.materials`. Import with `from flahax import nutrient_band`.
+
+### `resolve_material`
+
+```text
+resolve_material(product_name: str, *, grade: flahax.materials.Grade | None = None, lot: flahax.materials.Lot | None = None) -> flahax.materials.ResolvedMaterial
+```
+
+Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
+
+With neither grade nor lot, the shipped catalogue record is used with its declared basis.
+
+Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
+
 ## flahax.measured_water
 
 ### `BalancedWaterAnalysis`
