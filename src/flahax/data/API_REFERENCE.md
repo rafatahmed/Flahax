@@ -889,6 +889,24 @@ Accuracy on fertilizer mixtures has not been established.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec`.
 
+### `calculate_irrigation_ec_band`
+
+```text
+calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, **kwargs) -> dict
+```
+
+EXPERIMENTAL (M1): irrigation EC25 chemistry at nominal and nutrient band ends.
+
+Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
+``maximum`` (each an IrrigationECResult with its own pH, warnings and EC) and a
+``note``. The minimum end sets every dosed product to its band minimum and the
+maximum end to its band maximum: corner cases, not statistical bounds. An end where
+any dosed product has an open band end (a shipped product has none) is
+not_supported / band_end_open; nothing is substituted. Each end's audit records
+``band_end``.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec_band`.
+
 ### `calculate_irrigation_ec_from_plan`
 
 ```text

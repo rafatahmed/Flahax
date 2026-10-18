@@ -12,7 +12,7 @@ import copy
 import hashlib
 import math
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from importlib.resources import files
 
@@ -431,6 +431,56 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
         phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,
         assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'],
         assay_charge_residual_percent=residual['percent'], audit_inputs=audit_inputs)
+
+
+BAND_END_NOTE = ('Band ends are corner cases (every product at its minimum, or every product '
+                 'at its maximum), not statistical bounds.')
+
+
+def _end_material(material, end: str):
+    """Copy of a resolved material whose record elements are its band end, or None if any end is open."""
+    edge = material.band_minimum if end == 'minimum' else material.band_maximum
+    elements = {}
+    for key in material.record['elements']:
+        if edge.get(key) is None:
+            return None
+        elements[key] = edge[key]
+    return replace(material, record={**material.record, 'elements': elements})
+
+
+def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
+                                 materials: Mapping | None = None, **kwargs) -> dict:
+    """EXPERIMENTAL (M1): irrigation EC25 chemistry at nominal and nutrient band ends.
+
+    Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
+    ``maximum`` (each an IrrigationECResult with its own pH, warnings and EC) and a
+    ``note``. The minimum end sets every dosed product to its band minimum and the
+    maximum end to its band maximum: corner cases, not statistical bounds. An end where
+    any dosed product has an open band end (a shipped product has none) is
+    not_supported / band_end_open; nothing is substituted. Each end's audit records
+    ``band_end``.
+    """
+    nominal = calculate_irrigation_ec(doses_g_per_kg_water, materials=materials, **kwargs)
+    chosen = dict(materials or {})
+    sources = {name: chosen.get(name) or resolve_material(name) for name in doses_g_per_kg_water}
+    result = {'nominal': nominal}
+    for end in ('minimum', 'maximum'):
+        built = {name: _end_material(material, end) for name, material in sources.items()}
+        if any(material is None for material in built.values()):
+            # The nominal call above already validated every input (mode and phase errors raise).
+            result[end] = replace(nominal, status='not_supported', reason='band_end_open',
+                                  ec25_ms_cm=None, known_species_subtotal_ms_cm=None,
+                                  contributions_ms_cm={}, transport_numbers={}, missing_species=(),
+                                  unrecorded_counterions_eq_per_kgw=None,
+                                  assay_charge_residual={'eq_per_kgw': None, 'percent': None},
+                                  ph=None, ionic_strength=None, precipitated_molal={}, warnings=(),
+                                  audit={**nominal.audit, 'band_end': end, 'ph': None,
+                                         'solver_iterations': None, 'charge_balance': None})
+            continue
+        ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
+        result[end] = replace(ended, audit={**ended.audit, 'band_end': end})
+    result['note'] = BAND_END_NOTE
+    return result
 
 
 def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
