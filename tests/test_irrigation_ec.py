@@ -271,6 +271,7 @@ class BoundTests(unittest.TestCase):
                                         ph_mode='calculated', phase_policy='dissolved')
             with self.subTest(formula=formula['name']):
                 self.assertEqual(r.status, 'estimated', r.reason)
+                self.assertTrue(r.bounded, formula['name'])
                 low, high = r.ec25_range_ms_cm
                 widths[formula['name']] = (high - low) / r.ec25_ms_cm
         self.assertEqual(len(widths), 26)
@@ -440,12 +441,38 @@ class ComparisonTests(unittest.TestCase):
         p = calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id='kcl', ph_mode='calculated', phase_policy='dissolved')
         c = compare_measured_ec(p, measured_ec25_ms_cm=1.413, meter_reference_temperature_c=25)
         self.assertEqual(set(c), {'predicted_ec25_ms_cm', 'measured_ec25_ms_cm', 'difference_ms_cm',
-                                  'relative_difference_percent', 'audit', 'qualifier'})
+                                  'relative_difference_percent', 'audit', 'qualifier',
+                                  'ec25_range_ms_cm', 'within_range'})
+        self.assertIsNone(c['ec25_range_ms_cm'])
+        self.assertIsNone(c['within_range'])
         self.assertAlmostEqual(c['difference_ms_cm'], 1.413 - p.ec25_ms_cm, places=12)
         self.assertAlmostEqual(c['relative_difference_percent'], 100 * (1.413 - p.ec25_ms_cm) / p.ec25_ms_cm, places=9)
         self.assertEqual(c['qualifier'], p.qualifier)
         self.assertEqual(c['audit'], p.audit)
         self.assertIsNot(c['audit'], p.audit)
+
+    def test_compare_bounded(self):
+        p = calculate_ec_from_totals({'K+': 1/136.09, 'PO4-3': 1/136.09}, solution_id='mkp',
+                                     ph_mode='calculated', phase_policy='dissolved')
+        low, high = p.ec25_range_ms_cm
+        mid = p.ec25_ms_cm
+        for measured, expected in ((mid, True), (low, True), (high, True),
+                                   (low - 0.01, False), (high + 0.01, False)):
+            with self.subTest(measured=measured):
+                c = compare_measured_ec(p, measured_ec25_ms_cm=measured, meter_reference_temperature_c=25)
+                self.assertEqual(c['ec25_range_ms_cm'], (low, high))
+                self.assertIs(c['within_range'], expected)
+                self.assertAlmostEqual(c['difference_ms_cm'], measured - mid, places=12)
+                self.assertEqual(c['predicted_ec25_ms_cm'], mid)
+                self.assertNotIn('verdict', c)
+                self.assertNotIn('tolerance', c)
+
+    def test_compare_unbounded_has_none_within_range(self):
+        p = calculate_ec_from_totals({'K+': .01, 'Cl-': .01}, solution_id='kcl',
+                                     ph_mode='calculated', phase_policy='dissolved')
+        c = compare_measured_ec(p, measured_ec25_ms_cm=5.0, meter_reference_temperature_c=25)
+        self.assertIsNone(c['within_range'])
+        self.assertIsNone(c['ec25_range_ms_cm'])
 
     # M2a O2 bound: the K+/PO4-3 totals used here are now a bounded estimate, so the
     # partial prediction is an unrecorded-counterions case (KCl at supplied pH 4).
@@ -533,6 +560,23 @@ class BandChemistryTests(unittest.TestCase):
         self.assertNotIn('band_end', mid.audit)
         self.assertEqual(mid.ec25_ms_cm,
                          calculate_irrigation_ec(doses, materials=self._materials(), **self.PURE).ec25_ms_cm)
+
+    def test_band_ends_carry_own_bounds(self):                       # Review Focus 4
+        material = self._material('Potassium Monobasic Phosphate', 'idn-monopotassium-phosphate', 'KH2PO4',
+                                  {'K': 28.731, 'P': 22.761})
+        result = calculate_irrigation_ec_band({'Potassium Monobasic Phosphate': 1.0},
+                                              materials={'Potassium Monobasic Phosphate': material}, **self.PURE)
+        ranges = {}
+        for end in ('minimum', 'nominal', 'maximum'):
+            r = result[end]
+            self.assertEqual((r.status, r.bounded), ('estimated', True), end)
+            low, high = r.ec25_range_ms_cm
+            self.assertAlmostEqual(r.uncovered_bound_ms_cm, high - low, places=12)
+            self.assertAlmostEqual(r.audit['uncovered_bound_ms_cm'], high - low, places=12)
+            ranges[end] = (low, high)
+        self.assertNotEqual(ranges['minimum'], ranges['maximum'])
+        self.assertLess(ranges['minimum'][1], ranges['maximum'][1])
+        self.assertLess(ranges['minimum'][0], ranges['maximum'][0])
 
     def test_band_end_outside_domain(self):
         # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are inside the I < 0.1 domain, maximum is not.
