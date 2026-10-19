@@ -161,13 +161,15 @@ molar conductivity exceeds 80 S cm2/mol per unit charge at infinite dilution
 (Adamson 1973 p. 512; the largest non-H+/OH- ion is SO4-2 at 79.8). The result is
 `estimated` with `bounded = True`:
 
-- `ec25_range_ms_cm`: `(known subtotal, known subtotal + bound)`; the range is one-sided.
+- `ec25_range_ms_cm`: `(known subtotal, known subtotal + bound)`; the range extends only upward from the known subtotal, because missing contributions cannot be negative.
 - `ec25_ms_cm`: the midpoint; `uncertainty_ms_cm`: half the bound.
 - `audit["uncovered_bound_ms_cm"]`: the bound; `missing_species` still lists every uncovered species.
 - `transport_numbers` is `{}`, and `MODEL_VERSION` is `irrigation-ec-mccleskey2012-m2a-experimental`.
 
-`partial` now remains only for unrecorded counterions (and the other existing
-rules). All 26 shipped formulas return `estimated`, with ranges up to 14.4 % of
+The midpoint and `uncertainty_ms_cm` describe only the uncovered-species interval; they are not an accuracy statement and exclude model error. Because 80 S·cm²/mol per charge is conservative, the true value tends to lie in the lower half of the range.
+
+`partial` arises only from unrecorded counterions; temperature, carbon,
+ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas return `estimated`, with ranges up to 14.4 % of
 the midpoint (Generic Wet Season). Phosphate coefficients are not yet
 measured, so phosphate stays under the bound until M2b. `compare_measured_ec`
 also returns `ec25_range_ms_cm` and `within_range` (True, False, or None when the
