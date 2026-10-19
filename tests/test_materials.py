@@ -838,5 +838,180 @@ class BandTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
 
+class FormulationProvenanceTests(unittest.TestCase):
+    """F1: every salt on a formulation result carries the provenance of its own record."""
+    TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
+
+    def entries(self, library):
+        from flahax.engine import recommend
+        result = recommend(library, self.TARGETS)
+        return result, {item['id']: item for item in result['salts']}
+
+    def test_shipped_recommend_has_catalogue_provenance(self):
+        result, entries = self.entries(load_library()['salts'])
+        self.assertTrue(entries)
+        for item in entries.values():
+            self.assertTrue(item['provenance']['identityId'].startswith('idn-'), item['name'])
+            self.assertEqual(item['provenance']['recordId'], item['id'])
+        can = next(i for i in entries.values() if i['name'] == 'Calcium Nitrate (ag grade)')
+        self.assertEqual(can['provenance']['analysisBasis'], 'grade_typical')
+        self.assertEqual(can['provenance']['documents'][0]['supplier'], 'Haifa Group')
+        self.assertIsInstance(can['provenance']['flags'], list)
+
+    def test_resolved_record_provenance_flows(self):
+        g = grade(grade_id='grd-kno3', identity_id='idn-potassium-nitrate',
+                  analysis={'K': {'typical': 38.0}, 'N_NO3': {'typical': 13.0}})
+        material = resolve_material('Potassium Nitrate', grade=g)
+        library = [material.record if s['name'] == 'Potassium Nitrate' else s
+                   for s in load_library()['salts']]
+        _, entries = self.entries(library)
+        resolved = entries[material.record['id']]
+        self.assertEqual(resolved['provenance']['recordId'], f"{material.record['id']}")
+        self.assertIn('+grd-kno3', resolved['provenance']['recordId'])
+        self.assertEqual(resolved['provenance']['analysisBasis'], material.basis)
+        self.assertEqual(resolved['provenance']['analysisBasis']['K'], 'grade_typical')
+        self.assertEqual(resolved['provenance']['documents'][0]['title'], DOC['title'])
+        for key, item in entries.items():
+            if key != material.record['id']:
+                self.assertTrue(item['provenance']['identityId'].startswith('idn-'))
+                self.assertNotIsInstance(item['provenance']['analysisBasis'], dict)
+
+    def test_gradeless_resolved_record_keeps_catalogue_document(self):
+        material = resolve_material('Calcium Nitrate (ag grade)')
+        library = [material.record if s['name'] == 'Calcium Nitrate (ag grade)' else s
+                   for s in load_library()['salts']]
+        _, entries = self.entries(library)
+        resolved = entries[material.record['id']]
+        _, shipped = self.entries(load_library()['salts'])
+        self.assertEqual(resolved['provenance']['documents'],
+                         shipped[material.record['id']]['provenance']['documents'])
+        self.assertEqual(resolved['provenance']['documents'][0]['supplier'], 'Haifa Group')
+
+    def test_unattributed_record(self):
+        from flahax.engine import recommend
+        record = {'id': 'hand', 'name': 'Hand KNO3', 'formula': 'KNO3',
+                  'elements': {'K': 38.67, 'N_NO3': 13.85}}
+        result = recommend([record], {'K': 38.0, 'N_NO3': 13.0})
+        provenance = result['salts'][0]['provenance']
+        self.assertEqual(provenance['analysisBasis'], 'unattributed')
+        self.assertIsNone(provenance['identityId'])
+        self.assertEqual(provenance['documents'], [])
+        self.assertEqual(provenance['recordId'], 'hand')
+
+    def test_identities_hash_on_result(self):
+        result, _ = self.entries(load_library()['salts'])
+        self.assertEqual(result['identitiesSha256'], IDENTITIES_SHA256)
+
+
+class ChelateSodiumReportTests(unittest.TestCase):
+    """F2: chelate counterion sodium (D2) is reported in rows, never fitted."""
+    NO_CHELATE_TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
+    # Captured from recommend() before F2 (no chelate chosen).
+    NO_CHELATE_ROWS = [
+        {'symbol': 'N_NO3', 'target': 150.0, 'final': 150.00426635374635, 'deltaPct': 0.0028442358308969538},
+        {'symbol': 'K', 'target': 200.0, 'final': 199.9932778479975, 'deltaPct': -0.0033610760012550145},
+        {'symbol': 'Ca', 'target': 120.0, 'final': 119.40257151155895, 'deltaPct': -0.497857073700878},
+        {'symbol': 'P', 'target': 40.0, 'final': 39.99986923316647, 'deltaPct': -0.00032691708382159845},
+        {'symbol': 'Mg', 'target': 40.0, 'final': 39.996801591822894, 'deltaPct': -0.007996020442764262},
+        {'symbol': 'N_NH4', 'target': None, 'final': 6.91278045593236, 'deltaPct': None},
+    ]
+    NO_CHELATE_INCIDENTAL = [
+        {'symbol': 'N_NH4', 'ppm': 6.91278045593236, 'target': None, 'maximumPpm': None,
+         'assessment': 'requires_review'},
+    ]
+
+    def chilli(self):
+        library = load_library()
+        formula = next(f for f in library['formulas'] if f['name'].startswith('Chilli'))
+        return library['salts'], formula['targets']
+
+    def test_chelate_sodium_reported_not_fitted(self):
+        from unittest import mock
+        from flahax import engine
+        salts, targets = self.chilli()
+        base = engine.recommend(salts, targets)
+        with mock.patch.object(engine, 'counterion_sodium_mg_per_l', return_value=0.0):
+            off = engine.recommend(salts, targets)
+        names = {s['name'] for s in base['salts']}
+        self.assertIn('Mn EDTA', names)
+        self.assertEqual(base['grams'], off['grams'])
+        self.assertEqual(names, {s['name'] for s in off['salts']})
+        doses = {s['name']: s['gramsPerLitre'] for s in base['salts']}
+        from flahax.product_conversion import counterion_sodium_mg_per_l
+        extra = counterion_sodium_mg_per_l([(next(r for r in salts if r['name'] == n), g)
+                                         for n, g in doses.items()])
+        self.assertGreater(extra, 0)
+        na = lambda res: next(r for r in res['rows'] if r['symbol'] == 'Na')
+        self.assertAlmostEqual(na(base)['final'] - na(off)['final'], extra, places=9)
+        self.assertIsNone(na(base)['target'])
+        entry = next(i for i in base['incidentalContributions'] if i['symbol'] == 'Na')
+        self.assertAlmostEqual(entry['ppm'], na(base)['final'], places=9)
+        self.assertEqual(entry['assessment'], 'requires_review')
+        self.assertIn('Incidental Na includes formula counterion sodium (chelates D2, '
+                      f'CH - micro borax/molybdate): {extra:.4f} mg/L.', base['warnings'])
+        self.assertFalse(any('counterion sodium' in w for w in off['warnings']))
+
+    def test_na_row_created_when_absent(self):
+        from flahax.engine import recommend
+        library = load_library()['salts']
+        chosen = {'Mn EDTA'}
+        pool = [s for s in library if s['name'] in chosen]
+        result = recommend(pool, {'Mn': 2.0})
+        row = next(r for r in result['rows'] if r['symbol'] == 'Na')
+        self.assertIsNone(row['target'])
+        self.assertGreater(row['final'], 0)
+
+    def test_no_chelate_recipe_unchanged(self):
+        from flahax.engine import recommend
+        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS)
+        self.assertNotIn('Mn EDTA', {s['name'] for s in result['salts']})
+        self.assertEqual(len(result['rows']), len(self.NO_CHELATE_ROWS))
+        for got, want in zip(result['rows'], self.NO_CHELATE_ROWS):
+            self.assertEqual(got['symbol'], want['symbol'])
+            self.assertEqual(got['target'], want['target'])
+            self.assertAlmostEqual(got['final'], want['final'], places=9)
+        self.assertEqual(result['incidentalContributions'][0]['symbol'], 'N_NH4')
+        self.assertEqual(len(result['incidentalContributions']), 1)
+        self.assertAlmostEqual(result['incidentalContributions'][0]['ppm'],
+                               self.NO_CHELATE_INCIDENTAL[0]['ppm'], places=9)
+        self.assertEqual(result['warnings'], [])
+
+    def test_helper_matches_chemistry(self):
+        from flahax.product_conversion import catalogue_dose_totals, counterion_sodium_mg_per_l
+        by_name = {s['name']: s for s in load_library()['salts']}
+        doses = {'Iron EDTA': 0.05, 'Mn EDTA': 0.02, 'Zn EDTA': 0.01, 'Copper EDTA': 0.004,
+                 'Iron DTPA': 0.03, 'Iron EDDHA': 0.04}
+        expected = catalogue_dose_totals(doses)['Na+'] * 22.98977 * 1000.0
+        got = counterion_sodium_mg_per_l([(by_name[n], d) for n, d in doses.items()])
+        self.assertGreater(got, 0)
+        self.assertAlmostEqual(got, expected, places=6)
+
+    def test_helper_counts_all_counterion_sodium_of_micro_blend(self):
+        from flahax.product_conversion import catalogue_dose_totals, counterion_sodium_mg_per_l
+        by_name = {s['name']: s for s in load_library()['salts']}
+        got = counterion_sodium_mg_per_l([(by_name['CH - micro'], 1.0)])
+        full = catalogue_dose_totals({'CH - micro': 1.0})['Na+'] * 22.98977 * 1000.0
+        self.assertAlmostEqual(got, full, places=9)  # chelate share plus borax/molybdate sodium
+        self.assertAlmostEqual(got, 63.23, places=2)
+        # Standalone borax and sodium molybdate assay Na as an element: no counterion sodium.
+        self.assertEqual(counterion_sodium_mg_per_l([(by_name['Boric Acid'], 1.0),
+                                                     (by_name['Sodium Molybdate (Dihydrate)'], 1.0),
+                                                     (by_name['Sodium Borate (Decahydrate) (borax)'], 1.0)]),
+                         0.0)
+
+    def test_na_target_delta_recomputed(self):
+        from unittest import mock
+        from flahax import engine
+        pool = [s for s in load_library()['salts'] if s['name'] == 'Mn EDTA']
+        targets = {'Mn': 2.0, 'Na': 5.0}
+        base = engine.recommend(pool, targets)
+        with mock.patch.object(engine, 'counterion_sodium_mg_per_l', return_value=0.0):
+            off = engine.recommend(pool, targets)
+        row = next(r for r in base['rows'] if r['symbol'] == 'Na')
+        off_row = next(r for r in off['rows'] if r['symbol'] == 'Na')
+        self.assertGreater(row['final'], off_row['final'])
+        self.assertAlmostEqual(row['deltaPct'], 100.0 * (row['final'] - 5.0) / 5.0, places=9)
+        self.assertNotAlmostEqual(row['deltaPct'], off_row['deltaPct'], places=6)
+
 if __name__ == '__main__':
     unittest.main()

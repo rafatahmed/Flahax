@@ -584,7 +584,9 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         provenance['blendImpliedAnalysis'] = implied
     # A blend has no single formula; the host's would make assay checks compare the wrong compound.
     formula = None if blend else identity['formula'] or salt.get('formula')
-    record = {'id': record_id, 'name': salt['name'], 'formula': formula, 'elements': elements}
+    record = {'id': record_id, 'name': salt['name'], 'formula': formula, 'elements': elements,
+              'provenance': {**provenance, 'recordId': record_id, 'analysisBasis': dict(basis),
+                             'flags': list(flags)}}
     return ResolvedMaterial(name=product_name, identity_id=identity_id, record=record, basis=basis,
                             band_minimum=band_minimum, band_maximum=band_maximum,
                             composition=composition, provenance=provenance, flags=flags,
