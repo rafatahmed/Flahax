@@ -412,7 +412,7 @@
   "units": "mS kg cm-1 mol-1 (as McCleskey Table 1); 25 C only",
   "equation": "lambda = lambda0_25c - A_25c * sqrt(I) / (1 + B * sqrt(I))",
   "source": {
-   "citation": "Pethybridge, Talbot and House, J. Solution Chem. 35, 381-393 (2006) (article title and author initials to be confirmed from the PDF)",
+   "citation": "A. D. Pethybridge, J. D. R. Talbot and W. A. House, Precise Conductance Measurements on Dilute Aqueous Solutions of Sodium and Potassium Hydrogenphosphate and Dihydrogenphosphate, J. Solution Chem. 35(3), 381-393 (2006)",
    "doi": "10.1007/s10953-005-9003-z",
    "table": "III"
   },
