@@ -37,6 +37,10 @@ CROSS_CHECKS = {
                     'reference': 'phreeqc.dat diffusion coefficients, z^2 F^2 D / RT'},
 }
 GAP_LIMIT_PERCENT = 15.0
+KHPO4_NOTE = ('KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, '
+              'so when FlahaX bounds KHPO4- as uncovered in a mixture the upper end of the range '
+              'counts that current twice - small (<= 1.7 % of kappa at the most concentrated fit '
+              'point) and conservative.')
 
 
 def points(fixture):
@@ -122,7 +126,7 @@ def fit(fixture_path=FIXTURE):
         **fitted,
         'units': 'mS kg cm-1 mol-1 (as McCleskey Table 1); 25 C only',
         'equation': 'lambda = lambda0_25c - A_25c * sqrt(I) / (1 + B * sqrt(I))',
-        'source': {'citation': 'Pethybridge, Talbot and House (2006) J. Solution Chem. 35, 381-393',
+        'source': {'citation': fixture['source']['citation'],
                    'doi': fixture['source']['doi'], 'table': 'III'},
         'fit': {'method': 'weighted linear least squares, weight 1/kappa^2, B fixed; FlahaX '
                           'speciation at calculated pH; uncovered minor species excluded',
@@ -130,7 +134,8 @@ def fit(fixture_path=FIXTURE):
                 'max_abs_residual_percent': max(abs(p['residual_percent']) for p in residuals),
                 'max_ionic_strength': max(p['ionic_strength'] for p in residuals),
                 'max_uncovered_bound_percent': max(p['uncovered_bound_percent'] for p in residuals),
-                'density_kg_dm3': WATER_DENSITY_KG_DM3},
+                'density_kg_dm3': WATER_DENSITY_KG_DM3,
+                'note': KHPO4_NOTE},
         'cross_checks': checks,
     }
     return block, residuals
