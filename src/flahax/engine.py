@@ -24,6 +24,7 @@ from .composition import (
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental
+from .product_conversion import counterion_sodium_mg_per_l
 
 EPS = 1e-10
 # Grams below this do not appear in the recipe.
@@ -389,6 +390,41 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
+def _documents(value) -> list[dict]:
+    """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
+    if isinstance(value, dict) and value and all(
+            item is None or isinstance(item, dict) for item in value.values()):
+        value = list(value.values())
+    if isinstance(value, dict):
+        return [dict(value)]
+    return [dict(item) for item in (value or ()) if item]
+
+
+def _provenance(record: dict) -> dict:
+    """Provenance of the record that produced a salt entry; never guessed when absent."""
+    own = record.get("provenance")
+    if own:
+        # A resolved record keeps its grade/lot documents and the shipped catalogue reference.
+        documents = _documents(own.get("documents")) + _documents(own.get("source"))
+        return {
+            "recordId": own.get("recordId", record["id"]),
+            "identityId": own.get("identityId"),
+            "analysisBasis": own.get("analysisBasis", "unattributed"),
+            "documents": documents,
+            "flags": list(own.get("flags") or ()),
+        }
+    if record.get("identityId") or record.get("analysisBasis"):
+        return {
+            "recordId": record["id"],
+            "identityId": record.get("identityId"),
+            "analysisBasis": record.get("analysisBasis") or "unattributed",
+            "documents": _documents(record.get("source")),
+            "flags": [],
+        }
+    return {"recordId": record["id"], "identityId": None, "analysisBasis": "unattributed",
+            "documents": [], "flags": []}
+
+
 def _report(rows: list[dict], grams: list[float], warnings: list[str]) -> dict:
     deltas = [abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None]
     undesired = [
@@ -431,6 +467,11 @@ def recommend(
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
         nutrient rows, feasibility, incidental review, warnings and exclusions.
+        Each salt carries provenance (recordId, identityId, analysisBasis,
+        documents, flags) taken from the record that produced it, or
+        analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
+        Chelate counterion sodium (D2) is added to the Na row and incidental
+        review after the fit; it never affects eligibility, the fit or grams.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
         product-to-dose mapping. Feasible is positive-target fit within 1%,
@@ -467,9 +508,24 @@ def recommend(
     solved["saltIds"] = [item["id"] for item in solved["salts"]]
     by_id = {salt.get("id"): salt for salt in salts}
     for item in solved["salts"]:
+        item["provenance"] = _provenance(by_id[item["id"]])
         drift = assay_drift(by_id[item["id"]])
         if drift:
             warnings.append(drift)
+    from .materials import IDENTITIES_SHA256  # local: keeps engine importable without the catalogue at load
+    solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
+    counterion_na = counterion_sodium_mg_per_l(
+        [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]])
+    if counterion_na > 0:
+        na_row = next((row for row in solved["rows"] if row["symbol"] == "Na"), None)
+        if na_row is None:
+            na_row = {"symbol": "Na", "target": None, "final": 0.0, "deltaPct": None}
+            solved["rows"].append(na_row)
+        na_row["final"] += counterion_na
+        if na_row["target"] is not None and na_row["target"] > 0:
+            na_row["deltaPct"] = 100.0 * (na_row["final"] - na_row["target"]) / na_row["target"]
+        warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
+                        f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings))
     return solved

@@ -177,6 +177,31 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
     return units
 
 
+_NA_MG_PER_MOL = 22.98977 * 1000.0
+
+
+def counterion_sodium_mg_per_l(salts_with_doses) -> float:
+    """Formula counterion sodium in mg/L for ``[(product record, g/L), ...]``.
+
+    Doses in g/L are treated as g/kg water. Sums the counterion sodium that
+    ``convert_catalogue_product_dose`` reports for every dosed product: the chelate
+    sodium (D2) of the EDTA, DTPA and EDDHA products and all of CH - micro's
+    sodium (chelate share plus its borax and molybdate). Sodium already assayed as
+    elemental Na (standalone borax, sodium molybdate) is not a counterion there and
+    contributes nothing. Records without catalogue chemistry contribute nothing.
+    """
+    moles = 0.0
+    for product, dose in salts_with_doses:
+        if dose <= 0:
+            continue
+        try:
+            converted = convert_catalogue_product_dose(product, dose)
+        except DeliveryError:
+            continue
+        moles += converted.counterions.get("sodium", 0.0)
+    return moles * _NA_MG_PER_MOL
+
+
 def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None):
     """Convert every assayed catalogue element into one conserved basis.
 
