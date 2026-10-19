@@ -250,7 +250,7 @@ So the M2 exit ("typical catalogue recipes return `estimated`") also needs
 the reagent dose recorded. The catalogue corrections have now met the
 `calculated`-mode assay condition. In a 2026-10-19 recount in declared RO
 water at calculated pH, all 26 formulas are still `partial` /
-`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season). The causes are phosphate species, citrate
+`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season; 5.4 % since M2b, see §13). The causes are phosphate species, citrate
 pairs, CaNO₃⁺, MgH₂PO₄⁺/CaH₂PO₄⁺, NH₄SO₄⁻, Fe-EDTA species and trace
 MgOH⁺/CaOH⁺, which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
 literature context, never an accuracy claim for these mixtures.
@@ -333,6 +333,8 @@ The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mo
   | `phreeqc.dat` | 31.8 | 103.6 |
 
   The fitted values must be within 15 % of each, or the gap is stated.
+- **M2b fit (shipped, `tools/fit_phosphate_conductivity.py`):** λ°(H₂PO₄⁻) = 31.730, A = 35.926; λ°(HPO₄²⁻) = 109.669, A = 238.888; B = 1.5. RMS 0.127 % over 22 points, worst −0.274 % (½K₂HPO₄ 9.5533 mmol/dm³), I up to 0.01396. Uncovered minor species (KHPO₄⁻, PO₄³⁻) are left out of the model κ; their O2 bound is up to 1.69 % of κ at the most concentrated ½K₂HPO₄ point (KHPO₄⁻ 2.0×10⁻⁴ mol/kgw, 4.4 % of phosphate), so the fitted HPO₄²⁻ coefficients absorb that pair's current. Cross-check gaps: CRC −11.9 % / −3.8 %, Lee–Wheaton −4.8 % / −4.8 %, `phreeqc.dat` −0.2 % / +5.9 % (H₂PO₄⁻ / HPO₄²⁻), all within 15 %.
+- **M2b recount (2026-10-19):** all 26 formulas `estimated` and bounded (recommend doses, g/L as g/kgw, declared RO water, calculated pH; I 0.016–0.046). Range width as % of the midpoint (midpoint mS/cm): Generic Wet Season 5.40 (1.619); Tomatoes Third Cluster 2.74 (1.418); Tomatoes Fourth Cluster 2.53 (1.550); Lettuce General 2.14 (1.959); Tomato Stage 3 1.81 (2.782); Generic Dry Season 1.81 (2.413); Cucumber 1.49 (2.288); Tomatoes till First Cluster 1.43 (1.202); Melons 1.41 (2.614); Tomatoes Second Cluster 1.40 (1.267); Rice 1.33 (2.711); Chilli 1.33 (4.069); Strawberry Fruiting 1.28 (1.596); Tropical Lettuce 1.18 (1.807); Generic for Berries 1.03 (2.347); Tomato 0.91 (2.303); Lettuce 2 0.89 (2.253); Strawberry Drip 0.73 (1.925); Tomato Stage 2 0.72 (1.943); DEFAULT 0.72 (2.201); Hoagland 0.72 (2.201); Tomatoes to termination 0.71 (1.781); Generic Bloom 0.68 (1.724); Tomato Stage 1 0.67 (1.353); Pepper 0.60 (2.926); Generic Grow 0.48 (1.961). **Maximum 5.40 %** (was 14.38 % under M2a), still from citrate pairs; the remaining bound comes from Ca/Mg citrate, CaNO₃⁺, Ca/Mg H₂PO₄⁺, CaPO₄⁻ and Fe-EDTA species. The all-formulas test ceiling is 0.060.
 - **PO₄³⁻:** no measurement exists (Pethybridge assumed 80 per charge), so PO₄³⁻ stays under the O2 bound. It is negligible at irrigation pH.
 - **Transcription:** the owner's transcription of Table III is the first copy. A second, independent copy is typed from the PDF in `docs/sources/` (which is not versioned), and a test compares them, as was done for Table 1. **Merging the coefficients requires both copies to agree.**
 
@@ -348,7 +350,7 @@ The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mo
 
 ### M2 staging
 - **M2a:** the O2 bound, with no new data. Shipped formulas become `estimated` with a published range.
-- **M2b:** phosphate coefficients, once the owner supplies the Muccitelli & DiAngelo data and checks the CRC λ°. The range narrows by the phosphate share.
+- **M2b:** phosphate coefficients fitted to Pethybridge et al. (2006) Table III (O1 as amended; the Muccitelli & DiAngelo source was replaced). The range narrows by the phosphate share.
 - **Exit:** "typical catalogue recipes return `estimated`" is met by M2a. M2b reduces their uncertainty.
 
 ## 12. Left to the builder

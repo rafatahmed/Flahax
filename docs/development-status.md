@@ -14,7 +14,7 @@ The matrix below describes the 0.3.1 capabilities and their boundaries.
 | Industrial acid selection and product mass/volume | Standard workflow HNO3/H3PO4, `acid_selection.py`, four preserved lower-level PHREEQC acid fixtures | Supplied assay/density/provenance, nutrient and volume limits; no automatic dosing approval |
 | Source-specific CLI | `planning_cli.py`, `__main__.py`, `test_site_planning.py` | Explicit JSON/interactive inputs, no default water or equipment model |
 | No-new-measurements EC screening | `calculated_ec.py`, exact SQM anchors with source hash, regression tests | Pre-acid dilute approximation at 25 C, restricted loading, unknown accuracy; incomplete products yield no total |
-| Calculated irrigation EC (McCleskey 2012 on speciation) | `irrigation_ec.py`, transcription and rule tests | Experimental M2a; phosphate and chelate species give a bounded range; no measured accuracy |
+| Calculated irrigation EC (McCleskey 2012 on speciation) | `irrigation_ec.py`, transcription and rule tests | Experimental M2b; H2PO4-/HPO4-2 fitted to Pethybridge 2006 Table III; minor pairs and chelate species give a bounded range; no measured accuracy |
 | Optional measured-profile EC method | `conductivity.py`, synthetic regression profiles | Requires matching measured evidence when used; example profiles are fictional |
 | A/B and acid report clarity | `pepper_stock_review.py`, HTML/Markdown/JSON examples and tests | Candidate grouping only; trace locations unresolved; no approved full pepper StockPlan |
 | Stock planning API | Existing sourced compatibility/solubility/capacity checks | Caller must supply complete applicable records; absence from a pairwise table is not evidence of compatibility |
