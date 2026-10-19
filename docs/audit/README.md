@@ -7,4 +7,5 @@ claims; the review page takes precedence over the report where they differ.
 
 | Date | Audit | Scope | Review |
 |---|---|---|---|
+| 2026-10-18 | [Materials identity audit](2026-10-18-materials-identity/data/materials-audit.csv) | Chemical identity, hydration, assay basis and impurity limits of all 28 catalogue products against reference materials | [Maintainer review, 2026-10-18](2026-10-18-materials-identity/review.md) |
 | 2026-10-17 | [FlahaX vs Horticalc benchmark](2026-10-17-flahax-vs-horticalc/report.md) | Formulation accuracy, equilibrium chemistry against PHREEQC 3.8.6, electrical conductivity, scope | [Maintainer review, 2026-10-18](2026-10-17-flahax-vs-horticalc/review.md) |

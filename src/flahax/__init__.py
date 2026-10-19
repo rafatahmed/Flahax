@@ -152,3 +152,7 @@ from .irrigation_ec import (IrrigationECResult, DeclaredPureWater, calculate_irr
     calculate_irrigation_ec_from_plan, calculate_ec_from_totals, compare_measured_ec, assay_charge_residual)
 __all__ += ["IrrigationECResult", "DeclaredPureWater", "calculate_irrigation_ec",
     "calculate_irrigation_ec_from_plan", "calculate_ec_from_totals", "compare_measured_ec", "assay_charge_residual"]
+from .materials import (DocumentReference, Grade, Lot, ResolvedMaterial, make_grade, make_lot,
+    resolve_material, nutrient_band, load_identities, identity_for_product)
+__all__ += ["DocumentReference", "Grade", "Lot", "ResolvedMaterial", "make_grade", "make_lot",
+    "resolve_material", "nutrient_band", "load_identities", "identity_for_product"]

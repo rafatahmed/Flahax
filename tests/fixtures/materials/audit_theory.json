@@ -1,0 +1,145 @@
+{
+  "Ammonium Dibasic Phosphate": {
+    "formula": "(NH4)2HPO4",
+    "analysis": {
+      "P": 23.455425209446197,
+      "N_NH4": 21.21363909757879
+    }
+  },
+  "Ammonium Monobasic Phosphate": {
+    "formula": "(NH4)H2PO4",
+    "analysis": {
+      "P": 26.928202898917124,
+      "N_NH4": 12.177250523984219
+    }
+  },
+  "Ammonium Nitrate": {
+    "formula": "NH4NO3",
+    "analysis": {
+      "N_NO3": 17.49924039651302,
+      "N_NH4": 17.49924039651302
+    }
+  },
+  "Ammonium Sulfate": {
+    "formula": "(NH4)2SO4",
+    "analysis": {
+      "S": 24.263593136929913,
+      "N_NH4": 21.201052401187535
+    }
+  },
+  "Boric Acid": {
+    "formula": "H3BO3",
+    "analysis": {
+      "B": 17.48327524982808
+    }
+  },
+  "Calcium Nitrate (ag grade)": {
+    "formula": "5Ca(NO3)2.NH4NO3.10H2O",
+    "analysis": {
+      "Ca": 18.544060202131462,
+      "N_NO3": 14.257956826014981,
+      "N_NH4": 1.296177893274089
+    }
+  },
+  "Copper Sulfate (pentahydrate)": {
+    "formula": "CuSO4.5H2O",
+    "analysis": {
+      "Cu": 25.451446157691144,
+      "S": 12.84067232895191
+    }
+  },
+  "Iron II Sulfate (Hepahydrate)": {
+    "formula": "FeSO4.7H2O",
+    "analysis": {
+      "Fe": 20.08785780451315,
+      "S": 11.53221812539514
+    }
+  },
+  "Magnesium Sulfate (Heptahydrate)": {
+    "formula": "MgSO4.7H2O",
+    "analysis": {
+      "Mg": 9.861490387065425,
+      "S": 13.007997605814339
+    }
+  },
+  "Mg Nitrate": {
+    "formula": "Mg(NO3)2.6H2O",
+    "analysis": {
+      "Mg": 9.479311427186095,
+      "N_NO3": 10.92564257290002
+    }
+  },
+  "Phosphoric Acid (75%)": {
+    "formula": "H3PO4",
+    "analysis": {
+      "P": 31.608046355667526
+    }
+  },
+  "Potassium Carbonate": {
+    "formula": "K2CO3",
+    "analysis": {
+      "K": 56.58031642940974
+    }
+  },
+  "Potassium Citrate": {
+    "formula": "C6H5K3O7.H2O",
+    "analysis": {
+      "K": 36.15662361734975
+    }
+  },
+  "Potassium Dibasic Phosphate": {
+    "formula": "K2HPO4",
+    "analysis": {
+      "K": 44.89562696546759,
+      "P": 17.783208790013575
+    }
+  },
+  "Potassium Monobasic Phosphate": {
+    "formula": "KH2PO4",
+    "analysis": {
+      "K": 28.7310588505128,
+      "P": 22.760810031223276
+    }
+  },
+  "Potassium Nitrate": {
+    "formula": "KNO3",
+    "analysis": {
+      "K": 38.67213309331171,
+      "N_NO3": 13.854028604775376
+    }
+  },
+  "Potassium Sulfate": {
+    "formula": "K2SO4",
+    "analysis": {
+      "K": 44.87542797065869,
+      "S": 18.39857769697554
+    }
+  },
+  "Sodium Borate (Decahydrate) (borax)": {
+    "formula": "Na2B4O7.10H2O",
+    "analysis": {
+      "Na": 12.056748955233397,
+      "B": 11.338387628520586
+    }
+  },
+  "Sodium Molybdate (Dihydrate)": {
+    "formula": "Na2MoO4.2H2O",
+    "analysis": {
+      "Na": 19.00335078151631,
+      "Mo": 39.656151122842736
+    }
+  },
+  "Urea": {
+    "formula": "CO(NH2)2",
+    "analysis": {
+      "N_UREA": 46.64642736062887
+    }
+  },
+  "Zinc Sulfate (Monohydrate)": {
+    "formula": "ZnSO4.H2O",
+    "analysis": {
+      "Zn": 36.433408889840926,
+      "S": 17.865633053048338
+    }
+  }
+}

@@ -836,13 +836,15 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import Irrigatio
 ### `assay_charge_residual`
 
 ```text
-assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float]) -> dict
+assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials=None) -> dict
 ```
 
 EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
 
 Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
-pH-independent, computed from each product's declared ion forms.
+pH-independent, computed from each product's declared ion forms. Products in
+``materials`` (resolved user grades or lots) use their own assays, so the O5
+gate tests the analysis actually dosed.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_charge_residual`.
 
@@ -867,15 +869,18 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 ### `calculate_irrigation_ec`
 
 ```text
-calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0) -> flahax.irrigation_ec.IrrigationECResult
+calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, materials: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
 EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
 
 Water is a BalancedWaterAnalysis (with water_analysis_id) or a
 DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
-implicit) and are excluded from the assay residual. Accuracy on fertilizer
-mixtures has not been established.
+implicit) and are excluded from the assay residual. ``materials`` optionally
+maps dosed product names to ResolvedMaterial (user grade or lot); the audit
+records every dosed product's provenance under 'materials'. A blend of
+undisclosed composition gives not_supported / composition_undisclosed.
+Accuracy on fertilizer mixtures has not been established.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec`.
 
@@ -903,6 +908,117 @@ compare_measured_ec(prediction: flahax.irrigation_ec.IrrigationECResult, *, meas
 EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict or tolerance.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
+
+## flahax.materials
+
+### `DocumentReference`
+
+```text
+DocumentReference(supplier: str, title: str, issued: str, entered: str, url: str | None = None, sha256: str | None = None) -> None
+```
+
+Record fields: `supplier`, `title`, `issued`, `entered`, `url`, `sha256`.
+
+Source module: `flahax.materials`. Import with `from flahax import DocumentReference`.
+
+### `Grade`
+
+```text
+Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None) -> None
+```
+
+Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`.
+
+Source module: `flahax.materials`. Import with `from flahax import Grade`.
+
+### `Lot`
+
+```text
+Lot(lot_id: str, grade_id: str | None, identity_id: str | None, measured: dict, uncertainty: dict, document: flahax.materials.DocumentReference, oxide_conversions: dict = <factory>) -> None
+```
+
+Record fields: `lot_id`, `grade_id`, `identity_id`, `measured`, `uncertainty`, `document`, `oxide_conversions`.
+
+Source module: `flahax.materials`. Import with `from flahax import Lot`.
+
+### `ResolvedMaterial`
+
+```text
+ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = ()) -> None
+```
+
+Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`.
+
+Source module: `flahax.materials`. Import with `from flahax import ResolvedMaterial`.
+
+### `identity_for_product`
+
+```text
+identity_for_product(name: str) -> dict
+```
+
+Return the identity record of a catalogue product name, or fail closed.
+
+Source module: `flahax.materials`. Import with `from flahax import identity_for_product`.
+
+### `load_identities`
+
+```text
+load_identities() -> dict
+```
+
+Return the cached identity records keyed by id (treat as read-only).
+
+Source module: `flahax.materials`. Import with `from flahax import load_identities`.
+
+### `make_grade`
+
+```text
+make_grade(record: collections.abc.Mapping) -> flahax.materials.Grade
+```
+
+Validate a technical-data-sheet grade; oxide inputs are converted to elemental %.
+
+Source module: `flahax.materials`. Import with `from flahax import make_grade`.
+
+### `make_lot`
+
+```text
+make_lot(record: collections.abc.Mapping) -> flahax.materials.Lot
+```
+
+Validate a certificate-of-analysis lot linked to exactly one grade or one identity.
+
+Source module: `flahax.materials`. Import with `from flahax import make_lot`.
+
+### `nutrient_band`
+
+```text
+nutrient_band(doses_g_per_litre: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping[str, flahax.materials.ResolvedMaterial] | None = None) -> dict
+```
+
+Delivered nutrient (mg/L) at nominal and band-end assays for the same doses.
+
+Linear re-evaluation (mg/L = g/L x % x 10); the solver is never called. A nutrient
+whose contributor has an open band end gets ``None`` for that end of the total.
+Products without a resolved material use the shipped record with no band.
+
+Source module: `flahax.materials`. Import with `from flahax import nutrient_band`.
+
+### `resolve_material`
+
+```text
+resolve_material(product_name: str, *, grade: flahax.materials.Grade | None = None, lot: flahax.materials.Lot | None = None) -> flahax.materials.ResolvedMaterial
+```
+
+Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
+
+With neither grade nor lot, the shipped catalogue record is used with its declared basis.
+With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
+ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
+stays the product name.
+
+Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 
 ## flahax.measured_water
 
@@ -1114,7 +1230,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import Prod
 ### `catalogue_dose_totals`
 
 ```text
-catalogue_dose_totals(doses: 'Mapping[str, float]')
+catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None)
 ```
 
 Convert every assayed catalogue element into one conserved basis.
@@ -1122,6 +1238,8 @@ Convert every assayed catalogue element into one conserved basis.
 Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
 retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
 unhydrolysed. Rounded product assays do not establish unassayed counterions.
+``materials`` optionally maps dosed product names to ``ResolvedMaterial``
+(user grade or lot); see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 

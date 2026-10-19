@@ -220,6 +220,9 @@ def parse_formula(formula: str) -> dict | None:
         return None
 
 
+_CARBAMIDE = {"C": 1.0, "O": 1.0, "N": 2.0, "H": 4.0}  # urea atoms per carbon
+
+
 def theoretical_assay(formula: str) -> dict[str, float] | None:
     """Nutrient percentages implied by a parseable formula."""
     parsed = parse_formula(formula)
@@ -241,6 +244,10 @@ def theoretical_assay(formula: str) -> dict[str, float] | None:
         assay["N_NO3"] = percent(parsed["nitrate"], "N")
     if parsed["ammonium"]:
         assay["N_NH4"] = percent(parsed["ammonium"], "N")
+    atoms = parsed["atoms"]
+    carbons = atoms.get("C", 0.0)
+    if carbons and {key: count / carbons for key, count in atoms.items()} == _CARBAMIDE:
+        assay["N_UREA"] = percent(atoms["N"], "N")  # amide N of urea, CO(NH2)2
     assay.pop("N", None)
     return assay
 

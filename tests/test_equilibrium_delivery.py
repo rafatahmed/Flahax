@@ -114,6 +114,22 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             compose_delivery_plan(plan.recipe,plan.stocks,self.plan,
                                   [replace(plan.commands[0],requested_volume=VolumeLitres(.1))],plan.audit_record)
 
+    def test_user_grade_record_fails_closed_not_shipped_assay(self):
+        # A grade's record has its own id, so the plan cannot mistake it for the shipped product.
+        from flahax import make_grade, recommend, resolve_material
+        grade=make_grade({'grade_id':'grd-kno3','identity_id':'idn-potassium-nitrate','supplier':'S',
+                          'product':'KNO3','document':{'supplier':'S','title':'TDS','issued':'2026-01-01',
+                                                       'entered':'2026-10-18'},
+                          'analysis':{'K':{'typical':38.0},'N_NO3':{'typical':13.0}}})
+        record=resolve_material('Potassium Nitrate',grade=grade).record
+        fit=recommend([record],{'K':38.0*.19,'N_NO3':13.0*.19})
+        self.assertTrue(fit['feasible'])
+        recipe=final_solution_recipe(fit,VolumeLitres(100))
+        self.assertEqual(recipe.salts[0].name,'Potassium Nitrate')
+        with self.assertRaises(DeliveryError) as caught:
+            plan_equilibrium_delivery(**(self.args|{'recipe':recipe}))
+        self.assertEqual(caught.exception.code,'product_chemistry_mismatch')
+
     def test_equal_target_requires_no_reagent(self):
         p=plan_equilibrium_delivery(**(self.args|{'target_ph':7.4}))
         self.assertEqual(p.reagent_mass.value,0)
