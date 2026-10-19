@@ -1,0 +1,18 @@
+metric,FlahaX,Horticalc
+licence,Apache-2.0,GPL-3.0-or-later
+on PyPI,yes (flahax 0.4.0),no (desktop installer / source)
+runtime dependencies,0,"7 (fastapi, pydantic, numpy, scipy, uvicorn, PyYAML, pywebview)"
+library modules,36,20
+"library code lines (non-blank, non-comment)",4417,4479
+test files,39,40
+test functions,162,326
+exported public API names,80,n/a (app-oriented; no __all__)
+shipped products / fertilizers,28,253
+aqueous species,197,0
+solid phases / saturation indices,28,0
+activity model,Davies (I<=0.1 mol/kg),none (ionic strength used only inside EC model)
+EC model,"brochure anchors, 7 named products",McCleskey 2012 ion conductivity + CRC fallback
+pH prediction / acid dosing,"yes (equilibrium pH, nitric/phosphoric)",no (Sluijsmans acid/base equivalent only)
+stock tank planning,"yes (grouping, solubility, injector, pump)","yes (A/B/C grouping, compatibility)"
+audit record,"schema+model version, input IDs",recipe hashing only
+GUI,no (CLI only),yes (desktop + REST API)
