@@ -285,18 +285,21 @@ of scope here.
 |---|---|
 | O1 | **Decided 2026-10-19, amended the same day:** λ° and A for H₂PO₄⁻ and HPO₄²⁻ are fitted to the measured 25 °C KH₂PO₄ and K₂HPO₄ conductivities of Pethybridge, Talbot & House (2006), Table III, through FlahaX speciation, with B fixed at 1.5. The cross-checks, which report but do not block, are CRC λ°, Pethybridge's Lee–Wheaton λ° and λ° derived from `phreeqc.dat`. PO₄³⁻ stays under the O2 bound. See §13. |
 | O2 | **Decided 2026-10-19:** a one-sided bound of 80 S·cm²/mol per unit charge at infinite dilution, times molality, for each uncovered charged species. Published with the result as an EC range; species are never dropped and mobilities are never fitted. See §13. |
-| O3 | Measurement programme for M3: who measures, which solutions, which meter and calibration protocol |
+| O3 | **Decided 2026-10-19:** M3 evidence is published 25 °C KCl and single-salt tables, plus bench readings the owner takes on a Milwaukee MW802 in EC mode. Five solutions, one recorded water. The accuracy sentence states facts for those five only, with the model range and the meter band of ±0.12 mS/cm. M3 code waits until the blanks in §13 are filled and the readings exist. See §13. |
 
 **Designer's calls (owner may override):**
 - The first implementation plan covers **M1 only**. M2 and M3 are planned once
   O1–O3 are decided.
+- **2026-10-19:** O1, O2, and O3 are decided. M2 has shipped. M3 software,
+  fixtures, and release notes wait until the §13 blanks are filled and the
+  bench readings exist.
 - M1 is a **Python API only**; no CLI flag until M2 (former O4).
 - **Table 1 transcription check:** the shipped coefficient JSON is compared in
   CI with a second, independently typed fixture in `tests/`, and the owner
   signs off once against the paper (recorded with the paper SHA-256). CI
   cannot read the unversioned PDF.
 
-## 13. O1 and O2 decisions and audit (2026-10-19)
+## 13. O1, O2, and O3 decisions and audit (2026-10-19)
 
 ### Audit on the 26 shipped formulas
 These numbers come from a throwaway script, not product code. Inputs: recommend doses with g/L taken as g/kgw, declared RO water, calculated pH. Speciated I ranges from 0.016 to 0.046.
@@ -352,6 +355,30 @@ The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mo
 - **M2a:** the O2 bound, with no new data. Shipped formulas become `estimated` with a published range.
 - **M2b:** phosphate coefficients fitted to Pethybridge et al. (2006) Table III (O1 as amended; the Muccitelli & DiAngelo source was replaced). The range narrows by the phosphate share.
 - **Exit:** "typical catalogue recipes return `estimated`" is met by M2a. M2b reduces their uncertainty.
+
+### O3: measurement programme (2026-10-19)
+
+M3 evidence is published 25 °C tables plus bench readings the owner takes. M3 code, fixtures, and release notes wait until the blanks below are filled and the readings exist. Stock EC, the methods article, and a lab cell stay out of this decision.
+
+**Published half.** KCl inside about 0.001–0.05 mol/kgw, and the single-salt tables already used for the model, stay cited checks. Each citation records the molality conversion. Those tables do not speak for the five mixtures.
+
+**Bench solutions.** One recorded water for all five, preferably the declared RO water used in the M2b audit, made up by mass. The shipped model prediction is computed before any reading and is not refit.
+
+1. KH₂PO₄ at 1.000 g/kg, inside the Pethybridge fit, predicted 0.738 mS/cm.
+2. K₂HPO₄ at or below 9.55 mmol/kg of the half-formula. The hydration form is written down and used in the prediction.
+3. Tomatoes till First Cluster.
+4. Generic Wet Season, the widest bound, 5.4% of the midpoint at 1.619 mS/cm.
+5. Chilli, the high-EC end, midpoint 4.069 mS/cm, where ionic strength is past 0.014 mol/kgw.
+
+The other 21 recipes stay unmeasured. For Chilli, the record keeps the existing limits: the phosphate fit stops at 0.014 mol/kgw, and KHPO₄⁻ can be counted twice at the top of a range.
+
+**Meter.** Milwaukee MW802 pH/EC/TDS combo, probe SE600, manual ISTMW802 07/22. Read EC in mS/cm. The TDS scale uses a factor of 0.68 and is not the measurement. The manufacturer range is 0.00–6.00 mS/cm, resolution 0.01 mS/cm, accuracy ±2% of full scale, which is ±0.12 mS/cm. Compensation is automatic from 0 to 50 °C, and the manual gives no way to turn it off. Calibration is one point.
+
+Same-day EC calibration uses a certified 1.413 mS/cm standard, set to the 25 °C value on its label. Record the lot and expiry. A second certified standard inside 0.2–6.0 mS/cm may be read and must not move the calibration knob. Hold each solution at 25.0 ± 0.5 °C and record that temperature with a separate thermometer. The published specifications do not include a temperature display. Record three settled readings and the time. Make a second preparation of KH₂PO₄ and of Generic Wet Season. Store the probe in its storage solution. Milwaukee warns that storing this probe in RO or distilled water damages it. The test solutions may still be the declared RO water.
+
+**Sentence.** For these five solutions, on this date, with this meter, state how many readings fell inside the precomputed range, the largest relative gap to the midpoint, the difference between the repeated preparations, and any check-standard residual. Put the model range and the meter band of ±0.12 mS/cm beside each gap. That band is wider than the model range on these solutions: about 16% of 0.738 mS/cm, about 7% of 1.619 mS/cm, and about 3% of 4.069 mS/cm. A miss is included. Unmeasured recipes keep the qualifier that accuracy has not been established. No coefficient is refit, and there is no dosing suggestion.
+
+**Blanks, filled before any reading is entered.** Standard lot and expiry, thermometer identity, water analysis, K₂HPO₄ hydration, balance, date, and probe identity.
 
 ## 12. Left to the builder
 
