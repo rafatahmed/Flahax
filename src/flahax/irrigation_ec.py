@@ -64,19 +64,31 @@ def ionic_molal_conductivity(ion: str, ionic_strength: float,
 
 
 QUALIFIER = 'Accuracy on this fertilizer mixture has not yet been established.'
-MODEL_VERSION = 'irrigation-ec-mccleskey2012-m1-experimental'
+MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2a-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
 _ASSAY_LIMIT_PERCENT = 0.1
+# Decision O2 (design spec section 13): upper limit on the limiting molar conductivity per unit
+# charge, S cm2/mol, at infinite dilution and with no ionic-strength reduction. In the
+# limiting-conductivity table (Adamson 1973, p. 512) no ion other than H+ and OH- (always
+# covered by McCleskey) exceeds it; the highest are SO4-2 at 79.8 and Br- at 78.4.
+LAMBDA_MAX_PER_CHARGE = 80.0
 _CORE_AUDIT_KEYS = frozenset((
     'temperature_reference_c', 'ph_mode', 'ph', 'phase_policy', 'phases', 'carbon_boundary',
     'chemistrySha256', 'coefficientsSha256', 'equation', 'speciesMappingVersion',
-    'conductivity_units', 'unit_conversions', 'solver_iterations', 'charge_balance', 'model'))
+    'conductivity_units', 'unit_conversions', 'solver_iterations', 'charge_balance', 'model',
+    'uncovered_bound_ms_cm', 'lambda_max_per_charge'))
 
 
 @dataclass(frozen=True)
 class IrrigationECResult:
-    """EXPERIMENTAL (M1) irrigation EC25 result; see calculate_ec_from_totals."""
+    """EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
+
+    A bounded estimate (``bounded`` True, decision O2) has status 'estimated' with
+    ``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
+    ``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
+    ``transport_numbers`` are empty: they need the whole current, which is not known.
+    """
     status: str
     ec25_ms_cm: float | None
     known_species_subtotal_ms_cm: float | None
@@ -92,6 +104,10 @@ class IrrigationECResult:
     warnings: tuple
     audit: dict
     qualifier: str = field(default=QUALIFIER)
+    bounded: bool = False
+    ec25_range_ms_cm: tuple | None = None
+    uncertainty_ms_cm: float | None = None
+    uncovered_bound_ms_cm: float | None = None
 
 
 @lru_cache(maxsize=1)
@@ -149,7 +165,8 @@ def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbo
     return phases, None
 
 
-def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_inputs):
+def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_inputs,
+           uncovered_bound=None):
     inputs = dict(audit_inputs or {})
     clash = sorted(_CORE_AUDIT_KEYS & set(inputs))
     if clash:
@@ -163,7 +180,8 @@ def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_i
              'conductivity_units': CONDUCTIVITY_UNITS, 'unit_conversions': [],
              'solver_iterations': state.iterations if state is not None else None,
              'charge_balance': state.charge_balance if state is not None else None,
-             'model': MODEL_VERSION}
+             'model': MODEL_VERSION, 'uncovered_bound_ms_cm': uncovered_bound,
+             'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE}
     audit.update(inputs)
     return audit
 
@@ -185,8 +203,9 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
     """EXPERIMENTAL (M1): EC25 from an already-solved 25 C, closed-carbon state.
 
     The caller has validated the mode inputs (see _validate_request). Status
-    order: O5 assay gate, then (supplied only) unrecorded counterions, then
-    missing species coverage. The O5 gate uses assay_residual_percent (the
+    order: O5 assay gate, then (supplied only) unrecorded counterions; when both
+    pass, uncovered charged species give a bounded estimate (decision O2,
+    bound = sum |z| * LAMBDA_MAX_PER_CHARGE * m over them, in mS/cm). The O5 gate uses assay_residual_percent (the
     declared-form percent) when given, else the residual over the speciated
     absolute equivalents. A not_supported result carries no contributions.
     Supersaturation warnings (dissolved policy) are reported whatever the status.
@@ -222,26 +241,37 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
             unrecorded = state.charge_balance
     elif ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
         status, reason, unrecorded = 'partial', 'unrecorded_counterions', excess
-    elif missing:
-        status, reason = 'partial', 'missing_species_contributions'
     else:
+        # Missing species alone no longer block (decision O2): a bounded estimate.
         status, reason = 'estimated', None
     if status == 'not_supported':
         contributions = {}
     subtotal = sum(contributions.values())
-    ec = subtotal if status == 'estimated' else None
-    transport = {n: c / subtotal for n, c in contributions.items()} if ec else {}
+    bound = ec_range = uncertainty = None
+    if status == 'estimated' and missing:
+        bound = sum(abs(s['charge']) * LAMBDA_MAX_PER_CHARGE * s['molal'] for s in missing)
+        ec_range, uncertainty = (subtotal, subtotal + bound), bound / 2
+        ec = subtotal + uncertainty
+        transport = {}
+    elif status == 'estimated':
+        ec = subtotal
+        transport = {n: c / subtotal for n, c in contributions.items()} if ec else {}
+    else:
+        ec, transport = None, {}
     return IrrigationECResult(
         status=status, ec25_ms_cm=ec,
-        known_species_subtotal_ms_cm=subtotal if status == 'partial' else None,
+        known_species_subtotal_ms_cm=subtotal if status == 'partial' or bound is not None else None,
         contributions_ms_cm=contributions, transport_numbers=transport,
+        bounded=bound is not None, ec25_range_ms_cm=ec_range, uncertainty_ms_cm=uncertainty,
+        uncovered_bound_ms_cm=bound,
         missing_species=tuple(missing), unrecorded_counterions_eq_per_kgw=unrecorded,
         assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': percent},
         reason=reason, ph=state.ph, ionic_strength=strength,
         precipitated_molal={p: v for p, v in state.precipitated.items() if v > 0},
         warnings=warnings,
         audit=_audit(ph_mode=ph_mode, ph=state.ph, phase_policy=phase_policy, phases=phases,
-                     carbon_boundary='closed', state=state, audit_inputs=audit_inputs))
+                     carbon_boundary='closed', state=state, audit_inputs=audit_inputs,
+                     uncovered_bound=bound))
 
 
 def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: str, ph_mode: str,
@@ -254,7 +284,12 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
 
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
     speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
-    or 'not_supported'; invalid input raises DeliveryError. The 0.1 % O5
+    or 'not_supported'; invalid input raises DeliveryError. Charged species
+    without a coefficient (listed in missing_species) make the estimate
+    bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
+    + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
+    bound, and transport_numbers is empty. Unrecorded counterions stay
+    'partial' and the domain checks 'not_supported'. The 0.1 % O5
     assay gate uses assay_charge_residual_percent when given (the declared-form
     percent, as from assay_charge_residual()); when None (raw totals without
     declared forms) it uses the residual over the speciated absolute
@@ -475,8 +510,11 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
                                   unrecorded_counterions_eq_per_kgw=None,
                                   assay_charge_residual={'eq_per_kgw': None, 'percent': None},
                                   ph=None, ionic_strength=None, precipitated_molal={}, warnings=(),
+                                  bounded=False, ec25_range_ms_cm=None, uncertainty_ms_cm=None,
+                                  uncovered_bound_ms_cm=None,
                                   audit={**nominal.audit, 'band_end': end, 'ph': None,
                                          'solver_iterations': None, 'charge_balance': None,
+                                         'uncovered_bound_ms_cm': None,
                                          'assay_charge_residual_declared_percent': None})
             continue
         ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
