@@ -820,7 +820,7 @@ Source module: `flahax.injector_sizing`. Import with `from flahax import size_in
 DeclaredPureWater(water_id: str, kind: str = 'RO') -> None
 ```
 
-EXPERIMENTAL (M1): declared ion-free water (RO or distilled) with an id.
+EXPERIMENTAL: declared ion-free water (RO or distilled) with an id.
 
 Record fields: `water_id`, `kind`.
 
@@ -849,7 +849,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import Irrigatio
 assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials=None) -> dict
 ```
 
-EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
+EXPERIMENTAL: declared-form charge residual of catalogue doses.
 
 Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
 pH-independent, computed from each product's declared ion forms. Products in
@@ -864,7 +864,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_cha
 calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
@@ -887,7 +887,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, materials: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
+EXPERIMENTAL: irrigation EC25 of a catalogue recipe in stated water.
 
 Water is a BalancedWaterAnalysis (with water_analysis_id) or a
 DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
@@ -905,7 +905,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, **kwargs) -> dict
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 chemistry at nominal and nutrient band ends.
+EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
 
 Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
 ``maximum`` (each an IrrigationECResult with its own pH, warnings and EC) and a
@@ -924,7 +924,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec_from_plan(plan: flahax.equilibrium_delivery.EquilibriumPhPlan, *, phase_policy: str = 'dissolved') -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 on an EquilibriumPhPlan's own target state.
+EXPERIMENTAL: irrigation EC25 on an EquilibriumPhPlan's own target state.
 
 The plan's solved target state is used as supplied at plan.target_ph and is
 never re-solved; carbon boundary is closed. A plan that carries phases needs
@@ -939,7 +939,11 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 compare_measured_ec(prediction: flahax.irrigation_ec.IrrigationECResult, *, measured_ec25_ms_cm: float, meter_reference_temperature_c: float) -> dict
 ```
 
-EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict or tolerance.
+EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or tolerance.
+
+``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
+measurement lies inside it (both ends inclusive), False when outside, and None when the
+prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
