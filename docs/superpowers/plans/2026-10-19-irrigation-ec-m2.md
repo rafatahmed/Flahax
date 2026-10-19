@@ -70,25 +70,30 @@
   - `test_band_ends_carry_own_bounds` (Review Focus 4): a graded KH₂PO₄-like case where the ends differ.
 - [ ] **Implement, run, full suite, then commit** with the message "Report range membership for bounded EC estimates".
 
-### Task 3 (M2b): Phosphate coefficients from measured data. BLOCKED until the owner supplies data.
+### Task 3 (M2b): Phosphate coefficients from Pethybridge et al. 2006 (amended O1)
 
-**Precondition (controller checks; if missing, stop and report BLOCKED):**
-- `tests/fixtures/conductivity/crc_phosphate_lambda0.json`: owner-checked CRC λ° for H2PO4-, HPO4-2 and PO4-3, with the edition and page.
-- `tests/fixtures/conductivity/muccitelli1994_25c.json` and an independently typed copy `..._independent.json`. They hold every 25 °C KH₂PO₄ and K₂HPO₄ point (concentration in mol/L, κ in µS/cm or as printed, with units) from Muccitelli & DiAngelo (1994), plus the paper's DOI and the PDF SHA-256.
+**Inputs:**
+- `tests/fixtures/conductivity/pethybridge2006_table3.json` is the owner's first transcription. The controller writes it from the owner's message, with the citation, doi, units and the ½K₂HPO₄ heading convention.
+- `..._independent.json` is typed by a separate agent from the PDF in `docs/sources/` (step 3b). **Merge gate:** both copies must agree.
 
 **Files:**
-- Create: `tools/fit_phosphate_conductivity.py` (reads the fixtures, converts mol/L to mol/kgw with a stated density of water at 25 °C, speciates with FlahaX, and fits A and B per phosphate ion by least squares on κ with λ° fixed).
-- Modify: `src/flahax/data/conductivity_mccleskey2012.json`. Add a top-level `"supplementary"` section with `{ion: {lambda0_25c, A_25c, B, source, fit_rms_percent, points}}`. Do not add these ions to the McCleskey `ions` table, because they are not in the paper.
-- Modify: `irrigation_ec.ionic_molal_conductivity` / `covered_species`, so supplementary ions are covered at 25 °C only.
-- Test: `tests/test_irrigation_ec.py` (class `PhosphateCoefficientTests`).
+- Create `tools/fit_phosphate_conductivity.py`.
+  - **Inputs:** the fixture. Concentrations in mmol/dm³ convert to mol/kgw using a water density of 0.997047 kg/dm³ at 25 °C, a recorded constant.
+  - **Conductivity:** κ (mS/cm) = Λ × c(mmol/dm³) / 1000. The K₂HPO₄ rows use ½-formula units, so salt molarity = c/2.
+  - **Speciation:** each point uses `calculate_equilibrium_ph({'K+': n·m, 'PO4-3': m}, complete_analysis=True, carbon_boundary='closed', phases=[])`.
+  - **Fit:** weighted linear least squares (weight 1/κ²) for λ° and A of H2PO4- and HPO4-2, with B = 1.5 fixed.
+  - **Output:** the supplementary block, JSON on stdout, written with `--write`.
+- Modify `src/flahax/data/conductivity_mccleskey2012.json`. Add a top-level `"supplementary"` block: `{"H2PO4-": {"lambda0_25c", "A_25c", "B": 1.5}, "HPO4-2": {...}, "source": {citation, doi, table: "III"}, "fit": {rms_percent, points, max_ionic_strength, density_kg_dm3}, "cross_checks": {...}}`. The McCleskey `ions` table stays untouched. Update `COEFFICIENTS_SHA256` / the literal pin test.
+- Modify `irrigation_ec.py`. `ionic_molal_conductivity` and `covered_species` include the supplementary ions (25 °C only; any other temperature raises). The audit gains `phosphate_fit_max_ionic_strength` and `supplementaryCoefficients: true` whenever a supplementary ion contributes. Bump `MODEL_VERSION` to `irrigation-ec-mccleskey2012-m2b-experimental`.
 
-- [ ] **Failing tests:**
-  - `test_fixture_transcriptions_agree`;
-  - `test_fit_reproduces_measurements` (each point within the published RMS, which is ≤ 2 %);
-  - `test_phreeqc_cross_check` (CRC λ° within 15 % of the `phreeqc.dat`-derived 31.8 / 103.6 / 206.8; report, don't hide);
-  - `test_kh2po4_now_covered`: KH₂PO₄ totals give an unbounded `estimated` result, or a much smaller bound if minor pairs remain.
-- [ ] **Run the tool**, commit its output, then run the full suite. Recount the 26 formulas and record the narrowed ranges in the design §13.
-- [ ] **Commit** with the message "Add phosphate conductivity coefficients fitted to measured data".
+- [ ] **3a. Failing tests** (class `PhosphateCoefficientTests`):
+  - `test_fit_reproduces_table3`: running the tool on the fixture reproduces the shipped supplementary block to 1e-9, and every point is within 0.5 %.
+  - `test_cross_checks_reported`: fitted λ° vs CRC (36, 114), Pethybridge (33.33, 115.14) and phreeqc.dat (31.8, 103.6). Report the percent gaps and assert ≤ 15 %, or document a larger gap in the block.
+  - `test_kh2po4_now_mostly_covered`: KH₂PO₄ totals (1/136.09 mol/kgw) are bounded only by minor pairs, and the range width is below 5 % of the midpoint (it was ±36 % under M2a).
+  - `test_supplementary_not_in_mcCleskey_table`.
+  - `test_all_shipped_formulas_estimated`: tighten the width ceiling to the new observed maximum plus margin, and record the numbers.
+- [ ] **3a. Implement, run the tool, commit its output, run the full suite** (in the background, waiting for it). Recount the 26 formulas into design §13. Commit with the message "Add phosphate conductivity coefficients fitted to Pethybridge et al. 2006".
+- [ ] **3b (needs the PDF):** a separate agent types `pethybridge2006_table3_independent.json` from the PDF. Add `test_table3_transcriptions_agree`. If any value disagrees, stop and report to the owner. Commit with the message "Check Pethybridge Table III against an independent transcription".
 
 ### Task 4: Docs, exports, verification
 

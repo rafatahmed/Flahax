@@ -397,5 +397,69 @@
   "NaSO4-": "NaSO4-",
   "HSO4-": "HSO4-",
   "NaCO3-": "NaCO3-"
+ },
+ "supplementary": {
+  "H2PO4-": {
+   "lambda0_25c": 31.73003871836935,
+   "A_25c": 35.926250844829724,
+   "B": 1.5
+  },
+  "HPO4-2": {
+   "lambda0_25c": 109.66888196632331,
+   "A_25c": 238.88806889506296,
+   "B": 1.5
+  },
+  "units": "mS kg cm-1 mol-1 (as McCleskey Table 1); 25 C only",
+  "equation": "lambda = lambda0_25c - A_25c * sqrt(I) / (1 + B * sqrt(I))",
+  "source": {
+   "citation": "A. D. Pethybridge, J. D. R. Talbot and W. A. House, Precise Conductance Measurements on Dilute Aqueous Solutions of Sodium and Potassium Hydrogenphosphate and Dihydrogenphosphate, J. Solution Chem. 35(3), 381-393 (2006)",
+   "doi": "10.1007/s10953-005-9003-z",
+   "table": "III"
+  },
+  "fit": {
+   "method": "weighted linear least squares, weight 1/kappa^2, B fixed; FlahaX speciation at calculated pH; uncovered minor species excluded",
+   "rms_percent": 0.12676741404153896,
+   "points": 22,
+   "max_abs_residual_percent": 0.2742928228164519,
+   "max_ionic_strength": 0.013955009630132749,
+   "max_uncovered_bound_percent": 1.686258874214316,
+   "density_kg_dm3": 0.997047,
+   "note": "KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, so when FlahaX bounds KHPO4- as uncovered in a mixture the upper end of the range counts that current twice - small (<= 1.7 % of kappa at the most concentrated fit point) and conservative."
+  },
+  "cross_checks": {
+   "CRC": {
+    "reference": "CRC Handbook 85th ed., Vanysek, Ionic Conductivity and Diffusion at Infinite Dilution (57 for 1/2 HPO4-2, 114 molar)",
+    "H2PO4-": {
+     "lambda0": 36.0,
+     "gap_percent": -11.86100356008514
+    },
+    "HPO4-2": {
+     "lambda0": 114.0,
+     "gap_percent": -3.7992263453304282
+    }
+   },
+   "Pethybridge_Lee_Wheaton": {
+    "reference": "Pethybridge et al. (2006) Table IV, K salts (57.57 for 1/2 HPO4-2, 115.14 molar)",
+    "H2PO4-": {
+     "lambda0": 33.33,
+     "gap_percent": -4.800363881280073
+    },
+    "HPO4-2": {
+     "lambda0": 115.14,
+     "gap_percent": -4.751709252802405
+    }
+   },
+   "phreeqc_dat": {
+    "reference": "phreeqc.dat diffusion coefficients, z^2 F^2 D / RT",
+    "H2PO4-": {
+     "lambda0": 31.8,
+     "gap_percent": -0.22000403028506452
+    },
+    "HPO4-2": {
+     "lambda0": 103.6,
+     "gap_percent": 5.857994175987758
+    }
+   }
+  }
  }
 }

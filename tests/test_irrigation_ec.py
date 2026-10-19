@@ -17,6 +17,8 @@ from flahax.irrigation_ec import calculate_irrigation_ec_from_plan
 from flahax.measured_water import balance_water_analysis
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'conductivity'
+# 1/136.09 mol/kgw KH2PO4 at calculated pH: K+, H+ and (M2b) H2PO4- / HPO4-2 contributions.
+KH2PO4_SUBTOTAL = 0.738
 
 
 class CoefficientTests(unittest.TestCase):
@@ -32,7 +34,8 @@ class CoefficientTests(unittest.TestCase):
         data = load_conductivity_coefficients()
         names = {r['name'] for r in chemistry()['aqueous']}
         self.assertEqual(len(data['species_map']), 21)
-        self.assertEqual(covered_species(), frozenset(data['species_map']))
+        # M2b: plus the supplementary 25 C phosphate ions (decision O1).
+        self.assertEqual(covered_species(), frozenset(data['species_map']) | {'H2PO4-', 'HPO4-2'})
         for species, ion in data['species_map'].items():
             self.assertIn(species, names); self.assertIn(ion, data['ions'])
 
@@ -44,7 +47,7 @@ class CoefficientTests(unittest.TestCase):
         self.assertAlmostEqual(ionic_molal_conductivity('Cl-', 0.01), 76.800625 - 49.51375*0.1/1.15, places=9)
 
     def test_coefficient_file_is_pinned(self):
-        pinned = '3eecd89688f8be46ada86cd1d55763648b729167c74c88f9f36f897da4ae5c9b'
+        pinned = '7f5e88deb3d23798588113988611e7d729318f570651655051a1e3d08024a3ca'
         self.assertEqual(COEFFICIENTS_SHA256, pinned)
         raw = files('flahax').joinpath('data/conductivity_mccleskey2012.json').read_bytes()
         self.assertEqual(hashlib.sha256(raw).hexdigest(), pinned)
@@ -84,10 +87,12 @@ class TotalsTests(unittest.TestCase):
         m = 1/136.09
         r = self.calc({'K+': m, 'PO4-3': m})
         # M2a O2 bound: was ('partial', 'missing_species_contributions') with ec25_ms_cm None.
+        # M2b: H2PO4- is now covered (subtotal was 0.524); the minor pair KHPO4- stays bounded.
         self.assertEqual((r.status, r.reason, r.bounded), ('estimated', None, True))
         self.assertIsNotNone(r.ec25_ms_cm)
-        self.assertIn({'name': 'H2PO4-', 'charge': -1}, [{k: s[k] for k in ('name', 'charge')} for s in r.missing_species])
-        self.assertAlmostEqual(r.known_species_subtotal_ms_cm, 0.524, delta=0.002)
+        self.assertIn({'name': 'KHPO4-', 'charge': -1}, [{k: s[k] for k in ('name', 'charge')} for s in r.missing_species])
+        self.assertIn('H2PO4-', r.contributions_ms_cm)
+        self.assertAlmostEqual(r.known_species_subtotal_ms_cm, KH2PO4_SUBTOTAL, delta=0.002)
 
     def test_ionic_strength_envelope(self):
         self.assertEqual(self.calc({'K+': .0995, 'Cl-': .0995}).status, 'estimated')
@@ -180,7 +185,7 @@ class BoundTests(unittest.TestCase):
         r = self.calc(self.KH2PO4)
         self.assertEqual((r.status, r.reason, r.bounded), ('estimated', None, True))
         low, high = r.ec25_range_ms_cm
-        self.assertAlmostEqual(low, 0.524, delta=0.002)
+        self.assertAlmostEqual(low, KH2PO4_SUBTOTAL, delta=0.002)  # M2a: 0.524
         self.assertEqual(low, r.known_species_subtotal_ms_cm)
         self.assertAlmostEqual(low, sum(r.contributions_ms_cm.values()), places=12)
         bound = sum(abs(s['charge']) * 80.0 * s['molal'] for s in r.missing_species)
@@ -193,9 +198,10 @@ class BoundTests(unittest.TestCase):
         self.assertAlmostEqual(r.ec25_ms_cm + r.uncertainty_ms_cm, high, places=12)
         self.assertAlmostEqual(r.audit['uncovered_bound_ms_cm'], bound, places=12)
         self.assertEqual(r.audit['lambda_max_per_charge'], 80.0)
-        self.assertEqual(r.audit['model'], 'irrigation-ec-mccleskey2012-m2a-experimental')
-        # Every uncovered species is still listed; phosphate is among them.
-        self.assertIn('H2PO4-', [s['name'] for s in r.missing_species])
+        self.assertEqual(r.audit['model'], 'irrigation-ec-mccleskey2012-m2b-experimental')
+        # Every uncovered species is still listed; since M2b only minor phosphate pairs remain.
+        self.assertIn('KHPO4-', [s['name'] for s in r.missing_species])
+        self.assertNotIn('H2PO4-', [s['name'] for s in r.missing_species])
         self.assertTrue(all(s['molal'] > 1e-12 for s in r.missing_species))
         # Transport numbers need the whole current, so a bounded result reports none.
         self.assertEqual(r.transport_numbers, {})
@@ -259,8 +265,9 @@ class BoundTests(unittest.TestCase):
 
     def test_all_shipped_formulas_estimated(self):
         # Slow (several minutes): every shipped formula, recommend doses with g/L taken as g/kgw,
-        # declared RO water, calculated pH. Observed maximum width/midpoint 0.1438 (Generic Wet
-        # Season, 2026-10-19); asserted with a 0.01 margin.
+        # declared RO water, calculated pH. Observed maximum width/midpoint 0.1438 under M2a and
+        # 0.0540 under M2b (Generic Wet Season, citrate pairs; 2026-10-19 recount in design
+        # section 13); asserted with a 0.006 margin.
         from flahax.engine import load_library, recommend
         library = load_library()
         widths = {}
@@ -275,7 +282,122 @@ class BoundTests(unittest.TestCase):
                 low, high = r.ec25_range_ms_cm
                 widths[formula['name']] = (high - low) / r.ec25_ms_cm
         self.assertEqual(len(widths), 26)
-        self.assertLessEqual(max(widths.values()), 0.155, widths)
+        self.assertLessEqual(max(widths.values()), 0.060, widths)
+
+
+
+def _assert_close_tree(case, got, want, path='supplementary'):
+    """Equal structure; numbers within 1e-9, everything else equal."""
+    if isinstance(want, dict):
+        case.assertEqual(set(got), set(want), path)
+        for key in want:
+            _assert_close_tree(case, got[key], want[key], f'{path}.{key}')
+    elif isinstance(want, (int, float)) and not isinstance(want, bool):
+        case.assertAlmostEqual(got, want, delta=1e-9, msg=path)
+    else:
+        case.assertEqual(got, want, path)
+
+
+class PhosphateCoefficientTests(unittest.TestCase):
+    """M2b, decision O1: H2PO4- and HPO4-2 fitted to Pethybridge et al. (2006) Table III."""
+    KH2PO4 = {'K+': 1/136.09, 'PO4-3': 1/136.09}
+
+    @classmethod
+    def setUpClass(cls):
+        from tools.fit_phosphate_conductivity import fit
+        cls.block, cls.residuals = fit(FIXTURES / 'pethybridge2006_table3.json')
+        cls.shipped = load_conductivity_coefficients()['supplementary']
+
+    def calc(self, totals, **kw):
+        kw.setdefault('ph_mode', 'calculated'); kw.setdefault('phase_policy', 'dissolved')
+        return calculate_ec_from_totals(totals, solution_id='p', **kw)
+
+    def test_fit_reproduces_table3(self):
+        _assert_close_tree(self, self.shipped, self.block)
+        self.assertEqual(len(self.residuals), 22)
+        self.assertEqual(self.shipped['fit']['points'], 22)
+        for point in self.residuals:
+            with self.subTest(salt=point['salt'], c=point['c_mmol_dm3']):
+                self.assertLessEqual(abs(point['residual_percent']), 0.5)
+        for ion in ('H2PO4-', 'HPO4-2'):
+            self.assertEqual(self.shipped[ion]['B'], 1.5)
+        self.assertEqual(self.shipped['fit']['density_kg_dm3'], 0.997047)
+        self.assertLess(self.shipped['fit']['max_ionic_strength'], 0.015)
+
+    def test_cross_checks_reported(self):
+        references = {'CRC': (36.0, 114.0), 'Pethybridge_Lee_Wheaton': (33.33, 115.14),
+                      'phreeqc_dat': (31.8, 103.6)}
+        checks = self.shipped['cross_checks']
+        self.assertEqual(set(checks), set(references))
+        for name, values in references.items():
+            for ion, reference in zip(('H2PO4-', 'HPO4-2'), values):
+                with self.subTest(source=name, ion=ion):
+                    entry = checks[name][ion]
+                    gap = 100 * (self.shipped[ion]['lambda0_25c'] - reference) / reference
+                    self.assertEqual(entry['lambda0'], reference)
+                    self.assertAlmostEqual(entry['gap_percent'], gap, places=9)
+                    if abs(gap) > 15:
+                        self.assertIn('note', entry)
+                    else:
+                        self.assertNotIn('note', entry)
+
+    def test_kh2po4_now_mostly_covered(self):
+        r = self.calc(self.KH2PO4)
+        self.assertEqual((r.status, r.reason, r.bounded), ('estimated', None, True))
+        for ion in ('H2PO4-', 'HPO4-2'):
+            self.assertIn(ion, r.contributions_ms_cm)
+        names = {s['name'] for s in r.missing_species}
+        self.assertNotIn('H2PO4-', names); self.assertNotIn('HPO4-2', names)
+        # Only minor species remain: each under 0.1 % of total phosphate.
+        self.assertTrue(names)
+        for s in r.missing_species:
+            self.assertLess(s['molal'], 1e-3 * self.KH2PO4['PO4-3'], s['name'])
+        low, high = r.ec25_range_ms_cm
+        self.assertLess((high - low) / r.ec25_ms_cm, 0.05)   # M2a: about +-36 %
+        self.assertTrue(r.audit['supplementaryCoefficients'])
+        self.assertEqual(r.audit['phosphate_fit_max_ionic_strength'], self.shipped['fit']['max_ionic_strength'])
+
+    def test_supplementary_not_in_mcCleskey_table(self):
+        data = load_conductivity_coefficients()
+        self.assertEqual(len(data['ions']), 28)
+        for ion in ('H2PO4-', 'HPO4-2'):
+            self.assertNotIn(ion, data['ions']); self.assertNotIn(ion, data['species_map'])
+        self.assertEqual(self.shipped['source']['table'], 'III')
+        self.assertEqual(self.shipped['source']['doi'], '10.1007/s10953-005-9003-z')
+        self.assertIn('Pethybridge', self.shipped['source']['citation'])
+        # The citation comes from the fixture (confirmed against the PDF in step 3b).
+        fixture = json.loads((FIXTURES / 'pethybridge2006_table3.json').read_text(encoding='utf-8'))
+        self.assertEqual(self.shipped['source']['citation'], fixture['source']['citation'])
+        self.assertIn('KHPO4-', self.shipped['fit']['note'])
+
+    def test_table3_transcriptions_agree(self):
+        first = json.loads((FIXTURES / 'pethybridge2006_table3.json').read_text(encoding='utf-8'))
+        second = json.loads((FIXTURES / 'pethybridge2006_table3_independent.json').read_text(encoding='utf-8'))
+        for key in ('KH2PO4', 'K2HPO4_half', 'table_iv_lee_wheaton_lambda0'):
+            with self.subTest(key=key):
+                self.assertEqual(first[key], second[key])
+
+    def test_supplementary_lambda_is_25c_only(self):
+        row = self.shipped['H2PO4-']
+        self.assertEqual(ionic_molal_conductivity('H2PO4-', 0.0), row['lambda0_25c'])
+        self.assertAlmostEqual(ionic_molal_conductivity('H2PO4-', 0.01),
+                               row['lambda0_25c'] - row['A_25c'] * 0.1 / 1.15, places=12)
+        for ion in ('H2PO4-', 'HPO4-2'):
+            with self.subTest(ion=ion), self.assertRaises(DeliveryError) as c:
+                ionic_molal_conductivity(ion, 0.01, temperature_c=20.0)
+            self.assertEqual(c.exception.code, 'temperature_outside_reference')
+        for name in ('source', 'fit', 'cross_checks', 'units'):
+            with self.subTest(name=name), self.assertRaises(DeliveryError):
+                ionic_molal_conductivity(name, 0.01)
+
+    def test_audit_without_phosphate(self):
+        r = self.calc({'K+': .01, 'Cl-': .01})
+        self.assertFalse(r.audit['supplementaryCoefficients'])
+        self.assertIsNone(r.audit['phosphate_fit_max_ionic_strength'])
+        for key in ('supplementaryCoefficients', 'phosphate_fit_max_ionic_strength'):
+            with self.subTest(key=key), self.assertRaises(DeliveryError) as c:
+                self.calc(self.KH2PO4, audit_inputs={key: 0.0})
+            self.assertEqual(c.exception.code, 'invalid_audit_inputs')
 
 
 PURE = DeclaredPureWater('ro-test')

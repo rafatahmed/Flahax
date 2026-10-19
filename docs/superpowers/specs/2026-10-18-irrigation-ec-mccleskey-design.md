@@ -250,9 +250,9 @@ So the M2 exit ("typical catalogue recipes return `estimated`") also needs
 the reagent dose recorded. The catalogue corrections have now met the
 `calculated`-mode assay condition. In a 2026-10-19 recount in declared RO
 water at calculated pH, all 26 formulas are still `partial` /
-`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season). The causes are phosphate species, citrate
+`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season; 5.4 % since M2b, see §13). The causes are phosphate species, citrate
 pairs, CaNO₃⁺, MgH₂PO₄⁺/CaH₂PO₄⁺, NH₄SO₄⁻, Fe-EDTA species and trace
-MgOH⁺/CaOH⁺, which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
+MgOH⁺/CaOH⁺ (before M2b), which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
 literature context, never an accuracy claim for these mixtures.
 
 **Grower-facing release requires M2.** If M2 evidence is unavailable, the
@@ -283,7 +283,7 @@ of scope here.
 
 | Id | Decision |
 |---|---|
-| O1 | **Decided 2026-10-19:** CRC limiting molar conductivities λ° for H₂PO₄⁻, HPO₄²⁻ and PO₄³⁻. Eq. 8 A and B are fitted to measured 25 °C KH₂PO₄ and K₂HPO₄ conductivities (Muccitelli & DiAngelo 1994, 0.0005–0.0100 mol/L) through FlahaX speciation. Diffusion coefficients from `phreeqc.dat` (Nernst–Einstein) are a cross-check only. See §13. |
+| O1 | **Decided 2026-10-19, amended the same day:** λ° and A for H₂PO₄⁻ and HPO₄²⁻ are fitted to the measured 25 °C KH₂PO₄ and K₂HPO₄ conductivities of Pethybridge, Talbot & House (2006), Table III, through FlahaX speciation, with B fixed at 1.5. The cross-checks, which report but do not block, are CRC λ°, Pethybridge's Lee–Wheaton λ° and λ° derived from `phreeqc.dat`. PO₄³⁻ stays under the O2 bound. See §13. |
 | O2 | **Decided 2026-10-19:** a one-sided bound of 80 S·cm²/mol per unit charge at infinite dilution, times molality, for each uncovered charged species. Published with the result as an EC range; species are never dropped and mobilities are never fitted. See §13. |
 | O3 | Measurement programme for M3: who measures, which solutions, which meter and calibration protocol |
 
@@ -303,24 +303,40 @@ These numbers come from a throwaway script, not product code. Inputs: recommend 
 
 | Quantity | Range over the 26 formulas |
 |---|---|
-| Phosphate share of EC (CRC λ°, crude I correction) | 0.025–0.100 mS/cm, about 1–8 % of EC |
+| Phosphate share of EC (CRC λ°, crude I correction; before M2b) | 0.025–0.100 mS/cm, about 1–8 % of EC |
 | Difference between CRC and `phreeqc.dat` λ° for phosphate | at most 0.7 % of EC |
 | O2 bound for all other uncovered species (80 S·cm²/eq at infinite dilution) | 0.5–5.5 % of EC; worst is Generic Wet Season, from citrate pairs |
 
 The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mol/kgw), Mg(Citrate)⁻, CaNO₃⁺, MgH₂PO₄⁺, CaH₂PO₄⁺, CaPO₄⁻, NH₄SO₄⁻ and FeOH(Edta)²⁻.
 
-λ° derived from `phreeqc.dat` diffusion coefficients (z²F²D/RT) are 31.8 for H₂PO₄⁻, 103.6 for HPO₄²⁻ and 206.8 for PO₄³⁻ S·cm²/mol. The CRC values are 36, 114 and 207. These CRC values were recalled from memory, so the owner must check them against the CRC page (§13 O1).
+λ° derived from `phreeqc.dat` diffusion coefficients (z²F²D/RT) are 31.8 for H₂PO₄⁻, 103.6 for HPO₄²⁻ and 206.8 for PO₄³⁻ S·cm²/mol. The owner checked the CRC 85th edition table "Ionic Conductivity and Diffusion at Infinite Dilution" (Vanýsek, opening p. 5-92; phosphate rows on the following page). It gives 36 for H₂PO₄⁻, 57 for ½HPO₄²⁻ (114 molar) and 92.8 for ⅓PO₄³⁻ (278.4 molar). The earlier recalled PO₄³⁻ figure of 207 was wrong.
 
-### O1: phosphate coefficients
-- **λ°:** the CRC "Ionic conductivity and diffusion at infinite dilution" values for H₂PO₄⁻, HPO₄²⁻ and PO₄³⁻. They are recorded with page and edition, and the owner signs them off against the printed page, as was done for Table 1.
-- **A and B:** fitted to Eq. 8 using measured 25 °C conductivities of KH₂PO₄ and K₂HPO₄ solutions from Muccitelli & DiAngelo (1994), *J. Chem. Eng. Data* 39(1), doi 10.1021/je00013a037.
-  - The fit runs through FlahaX speciation: K⁺ and the other covered species use McCleskey, and only the phosphate A and B are free.
-  - Only points with I ≤ 0.1 mol/kgw are used.
-  - The fit residuals are published.
-  - The paper is not open access. The owner supplies the table values, which are transcribed twice, as was done for Table 1.
-- **Cross-check:** `phreeqc.dat` λ° must lie within 15 % of the CRC λ°. A larger gap is reported, but does not block.
-- **Data the plan does not have:** until the measured data is supplied, phosphate species stay uncovered and fall under the O2 bound. No parameter is invented.
-- **Free CRC data considered and rejected as the fit basis:** the CRC "Electrical conductivity of aqueous solutions" table lists KH₂PO₄ at 3.0 mS/cm (0.5 %) and K₂HPO₄ at 5.2 mS/cm (0.5 %). Both are at 20 °C, give only one point each inside the Davies domain, and would need a temperature correction.
+### O1: phosphate coefficients (amended 2026-10-19)
+- **Why the source changed:** Muccitelli & DiAngelo (1994) has no lawful open copy: Unpaywall lists it as closed and OSTI holds only the abstract. Tsurko et al. (1999) is also closed.
+- **Data:** Pethybridge, Talbot & House, *J. Solution Chem.* 35, 381–393 (2006), doi 10.1007/s10953-005-9003-z, Table III. It gives 25 °C molar conductivities of KH₂PO₄ (12 points, 0.0447–6.7214 mmol/dm³) and ½K₂HPO₄ (10 points, 0.0484–9.5533 mmol/dm³ of the half-formula). Speciated I runs from 5×10⁻⁵ to 0.014 mol/kgw.
+- **Fit:** each point is speciated with FlahaX at calculated pH. K⁺, H⁺, OH⁻ and the other covered species use McCleskey. λ° and A for H₂PO₄⁻ and HPO₄²⁻ are free, and B is fixed at 1.5, the McCleskey B of K⁺ and Cl⁻. The fit is linear in λ° and A; the residuals are published.
+- **Why λ° is fitted, not fixed:** Pethybridge's λ° (33.33 and 115.14) comes from a Lee–Wheaton analysis with its own ion pairing. Holding it fixed in FlahaX speciation biased the dilute points by +1.3 % and pushed A and B to unphysical values. A throwaway feasibility fit with λ° free gave:
+
+  | B | λ°(H₂PO₄⁻) | A | λ°(HPO₄²⁻) | A | RMS |
+  |---|---|---|---|---|---|
+  | 0.5 | 31.70 | 33.3 | 109.2 | 212.6 | 0.16 % |
+  | 1.5 | 31.73 | 35.9 | 109.7 | 238.9 | 0.13 % |
+  | 3.0 | 31.77 | 39.9 | 110.4 | 279.3 | 0.11 % |
+
+- **Using the fit above the data range:** the data reach I = 0.014, while shipped formulas reach 0.046. Across B = 0.5–3 the H₂PO₄⁻ λ at I = 0.046 moves by about 5 %. With phosphate at no more than 8 % of EC, that is under 0.4 % of EC. The audit records `phosphate_fit_max_ionic_strength` = 0.014 so readers can see when the fit is being used beyond its data.
+- **Cross-checks** (reported, never blocking):
+
+  | Source | H₂PO₄⁻ | HPO₄²⁻ |
+  |---|---|---|
+  | CRC | 36 | 114 |
+  | Pethybridge (Lee–Wheaton) | 33.33 | 115.14 |
+  | `phreeqc.dat` | 31.8 | 103.6 |
+
+  The fitted values must be within 15 % of each, or the gap is stated.
+- **M2b fit (shipped, `tools/fit_phosphate_conductivity.py`):** λ°(H₂PO₄⁻) = 31.730, A = 35.926; λ°(HPO₄²⁻) = 109.669, A = 238.888; B = 1.5. RMS 0.127 % over 22 points, worst −0.274 % (½K₂HPO₄ 9.5533 mmol/dm³), I up to 0.01396. Uncovered minor species (KHPO₄⁻, PO₄³⁻) are left out of the model κ; their O2 bound is up to 1.69 % of κ at the most concentrated ½K₂HPO₄ point (KHPO₄⁻ 2.0×10⁻⁴ mol/kgw, 4.4 % of phosphate), so the fitted HPO₄²⁻ coefficients absorb part of its current, so when FlahaX bounds KHPO₄⁻ as uncovered in a mixture the upper end of the range counts that current twice — small (≤ 1.7 % of κ at the most concentrated fit point) and conservative. The shipped block carries this as `fit.note`. Cross-check gaps: CRC −11.9 % / −3.8 %, Lee–Wheaton −4.8 % / −4.8 %, `phreeqc.dat` −0.2 % / +5.9 % (H₂PO₄⁻ / HPO₄²⁻), all within 15 %.
+- **M2b recount (2026-10-19):** all 26 formulas `estimated` and bounded (recommend doses, g/L as g/kgw, declared RO water, calculated pH; I 0.016–0.046). Range width as % of the midpoint (midpoint mS/cm): Generic Wet Season 5.40 (1.619); Tomatoes Third Cluster 2.74 (1.418); Tomatoes Fourth Cluster 2.53 (1.550); Lettuce General 2.14 (1.959); Tomato Stage 3 1.81 (2.782); Generic Dry Season 1.81 (2.413); Cucumber 1.49 (2.288); Tomatoes till First Cluster 1.43 (1.202); Melons 1.41 (2.614); Tomatoes Second Cluster 1.40 (1.267); Rice 1.33 (2.711); Chilli 1.33 (4.069); Strawberry Fruiting 1.28 (1.596); Tropical Lettuce 1.18 (1.807); Generic for Berries 1.03 (2.347); Tomato 0.91 (2.303); Lettuce 2 0.89 (2.253); Strawberry Drip 0.73 (1.925); Tomato Stage 2 0.72 (1.943); DEFAULT 0.72 (2.201); Hoagland 0.72 (2.201); Tomatoes to termination 0.71 (1.781); Generic Bloom 0.68 (1.724); Tomato Stage 1 0.67 (1.353); Pepper 0.60 (2.926); Generic Grow 0.48 (1.961). **Maximum 5.40 %** (was 14.38 % under M2a), still from citrate pairs; the remaining bound comes from Ca/Mg citrate, CaNO₃⁺, Ca/Mg H₂PO₄⁺, CaPO₄⁻ and Fe-EDTA species. The all-formulas test ceiling is 0.060.
+- **PO₄³⁻:** no measurement exists (Pethybridge assumed 80 per charge), so PO₄³⁻ stays under the O2 bound. It is negligible at irrigation pH.
+- **Transcription:** the owner's transcription of Table III is the first copy. A second, independent copy is typed from the PDF in `docs/sources/` (which is not versioned), and a test compares them, as was done for Table 1. **Merging the coefficients requires both copies to agree.** Done 2026-10-19: the independent copy (`tests/fixtures/conductivity/pethybridge2006_table3_independent.json`, typed from the PDF with SHA-256 `c68368408f4b55698b84f71aa4485cf7bbc58dfa9ec37292900fafacfb480f34`) agrees exactly on all KH2PO4, K2HPO4 and Table IV values (`test_table3_transcriptions_agree`); the citation is confirmed as A. D. Pethybridge, J. D. R. Talbot and W. A. House, J. Solution Chem. 35(3), 381-393 (2006).
 
 ### O2: one-sided bound
 - **λ_max:** 80 S·cm²/mol per unit charge, at infinite dilution, with no ionic-strength reduction. In the limiting-conductivity table (Adamson 1973, p. 512, as reproduced in standard tables), no ion except H⁺ and OH⁻ exceeds this per unit charge; the highest are SO₄²⁻ at 79.8 and Br⁻ at 78.4. H⁺ and OH⁻ are always covered by McCleskey.
@@ -334,7 +350,7 @@ The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mo
 
 ### M2 staging
 - **M2a:** the O2 bound, with no new data. Shipped formulas become `estimated` with a published range.
-- **M2b:** phosphate coefficients, once the owner supplies the Muccitelli & DiAngelo data and checks the CRC λ°. The range narrows by the phosphate share.
+- **M2b:** phosphate coefficients fitted to Pethybridge et al. (2006) Table III (O1 as amended; the Muccitelli & DiAngelo source was replaced). The range narrows by the phosphate share.
 - **Exit:** "typical catalogue recipes return `estimated`" is met by M2a. M2b reduces their uncertainty.
 
 ## 12. Left to the builder
