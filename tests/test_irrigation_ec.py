@@ -47,7 +47,7 @@ class CoefficientTests(unittest.TestCase):
         self.assertAlmostEqual(ionic_molal_conductivity('Cl-', 0.01), 76.800625 - 49.51375*0.1/1.15, places=9)
 
     def test_coefficient_file_is_pinned(self):
-        pinned = 'b1784c8defe6da0a9f96e81e349f95a51e37ac33951d17b22917d035e829f654'
+        pinned = '7f5e88deb3d23798588113988611e7d729318f570651655051a1e3d08024a3ca'
         self.assertEqual(COEFFICIENTS_SHA256, pinned)
         raw = files('flahax').joinpath('data/conductivity_mccleskey2012.json').read_bytes()
         self.assertEqual(hashlib.sha256(raw).hexdigest(), pinned)
@@ -365,10 +365,17 @@ class PhosphateCoefficientTests(unittest.TestCase):
         self.assertEqual(self.shipped['source']['table'], 'III')
         self.assertEqual(self.shipped['source']['doi'], '10.1007/s10953-005-9003-z')
         self.assertIn('Pethybridge', self.shipped['source']['citation'])
-        # The citation comes from the fixture, caveat included, until step 3b confirms it.
+        # The citation comes from the fixture (confirmed against the PDF in step 3b).
         fixture = json.loads((FIXTURES / 'pethybridge2006_table3.json').read_text(encoding='utf-8'))
         self.assertEqual(self.shipped['source']['citation'], fixture['source']['citation'])
         self.assertIn('KHPO4-', self.shipped['fit']['note'])
+
+    def test_table3_transcriptions_agree(self):
+        first = json.loads((FIXTURES / 'pethybridge2006_table3.json').read_text(encoding='utf-8'))
+        second = json.loads((FIXTURES / 'pethybridge2006_table3_independent.json').read_text(encoding='utf-8'))
+        for key in ('KH2PO4', 'K2HPO4_half', 'table_iv_lee_wheaton_lambda0'):
+            with self.subTest(key=key):
+                self.assertEqual(first[key], second[key])
 
     def test_supplementary_lambda_is_25c_only(self):
         row = self.shipped['H2PO4-']

@@ -1,0 +1,18 @@
+{
+  "typed_by": "Independent transcription from the PDF text layer (pypdf extraction of docs/sources/pethybridge_talbot_house_2006.pdf, SHA-256 c68368408f4b55698b84f71aa4485cf7bbc58dfa9ec37292900fafacfb480f34), Table III p. 388 and Table IV p. 391; typed 2026-10-19 without consulting pethybridge2006_table3.json",
+  "KH2PO4": [
+    [0.0447, 121.29], [0.1056, 115.70], [0.1723, 113.28], [0.2753, 111.33],
+    [0.3808, 110.15], [0.5222, 109.11], [1.1025, 106.81], [2.3530, 104.50],
+    [3.1204, 103.62], [4.3667, 102.54], [5.1063, 101.98], [6.7214, 100.97]
+  ],
+  "K2HPO4_half": [
+    [0.0484, 132.57], [0.1557, 129.58], [0.3145, 127.58], [0.5031, 126.11],
+    [0.6639, 125.15], [1.4291, 121.94], [3.4870, 116.99], [5.0287, 114.51],
+    [7.5668, 111.47], [9.5533, 109.60]
+  ],
+  "table_iv_lee_wheaton_lambda0": {
+    "H2PO4-": {"K": 33.33, "Na": 33.17},
+    "half_HPO4-2": {"K": 57.57, "Na": 57.60}
+  },
+  "citation_confirmed": "A. D. Pethybridge, J. D. R. Talbot and W. A. House, \"Precise Conductance Measurements on Dilute Aqueous Solutions of Sodium and Potassium Hydrogenphosphate and Dihydrogenphosphate\", Journal of Solution Chemistry, Vol. 35, No. 3, pp. 381-393, March 2006 (DOI 10.1007/s10953-005-9003-z)"
+}
