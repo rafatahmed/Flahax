@@ -118,4 +118,16 @@ other files in `docs/sources/`.
 
 ## Owner sign-off
 
-Table 1 transcription: owner sign-off pending
+Table 1 transcription: checked 2026-10-19 against the local paper
+`docs/sources/mccleskey_nordstrom_etal_2012.pdf`, SHA-256
+`17002c4eeedef68ddb62048f3b1b0c77a96b03d5f9dc51b167fc05e9f145ce1f`
+(journal page 372, PDF page 4). All 28 ions in
+`src/flahax/data/conductivity_mccleskey2012.json` match the printed Eq. 8
+polynomials (λ° and A as a, b, c, plus B). Trailing zeros in the print
+(40.70, 0.8770, 19.20, 0.6070, 80.50, 2.090, 68.10, 39.90, 35.90, 54.80,
+4.390, 48.20, 6.210, 0.8730) are the same values as the JSON numbers.
+The independent fixture matches the shipped file, and
+`tests.test_irrigation_ec.CoefficientTests` passed (5 tests).
+
+This is the M1 Table 1 check. It does not decide O1, O2 or O3, and it
+does not start M2 or M3.
