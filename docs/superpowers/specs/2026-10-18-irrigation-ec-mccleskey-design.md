@@ -238,14 +238,17 @@ claim are written down before any coefficient choice is tuned.
 
 | Gate | Passes | Why the rest fail |
 |---|---|---|
-| Assay charge residual ≤ 0.1 % (declared forms) | 15 of 26 | Rounded label assays; worst −0.32 %. In `calculated` mode the other 11 are `not_supported` regardless of coefficient coverage. |
+| Assay charge residual ≤ 0.1 % (declared forms) | **26 of 26** (recount 2026-10-19; was 15 of 26) | All pass after the traceable-catalogue corrections: Mg Nitrate D1, chelate sodium D2, borax declared form. Worst −0.05 % (Tropical Lettuce). The 2026-10-18 count was 15 of 26, worst −0.32 %, from rounded label assays and undeclared chelate counterions. |
 | `supplied` pH 5.8 with no recorded reagent | 0 of 26 | Speciated imbalance 0.3–6 %: the target pH implies an acid or base dose that was not recorded. Correct `partial` behaviour, and a reason for `EquilibriumPhPlan` input. |
 | Charged chelate and trace complexes covered | 0 of 26 without O2 | Micromolar FeEdta⁻ and others make nearly every recipe `partial` unless covered or bounded under O2. |
 
 So the M2 exit ("typical catalogue recipes return `estimated`") also needs
-the reagent dose recorded and, for `calculated` mode, either assay
-corrections in the catalogue or acceptance that those 11 formulas stay
-`not_supported`. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
+the reagent dose recorded. The catalogue corrections have now met the
+`calculated`-mode assay condition. In a 2026-10-19 recount in declared RO
+water at calculated pH, all 26 formulas are still `partial` /
+`missing_species_contributions`. The causes are phosphate species, citrate
+pairs, CaNO₃⁺, MgH₂PO₄⁺/CaH₂PO₄⁺, NH₄SO₄⁻, Fe-EDTA species and trace
+MgOH⁺/CaOH⁺, which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
 literature context, never an accuracy claim for these mixtures.
 
 **Grower-facing release requires M2.** If M2 evidence is unavailable, the
