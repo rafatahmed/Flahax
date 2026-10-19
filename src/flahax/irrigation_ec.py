@@ -88,6 +88,10 @@ class IrrigationECResult:
     ``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
     ``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
     ``transport_numbers`` are empty: they need the whole current, which is not known.
+
+    The midpoint and ``uncertainty_ms_cm`` describe only the uncovered-species interval;
+    they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
+    charge is conservative, the true value tends to lie in the lower half of the range.
     """
     status: str
     ec25_ms_cm: float | None
@@ -288,7 +292,8 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
     without a coefficient (listed in missing_species) make the estimate
     bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
     + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-    bound, and transport_numbers is empty. Unrecorded counterions stay
+    bound, and transport_numbers is empty. known_species_subtotal_ms_cm is populated for
+    bounded estimates and equals the range's lower limit. Unrecorded counterions stay
     'partial' and the domain checks 'not_supported'. The 0.1 % O5
     assay gate uses assay_charge_residual_percent when given (the declared-form
     percent, as from assay_charge_residual()); when None (raw totals without

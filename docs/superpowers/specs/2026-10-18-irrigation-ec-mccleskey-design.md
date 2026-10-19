@@ -145,6 +145,8 @@ off). **Owner decision (O5, 2026-10-18):** the existing 0.1 % precedent of
 
 ## 6. Calculation
 
+*Amended by §13 (O2, M2a, 2026-10-19): species-only gaps give a bounded `estimated` result; see §13 for the range fields and post-mix `within_range`.*
+
 κ₂₅ (mS/cm) = Σ λᵢ(25 °C, I) · mᵢ over charged species, where
 λ = λ°(T) − A(T)·I^½ / (1 + B·I^½) (McCleskey Eq. 8 with the Table 1
 polynomials), mᵢ is the speciated molality and I is the speciated ionic
@@ -175,6 +177,8 @@ result by a few tenths of a percent; it is never applied silently.
   bound (decision O2).
 
 ## 7. Output contract
+
+*Amended by §13 (O2, M2a, 2026-10-19): species-only gaps give a bounded `estimated` result; see §13 for the range fields and post-mix `within_range`.*
 
 | Status | `ec25_ms_cm` | Also carried |
 |---|---|---|
@@ -246,7 +250,7 @@ So the M2 exit ("typical catalogue recipes return `estimated`") also needs
 the reagent dose recorded. The catalogue corrections have now met the
 `calculated`-mode assay condition. In a 2026-10-19 recount in declared RO
 water at calculated pH, all 26 formulas are still `partial` /
-`missing_species_contributions`. The causes are phosphate species, citrate
+`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season). The causes are phosphate species, citrate
 pairs, CaNO₃⁺, MgH₂PO₄⁺/CaH₂PO₄⁺, NH₄SO₄⁻, Fe-EDTA species and trace
 MgOH⁺/CaOH⁺, which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
 literature context, never an accuracy claim for these mixtures.
