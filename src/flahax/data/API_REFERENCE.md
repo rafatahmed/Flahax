@@ -876,7 +876,10 @@ or 'not_supported'; invalid input raises DeliveryError. Charged species
 without a coefficient (listed in missing_species) make the estimate
 bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
 + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-bound, and transport_numbers is empty. known_species_subtotal_ms_cm is populated for
+bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
+coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
+the audit then records supplementaryCoefficients and
+phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
 bounded estimates and equals the range's lower limit. Unrecorded counterions stay
 'partial' and the domain checks 'not_supported'. The 0.1 % O5
 assay gate uses assay_charge_residual_percent when given (the declared-form

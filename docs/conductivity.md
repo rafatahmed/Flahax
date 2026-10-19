@@ -125,10 +125,10 @@ still be reported when EC evidence is missing; that does not approve the recipe
 or authorize EC-driven correction. Verify EC after preparation/dilution using
 meters rated for the relevant stock and irrigation ranges.
 
-## Calculated irrigation EC (experimental, M2a)
+## Calculated irrigation EC (experimental, M2b)
 
 Purpose: estimate the EC of an irrigation solution before mixing, and compare
-it with a meter reading after mixing. This is **experimental (M2a)** and Python
+it with a meter reading after mixing. This is **experimental (M2b)** and Python
 only: there is no CLI flag and no grower-facing number. It is separate from the
 calibration-based planner above.
 
@@ -141,7 +141,7 @@ applied.
 
 | Status | Meaning |
 |---|---|
-| `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient, or the species without one are covered by the bound below. `ec25_ms_cm` is the estimate. |
+| `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient, or the species without one are covered by the bound below, or a supplementary 25 C coefficient (H2PO4-, HPO4-2). `ec25_ms_cm` is the estimate. |
 | `partial` | With a `supplied` pH, there are unrecorded counterions (`unrecorded_counterions`, rule O5) reported in eq/kgw. Only a known-species subtotal is reported, with no total. |
 | `not_supported` | Outside the envelope (temperature, ionic strength, non-closed carbon) or the assay charge residual is too large. `reason` says which; no EC is reported. |
 
@@ -154,7 +154,7 @@ it is over the speciated absolute equivalents. Above it, a `supplied` pH gives
 `not_supported` (`assay_charge_residual_too_large`).
 
 Bounded estimates (decision O2): charged species with no McCleskey coefficient
-(H2PO4-, MgOH+, CaOH+, charged chelates) no longer make the result `partial`.
+(KHPO4-, CaH2PO4+, MgOH+, CaOH+, charged chelates) no longer make the result `partial`.
 Their contribution is non-negative, so the known subtotal is a lower limit. The
 upper limit adds sum(|z| x 80 x m) over those species, because no ion's limiting
 molar conductivity exceeds 80 S cm2/mol per unit charge at infinite dilution
@@ -164,18 +164,26 @@ molar conductivity exceeds 80 S cm2/mol per unit charge at infinite dilution
 - `ec25_range_ms_cm`: `(known subtotal, known subtotal + bound)`; the range extends only upward from the known subtotal, because missing contributions cannot be negative.
 - `ec25_ms_cm`: the midpoint; `uncertainty_ms_cm`: half the bound.
 - `audit["uncovered_bound_ms_cm"]`: the bound; `missing_species` still lists every uncovered species.
-- `transport_numbers` is `{}`, and `MODEL_VERSION` is `irrigation-ec-mccleskey2012-m2a-experimental`.
+- `transport_numbers` is `{}` for bounded results, and `MODEL_VERSION` is `irrigation-ec-mccleskey2012-m2b-experimental`.
 
 The midpoint and `uncertainty_ms_cm` describe only the uncovered-species interval; they are not an accuracy statement and exclude model error. Because 80 S·cm²/mol per charge is conservative, the true value tends to lie in the lower half of the range.
 
 `partial` arises only from unrecorded counterions; temperature, carbon,
-ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas return `estimated`, with ranges up to 14.4 % of
-the midpoint (Generic Wet Season). Phosphate coefficients are not yet
-measured, so phosphate stays under the bound until M2b. `compare_measured_ec`
-also returns `ec25_range_ms_cm` and `within_range` (True, False, or None when the
-prediction is not bounded); it is a fact, not a pass/fail verdict.
+ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas return `estimated`, with ranges up to 5.4 % of
+the midpoint (Generic Wet Season, mostly citrate pairs; 14.4 % before the
+phosphate coefficients).
 
-Example (KH2PO4 at 1 g/kg water, calculated pH):
+**Phosphate (M2b).** H2PO4- and HPO4-2 are covered at 25 C by coefficients
+fitted to the measured KH2PO4 and K2HPO4 conductivities of Pethybridge,
+Talbot and House (2006), Table III, through FlahaX speciation (lambda0 and A
+fitted, B = 1.5; RMS 0.13 % over 22 points). The data reach I = 0.014 mol/kgw;
+above that the fit is extrapolated, and the audit records
+`phosphate_fit_max_ionic_strength` and `supplementaryCoefficients`. PO4-3 and
+minor phosphate pairs such as KHPO4- stay under the bound. KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, so the upper end of a mixture's range may count it twice (small and conservative). `compare_measured_ec`
+also returns `ec25_range_ms_cm` and `within_range` (True, False, or None when the
+prediction is not bounded); it is a fact, not a pass/fail verdict. `within_range` does not include model or meter error, so when the range is narrow a False value says nothing about agreement.
+
+Example (KH2PO4 at 1 g/kg water, calculated pH). With the phosphate coefficients the remaining bound is below 0.001 mS/cm, so a 0.80 reading lies outside the range:
 
 ```python
 from flahax import calculate_ec_from_totals, compare_measured_ec
@@ -197,10 +205,10 @@ Output:
 
 ```text
 estimated True
-[0.524, 1.113]
-0.818 0.295
-['H2PO4-', 'HPO4-2', 'KHPO4-', 'PO4-3']
-True
+[0.738, 0.738]
+0.738 0.0
+['KHPO4-', 'PO4-3']
+False
 ```
 
 ```python

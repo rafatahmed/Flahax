@@ -5,8 +5,10 @@ Source: McCleskey, Nordstrom, Ryan, Ball (2012) Geochim. Cosmochim. Acta 77,
 data/conductivity_mccleskey2012.json and pinned by SHA-256. This module holds
 the coefficient loader, the ionic molal conductivity and EC25 from speciated
 analytical totals. Units are mS kg cm-1 mol-1 x mol/kgw (no density
-conversion). Not validated for concentrated nutrient solutions; every result
-carries QUALIFIER.
+conversion). H2PO4- and HPO4-2 use a supplementary 25 C block in the same file,
+fitted to Pethybridge, Talbot and House (2006) Table III by
+tools/fit_phosphate_conductivity.py (decision O1). Not validated for
+concentrated nutrient solutions; every result carries QUALIFIER.
 """
 import copy
 import hashlib
@@ -37,34 +39,58 @@ def _load():
 
 
 def load_conductivity_coefficients() -> dict:
-    """Return the cached McCleskey 2012 Table 1 data (treat as read-only)."""
+    """Return the cached McCleskey 2012 Table 1 data and supplementary block (treat as read-only)."""
     return _load()
 
 
+@lru_cache(maxsize=1)
+def _supplementary():
+    """Supplementary 25 C ion rows (decision O1); the species name is the ion name."""
+    block = _load().get('supplementary', {})
+    return {ion: row for ion, row in block.items() if isinstance(row, dict) and 'lambda0_25c' in row}
+
+
+@lru_cache(maxsize=1)
+def _coverage():
+    """FlahaX species name -> conductivity ion: McCleskey Table 1, then supplementary."""
+    return {**_load()['species_map'], **{ion: ion for ion in _supplementary()}}
+
+
 def covered_species() -> frozenset:
-    """FlahaX aqueous species names that have a Table 1 coefficient."""
-    return frozenset(_load()['species_map'])
+    """FlahaX aqueous species names with a Table 1 or supplementary (25 C) coefficient."""
+    return frozenset(_coverage())
 
 
 def ionic_molal_conductivity(ion: str, ionic_strength: float,
                              temperature_c: float = 25.0) -> float:
-    """Eq. 8: lambda = lambda0(T) - A(T)*sqrt(I)/(1 + B*sqrt(I)), T in C."""
+    """Eq. 8: lambda = lambda0(T) - A(T)*sqrt(I)/(1 + B*sqrt(I)), T in C.
+
+    Supplementary ions (H2PO4-, HPO4-2) have 25 C coefficients only; any other
+    temperature raises temperature_outside_reference.
+    """
     row = _load()['ions'].get(ion) if isinstance(ion, str) else None
-    if row is None:
-        raise DeliveryError('unknown_ion', f'no McCleskey 2012 Table 1 coefficient for {ion!r}')
+    extra = _supplementary().get(ion) if isinstance(ion, str) and row is None else None
+    if row is None and extra is None:
+        raise DeliveryError('unknown_ion',
+                            f'no McCleskey 2012 Table 1 or supplementary coefficient for {ion!r}')
     for name, v in (('ionic_strength', ionic_strength), ('temperature_c', temperature_c)):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
             raise DeliveryError('invalid_value', f'{name} must be a finite number')
     if ionic_strength < 0:
         raise DeliveryError('invalid_value', 'ionic_strength must be >= 0')
+    root = math.sqrt(ionic_strength)
+    if extra is not None:
+        if temperature_c != 25:
+            raise DeliveryError('temperature_outside_reference',
+                                f'supplementary coefficient for {ion!r} is for 25 C only')
+        return extra['lambda0_25c'] - extra['A_25c'] * root / (1 + extra['B'] * root)
     t = float(temperature_c)
     poly = lambda c: c[0] * t * t + c[1] * t + c[2]
-    root = math.sqrt(ionic_strength)
     return poly(row['lambda0']) - poly(row['A']) * root / (1 + row['B'] * root)
 
 
 QUALIFIER = 'Accuracy on this fertilizer mixture has not yet been established.'
-MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2a-experimental'
+MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2b-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
 _ASSAY_LIMIT_PERCENT = 0.1
@@ -77,7 +103,8 @@ _CORE_AUDIT_KEYS = frozenset((
     'temperature_reference_c', 'ph_mode', 'ph', 'phase_policy', 'phases', 'carbon_boundary',
     'chemistrySha256', 'coefficientsSha256', 'equation', 'speciesMappingVersion',
     'conductivity_units', 'unit_conversions', 'solver_iterations', 'charge_balance', 'model',
-    'uncovered_bound_ms_cm', 'lambda_max_per_charge'))
+    'uncovered_bound_ms_cm', 'lambda_max_per_charge', 'supplementaryCoefficients',
+    'phosphate_fit_max_ionic_strength'))
 
 
 @dataclass(frozen=True)
@@ -170,7 +197,7 @@ def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbo
 
 
 def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_inputs,
-           uncovered_bound=None):
+           uncovered_bound=None, supplementary_used=False):
     inputs = dict(audit_inputs or {})
     clash = sorted(_CORE_AUDIT_KEYS & set(inputs))
     if clash:
@@ -185,7 +212,12 @@ def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_i
              'solver_iterations': state.iterations if state is not None else None,
              'charge_balance': state.charge_balance if state is not None else None,
              'model': MODEL_VERSION, 'uncovered_bound_ms_cm': uncovered_bound,
-             'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE}
+             'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE,
+             # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
+             # the fit's data reach only this ionic strength.
+             'supplementaryCoefficients': supplementary_used,
+             'phosphate_fit_max_ionic_strength':
+                 data['supplementary']['fit']['max_ionic_strength'] if supplementary_used else None}
     audit.update(inputs)
     return audit
 
@@ -215,7 +247,8 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
     Supersaturation warnings (dissolved policy) are reported whatever the status.
     """
     charges = _charges()
-    species_map = _load()['species_map']
+    species_map = _coverage()
+    supplementary = _supplementary()
     strength = state.ionic_strength
     equivalents = sum(abs(charges[n]) * m for n, m in state.species.items() if charges.get(n))
     if assay_residual_percent is not None:
@@ -275,7 +308,8 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
         warnings=warnings,
         audit=_audit(ph_mode=ph_mode, ph=state.ph, phase_policy=phase_policy, phases=phases,
                      carbon_boundary='closed', state=state, audit_inputs=audit_inputs,
-                     uncovered_bound=bound))
+                     uncovered_bound=bound,
+                     supplementary_used=any(n in supplementary for n in contributions)))
 
 
 def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: str, ph_mode: str,
@@ -292,7 +326,10 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
     without a coefficient (listed in missing_species) make the estimate
     bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
     + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-    bound, and transport_numbers is empty. known_species_subtotal_ms_cm is populated for
+    bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
+    coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
+    the audit then records supplementaryCoefficients and
+    phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
     bounded estimates and equals the range's lower limit. Unrecorded counterions stay
     'partial' and the domain checks 'not_supported'. The 0.1 % O5
     assay gate uses assay_charge_residual_percent when given (the declared-form
@@ -520,6 +557,8 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
                                   audit={**nominal.audit, 'band_end': end, 'ph': None,
                                          'solver_iterations': None, 'charge_balance': None,
                                          'uncovered_bound_ms_cm': None,
+                                         'supplementaryCoefficients': False,
+                                         'phosphate_fit_max_ionic_strength': None,
                                          'assay_charge_residual_declared_percent': None})
             continue
         ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
