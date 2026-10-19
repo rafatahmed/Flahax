@@ -807,6 +807,103 @@ not necessarily the whole farm. Gross depth already includes losses.
 
 Source module: `flahax.injector_sizing`. Import with `from flahax import size_injection_requirements`.
 
+## flahax.irrigation_ec
+
+### `DeclaredPureWater`
+
+```text
+DeclaredPureWater(water_id: str, kind: str = 'RO') -> None
+```
+
+EXPERIMENTAL (M1): declared ion-free water (RO or distilled) with an id.
+
+Record fields: `water_id`, `kind`.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import DeclaredPureWater`.
+
+### `IrrigationECResult`
+
+```text
+IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.') -> None
+```
+
+EXPERIMENTAL (M1) irrigation EC25 result; see calculate_ec_from_totals.
+
+Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import IrrigationECResult`.
+
+### `assay_charge_residual`
+
+```text
+assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float]) -> dict
+```
+
+EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
+
+Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
+pH-independent, computed from each product's declared ion forms.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_charge_residual`.
+
+### `calculate_ec_from_totals`
+
+```text
+calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
+```
+
+EXPERIMENTAL (M1): irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+
+kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
+speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
+or 'not_supported'; invalid input raises DeliveryError. The 0.1 % O5
+assay gate uses assay_charge_residual_percent when given (the declared-form
+percent, as from assay_charge_residual()); when None (raw totals without
+declared forms) it uses the residual over the speciated absolute
+equivalents. Accuracy on fertilizer mixtures has not been established.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_ec_from_totals`.
+
+### `calculate_irrigation_ec`
+
+```text
+calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0) -> flahax.irrigation_ec.IrrigationECResult
+```
+
+EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
+
+Water is a BalancedWaterAnalysis (with water_analysis_id) or a
+DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
+implicit) and are excluded from the assay residual. Accuracy on fertilizer
+mixtures has not been established.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec`.
+
+### `calculate_irrigation_ec_from_plan`
+
+```text
+calculate_irrigation_ec_from_plan(plan: flahax.equilibrium_delivery.EquilibriumPhPlan, *, phase_policy: str = 'dissolved') -> flahax.irrigation_ec.IrrigationECResult
+```
+
+EXPERIMENTAL (M1): irrigation EC25 on an EquilibriumPhPlan's own target state.
+
+The plan's solved target state is used as supplied at plan.target_ph and is
+never re-solved; carbon boundary is closed. A plan that carries phases needs
+phase_policy='equilibrated'. Accuracy on fertilizer mixtures has not been
+established.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec_from_plan`.
+
+### `compare_measured_ec`
+
+```text
+compare_measured_ec(prediction: flahax.irrigation_ec.IrrigationECResult, *, measured_ec25_ms_cm: float, meter_reference_temperature_c: float) -> dict
+```
+
+EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict or tolerance.
+
+Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
+
 ## flahax.measured_water
 
 ### `BalancedWaterAnalysis`
