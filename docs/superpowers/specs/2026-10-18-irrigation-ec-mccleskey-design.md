@@ -145,6 +145,8 @@ off). **Owner decision (O5, 2026-10-18):** the existing 0.1 % precedent of
 
 ## 6. Calculation
 
+*Amended by §13 (O2, M2a, 2026-10-19): species-only gaps give a bounded `estimated` result; see §13 for the range fields and post-mix `within_range`.*
+
 κ₂₅ (mS/cm) = Σ λᵢ(25 °C, I) · mᵢ over charged species, where
 λ = λ°(T) − A(T)·I^½ / (1 + B·I^½) (McCleskey Eq. 8 with the Table 1
 polynomials), mᵢ is the speciated molality and I is the speciated ionic
@@ -175,6 +177,8 @@ result by a few tenths of a percent; it is never applied silently.
   bound (decision O2).
 
 ## 7. Output contract
+
+*Amended by §13 (O2, M2a, 2026-10-19): species-only gaps give a bounded `estimated` result; see §13 for the range fields and post-mix `within_range`.*
 
 | Status | `ec25_ms_cm` | Also carried |
 |---|---|---|
@@ -246,7 +250,7 @@ So the M2 exit ("typical catalogue recipes return `estimated`") also needs
 the reagent dose recorded. The catalogue corrections have now met the
 `calculated`-mode assay condition. In a 2026-10-19 recount in declared RO
 water at calculated pH, all 26 formulas are still `partial` /
-`missing_species_contributions`. The causes are phosphate species, citrate
+`missing_species_contributions`. Since M2a, these are bounded `estimated` results (widest range 14.4 % of the midpoint, Generic Wet Season). The causes are phosphate species, citrate
 pairs, CaNO₃⁺, MgH₂PO₄⁺/CaH₂PO₄⁺, NH₄SO₄⁻, Fe-EDTA species and trace
 MgOH⁺/CaOH⁺, which await O1 and O2. McCleskey's −0.7 ± 5 % over 1,593 natural waters is
 literature context, never an accuracy claim for these mixtures.
@@ -275,12 +279,12 @@ measured evidence sets one (section 8).
 The stock design stays the reference for stock strength, which remains out
 of scope here.
 
-## 11. Owner decisions (open)
+## 11. Owner decisions
 
 | Id | Decision |
 |---|---|
-| O1 | Source for phosphate conductivity parameters in M2: Appelo/`phreeqc.dat` method applied in full, literature single-salt data fitted to Eq. 8, or both with cross-check |
-| O2 | Whether an upper-bound rule may let a result be `estimated` despite uncovered species. If adopted, the bound is a cited λ_max (per charge class) × molality for each uncovered species, published with the result as an explicit added uncertainty. Never a dropped species and never a fitted mobility. |
+| O1 | **Decided 2026-10-19:** CRC limiting molar conductivities λ° for H₂PO₄⁻, HPO₄²⁻ and PO₄³⁻. Eq. 8 A and B are fitted to measured 25 °C KH₂PO₄ and K₂HPO₄ conductivities (Muccitelli & DiAngelo 1994, 0.0005–0.0100 mol/L) through FlahaX speciation. Diffusion coefficients from `phreeqc.dat` (Nernst–Einstein) are a cross-check only. See §13. |
+| O2 | **Decided 2026-10-19:** a one-sided bound of 80 S·cm²/mol per unit charge at infinite dilution, times molality, for each uncovered charged species. Published with the result as an EC range; species are never dropped and mobilities are never fitted. See §13. |
 | O3 | Measurement programme for M3: who measures, which solutions, which meter and calibration protocol |
 
 **Designer's calls (owner may override):**
@@ -291,6 +295,47 @@ of scope here.
   CI with a second, independently typed fixture in `tests/`, and the owner
   signs off once against the paper (recorded with the paper SHA-256). CI
   cannot read the unversioned PDF.
+
+## 13. O1 and O2 decisions and audit (2026-10-19)
+
+### Audit on the 26 shipped formulas
+These numbers come from a throwaway script, not product code. Inputs: recommend doses with g/L taken as g/kgw, declared RO water, calculated pH. Speciated I ranges from 0.016 to 0.046.
+
+| Quantity | Range over the 26 formulas |
+|---|---|
+| Phosphate share of EC (CRC λ°, crude I correction) | 0.025–0.100 mS/cm, about 1–8 % of EC |
+| Difference between CRC and `phreeqc.dat` λ° for phosphate | at most 0.7 % of EC |
+| O2 bound for all other uncovered species (80 S·cm²/eq at infinite dilution) | 0.5–5.5 % of EC; worst is Generic Wet Season, from citrate pairs |
+
+The largest uncovered non-phosphate species are Ca(Citrate)⁻ (4.7×10⁻⁴ mol/kgw), Mg(Citrate)⁻, CaNO₃⁺, MgH₂PO₄⁺, CaH₂PO₄⁺, CaPO₄⁻, NH₄SO₄⁻ and FeOH(Edta)²⁻.
+
+λ° derived from `phreeqc.dat` diffusion coefficients (z²F²D/RT) are 31.8 for H₂PO₄⁻, 103.6 for HPO₄²⁻ and 206.8 for PO₄³⁻ S·cm²/mol. The CRC values are 36, 114 and 207. These CRC values were recalled from memory, so the owner must check them against the CRC page (§13 O1).
+
+### O1: phosphate coefficients
+- **λ°:** the CRC "Ionic conductivity and diffusion at infinite dilution" values for H₂PO₄⁻, HPO₄²⁻ and PO₄³⁻. They are recorded with page and edition, and the owner signs them off against the printed page, as was done for Table 1.
+- **A and B:** fitted to Eq. 8 using measured 25 °C conductivities of KH₂PO₄ and K₂HPO₄ solutions from Muccitelli & DiAngelo (1994), *J. Chem. Eng. Data* 39(1), doi 10.1021/je00013a037.
+  - The fit runs through FlahaX speciation: K⁺ and the other covered species use McCleskey, and only the phosphate A and B are free.
+  - Only points with I ≤ 0.1 mol/kgw are used.
+  - The fit residuals are published.
+  - The paper is not open access. The owner supplies the table values, which are transcribed twice, as was done for Table 1.
+- **Cross-check:** `phreeqc.dat` λ° must lie within 15 % of the CRC λ°. A larger gap is reported, but does not block.
+- **Data the plan does not have:** until the measured data is supplied, phosphate species stay uncovered and fall under the O2 bound. No parameter is invented.
+- **Free CRC data considered and rejected as the fit basis:** the CRC "Electrical conductivity of aqueous solutions" table lists KH₂PO₄ at 3.0 mS/cm (0.5 %) and K₂HPO₄ at 5.2 mS/cm (0.5 %). Both are at 20 °C, give only one point each inside the Davies domain, and would need a temperature correction.
+
+### O2: one-sided bound
+- **λ_max:** 80 S·cm²/mol per unit charge, at infinite dilution, with no ionic-strength reduction. In the limiting-conductivity table (Adamson 1973, p. 512, as reproduced in standard tables), no ion except H⁺ and OH⁻ exceeds this per unit charge; the highest are SO₄²⁻ at 79.8 and Br⁻ at 78.4. H⁺ and OH⁻ are always covered by McCleskey.
+- **Bound:** bound = Σ |zᵢ| · 80 · mᵢ over every uncovered charged species above 1×10⁻¹² mol/kgw. Every uncovered species is still listed.
+- **Result:** when uncovered species exist and every other rule passes, the status is `estimated` and `bounded: true`.
+  - `ec25_range_ms_cm` = (known subtotal, known subtotal + bound). The range is one-sided because missing contributions cannot be negative.
+  - `ec25_ms_cm` is the midpoint and `uncertainty_ms_cm` is half the bound.
+  - The audit records `uncovered_bound_ms_cm`.
+- **Unchanged rules:** unrecorded counterions, the assay-residual gate and the domain checks still produce `partial` or `not_supported` as before. O2 never applies to them.
+- **Post-mix comparison:** accepts a bounded estimate. It reports the difference to the midpoint and whether the measurement falls inside the range, as a fact, not a verdict.
+
+### M2 staging
+- **M2a:** the O2 bound, with no new data. Shipped formulas become `estimated` with a published range.
+- **M2b:** phosphate coefficients, once the owner supplies the Muccitelli & DiAngelo data and checks the CRC λ°. The range narrows by the phosphate share.
+- **Exit:** "typical catalogue recipes return `estimated`" is met by M2a. M2b reduces their uncertainty.
 
 ## 12. Left to the builder
 

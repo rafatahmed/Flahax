@@ -820,7 +820,7 @@ Source module: `flahax.injector_sizing`. Import with `from flahax import size_in
 DeclaredPureWater(water_id: str, kind: str = 'RO') -> None
 ```
 
-EXPERIMENTAL (M1): declared ion-free water (RO or distilled) with an id.
+EXPERIMENTAL: declared ion-free water (RO or distilled) with an id.
 
 Record fields: `water_id`, `kind`.
 
@@ -829,12 +829,21 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import DeclaredP
 ### `IrrigationECResult`
 
 ```text
-IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.') -> None
+IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None) -> None
 ```
 
-EXPERIMENTAL (M1) irrigation EC25 result; see calculate_ec_from_totals.
+EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`.
+A bounded estimate (``bounded`` True, decision O2) has status 'estimated' with
+``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
+``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
+``transport_numbers`` are empty: they need the whole current, which is not known.
+
+The midpoint and ``uncertainty_ms_cm`` describe only the uncovered-species interval;
+they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
+charge is conservative, the true value tends to lie in the lower half of the range.
+
+Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import IrrigationECResult`.
 
@@ -844,7 +853,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import Irrigatio
 assay_charge_residual(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials=None) -> dict
 ```
 
-EXPERIMENTAL (M1): declared-form charge residual of catalogue doses.
+EXPERIMENTAL: declared-form charge residual of catalogue doses.
 
 Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
 pH-independent, computed from each product's declared ion forms. Products in
@@ -859,11 +868,17 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_cha
 calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
-or 'not_supported'; invalid input raises DeliveryError. The 0.1 % O5
+or 'not_supported'; invalid input raises DeliveryError. Charged species
+without a coefficient (listed in missing_species) make the estimate
+bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
++ sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
+bound, and transport_numbers is empty. known_species_subtotal_ms_cm is populated for
+bounded estimates and equals the range's lower limit. Unrecorded counterions stay
+'partial' and the domain checks 'not_supported'. The 0.1 % O5
 assay gate uses assay_charge_residual_percent when given (the declared-form
 percent, as from assay_charge_residual()); when None (raw totals without
 declared forms) it uses the residual over the speciated absolute
@@ -877,7 +892,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, recipe_id: str, water: flahax.measured_water.BalancedWaterAnalysis | flahax.irrigation_ec.DeclaredPureWater, water_analysis_id: str | None = None, reagent_additions_molal: collections.abc.Mapping[str, float] | None = None, reagent_id: str | None = None, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, materials: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 of a catalogue recipe in stated water.
+EXPERIMENTAL: irrigation EC25 of a catalogue recipe in stated water.
 
 Water is a BalancedWaterAnalysis (with water_analysis_id) or a
 DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
@@ -895,7 +910,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, **kwargs) -> dict
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 chemistry at nominal and nutrient band ends.
+EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
 
 Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
 ``maximum`` (each an IrrigationECResult with its own pH, warnings and EC) and a
@@ -914,7 +929,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 calculate_irrigation_ec_from_plan(plan: flahax.equilibrium_delivery.EquilibriumPhPlan, *, phase_policy: str = 'dissolved') -> flahax.irrigation_ec.IrrigationECResult
 ```
 
-EXPERIMENTAL (M1): irrigation EC25 on an EquilibriumPhPlan's own target state.
+EXPERIMENTAL: irrigation EC25 on an EquilibriumPhPlan's own target state.
 
 The plan's solved target state is used as supplied at plan.target_ph and is
 never re-solved; carbon boundary is closed. A plan that carries phases needs
@@ -929,7 +944,11 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 compare_measured_ec(prediction: flahax.irrigation_ec.IrrigationECResult, *, measured_ec25_ms_cm: float, meter_reference_temperature_c: float) -> dict
 ```
 
-EXPERIMENTAL (M1) post-mix comparison: reports the difference only, no verdict or tolerance.
+EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or tolerance.
+
+``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
+measurement lies inside it (both ends inclusive), False when outside, and None when the
+prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
