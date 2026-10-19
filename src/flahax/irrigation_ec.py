@@ -458,8 +458,8 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
     maximum end to its band maximum: corner cases, not statistical bounds. An end where
     any dosed product has an open band end (a shipped product has none) is
     not_supported / band_end_open; nothing is substituted. Each end's audit records
-    ``band_end``
-    and ``audit['materials']`` carries the nominal provenance.
+    ``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
+    reports no nominal numbers (its audit assay residual is None too).
     """
     nominal = calculate_irrigation_ec(doses_g_per_kg_water, materials=materials, **kwargs)
     chosen = dict(materials or {})
@@ -476,7 +476,8 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
                                   assay_charge_residual={'eq_per_kgw': None, 'percent': None},
                                   ph=None, ionic_strength=None, precipitated_molal={}, warnings=(),
                                   audit={**nominal.audit, 'band_end': end, 'ph': None,
-                                         'solver_iterations': None, 'charge_balance': None})
+                                         'solver_iterations': None, 'charge_balance': None,
+                                         'assay_charge_residual_declared_percent': None})
             continue
         ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
         result[end] = replace(ended, audit={**ended.audit, 'band_end': end})

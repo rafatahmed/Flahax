@@ -24,7 +24,7 @@ from .composition import (
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental
-from .product_conversion import chelate_sodium_mg_per_l
+from .product_conversion import counterion_sodium_mg_per_l
 
 EPS = 1e-10
 # Grams below this do not appear in the recipe.
@@ -404,12 +404,13 @@ def _provenance(record: dict) -> dict:
     """Provenance of the record that produced a salt entry; never guessed when absent."""
     own = record.get("provenance")
     if own:
-        documents = own.get("documents")
+        # A resolved record keeps its grade/lot documents and the shipped catalogue reference.
+        documents = _documents(own.get("documents")) + _documents(own.get("source"))
         return {
             "recordId": own.get("recordId", record["id"]),
             "identityId": own.get("identityId"),
             "analysisBasis": own.get("analysisBasis", "unattributed"),
-            "documents": _documents(documents),
+            "documents": documents,
             "flags": list(own.get("flags") or ()),
         }
     if record.get("identityId") or record.get("analysisBasis"):
@@ -514,14 +515,17 @@ def recommend(
     from .materials import IDENTITIES_SHA256  # local: keeps engine importable without the catalogue at load
     solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
-    chelate_na = chelate_sodium_mg_per_l(
+    counterion_na = counterion_sodium_mg_per_l(
         [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]])
-    if chelate_na > 0:
+    if counterion_na > 0:
         na_row = next((row for row in solved["rows"] if row["symbol"] == "Na"), None)
         if na_row is None:
             na_row = {"symbol": "Na", "target": None, "final": 0.0, "deltaPct": None}
             solved["rows"].append(na_row)
-        na_row["final"] += chelate_na
-        warnings.append(f"Incidental Na includes chelate sodium counterions (D2): {chelate_na:.4f} mg/L.")
+        na_row["final"] += counterion_na
+        if na_row["target"] is not None and na_row["target"] > 0:
+            na_row["deltaPct"] = 100.0 * (na_row["final"] - na_row["target"]) / na_row["target"]
+        warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
+                        f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings))
     return solved

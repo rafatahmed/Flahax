@@ -903,8 +903,8 @@ Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum``
 maximum end to its band maximum: corner cases, not statistical bounds. An end where
 any dosed product has an open band end (a shipped product has none) is
 not_supported / band_end_open; nothing is substituted. Each end's audit records
-``band_end``
-and ``audit['materials']`` carries the nominal provenance.
+``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
+reports no nominal numbers (its audit assay residual is None too).
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec_band`.
 

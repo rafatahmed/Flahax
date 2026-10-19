@@ -107,6 +107,8 @@ re-run, and chemistry (pH, precipitation, EC) is reported at the nominal assay
 only. A lot with stated uncertainty gives its own band; otherwise the grade's
 minimum and maximum apply. An open bound (a grade with a minimum only) gives
 `None` for that end. FlahaX shows the band; it does not pick a "safe" end.
+For pH, precipitation and EC at the band ends, use `calculate_irrigation_ec_band`
+(below).
 
 ## Undisclosed blends
 
@@ -187,18 +189,22 @@ Band applies to nutrient amounts only; chemistry is reported at the nominal assa
 The lot supplies N-NO3 (`lot_measured`); K comes from the grade typical. The
 lot gave no uncertainty, so the band is the grade's minimum to maximum.
 
-## Provenance, chelate sodium and band-end chemistry
+## Provenance, counterion sodium and band-end chemistry
 
-**Provenance on formulation results.** `recommend` and the forward formulation
-results attach `provenance` to every salt entry: `recordId`, `identityId`,
-`analysisBasis`, `documents` and `flags`, taken from the record that produced
-the salt. A record without provenance reports `analysisBasis: "unattributed"`;
-a basis is never guessed. The result also carries `identitiesSha256`, which
-pins the shipped catalogue. `forward()` is unchanged.
+**Provenance on formulation results.** `recommend` results (and so the
+workflow recommendation) attach `provenance` to every salt entry: `recordId`,
+`identityId`, `analysisBasis`, `documents` and `flags`, taken from the record
+that produced the salt. A record without provenance reports
+`analysisBasis: "unattributed"`; a basis is never guessed. `analysisBasis` is a
+string for shipped records and a per-nutrient dict for resolved materials. The
+result also carries `identitiesSha256`, which pins the shipped catalogue.
+`solve_weights` and `forward` are unchanged.
 
-**Chelate sodium in formulation rows.** Chelate counterion sodium (D2) is added
-to the `Na` row and to the incidental-ion review after the fit, with a warning
-naming the amount. It never enters `elements`, eligibility, the fit or the
+**Counterion sodium in formulation rows.** Formula counterion sodium not
+already assayed as elemental Na (chelate sodium, D2, and CH - micro's borax and
+molybdate sodium) is added to the `Na` row and to the incidental-ion review
+after the fit, with a warning naming the amount; an `Na` target's `deltaPct` is
+recomputed. It never enters `elements`, eligibility, the fit or the
 grams. Na stays a restricted ion, so a tight Na maximum can make a recipe with
 chelates require review or be infeasible.
 
@@ -248,3 +254,7 @@ nominal estimated 0.6924419215785783 8.454879373311996 None
 maximum estimated 0.6957751961226507 8.77560493350029 maximum
 Band ends are corner cases (every product at its minimum, or every product at its maximum), not statistical bounds.
 ```
+
+In unbuffered pure water the pH follows the assay charge residual, so the small
+residual differences between the ends move pH strongly (6.52, 8.45 and 8.78
+here). This is not a buffered-solution prediction.
