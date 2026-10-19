@@ -412,7 +412,7 @@
   "units": "mS kg cm-1 mol-1 (as McCleskey Table 1); 25 C only",
   "equation": "lambda = lambda0_25c - A_25c * sqrt(I) / (1 + B * sqrt(I))",
   "source": {
-   "citation": "Pethybridge, Talbot and House (2006) J. Solution Chem. 35, 381-393",
+   "citation": "Pethybridge, Talbot and House, J. Solution Chem. 35, 381-393 (2006) (article title and author initials to be confirmed from the PDF)",
    "doi": "10.1007/s10953-005-9003-z",
    "table": "III"
   },
@@ -423,7 +423,8 @@
    "max_abs_residual_percent": 0.2742928228164519,
    "max_ionic_strength": 0.013955009630132749,
    "max_uncovered_bound_percent": 1.686258874214316,
-   "density_kg_dm3": 0.997047
+   "density_kg_dm3": 0.997047,
+   "note": "KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, so when FlahaX bounds KHPO4- as uncovered in a mixture the upper end of the range counts that current twice - small (<= 1.7 % of kappa at the most concentrated fit point) and conservative."
   },
   "cross_checks": {
    "CRC": {
