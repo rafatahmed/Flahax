@@ -1,0 +1,25 @@
+{
+  "typed_by": "owner transcription (first copy), relayed in session 2026-10-19 from the PDF text of the open Springer article",
+  "source": {
+    "citation": "Pethybridge, Talbot and House, J. Solution Chem. 35, 381-393 (2006) (article title and author initials to be confirmed from the PDF)",
+    "doi": "10.1007/s10953-005-9003-z",
+    "table": "III",
+    "temperature_c": 25.0
+  },
+  "units": {"c": "mmol dm-3", "Lambda": "S cm2 mol-1"},
+  "conventions": {
+    "KH2PO4": "c and Lambda per mole of KH2PO4",
+    "K2HPO4_half": "column headed 1/2(K2HPO4): c and Lambda per mole of the half-formula; molar conductivity of K2HPO4 is 2 x Lambda, salt molarity is c/2"
+  },
+  "KH2PO4": [
+    [0.0447, 121.29], [0.1056, 115.70], [0.1723, 113.28], [0.2753, 111.33],
+    [0.3808, 110.15], [0.5222, 109.11], [1.1025, 106.81], [2.3530, 104.50],
+    [3.1204, 103.62], [4.3667, 102.54], [5.1063, 101.98], [6.7214, 100.97]
+  ],
+  "K2HPO4_half": [
+    [0.0484, 132.57], [0.1557, 129.58], [0.3145, 127.58], [0.5031, 126.11],
+    [0.6639, 125.15], [1.4291, 121.94], [3.4870, 116.99], [5.0287, 114.51],
+    [7.5668, 111.47], [9.5533, 109.60]
+  ],
+  "table_iv_lee_wheaton_lambda0": {"H2PO4-": {"K": 33.33, "Na": 33.17}, "half_HPO4-2": {"K": 57.57, "Na": 57.60}}
+}
