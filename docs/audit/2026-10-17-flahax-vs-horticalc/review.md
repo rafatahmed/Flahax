@@ -70,6 +70,24 @@ with the report:
    (`plan_ec_delivery`, see [EC planning](../../conductivity.md)). "No
    ion-based model" is correct; "brochure anchors only" is not.
 
+## Product library: what "253 vs 28" measures
+
+The report lists "253 real commercial fertilizers vs 28 generic salts" as a
+Horticalc win. Catalogue size does not measure chemical coverage or model
+accuracy. FlahaX's chemistry uses explicit chemical identities and
+composition assumptions. Its catalogue should keep chemical identity
+separate from supplier grade and batch assay, with traceable specifications
+and impurity information. Several commercial products can share one
+chemical source.
+
+A factory blend has a declared nutrient analysis, but its exact
+ingredients, proportions, counterions or additives may be incomplete or
+undisclosed. Some manufacturers do disclose ingredients, so this varies by
+product. A declared analysis is enough for a mass balance, which is what
+Horticalc computes. Speciation, precipitation and pH need the composition.
+The [materials identity audit](../2026-10-18-materials-identity/review.md)
+traces FlahaX's own 28 products to that standard.
+
 ## Consequences for FlahaX
 
 - The anchor tests in `tests/test_site_planning.py` and the 1.15 mS/cm smoke

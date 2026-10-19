@@ -13,6 +13,7 @@ from .aqueous_model import AcidResult, chemistry
 from .delivery_contracts import DeliveryError, validate_product_assay
 from .delivery_quantities import FinalSolutionRecipe, MassGrams, VolumeLitres, elemental_contribution, rescore_with_reagent
 from .engine import load_library, forward
+from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
 from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
 
@@ -157,7 +158,9 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
              'maximumConcentrationsPpm':dict(maximum_concentrations or {}),
              'sourceDatabaseSha256':chemistry()['database_sha256'],
              'chemistrySha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
-             'catalogueSha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest()}
+             'catalogueSha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
+             'identitiesSha256':IDENTITIES_SHA256,
+             'materials':{name:material_audit_entry(resolve_material(name)) for name in doses}}
     return EquilibriumPhPlan(recipe,water_analysis_id,water_mass,assay['id'],reagent_channel_id,target_ph,result,
                              mass,volume,contribution,loss,tuple(rows),audit,tuple(warnings),
                              incidental_assessment=assessment)

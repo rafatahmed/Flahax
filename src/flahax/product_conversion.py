@@ -61,16 +61,26 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     family = chemistry.family
     # These relations follow the stated dissolved formula/profile, not label
     # text. Assay values remain the authoritative analytical metal totals.
+    # D2: chelate sodium counterions per formula unit (NaFe(III)EDTA,
+    # Na2M(II)EDTA, Na2Fe(III)DTPA, NaFe(III)-o,o-EDDHA). They enter chemistry
+    # totals only and are never added to the product assay ``elements``.
+    edta_sodium = totals.get("Fe", 0.0) + 2 * sum(totals.get(k, 0.0) for k in ("Mn", "Zn", "Cu"))
     if family == "edta_chelate":
         ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-    elif family == "dtpa_chelate": ligands["DTPA"] = totals.get("Fe", 0.0)
-    elif family == "eddha_chelate": ligands["o,o-EDDHA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = edta_sodium
+    elif family == "dtpa_chelate":
+        ligands["DTPA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = 2 * totals.get("Fe", 0.0)
+    elif family == "eddha_chelate":
+        ligands["o,o-EDDHA"] = totals.get("Fe", 0.0)
+        counterions["sodium"] = totals.get("Fe", 0.0)
     elif family == "citrate_salt":
         ligands["citrate"] = totals.get("K", 0.0) / 3.0
     elif family == "edta_borax_molybdate_blend":
         ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-        counterions["sodium"] = 0.5 * totals.get("boron", 0.0) + 2 * totals.get("molybdate", 0.0)
-    elif family == "boron" and "borax" in chemistry.components:
+        counterions["sodium"] = (edta_sodium + 0.5 * totals.get("boron", 0.0)
+                                 + 2 * totals.get("molybdate", 0.0))
+    elif family == "boron" and "B(OH)4-" in chemistry.components:
         counterions["sodium"] = 0.5 * totals.get("boron", 0.0)
     elif family == "molybdate": counterions["sodium"] = 2 * totals.get("molybdate", 0.0)
     elif family == "free_metal_sulfate": counterions["sulfate"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
@@ -95,29 +105,91 @@ def convert_catalogue_product_dose(product: Mapping[str, object], dose_g_per_kg_
     return convert_product_dose(product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water)
 
 
-def catalogue_dose_totals(doses: Mapping[str, float]):
+_BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+',
+          'Fe': 'Fe+3', 'Mn': 'Mn+2', 'Zn': 'Zn+2', 'Cu': 'Cu+2', 'boron': 'H3BO3',
+          'molybdate': 'MoO4-2', 'phosphate': 'PO4-3', 'sulfate': 'SO4-2',
+          'nitrate': 'NO3-', 'ammonium': 'NH4+', 'carbonate': 'CO3-2', 'urea': 'Ure',
+          'EDTA': 'Edta-4', 'DTPA': 'Dtp-5', 'o,o-EDDHA': 'Edd-4', 'citrate': 'Citrate-3'}
+
+
+def _check_materials(doses: Mapping[str, float], materials, *, allow_undisclosed: bool = False) -> dict:
+    """Validate the optional resolved-material mapping against the dosed products.
+
+    Chemistry refuses an undisclosed blend; nutrient amounts (the band) may keep it.
+    """
+    from .materials import ResolvedMaterial
+    if materials is None:
+        return {}
+    if not isinstance(materials, Mapping):
+        raise DeliveryError("material_mismatch", "materials must map dosed product names to ResolvedMaterial")
+    for name, material in materials.items():
+        if name not in doses:
+            raise DeliveryError("material_mismatch", f"material {name!r} is not a dosed product")
+        if not isinstance(material, ResolvedMaterial) or material.name != name:
+            raise DeliveryError("material_mismatch", f"materials[{name!r}] must be the ResolvedMaterial of {name!r}")
+    for name, material in ({} if allow_undisclosed else materials).items():
+        if material.composition == 'undisclosed':
+            raise DeliveryError("composition_undisclosed",
+                                f"{name!r} is a blend of undisclosed composition; chemistry is not supported")
+    return dict(materials)
+
+
+def _catalogue_product(identity_id: str, library: Mapping[str, Mapping]) -> Mapping:
+    """The catalogue product an identity covers, as shipped (grade-free)."""
+    from .materials import load_identities
+    return library[load_identities()[identity_id]['products'][0]]
+
+
+def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
+    """Per conversion unit: (dosed product name, ProductChemistry, {basis: mol/kg water}).
+
+    A product in ``materials`` is converted from its resolved record through the
+    chemistry profile of its identity's catalogue product. A disclosed blend
+    contributes one unit per component identity: that identity's shipped catalogue
+    record and chemistry, at dose x mass fraction. An undisclosed blend raises
+    ``composition_undisclosed``; nothing is computed for the rest of the mix.
+    """
+    from .engine import load_library
+    from .materials import load_identities
+    library = {str(item["name"]): item for item in load_library()["salts"]}
+    resolved = _check_materials(doses, materials)
+    units = []
+    for name, dose in doses.items():
+        if name not in library:
+            raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
+        material = resolved.get(name)
+        if material is None:
+            parts = [(library[name], dose)]
+        elif material.components:
+            parts = [(_catalogue_product(identity_id, library), _finite_dose(dose) * fraction)
+                     for identity_id, fraction in material.components]
+        else:
+            product_name = load_identities()[material.identity_id]['products'][0]
+            parts = [({**material.record, 'name': product_name}, dose)]
+        for product, amount in parts:
+            converted = convert_catalogue_product_dose(product, amount)
+            totals: dict = {}
+            for source in (converted.totals, converted.counterions, converted.ligands):
+                for key, value in source.items():
+                    basis = 'Fe+2' if key == 'Fe' and product['name'] == 'Iron II Sulfate (Hepahydrate)' else _BASIS[key]
+                    totals[basis] = totals.get(basis, 0.) + value
+            units.append((name, converted.chemistry, totals))
+    return units
+
+
+def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None):
     """Convert every assayed catalogue element into one conserved basis.
 
     Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
     retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
     unhydrolysed. Rounded product assays do not establish unassayed counterions.
+    ``materials`` optionally maps dosed product names to ``ResolvedMaterial``
+    (user grade or lot); see ``catalogue_dose_contributions``.
     """
-    from .engine import load_library
-    library = {str(item["name"]): item for item in load_library()["salts"]}
     result = {}
-    mapping = {'Ca':'Ca+2','Mg':'Mg+2','K':'K+','Na':'Na+','sodium':'Na+',
-               'Fe':'Fe+3','Mn':'Mn+2','Zn':'Zn+2','Cu':'Cu+2','boron':'H3BO3',
-               'molybdate':'MoO4-2','phosphate':'PO4-3','sulfate':'SO4-2',
-               'nitrate':'NO3-','ammonium':'NH4+','carbonate':'CO3-2','urea':'Ure',
-               'EDTA':'Edta-4','DTPA':'Dtp-5','o,o-EDDHA':'Edd-4','citrate':'Citrate-3'}
-    for name, dose in doses.items():
-        if name not in library:
-            raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
-        converted = convert_catalogue_product_dose(library[name], dose)
-        for source in (converted.totals, converted.counterions, converted.ligands):
-            for key, amount in source.items():
-                basis = 'Fe+2' if key=='Fe' and name=='Iron II Sulfate (Hepahydrate)' else mapping[key]
-                result[basis]=result.get(basis,0.)+amount
+    for _, _, totals in catalogue_dose_contributions(doses, materials=materials):
+        for basis, amount in totals.items():
+            result[basis] = result.get(basis, 0.) + amount
     return result
 
 

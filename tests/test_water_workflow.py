@@ -37,7 +37,8 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertTrue(result.recommendation['feasible'])
         self.assertEqual(result.stages['formulation'].status, 'requires_review')
         violations = {r['symbol']: r['ppm'] for r in result.recommendation['incidentalContributions']}
-        self.assertAlmostEqual(violations['N_NH4'], 4.84511367294, places=8)
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 4.84511367294
+        self.assertAlmostEqual(violations['N_NH4'], 4.84519260402, places=8)
         self.assertAlmostEqual(violations['Na'], .0479192828162, places=10)
         self.assertEqual(result.stages['chemistry'].status, 'needs_input')
         self.assertIsNone(result.stages['chemistry'].value)

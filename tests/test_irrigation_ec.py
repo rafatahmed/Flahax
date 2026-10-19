@@ -165,21 +165,51 @@ PURE = DeclaredPureWater('ro-test')
 
 
 class CatalogueTests(unittest.TestCase):
+    # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate is now
+    # Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these totals
+    # for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests below keep it.
+    OLD_MG_NITRATE_1G = {'Mg+2': 0.003970376465747789, 'NO3-': 0.007853384451726673}
+    OLD_MG_NITRATE_1G_RESIDUAL = {'eq_per_kgw': 8.736847976890429e-05, 'percent': 0.5531703166119969}
+
     def test_mg_nitrate_assay_residual(self):
-        self.assertAlmostEqual(assay_charge_residual({'Mg Nitrate': 1.0})['percent'], 0.5532, places=3)
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 0.5532 %, now ~0.
+        self.assertAlmostEqual(assay_charge_residual({'Mg Nitrate': 1.0})['percent'], 0.0, places=3)
+        old = self.OLD_MG_NITRATE_1G
+        net, absolute = 2 * old['Mg+2'] - old['NO3-'], 2 * old['Mg+2'] + old['NO3-']
+        self.assertAlmostEqual(100 * net / absolute, 0.5532, places=3)
 
     def test_residual_gate_by_mode(self):
-        c = calculate_irrigation_ec({'Mg Nitrate': 1.0}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the retired Mg Nitrate
+        # totals and residual are passed explicitly, so the O5 gate by pH mode stays covered.
+        residual = self.OLD_MG_NITRATE_1G_RESIDUAL
+        kw = dict(solution_id='r', phase_policy='dissolved',
+                  assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'],
+                  assay_charge_residual_percent=residual['percent'])
+        c = calculate_ec_from_totals(self.OLD_MG_NITRATE_1G, ph_mode='calculated', **kw)
         self.assertEqual((c.status, c.reason), ('not_supported', 'assay_charge_residual_too_large'))
-        s = calculate_irrigation_ec({'Mg Nitrate': 1.0}, recipe_id='r', water=PURE, ph_mode='supplied', ph=6.0, phase_policy='dissolved')
+        s = calculate_ec_from_totals(self.OLD_MG_NITRATE_1G, ph_mode='supplied', ph=6.0, **kw)
         self.assertEqual((s.status, s.reason), ('partial', 'unrecorded_counterions'))
 
     def test_gate_uses_declared_form_percent(self):
-        doses = {'Mg Nitrate': 0.40, 'Magnesium Sulfate (Heptahydrate)': 1.0, 'Potassium Sulfate': 0.5}
-        r = calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the mix below
+        # (0.40 old Mg Nitrate + 1.0 MgSO4.7H2O + 0.5 K2SO4) had a declared residual of 0.0914 %;
+        # its totals and residual are now passed explicitly to keep the declared-percent gate covered.
+        totals = {'Mg+2': 0.005644929026949188, 'SO4-2': 0.0069279475982532744,
+                  'K+': 0.005738484793456493, 'NO3-': 0.0031413537806906696}
+        eq, declared = 3.1093870157648636e-05, 0.09138377465402972
+        kw = dict(solution_id='r', ph_mode='calculated', phase_policy='dissolved',
+                  assay_charge_residual_eq_per_kgw=eq)
+        speciated = calculate_ec_from_totals(totals, **kw)
+        self.assertEqual(speciated.reason, 'assay_charge_residual_too_large')  # speciated % > 0.1
+        r = calculate_ec_from_totals(totals, assay_charge_residual_percent=declared, **kw)
         self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
-        self.assertAlmostEqual(r.audit['assay_charge_residual_declared_percent'], 0.0914, places=4)
-        self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+        self.assertAlmostEqual(r.assay_charge_residual['percent'], 0.0914, places=4)
+        # The catalogue path still records the declared-form percent it gated on.
+        doses = {'Mg Nitrate': 0.40, 'Magnesium Sulfate (Heptahydrate)': 1.0, 'Potassium Sulfate': 0.5}
+        c = calculate_irrigation_ec(doses, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
+        self.assertEqual(c.assay_charge_residual['percent'], c.audit['assay_charge_residual_declared_percent'])
+        self.assertAlmostEqual(c.audit['assay_charge_residual_declared_percent'],
+                               assay_charge_residual(doses)['percent'], places=12)
 
     def test_recipe_and_reagent_ids_must_be_nonempty_strings(self):
         for rid in ('', ' ', None, 7):
@@ -205,10 +235,28 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(none.audit['reagent_additions_molal'], {})
 
     def test_chelate_residual_reported_not_crash(self):
+        # 2026-10-18 chelate sodium counterions (D2): was not_supported /
+        # assay_charge_residual_too_large (declared percent < -0.1) because the
+        # chelate sodium was missing; the residual is still reported in the audit.
         r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
                                     ph_mode='calculated', phase_policy='dissolved')
-        self.assertEqual(r.status, 'not_supported'); self.assertEqual(r.reason, 'assay_charge_residual_too_large')
-        self.assertLess(r.audit['assay_charge_residual_declared_percent'], -0.1)
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertIn('assay_charge_residual_declared_percent', r.audit)
+        self.assertLessEqual(abs(r.audit['assay_charge_residual_declared_percent']), 0.1)
+        self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+
+    def test_borax_declared_residual_near_zero(self):
+        # Borax boron is declared at -0.5 per B (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3).
+        r = assay_charge_residual({'Sodium Borate (Decahydrate) (borax)': 1.0})
+        self.assertLessEqual(abs(r['percent']), 0.1)
+
+    def test_chelate_residuals_within_limit(self):
+        for name in ('Iron EDTA', 'Zn EDTA', 'Mn EDTA', 'Copper EDTA', 'Iron DTPA', 'Iron EDDHA', 'CH - micro'):
+            with self.subTest(name=name):
+                self.assertLessEqual(abs(assay_charge_residual({name: 1.0})['percent']), 0.1)
+        r = calculate_irrigation_ec({'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5}, recipe_id='r', water=PURE,
+                                    ph_mode='calculated', phase_policy='dissolved')
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
 
     def test_zero_doses_in_pure_water(self):
         r = calculate_irrigation_ec({}, recipe_id='r', water=PURE, ph_mode='calculated', phase_policy='dissolved')
@@ -262,6 +310,10 @@ class PlanTests(unittest.TestCase):
         for key in ('catalogueSha256', 'waterTotalsMolal', 'initialPh'):
             self.assertEqual(r.audit[key], self.plan.audit[key], key)
         self.assertEqual(r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent'])
+        # Material provenance travels from the plan into the EC audit, as a copy.
+        self.assertEqual(r.audit['materials'], self.plan.audit['materials'])
+        self.assertIsNot(r.audit['materials'], self.plan.audit['materials'])
+        self.assertEqual(r.audit['identitiesSha256'], self.plan.audit['identitiesSha256'])
         with self.assertRaises(DeliveryError) as c:
             calculate_irrigation_ec_from_plan(self.plan, phase_policy='equilibrated')
         self.assertEqual(c.exception.code, 'invalid_phase_policy')
