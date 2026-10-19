@@ -382,6 +382,19 @@ class BandChemistryTests(unittest.TestCase):
             self.assertIsNone(r.ph)
             self.assertIsNone(r.ionic_strength)
             self.assertEqual(r.audit['band_end'], end)
+            self.assertIsNone(r.audit['assay_charge_residual_declared_percent'])
+        self.assertIsNotNone(result['nominal'].audit['assay_charge_residual_declared_percent'])
+
+    def test_graded_plus_shipped_band_ends_open(self):
+        doses = {'Potassium Nitrate': 1.0, 'Potassium Sulfate': 0.5}
+        materials = {'Potassium Nitrate': self._materials()['Potassium Nitrate']}
+        result = calculate_irrigation_ec_band(doses, materials=materials, **self.PURE)
+        self.assertEqual(result['nominal'].status, 'estimated')
+        for end in ('minimum', 'maximum'):
+            r = result[end]
+            self.assertEqual((r.status, r.reason), ('not_supported', 'band_end_open'))
+            self.assertIsNone(r.ec25_ms_cm)
+            self.assertEqual(r.audit['band_end'], end)
 
     def test_open_end_still_validates_inputs(self):
         with self.assertRaises(DeliveryError) as caught:

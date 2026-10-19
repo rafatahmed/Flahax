@@ -233,5 +233,4 @@ supersaturation warnings and EC.
 
 ## Related, out of scope
 
-- Chemistry evaluated at band ends (pH, precipitation, EC).
 - A methods-article section on traceable materials, after this ships.
