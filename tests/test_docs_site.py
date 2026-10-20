@@ -39,6 +39,20 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertNotIn('superpowers', relative)
                 self.assertNotIn('publication', relative)
 
+    def test_published_readme_paths_resolve(self):
+        names = ('method usage chemistry-coverage-matrix computational-review delivery-contracts '
+                 'delivery-quantities equilibrium-kernel fertilizer-equilibrium-model '
+                 'full-fertilizer-chemistry package-verification ph-planning reference-fixtures '
+                 'release-evidence stock-planning site-planning index publishing '
+                 'implementation-roadmap release-readiness development-roadmap development-status '
+                 'delivery-control-design stock-conductivity-service-design').split()
+        for name in names:
+            with self.subTest(name=name):
+                old = ROOT / 'docs' / f'{name}.md'
+                self.assertTrue(old.exists(), f'{old} must exist for published READMEs')
+                if name != 'index' and any(SITE.rglob(f'{name}.md')):
+                    self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
+
     def test_superpowers_ignored(self):
         lines = (ROOT / '.gitignore').read_text(encoding='utf-8').splitlines()
         self.assertIn('docs/superpowers/', [line.strip() for line in lines])
