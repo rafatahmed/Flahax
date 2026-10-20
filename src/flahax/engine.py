@@ -22,6 +22,7 @@ from .composition import (
     assay_conflict,
     assay_drift,
     is_carbonate,
+    target_ion_balance,
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental
@@ -648,6 +649,14 @@ def recommend(
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
     warnings: list[str] = []
+    balance = target_ion_balance(targets)
+    if balance["exceedsWarning"]:
+        side = "cations" if balance["imbalancePercent"] > 0 else "anions"
+        warnings.append(
+            f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} vs "
+            f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
+            f"No salt combination meets every target exactly; the excess {side} need counter-ions "
+            "the formula does not list.")
     solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima)
     short = _short(solved["rows"], targets)
     if short:
@@ -686,6 +695,7 @@ def recommend(
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     solved["ammoniumLimit"] = ammonium_limit
+    solved["targetIonBalance"] = balance
     solved["unmetTargets"] = _diagnose(library, targets, water, solved["rows"], maxima, allowed,
                                        allow_carbonates)
     return solved

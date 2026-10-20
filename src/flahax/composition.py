@@ -49,6 +49,42 @@ ATOMIC = {
 
 _TOKEN = re.compile(r"[A-Z][a-z]?|\(|\)|\d+")
 
+# Ion form and charge of each target symbol for a formula's charge balance (Dutch
+# convention: P as H2PO4-, S as SO4 2-). Urea and Si are neutral; micronutrients are
+# excluded as negligible at mg/L levels.
+BALANCE_IONS = {
+    "N_NO3": ("N", -1), "N_NH4": ("N", 1), "P": ("P", -1), "S": ("S", -2), "Cl": ("Cl", -1),
+    "K": ("K", 1), "Ca": ("Ca", 2), "Mg": ("Mg", 2), "Na": ("Na", 1),
+}
+# Warn when the formula's cation and anion sums differ by more than this share of the
+# larger sum (about the +/-10% window used by Steiner-type software, Martinez-Corral 2009).
+ION_BALANCE_WARNING_PCT = 10.0
+
+
+def target_ion_balance(targets: dict) -> dict:
+    """Cation and anion meq/L implied by a formula's targets, and their imbalance.
+
+    A real solution is electrically neutral (Steiner 1961). When a formula is not,
+    no combination of salts meets every target exactly: counter-ions the formula does
+    not list must carry the difference.
+    """
+    cations = anions = 0.0
+    for symbol, ppm in targets.items():
+        form = BALANCE_IONS.get(symbol)
+        if form is None or not ppm or ppm <= 0:
+            continue
+        element, charge = form
+        meq = float(ppm) / ATOMIC[element] * abs(charge)
+        if charge > 0:
+            cations += meq
+        else:
+            anions += meq
+    larger = max(cations, anions)
+    imbalance = 100.0 * (cations - anions) / larger if larger > 0 else 0.0
+    return {"cationsMeqPerL": cations, "anionsMeqPerL": anions, "imbalancePercent": imbalance,
+            "exceedsWarning": abs(imbalance) > ION_BALANCE_WARNING_PCT,
+            "assumptions": "P as H2PO4-, S as SO4 2-; urea, Si and micronutrients excluded"}
+
 
 class InputError(ValueError):
     """The caller passed a profile or a salt the balance cannot use."""

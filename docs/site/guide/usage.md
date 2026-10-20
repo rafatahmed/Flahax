@@ -117,6 +117,36 @@ nutrients separately. Explicit `maximum_concentrations` in the workflow or
 acid adapters enforce absolute nutrient limits, including a true zero limit.
 See [water-to-delivery](water-to-delivery.md).
 
+## Tolerance, formula balance and unmet targets
+
+`feasible` means every positive target is within 1% of the formula value (an
+absolute 0.01 mg/L floor applies in the benchmark evaluator). The 1% is a FlahaX
+assumption: no published standard gives a per-ion tolerance for preparing a feed
+solution. Dutch practice corrects only when root-zone analyses deviate by 25% or
+more (De Kreij et al. 2003).
+
+A real nutrient solution is electrically neutral (Steiner 1961). `recommend`
+reports `targetIonBalance`: the cation and anion meq/L implied by the formula
+itself, counting P as H2PO4- and S as SO4 2- and excluding urea, Si and
+micronutrients. When the two sums differ by more than 10% of the larger, a
+warning explains that no salt combination can meet every target exactly. The
+10% follows the window used by Steiner-type software (Martinez-Corral et al.
+2009). Several shipped formulas exceed it, including Pepper (Howard Resh) at
+-39.5% and the U of Florida tomato clusters at +19% to +30%.
+
+Every positive target missed by more than 1% appears in `unmetTargets` with a
+reason:
+
+| Reason | Meaning |
+|---|---|
+| `no_source` | No catalogue product supplies the element (for example Si). |
+| `limited_by_ceiling` | The targets are reachable, but an incidental ceiling binds; `bindingLimits` names it. |
+| `incidental_tradeoff` | The targets are reachable, but the incidental-ion penalty chose otherwise. |
+| `conflicting_targets` | Dropping one of the `conflictsWith` targets makes the rest reachable; `reachableWithChloride` says whether chloride products (which need a Cl ceiling) would reach it. |
+
+The diagnosis is a least-squares check on the target rows alone. It names a
+likely cause; it does not prove infeasibility.
+
 ## Incidental ions and ceilings
 
 An incidental ion is one the products add but the formula does not ask for.
@@ -159,6 +189,15 @@ References:
   effects of vegetable and herb species in peat-based substrate and
   hydroponics. *HortScience* 54(6): 1093-1100.
   <https://doi.org/10.21273/HORTSCI13959-19>
+
+## Feed pH and residual bicarbonate
+
+`plan_fertilizer_workflow` adds a note when the target pH lies outside 5.3-5.8,
+the feed range of Dutch soilless practice (root zone about 5.5-6.0; Van der Lugt
+et al.; Savvas). A stronger note appears outside 5.0-7.0. FlahaX doses acid to the
+target pH, so the bicarbonate left afterwards is an outcome. The equilibrium acid
+plan reports it in `audit["residualBicarbonateMmolPerKg"]` and warns when it is
+below the 0.5 mmol/L that Dutch practice leaves as a pH buffer (0.5-0.75 mmol/L).
 
 ## Additional planning commands (since 0.3.1)
 

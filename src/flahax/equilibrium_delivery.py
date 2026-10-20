@@ -26,6 +26,10 @@ def _number(value, name, *, positive=False):
     return float(value)
 
 
+# Residual HCO3 (mmol/L) Dutch soilless practice leaves after acidification as a pH buffer
+# (0.5-0.75 mmol/L; Van der Lugt et al., Nutrient Solutions for Greenhouse Crops).
+RESIDUAL_BICARBONATE_BUFFER = 0.5
+
 @dataclass(frozen=True)
 class EquilibriumPhPlan:
     recipe: FinalSolutionRecipe
@@ -149,6 +153,12 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
         warnings.append('Incidental nutrient additions require review or explicit maximum-concentration limits.')
     if any(v>1e-12 for v in result.target.precipitated.values()) or any(si>1e-7 for si in result.target.saturation_indices.values()):
         warnings.append('Precipitation risk: target has formed solids or positive saturation indices; not valid for delivery approval.')
+    # Dutch practice leaves 0.5-0.75 mmol/L HCO3 as a pH buffer (Van der Lugt et al.);
+    # FlahaX doses to the target pH, so the residual is reported, not imposed.
+    residual_bicarbonate = 1000*result.target.species.get('HCO3-',0.)
+    if 1000*water.get('CO3-2',0.) > RESIDUAL_BICARBONATE_BUFFER and residual_bicarbonate < RESIDUAL_BICARBONATE_BUFFER:
+        warnings.append(f'Residual bicarbonate at pH {target_ph:g} is {residual_bicarbonate:.2f} mmol/kg water, below the '
+                        f'{RESIDUAL_BICARBONATE_BUFFER:g} mmol/L Dutch practice leaves as a pH buffer; a higher target pH keeps more.')
     audit = {'modelVersion':'minteq-flahax-25c-v1','waterAnalysisId':water_analysis_id,
              'waterMassKg':water_mass,'reagentAssay':assay,'chemicalFormula':'HNO3',
              'reagentChannelId':reagent_channel_id,
@@ -156,6 +166,7 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
              'finalVolumeLitres':recipe.final_volume.value,'productDosesGPerKgWater':doses,
              'temperatureC':temperature_c,'phases':list(phases),'maximumNutrientErrorPercent':tolerance,
              'maximumConcentrationsPpm':dict(maximum_concentrations or {}),
+             'residualBicarbonateMmolPerKg':residual_bicarbonate,
              'sourceDatabaseSha256':chemistry()['database_sha256'],
              'chemistrySha256':hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest(),
              'catalogueSha256':hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),

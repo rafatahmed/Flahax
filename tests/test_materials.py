@@ -978,7 +978,9 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertEqual(len(result['incidentalContributions']), 1)
         self.assertAlmostEqual(result['incidentalContributions'][0]['ppm'],
                                self.NO_CHELATE_INCIDENTAL[0]['ppm'], places=9)
-        self.assertEqual(result['warnings'], [])
+        # The synthetic targets omit S, so the formula is unbalanced (+16.6%) and says so;
+        # no other warning, in particular no chelate-sodium note, may appear.
+        self.assertEqual([w for w in result['warnings'] if 'not electrically balanced' not in w], [])
 
     def test_helper_matches_chemistry(self):
         from flahax.product_conversion import catalogue_dose_totals, counterion_sodium_mg_per_l
