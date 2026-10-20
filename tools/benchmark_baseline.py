@@ -50,7 +50,13 @@ def provenance():
                     except ValueError:
                         key = "installed/flahax/" + path.relative_to(source).as_posix()
                     inputs[key] = digest(path)
-    for path in [ROOT / "asv.conf.json", Path(__file__).resolve()]:
+    # Only shipped helpers: local tutorial scripts are deliberately ignored.
+    for relative in git("ls-files", "examples/*.py").splitlines():
+        inputs[relative] = digest(ROOT / relative)
+    for path in [ROOT / "asv.conf.json", ROOT / "pyproject.toml",
+                 ROOT / ".github/workflows/benchmark.yml",
+                 ROOT / "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv",
+                 Path(__file__).resolve()]:
         inputs[path.relative_to(ROOT).as_posix()] = digest(path)
     return {
         "schema": VERSION, "utc": datetime.now(timezone.utc).isoformat(),
