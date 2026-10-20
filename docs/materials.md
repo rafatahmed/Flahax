@@ -1,8 +1,7 @@
 # Traceable materials: identity, grade and lot
 
 Every number FlahaX calculates with can be traced to a **chemical identity**
-and a **source document**. Design: [traceable catalogue
-design](superpowers/specs/2026-10-18-traceable-catalogue-design.md). Evidence:
+and a **source document**. Evidence:
 [materials identity audit](audit/2026-10-18-materials-identity/review.md).
 
 **Position (owner's wording):** Catalogue size does not measure chemical
