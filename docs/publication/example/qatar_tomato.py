@@ -14,7 +14,7 @@ from flahax.product_conversion import MOLAR_MASS
 # station 104: measured pH 7.80; mg/L; CO3-2 is inorganic carbon as C.
 WELL_MG_L = {'Na+': 680, 'K+': 44.2, 'Ca+2': 244, 'Mg+2': 100.8, 'Cl-': 1280.4,
              'SO4-2': 723.3, 'NO3-': 15.38, 'CO3-2': 38.75}
-GRAMS_PER_MOL = {'Na+': 22.98977, 'K+': 39.0983, 'Ca+2': 40.078, 'Mg+2': 24.305, 'Cl-': 35.453,
+GRAMS_PER_MOL = {'Na+': 22.98977, 'K+': 39.0983, 'Ca+2': 40.078, 'Mg+2': 24.305, 'Cl-': 35.45,
                  'SO4-2': 96.06, 'NO3-': 62.004, 'CO3-2': 12.011}
 WELL_PH = 7.8
 BLEND = .25          # 1 part well water to 3 parts desalinated water, taken as ion-free
@@ -39,7 +39,7 @@ def ppm(totals):
     keys = {'Ca+2': 'Ca', 'Mg+2': 'Mg', 'K+': 'K', 'Na+': 'Na', 'SO4-2': 'S'}
     out = {k: totals[b] * MOLAR_MASS[k] * 1000 for b, k in keys.items()}
     out['N_NO3'] = totals['NO3-'] * MOLAR_MASS['N'] * 1000
-    out['Cl'] = totals['Cl-'] * 35.453 * 1000
+    out['Cl'] = totals['Cl-'] * 35.45 * 1000
     return out
 
 

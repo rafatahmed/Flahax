@@ -16,6 +16,7 @@ import math
 from importlib.resources import files
 
 from .composition import (
+    CONSENT_IONS,
     RESTRICTED_IONS,
     InputError,
     assay_conflict,
@@ -31,6 +32,10 @@ EPS = 1e-10
 KEEP_GRAMS = 1e-6
 # A recipe is feasible when every requested ion is inside this Δ%.
 TOLERANCE_PCT = 1.0
+# Doublings of the pull on an incidental ion above its stated maximum (weight up to 2**12).
+CEILING_STEPS = 13
+# Relative aim below a stated maximum (1 ppm of the limit).
+CEILING_MARGIN = 1e-6
 
 
 def load_library() -> dict:
@@ -195,8 +200,15 @@ def forward(salts: list[dict], grams: list[float], water: dict | None = None) ->
     return achieved
 
 
-def _fit(salts: list[dict], targets: dict, water: dict, ridge: float) -> dict:
-    """Non-negative grams. ridge is an L2 penalty on grams, not a salt count."""
+def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
+         maxima: dict | None = None, ceilings: dict[str, float] | None = None) -> dict:
+    """Non-negative grams. ridge is an L2 penalty on grams, not a salt count.
+
+    An incidental ion with a stated positive maximum is not penalized; an ion in
+    ceilings exceeded that maximum and is pulled toward it with the given weight.
+    """
+    maxima = maxima or {}
+    ceilings = ceilings or {}
     symbols = list(dict.fromkeys([
         *targets.keys(),
         *(symbol for salt in salts for symbol in salt["elements"]),
@@ -210,6 +222,13 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float) -> dict:
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
+        elif symbol in ceilings:
+            # Aim just under the maximum so round-off cannot leave it exceeded.
+            limit, weight = maxima[symbol] * (1 - CEILING_MARGIN), ceilings[symbol]
+            matrix.append([weight * rate / limit for rate in rates])
+            rhs.append(weight * (limit - background) / limit)
+        elif maxima.get(symbol, 0.0) > 0:
+            continue
         else:
             matrix.append([rate / 100.0 for rate in rates])
             rhs.append(-background / 100.0)
@@ -223,6 +242,24 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float) -> dict:
     achieved = forward(salts, grams, water)
     loss, rows = score(achieved, targets)
     return {"grams": grams, "loss": loss, "rows": rows}
+
+
+def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, maxima: dict) -> dict:
+    """Fit, then pull any incidental ion that passed its stated maximum back toward it."""
+    solved = _fit(salts, targets, water, ridge, maxima)
+    ceilings: dict[str, float] = {}
+    # Escalate the pull on each exceeded ion until it is within its maximum; a
+    # remainder after the cap is reported by _report as a limit violation.
+    for _ in range(CEILING_STEPS):
+        final = {row["symbol"]: float(row["final"] or 0.0) for row in solved["rows"]}
+        over = [symbol for symbol, limit in maxima.items()
+                if limit > 0 and symbol not in targets and final.get(symbol, 0.0) > limit + 1e-12]
+        if not over:
+            break
+        for symbol in over:
+            ceilings[symbol] = ceilings.get(symbol, 0.5) * 2.0
+        solved = _fit(salts, targets, water, ridge, maxima, ceilings)
+    return solved
 
 
 def solve_weights(salts: list[dict], targets: dict, water: dict | None = None, ridge: float = 0.0) -> dict:
@@ -273,7 +310,8 @@ def _supplies(salt: dict, symbol: str) -> bool:
     return float(salt["elements"].get(symbol) or 0.0) > 0
 
 
-def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge: float) -> dict:
+def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge: float,
+              maxima: dict | None = None) -> dict:
     """Drop a salt when the refit still meets every requested ion."""
     grams = solved["grams"][:]
     rows = solved["rows"]
@@ -289,7 +327,7 @@ def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge
                 if not any(_supplies(salts[item], symbol) for item in others)
             ):
                 continue
-            trial = _fit([salts[item] for item in others], targets, water, ridge)
+            trial = _fit_within([salts[item] for item in others], targets, water, ridge, maxima or {})
             if not _still_within(trial["rows"], rows):
                 continue
             grams = [0.0] * len(salts)
@@ -363,6 +401,8 @@ def _recover(library, ready, excluded, targets, short):
                 continue
             if "carries" not in item["reason"]:
                 continue
+            if CONSENT_IONS.intersection(salt["elements"]) - set(targets):
+                continue
             holders.append(salt)
         if not holders:
             supplied = any(
@@ -425,16 +465,17 @@ def _provenance(record: dict) -> dict:
             "documents": [], "flags": []}
 
 
-def _report(rows: list[dict], grams: list[float], warnings: list[str]) -> dict:
+def _report(rows: list[dict], grams: list[float], warnings: list[str], maxima: dict | None = None) -> dict:
     deltas = [abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None]
     undesired = [
         {"symbol": row["symbol"], "ppm": round(row["final"], 4)}
         for row in rows
         if row["target"] is None and row["final"] > 0.01
     ]
+    incidental = assess_incidental(rows, maxima)
     return {
-        "feasible": bool(deltas) and max(deltas) <= TOLERANCE_PCT,
-        **assess_incidental(rows),
+        "feasible": bool(deltas) and max(deltas) <= TOLERANCE_PCT and not incidental["limitViolations"],
+        **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
         "undesiredIons": undesired,
         "totalGramsPerLitre": round(sum(gram for gram in grams if gram > 0), 6),
@@ -450,6 +491,7 @@ def recommend(
     allow_ions: frozenset[str] | set[str] | None = None,
     allow_carbonates: bool = False,
     ridge: float = 0.02,
+    maximum_concentrations: dict | None = None,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -463,6 +505,11 @@ def recommend(
         allow_carbonates: Permit carbonate products in nutrient fitting only;
             this does not establish dissolution or stock compatibility.
         ridge: L2 dose penalty, not a limit on the number of products.
+        maximum_concentrations: Optional mg/L ceilings for incidental ions, for
+            example {"Cl": 70}. An ion with a positive ceiling is admitted like
+            allow_ions and is not penalized up to the ceiling; a fit above it is
+            pulled back, and any remaining excess is reported in
+            limitViolations with feasible False. Omitted keeps the default.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -488,17 +535,20 @@ def recommend(
     allowed = frozenset(allow_ions or ())
     if allowed:
         validate_profile({ion: 0.0 for ion in allowed}, "allow_ions")
+    maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
+    allowed |= {ion for ion, limit in maxima.items() if limit > 0}
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
     warnings: list[str] = []
-    solved = _simplify(salts, targets, water, _fit(salts, targets, water, ridge), ridge)
+    solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima)
     short = _short(solved["rows"], targets)
     if short:
         salts, excluded, recovered = _recover(library, salts, excluded, targets, short)
         warnings.extend(recovered)
         if recovered:
-            solved = _simplify(salts, targets, water, _fit(salts, targets, water, ridge), ridge)
+            solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima),
+                               ridge, maxima)
     solved["salts"] = _chosen(salts, solved["grams"])
     chosen_names = {item["name"] for item in solved["salts"]}
     warnings = [
@@ -527,5 +577,5 @@ def recommend(
             na_row["deltaPct"] = 100.0 * (na_row["final"] - na_row["target"]) / na_row["target"]
         warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
-    solved.update(_report(solved["rows"], solved["grams"], warnings))
+    solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     return solved

@@ -79,14 +79,16 @@ class CompositionGuards(unittest.TestCase):
         # The 75 % acid is dosed from its stored solution assay, below the H3PO4 formula value.
         self.assertIn("P assay 23.706% vs formula 31.61%", notes["Phosphoric Acid (75%)"])
 
-    def test_the_fertilizer_list_has_no_chloride_salts(self):
-        chloride = [
-            salt["name"] for salt in load_library()["salts"]
-            if float(salt["elements"].get("Cl") or 0) > 0
-            and not str(salt["name"]).lower().startswith("test")
-            and salt.get("formula") != "Input Formula Here"
-        ]
-        self.assertEqual(chloride, [])
+    def test_chloride_salts_are_used_only_with_consent(self):
+        library = load_library()
+        chloride = sorted(salt["name"] for salt in library["salts"]
+                          if float(salt["elements"].get("Cl") or 0) > 0)
+        self.assertEqual(chloride, ["Calcium Chloride (Dihydrate)", "Potassium Chloride"])
+        for formula in library["formulas"]:
+            for water in ({}, {"Ca": 20}):
+                with self.subTest(formula=formula["name"], water=water):
+                    result = recommend(library["salts"], formula["targets"], water)
+                    self.assertFalse(set(chloride) & {s["name"] for s in result["salts"]})
 
 
 class LeastSquares(unittest.TestCase):

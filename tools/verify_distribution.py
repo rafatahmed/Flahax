@@ -115,7 +115,7 @@ def verify(report, interpreter, artifacts_dir=None):
                 raise RuntimeError('packaged user manual differs from source')
             if not Path(result.pop('module')).resolve().is_relative_to(install.resolve()):
                 raise RuntimeError('smoke imported source checkout rather than installed package')
-            if result['catalogue_count'] != 28:
+            if result['catalogue_count'] != 30:
                 raise RuntimeError('missing packaged catalogue data')
             # Verify the builder retained the resource bytes from this checkout.
             if result['api_reference_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/API_REFERENCE.md').read_bytes()).hexdigest():
