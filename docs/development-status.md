@@ -1,7 +1,7 @@
 # Water-to-delivery development status
 
-Updated 2026-10-17. **0.4.0 is published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
-[publication evidence](release-evidence.md#031-publication---2026-10-17).
+Updated 2026-10-17. **0.4.0 is published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
+[publication evidence](site/evidence/release-evidence.md#031-publication---2026-10-17).
 The matrix below describes the 0.3.1 capabilities and their boundaries.
 
 ## Capability and boundary matrix
@@ -20,11 +20,11 @@ The matrix below describes the 0.3.1 capabilities and their boundaries.
 | Stock planning API | Existing sourced compatibility/solubility/capacity checks | Caller must supply complete applicable records; absence from a pairwise table is not evidence of compatibility |
 | Injector design flow and inventory | `injector_sizing.py`, batch/area arithmetic and tests | Pump/venturi/Dosatron operating-point data still needed for a specific model |
 | Offline graphical capability report | `examples/run_all.py`, `visual_report.py`, `test_examples.py` | Separate pepper, manufacturer-screening and synthetic demonstrations; no cross-scenario dosing inference |
-| Traceable materials (identity, grade, lot, nutrient band) | `materials.py`, `material_identities.json`, material tests; [materials](materials.md) | Grades and lots are user supplied; band covers nutrient amounts only; undisclosed blends refused for chemistry |
+| Traceable materials (identity, grade, lot, nutrient band) | `materials.py`, `material_identities.json`, material tests; [materials](site/guide/materials.md) | Grades and lots are user supplied; band covers nutrient amounts only; undisclosed blends refused for chemistry |
 
 Paths in this matrix refer to `src/flahax/`, `tests/` or `examples/` as named.
-See [site planning](site-planning.md), [water-to-delivery](water-to-delivery.md),
-[EC methods](conductivity.md), [source review](source-sheet-review.md) and
+See [site planning](site/guide/site-planning.md), [water-to-delivery](site/guide/water-to-delivery.md),
+[EC methods](site/guide/conductivity.md), [source review](site/guide/source-sheet-review.md) and
 [runnable examples](../examples/README.md) for executable instructions.
 
 ## Preserved boundaries
@@ -63,7 +63,7 @@ See [site planning](site-planning.md), [water-to-delivery](water-to-delivery.md)
 
 ## Verification
 
-Final local verification is recorded in [release evidence](release-evidence.md).
+Final local verification is recorded in [release evidence](site/evidence/release-evidence.md).
 Earlier incremental test counts in feature guides are dated historical runs,
 not claims about the final branch test count. Source-sheet constants and
 screening arithmetic tests establish transcription and implementation

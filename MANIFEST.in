@@ -7,6 +7,7 @@ include CONTRIBUTING.md
 include INTEGRATION.md
 include pyproject.toml
 recursive-include docs *.md *.jpg *.png *.pdf
+recursive-include docs/site *.csv
 exclude docs/sources/04_Fertilizer.pdf
 exclude docs/sources/165357805552.pdf
 exclude docs/sources/215057776303.pdf
@@ -26,3 +27,4 @@ prune examples/tutorial
 global-exclude __pycache__
 global-exclude *.py[cod]
 prune docs/publication
+prune docs/superpowers

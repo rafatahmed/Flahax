@@ -65,7 +65,7 @@ contain chelates or Mg Nitrate.
 1. **Phosphoric Acid (75%) overstates P by about 33 %.** The catalogue
    lists 31.61 % P, the pure-acid value. A 75 % w/w solution is about
    23.71 % P. This was already noted in
-   [water-to-delivery.md](../../water-to-delivery.md) but remains in the
+   [water-to-delivery.md](../../../guide/water-to-delivery.md) but remains in the
    data. It changes recipe doses, not only labels.
 2. **Chelates lack counterions and grade definitions.** Catalogue metal
    percentages are grade assays, not identities. For example, dry NaFeEDTA
@@ -91,7 +91,7 @@ contain chelates or Mg Nitrate.
 - Material-level corrections (findings 1–4) change numbers and need their
   own reviewed change with regression evidence. None is made by this review.
 - Resolved by the traceable-catalogue change (branch `feat/traceable-catalogue`): identity,
-  grade and lot layers ([materials](../../materials.md)); Mg Nitrate D1, phosphoric acid 75 %,
+  grade and lot layers ([materials](../../../guide/materials.md)); Mg Nitrate D1, phosphoric acid 75 %,
   chelate sodium D2 and the borax declared form.
 
 ## Source

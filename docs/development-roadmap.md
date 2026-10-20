@@ -6,7 +6,7 @@ published baseline is [0.4.0](https://pypi.org/project/flahax/0.4.0/)
 The [implementation ledger](implementation-roadmap.md) retains P0–P7
 acceptance and historical audits.
 
-Site planning ([site planning](site-planning.md), [source review](source-sheet-review.md)),
+Site planning ([site planning](site/guide/site-planning.md), [source review](site/guide/source-sheet-review.md)),
 the water-to-delivery workflow and the EC/injection planner shipped in 0.3.1.
 General concentrated A/B EC, acid-adjusted full-recipe conductivity and
 manufacturer-qualified equipment model selection remain open; brochure anchors
@@ -22,12 +22,12 @@ Hosted acceptance P6.6/P6.7 is closed: Python 3.11–3.13 jobs and the pinned li
 
 ## Milestones and acceptance
 
-The [water-to-delivery](water-to-delivery.md) workflow (0.3.1) does not
+The [water-to-delivery](site/guide/water-to-delivery.md) workflow (0.3.1) does not
 authorize a commercial dose from an incomplete water analysis. 0.4.0 anchors
 source water at its measured pH; a field evaluation against measured pH, acid
 demand and laboratory nutrient analyses is planned
 ([publication drafts](publication/README.md)). The
-[EC/injection planner](conductivity.md) still lacks real calibration packs and
+[EC/injection planner](site/guide/conductivity.md) still lacks real calibration packs and
 hold-out validation; synthetic interpolation tests are not physical accuracy
 evidence. Automatic EC-setpoint dosing and a universal concentrated-stock
 conductivity model are not claimed.
@@ -41,7 +41,7 @@ Version labels below are proposals. Assign an owner before starting each milesto
 | M3 / 0.5.0 candidate | Stabilize consumer contracts, diagnostics and repeatable reports; `delivery_contracts.py`, `delivery_plan.py`, public exports | Documented serialization/version policy, round-trip and invalid-record tests, stable error codes and migration notes; compatibility tests for existing API/CLI examples | API maintainer |
 | M4 / later minor releases | Choose one validated capability extension from the opportunity table | Approved scope and source data first; independent reference cases and rejection boundaries; documented compatibility and performance impact | Product owner with model reviewer |
 
-M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
+M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](site/evidence/release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
 
 ## Hardening backlog
 
