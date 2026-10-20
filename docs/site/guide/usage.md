@@ -127,25 +127,38 @@ back if the fit exceeds it, and any remaining excess is reported in
 the products that carry it; chloride products are never used without one.
 
 **Ammonium default.** When the targets omit `N_NH4` and no `N_NH4` ceiling is
-given, incidental NH4-N may reach 10% of the formula's total target N
-(`N_NO3 + N_NH4 + N_UREA`). Calcium nitrate (ag grade) always carries some
-ammonium, so without this allowance the fit under-doses calcium to avoid it.
-The 10% is the project owner's choice (2026-10-20) within the ammonium share
-attributed to Sonneveld and Voogt (2009): about 5-10% of total N in hydroponics
-and 10-15% in substrate culture. The exact page has not been verified.
-`result["ammoniumLimit"]` reports the limit applied. Pass
-`max_ammonium_fraction=None` for the previous penalty-only fit. An explicit
-`N_NH4` target, including `0` ("none wanted"), keeps its own fit and is never
-relaxed.
+given, incidental NH4-N may reach the smaller of 10% of the formula's total
+target N (`N_NO3 + N_NH4 + N_UREA`) and 1.5 mmol/L NH4 (21.01 mg/L N). Calcium
+nitrate (ag grade) always carries some ammonium, so without this allowance the
+fit under-doses calcium to avoid it. `result["ammoniumLimit"]` reports the limit
+applied. Raise the share with `max_ammonium_fraction` (for example `0.15`), or
+pass `None` for the previous penalty-only fit. An explicit `N_NH4` target,
+including `0` ("none wanted"), keeps its own fit and is never relaxed.
+
+The values are the project owner's decisions (2026-10-20), grounded in Dutch
+soilless practice. Recommended NH4 is 5-15% of total N, with at most about
+1-1.5 mmol/L (Van der Lugt et al., following De Kreij, Voogt et al.). Voogt's
+WUR lecture gives "heavy fruit bearing - max 90:10" NO3:NH4. The Dutch standard
+solutions carry 5.9-8.8% NH4-N for most crops (gerbera 12.8%). The often-quoted
+"5-10% in hydroponics, 10-15% in substrate" is Dickson and Fisher's (2019)
+attribution to Sonneveld and Voogt (2009) without a page reference, and it
+describes the pH-neutral share rather than a limit. That primary text has not
+been checked.
 
 References:
 
+- De Kreij, C., Voogt, W. and Baas, R. (2003). *Nutrient solutions and water
+  quality for soilless cultures*. Brochure 191, PPO Glasshouse Horticulture,
+  Naaldwijk. <https://edepot.wur.nl/456342>
+- Voogt, W. Lecture slides on nutrient solutions, Wageningen UR.
+  <https://edepot.wur.nl/13081>
 - Sonneveld, C. and Voogt, W. (2009). *Plant Nutrition of Greenhouse Crops*.
   Springer, Dordrecht. <https://doi.org/10.1007/978-90-481-2532-6>
+  (chapters 12-13, pp. 257-312; not consulted directly).
 - Dickson, R. W. and Fisher, P. R. (2019). Quantifying the acidic and basic
   effects of vegetable and herb species in peat-based substrate and
   hydroponics. *HortScience* 54(6): 1093-1100.
-  <https://doi.org/10.21273/HORTSCI13959-19> (cites the ranges above).
+  <https://doi.org/10.21273/HORTSCI13959-19>
 
 ## Additional planning commands (since 0.3.1)
 

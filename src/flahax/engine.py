@@ -42,14 +42,19 @@ CEILING_FIRST_WEIGHT = 1024.0
 CEILING_STEPS = 13
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
-# Default ceiling on incidental NH4-N as a share of the formula's total N (#54).
-# Owner decision (2026-10-20) within the ammonium share attributed to Sonneveld &
-# Voogt (2009), Plant Nutrition of Greenhouse Crops, Springer, doi:10.1007/978-90-481-2532-6
-# (about 5-10 % of total N in hydroponics, 10-15 % in substrate culture).
+# Default ceiling on incidental NH4-N (#54): the smaller of 10% of the formula's total
+# target N and 1.5 mmol/L NH4. Owner decisions (2026-10-20) based on Dutch soilless
+# practice: NH4 at 5-15% of total N with at most 1-1.5 mmol/L (Van der Lugt et al.
+# 2016 handbook, after De Kreij, Voogt et al.), "heavy fruit bearing - max 90:10"
+# NO3:NH4 (Voogt, WUR lecture, edepot.wur.nl/13081), and Dutch standard solutions at
+# 5.9-8.8% NH4-N for most crops. Dickson & Fisher (2019, doi:10.21273/HORTSCI13959-19)
+# cite 5-10% (hydroponics) / 10-15% (substrate) to Sonneveld & Voogt (2009) without a
+# page; that primary text has not been verified.
 AMMONIUM_FRACTION = 0.10
-AMMONIUM_BASIS = ("incidental NH4-N up to 10% of total target N; owner decision within the "
-                  "ammonium share attributed to Sonneveld & Voogt (2009), "
-                  "doi:10.1007/978-90-481-2532-6")
+AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
+AMMONIUM_BASIS = ("incidental NH4-N up to min(10% of total target N, 1.5 mmol/L); owner "
+                  "decision based on Dutch soilless practice (De Kreij, Voogt et al.; Voogt "
+                  "'max 90:10'); see docs for references")
 
 
 def load_library() -> dict:
@@ -596,8 +601,9 @@ def recommend(
             limitViolations with feasible False. Omitted keeps the default.
         max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
             none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-            the total target N (N_NO3 + N_NH4 + N_UREA). Default 0.10
-            (Sonneveld & Voogt 2009); None keeps the penalty-only fit.
+            the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
+            NH4 (21.01 mg/L N). Default 0.10 (Dutch soilless practice; users may
+            raise it, e.g. to 0.15); None keeps the penalty-only fit.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -633,11 +639,11 @@ def recommend(
         total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
         # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
         if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
-            limit = max_ammonium_fraction * total_n
+            limit = min(max_ammonium_fraction * total_n, AMMONIUM_CAP_MG_PER_L)
             if limit > 0:
                 maxima["N_NH4"] = limit
                 ammonium_limit = {"mgPerL": limit, "fractionOfTotalN": max_ammonium_fraction,
-                                  "basis": AMMONIUM_BASIS}
+                                  "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L, "basis": AMMONIUM_BASIS}
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
