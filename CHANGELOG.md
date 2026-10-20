@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The NNLS solver raises `InputError` when it is still not optimal at its iteration cap, instead of silently returning a non-optimal fit (#55). No benchmark fit reaches the cap.
 - `recommend()` reports `targetIonBalance`, the cation and anion meq/L implied by the formula (P as H2PO4-, S as SO4 2-), and warns when the sums differ by more than 10%. Eight shipped formulas exceed it, which explains most recipe misses (#39); for example Pepper (Howard Resh) is -39.5% and the U of Florida tomato clusters are +19% to +30%.
 - `recommend()` reports `unmetTargets`: each positive target missed by more than 1% with a reason (`no_source`, `limited_by_ceiling`, `incidental_tradeoff`, `conflicting_targets` with the conflicting targets, and whether chloride products would reach it) (#39). The 1% tolerance is documented as a FlahaX assumption.
 - Incidental-ion ceilings reach their limit in one refit instead of up to 13 (#56): mean `recommend()` time on the benchmark falls from 482 to 211 ms with the ammonium default.
