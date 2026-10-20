@@ -287,13 +287,20 @@ class BoundTests(unittest.TestCase):
 
 
 def _assert_close_tree(case, got, want, path='supplementary'):
-    """Equal structure; numbers within 1e-9, everything else equal."""
+    """Equal structure; numbers within 1e-7 relative (1e-9 absolute floor), everything else equal.
+
+    The fit speciates through calculated pH, which returns the midpoint of a bisection
+    bracket up to 1e-7 pH wide; any change in the solver's iteration path (#61) moves
+    the refit in the ninth digit, far below the ~1e-4 precision of Table III."""
     if isinstance(want, dict):
         case.assertEqual(set(got), set(want), path)
         for key in want:
             _assert_close_tree(case, got[key], want[key], f'{path}.{key}')
     elif isinstance(want, (int, float)) and not isinstance(want, bool):
-        case.assertAlmostEqual(got, want, delta=1e-9, msg=path)
+        # Percentages (fit residuals, gaps to other lambda0 sources) inherit the 1e-7
+        # relative bound of the conductivities they compare: 1e-5 percentage points.
+        floor = 1e-5 if path.endswith('percent') else 1e-9
+        case.assertAlmostEqual(got, want, delta=max(floor, 1e-7 * abs(want)), msg=path)
     else:
         case.assertEqual(got, want, path)
 

@@ -109,10 +109,13 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
                 raise DeliveryError('wrong_reagent_direction', 'acid selection cannot satisfy a base requirement')
             basis, molar_mass, nutrients = ACIDS[formula]
 
-            def at(dose):
+            last = [initial]
+
+            def at(dose, last=last):
                 amended = dict(totals)
                 amended[basis] = amended.get(basis, 0) + dose
-                return solve(amended, target_ph, phases=phases)
+                last[0] = solve(amended, target_ph, phases=phases, start=last[0])  # warm start, #61
+                return last[0]
 
             dose = 0.
             target = initial if target_ph == initial_ph else at(0.)
