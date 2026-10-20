@@ -289,6 +289,11 @@ A zero NH4 target has no meaningful percentage deviation. Real products may
 add NH4: report the absolute addition separately; never relabel it as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
+When targets omit NH4 entirely, `recommend` allows incidental NH4-N up to the
+smaller of 10% of the total target N and 1.5 mmol/L (21.01 mg/L N) by default,
+an owner decision based on Dutch soilless practice (5-15% of total N, at most
+1-1.5 mmol/L; De Kreij, Voogt et al.). `ammoniumLimit` reports it;
+`max_ammonium_fraction` raises it and `None` turns it off.
 
 ### Real water analyses: start from the measured pH
 
