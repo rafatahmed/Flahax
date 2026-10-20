@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 
 from .aqueous_model import AqueousResult, chemistry, solve
 from .delivery_contracts import DeliveryError
+from .root_finding import shrink_bracket
 
 BALANCE_IONS = {'Cl-': -1, 'Na+': 1}
 DEFAULT_MAXIMUM_IMBALANCE_PERCENT = 5.
@@ -75,19 +76,14 @@ def _carbon_for_alkalinity(totals, ph, alkalinity, phases):
     if alkalinity <= base:
         raise DeliveryError('alkalinity_out_of_range',
                             'measured alkalinity is not above the carbon-free alkalinity at the measured pH')
-    low, high = 0., 1e-6
-    while alk(high) < alkalinity:
+    low, g_low, high = 0., base - alkalinity, 1e-6
+    while (g_high := alk(high) - alkalinity) < 0:
+        low, g_low = high, g_high
         high *= 4
         if high > .1:
             raise DeliveryError('alkalinity_out_of_range', 'alkalinity requires more carbon than the Davies domain allows')
-    for _ in range(200):
-        middle = (low + high) / 2
-        if alk(middle) < alkalinity:
-            low = middle
-        else:
-            high = middle
-        if high - low <= 1e-12 * high:
-            break
+    low, high = shrink_bracket(lambda carbon: alk(carbon) - alkalinity, low, g_low, high, g_high,
+                               relative=1e-12)
     return (low + high) / 2
 
 
