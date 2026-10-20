@@ -25,8 +25,10 @@ class PublishedEvidenceTests(unittest.TestCase):
                     covered.add(name)
                     self.assertEqual(hashlib.sha256(bundle.read(name)).hexdigest(), expected)
                 self.assertEqual(covered, set(bundle.namelist()) - {"CHECKSUMS.sha256"})
-                self.assertEqual(path.with_name("baseline.json").read_bytes(),
-                                 bundle.read("baseline.json"))
+                for download in path.parent.iterdir():
+                    if download.name != "evidence.zip":
+                        self.assertEqual(download.read_bytes(), bundle.read(download.name),
+                                         download.name)
                 for name in bundle.namelist():
                     if name.endswith((".json", ".log", ".txt")):
                         self.assertIsNone(re.search(
