@@ -60,7 +60,7 @@ The planner evaluates valid tank assignments in tank-ID order and chooses one th
 
 ## Mathematical verification is the completion criterion
 
-The stock planner is a conservative constraint solver using caller-supplied rules. The separate coupled aqueous model is now verified against pinned PHREEQC; see [the current model](../../fertilizer-equilibrium-model.md) and [coverage matrix](../../chemistry-coverage-matrix.md). Dilute equilibrium verification does not certify concentrated stocks outside the Davies range.
+The stock planner is a conservative constraint solver using caller-supplied rules. The separate coupled aqueous model is now verified against pinned PHREEQC; see [the current model](../models/fertilizer-equilibrium-model.md) and [coverage matrix](../models/chemistry-coverage-matrix.md). Dilute equilibrium verification does not certify concentrated stocks outside the Davies range.
 
 For each phase `p`, the reference calculation is:
 

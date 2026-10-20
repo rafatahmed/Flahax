@@ -20,7 +20,7 @@ This roadmap tracks package capabilities and their evidence, not deployment or h
 
 This section preserves the pre-increment audit. See the continuation below for the current implementation and verification status; its identified P5.5 and local packaging gaps are now addressed.
 
-Audited against chemistry closure commit `20c41c43f785940c5045276bb47925159a119bca`, package version `0.2.0`, runtime modules, tests and checked-in workflows. The closure records 100 passing tests with live PHREEQC, 10 product/target and 11 phase fixture families. [Release evidence](release-evidence.md), [exact chemistry coverage](chemistry-coverage-matrix.md), [source assumptions](sources/flahax-chelate-thermodynamic-profile.md) and [reproduction instructions](reference-fixtures.md) are the acceptance record, not a claim that all future work is finished.
+Audited against chemistry closure commit `20c41c43f785940c5045276bb47925159a119bca`, package version `0.2.0`, runtime modules, tests and checked-in workflows. The closure records 100 passing tests with live PHREEQC, 10 product/target and 11 phase fixture families. [Release evidence](site/evidence/release-evidence.md), [exact chemistry coverage](site/models/chemistry-coverage-matrix.md), [source assumptions](site/models/flahax-chelate-thermodynamic-profile.md) and [reproduction instructions](site/models/reference-fixtures.md) are the acceptance record, not a claim that all future work is finished.
 
 | Audited area | What the package actually provides | Evidence / outstanding boundary |
 |---|---|---|
@@ -49,7 +49,7 @@ P5.5 now provides the explicit catalogue-equilibrium delivery adapter. The compl
 
 P6.6/P6.7 remain active until the supported Python 3.11–3.13 hosted jobs actually pass; the previously observed GitHub account billing lock prevented execution. Local success is not hosted-CI acceptance.
 
-At the project owner's request, G6 for this **planning-package release** uses computational evidence without laboratory work. **Assessor: Rafat Al Khashan.** The [computational assessment](computational-review.md) records passing numerical evidence and its limits, not an independent human review, fabricated signature or operational certification. Physical validation is not a prerequisite for this bounded computational assessment. No hardware or external integration is authorized by this amendment.
+At the project owner's request, G6 for this **planning-package release** uses computational evidence without laboratory work. **Assessor: Rafat Al Khashan.** The [computational assessment](site/evidence/computational-review.md) records passing numerical evidence and its limits, not an independent human review, fabricated signature or operational certification. Physical validation is not a prerequisite for this bounded computational assessment. No hardware or external integration is authorized by this amendment.
 
 1. FlahaX remains a Python package with no required third-party runtime dependencies.
 2. The current `recommend` output—grams per litre of final working solution—remains the canonical nutrient recipe.
@@ -125,7 +125,7 @@ P2/P3/P4 have bounded numerical implementations. Both measured-curve and equilib
 
 **Exit condition:** every selected salt has exactly one compatible storage channel, no limit/capacity is exceeded, and the plan names the rule that accepted or rejected each assignment.
 
-**Decision gate G2:** the unified 25 C reference is PHREEQC 3.8.6 `minteq.v4.dat` plus the checked-in, source-documented FlahaX extensions. Runtime Davies is restricted to `I <= 0.1 mol/kgw`. The [coverage matrix](chemistry-coverage-matrix.md) identifies exact native aliases, extension gaps, reactions and sources. Acceptance is numerical verification of this bounded selected model, not commercial-lot or bench certification.
+**Decision gate G2:** the unified 25 C reference is PHREEQC 3.8.6 `minteq.v4.dat` plus the checked-in, source-documented FlahaX extensions. Runtime Davies is restricted to `I <= 0.1 mol/kgw`. The [coverage matrix](site/models/chemistry-coverage-matrix.md) identifies exact native aliases, extension gaps, reactions and sources. Acceptance is numerical verification of this bounded selected model, not commercial-lot or bench certification.
 
 ### P3 — pH and alkalinity equilibrium model `[x]`
 

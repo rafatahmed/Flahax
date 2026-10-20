@@ -31,13 +31,13 @@
 
 ## Scientific model and evidence
 
-- [Formulation method](method.md)
-- [Current mixed-equilibrium model](fertilizer-equilibrium-model.md)
-- [Coverage summary](full-fertilizer-chemistry.md) and [exact reaction/phase matrix](chemistry-coverage-matrix.md)
-- [Reference fixture reproduction](reference-fixtures.md)
-- [Chelate parameter assumptions](sources/flahax-chelate-thermodynamic-profile.md)
-- [Computational assessment](computational-review.md), [release evidence](release-evidence.md) and [roadmap](implementation-roadmap.md)
-- [Audits](audit/README.md): dated independent assessments with maintainer reviews, starting with the 2026-10-17 FlahaX vs Horticalc benchmark.
+- [Formulation method](site/models/method.md)
+- [Current mixed-equilibrium model](site/models/fertilizer-equilibrium-model.md)
+- [Coverage summary](site/models/full-fertilizer-chemistry.md) and [exact reaction/phase matrix](site/models/chemistry-coverage-matrix.md)
+- [Reference fixture reproduction](site/models/reference-fixtures.md)
+- [Chelate parameter assumptions](site/models/flahax-chelate-thermodynamic-profile.md)
+- [Computational assessment](site/evidence/computational-review.md), [release evidence](site/evidence/release-evidence.md) and [roadmap](implementation-roadmap.md)
+- [Audits](site/evidence/audit/README.md): dated independent assessments with maintainer reviews, starting with the 2026-10-17 FlahaX vs Horticalc benchmark.
 
 ## Maintainers and development
 
@@ -59,6 +59,6 @@
 - [Reduced-equilibrium model history](history/reduced-equilibrium-model.md)
 - [Chemistry development history](history/full-fertilizer-development.md)
 - [Original delivery design](delivery-control-design.md)
-- [Initial reference kernels](equilibrium-kernel.md)
+- [Initial reference kernels](site/models/equilibrium-kernel.md)
 
 Scientific captures and failure reproducers remain in `tests/fixtures/phreeqc/`. Their provenance is retained rather than removed as unused documentation.

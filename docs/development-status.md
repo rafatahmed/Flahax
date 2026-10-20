@@ -1,7 +1,7 @@
 # Water-to-delivery development status
 
-Updated 2026-10-17. **0.4.0 is published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
-[publication evidence](release-evidence.md#031-publication---2026-10-17).
+Updated 2026-10-17. **0.4.0 is published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
+[publication evidence](site/evidence/release-evidence.md#031-publication---2026-10-17).
 The matrix below describes the 0.3.1 capabilities and their boundaries.
 
 ## Capability and boundary matrix
@@ -63,7 +63,7 @@ See [site planning](site/guide/site-planning.md), [water-to-delivery](site/guide
 
 ## Verification
 
-Final local verification is recorded in [release evidence](release-evidence.md).
+Final local verification is recorded in [release evidence](site/evidence/release-evidence.md).
 Earlier incremental test counts in feature guides are dated historical runs,
 not claims about the final branch test count. Source-sheet constants and
 screening arithmetic tests establish transcription and implementation
