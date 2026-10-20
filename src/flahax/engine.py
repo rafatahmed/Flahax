@@ -35,6 +35,8 @@ NNLS_ADDITION_FACTOR = 4
 # Smallest Cholesky pivot, relative to the column's squared norm, accepted by the Gram
 # path (#59); below it the subproblem is ill-conditioned and Householder decides.
 GRAM_PIVOT_FLOOR = 1e-8
+# Pivot ratio below which the Gram solution is refined against the original columns.
+GRAM_REFINE_BELOW = 1e-4
 # Double-precision unit round-off, for scale-aware NNLS optimality tests.
 ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
@@ -91,10 +93,6 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
             continue
         gap[symbol] = targets[symbol] - water.get(symbol, 0.0)
     return gap
-
-
-def _matvec(rows: list[list[float]], vec: list[float]) -> list[float]:
-    return [sum(a * b for a, b in zip(row, vec)) for row in rows]
 
 
 def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
@@ -179,6 +177,7 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     """
     k = len(passive)
     chol = [[0.0] * k for _ in range(k)]
+    weakest = 1.0
     for i in range(k):
         gi = gram[passive[i]]
         for j in range(i + 1):
@@ -186,6 +185,7 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
             if i == j:
                 if value <= GRAM_PIVOT_FLOOR * gi[passive[i]]:
                     return None
+                weakest = min(weakest, value / gi[passive[i]])
                 chol[i][i] = math.sqrt(value)
             else:
                 chol[i][j] = value / chol[j][j]
@@ -202,7 +202,8 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     z = solve([cross[j] for j in passive])
     picked = [cols[j] for j in passive]
     m = len(rhs)
-    for _ in range(2):
+    # Well-conditioned subproblems are already accurate; refine only weak ones.
+    for _ in range(0 if weakest > GRAM_REFINE_BELOW else 2):
         residual = [rhs[r] - sum(z[i] * picked[i][r] for i in range(k)) for r in range(m)]
         delta = solve([sum(col[r] * residual[r] for r in range(m)) for col in picked])
         z = [a + b for a, b in zip(z, delta)]
@@ -232,10 +233,6 @@ def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = N
     scale = max((abs(v) for row in matrix for v in row), default=0.0)
     scale *= math.sqrt(sum(v * v for v in rhs))
     dual_tol = 10.0 * max(m, n) * ROUNDOFF * scale
-
-    def residual() -> list[float]:
-        pred = _matvec(matrix, x)
-        return [rhs[i] - pred[i] for i in range(m)]
 
     gram = _LazyGram(cols)
     cross = [sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
@@ -291,8 +288,9 @@ def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = N
 
     additions = 0
     while True:
-        resid = residual()
-        weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
+        # Dual weights A^T(b - Ax) from cached Gram entries over the passive columns.
+        support = [j for j in range(n) if x[j] != 0.0]
+        weights = [cross[i] - sum(gram[i][j] * x[j] for j in support) for i in range(n)]
         candidates = [j for j in active if j not in rejected]
         if not candidates:
             break
@@ -607,6 +605,13 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
                      if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6))
     base = _target_misses(engine_pool, targets, water)
     with_chloride = None
+    dropped_ok: dict[str, bool] = {}  # each drop-one fit is shared by every missed target
+
+    def reachable_without(target: str) -> bool:
+        if target not in dropped_ok:
+            dropped_ok[target] = not _target_misses(engine_pool, targets, water, {target})
+        return dropped_ok[target]
+
     out = []
     for row in missed:
         symbol = row["symbol"]
@@ -619,7 +624,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
         else:
             others = [t for t, ppm in targets.items() if ppm > 0 and t != symbol]
             item["reason"] = "conflicting_targets"
-            item["conflictsWith"] = [t for t in others if not _target_misses(engine_pool, targets, water, {t})]
+            item["conflictsWith"] = [t for t in others if reachable_without(t)]
             if consent:
                 if with_chloride is None:
                     with_chloride = not _target_misses(usable, targets, water)
