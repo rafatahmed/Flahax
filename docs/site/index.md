@@ -53,7 +53,7 @@ for salt in result["salts"]:
 - **Developers:** start with the [user manual](guide/manual.md)
   and the [API reference](api/reference.md).
 - **Growers and agronomists:** read the
-  [guide for growers and agronomists](https://flahax.readthedocs.io/en/latest/for-growers/).
+  [guide for growers and agronomists](growers.md).
 
 ```{toctree}
 :caption: User guide
@@ -70,6 +70,13 @@ guide/stock-planning
 guide/ph-planning
 guide/conductivity
 guide/materials
+```
+
+```{toctree}
+:caption: For growers and agronomists
+:hidden:
+
+growers
 ```
 
 ```{toctree}
