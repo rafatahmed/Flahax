@@ -29,6 +29,17 @@ class ChemistryAcceptanceTests(unittest.TestCase):
         carbonate=catalogue_dose_totals({'Potassium Carbonate':1.})
         self.assertEqual(carbonate['K+'],2*carbonate['CO3-2'])
 
+    def test_near_singular_newton_step_does_not_stall(self):
+        # Cold start at this pH met a near-singular Jacobian (Fe-EDDHA) and raised
+        # 'line search stalled'; a damped least-squares step now recovers.
+        from benchmarks.cases import read_fixture
+        totals=read_fixture('products/mixed_target_ph_nitric')['runtime_totals']
+        for ph in (7.3962594096730125,7.406259409673012):
+            with self.subTest(ph=ph):
+                result=solve(totals,ph)
+                for component,residual in result.residuals.items():
+                    self.assertLess(abs(residual),1e-9*result.totals[component]+1e-15)
+
     def test_chloride_salts_keep_chloride_and_add_no_nitrate(self):
         calcium=catalogue_dose_totals({'Calcium Chloride (Dihydrate)':1.})
         self.assertNotIn('NO3-',calcium)

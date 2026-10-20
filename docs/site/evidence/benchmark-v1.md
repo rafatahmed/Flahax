@@ -67,7 +67,9 @@ absolute/relative molality and acid-dose tolerances, absolute log-activity and
 saturation-index tolerances, and phase-amount tolerances. Conservation uses
 `1e-15 + 1e-9 * component total`; phase complementarity uses `1e-7` SI.
 Report every comparison and available final-state iteration count, including
-failed comparisons. Do not silently widen tolerances to improve results.
+failed comparisons. `track_search_solves` counts every equilibrium solve per call,
+so an acid target's search work is reported separately from the iterations of
+its final state. Do not silently widen tolerances to improve results.
 
 These captures prescribe pH. The nitric case solves reagent demand to a
 prescribed target; it does not independently validate prediction of an unknown
@@ -151,6 +153,9 @@ timed samples. The equilibrium benchmark has a 900-second process timeout;
 this budget includes setup. A timeout is a benchmark-budget failure, not proof
 that one solve exceeded 900 seconds or failed to converge. Preserve it as a
 missing measurement and use a separately identified run if changing the budget.
+The 2026-10-20 snapshots predate the solver speed-up for #37 (sparse Jacobian and
+bracketed root finding), which cut the acid-target call from about 70 s to under
+2 s on the recording laptop; compare only runs from the same revision.
 
 The manual `Benchmark v1` CI workflow retains JSON, ASV records, and its
 measurement log as artifacts. A correctness failure makes the workflow fail.
