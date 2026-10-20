@@ -2,6 +2,22 @@
 
 The current preparation comes first; dated audits below it are history.
 
+## 0.5.0 - preparation 2026-10-21
+
+Prepared on `release/0.5.0` from `main` at `9bea54a`. The evidence is the
+[0.5.0 preparation record](site/evidence/release-evidence.md#050-preparation---2026-10-21).
+
+0.5.0 changes:
+- recipe selection: the ammonium limit, ceilings as constraints and miss diagnosis;
+- catalogue identities and provenance;
+- experimental irrigation EC;
+- solver speed and accuracy.
+
+It keeps every 0.4.0 export. Remaining gates:
+- hosted checks on the release revision;
+- review and explicit owner publication authorization;
+- the workflow build, with recorded hashes and a fresh-install check.
+
 ## 0.4.0 - published 2026-10-17
 
 Prepared on `release/0.4.0` from `main` at `00d855a`, finalized in PR #18 and

@@ -132,7 +132,7 @@ __all__ = [
     "transition_plan",
     "validate_delivery_request",
 ]
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 from .equilibrium_delivery import EquilibriumPhPlan, plan_equilibrium_delivery
 __all__ += ["EquilibriumPhPlan", "plan_equilibrium_delivery"]
 __all__ += ["AqueousResult", "AcidResult", "catalogue_dose_totals", "plan_catalogue_nitric_target"]

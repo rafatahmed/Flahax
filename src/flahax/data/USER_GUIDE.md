@@ -1,8 +1,8 @@
-# FlahaX 0.4.0 — User Manual
+# FlahaX 0.5.0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.4.0, released 2026-10-17, the first release under the Apache License 2.0. The release workflow ran the Python 3.11–3.13 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
+**Version:** 0.5.0, release candidate prepared 2026-10-21; not yet published. See the repository's release evidence.
 
 ## Contents
 
@@ -26,9 +26,9 @@ For exact public signatures and result-record fields, see the bundled
 
 FlahaX selects fertilizer salts and their grams per litre for fixed nutrient targets after accounting for source water. Optional Python APIs evaluate one mixed aqueous system and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
 
-Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). FlahaX is open source under the Apache License 2.0.
+Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions (by default ammonium) within stated limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
-The mixed model covers 28 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
+The mixed model covers 30 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
 Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. CH-micro includes those EDTA forms, borax and sodium molybdate. Do not substitute arbitrary product chemistry based on a similar name.
 
@@ -42,7 +42,7 @@ Install the published package in a virtual environment. From a source checkout, 
 python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # POSIX shell: source .venv/bin/activate
-python -m pip install flahax==0.4.0
+python -m pip install flahax==0.5.0
 python -c "import flahax; print(flahax.__version__)"
 ```
 
@@ -88,6 +88,12 @@ in its raw `grams` vector; `recommend` filters and may recover products before
 fitting. Do not zip its `grams` with the original catalogue. `feasible` reports
 positive-target fit; it is not stock or delivery approval. Avoid additional
 rounding before constraint checks.
+
+`recommend` also returns `unmetTargets` (each target missed by more than 1%,
+with a reason), `targetIonBalance` (the formula's own cation and anion meq/L),
+`ammoniumLimit`, `limitViolations` (incidental ions above a stated maximum) and,
+for every selected product, `provenance` (record, chemical identity, analysis
+basis and source documents). Section 11 shows how to read them.
 
 ## 4. Command-line use
 
@@ -244,18 +250,20 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 ## 10. Upgrading, integration and citation
 
+0.5.0 preserves every 0.4.0 public export and signature; `recommend` gains the keyword-only `maximum_concentrations` and `max_ammonium_fraction`, and `catalogue_dose_totals` gains `materials`. It adds the material traceability API (`load_identities`, `identity_for_product`, `make_grade`, `make_lot`, `resolve_material`, `nutrient_band`) and experimental speciation-based irrigation EC (`calculate_irrigation_ec` and related functions); see the API reference. **Recipes change:** the default ammonium limit, the corrected catalogue assays (Mg nitrate hexahydrate, 75% phosphoric acid) and the constraint treatment of ceilings give different doses for most shipped formulas, and chelate sodium now appears in chemistry and EC. Re-run and review saved recipes before reusing them. The equilibrium solver is faster with numerically equivalent results. The full list is in `CHANGELOG.md`.
+
 0.4.0 preserves every 0.3.1 public export and the no-argument recipe/CLI contract. It adds `balance_water_analysis` and an optional `measured_ph` entry in the workflow's `equilibrium` record; without it, behaviour is unchanged. 0.3.1 added the explicit planning subcommands. Check the nitric-result types when upgrading from development snapshots: use `AcidResult` for numerical states and `EquilibriumPhPlan` for reagent-volume composition. Package, record-schema and thermodynamic-model versions are distinct identifiers.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.4.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.5.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 
 ## 11. Site workflow, EC and injection examples
 
 Each Python block in this manual is a complete, independently executed example.
-The following examples cover the 0.3.1 and 0.4.0 additions without inventing
+The following examples cover the 0.3.1, 0.4.0 and 0.5.0 additions without inventing
 site chemistry, EC calibration or manufacturer operating curves. The
 measured-pH example uses a published well analysis, cited in the code.
 
@@ -294,6 +302,40 @@ smaller of 10% of the total target N and 1.5 mmol/L (21.01 mg/L N) by default,
 an owner decision based on Dutch soilless practice (5-15% of total N, at most
 1-1.5 mmol/L; De Kreij, Voogt et al.). `ammoniumLimit` reports it;
 `max_ammonium_fraction` raises it and `None` turns it off.
+
+### Reading misses, limits and provenance
+
+```python
+import math
+from flahax import load_library, recommend
+
+library = load_library()
+grow = next(f for f in library['formulas'] if f['name'] == 'Generic Grow (maximumyield)')
+result = recommend(library['salts'], grow['targets'])
+assert result['targetIonBalance']['exceedsWarning']        # anions exceed cations by 17%
+assert math.isclose(result['ammoniumLimit']['mgPerL'], 16)  # 10% of the 160 mg/L target N
+assert not result['limitViolations']
+assert {miss['reason'] for miss in result['unmetTargets']} == {'limited_by_ceiling'}
+for miss in result['unmetTargets']:
+    print(miss['symbol'], round(miss['deltaPct'], 2), miss['bindingLimits'])
+print(result['salts'][0]['name'], result['salts'][0]['provenance']['identityId'])
+```
+
+Generic Grow lists 17% more anion than cation charge, so no salt combination
+meets every target; its warning says so. Its N_NO3, K, Ca and S misses are all
+`limited_by_ceiling`: meeting them would need more ammonium than the default
+limit allows, and `bindingLimits` names it. Other reasons are `no_source` (no
+product supplies the element), `incidental_tradeoff` (reachable, but the
+penalty on an unrequested ion chose otherwise) and `conflicting_targets` (with
+`conflictsWith`, and `reachableWithChloride` when chloride products would
+reach it). Misses within 1% are not listed.
+
+A binding ceiling is held exactly on its limit, less one part per million.
+Potassium chloride and calcium chloride dihydrate are in the catalogue but are
+never used unless the formula targets Cl or a Cl ceiling is given, for example
+`maximum_concentrations={'Cl': 106.35}` (3 mmol/L, a common raw-water limit for
+open systems). Each product's `provenance` names its catalogue record, chemical
+identity, analysis basis and source documents; keep it with the recipe.
 
 ### Real water analyses: start from the measured pH
 

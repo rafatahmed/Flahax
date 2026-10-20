@@ -4,7 +4,7 @@ Readers: the documentation is at <https://flahax.readthedocs.io/>. This index is
 
 ## Start here
 
-- [User manual](../src/flahax/data/USER_GUIDE.md) (version 0.4.0): the canonical, self-contained guide shipped inside the package.
+- [User manual](../src/flahax/data/USER_GUIDE.md) (version 0.5.0): the canonical, self-contained guide shipped inside the package.
 - [Changelog](../CHANGELOG.md): new capabilities, compatibility notes and release status.
 - [Core API and CLI](site/guide/usage.md): formulation inputs and output fields.
 - [Complete public API reference](../src/flahax/data/API_REFERENCE.md): generated signatures, source docstrings and result-record fields for every top-level export; shipped offline.

@@ -26,6 +26,59 @@ They are kept here because the records cite them.
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
 
+## 0.5.0 preparation (2026-10-21)
+
+Prepared revision: `release/0.5.0`, cut from `main` at `9bea54a` (merge of
+[PR #67](https://github.com/rafatahmed/Flahax/pull/67)). Hosted CI passed on `9bea54a`
+([run 39515601654](https://github.com/rafatahmed/Flahax/actions/runs/39515601654):
+Python 3.11, 3.12 and 3.13, live PHREEQC replay, docs). Assessor: Rafat Al Khashan
+with Claude Code assistance. This is release-readiness evidence, not publication
+authorization. Version 0.5.0 is unpublished; PyPI's latest release is 0.4.0.
+
+| Check | Result |
+|---|---|
+| Version alignment | `0.5.0` in `pyproject.toml`, `flahax.__version__`, `CITATION.cff`, README, user manual and API reference; changelog section `0.5.0 — Unreleased`; tag `v0.5.0` not yet created |
+| Licence | Unchanged: Apache-2.0. Wheel metadata `License-Expression: Apache-2.0`, with `LICENSE` and `NOTICE` as licence files |
+| Local regression | 373 tests passed with zero skips and `FLAHAX_REQUIRE_PHREEQC=1` (pinned PHREEQC 3.8.6) on Python 3.13.15 (33.4 s) and 3.14.0 (28.2 s), with the documentation site built so its checks run. `compileall` and `git diff --check` passed |
+| Public API compatibility against `v0.4.0` | 103 exports retained, none removed; 18 added (121 total): the material traceability API (`DocumentReference`, `Grade`, `Lot`, `ResolvedMaterial`, `load_identities`, `identity_for_product`, `make_grade`, `make_lot`, `resolve_material`, `nutrient_band`) and experimental irrigation EC (`DeclaredPureWater`, `IrrigationECResult`, `assay_charge_residual`, `calculate_ec_from_totals`, `calculate_irrigation_ec`, `calculate_irrigation_ec_band`, `calculate_irrigation_ec_from_plan`, `compare_measured_ec`). Two signatures gain keyword-only parameters with defaults: `recommend` (`maximum_concentrations`, `max_ammonium_fraction`) and `catalogue_dose_totals` (`materials`) |
+| Isolated distribution check | `tools/verify_distribution.py` passed: clean wheel and sdist installs on Python 3.13.15 (builder 3.14.0, `build` 1.6.1), nine manual examples, 30 catalogue products, all public exports, both CLI entry points, planning EC 1.15 mS/cm. Sdist 468 files, 5,086,439 bytes; no PDF; `docs/publication/` excluded |
+| Metadata | `twine check --strict` (Twine 7.0.0) passed for both artifacts |
+| Packaged resources | `USER_GUIDE.md` `92f5d5806b1f0931df05fe490b738b8b277486d70a21d6ea53e2839f36c5ffb9`; `API_REFERENCE.md` `db350573e41e407468d0ddb7bd7b86304c80562baf8d6b77d146d4f8df1ab9c8`; `chemistry_25c.json` `ad87363818ccc2471c1343a0791f9ae63798bc0b3530b5b710344aff3077188f`; `library.json` `dfc65ac7fc0060ebe760870b832e6c2c4febce2babf8cfa9defa6a858e28a05a` |
+| Thermodynamic data | Unchanged since 0.3.1: `chemistry_25c.json` has the same LF hash as the published 0.4.0 wheel |
+| Benchmark and comparison evidence | [Benchmark v1 snapshot 2026-10-20-linux-df0d30b](benchmark-results.md): every correctness gate passes (NNLS 7/7, stored chemistry 21/21, timing 17/17; complete recipes 34/52). [Competitor comparison](competitor-comparison.md) at `ed568c5` |
+
+Candidate hashes, built on Windows from the LF working tree before the final
+form of this record (the record changes the sdist, so the publication artifacts
+must be rebuilt from the final reviewed revision and hashed again):
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.5.0-py3-none-any.whl` | `1c6d76bdf04cb21860b153fae8ccd294af7a3142d503173a09158bf0baadb96e` |
+| `flahax-0.5.0.tar.gz` | `52122a12d154753b8726ba6649a954c78325314378ea6ac9c8995c7c421ae987` |
+
+What 0.5.0 changes scientifically:
+- **Recipes.** `recommend` allows incidental NH4-N up to the smaller of 10% of
+  the target N and 1.5 mmol/L when the formula omits NH4 (#54). It treats a
+  binding incidental-ion ceiling as a constraint (#68), and it explains every
+  missed target and the formula's own ion balance (#39).
+- **Catalogue.** Mg nitrate is corrected to the hexahydrate and phosphoric acid
+  to a 75% solution. Potassium chloride and calcium chloride dihydrate are
+  added, and are used only with chloride consent. Every product is linked to a
+  chemical identity and source document.
+- **Shipped recipes change.** Most shipped formulas get different doses, and
+  chelate sodium appears in chemistry and EC.
+- **Solvers.** The equilibrium and NNLS solvers are faster, with numerically
+  equivalent or more accurate results (#59, #61, #68).
+- **Unchanged.** No reaction constant or phase changed.
+
+Remaining before publication, per the [publishing checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md):
+- hosted CI on the release revision;
+- explicit owner authorization;
+- the `v0.5.0` GitHub Release, the workflow's own build and gates, and approval of the `pypi` deployment;
+- PyPI metadata, hash identity and fresh-install verification;
+- the publication date in the changelog and the manual;
+- confirming that the Read the Docs `stable` version serves the benchmark pages (#48).
+
 ## 0.4.0 publication (2026-10-17)
 
 0.4.0 was published to PyPI on **2026-10-17** by the hardened release workflow

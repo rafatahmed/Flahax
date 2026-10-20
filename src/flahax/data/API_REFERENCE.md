@@ -1,4 +1,4 @@
-# FlahaX 0.4.0 - Public API reference
+# FlahaX 0.5.0 - Public API reference
 
 Generated from `flahax.__all__`, runtime signatures and source docstrings.
 Do not edit this inventory by hand. Regenerate with
