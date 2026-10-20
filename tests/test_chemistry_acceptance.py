@@ -40,6 +40,39 @@ class ChemistryAcceptanceTests(unittest.TestCase):
                 for component,residual in result.residuals.items():
                     self.assertLess(abs(residual),1e-9*result.totals[component]+1e-15)
 
+    def test_low_ph_chelate_mixtures_converge(self):
+        # #52: below pH ~5.05 the cold start left Newton crawling toward strongly
+        # complexed free ions (EDTA/DTPA/EDDHA with Fe and Cu) until its iteration limit.
+        from benchmarks.cases import read_fixture
+        for name in ('products/mixed_products','phases/mixed_product_phases'):
+            data=read_fixture(name)
+            for ph in (4.2,4.3,4.5,4.7,4.9,5.0):
+                with self.subTest(fixture=name,ph=ph):
+                    result=solve(data['runtime_totals'],ph,phases=data.get('phases',()))
+                    for component,residual in result.residuals.items():
+                        self.assertLess(abs(residual),1e-9*result.totals[component]+1e-15)
+
+    def test_acid_target_at_ph_five_for_chelate_mixture(self):
+        # Failed on main with 'aqueous Newton iteration limit' (#52).
+        from benchmarks.cases import read_fixture
+        data=read_fixture('products/mixed_target_ph_nitric')
+        result=nitric_target(data['runtime_totals'],data['initial_ph'],5.)
+        self.assertAlmostEqual(result.target.ph,5.)
+        self.assertGreater(result.nitric_acid_molal,0.)
+        self.assertAlmostEqual(result.target.totals['NO3-']-data['runtime_totals']['NO3-'],result.nitric_acid_molal,places=14)
+
+    def test_converging_solves_do_not_use_the_restart(self):
+        import flahax.aqueous_model as model
+        from benchmarks.cases import read_fixture
+        calls=[]
+        original=model._continued_fraction
+        model._continued_fraction=lambda *a,**k: calls.append(1) or original(*a,**k)
+        try:
+            solve(read_fixture('products/mixed_products')['runtime_totals'],6.)
+        finally:
+            model._continued_fraction=original
+        self.assertEqual(calls,[])
+
     def test_chloride_salts_keep_chloride_and_add_no_nitrate(self):
         calcium=catalogue_dose_totals({'Calcium Chloride (Dihydrate)':1.})
         self.assertNotIn('NO3-',calcium)

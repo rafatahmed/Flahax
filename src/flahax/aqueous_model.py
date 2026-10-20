@@ -14,6 +14,8 @@ from .delivery_contracts import DeliveryError
 from .root_finding import shrink_bracket
 
 LN10 = math.log(10.)
+# Continued-fraction sweeps before Newton when the cold start does not converge (#52).
+PRESOLVE_SWEEPS = 200
 
 @lru_cache(maxsize=1)
 def chemistry():
@@ -73,7 +75,44 @@ def _damped_step(evaluate, x, residual, matrix):
         damping*=10
     return None
 
+def _continued_fraction(logs, totals, bases, records, sparse, ph, strength, sweeps=PRESOLVE_SWEEPS):
+    """Mass-balance pre-iteration (Wigley 1977 continued fraction): rescale each free
+    activity by total/sum, damped by its largest stoichiometric coefficient."""
+    root=math.sqrt(strength)
+    def lgamma(z):
+        return -.509*z*z*(root/(1+root)-.3*strength) if z else .1*strength
+    offsets=[r['beta']-ph*r['powers'].get('H+',0)-lgamma(r['charge']) for r in records]
+    power=[max([abs(v) for nz in sparse for j,v in nz if j==k]+[1.]) for k in range(len(bases))]
+    logs=list(logs)
+    for _ in range(sweeps):
+        sums=[0.]*len(bases)
+        for o,nz in zip(offsets,sparse):
+            a=10.**max(-300,min(100,o+sum(v*logs[j] for j,v in nz)))
+            for j,v in nz:
+                sums[j]+=a*v
+        worst=0.
+        for k,b in enumerate(bases):
+            if sums[k]<=0:
+                continue
+            change=(math.log10(totals[b])-math.log10(sums[k]))/power[k]
+            logs[k]+=change
+            worst=max(worst,abs(change))
+        if worst<1e-3:
+            break
+    return logs
+
 def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
+    try:
+        return _solve(totals, ph, phases=phases, ionic_strength=ionic_strength, temperature_c=temperature_c)
+    except DeliveryError as exc:
+        if exc.code != 'nonconvergent':
+            raise
+    # The cold start (every free activity at total/1000) can leave Newton crawling far
+    # from strongly complexed free ions (#52); restart from a continued-fraction estimate.
+    return _solve(totals, ph, phases=phases, ionic_strength=ionic_strength, temperature_c=temperature_c,
+                  presolve=True)
+
+def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., presolve=False):
     if temperature_c != 25:
         raise DeliveryError('temperature_out_of_range','reaction dataset is restricted to 25 C')
     if not math.isfinite(ph) or not 0 <= ph <= 14:
@@ -98,6 +137,8 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
     sparse=[[(j,v) for j,v in enumerate(s) if v] for s in stoich]
     strength=ionic_strength if ionic_strength is not None else min(.05,max(1e-8,sum(totals.values())))
     logs=[math.log10(totals[b])-3 for b in bases]
+    if presolve:
+        logs=_continued_fraction(logs,totals,bases,records,sparse,ph,strength)
     active=[]
     solids={}
     water=1.
