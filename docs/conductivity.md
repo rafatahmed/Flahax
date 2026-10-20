@@ -226,8 +226,9 @@ qualifier "Accuracy on this fertilizer mixture has not yet been established."
 No measured accuracy is claimed. `compare_measured_ec` reports the difference
 between a prediction and a measured EC25 without a pass/fail verdict.
 
-Design and decisions:
-[irrigation EC design](superpowers/specs/2026-10-18-irrigation-ec-mccleskey-design.md).
+Accuracy evidence is planned from published 25 C KCl and single-salt tables plus
+five bench readings on a Milwaukee MW802 meter; no accuracy is claimed until
+those readings exist.
 
 ## Evidence boundary
 
