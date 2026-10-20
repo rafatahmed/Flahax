@@ -1,4 +1,6 @@
 """Sphinx configuration for the FlahaX documentation site."""
+import os
+
 from flahax import __version__
 
 project = "FlahaX"
@@ -9,6 +11,7 @@ extensions = ["myst_parser"]
 source_suffix = {".md": "markdown"}
 
 html_theme = "furo"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 
 myst_enable_extensions = ["colon_fence", "deflist"]
 myst_heading_anchors = 3
