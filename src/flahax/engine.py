@@ -43,11 +43,14 @@ ROUNDOFF = 2.220446049250313e-16
 KEEP_GRAMS = 1e-6
 # A recipe is feasible when every requested ion is inside this Δ%.
 TOLERANCE_PCT = 1.0
-# Pull on an incidental ion above its stated maximum: the fit is convex, so a binding
-# ceiling's optimum lies on the limit and a strong first weight reaches it in one refit
-# (#56); doubling continues only while it is still exceeded (up to 2**22).
-CEILING_FIRST_WEIGHT = 1024.0
-CEILING_STEPS = 13
+# A binding ceiling is met as a constraint (#68): a row of moderate weight whose aim is
+# shifted by the Lagrange multiplier, searched until the ion sits on its aim (see
+# _fit_within). A huge penalty weight instead (1024, #56) left the objective so flat in
+# double precision that doses were fixed only to ~2e-3 g/L and depended on the start.
+CEILING_WEIGHT = 8.0
+CEILING_STEPS = 60
+# Converged when every active ceiling ion is within this fraction of its limit of its aim.
+CEILING_TOLERANCE = 1e-9
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
 # Default ceiling on incidental NH4-N (#54): the smaller of 10% of the formula's total
@@ -210,12 +213,14 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     return z
 
 
-def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = None) -> list[float]:
+def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = None,
+         gram: "_LazyGram | None" = None) -> list[float]:
     """Lawson-Hanson non-negative least squares. matrix is rows × columns.
 
     x0, when given, is a non-negative starting point (warm start, #59): its positive
     entries form the initial passive set. The problem is convex, so the optimum is
-    the same; a nearby start needs far fewer column additions.
+    the same; a nearby start needs far fewer column additions. gram, when given, is a
+    _LazyGram of this same matrix, shared by calls that change only rhs.
     """
     if not matrix:
         return []
@@ -228,14 +233,18 @@ def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = N
     # Columns found numerically dependent on the passive set; skipped until x changes,
     # as in Lawson-Hanson, so one dependent column cannot block the others.
     rejected: set[int] = set()
-    # Optimality (dual) test at round-off level, scaled by |A| and |b|. A fixed
-    # absolute threshold stopped early on small or near-dependent problems (#36).
-    scale = max((abs(v) for row in matrix for v in row), default=0.0)
-    scale *= math.sqrt(sum(v * v for v in rhs))
-    dual_tol = 10.0 * max(m, n) * ROUNDOFF * scale
+    # Optimality (dual) test at round-off level, per column (#68): weight j is
+    # cross[j] - sum_k G[j][k] x[k], whose rounding error is bounded by a multiple of
+    # ROUNDOFF times the sum of the magnitudes of its terms. A fixed threshold stopped
+    # early on small or near-dependent problems (#36); one global |A||b| scale stopped
+    # early when a heavily weighted row (an incidental-ion ceiling) inflated it for
+    # columns that row does not touch.
+    bound = 10.0 * max(m, n) * ROUNDOFF
 
-    gram = _LazyGram(cols)
+    # A caller solving several right-hand sides for one matrix may share its Gram cache.
+    gram = _LazyGram(cols) if gram is None else gram
     cross = [sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
+    cross_size = [sum(abs(a * b) for a, b in zip(ci, rhs)) for ci in cols]
 
     def least_squares(chosen: list[int]) -> list[float]:
         sub = _gram_lstsq(gram, cross, cols, rhs, chosen)
@@ -290,13 +299,17 @@ def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = N
     while True:
         # Dual weights A^T(b - Ax) from cached Gram entries over the passive columns.
         support = [j for j in range(n) if x[j] != 0.0]
-        weights = [cross[i] - sum(gram[i][j] * x[j] for j in support) for i in range(n)]
-        candidates = [j for j in active if j not in rejected]
+        weights = []
+        sizes = []
+        for i in range(n):
+            row = gram[i]
+            terms = [row[j] * x[j] for j in support]
+            weights.append(cross[i] - sum(terms))
+            sizes.append(cross_size[i] + sum(map(abs, terms)))
+        candidates = [j for j in active if j not in rejected and weights[j] > bound * sizes[j]]
         if not candidates:
             break
         enter = max(candidates, key=lambda j: weights[j])
-        if weights[enter] <= dual_tol:
-            break
         if additions >= NNLS_ADDITION_FACTOR * n:
             # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
             raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
@@ -344,12 +357,14 @@ def forward(salts: list[dict], grams: list[float], water: dict | None = None) ->
 
 
 def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
-         maxima: dict | None = None, ceilings: dict[str, float] | None = None,
-         x0: list[float] | None = None) -> dict:
+         maxima: dict | None = None, ceilings: dict[str, tuple[float, float]] | None = None,
+         x0: list[float] | None = None, grams_cache: dict | None = None) -> dict:
     """Non-negative grams. ridge is an L2 penalty on grams, not a salt count.
 
     An incidental ion with a stated positive maximum is not penalized; an ion in
-    ceilings exceeded that maximum and is pulled toward it with the given weight.
+    ceilings, as (weight, aim mg/L), is pulled toward that aim. The matrix depends only
+    on which ions have ceiling rows (aims change rhs alone), so grams_cache, when given,
+    shares one Gram cache per set of ceiling ions.
     """
     maxima = maxima or {}
     ceilings = ceilings or {}
@@ -367,10 +382,10 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
         elif symbol in ceilings:
-            # Aim just under the maximum so round-off cannot leave it exceeded.
-            limit, weight = maxima[symbol] * (1 - CEILING_MARGIN), ceilings[symbol]
+            weight, aim = ceilings[symbol]
+            limit = maxima[symbol]
             matrix.append([weight * rate / limit for rate in rates])
-            rhs.append(weight * (limit - background) / limit)
+            rhs.append(weight * (aim - background) / limit)
         elif maxima.get(symbol, 0.0) > 0:
             continue
         else:
@@ -382,7 +397,13 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
             row[index] = ridge
             matrix.append(row)
             rhs.append(0.0)
-    grams = nnls(matrix, rhs, x0)
+    gram = None
+    if grams_cache is not None and matrix:
+        key = tuple(sorted(ceilings))
+        gram = grams_cache.get(key)
+        if gram is None:
+            gram = grams_cache[key] = _LazyGram([list(column) for column in zip(*matrix)])
+    grams = nnls(matrix, rhs, x0, gram)
     achieved = forward(salts, grams, water)
     loss, rows = score(achieved, targets)
     return {"grams": grams, "loss": loss, "rows": rows}
@@ -390,20 +411,76 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
 
 def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, maxima: dict,
                 x0: list[float] | None = None) -> dict:
-    """Fit, then pull any incidental ion that passed its stated maximum back toward it."""
-    solved = _fit(salts, targets, water, ridge, maxima, x0=x0)
-    ceilings: dict[str, float] = {}
-    # Escalate the pull on each exceeded ion until it is within its maximum; a
-    # remainder after the cap is reported by _report as a limit violation.
+    """Fit, then hold any incidental ion that passed its stated maximum on that maximum.
+
+    The fit is convex, so a binding ceiling's optimum lies on the limit (#68). Each
+    ceiling ion gets a row of moderate weight aimed at aim - shift, where aim is the
+    limit less CEILING_MARGIN (so round-off cannot leave it exceeded) and the shift is
+    the scaled Lagrange multiplier. The ion's excess over its aim falls as the shift
+    grows, so each shift is found by a bracketed (Illinois) search; a ceiling whose
+    shift reaches zero with the ion below its aim is released. Each refit starts from
+    the last doses. A remainder after CEILING_STEPS (for example water alone above the
+    limit) is reported by _report as a limit violation.
+    """
+    cache: dict = {}
+    solved = _fit(salts, targets, water, ridge, maxima, x0=x0, grams_cache=cache)
+    # symbol -> [shift, (lo shift, lo excess > 0) or None, (hi shift, hi excess < 0) or None, side]
+    search: dict[str, list] = {}
     for _ in range(CEILING_STEPS):
         final = {row["symbol"]: float(row["final"] or 0.0) for row in solved["rows"]}
-        over = [symbol for symbol, limit in maxima.items()
-                if limit > 0 and symbol not in targets and final.get(symbol, 0.0) > limit + 1e-12]
-        if not over:
+        converged = True
+        for symbol, limit in maxima.items():
+            if limit <= 0 or symbol in targets:
+                continue
+            value = final.get(symbol, 0.0)
+            if symbol not in search:
+                if value <= limit + 1e-12:
+                    continue
+                search[symbol] = [0.0, None, None, 0]
+                converged = False
+                continue
+            state = search[symbol]
+            shift, excess = state[0], value - limit * (1 - CEILING_MARGIN)
+            if abs(excess) <= CEILING_TOLERANCE * limit:
+                continue
+            if excess < 0 and shift == 0.0:
+                del search[symbol]  # the ceiling does not bind
+                continue
+            converged = False
+            side = 1 if excess > 0 else -1
+            last = state[1] if side > 0 else state[2]
+            if side > 0:
+                state[1] = (shift, excess)
+            else:
+                state[2] = (shift, excess)
+            lo, hi = state[1], state[2]
+            # While NNLS keeps its active set the excess is affine in the shift, so a
+            # secant through two points on one side lands on the root.
+            secant = (shift - excess * (shift - last[0]) / (excess - last[1])
+                      if last is not None and last[1] != excess else math.nan)
+            if lo is None:
+                shift = secant if 0 <= secant < shift else shift / 2  # come back down
+            elif hi is None:
+                growth = max(2 * shift, shift + excess, 1e-12 * limit)
+                shift = secant if shift < secant <= 4 * growth else growth  # expand to a bracket
+            else:
+                # Illinois: halve the retained end's excess when the same side repeats.
+                g_lo, g_hi = lo[1], hi[1]
+                if state[3] == side == 1:
+                    g_hi /= 2
+                    state[2] = (hi[0], g_hi)
+                elif state[3] == side == -1:
+                    g_lo /= 2
+                    state[1] = (lo[0], g_lo)
+                shift = (lo[0] * g_hi - hi[0] * g_lo) / (g_hi - g_lo)
+                if not lo[0] < shift < hi[0]:
+                    shift = (lo[0] + hi[0]) / 2
+            state[0], state[3] = shift, side
+        if converged:
             break
-        for symbol in over:
-            ceilings[symbol] = ceilings[symbol] * 2.0 if symbol in ceilings else CEILING_FIRST_WEIGHT
-        solved = _fit(salts, targets, water, ridge, maxima, ceilings)
+        ceilings = {symbol: (CEILING_WEIGHT, maxima[symbol] * (1 - CEILING_MARGIN) - state[0])
+                    for symbol, state in search.items()}
+        solved = _fit(salts, targets, water, ridge, maxima, ceilings, x0=solved["grams"], grams_cache=cache)
     return solved
 
 
@@ -712,8 +789,9 @@ def recommend(
         maximum_concentrations: Optional mg/L ceilings for incidental ions, for
             example {"Cl": 70}. An ion with a positive ceiling is admitted like
             allow_ions and is not penalized up to the ceiling; a fit above it is
-            pulled back, and any remaining excess is reported in
-            limitViolations with feasible False. Omitted keeps the default.
+            solved again with the ion held on the ceiling as a constraint, and any
+            excess that cannot be removed is reported in limitViolations with
+            feasible False. Omitted keeps the default.
         max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
             none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
             the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
