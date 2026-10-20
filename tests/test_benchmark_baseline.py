@@ -6,10 +6,23 @@ import tempfile
 import unittest
 
 from benchmarks.cases import evaluate_recipe, objective
-from tools.benchmark_baseline import historical, asv_samples
+from tools.benchmark_baseline import historical, asv_samples, provenance
 
 
 class BenchmarkMeasurementTests(unittest.TestCase):
+    def test_provenance_covers_delivery_helper_and_historical_data(self):
+        from benchmarks.cases import ROOT, digest
+        if not (ROOT / ".git").exists():
+            self.skipTest("checkout-only provenance")
+        manifest = provenance()["input_sha256"]
+        for relative in (
+            "examples/equilibrium_delivery.py",
+            "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv",
+            ".github/workflows/benchmark.yml",
+            "pyproject.toml",
+        ):
+            self.assertEqual(manifest[relative], digest(ROOT / relative))
+
     def test_recipe_uses_returned_doses_not_claimed_rows(self):
         products = [{"id": "k", "elements": {"K": 10.}}]
         result = {"salts": [{"id": "k", "gramsPerLitre": 1.}],
