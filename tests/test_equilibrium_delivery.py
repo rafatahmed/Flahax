@@ -57,6 +57,14 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         self.assertEqual(len(p.audit['chemistrySha256']),64)
         self.assertEqual(p.audit['waterTotalsMolal'],self.args['water_totals'])
 
+    def test_residual_bicarbonate_is_reported(self):
+        p=self.plan
+        self.assertAlmostEqual(p.audit['residualBicarbonateMmolPerKg'],
+                               1000*p.equilibrium.target.species.get('HCO3-',0.),places=12)
+        carbon=1000*self.args['water_totals'].get('CO3-2',0.)
+        flagged=any('Residual bicarbonate' in w for w in p.warnings)
+        self.assertEqual(flagged, carbon>.5 and p.audit['residualBicarbonateMmolPerKg']<.5)
+
     def compose(self, plan=None):
         p=plan or self.plan
         limits=[record(s.salt_id+'-limit',productId=s.salt_id,maxGramsPerLitre=50,
