@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m asv machine --yes --machine github-linux
           python -m asv check --python=same
-          python -m asv run HEAD --python=same --machine github-linux --set-commit-hash "$GITHUB_SHA" --record-samples --show-stderr 2>&1 | tee build/benchmark-v1/asv.log
+          python -m asv run --python=same --machine github-linux --set-commit-hash "$GITHUB_SHA" --record-samples --show-stderr 2>&1 | tee build/benchmark-v1/asv.log
       - name: Record provenance and sample summary
         if: always()
         run: python -m tools.benchmark_baseline --metadata-only --compare-inputs build/benchmark-v1/before.json --asv-results build/asv/results --output build/benchmark-v1/after.json
