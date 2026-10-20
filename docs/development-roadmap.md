@@ -41,7 +41,7 @@ Version labels below are proposals. Assign an owner before starting each milesto
 | M3 / 0.5.0 candidate | Stabilize consumer contracts, diagnostics and repeatable reports; `delivery_contracts.py`, `delivery_plan.py`, public exports | Documented serialization/version policy, round-trip and invalid-record tests, stable error codes and migration notes; compatibility tests for existing API/CLI examples | API maintainer |
 | M4 / later minor releases | Choose one validated capability extension from the opportunity table | Approved scope and source data first; independent reference cases and rejection boundaries; documented compatibility and performance impact | Product owner with model reviewer |
 
-M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
+M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](site/evidence/release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
 
 ## Hardening backlog
 

@@ -60,6 +60,19 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertTrue(old.exists())
                 self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
 
+    def test_chemistry_matrix_tool_writes_site_page(self):
+        text = (ROOT / 'tools' / 'build_chemistry_model.py').read_text(encoding='utf-8')
+        self.assertIn('docs/site/models/chemistry-coverage-matrix.md', text)
+        self.assertNotIn("'docs/chemistry-coverage-matrix.md'", text)
+
+    def test_built_site_has_audit_data(self):
+        built = ROOT / 'build' / 'docs-html'
+        if not built.exists():
+            self.skipTest('build/docs-html has not been built')
+        for name in ('bench_ec.csv', 'materials-audit.csv'):
+            with self.subTest(name=name):
+                self.assertTrue(any(built.rglob(name)), f'{name} missing from the built site')
+
     def test_superpowers_ignored(self):
         lines = (ROOT / '.gitignore').read_text(encoding='utf-8').splitlines()
         self.assertIn('docs/superpowers/', [line.strip() for line in lines])

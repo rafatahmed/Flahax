@@ -6,12 +6,12 @@ The current preparation comes first; dated audits below it are history.
 
 Prepared on `release/0.4.0` from `main` at `00d855a`, finalized in PR #18 and
 published from `3610a59` (tag `v0.4.0`). See the
-[publication evidence](release-evidence.md#040-publication---2026-10-17).
+[publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17).
 The preparation record follows.
 
 0.4.0 is the first release under the Apache License 2.0 (PR #13) and adds
 measured-pH water balancing (PR #15). Evidence is in
-[release evidence](release-evidence.md#040-preparation---2026-10-17).
+[release evidence](site/evidence/release-evidence.md#040-preparation---2026-10-17).
 Remaining gates: hosted Python 3.11–3.13 checks and live replay on the final
 revision, review, explicit owner publication authorization, and a final build
 of the exact approved artifacts with recorded hashes.
@@ -29,7 +29,7 @@ untouched and excluded from versioned/distribution artifacts. Branch conventions
 are recorded in [CONTRIBUTING](../CONTRIBUTING.md).
 
 See [current capability status](development-status.md) and
-[verification evidence](release-evidence.md). Remaining release gates are
+[verification evidence](site/evidence/release-evidence.md). Remaining release gates are
 hosted supported-version verification, review and explicit publication approval.
 No historical CI exception is inherited by 0.3.1.
 
@@ -53,7 +53,7 @@ The owner authorized this release using local evidence despite the hosted billin
 
 The retired package-verification branch contained one post-merge authorization commit, `96ce35c`. It was preserved in the post-release roadmap history, together with main's merge history, before the old local and remote refs were deleted. Existing scientific captures, failure reproducers, public compatibility modules and local release artifacts were retained.
 
-Local release results remain in [release evidence](release-evidence.md); automated and computational acceptance are not independent human review. Assessor: Rafat Al Khashan. Future work follows the [development roadmap](development-roadmap.md).
+Local release results remain in [release evidence](site/evidence/release-evidence.md); automated and computational acceptance are not independent human review. Assessor: Rafat Al Khashan. Future work follows the [development roadmap](development-roadmap.md).
 
 ## Cleanup validation — 2026-09-28
 

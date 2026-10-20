@@ -67,7 +67,7 @@ with the report:
    ([bench_scope.csv](data/bench_scope.csv)), so its 0.88 mS/cm for Magsul
    omits the pairing the method assumes and is likely high.
 6. **Omission.** FlahaX also has the measured-profile EC method
-   (`plan_ec_delivery`, see [EC planning](../../site/guide/conductivity.md)). "No
+   (`plan_ec_delivery`, see [EC planning](../../../guide/conductivity.md)). "No
    ion-based model" is correct; "brochure anchors only" is not.
 
 ## Product library: what "253 vs 28" measures

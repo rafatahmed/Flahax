@@ -81,6 +81,31 @@ api/package-verification
 ```
 
 ```{toctree}
+:caption: Models and chemistry
+:hidden:
+
+models/method
+models/fertilizer-equilibrium-model
+models/equilibrium-kernel
+models/full-fertilizer-chemistry
+models/chemistry-coverage-matrix
+models/reference-fixtures
+models/flahax-chelate-thermodynamic-profile
+```
+
+```{toctree}
+:caption: Evidence and audits
+:hidden:
+
+evidence/computational-review
+evidence/release-evidence
+evidence/audit/README
+evidence/audit/2026-10-17-flahax-vs-horticalc/report
+evidence/audit/2026-10-17-flahax-vs-horticalc/review
+evidence/audit/2026-10-18-materials-identity/review
+```
+
+```{toctree}
 :caption: Changelog
 :hidden:
 

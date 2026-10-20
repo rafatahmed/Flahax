@@ -51,7 +51,7 @@ pushing a tag.
    artifact hashes in the build summary. Then approve the `pypi` deployment.
 5. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
    environment, run the manual's examples and both CLI entry points, and
-   record the date, run URL and hashes in [release evidence](release-evidence.md).
+   record the date, run URL and hashes in [release evidence](site/evidence/release-evidence.md).
 
 **Old tags run old workflows.** For a Release event, GitHub runs
 `publish.yml` as it exists at the tagged commit. Tags before `v0.4.0` carry the
@@ -104,11 +104,11 @@ package was uploaded.
 - **0.4.0**, 2026-10-17: first Apache-2.0 release and first upload through the
   hardened workflow with Trusted Publishing (run `39043172800`), approved by
   the owner, verified by a fresh installation from PyPI. See the
-  [0.4.0 publication evidence](release-evidence.md#040-publication---2026-10-17).
+  [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17).
 - **0.3.1**, 2026-10-17: uploaded manually with Twine from `main` at
   `586eddb`, tagged `v0.3.1`, verified by a fresh installation from PyPI;
   hosted CI passed. See the
-  [0.3.1 publication evidence](release-evidence.md#031-publication---2026-10-17).
+  [0.3.1 publication evidence](site/evidence/release-evidence.md#031-publication---2026-10-17).
   Its GitHub Release note was added on 2026-10-17; the old-workflow run it
   started was cancelled before approval.
 - **0.3.0**, 2026-09-27: uploaded manually with Twine under an owner exception

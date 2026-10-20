@@ -2,7 +2,7 @@
 
 Every number FlahaX calculates with can be traced to a **chemical identity**
 and a **source document**. Evidence:
-[materials identity audit](../../audit/2026-10-18-materials-identity/review.md).
+[materials identity audit](../evidence/audit/2026-10-18-materials-identity/review.md).
 
 **Position (owner's wording):** Catalogue size does not measure chemical
 coverage or model accuracy. FlahaX's chemistry approach uses explicit
