@@ -142,23 +142,9 @@ The combined HTML report includes a separate calculated screening graph/table,
 unavailable A/B predictions and a per-channel sizing table. The older
 fictional calibration example remains labelled as a distinct API demo.
 
-### Local verification, 2026-09-30
+(local-verification-2026-09-30)=
+## Historical validation
 
-- `PYTHONPATH=src FLAHAX_REQUIRE_PHREEQC=1 python -m unittest discover -s tests -t .`:
-  **149 tests passed, 207.550 s, zero skips** (environment variables set with
-  `$env:...` in PowerShell). PHREEQC live replay used the existing external
-  installation; its executable and base database were not modified.
-- Initial sandboxed full run: 149 tests, two temporary-directory permission
-  errors in live PHREEQC replay. The successful full rerun used approved
-  temporary-directory access; no test or tolerance was removed to pass.
-- Focused workflow/examples/source-input tests: 31 passed in 73.327 s.
-  Final site-input/release-hygiene check: 13 passed in 1.175 s.
-- `python -m compileall -q src examples`: passed.
-- `git diff --check`: passed (line-ending normalization warnings only).
-- `python -m examples.run_all --output build/site-planning-reviewed`: generated
-  HTML, Markdown and JSON; browser inspection confirmed the calculated EC chart,
-  unavailable-stock rows and per-channel flow table render correctly.
-
-These checks verify arithmetic, data transcription and rejection boundaries;
-they do not establish experimental accuracy of the screening approximation,
-validate a concentrated-stock conductivity model, or approve equipment.
+Dated development checks are preserved in the
+[planning validation history](../evidence/planning-validation-history.md#site-planning-validation).
+They record those runs only and do not establish current release validation.

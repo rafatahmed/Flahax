@@ -1,4 +1,14 @@
-# Stock and irrigation EC planning
+(stock-and-irrigation-ec-planning)=
+# EC methods and limitations
+
+FlahaX offers three separate EC methods. Select a method by its input
+requirements and scope; a result from one method does not validate another.
+
+| Method | Inputs and scope | Evidence limit |
+|---|---|---|
+| Manufacturer screening (`flahax ec`) | Exact supported commercial products and water EC, pre-acid at 25 C; see [site inputs](site-planning.md) | Single-product brochure anchors with unvalidated mixture assumptions; no concentrated-stock prediction |
+| Measured calibration (`plan_ec_delivery`) | Separate measured profiles for each stock tank and irrigation mixture, matched to recipe and source | Interpolation inside the supplied calibration domain; no extrapolation |
+| Calculated irrigation EC (`calculate_irrigation_ec`, `calculate_ec_from_totals`) | Chemical composition and the declared equilibrium boundary; experimental Python API | Computational estimate with stated coverage limits; numerical agreement does not establish field accuracy |
 
 For the new **no-new-measurements** manufacturer-anchor screening path and
 interactive CLI, see [site planning](site-planning.md) and the
@@ -125,7 +135,8 @@ still be reported when EC evidence is missing; that does not approve the recipe
 or authorize EC-driven correction. Verify EC after preparation/dilution using
 meters rated for the relevant stock and irrigation ranges.
 
-## Calculated irrigation EC (experimental, M2b)
+(calculated-irrigation-ec-experimental-m2b)=
+## Calculated irrigation EC (experimental)
 
 Purpose: estimate the EC of an irrigation solution before mixing, and compare
 it with a meter reading after mixing. This is **experimental (M2b)** and Python
@@ -240,11 +251,6 @@ exercise the algorithm. Passing these tests proves software behavior, **not**
 physical EC accuracy for a commercial formulation. A site or manufacturer
 calibration pack with hold-out validation is still required for that claim.
 
-Local verification on Windows/Python 3.14.0, 2026-09-28: the full suite with
-`PYTHONPATH=src` and `FLAHAX_REQUIRE_PHREEQC=1` passed 137 tests in 167.484 s,
-with no skips. After the final overflow-safe TDS arithmetic adjustment,
-`python -m unittest tests.test_conductivity tests.test_examples tests.test_release_hygiene -q`
-passed all 17 tests. Compilation and `git diff --check` passed. Clean wheel
-and sdist installation checks passed before that final arithmetic adjustment
-(`build/ec-distribution-verification.json`); these are local development checks,
-not hosted release approval or a physical EC accuracy certification.
+Dated development checks are preserved in the
+[planning validation history](../evidence/planning-validation-history.md#conductivity-validation).
+They record those runs only and do not establish current release validation.
