@@ -39,6 +39,14 @@ TOLERANCE_PCT = 1.0
 CEILING_STEPS = 13
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
+# Default ceiling on incidental NH4-N as a share of the formula's total N (#54).
+# Owner decision (2026-10-20) within the ammonium share attributed to Sonneveld &
+# Voogt (2009), Plant Nutrition of Greenhouse Crops, Springer, doi:10.1007/978-90-481-2532-6
+# (about 5-10 % of total N in hydroponics, 10-15 % in substrate culture).
+AMMONIUM_FRACTION = 0.10
+AMMONIUM_BASIS = ("incidental NH4-N up to 10% of total target N; owner decision within the "
+                  "ammonium share attributed to Sonneveld & Voogt (2009), "
+                  "doi:10.1007/978-90-481-2532-6")
 
 
 def load_library() -> dict:
@@ -514,6 +522,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.02,
     maximum_concentrations: dict | None = None,
+    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -532,6 +541,10 @@ def recommend(
             allow_ions and is not penalized up to the ceiling; a fit above it is
             pulled back, and any remaining excess is reported in
             limitViolations with feasible False. Omitted keeps the default.
+        max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
+            none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
+            the total target N (N_NO3 + N_NH4 + N_UREA). Default 0.10
+            (Sonneveld & Voogt 2009); None keeps the penalty-only fit.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -559,6 +572,19 @@ def recommend(
         validate_profile({ion: 0.0 for ion in allowed}, "allow_ions")
     maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
+    ammonium_limit = None
+    if max_ammonium_fraction is not None:
+        if (isinstance(max_ammonium_fraction, bool) or not isinstance(max_ammonium_fraction, (int, float))
+                or not 0 <= max_ammonium_fraction <= 1):
+            raise InputError("max_ammonium_fraction must be a number in [0, 1]")
+        total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
+        # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
+        if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
+            limit = max_ammonium_fraction * total_n
+            if limit > 0:
+                maxima["N_NH4"] = limit
+                ammonium_limit = {"mgPerL": limit, "fractionOfTotalN": max_ammonium_fraction,
+                                  "basis": AMMONIUM_BASIS}
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
@@ -600,4 +626,5 @@ def recommend(
         warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
+    solved["ammoniumLimit"] = ammonium_limit
     return solved

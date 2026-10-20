@@ -59,7 +59,8 @@ from flahax import gap_for, load_library, recommend, solve_weights
 
 load_library() -> dict
 gap_for(targets, water) -> dict
-recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.02) -> dict
+recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.02,
+          maximum_concentrations=None, max_ammonium_fraction=0.10) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
@@ -73,7 +74,7 @@ Targets and water are maps of element symbol to ppm. Use the database symbols:
 
 `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
 
-A missing target means the formula does not ask for that element. That is different from a target of zero. Any ppm the salts still produce for an unrequested element is penalized.
+A missing target means the formula does not ask for that element. That is different from a target of zero. Any ppm the salts still produce for an unrequested element is penalized, unless that element has a ceiling (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
 
 A salt is a dictionary:
 
@@ -114,8 +115,37 @@ fit; it is not an assertion that every incidental addition is acceptable.
 `incidentalContributions` and `requiresReview` report zero/omitted-target
 nutrients separately. Explicit `maximum_concentrations` in the workflow or
 acid adapters enforce absolute nutrient limits, including a true zero limit.
-See [water-to-delivery](water-to-delivery.md). This does not change the
-optimizer's existing penalties or invent different fertilizer materials.
+See [water-to-delivery](water-to-delivery.md).
+
+## Incidental ions and ceilings
+
+An incidental ion is one the products add but the formula does not ask for.
+Without a ceiling, each mg/L of it is penalized in the fit. With a ceiling in
+`maximum_concentrations` (mg/L), the ion is free up to that value, is pulled
+back if the fit exceeds it, and any remaining excess is reported in
+`limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
+the products that carry it; chloride products are never used without one.
+
+**Ammonium default.** When the targets omit `N_NH4` and no `N_NH4` ceiling is
+given, incidental NH4-N may reach 10% of the formula's total target N
+(`N_NO3 + N_NH4 + N_UREA`). Calcium nitrate (ag grade) always carries some
+ammonium, so without this allowance the fit under-doses calcium to avoid it.
+The 10% is the project owner's choice (2026-10-20) within the ammonium share
+attributed to Sonneveld and Voogt (2009): about 5-10% of total N in hydroponics
+and 10-15% in substrate culture. The exact page has not been verified.
+`result["ammoniumLimit"]` reports the limit applied. Pass
+`max_ammonium_fraction=None` for the previous penalty-only fit. An explicit
+`N_NH4` target, including `0` ("none wanted"), keeps its own fit and is never
+relaxed.
+
+References:
+
+- Sonneveld, C. and Voogt, W. (2009). *Plant Nutrition of Greenhouse Crops*.
+  Springer, Dordrecht. <https://doi.org/10.1007/978-90-481-2532-6>
+- Dickson, R. W. and Fisher, P. R. (2019). Quantifying the acidic and basic
+  effects of vegetable and herb species in peat-based substrate and
+  hydroponics. *HortScience* 54(6): 1093-1100.
+  <https://doi.org/10.21273/HORTSCI13959-19> (cites the ranges above).
 
 ## Additional planning commands (since 0.3.1)
 
