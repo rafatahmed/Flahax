@@ -1,14 +1,14 @@
 {
   "metadata": {
     "schema": "benchmark-v1",
-    "utc": "2026-10-20T22:55:16.376120+00:00",
-    "git_commit": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3",
+    "utc": "2026-10-20T23:28:16.452120+00:00",
+    "git_commit": "df0d30bf4f62365056e0b0f250c75d0cf7206611",
     "dirty_tree": false,
     "package_version": "0.4.0",
     "source_checkout_import": true,
     "python": "3.13.16 (main, Oct  1 2026, 02:37:54) [GCC 13.3.0]",
     "implementation": "CPython",
-    "os": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "os": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
     "architecture": "x86_64",
     "processor": "x86_64",
     "logical_cpus": 4,
@@ -33,7 +33,7 @@
       "src/flahax/delivery_contracts.py": "f2f56a4cddf1d60fc6f991d1e0e0caa49afcce6d514e0c9ac2a600cc051532d8",
       "src/flahax/delivery_plan.py": "b1e46658c3e7a7f25430122b6fb4fbb3b0ebc4927ce3618ef59ea30d1e544476",
       "src/flahax/delivery_quantities.py": "af6218607a66a5cc2f7551e6dc24fa64a5f7c8d8d475062d00e618c2a4902756",
-      "src/flahax/engine.py": "b1323128edf823d71e3742366f44920e3540c410a31d8f5a2281f67d799d4aa5",
+      "src/flahax/engine.py": "4e7bd3627688f32dd473b17c85922828748d55a47838a3add7ebfb50edde75e6",
       "src/flahax/equilibrium.py": "182b5dcb53d333254c1e507117e193a24da4578edace6bdb0bca888686222d7a",
       "src/flahax/equilibrium_delivery.py": "99413a6fedece1defceeaf043b1aa0d192cd06870aba00e6044087bb905e14e7",
       "src/flahax/fertilizer_equilibrium.py": "a205ac1d8d0aa34dce59e710b57de410ad3727bb27f6bdaab1b3017c7d06bf6e",
@@ -281,7 +281,7 @@
       "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv": "a9af04b386f4e1f4faa659d343d4169758ee6258dd1a71580205a2180564b25b",
       "tools/benchmark_baseline.py": "9fca05af9bec7244fc76a6dfb7c17002a9d673c48d0bba42613b4b39930d10cf"
     },
-    "input_manifest_sha256": "9b7ac5b421372b62dcee239735e675b16c2d43392ba07f76952f3b33cfc57955",
+    "input_manifest_sha256": "b25dc7d73e372e8ea5e4290404df37aac86aeeee4ecadaa6975d5f68c0680fe7",
     "physical_validation": "not performed",
     "live_phreeqc": "not run by this command; comparisons use pinned stored captures"
   },
@@ -518,9 +518,9 @@
     "summary": {
       "element_targets": 636,
       "element_pass_fraction": 0.8977987421383647,
-      "rms_percent": 7.383825055433143,
+      "rms_percent": 7.383853015638697,
       "max_absolute_percent": 100.0,
-      "rmse_mg_l": 13.260083991703848,
+      "rmse_mg_l": 13.260107871991925,
       "whole_recipe_pass_fraction_of_attempted": 0.6538461538461539
     },
     "cases": [
@@ -1693,7 +1693,7 @@
           {
             "id": "cmbpfudmb00omq8z9a5nu1i5b",
             "name": "Boric Acid",
-            "gramsPerLitre": 0.00286,
+            "gramsPerLitre": 0.001931,
             "provenance": {
               "recordId": "cmbpfudmb00omq8z9a5nu1i5b",
               "identityId": "idn-boric-acid",
@@ -1703,9 +1703,21 @@
             }
           },
           {
+            "id": "cmbpfudh500klq8z9c38yocuf",
+            "name": "CH - micro",
+            "gramsPerLitre": 0.0125,
+            "provenance": {
+              "recordId": "cmbpfudh500klq8z9c38yocuf",
+              "identityId": "idn-ch-micro-assumed-blend",
+              "analysisBasis": "declared_catalogue",
+              "documents": [],
+              "flags": []
+            }
+          },
+          {
             "id": "cmbpfudif00lkq8z99slfmci3",
             "name": "Calcium Nitrate (ag grade)",
-            "gramsPerLitre": 1.052715,
+            "gramsPerLitre": 1.053629,
             "provenance": {
               "recordId": "cmbpfudif00lkq8z99slfmci3",
               "identityId": "idn-ammonium-calcium-nitrate",
@@ -1726,7 +1738,7 @@
           {
             "id": "cmbpfudls00o7q8z929uh7kwl",
             "name": "Copper Sulfate (pentahydrate)",
-            "gramsPerLitre": 7.9e-05,
+            "gramsPerLitre": 2.5e-05,
             "provenance": {
               "recordId": "cmbpfudls00o7q8z929uh7kwl",
               "identityId": "idn-copper-sulfate-pentahydrate",
@@ -1738,7 +1750,7 @@
           {
             "id": "cmbpfudm400ohq8z9h4pbl5iz",
             "name": "Iron II Sulfate (Hepahydrate)",
-            "gramsPerLitre": 0.014435,
+            "gramsPerLitre": 0.01008,
             "provenance": {
               "recordId": "cmbpfudm400ohq8z9h4pbl5iz",
               "identityId": "idn-iron-ii-sulfate-heptahydrate",
@@ -1750,7 +1762,7 @@
           {
             "id": "cmbpfudmm00ouq8z91yim9eru",
             "name": "Magnesium Sulfate (Heptahydrate)",
-            "gramsPerLitre": 0.478731,
+            "gramsPerLitre": 0.482674,
             "provenance": {
               "recordId": "cmbpfudmm00ouq8z91yim9eru",
               "identityId": "idn-magnesium-sulfate-heptahydrate",
@@ -1762,7 +1774,7 @@
           {
             "id": "cmbpfudhl00kyq8z9j8u2rr14",
             "name": "Mg Nitrate",
-            "gramsPerLitre": 0.019057,
+            "gramsPerLitre": 0.015123,
             "provenance": {
               "recordId": "cmbpfudhl00kyq8z9j8u2rr14",
               "identityId": "idn-magnesium-nitrate-hexahydrate",
@@ -1774,7 +1786,7 @@
           {
             "id": "cmbpfudhw00l6q8z9wj92mk5s",
             "name": "Mn EDTA",
-            "gramsPerLitre": 0.003846,
+            "gramsPerLitre": 0.001923,
             "provenance": {
               "recordId": "cmbpfudhw00l6q8z9wj92mk5s",
               "identityId": "idn-disodium-manganese-edta",
@@ -1786,7 +1798,7 @@
           {
             "id": "cmbpfudky00nkq8z9baprwvj6",
             "name": "Potassium Dibasic Phosphate",
-            "gramsPerLitre": 0.17433,
+            "gramsPerLitre": 0.174302,
             "provenance": {
               "recordId": "cmbpfudky00nkq8z9baprwvj6",
               "identityId": "idn-dipotassium-phosphate",
@@ -1798,7 +1810,7 @@
           {
             "id": "cmbpfudmt00ozq8z9gsnrs779",
             "name": "Potassium Nitrate",
-            "gramsPerLitre": 0.40542,
+            "gramsPerLitre": 0.405746,
             "provenance": {
               "recordId": "cmbpfudmt00ozq8z9gsnrs779",
               "identityId": "idn-potassium-nitrate",
@@ -1808,21 +1820,9 @@
             }
           },
           {
-            "id": "cmbpfudly00ocq8z9zrrcr9zt",
-            "name": "Zinc Sulfate (Monohydrate)",
-            "gramsPerLitre": 0.000137,
-            "provenance": {
-              "recordId": "cmbpfudly00ocq8z9zrrcr9zt",
-              "identityId": "idn-zinc-sulfate-monohydrate",
-              "analysisBasis": "declared_catalogue",
-              "documents": [],
-              "flags": []
-            }
-          },
-          {
             "id": "cmbpfudlf00nxq8z9wx4ryy2b",
             "name": "Sodium Molybdate (Dihydrate)",
-            "gramsPerLitre": 0.000126,
+            "gramsPerLitre": 0.00011,
             "provenance": {
               "recordId": "cmbpfudlf00nxq8z9wx4ryy2b",
               "identityId": "idn-sodium-molybdate-dihydrate",
@@ -1836,108 +1836,108 @@
           {
             "ion": "N_NO3",
             "target_mg_l": 210,
-            "delivered_mg_l": 209.8480544148,
-            "error_mg_l": -0.15194558519999646,
-            "error_percent": -0.07235504057142689,
+            "delivered_mg_l": 209.59502629719998,
+            "error_mg_l": -0.4049737028000209,
+            "error_percent": -0.1928446203809623,
             "tolerance_mg_l": 2.1,
             "passes": true
           },
           {
             "ion": "P",
             "target_mg_l": 31,
-            "delivered_mg_l": 30.9976173,
-            "error_mg_l": -0.0023826999999982945,
-            "error_percent": -0.007686129032252563,
+            "delivered_mg_l": 30.99263862,
+            "error_mg_l": -0.007361379999998974,
+            "error_percent": -0.023746387096770884,
             "tolerance_mg_l": 0.31,
             "passes": true
           },
           {
             "ion": "K",
             "target_mg_l": 235,
-            "delivered_mg_l": 235.0448541,
-            "error_mg_l": 0.04485410000000911,
-            "error_percent": 0.019086851063833666,
+            "delivered_mg_l": 235.15834714,
+            "error_mg_l": 0.1583471399999894,
+            "error_percent": 0.06738176170212315,
             "tolerance_mg_l": 2.35,
             "passes": true
           },
           {
             "ion": "Mg",
             "target_mg_l": 49,
-            "delivered_mg_l": 49.0093487067,
-            "error_mg_l": 0.009348706700002651,
-            "error_percent": 0.019078993265311532,
+            "delivered_mg_l": 49.0252124513,
+            "error_mg_l": 0.025212451299999827,
+            "error_percent": 0.051453982244897604,
             "tolerance_mg_l": 0.49,
             "passes": true
           },
           {
             "ion": "Ca",
             "target_mg_l": 200,
-            "delivered_mg_l": 200.01585000000003,
-            "error_mg_l": 0.015850000000028786,
-            "error_percent": 0.007925000000014393,
+            "delivered_mg_l": 200.18950999999998,
+            "error_mg_l": 0.1895099999999843,
+            "error_percent": 0.09475499999999215,
             "tolerance_mg_l": 2.0,
             "passes": true
           },
           {
             "ion": "S",
             "target_mg_l": 64,
-            "delivered_mg_l": 63.9818704,
-            "error_mg_l": -0.018129600000001744,
-            "error_percent": -0.028327500000002725,
+            "delivered_mg_l": 63.961321399999996,
+            "error_mg_l": -0.03867860000000434,
+            "error_percent": -0.06043531250000678,
             "tolerance_mg_l": 0.64,
             "passes": true
           },
           {
             "ion": "B",
             "target_mg_l": 0.5,
-            "delivered_mg_l": 0.49998519999999996,
-            "error_mg_l": -1.4800000000037006e-05,
-            "error_percent": -0.002960000000007401,
+            "delivered_mg_l": 0.50007742,
+            "error_mg_l": 7.741999999999472e-05,
+            "error_percent": 0.015483999999998943,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Fe",
             "target_mg_l": 2.9,
-            "delivered_mg_l": 2.8999914999999996,
-            "error_mg_l": -8.500000000299934e-06,
-            "error_percent": -0.0002931034482862046,
+            "delivered_mg_l": 2.9000719999999998,
+            "error_mg_l": 7.199999999984996e-05,
+            "error_percent": 0.0024827586206844815,
             "tolerance_mg_l": 0.028999999999999998,
             "passes": true
           },
           {
             "ion": "Zn",
             "target_mg_l": 0.05,
-            "delivered_mg_l": 0.04992279999999999,
-            "error_mg_l": -7.720000000001337e-05,
-            "error_percent": -0.15440000000002674,
+            "delivered_mg_l": 0.05000000000000001,
+            "error_mg_l": 6.938893903907228e-18,
+            "error_percent": 1.3877787807814457e-14,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Cu",
             "target_mg_l": 0.02,
-            "delivered_mg_l": 0.0201055,
-            "error_mg_l": 0.00010549999999999796,
-            "error_percent": 0.5274999999999898,
+            "delivered_mg_l": 0.020112500000000002,
+            "error_mg_l": 0.00011250000000000149,
+            "error_percent": 0.5625000000000074,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Mo",
             "target_mg_l": 0.05,
-            "delivered_mg_l": 0.049959,
-            "error_mg_l": -4.099999999999937e-05,
-            "error_percent": -0.08199999999999874,
+            "delivered_mg_l": 0.049865,
+            "error_mg_l": -0.00013500000000000317,
+            "error_percent": -0.27000000000000635,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Mn",
             "target_mg_l": 0.5,
-            "delivered_mg_l": 0.49998,
-            "error_mg_l": -2.0000000000020002e-05,
-            "error_percent": -0.004000000000004,
+            "delivered_mg_l": 0.49999,
+            "error_mg_l": -1.0000000000010001e-05,
+            "error_percent": -0.002000000000002,
             "tolerance_mg_l": 0.01,
             "passes": true
           }
@@ -1945,20 +1945,20 @@
         "whole_recipe_passes": true,
         "products_used": 11,
         "delivered_assay_mg_l": {
-          "B": 0.49998519999999996,
-          "N_NO3": 209.8480544148,
-          "N_NH4": 11.579865000000002,
-          "Ca": 200.01585000000003,
-          "S": 63.9818704,
-          "Cu": 0.0201055,
-          "Fe": 2.8999914999999996,
-          "Mg": 49.0093487067,
-          "Mn": 0.49998,
-          "P": 30.9976173,
-          "K": 235.0448541,
-          "Zn": 0.04992279999999999,
-          "Mo": 0.049959,
-          "Na": 0.02394
+          "B": 0.50007742,
+          "Fe": 2.9000719999999998,
+          "Zn": 0.05000000000000001,
+          "Mn": 0.49999,
+          "Cu": 0.020112500000000002,
+          "Mo": 0.049865,
+          "N_NO3": 209.59502629719998,
+          "N_NH4": 11.589919,
+          "Ca": 200.18950999999998,
+          "S": 63.961321399999996,
+          "Mg": 49.0252124513,
+          "P": 30.99263862,
+          "K": 235.15834714,
+          "Na": 0.020900000000000002
         },
         "solver_feasible": true,
         "incidental_requires_review": true
@@ -5275,7 +5275,7 @@
           {
             "id": "cmbpfudmb00omq8z9a5nu1i5b",
             "name": "Boric Acid",
-            "gramsPerLitre": 0.00286,
+            "gramsPerLitre": 0.001931,
             "provenance": {
               "recordId": "cmbpfudmb00omq8z9a5nu1i5b",
               "identityId": "idn-boric-acid",
@@ -5285,9 +5285,21 @@
             }
           },
           {
+            "id": "cmbpfudh500klq8z9c38yocuf",
+            "name": "CH - micro",
+            "gramsPerLitre": 0.0125,
+            "provenance": {
+              "recordId": "cmbpfudh500klq8z9c38yocuf",
+              "identityId": "idn-ch-micro-assumed-blend",
+              "analysisBasis": "declared_catalogue",
+              "documents": [],
+              "flags": []
+            }
+          },
+          {
             "id": "cmbpfudif00lkq8z99slfmci3",
             "name": "Calcium Nitrate (ag grade)",
-            "gramsPerLitre": 1.052715,
+            "gramsPerLitre": 1.053629,
             "provenance": {
               "recordId": "cmbpfudif00lkq8z99slfmci3",
               "identityId": "idn-ammonium-calcium-nitrate",
@@ -5308,7 +5320,7 @@
           {
             "id": "cmbpfudls00o7q8z929uh7kwl",
             "name": "Copper Sulfate (pentahydrate)",
-            "gramsPerLitre": 7.9e-05,
+            "gramsPerLitre": 2.5e-05,
             "provenance": {
               "recordId": "cmbpfudls00o7q8z929uh7kwl",
               "identityId": "idn-copper-sulfate-pentahydrate",
@@ -5320,7 +5332,7 @@
           {
             "id": "cmbpfudm400ohq8z9h4pbl5iz",
             "name": "Iron II Sulfate (Hepahydrate)",
-            "gramsPerLitre": 0.014435,
+            "gramsPerLitre": 0.01008,
             "provenance": {
               "recordId": "cmbpfudm400ohq8z9h4pbl5iz",
               "identityId": "idn-iron-ii-sulfate-heptahydrate",
@@ -5332,7 +5344,7 @@
           {
             "id": "cmbpfudmm00ouq8z91yim9eru",
             "name": "Magnesium Sulfate (Heptahydrate)",
-            "gramsPerLitre": 0.478731,
+            "gramsPerLitre": 0.482674,
             "provenance": {
               "recordId": "cmbpfudmm00ouq8z91yim9eru",
               "identityId": "idn-magnesium-sulfate-heptahydrate",
@@ -5344,7 +5356,7 @@
           {
             "id": "cmbpfudhl00kyq8z9j8u2rr14",
             "name": "Mg Nitrate",
-            "gramsPerLitre": 0.019057,
+            "gramsPerLitre": 0.015123,
             "provenance": {
               "recordId": "cmbpfudhl00kyq8z9j8u2rr14",
               "identityId": "idn-magnesium-nitrate-hexahydrate",
@@ -5356,7 +5368,7 @@
           {
             "id": "cmbpfudhw00l6q8z9wj92mk5s",
             "name": "Mn EDTA",
-            "gramsPerLitre": 0.003846,
+            "gramsPerLitre": 0.001923,
             "provenance": {
               "recordId": "cmbpfudhw00l6q8z9wj92mk5s",
               "identityId": "idn-disodium-manganese-edta",
@@ -5368,7 +5380,7 @@
           {
             "id": "cmbpfudky00nkq8z9baprwvj6",
             "name": "Potassium Dibasic Phosphate",
-            "gramsPerLitre": 0.17433,
+            "gramsPerLitre": 0.174302,
             "provenance": {
               "recordId": "cmbpfudky00nkq8z9baprwvj6",
               "identityId": "idn-dipotassium-phosphate",
@@ -5380,7 +5392,7 @@
           {
             "id": "cmbpfudmt00ozq8z9gsnrs779",
             "name": "Potassium Nitrate",
-            "gramsPerLitre": 0.40542,
+            "gramsPerLitre": 0.405746,
             "provenance": {
               "recordId": "cmbpfudmt00ozq8z9gsnrs779",
               "identityId": "idn-potassium-nitrate",
@@ -5390,21 +5402,9 @@
             }
           },
           {
-            "id": "cmbpfudly00ocq8z9zrrcr9zt",
-            "name": "Zinc Sulfate (Monohydrate)",
-            "gramsPerLitre": 0.000137,
-            "provenance": {
-              "recordId": "cmbpfudly00ocq8z9zrrcr9zt",
-              "identityId": "idn-zinc-sulfate-monohydrate",
-              "analysisBasis": "declared_catalogue",
-              "documents": [],
-              "flags": []
-            }
-          },
-          {
             "id": "cmbpfudlf00nxq8z9wx4ryy2b",
             "name": "Sodium Molybdate (Dihydrate)",
-            "gramsPerLitre": 0.000126,
+            "gramsPerLitre": 0.00011,
             "provenance": {
               "recordId": "cmbpfudlf00nxq8z9wx4ryy2b",
               "identityId": "idn-sodium-molybdate-dihydrate",
@@ -5418,108 +5418,108 @@
           {
             "ion": "N_NO3",
             "target_mg_l": 210,
-            "delivered_mg_l": 209.8480544148,
-            "error_mg_l": -0.15194558519999646,
-            "error_percent": -0.07235504057142689,
+            "delivered_mg_l": 209.59502629719998,
+            "error_mg_l": -0.4049737028000209,
+            "error_percent": -0.1928446203809623,
             "tolerance_mg_l": 2.1,
             "passes": true
           },
           {
             "ion": "P",
             "target_mg_l": 31,
-            "delivered_mg_l": 30.9976173,
-            "error_mg_l": -0.0023826999999982945,
-            "error_percent": -0.007686129032252563,
+            "delivered_mg_l": 30.99263862,
+            "error_mg_l": -0.007361379999998974,
+            "error_percent": -0.023746387096770884,
             "tolerance_mg_l": 0.31,
             "passes": true
           },
           {
             "ion": "K",
             "target_mg_l": 235,
-            "delivered_mg_l": 235.0448541,
-            "error_mg_l": 0.04485410000000911,
-            "error_percent": 0.019086851063833666,
+            "delivered_mg_l": 235.15834714,
+            "error_mg_l": 0.1583471399999894,
+            "error_percent": 0.06738176170212315,
             "tolerance_mg_l": 2.35,
             "passes": true
           },
           {
             "ion": "Mg",
             "target_mg_l": 49,
-            "delivered_mg_l": 49.0093487067,
-            "error_mg_l": 0.009348706700002651,
-            "error_percent": 0.019078993265311532,
+            "delivered_mg_l": 49.0252124513,
+            "error_mg_l": 0.025212451299999827,
+            "error_percent": 0.051453982244897604,
             "tolerance_mg_l": 0.49,
             "passes": true
           },
           {
             "ion": "Ca",
             "target_mg_l": 200,
-            "delivered_mg_l": 200.01585000000003,
-            "error_mg_l": 0.015850000000028786,
-            "error_percent": 0.007925000000014393,
+            "delivered_mg_l": 200.18950999999998,
+            "error_mg_l": 0.1895099999999843,
+            "error_percent": 0.09475499999999215,
             "tolerance_mg_l": 2.0,
             "passes": true
           },
           {
             "ion": "S",
             "target_mg_l": 64,
-            "delivered_mg_l": 63.9818704,
-            "error_mg_l": -0.018129600000001744,
-            "error_percent": -0.028327500000002725,
+            "delivered_mg_l": 63.961321399999996,
+            "error_mg_l": -0.03867860000000434,
+            "error_percent": -0.06043531250000678,
             "tolerance_mg_l": 0.64,
             "passes": true
           },
           {
             "ion": "B",
             "target_mg_l": 0.5,
-            "delivered_mg_l": 0.49998519999999996,
-            "error_mg_l": -1.4800000000037006e-05,
-            "error_percent": -0.002960000000007401,
+            "delivered_mg_l": 0.50007742,
+            "error_mg_l": 7.741999999999472e-05,
+            "error_percent": 0.015483999999998943,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Fe",
             "target_mg_l": 2.9,
-            "delivered_mg_l": 2.8999914999999996,
-            "error_mg_l": -8.500000000299934e-06,
-            "error_percent": -0.0002931034482862046,
+            "delivered_mg_l": 2.9000719999999998,
+            "error_mg_l": 7.199999999984996e-05,
+            "error_percent": 0.0024827586206844815,
             "tolerance_mg_l": 0.028999999999999998,
             "passes": true
           },
           {
             "ion": "Zn",
             "target_mg_l": 0.05,
-            "delivered_mg_l": 0.04992279999999999,
-            "error_mg_l": -7.720000000001337e-05,
-            "error_percent": -0.15440000000002674,
+            "delivered_mg_l": 0.05000000000000001,
+            "error_mg_l": 6.938893903907228e-18,
+            "error_percent": 1.3877787807814457e-14,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Cu",
             "target_mg_l": 0.02,
-            "delivered_mg_l": 0.0201055,
-            "error_mg_l": 0.00010549999999999796,
-            "error_percent": 0.5274999999999898,
+            "delivered_mg_l": 0.020112500000000002,
+            "error_mg_l": 0.00011250000000000149,
+            "error_percent": 0.5625000000000074,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Mo",
             "target_mg_l": 0.05,
-            "delivered_mg_l": 0.049959,
-            "error_mg_l": -4.099999999999937e-05,
-            "error_percent": -0.08199999999999874,
+            "delivered_mg_l": 0.049865,
+            "error_mg_l": -0.00013500000000000317,
+            "error_percent": -0.27000000000000635,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Mn",
             "target_mg_l": 0.5,
-            "delivered_mg_l": 0.49998,
-            "error_mg_l": -2.0000000000020002e-05,
-            "error_percent": -0.004000000000004,
+            "delivered_mg_l": 0.49999,
+            "error_mg_l": -1.0000000000010001e-05,
+            "error_percent": -0.002000000000002,
             "tolerance_mg_l": 0.01,
             "passes": true
           }
@@ -5527,20 +5527,20 @@
         "whole_recipe_passes": true,
         "products_used": 11,
         "delivered_assay_mg_l": {
-          "B": 0.49998519999999996,
-          "N_NO3": 209.8480544148,
-          "N_NH4": 11.579865000000002,
-          "Ca": 200.01585000000003,
-          "S": 63.9818704,
-          "Cu": 0.0201055,
-          "Fe": 2.8999914999999996,
-          "Mg": 49.0093487067,
-          "Mn": 0.49998,
-          "P": 30.9976173,
-          "K": 235.0448541,
-          "Zn": 0.04992279999999999,
-          "Mo": 0.049959,
-          "Na": 0.02394
+          "B": 0.50007742,
+          "Fe": 2.9000719999999998,
+          "Zn": 0.05000000000000001,
+          "Mn": 0.49999,
+          "Cu": 0.020112500000000002,
+          "Mo": 0.049865,
+          "N_NO3": 209.59502629719998,
+          "N_NH4": 11.589919,
+          "Ca": 200.18950999999998,
+          "S": 63.961321399999996,
+          "Mg": 49.0252124513,
+          "P": 30.99263862,
+          "K": 235.15834714,
+          "Na": 0.020900000000000002
         },
         "solver_feasible": true,
         "incidental_requires_review": true
@@ -12656,7 +12656,7 @@
           {
             "id": "cmbpfudif00lkq8z99slfmci3",
             "name": "Calcium Nitrate (ag grade)",
-            "gramsPerLitre": 0.68397,
+            "gramsPerLitre": 0.683971,
             "provenance": {
               "recordId": "cmbpfudif00lkq8z99slfmci3",
               "identityId": "idn-ammonium-calcium-nitrate",
@@ -12675,12 +12675,12 @@
             }
           },
           {
-            "id": "cmbpfudls00o7q8z929uh7kwl",
-            "name": "Copper Sulfate (pentahydrate)",
-            "gramsPerLitre": 0.000613,
+            "id": "cmbpfudi100l9q8z9xit3ujoz",
+            "name": "Copper EDTA",
+            "gramsPerLitre": 0.001114,
             "provenance": {
-              "recordId": "cmbpfudls00o7q8z929uh7kwl",
-              "identityId": "idn-copper-sulfate-pentahydrate",
+              "recordId": "cmbpfudi100l9q8z9xit3ujoz",
+              "identityId": "idn-disodium-copper-edta",
               "analysisBasis": "declared_catalogue",
               "documents": [],
               "flags": []
@@ -12689,7 +12689,7 @@
           {
             "id": "cmbpfudmm00ouq8z91yim9eru",
             "name": "Magnesium Sulfate (Heptahydrate)",
-            "gramsPerLitre": 0.317696,
+            "gramsPerLitre": 0.3177,
             "provenance": {
               "recordId": "cmbpfudmm00ouq8z91yim9eru",
               "identityId": "idn-magnesium-sulfate-heptahydrate",
@@ -12701,7 +12701,7 @@
           {
             "id": "cmbpfudhl00kyq8z9j8u2rr14",
             "name": "Mg Nitrate",
-            "gramsPerLitre": 0.196964,
+            "gramsPerLitre": 0.19696,
             "provenance": {
               "recordId": "cmbpfudhl00kyq8z9j8u2rr14",
               "identityId": "idn-magnesium-nitrate-hexahydrate",
@@ -12713,7 +12713,7 @@
           {
             "id": "cmbpfudky00nkq8z9baprwvj6",
             "name": "Potassium Dibasic Phosphate",
-            "gramsPerLitre": 0.18578,
+            "gramsPerLitre": 0.184186,
             "provenance": {
               "recordId": "cmbpfudky00nkq8z9baprwvj6",
               "identityId": "idn-dipotassium-phosphate",
@@ -12725,7 +12725,7 @@
           {
             "id": "cmbpfudl900nsq8z98470qom2",
             "name": "Potassium Monobasic Phosphate",
-            "gramsPerLitre": 0.074554,
+            "gramsPerLitre": 0.075799,
             "provenance": {
               "recordId": "cmbpfudl900nsq8z98470qom2",
               "identityId": "idn-monopotassium-phosphate",
@@ -12737,7 +12737,7 @@
           {
             "id": "cmbpfudi900lfq8z9o74v7q4e",
             "name": "Potassium Sulfate",
-            "gramsPerLitre": 0.10065,
+            "gramsPerLitre": 0.101448,
             "provenance": {
               "recordId": "cmbpfudi900lfq8z9o74v7q4e",
               "identityId": "idn-potassium-sulfate",
@@ -12747,12 +12747,12 @@
             }
           },
           {
-            "id": "cmbpfudly00ocq8z9zrrcr9zt",
-            "name": "Zinc Sulfate (Monohydrate)",
-            "gramsPerLitre": 0.000384,
+            "id": "cmbpfudhr00l3q8z9qrth913z",
+            "name": "Zn EDTA",
+            "gramsPerLitre": 0.001,
             "provenance": {
-              "recordId": "cmbpfudly00ocq8z9zrrcr9zt",
-              "identityId": "idn-zinc-sulfate-monohydrate",
+              "recordId": "cmbpfudhr00l3q8z9qrth913z",
+              "identityId": "idn-disodium-zinc-edta",
               "analysisBasis": "declared_catalogue",
               "documents": [],
               "flags": []
@@ -12775,54 +12775,54 @@
           {
             "ion": "N_NO3",
             "target_mg_l": 120,
-            "delivered_mg_l": 120.0112575696,
-            "error_mg_l": 0.011257569600005013,
-            "error_percent": 0.009381308000004177,
+            "delivered_mg_l": 120.010964544,
+            "error_mg_l": 0.010964544000003684,
+            "error_percent": 0.00913712000000307,
             "tolerance_mg_l": 1.2,
             "passes": true
           },
           {
             "ion": "P",
             "target_mg_l": 50,
-            "delivered_mg_l": 50.00054112,
-            "error_mg_l": 0.0005411200000011718,
-            "error_percent": 0.0010822400000023435,
+            "delivered_mg_l": 50.000449079999996,
+            "error_mg_l": 0.00044907999999566073,
+            "error_percent": 0.0008981599999913215,
             "tolerance_mg_l": 0.5,
             "passes": true
           },
           {
             "ion": "K",
             "target_mg_l": 150,
-            "delivered_mg_l": 149.99517637999998,
-            "error_mg_l": -0.004823620000024675,
-            "error_percent": -0.003215746666683117,
+            "delivered_mg_l": 149.99531814,
+            "error_mg_l": -0.004681860000005145,
+            "error_percent": -0.00312124000000343,
             "tolerance_mg_l": 1.5,
             "passes": true
           },
           {
             "ion": "Mg",
             "target_mg_l": 50,
-            "delivered_mg_l": 49.9956537484,
-            "error_mg_l": -0.004346251599997686,
-            "error_percent": -0.008692503199995372,
+            "delivered_mg_l": 49.995668976,
+            "error_mg_l": -0.004331024000002515,
+            "error_percent": -0.00866204800000503,
             "tolerance_mg_l": 0.5,
             "passes": true
           },
           {
             "ion": "Ca",
             "target_mg_l": 150,
-            "delivered_mg_l": 149.9543,
-            "error_mg_l": -0.04570000000001073,
-            "error_percent": -0.03046666666667382,
+            "delivered_mg_l": 149.95449000000002,
+            "error_mg_l": -0.045509999999978845,
+            "error_percent": -0.030339999999985896,
             "tolerance_mg_l": 1.5,
             "passes": true
           },
           {
             "ion": "S",
             "target_mg_l": 60,
-            "delivered_mg_l": 60.001154199999995,
-            "error_mg_l": 0.001154199999994887,
-            "error_percent": 0.0019236666666581452,
+            "delivered_mg_l": 60.00123096,
+            "error_mg_l": 0.0012309600000008913,
+            "error_percent": 0.0020516000000014856,
             "tolerance_mg_l": 0.6,
             "passes": true
           },
@@ -12847,18 +12847,18 @@
           {
             "ion": "Zn",
             "target_mg_l": 0.3,
-            "delivered_mg_l": 0.2999296,
-            "error_mg_l": -7.039999999997049e-05,
-            "error_percent": -0.02346666666665683,
+            "delivered_mg_l": 0.30000000000000004,
+            "error_mg_l": 5.551115123125783e-17,
+            "error_percent": 1.8503717077085944e-14,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
           {
             "ion": "Cu",
             "target_mg_l": 0.2,
-            "delivered_mg_l": 0.20000850000000003,
-            "error_mg_l": 8.500000000022379e-06,
-            "error_percent": 0.004250000000011189,
+            "delivered_mg_l": 0.19996,
+            "error_mg_l": -4.000000000001225e-05,
+            "error_percent": -0.020000000000006124,
             "tolerance_mg_l": 0.01,
             "passes": true
           },
@@ -12884,19 +12884,19 @@
         "whole_recipe_passes": true,
         "products_used": 11,
         "delivered_assay_mg_l": {
-          "Ca": 149.9543,
+          "Ca": 149.95449000000002,
           "B": 0.7000646,
           "Fe": 2.8000000000000003,
-          "Zn": 0.2999296,
+          "Zn": 0.30000000000000004,
           "Mn": 0.8,
-          "Cu": 0.20000850000000003,
+          "Cu": 0.19996,
           "Mo": 0.050134,
-          "N_NO3": 120.0112575696,
-          "N_NH4": 7.52367,
-          "S": 60.001154199999995,
-          "Mg": 49.9956537484,
-          "P": 50.00054112,
-          "K": 149.99517637999998,
+          "N_NO3": 120.010964544,
+          "N_NH4": 7.523681000000001,
+          "Mg": 49.995668976,
+          "S": 60.00123096,
+          "P": 50.000449079999996,
+          "K": 149.99531814,
           "Na": 0.01444
         },
         "solver_feasible": true,
@@ -28261,31 +28261,31 @@
     "note": "ASV samples may be per-loop averages, not request latency. number=1 is configured for this suite. Inspect ASV raw failures and memory results.",
     "records": [
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Delivery.time_composed_delivery_example",
         "parameter_index": 0,
         "parameters": [],
         "samples_seconds": [
-          0.016617052000000854,
-          0.015864561000000776,
-          0.016878118000001052,
-          0.01611195099999918,
-          0.015724061000000233,
-          0.01573104299999528,
-          0.01582315399999601,
-          0.015707768999995153,
-          0.015793309000002864,
-          0.015657976999996492
+          0.015380402999994658,
+          0.015214403999991077,
+          0.01604094200000361,
+          0.01515606499999933,
+          0.015161315000000286,
+          0.015107886000009785,
+          0.015111751999995704,
+          0.015453338000000372,
+          0.015033407000004217,
+          0.01528962300000103
         ],
         "sample_count": 10,
-        "median_seconds": 0.015808231499999437,
-        "p95_seconds_nearest_rank": 0.016878118000001052,
-        "asv_result": 0.015808231499999437,
+        "median_seconds": 0.015187859499995682,
+        "p95_seconds_nearest_rank": 0.01604094200000361,
+        "asv_result": 0.015187859499995682,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.peakmem_solve",
         "parameter_index": 0,
         "parameters": [
@@ -28300,12 +28300,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46178304,
+        "asv_result": 39915520,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.peakmem_solve",
         "parameter_index": 1,
         "parameters": [
@@ -28320,12 +28320,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46063616,
+        "asv_result": 39976960,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.peakmem_solve",
         "parameter_index": 2,
         "parameters": [
@@ -28340,12 +28340,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46313472,
+        "asv_result": 40108032,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.peakmem_solve",
         "parameter_index": 3,
         "parameters": [
@@ -28360,12 +28360,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46206976,
+        "asv_result": 39968768,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.time_solve",
         "parameter_index": 0,
         "parameters": [
@@ -28377,26 +28377,26 @@
           ]
         ],
         "samples_seconds": [
-          0.06801667900001007,
-          0.06799921600000403,
-          0.06797612300000822,
-          0.06789799800000651,
-          0.06797712499999875,
-          0.06768696599999657,
-          0.06795403300000658,
-          0.06781380099999978,
-          0.06920278599999108,
-          0.06888026599999364
+          0.06943602400001225,
+          0.06996252400000458,
+          0.07006638699999712,
+          0.06978110699999718,
+          0.07061137200000189,
+          0.06920100600000012,
+          0.07012165099999379,
+          0.06901702400000431,
+          0.06996439799999621,
+          0.06939547899999354
         ],
         "sample_count": 10,
-        "median_seconds": 0.06797662400000348,
-        "p95_seconds_nearest_rank": 0.06920278599999108,
-        "asv_result": 0.06797662400000348,
+        "median_seconds": 0.06987181550000088,
+        "p95_seconds_nearest_rank": 0.07061137200000189,
+        "asv_result": 0.06987181550000088,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.time_solve",
         "parameter_index": 1,
         "parameters": [
@@ -28408,26 +28408,26 @@
           ]
         ],
         "samples_seconds": [
-          0.0015287950000129058,
-          0.001584117000007268,
-          0.0014848730000096566,
-          0.0014860249999912867,
-          0.001507044999996765,
-          0.0014860450000071523,
-          0.001477429000004804,
-          0.0015147689999963632,
-          0.0015801400000015065,
-          0.0015923230000112198
+          0.0016366570000059255,
+          0.0015206909999960772,
+          0.0015065440000086028,
+          0.001494913999991354,
+          0.0014978279999979804,
+          0.001486436999996954,
+          0.0014799150000044392,
+          0.0015111729999972567,
+          0.0014799650000014708,
+          0.0014963360000024295
         ],
         "sample_count": 10,
-        "median_seconds": 0.001510906999996564,
-        "p95_seconds_nearest_rank": 0.0015923230000112198,
-        "asv_result": 0.001510906999996564,
+        "median_seconds": 0.001497082000000205,
+        "p95_seconds_nearest_rank": 0.0016366570000059255,
+        "asv_result": 0.001497082000000205,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.time_solve",
         "parameter_index": 2,
         "parameters": [
@@ -28439,26 +28439,26 @@
           ]
         ],
         "samples_seconds": [
-          0.06903681699999709,
-          0.0712797409999979,
-          0.06918878000000461,
-          0.0704574909999991,
-          0.0691135499999973,
-          0.0720599739999983,
-          0.07081609899999819,
-          0.07256001599999706,
-          0.07117051100000538,
-          0.07209710800000835
+          0.07019333399999539,
+          0.07009044000000131,
+          0.06989487199999189,
+          0.07001872299998979,
+          0.070118499000003,
+          0.07017863100000454,
+          0.06999248500000022,
+          0.07006897600000173,
+          0.07024941199999546,
+          0.06993270200000268
         ],
         "sample_count": 10,
-        "median_seconds": 0.07099330500000178,
-        "p95_seconds_nearest_rank": 0.07256001599999706,
-        "asv_result": 0.07099330500000178,
+        "median_seconds": 0.07007970800000152,
+        "p95_seconds_nearest_rank": 0.07024941199999546,
+        "asv_result": 0.07007970800000152,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.time_solve",
         "parameter_index": 3,
         "parameters": [
@@ -28470,26 +28470,26 @@
           ]
         ],
         "samples_seconds": [
-          0.06806079999999781,
-          0.06808670799999561,
-          0.06961987300000771,
-          0.06958109100000343,
-          0.0692589970000057,
-          0.06936367300001223,
-          0.06907371900000214,
-          0.07049361199999282,
-          0.0695026960000007,
-          0.06916067400000259
+          0.06958941299998855,
+          0.06908905000000232,
+          0.06875085999999442,
+          0.06939313700000582,
+          0.0691146180000004,
+          0.06893087599999603,
+          0.06904739299999108,
+          0.06920008699999869,
+          0.06915927100000374,
+          0.06957552700001202
         ],
         "sample_count": 10,
-        "median_seconds": 0.06931133500000897,
-        "p95_seconds_nearest_rank": 0.07049361199999282,
-        "asv_result": 0.06931133500000897,
+        "median_seconds": 0.06913694450000207,
+        "p95_seconds_nearest_rank": 0.06958941299998855,
+        "asv_result": 0.06913694450000207,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_final_state_iterations",
         "parameter_index": 0,
         "parameters": [
@@ -28506,10 +28506,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 68,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_final_state_iterations",
         "parameter_index": 1,
         "parameters": [
@@ -28526,10 +28526,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 23,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_final_state_iterations",
         "parameter_index": 2,
         "parameters": [
@@ -28546,10 +28546,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 73,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_final_state_iterations",
         "parameter_index": 3,
         "parameters": [
@@ -28566,10 +28566,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 2,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_search_solves",
         "parameter_index": 0,
         "parameters": [
@@ -28586,10 +28586,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 1,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_search_solves",
         "parameter_index": 1,
         "parameters": [
@@ -28606,10 +28606,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 1,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_search_solves",
         "parameter_index": 2,
         "parameters": [
@@ -28626,10 +28626,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 1,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Equilibrium.track_search_solves",
         "parameter_index": 3,
         "parameters": [
@@ -28646,10 +28646,10 @@
         "p95_seconds_nearest_rank": null,
         "asv_result": 9,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Formulation.peakmem_recommend",
         "parameter_index": 0,
         "parameters": [
@@ -28662,12 +28662,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46227456,
+        "asv_result": 40034304,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Formulation.peakmem_recommend",
         "parameter_index": 1,
         "parameters": [
@@ -28680,12 +28680,12 @@
         "sample_count": 0,
         "median_seconds": null,
         "p95_seconds_nearest_rank": null,
-        "asv_result": 46084096,
+        "asv_result": 40001536,
         "status": "non_timing_or_samples_not_recorded",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Formulation.time_recommend",
         "parameter_index": 0,
         "parameters": [
@@ -28695,26 +28695,26 @@
           ]
         ],
         "samples_seconds": [
-          0.03363332799999341,
-          0.03383561399999735,
-          0.03371872700000722,
-          0.03354549300000542,
-          0.033517000999992774,
-          0.033657001999998215,
-          0.03380602899999019,
-          0.033660447999992016,
-          0.03343573900001218,
-          0.033544932000012295
+          0.01952496199999132,
+          0.01956557799999814,
+          0.01954235499999868,
+          0.019578110999987075,
+          0.019697124000003896,
+          0.01963575999999989,
+          0.01959147699997743,
+          0.019779717000005803,
+          0.019641589999991993,
+          0.019613587000009147
         ],
         "sample_count": 10,
-        "median_seconds": 0.033645164999995814,
-        "p95_seconds_nearest_rank": 0.03383561399999735,
-        "asv_result": 0.033645164999995814,
+        "median_seconds": 0.01960253199999329,
+        "p95_seconds_nearest_rank": 0.019779717000005803,
+        "asv_result": 0.01960253199999329,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Formulation.time_recommend",
         "parameter_index": 1,
         "parameters": [
@@ -28724,74 +28724,74 @@
           ]
         ],
         "samples_seconds": [
-          0.01975987299999815,
-          0.019590859000004457,
-          0.019756345999994096,
-          0.019709919999996828,
-          0.019672280000008868,
-          0.019728154999995695,
-          0.01966307400000744,
-          0.0196055159999986,
-          0.019594124999997575,
-          0.019463340000001494
+          0.01600159400001644,
+          0.01591936200000532,
+          0.016082655000019486,
+          0.015939087999981894,
+          0.015843490999998266,
+          0.015741540999982817,
+          0.015855071999993697,
+          0.016117450999985294,
+          0.015901108000008435,
+          0.01599017400002367
         ],
         "sample_count": 10,
-        "median_seconds": 0.019667677000008155,
-        "p95_seconds_nearest_rank": 0.01975987299999815,
-        "asv_result": 0.019667677000008155,
+        "median_seconds": 0.015929224999993608,
+        "p95_seconds_nearest_rank": 0.016117450999985294,
+        "asv_result": 0.015929224999993608,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Import.time_fresh_process_import",
         "parameter_index": 0,
         "parameters": [],
         "samples_seconds": [
-          0.12156114500000115,
-          0.10759838499998864,
-          0.10775145000000919,
-          0.1101806970000041,
-          0.10836847000000205,
-          0.10789249200000484,
-          0.10819871300000727,
-          0.10773915700001169,
-          0.10855699100000038,
-          0.10891218300000105
+          0.12241405999998278,
+          0.11354750200001718,
+          0.11264720599999123,
+          0.1124298119999878,
+          0.11205833000002485,
+          0.11346239300002026,
+          0.11123166199999446,
+          0.11314427499999624,
+          0.11121477300000038,
+          0.11236758900000154
         ],
         "sample_count": 10,
-        "median_seconds": 0.10828359150000466,
-        "p95_seconds_nearest_rank": 0.12156114500000115,
-        "asv_result": 0.10828359150000466,
+        "median_seconds": 0.11253850899998952,
+        "p95_seconds_nearest_rank": 0.12241405999998278,
+        "asv_result": 0.11253850899998952,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.IrrigationEC.time_experimental_ec",
         "parameter_index": 0,
         "parameters": [],
         "samples_seconds": [
-          0.0036651090000106024,
-          0.0036951150000135158,
-          0.0035608150000001615,
-          0.003806663000005983,
-          0.003787537000008001,
-          0.003804939999994872,
-          0.0038808709999926805,
-          0.0038140369999979384,
-          0.003829856000010068,
-          0.0037830790000015213
+          0.0036866820000227563,
+          0.003602165000017976,
+          0.0035612180000157423,
+          0.0035851830000126483,
+          0.0035965140000087104,
+          0.0035308220000160873,
+          0.003532676000020274,
+          0.003538797000004479,
+          0.0035289289999980156,
+          0.003525693000000274
         ],
         "sample_count": 10,
-        "median_seconds": 0.0037962385000014365,
-        "p95_seconds_nearest_rank": 0.0038808709999926805,
-        "asv_result": 0.0037962385000014365,
+        "median_seconds": 0.0035500075000101106,
+        "p95_seconds_nearest_rank": 0.0036866820000227563,
+        "asv_result": 0.0035500075000101106,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 0,
         "parameters": [
@@ -28806,26 +28806,26 @@
           ]
         ],
         "samples_seconds": [
-          6.476100000440965e-05,
-          4.9541999999291875e-05,
-          4.44529999867882e-05,
-          4.4252999998661835e-05,
-          4.386199999828477e-05,
-          4.4903999992129684e-05,
-          4.453299999340743e-05,
-          4.612600000086786e-05,
-          4.3711999992979145e-05,
-          4.569500001139204e-05
+          7.009000000834931e-05,
+          9.24919999931717e-05,
+          4.97620000032839e-05,
+          4.692699999964134e-05,
+          4.65969999936533e-05,
+          4.7297999998363593e-05,
+          4.5734999986279945e-05,
+          4.675700000689176e-05,
+          4.9301999979434186e-05,
+          4.691699999170851e-05
         ],
         "sample_count": 10,
-        "median_seconds": 4.471849999276856e-05,
-        "p95_seconds_nearest_rank": 6.476100000440965e-05,
-        "asv_result": 4.471849999276856e-05,
+        "median_seconds": 4.7112499999002466e-05,
+        "p95_seconds_nearest_rank": 9.24919999931717e-05,
+        "asv_result": 4.7112499999002466e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 1,
         "parameters": [
@@ -28840,26 +28840,26 @@
           ]
         ],
         "samples_seconds": [
-          4.2730000004098656e-05,
-          2.4995999993393525e-05,
-          2.2150999996028986e-05,
-          2.243200000862089e-05,
-          2.333300000145755e-05,
-          2.342400000543421e-05,
-          2.1970999995346574e-05,
-          2.1158999999215666e-05,
-          2.0176999996124323e-05,
-          2.0648000003120615e-05
+          4.464299999540344e-05,
+          2.501700001289464e-05,
+          2.352399999949739e-05,
+          2.244199998813201e-05,
+          2.1920999984104128e-05,
+          2.4475999993001096e-05,
+          2.1561000011161013e-05,
+          2.1699999990687502e-05,
+          2.1790999994664162e-05,
+          2.1591000006537797e-05
         ],
         "sample_count": 10,
-        "median_seconds": 2.2291500002324938e-05,
-        "p95_seconds_nearest_rank": 4.2730000004098656e-05,
-        "asv_result": 2.2291500002324938e-05,
+        "median_seconds": 2.218149998611807e-05,
+        "p95_seconds_nearest_rank": 4.464299999540344e-05,
+        "asv_result": 2.218149998611807e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 2,
         "parameters": [
@@ -28874,26 +28874,26 @@
           ]
         ],
         "samples_seconds": [
-          4.8139999989871285e-05,
-          3.0076000001599823e-05,
-          2.8873999994516453e-05,
-          2.749099999732607e-05,
-          2.59880000044177e-05,
-          2.8864000000794476e-05,
-          2.649900000051275e-05,
-          2.6208999997834326e-05,
-          2.623899999321111e-05,
-          2.537700000004861e-05
+          4.9963000009256575e-05,
+          3.086699999244047e-05,
+          2.8743999990865632e-05,
+          2.7260999985401213e-05,
+          2.6699999978063715e-05,
+          2.813199998286109e-05,
+          2.7620999986766037e-05,
+          2.7101000000584463e-05,
+          2.814200001921563e-05,
+          2.6439000009759184e-05
         ],
         "sample_count": 10,
-        "median_seconds": 2.699499999891941e-05,
-        "p95_seconds_nearest_rank": 4.8139999989871285e-05,
-        "asv_result": 2.699499999891941e-05,
+        "median_seconds": 2.7876499984813563e-05,
+        "p95_seconds_nearest_rank": 4.9963000009256575e-05,
+        "asv_result": 2.7876499984813563e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 3,
         "parameters": [
@@ -28908,26 +28908,26 @@
           ]
         ],
         "samples_seconds": [
-          4.908200000386387e-05,
-          3.08079999911115e-05,
-          2.765199999998913e-05,
-          2.6409000000171545e-05,
-          2.577700000472305e-05,
-          2.649900000051275e-05,
-          2.5297999997064835e-05,
-          2.6218000002131703e-05,
-          4.691800000955482e-05,
-          2.5899000007711948e-05
+          5.333999999379557e-05,
+          3.229999998666244e-05,
+          2.879300001268348e-05,
+          2.8543000013314668e-05,
+          2.790299998878254e-05,
+          2.773099998876205e-05,
+          2.8533000005381837e-05,
+          4.091699997843534e-05,
+          2.881300000012743e-05,
+          2.7181000007203693e-05
         ],
         "sample_count": 10,
-        "median_seconds": 2.6454000000342148e-05,
-        "p95_seconds_nearest_rank": 4.908200000386387e-05,
-        "asv_result": 2.6454000000342148e-05,
+        "median_seconds": 2.8668000012999073e-05,
+        "p95_seconds_nearest_rank": 5.333999999379557e-05,
+        "asv_result": 2.8668000012999073e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 4,
         "parameters": [
@@ -28942,26 +28942,26 @@
           ]
         ],
         "samples_seconds": [
-          8.497800000384359e-05,
-          6.579300000453259e-05,
-          5.93099999974811e-05,
-          5.8449000007954055e-05,
-          5.996200000879526e-05,
-          5.81480000079182e-05,
-          5.7085999998207626e-05,
-          5.6244999996124534e-05,
-          5.645499999218373e-05,
-          5.697599999621161e-05
+          8.810400001380003e-05,
+          6.666400000199246e-05,
+          6.37589999996635e-05,
+          6.302799999957642e-05,
+          6.077300000129071e-05,
+          6.329799998638919e-05,
+          6.280699997773809e-05,
+          6.121399999869936e-05,
+          6.074300000591393e-05,
+          6.0884000021133033e-05
         ],
         "sample_count": 10,
-        "median_seconds": 5.829850000793613e-05,
-        "p95_seconds_nearest_rank": 8.497800000384359e-05,
-        "asv_result": 5.829850000793613e-05,
+        "median_seconds": 6.291749998865726e-05,
+        "p95_seconds_nearest_rank": 8.810400001380003e-05,
+        "asv_result": 6.291749998865726e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 5,
         "parameters": [
@@ -28976,26 +28976,26 @@
           ]
         ],
         "samples_seconds": [
-          6.533199999125827e-05,
-          4.777800000965726e-05,
-          4.3261000001848515e-05,
-          4.211899999972957e-05,
-          4.2758999995839986e-05,
-          4.40820000022768e-05,
-          4.2959999987601805e-05,
-          4.178800000431693e-05,
-          4.1527000007590686e-05,
-          4.1767999988451265e-05
+          7.141300000057527e-05,
+          5.17660000127762e-05,
+          5.058399997892593e-05,
+          4.60349999968912e-05,
+          4.5996000011427896e-05,
+          4.668699997978365e-05,
+          4.509400000074493e-05,
+          4.637600000023667e-05,
+          4.43119999999908e-05,
+          4.704799999899478e-05
         ],
         "sample_count": 10,
-        "median_seconds": 4.2859499991720895e-05,
-        "p95_seconds_nearest_rank": 6.533199999125827e-05,
-        "asv_result": 4.2859499991720895e-05,
+        "median_seconds": 4.653149999001016e-05,
+        "p95_seconds_nearest_rank": 7.141300000057527e-05,
+        "asv_result": 4.653149999001016e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Kernel.time_nnls",
         "parameter_index": 6,
         "parameters": [
@@ -29010,60 +29010,60 @@
           ]
         ],
         "samples_seconds": [
-          4.8800999991271965e-05,
-          3.033700001253692e-05,
-          2.6589999990278557e-05,
-          2.6840000003858222e-05,
-          2.6739999995584185e-05,
-          2.596899999218749e-05,
-          2.590799999779847e-05,
-          2.578800000208048e-05,
-          2.550799999312403e-05,
-          4.6767000000613734e-05
+          4.9872000005279915e-05,
+          3.110800000172276e-05,
+          2.857300000869145e-05,
+          2.7281000001266875e-05,
+          2.7420999998639672e-05,
+          2.7701999982809866e-05,
+          2.7190000025711925e-05,
+          2.7802000005294758e-05,
+          2.740099998277401e-05,
+          2.7289999991353397e-05
         ],
         "sample_count": 10,
-        "median_seconds": 2.666499999293137e-05,
-        "p95_seconds_nearest_rank": 4.8800999991271965e-05,
-        "asv_result": 2.666499999293137e-05,
+        "median_seconds": 2.756149999072477e-05,
+        "p95_seconds_nearest_rank": 4.9872000005279915e-05,
+        "asv_result": 2.756149999072477e-05,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       },
       {
-        "asv_file": "runnervmxehtw/4dffdf86-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
+        "asv_file": "runnervm8k3b6/df0d30bf-existing-py_opt_hostedtoolcache_Python_3.13.16_x64_bin_python.json",
         "benchmark": "performance.Library.time_load_library",
         "parameter_index": 0,
         "parameters": [],
         "samples_seconds": [
-          0.0002591820000077405,
-          0.0002257010000050741,
-          0.00024417499999174197,
-          0.00022054100000445942,
-          0.00023550800000293748,
-          0.0002103220000009287,
-          0.00023671099999944545,
-          0.00021085299999867857,
-          0.0002131979999973055,
-          0.00021460000000672608
+          0.00025755000001481676,
+          0.00023266299999136208,
+          0.00024343300000850832,
+          0.000221170999992637,
+          0.00022787399998946967,
+          0.00021711400000867798,
+          0.0002477100000248811,
+          0.00021474999999782085,
+          0.00023698199998989367,
+          0.0002206700000044748
         ],
         "sample_count": 10,
-        "median_seconds": 0.00022312100000476676,
-        "p95_seconds_nearest_rank": 0.0002591820000077405,
-        "asv_result": 0.00022312100000476676,
+        "median_seconds": 0.00023026849999041588,
+        "p95_seconds_nearest_rank": 0.00025755000001481676,
+        "asv_result": 0.00023026849999041588,
         "status": "measured",
-        "commit_hash": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3"
+        "commit_hash": "df0d30bf4f62365056e0b0f250c75d0cf7206611"
       }
     ]
   },
   "after_metadata": {
     "schema": "benchmark-v1",
-    "utc": "2026-10-20T22:55:40.988707+00:00",
-    "git_commit": "4dffdf864ed4d52b44705cb89b43ad1afa659ef3",
+    "utc": "2026-10-20T23:28:40.245151+00:00",
+    "git_commit": "df0d30bf4f62365056e0b0f250c75d0cf7206611",
     "dirty_tree": false,
     "package_version": "0.4.0",
     "source_checkout_import": true,
     "python": "3.13.16 (main, Oct  1 2026, 02:37:54) [GCC 13.3.0]",
     "implementation": "CPython",
-    "os": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "os": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
     "architecture": "x86_64",
     "processor": "x86_64",
     "logical_cpus": 4,
@@ -29088,7 +29088,7 @@
       "src/flahax/delivery_contracts.py": "f2f56a4cddf1d60fc6f991d1e0e0caa49afcce6d514e0c9ac2a600cc051532d8",
       "src/flahax/delivery_plan.py": "b1e46658c3e7a7f25430122b6fb4fbb3b0ebc4927ce3618ef59ea30d1e544476",
       "src/flahax/delivery_quantities.py": "af6218607a66a5cc2f7551e6dc24fa64a5f7c8d8d475062d00e618c2a4902756",
-      "src/flahax/engine.py": "b1323128edf823d71e3742366f44920e3540c410a31d8f5a2281f67d799d4aa5",
+      "src/flahax/engine.py": "4e7bd3627688f32dd473b17c85922828748d55a47838a3add7ebfb50edde75e6",
       "src/flahax/equilibrium.py": "182b5dcb53d333254c1e507117e193a24da4578edace6bdb0bca888686222d7a",
       "src/flahax/equilibrium_delivery.py": "99413a6fedece1defceeaf043b1aa0d192cd06870aba00e6044087bb905e14e7",
       "src/flahax/fertilizer_equilibrium.py": "a205ac1d8d0aa34dce59e710b57de410ad3727bb27f6bdaab1b3017c7d06bf6e",
@@ -29336,7 +29336,7 @@
       "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv": "a9af04b386f4e1f4faa659d343d4169758ee6258dd1a71580205a2180564b25b",
       "tools/benchmark_baseline.py": "9fca05af9bec7244fc76a6dfb7c17002a9d673c48d0bba42613b4b39930d10cf"
     },
-    "input_manifest_sha256": "9b7ac5b421372b62dcee239735e675b16c2d43392ba07f76952f3b33cfc57955",
+    "input_manifest_sha256": "b25dc7d73e372e8ea5e4290404df37aac86aeeee4ecadaa6975d5f68c0680fe7",
     "physical_validation": "not performed",
     "live_phreeqc": "not run by this command; comparisons use pinned stored captures"
   },
@@ -29344,10 +29344,10 @@
   "asv_machine": {
     "arch": "x86_64",
     "cpu": "AMD EPYC 7763 64-Core Processor",
-    "machine": "runnervmxehtw",
+    "machine": "runnervm8k3b6",
     "num_cpu": "4",
-    "os": "Linux 7.0.0-1017-azure",
-    "ram": "16760344576",
+    "os": "Linux 6.17.0-1022-azure",
+    "ram": "16766414848",
     "version": 1
   },
   "publication_schema": "benchmark-publication-v1"
