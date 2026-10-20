@@ -50,25 +50,23 @@ Read more: [user manual](guide/manual.md),
 
 ## Reading a calculated EC result
 
-FlahaX can estimate the EC of an irrigation solution before mixing, so you can
-compare it with a meter reading afterwards. This calculation is still
-experimental and is not yet offered as a number on the command line.
+FlahaX has an experimental calculation that estimates the EC of an
+irrigation solution before mixing, for comparison with a meter reading after
+mixing. It is available only from Python: there is no command-line option and
+no grower-facing EC number. Its results use these statuses:
 
 | Status | What it means |
 |---|---|
 | `estimated` | FlahaX gives an EC estimate. |
-| `estimated`, with a range | Some dissolved species have no conductivity value. Their share cannot be negative, so the range starts at the part FlahaX can count and extends only upward. The true value tends to lie in the lower half. The middle of the range and its half-width describe only this missing share; they are not an accuracy statement. |
+| `estimated`, with a range | Some charged dissolved species have no conductivity value. Their share cannot be negative, so the range starts at the part FlahaX can count and extends only upward. The true value tends to lie in the lower half. The middle of the range and its half-width describe only this missing share; they are not an accuracy statement. |
 | `partial` | You supplied the pH and the analysis is missing some counterions. Only the part from known species is reported, with no total. |
-| `not_supported` | The mixture is outside the conditions the method covers, or its analysis does not balance closely enough. The result says why, and no EC is given. A blend with undisclosed ingredients also gives this status. |
+| `not_supported` | The mixture is outside the conditions the method covers, or FlahaX calculated the pH and the analysis does not balance closely enough. The result says why, and no EC is given. A blend with undisclosed ingredients also gives this status. |
 
 Every result carries the sentence "Accuracy on this fertilizer mixture has
 not yet been established." No measured accuracy is claimed. When you compare a
 prediction with your meter, FlahaX reports the difference without a pass or
 fail verdict. Always check EC with a suitable meter after the solution is
 prepared.
-
-A separate screening command, which uses manufacturer data sheets, reports
-its result as a `screening_estimate` of unknown numerical accuracy.
 
 Read more: [stock and irrigation EC](guide/conductivity.md),
 [site planning](guide/site-planning.md).
