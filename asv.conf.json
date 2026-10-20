@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "project": "FlahaX",
+  "project_url": "https://github.com/rafatahmed/Flahax",
+  "repo": ".",
+  "branches": ["main"],
+  "environment_type": "virtualenv",
+  "pythons": ["3.13"],
+  "matrix": {"numpy": ["2.5.4"], "scipy": ["1.18.1"]},
+  "benchmark_dir": "benchmarks",
+  "env_dir": "build/asv/env",
+  "results_dir": "build/asv/results",
+  "html_dir": "build/asv/html"
+}

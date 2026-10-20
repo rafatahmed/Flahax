@@ -1,5 +1,10 @@
 # FlahaX
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/site/_static/brand/v2/flahax-banner-white.png">
+  <img src="docs/site/_static/brand/v2/flahax-banner-color.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="100%">
+</picture>
+
 **Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
 equilibrium chemistry and auditable delivery planning.**
 
@@ -94,6 +99,11 @@ plan; they never operate pumps, valves or other hardware.
 | Audit trail | Explicit units (g/L of final solution versus g/kg water), model identifiers, source hashes, `needs_input` instead of guessed values | Plans are reviewable records, not operating authorizations |
 
 ## Verification
+
+The [Benchmark v1 protocol](docs/site/evidence/benchmark-v1.md) separates
+formulation fit, numerical chemistry, runtime/memory measurements, and physical
+validation. Its reproducible reports include input hashes and failed cases;
+timings are informational, and physical validation remains separate.
 
 - 153 automated tests, including live replay of every catalogue product,
   phase and acid case against pinned PHREEQC 3.8.6 (USGS).

@@ -6,6 +6,8 @@ include CHANGELOG.md
 include CONTRIBUTING.md
 include INTEGRATION.md
 include pyproject.toml
+include asv.conf.json
+recursive-include benchmarks *.py *.txt
 recursive-include docs *.md *.jpg *.png *.pdf
 recursive-include docs/site *.csv
 exclude docs/sources/04_Fertilizer.pdf
