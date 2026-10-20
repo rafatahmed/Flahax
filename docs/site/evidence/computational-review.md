@@ -1,30 +1,75 @@
-# G6 computational assessment — 2026-09-27
+# Computational assessment (G6)
 
-## Explicit scope amendment
+G6 is the release gate for scientific review of the chemistry. This page
+records how that gate was met for the planning package, on **2026-09-27**,
+before the 0.3.0 release.
 
-The project owner requested mathematical evidence with no laboratory work for this release and designated **Rafat Al Khashan** as assessor. This supersedes the earlier G6 requirement for independent scientific and bench/site sign-off **for the planning-package release only**. The record distinguishes the named assessor from the automated verification evidence: it is not independent review, experimental validation, a formal proof over all possible inputs, or operational dosing certification. Naming the assessor does not fabricate a reviewer signature or laboratory results.
+:::{note}
+**In short.** The chemistry was accepted on computational evidence alone:
+conservation, convergence and agreement with PHREEQC, checked by automated
+tests. It was not reviewed by an independent scientist, not tested in a
+laboratory or on a site, and is not a proof over all possible inputs or a
+dosing certification.
 
-The accepted object is a bounded numerical implementation of the selected source-versioned model, not a claim that every selected equilibrium constant accurately represents every commercial lot. The disclosed Dtp/Edd activity/concentration and stereoisomer assumptions remain in [the source profile](../models/flahax-chelate-thermodynamic-profile.md).
+The thermodynamic data assessed here have not changed since (see
+[release evidence](release-evidence.md)). Capabilities added later, such as
+measured-pH speciation in 0.4.0 and the EC estimate, are covered by their own
+release records, not by this assessment.
+:::
 
-## Computational acceptance criteria
+## Scope
+
+The project owner asked for mathematical evidence with no laboratory work for
+this release and named **Rafat Al Khashan** as assessor. This replaces the
+earlier G6 requirement for independent scientific and bench or site sign-off,
+**for the planning package only**.
+
+The record keeps the named assessor apart from the automated evidence. It is
+not independent review, experimental validation, a formal proof over all
+possible inputs or operational dosing certification. Naming the assessor does
+not stand in for a reviewer's signature or for laboratory results.
+
+What was accepted is a bounded numerical implementation of the selected,
+source-versioned model. It is not a claim that every selected equilibrium
+constant represents every commercial lot accurately. The assumptions for the
+DTPA and EDDHA chelates (`Dtp`, `Edd`) about activity versus concentration and
+about stereoisomers are disclosed in the
+[chelate extension](../models/flahax-chelate-thermodynamic-profile.md).
+
+## Acceptance criteria
 
 | Criterion | Evidence and assessment |
 |---|---|
-| Product identity and units | All 28 catalogue products retain declared components. P5.5 matches both ID and name, converts batch salt grams using explicit kg water, and checks mass = g/L × L. No assumed unit-density conversion. |
-| Equilibrium conservation | `test_chemistry_acceptance.py` and product/phase regressions enforce per-component 1e-9 relative + 1e-15 mol/kg-water residuals, including ligand and phase inventories. |
-| Mass action and convergence | Simultaneous ligand order-invariance/mass-action tests; phase complementarity and finite iteration limits; explicit invalid-domain/nonconvergence errors. Agreement is established for the tested cases, not promised for arbitrary inputs. |
-| Independent numerical reference | 21 PHREEQC golden families, raw captures and hashes, charge error <= 0.1%, declared Davies/reference tolerances, both nitrate titration and corrected Fix_H+ target proofs. This is an independently implemented reference calculation, not an independent human review. |
-| Reagent/recipe feedback | `test_equilibrium_delivery.py`: HNO3 moles → assayed mass → density-qualified volume → added nitrate-N ppm; target rescoring, zero dose, maximum volume and nutrient tolerances; preservation of measured-curve API. |
-| Delivery guards | Missing/contradictory input rejection; source hashes in audit; matching recipe and dedicated acid command/channel; target supersaturation/solid formation prevents validation; post-mix measurement remains required. |
-| Distributed package | Wheel and sdist installed separately outside checkout with isolated imports; runtime data/export checks, zero runtime dependencies, numerical APIs and both CLI entry points. `tools/verify_distribution.py` emits observed values and artifact hashes. |
-| Reference reproducibility | Fresh administrative extraction of the official pinned MSI into TEMP succeeded; installer, executable and database hashes verified; required-live replay succeeds without skips. Missing required PHREEQC is tested as a hard failure. |
+| Product identity and units | All 28 catalogue products keep their declared components. Equilibrium delivery (P5.5) matches products by ID and name, converts batch salt grams using explicit kg of water, and checks mass = g/L × L. No unit density is assumed. |
+| Equilibrium conservation | `test_chemistry_acceptance.py` and the product and phase regressions hold each component to a 1e-9 relative plus 1e-15 mol/kg-water residual, including ligand and phase inventories. |
+| Mass action and convergence | Tests show simultaneous ligand solutions are independent of order and satisfy mass action; phases meet complementarity within finite iteration limits; invalid domains and non-convergence raise explicit errors. Agreement is shown for the tested cases, not promised for arbitrary inputs. |
+| Independent numerical reference | 21 PHREEQC golden families with raw captures and hashes, charge error ≤ 0.1 %, declared Davies and reference tolerances, and both the nitrate titration and the corrected PHREEQC `Fix_H+` target-pH proofs. This is an independently implemented calculation, not independent human review. See [PHREEQC reference fixtures](../models/reference-fixtures.md). |
+| Reagent and recipe feedback | `test_equilibrium_delivery.py`: HNO₃ moles → assayed mass → density-qualified volume → added nitrate-N ppm; target rescoring, zero dose, maximum volume and nutrient tolerances; the measured-curve API is preserved. |
+| Delivery guards | Missing or contradictory inputs are rejected; source hashes go into the audit; recipe, acid command and channel must match; target supersaturation or solid formation prevents validation; a post-mix measurement is still required. |
+| Distributed package | Wheel and sdist installed separately outside the checkout with isolated imports; runtime data and exports, zero runtime dependencies, numerical APIs and both CLI entry points checked. `tools/verify_distribution.py` records observed values and artifact hashes. See [package verification](../api/package-verification.md). |
+| Reference reproducibility | A fresh administrative extraction of the official pinned PHREEQC installer succeeded; installer, executable and database hashes verified; the required live replay runs without skips. A missing PHREEQC is tested as a hard failure when the replay is required. |
 
-## Assessment and release boundary
+## Assessment
 
-**Assessor:** Rafat Al Khashan (designated by the project owner).
+**Assessor:** Rafat Al Khashan, designated by the project owner.
 
-**Computational assessment:** the automated evidence passes for the above tested, bounded planning capabilities, subject to the exact regression and distribution checks documented in [release evidence](release-evidence.md). Personal sign-off by the named assessor is not inferred from this designation. The assessment does not certify chemistry parameters beyond their selected documented convention.
+**Result:** the automated evidence passes for the tested, bounded planning
+capabilities above, subject to the regression and distribution checks in the
+[release evidence](release-evidence.md). The assessment does not certify any
+chemistry parameter beyond its documented convention. This record does not
+replace a personal signature by the assessor.
 
-**Remote release/merge gate remains separate:** GitHub Actions previously could not start because the repository account was billing-locked. Local results do not turn those failed remote checks into passes. Supported Python 3.11/3.12 remote validation and the new hosted jobs must be observed before claiming the entire CI gate complete. Python 3.13 local tests and installed-distribution checks provide evidence for that interpreter only; Python 3.14 checks are additional.
+**Hosted CI.** When this assessment was written, GitHub Actions could not run
+because the repository account was billing-locked, so the Python 3.11 and 3.12
+checks had not been observed, and local results were not counted as passes.
+That gate has since been met: the 0.4.0 release ran the tests on Python 3.11,
+3.12 and 3.13 and the live PHREEQC replay on hosted CI before publication (see
+[0.4.0 publication](release-evidence.md#040-publication-2026-10-17)).
 
-No publishing, automatic merging, deployment, external database write, pump action, or laboratory certification follows from this document. Optional P7 implementation belongs to the separate FlahaFAST project; it is not a FlahaX package release gate. This repository documents only its consumer boundary.
+## What this does not authorize
+
+No publishing, automatic merging, deployment, external database write, pump
+action or laboratory certification follows from this document. Integration
+with FlahaFAST (P7) belongs to that separate project and is not a FlahaX
+release gate; this repository documents only the
+[consumer boundary](https://github.com/rafatahmed/Flahax/blob/main/INTEGRATION.md).

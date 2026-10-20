@@ -1,11 +1,33 @@
-# Delivery Planner Release Evidence
+# Release evidence
 
-## 0.4.0 publication - 2026-10-17
+This page is the release log: for each FlahaX version, what was checked, on
+which revision, and with what result. Newest first.
+
+:::{note}
+**Current release: 0.4.0**, published to PyPI on 2026-10-17 through Trusted
+Publishing, after hosted CI on Python 3.11, 3.12 and 3.13 and a live PHREEQC
+replay passed. FlahaX is a dependency-free **planning and verification
+prototype**: the evidence is computational (see the
+[computational assessment](computational-review.md)), and no record here
+authorizes autonomous dosing, pump control, deployment or universal chemical
+certification.
+
+Each section is a record written at the time. Words such as "unpublished",
+"remaining" or "outstanding" describe that moment, not today.
+:::
+
+| Version | Date | Status | Record |
+|---|---|---|---|
+| 0.4.0 | 2026-10-17 | Published, latest | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
+| 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
+| 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
+
+## 0.4.0 publication (2026-10-17)
 
 0.4.0 was published to PyPI on **2026-10-17** by the hardened release workflow
 (run [`39043172800`](https://github.com/rafatahmed/Flahax/actions/runs/39043172800)),
 triggered by the GitHub Release for tag `v0.4.0` on `main` at `3610a59`
-(merge of PR #18). It is the first release under the Apache License 2.0 and the
+(merge of [PR #18](https://github.com/rafatahmed/Flahax/pull/18)). It is the first release under the Apache License 2.0 and the
 first published through PyPI Trusted Publishing. The owner authorized
 publication and approved the `pypi` environment deployment.
 
@@ -35,19 +57,19 @@ endings. The thermodynamic data are unchanged since 0.3.1.
 
 The `v0.3.1` GitHub Release note was published the same day. Its tag carries
 the old workflow, which started a build that stopped at the approval gate; that
-run (`39042767902`) was cancelled and nothing was uploaded.
+run ([`39042767902`](https://github.com/rafatahmed/Flahax/actions/runs/39042767902)) was cancelled and nothing was uploaded.
 
-## 0.4.0 preparation - 2026-10-17
+## 0.4.0 preparation (2026-10-17)
 
 Prepared revision: `release/0.4.0`, cut from `main` at `00d855a` (merge of
-PR #15). Hosted CI passed on `00d855a`. Assessor: Rafat Al Khashan with
+[PR #15](https://github.com/rafatahmed/Flahax/pull/15)). Hosted CI passed on `00d855a`. Assessor: Rafat Al Khashan with
 Claude Code assistance. This is release-readiness evidence, not publication
 authorization. Version 0.4.0 is unpublished; PyPI's latest release is 0.3.1.
 
 | Check | Result |
 |---|---|
 | Version alignment | `0.4.0` in `pyproject.toml`, `flahax.__version__`, `CITATION.cff`, README, user manual and API reference; changelog section `0.4.0 — Unreleased`; tag `v0.4.0` not yet created |
-| Licence | First release under Apache-2.0 (PR #13). Wheel metadata `License-Expression: Apache-2.0`, with `LICENSE` and `NOTICE` as licence files; `NOTICE` is also in the sdist. 0.3.1 and earlier remain under the Flaha Free Use License 1.0 |
+| Licence | First release under Apache-2.0 ([PR #13](https://github.com/rafatahmed/Flahax/pull/13)). Wheel metadata `License-Expression: Apache-2.0`, with `LICENSE` and `NOTICE` as licence files; `NOTICE` is also in the sdist. 0.3.1 and earlier remain under the Flaha Free Use License 1.0 |
 | Local regression | 162 tests passed in 210.0 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1`; also 162 passed on Python 3.14.0. `compileall` and `git diff --check` passed |
 | Public API compatibility against the published 0.3.1 wheel | 100 exports retained, none removed, no signature changed; 3 added (`BalancedWaterAnalysis`, `balance_water_analysis`, `carbonate_alkalinity`; 103 total). The workflow `equilibrium` record gains optional keys only (`measured_ph`, `alkalinity_eq_per_kg`, `balance_ion`, `maximum_imbalance_percent`) |
 | Isolated distribution check | `tools/verify_distribution.py` passed: clean wheel and sdist installs on Python 3.13.15 (builder 3.14.0), eight manual examples, 28 catalogue products, all public exports, both CLI entry points. Sdist 394 files, 3,397,413 bytes; no PDF; `docs/publication/` excluded |
@@ -82,18 +104,16 @@ authorization; a final build of the exact approved artifacts with recorded
 hashes; upload through the approved route; PyPI metadata and fresh-install
 verification; and the publication date and `v0.4.0` tag.
 
-## 0.3.1 publication - 2026-10-17
+## 0.3.1 publication (2026-10-17)
 
-The owner authorized publication of 0.3.1 in the Claude Code session of
-2026-10-17. Released revision: `main` at `586eddb` (merge of PR #10), tagged
-`v0.3.1`. Route: manual Twine upload with the owner's PyPI token from the
-Windows credential store; the token was never displayed or committed. No
+The owner authorized publication of 0.3.1 on 2026-10-17. Released revision: `main` at `586eddb` (merge of [PR #10](https://github.com/rafatahmed/Flahax/pull/10)), tagged
+`v0.3.1`. Route: manual Twine upload by the owner. No
 GitHub Release was created, so the automatic publish workflow did not run.
 
 | Step | Result |
 |---|---|
 | Version unused | `https://pypi.org/pypi/flahax/0.3.1/json` returned 404 before upload |
-| Hosted CI on the release content | PR #10 run `39028824252` passed: Python 3.11-3.13 and `phreeqc-live` |
+| Hosted CI on the release content | [PR #10](https://github.com/rafatahmed/Flahax/pull/10) run [`39028824252`](https://github.com/rafatahmed/Flahax/actions/runs/39028824252) passed: Python 3.11-3.13 and `phreeqc-live` |
 | Local regression | 153 tests, zero skips, live PHREEQC, Python 3.13.15, on `122a942` (same tree as `586eddb` except the merge) |
 | Exact artifacts | Built by `tools/verify_distribution.py --artifacts-dir dist/0.3.1-final` from `586eddb`; clean wheel and sdist installs passed on Python 3.13.15 (builder 3.14.0); no PDF in the sdist |
 | Metadata | `twine check --strict` passed for both files |
@@ -114,9 +134,9 @@ management page lists 0.3.0 under yanked releases. The yank was made because
 the 0.3.0 sdist contains the YaraVita PDF; yanked files stay downloadable by
 exact pin (`flahax==0.3.0`).
 
-## 0.3.1 release audit - 2026-10-17
+## 0.3.1 release audit (2026-10-17)
 
-Audited revision: `main` at `2e257d5` (merge of PR #7), then the audit commit
+Audited revision: `main` at `2e257d5` (merge of [PR #7](https://github.com/rafatahmed/Flahax/pull/7)), then the audit commit
 `7d4ef15` on `release/0.3.1-audit`, which only excludes the YaraVita PDF and
 updates status documents. Assessor: Rafat Al Khashan with Claude Code
 assistance. This is release-readiness evidence, not publication authorization.
@@ -125,7 +145,7 @@ Version 0.3.1 remains unpublished; PyPI's latest release is 0.3.0.
 | Check | Result |
 |---|---|
 | Version alignment | `0.3.1` in `pyproject.toml`, `flahax.__version__`, `CITATION.cff`, user manual and API reference; changelog section `0.3.1 - Unreleased`; tag `v0.3.1` not yet created |
-| Hosted CI on `2e257d5` | Run `38967066279` (2026-10-16) passed: Python 3.11, 3.12 and 3.13 each ran 153 tests, OK with 2 skips (live replay, covered by the dedicated job) plus isolated wheel/sdist verification; `phreeqc-live` ran 6 tests, OK, zero skips, with hash-pinned PHREEQC 3.8.6 |
+| Hosted CI on `2e257d5` | Run [`38967066279`](https://github.com/rafatahmed/Flahax/actions/runs/38967066279) (2026-10-16) passed: Python 3.11, 3.12 and 3.13 each ran 153 tests, OK with 2 skips (live replay, covered by the dedicated job) plus isolated wheel/sdist verification; `phreeqc-live` ran 6 tests, OK, zero skips, with hash-pinned PHREEQC 3.8.6 |
 | Local regression, `2e257d5` | 153 tests passed in 352.243 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1` |
 | Local regression, `7d4ef15` | 153 tests passed in 297.943 s on Python 3.13.15, zero skips, `FLAHAX_REQUIRE_PHREEQC=1`; `compileall` passed |
 | Public API compatibility against the published 0.3.0 wheel | 86 exports retained, none removed; 14 added (100 total). Only `EquilibriumPhPlan` (new trailing field `incidental_assessment`, default `None`) and `plan_equilibrium_delivery` (new keyword-only `maximum_concentrations`, default `None`) changed, both backward compatible |
@@ -149,7 +169,7 @@ with recorded hashes; upload through the approved route; PyPI metadata and
 fresh-install verification; and the publication date and `v0.3.1` tag. Hosted
 CI must also pass on the final revision that includes this audit.
 
-## 0.3.1 documentation audit - 2026-10-02
+## 0.3.1 documentation audit (2026-10-02)
 
 The merged preparation branch was audited on `release/0.3.1-documentation`.
 See [audit findings and maintenance policy](https://github.com/rafatahmed/Flahax/blob/main/docs/documentation-maintenance.md).
@@ -175,7 +195,8 @@ Resource SHA-256 values:
 Full regression (before adding the README-only test):
 `PYTHONPATH=src FLAHAX_REQUIRE_PHREEQC=1 py -3.13 -m unittest discover -s tests -t .`
 passed **152 tests in 190.122 seconds, zero skips**, including live PHREEQC.
-Set these variables with `$env:...` in PowerShell as shown below.
+In PowerShell, set the two variables with `$env:` as in the
+[0.3.1 preparation](#031-preparation-2026-10-01) commands.
 
 The subsequent README test and maintenance-page additions were checked with
 `PYTHONPATH=src py -3.13 -m unittest tests.test_release_hygiene`: **5 passed**.
@@ -183,7 +204,7 @@ The reference freshness check passed on Python 3.13 and 3.14. Compilation and
 `git diff --check` passed. These are local checks, not a hosted-CI result or
 publication authorization. Version 0.3.1 remains unpublished.
 
-## 0.3.1 preparation - 2026-10-01
+## 0.3.1 preparation (2026-10-01)
 
 Branch: `release/0.3.1-site-planning`. This is local preparation, not a new
 published release or a hosted-CI pass. See [current status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md)
@@ -197,7 +218,7 @@ $env:FLAHAX_REQUIRE_PHREEQC = '1'
 py -3.13 -m unittest discover -s tests -t .
 py -3.13 -m compileall -q src examples tools
 git diff --check
-.venv-verification/Scripts/python.exe tools/verify_distribution.py --python C:/Users/rafat/AppData/Local/Programs/Python/Python313/python.exe --report build/release-0.3.1-distribution.json
+.venv-verification/Scripts/python.exe tools/verify_distribution.py --python <path-to-python-3.13> --report build/release-0.3.1-distribution.json
 ```
 
 The distribution check passed: isolated wheel and sdist installations on
@@ -225,11 +246,11 @@ Compilation, final documentation-link/manual/export checks and whitespace
 validation passed. The catalogue and thermodynamic data are unchanged. The
 historical evidence below is retained, not reclassified as a 0.3.1 result.
 
-## Authorized publication exception — 0.3.0
+## 0.3.0 authorized publication exception (2026-09-27)
 
-On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the post-release audit in `release-readiness.md`; candidate-sdist evidence remains separate.
+On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the [post-release audit](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md); candidate-sdist evidence remains separate.
 
-## Automated evidence
+## 0.3.0 automated evidence
 
 - Existing nutrient-solver regression suite passes unchanged.
 - Delivery contract, stock, pH, pump, aggregate-plan, and chemistry fixture tests run dependency-free.
@@ -247,7 +268,7 @@ Validated on branch `p2p3-chemistry-completion`, Python 3.14, installed PHREEQC 
 | Requirement | Passing evidence |
 |---|---|
 | P2.5 reference verification | `tests/test_product_phreeqc.py`: 10 product/target families and 11 phase families, exact live replay, charge errors <= 0.1%, hashes, full species/activities/SI and phase amounts within declared tolerances |
-| P2.7 full fertilizer model | `tests/test_chemistry_acceptance.py`: all 28 catalogue conversions, 197 aqueous entries/28 phases, simultaneous balances, Davies/temperature rejection, phase complementarity and convergence; `docs/chemistry-coverage-matrix.md` resolves aliases before extensions |
+| P2.7 full fertilizer model | `tests/test_chemistry_acceptance.py`: all 28 catalogue conversions, 197 aqueous entries/28 phases, simultaneous balances, Davies/temperature rejection, phase complementarity and convergence; the [chemistry coverage matrix](../models/chemistry-coverage-matrix.md) resolves aliases before extensions |
 | P3.7 acid/base coverage | Actual mixed doses -> initial solve -> nitrate addition -> same target solve. Corrected Fix_H+ and independent nitrate titration agree; tests verify component/charge conservation and post-mix measurement requirement |
 | Evidence preservation | `tests/test_preserved_chemistry_evidence.py` hashes six original successes and all diagnostic artifacts; `tests/fixtures/phreeqc/failures/README.md` explains the reduced failure ladder |
 
@@ -260,11 +281,11 @@ git diff --check
 git status
 ```
 
-The complete unittest run passes **100 tests with zero failures/errors/skips**, including installed-PHREEQC live execution. Compilation and whitespace validation pass. Numerical tolerances and regeneration commands are in `reference-fixtures.md`; executable/base/extension and output hashes are in each fixture's JSON. The closure commit is the commit containing this acceptance record (not an invented self-referential hash).
+The complete unittest run passes **100 tests with zero failures/errors/skips**, including installed-PHREEQC live execution. Compilation and whitespace validation pass. Numerical tolerances and regeneration commands are in [PHREEQC reference fixtures](../models/reference-fixtures.md); executable/base/extension and output hashes are in each fixture's JSON.
 
-This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in `sources/flahax-chelate-thermodynamic-profile.md`. The original closure left independent review and lot-specific experimental validation to G6. The owner-amended computational scope below supersedes that release requirement without claiming experimental validation.
+This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in the [chelate extension](../models/flahax-chelate-thermodynamic-profile.md). The original closure left independent review and lot-specific experimental validation to G6. The owner-amended [computational scope](computational-review.md) supersedes that release requirement without claiming experimental validation.
 
-## Package and delivery continuation — 2026-09-27
+## Package and delivery continuation (2026-09-27)
 
 Package-verification work was based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the project owner. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
 
@@ -273,8 +294,8 @@ Package-verification work was based on merged main `33febd41e1f2854c99275994cc98
 | P5.5 equilibrium delivery | `tests/test_equilibrium_delivery.py`: explicit g/L-to-g/kg-water mapping, HNO3 assay/density, nitrate rescoring, source hashes, dedicated acid command, composed-plan transitions, target reference and rejection guards | Pass |
 | P6.6 distributions | `tools/verify_distribution.py`: independent wheel/sdist installations outside checkout; Python 3.13.15 resource hashes, public exports, chemistry/delivery numerical examples and both CLI entry points agree; no required runtime dependencies or bundled executable. Earlier Python 3.14 installs also passed. | Local pass; hosted supported-version matrix outstanding |
 | P6.7 live reference | Full suite runs pinned PHREEQC with zero skips; fresh official MSI extraction verifies installer/executable/base hashes. `tests/test_live_reference_policy.py` confirms required-live absence fails rather than skips. New hosted job retains replay logs. | Local pass; hosted job outstanding |
-| P6.8 / amended G6 | Conservation, convergence, reference agreement, delivery guards and distribution checks recorded in `computational-review.md`; assessor Rafat Al Khashan | Bounded computational assessment passes; not independent review, formal proof or laboratory certification |
-| P7 | Consumer boundary documented in `INTEGRATION.md`; implementation belongs to separate FlahaFAST project | External; not a package release gate |
+| P6.8 / amended G6 | Conservation, convergence, reference agreement, delivery guards and distribution checks recorded in the [computational assessment](computational-review.md); assessor Rafat Al Khashan | Bounded computational assessment passes; not independent review, formal proof or laboratory certification |
+| P7 | Consumer boundary documented in [INTEGRATION.md](https://github.com/rafatahmed/Flahax/blob/main/INTEGRATION.md); implementation belongs to separate FlahaFAST project | External; not a package release gate |
 
 Exact final local suite command (PowerShell):
 
@@ -295,19 +316,19 @@ $testPython = py -3.13 -c "import sys; print(sys.executable)"
 .\.venv-verification\Scripts\python.exe tools/verify_distribution.py --python $testPython
 ```
 
-Result: **PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points**. The development environment contains the `build` frontend; see `package-verification.md` to reproduce. The generated local `build/distribution-verification.json` records artifact hashes and observations. Both installs reported 28 catalogue products, chemistry SHA-256 `aeb264a4edf1177102bc1a68fb4dc87de6c1ea9c94cd45ff462dcfc06a0ee575`, library SHA-256 `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343`, and synthetic delivery reagent volume `0.0003095719864150872 L`. Artifact hashes identify the tested build, not a promise of byte-identical future archive timestamps.
+Result: **PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points**. The development environment contains the `build` frontend; see [package verification](../api/package-verification.md) to reproduce. The generated local `build/distribution-verification.json` records artifact hashes and observations. Both installs reported 28 catalogue products, chemistry SHA-256 `aeb264a4edf1177102bc1a68fb4dc87de6c1ea9c94cd45ff462dcfc06a0ee575`, library SHA-256 `4ba103d202d9c5374ddd2f5a146dc3a725c34987b209b9575c59ab4465eb8343`, and synthetic delivery reagent volume `0.0003095719864150872 L`. Artifact hashes identify the tested build, not a promise of byte-identical future archive timestamps.
 
 `tools/provision_phreeqc.ps1` was tested both against the existing installation and with a fresh destination under TEMP. It downloads the official pinned MSI, administratively extracts outside the checkout and verifies all three hashes without modifying the base database. This is reference tooling, not a package runtime dependency.
 
-The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run `36322890741`). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the account owner.
+The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run [`36322890741`](https://github.com/rafatahmed/Flahax/actions/runs/36322890741)). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the account owner.
 
-## Release-readiness cleanup
+## 0.3.0 release-readiness cleanup
 
 The release-readiness cleanup adds metadata/export and documentation-link checks, fixes expired-date-prone test fixtures without changing runtime expiry policy, and archives superseded notes without deleting scientific evidence. Final local validation: `$env:PYTHONPATH='src'; $env:FLAHAX_REQUIRE_PHREEQC='1'; py -3.13 -m unittest discover -s tests -t .` — **109 tests in 142.086 seconds, OK, zero skips**. Clean wheel/sdist verification passes after the packaging changes; compilation and whitespace checks pass. The corrected explicit-salts CLI example returns `feasible: true`.
 
-Hosted PR #3 run `36345628921` was attempted and all four jobs were prevented from starting by the account billing lock. Actions is enabled; P6.6/P6.7 hosted acceptance and merge remain blocked. See [release-readiness audit](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md). FlahaFAST implementation is assigned to the separate FlahaFAST project and is not a package release gate.
+Hosted [PR #3](https://github.com/rafatahmed/Flahax/pull/3) run [`36345628921`](https://github.com/rafatahmed/Flahax/actions/runs/36345628921) was attempted and all four jobs were prevented from starting by the account billing lock. Actions is enabled; P6.6/P6.7 hosted acceptance and merge remain blocked. See [release-readiness audit](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md). FlahaFAST implementation is assigned to the separate FlahaFAST project and is not a package release gate.
 
-## 0.3.0 preparation evidence
+## 0.3.0 preparation
 
 Version metadata and citation now identify the owner-requested **0.3.0** candidate; no publication date is asserted. The user manual is a bundled package resource, and all four Python examples execute in source tests and both clean installed distributions. The build report includes the manual SHA-256, version, example count and distribution hashes. The documentation index and changelog distinguish current guidance from historical provenance.
 
@@ -324,12 +345,14 @@ mol/kgw`; the broader activity/speciation comparison uses the declared `0.05`
 tolerance. Chelated micronutrients and unspecified micro blends remain outside
 this evidence because their ligand data are not present.
 
-## Required external gates before operational use
+## Gates before operational use
 
-- G2/G3: bounded mixed-product reference/model choices are implemented and numerically verified above; preserve their declared conditions and source-profile limitations.
-- G6: for this planning-package release, the owner explicitly requested computational evidence without laboratory work; see the amended assessment above. Independent and physical validation are not claimed.
-- P7: define a separate, read-only FlahaFAST interface contract; it is not implemented in the package.
+These still apply to every release:
 
-## Release decision
+- **G2/G3:** the bounded mixed-product reference and model choices are implemented and numerically verified above; their declared conditions and source-profile limits must be kept.
+- **G6:** for the planning package, the owner asked for computational evidence without laboratory work; see the [computational assessment](computational-review.md). Independent and physical validation are not claimed.
+- **P7:** a separate, read-only FlahaFAST interface contract; it is not implemented in the package.
 
-The package remains a dependency-free **planning and verification prototype**. P2/P3 and owner-amended G6 computational acceptance do not authorize autonomous dosing, pump control, deployment or universal chemical certification. The supported-version hosted verification gate remains outstanding; this record does not authorize publication or automatic merging. P7 integration remains unimplemented.
+The package remains a dependency-free **planning and verification prototype**. P2/P3 and the owner-amended G6 computational acceptance do not authorize autonomous dosing, pump control, deployment or universal chemical certification. P7 integration remains unimplemented.
+
+When 0.3.0 was prepared, hosted verification on the supported Python versions was still outstanding because of the billing lock. It has since passed: see [0.4.0 publication](#040-publication-2026-10-17).

@@ -1,0 +1,89 @@
+/* FlahaX documentation: light touches on top of Furo. */
+
+/* Sidebar brand: mark beside the project name. */
+.sidebar-brand {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem var(--sidebar-item-spacing-horizontal);
+}
+.sidebar-logo-container { margin: 0; }
+.sidebar-logo { width: 2.1rem; }
+.sidebar-brand-text { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+
+.sidebar-tree .caption,
+.sidebar-tree :not(.caption) > .caption-text {
+  color: var(--color-brand-primary);
+  letter-spacing: 0.06em;
+}
+
+/* Headings. */
+article h1 { font-weight: 750; letter-spacing: -0.02em; }
+article h2 {
+  font-weight: 650;
+  margin-top: 2.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--color-background-border);
+}
+article h3 { font-weight: 600; }
+
+/* Tables: compact, readable, scroll instead of overflow. */
+article table.docutils {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 0.4rem;
+  border: 1px solid var(--color-background-border);
+  box-shadow: none;
+  font-size: 0.86rem;
+}
+article table.docutils th {
+  background: var(--color-background-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+article table.docutils td,
+article table.docutils th {
+  padding: 0.45rem 0.75rem;
+  border-left: none;
+  border-right: none;
+  vertical-align: top;
+}
+article table.docutils tbody tr:nth-child(even) td {
+  background: var(--color-background-hover--transparent, transparent);
+}
+article table.docutils code.literal { white-space: nowrap; }
+
+/* Code blocks. */
+.highlight pre { border-radius: 0.4rem; }
+
+/* Landing page. */
+.flahax-hero {
+  margin: 0.5rem 0 1.5rem;
+  font-size: 1.15rem;
+  line-height: 1.55;
+  color: var(--color-foreground-secondary);
+}
+.flahax-hero strong { color: var(--color-foreground-primary); }
+.flahax-badges { margin: 0 0 1.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.flahax-badges span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand-primary) 12%, transparent);
+  color: var(--color-brand-primary);
+}
+
+.sd-card {
+  border-color: var(--color-background-border) !important;
+  background: var(--color-background-primary) !important;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.sd-card:hover {
+  border-color: var(--color-brand-primary) !important;
+  transform: translateY(-2px);
+}
+.sd-card-title { color: var(--color-brand-primary); font-weight: 650; }
+.sd-card-body p:last-child { margin-bottom: 0; }
+.sd-card-text { color: var(--color-foreground-secondary); font-size: 0.92rem; }

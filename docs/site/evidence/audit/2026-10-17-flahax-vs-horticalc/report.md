@@ -201,8 +201,8 @@ either package, and its own documentation says so.
 
 ### Reproducibility
 
-Every number above comes from code run in this session against `flahax` 0.4.0 at
-`C:\Users\rafat\repo\Flaha\Flahax` and Horticalc at branch `main` (fetched 17 Oct 2026),
+Every number above comes from code run in this session against `flahax` 0.4.0 from
+a local checkout of this repository and Horticalc at branch `main` (fetched 17 Oct 2026),
 with PHREEQC 3.8.6 via phreeqpython and `minteq.v4.dat` downloaded from the USGS subtree.
 
 **Not assessed:** laboratory or field validation of either package; concentrated stock-tank
