@@ -76,6 +76,17 @@ Dashboard settings, recorded here because they live outside the repository:
 - The default version is `latest` until that release, then `stable`.
 - Never put a Read the Docs token in the repository.
 
+## Checklist (in progress: 0.5.0)
+
+- [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
+- [x] Review compatibility, scientific provenance and distribution contents.
+- [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
+- [ ] Observe successful hosted Python 3.11–3.13 checks on the merged revision.
+- [ ] Obtain explicit publication authorization.
+- [ ] Publish the `v0.5.0` GitHub Release; review the run; approve the deployment.
+- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+- [ ] Confirm the Read the Docs `stable` version builds `v0.5.0` and serves the benchmark pages (#48).
+
 ## Checklist (last run: 0.4.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
