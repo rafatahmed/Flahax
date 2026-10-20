@@ -15,10 +15,11 @@ html_title = "FlahaX"
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 html_static_path = ["_static"]
 html_css_files = ["flahax.css"]
-html_favicon = "_static/flahax-mark.svg"
+html_favicon = "_static/brand/v2/flahax-logo-color.png"
 html_theme_options = {
-    "light_logo": "flahax-mark.svg",
-    "dark_logo": "flahax-mark.svg",
+    "light_logo": "brand/v2/flahax-logo-color.png",
+    "dark_logo": "brand/v2/flahax-logo-white.png",
+    "sidebar_hide_name": True,
     "source_repository": "https://github.com/rafatahmed/Flahax/",
     "source_branch": "main",
     "source_directory": "docs/site/",
