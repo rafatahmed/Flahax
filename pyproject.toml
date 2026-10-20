@@ -28,7 +28,7 @@ dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/rafatahmed/Flahax"
-Documentation = "https://github.com/rafatahmed/Flahax/tree/main/docs"
+Documentation = "https://flahax.readthedocs.io/"
 Source = "https://github.com/rafatahmed/Flahax"
 Issues = "https://github.com/rafatahmed/Flahax/issues"
 

@@ -159,7 +159,7 @@ def write_coverage(data):
              '| Struvite; kieserite; sylvite | flahax-phases-25c.dat | Absent from this base; cited extension |',
              '| Fe-DTPA; Fe-o,o-EDDHA | Dtp/Edd protonation and Fe-only 1:1 reactions | Absent from base; selected cited profile |',
              '| Urea | Ure = Ure | Neutral conserved inventory, not invented hydrolysis |', '',
-             'Sources and scientific conditions: [chelate profile](sources/flahax-chelate-thermodynamic-profile.md),',
+             'Sources and scientific conditions: [chelate profile](flahax-chelate-thermodynamic-profile.md),',
              '[model](fertilizer-equilibrium-model.md), [fixture contract](reference-fixtures.md).', '',
              'Only the frozen product oxidation states are conserved; redox reactions containing electrons',
              'are not imported. A fixed analytical master identity needs no fitted equilibrium constant.', '',
@@ -171,7 +171,7 @@ def write_coverage(data):
               '| Phase | Dissolution reaction | log K (25 C) | Source:line |', '|---|---|---:|---|']
     for r in data['phases']:
         lines.append(f'| `{r["name"]}` | `{r["equation"]}` | {r["log_k"]:g} | {r["source"]}:{r["line"]} |')
-    (ROOT/'docs/chemistry-coverage-matrix.md').write_text('\n'.join(lines)+'\n')
+    (ROOT/'docs/site/models/chemistry-coverage-matrix.md').write_text('\n'.join(lines)+'\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

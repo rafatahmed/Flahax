@@ -64,5 +64,8 @@ tests/fixtures/phreeqc/**/phreeqc.log
 
 # User-supplied manufacturer references are local-only until redistribution
 # permission is established; findings and SHA-256 hashes are versioned in
-# docs/source-sheet-review.md. This covers every PDF in docs/sources/.
+# docs/site/guide/source-sheet-review.md. This covers every PDF in docs/sources/.
 docs/sources/*.pdf
+
+# Internal design specs and plans (local only)
+docs/superpowers/

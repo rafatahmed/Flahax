@@ -1,6 +1,6 @@
 # Historical development record — not the current API contract
 
-Retained for provenance and legacy fixture interpretation. For current capabilities use [the unified model](../fertilizer-equilibrium-model.md) and [coverage](../full-fertilizer-chemistry.md). Statements of pending work below describe earlier implementations only.
+Retained for provenance and legacy fixture interpretation. For current capabilities use [the unified model](../site/models/fertilizer-equilibrium-model.md) and [coverage](../site/models/full-fertilizer-chemistry.md). Statements of pending work below describe earlier implementations only.
 
 ## Historical reduced model (superseded; retained for fixture provenance)
 
