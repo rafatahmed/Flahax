@@ -101,7 +101,18 @@ def _continued_fraction(logs, totals, bases, records, sparse, ph, strength, swee
             break
     return logs
 
-def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
+def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., start=None):
+    """Equilibrium at fixed pH. ``start`` (an AqueousResult of a nearby state, such as
+    the previous step of a dose or pH search) only seeds the iteration; the converged
+    state is the same within solver tolerance, and a failed warm start falls back to
+    the cold start below."""
+    if start is not None:
+        try:
+            return _solve(totals, ph, phases=phases, ionic_strength=ionic_strength,
+                          temperature_c=temperature_c, start=start)
+        except DeliveryError as exc:
+            if exc.code != 'nonconvergent':
+                raise
     try:
         return _solve(totals, ph, phases=phases, ionic_strength=ionic_strength, temperature_c=temperature_c)
     except DeliveryError as exc:
@@ -112,7 +123,7 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
     return _solve(totals, ph, phases=phases, ionic_strength=ionic_strength, temperature_c=temperature_c,
                   presolve=True)
 
-def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., presolve=False):
+def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., presolve=False, start=None):
     if temperature_c != 25:
         raise DeliveryError('temperature_out_of_range','reaction dataset is restricted to 25 C')
     if not math.isfinite(ph) or not 0 <= ph <= 14:
@@ -142,7 +153,15 @@ def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., pre
     active=[]
     solids={}
     water=1.
+    if start is not None:
+        logs=[math.log10(start.activities[b]) if start.activities.get(b,0)>0 else v for b,v in zip(bases,logs)]
+        if ionic_strength is None:
+            strength=min(.1,max(1e-8,start.ionic_strength))
+        water=start.water_activity
+        active=[p for p,v in start.precipitated.items() if v>0 and p in candidates]
+        solids={p:start.precipitated[p] for p in active}
     count=0
+    previous=None
     def lgamma(z):
         root=math.sqrt(strength)
         return -.509*z*z*(root/(1+root)-.3*strength) if z else .1*strength
@@ -187,7 +206,9 @@ def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., pre
                 count+=1
                 residual,amounts,matrix=evaluate(x,True)
                 norm=max(map(abs,residual),default=0.)
-                if norm<2e-10:
+                # A warm start can begin inside the tolerance with the previous state's
+                # residual; one Newton step restores the cold path's quadratic finish (#61).
+                if norm<2e-10 and (iteration or start is None or norm<1e-14):
                     break
                 step=linear(matrix,[-r for r in residual])
                 alpha=min(1.,4/max([abs(v) for v in step[:n]]+[4.]))
@@ -234,8 +255,19 @@ def _solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25., pre
                                  {p:max(0,v) for p,v in solids.items()},residuals,count,
                                  sum(a*r['charge'] for a,r in zip(amounts,records)),water)
         if ionic_strength is None:
-            strength=(strength+updated)/2
-        water=(water+next_water)/2
+            # Secant step on g(I) = I(speciation at I) - I, which converges superlinearly
+            # whether ion pairing makes g's slope positive or negative; the plain average
+            # (linear, ~35 passes to 1e-12, #61) remains the fallback.
+            gap=updated-strength
+            step=(strength+updated)/2
+            if previous is not None and gap!=previous[1]:
+                secant=strength-gap*(strength-previous[0])/(gap-previous[1])
+                if 0<secant<=.1:
+                    step=secant
+            previous=(strength,gap)
+            strength=step
+        # Water activity depends only weakly on itself (through H2O-bearing species).
+        water=next_water
     raise DeliveryError('nonconvergent','ionic strength/water iteration limit')
 
 @dataclass(frozen=True)
@@ -258,8 +290,11 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     if target_ph>initial_ph:
         raise DeliveryError('wrong_reagent_direction','target requires base')
     lo,hi=0.,.001
+    last=[initial]
     def at(dose):
-        return solve(dict(totals)|{'NO3-':totals.get('NO3-',0.)+dose},target_ph,phases=phases)
+        # Warm-start each dose from the previous solve (#61); only the iteration path changes.
+        last[0]=solve(dict(totals)|{'NO3-':totals.get('NO3-',0.)+dose},target_ph,phases=phases,start=last[0])
+        return last[0]
     target=at(0.)
     if target.charge_balance < initial.charge_balance-1e-12:
         raise DeliveryError('wrong_reagent_direction','target requires base')
