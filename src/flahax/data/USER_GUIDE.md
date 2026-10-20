@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.5.0, release candidate prepared 2026-10-21; not yet published. See the repository's release evidence.
+**Version:** 0.5.0, released 2026-10-20. The release workflow ran the Python 3.11–3.13 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
 
 ## Contents
 
