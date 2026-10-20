@@ -5,7 +5,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from tools.publish_benchmark_report import load_capture, redact, sha
+from tools.publish_benchmark_report import (
+    case_label, count, load_capture, miss_summary, redact, sha)
 
 
 class PublicationTests(unittest.TestCase):
@@ -73,6 +74,36 @@ class PublicationTests(unittest.TestCase):
         public = redact(json.dumps(raw))
         self.assertNotIn("private", public)
         self.assertEqual(json.loads(public)["samples"], raw["samples"])
+
+    def test_counts_are_grammatical(self):
+        self.assertEqual(count(0, "timing workload"), "0 timing workloads")
+        self.assertEqual(count(1, "timing workload"), "1 timing workload")
+        self.assertEqual(count(2, "timing workload"), "2 timing workloads")
+
+    def test_case_label_keeps_catalogue_id(self):
+        names = {"abc": "Tomato"}
+        self.assertEqual(case_label("abc:zero_nutrients", names),
+                         "Tomato, zero nutrients (`abc:zero_nutrients`)")
+        self.assertIn("Unknown formula", case_label("missing:calcium_20_mg_l", names))
+
+    def test_miss_summary_names_largest_positive_target_miss(self):
+        rows = [
+            {"case": "a:zero_nutrients", "ion": "Ca", "target_mg_l": "100",
+             "delivered_mg_l": "90", "error_percent": "-10", "passes": "False"},
+            {"case": "a:zero_nutrients", "ion": "Si", "target_mg_l": "50",
+             "delivered_mg_l": "0", "error_percent": "-100", "passes": "False"},
+            {"case": "a:zero_nutrients", "ion": "Ca", "target_mg_l": "0",
+             "delivered_mg_l": "5", "error_percent": "", "passes": "False"},
+            {"case": "a:zero_nutrients", "ion": "K", "target_mg_l": "200",
+             "delivered_mg_l": "200", "error_percent": "0", "passes": True},
+        ]
+        summary = miss_summary(rows, {"a": "Tomato"})
+        self.assertIn("largest miss is Si in Tomato", summary)
+        self.assertIn("target 50 mg/L, delivered 0 mg/L (-100.0%)", summary)
+        self.assertIn("| Ca | 2/2 |", summary)
+        self.assertNotIn("| K |", summary)
+        self.assertEqual(miss_summary(rows[3:], {}),
+                         "All explicit nutrient targets pass in this capture.")
 
 
 if __name__ == "__main__":

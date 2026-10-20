@@ -1,6 +1,6 @@
 # First Internal Equilibrium Kernel
 
-FlahaX now contains a deliberately narrow, dependency-free aqueous-equilibrium kernel: open-CO₂ calcite equilibrium at 25 °C using Davies activity coefficients. It is the first mathematical P2.6/P3.6 component, verified against the checked-in PHREEQC Example 3 fixture.
+FlahaX now contains a deliberately narrow, dependency-free aqueous-equilibrium kernel: open-CO₂ calcite equilibrium at 25 °C using Davies activity coefficients. It was the first component of the stock-saturation and pH equilibrium model, verified against the checked-in PHREEQC Example 3 fixture.
 
 ## Supported system
 

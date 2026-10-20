@@ -8,6 +8,8 @@ import re
 import unittest
 import zipfile
 
+from tools.publish_benchmark_report import formula_names, miss_summary
+
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "docs/site/_static/benchmarks"
 
@@ -51,6 +53,18 @@ class PublishedEvidenceTests(unittest.TestCase):
         timing = list(csv.DictReader(io.StringIO((folder / "timings.csv").read_text())))
         measured = sum(r["status"] == "measured" for r in timing)
         self.assertIn(f"| Completed timing workloads | {measured}/{len(timing)} ", page)
+
+    def test_pages_name_misses_from_their_own_snapshot(self):
+        names = formula_names(ROOT)
+        for page_path in (ROOT / "docs/site/evidence").glob("benchmark-results*.md"):
+            page = page_path.read_text(encoding="utf-8")
+            snapshot = re.search(r"\*\*Measured snapshot: ([a-z0-9-]+)\.", page).group(1)
+            with (ASSETS / snapshot / "formulation.csv").open(newline="") as stream:
+                rows = list(csv.DictReader(stream))
+            with self.subTest(page=page_path.name):
+                self.assertIn(miss_summary(rows, names), page)
+                self.assertNotRegex(page, r"\b1 timing workloads\b")
+                self.assertNotRegex(page, r"(?m)^\| cmb[a-z0-9]+:")
 
 
 if __name__ == "__main__":

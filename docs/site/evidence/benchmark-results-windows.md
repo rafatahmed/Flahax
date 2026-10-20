@@ -1,20 +1,24 @@
-# Benchmark results: Windows
+# Benchmark results: Windows (local supplement)
 
 **Measured snapshot: 2026-10-20-windows-6373d23.** This page reports one clean-checkout development
 baseline, including failures. It is not a release certification, a comparison
 against another product, or physical validation.
+
+**Local supplementary capture.** This was measured on a developer machine, not a hosted runner.
+Its timings reflect that machine's power and thermal state; use them only alongside the hosted capture.
 
 ```{warning}
 The numerical scorecard is not fully passing: 6/7 controlled
 NNLS cases pass. 2 timing workloads have no completed measurement.
 The [manual GitHub benchmark workflow](https://github.com/rafatahmed/Flahax/actions/runs/39403201151) completed with conclusion
 **failure**. A completed capture is not necessarily a passing
-scientific scorecard; failed gates and timeouts are retained.
+scientific scorecard; failed gates and timeouts are retained. Passing pull-request
+CI checks are separate evidence and do not mean this scorecard passed.
 ```
 
 Read the [protocol and reproduction instructions](benchmark-v1.md) before comparing results.
 
-[Results from the other recorded environment](benchmark-results.md). Treat environments separately; this is not a controlled OS comparison.
+[Hosted Linux baseline](benchmark-results.md). Treat environments separately; this is not a controlled OS comparison.
 
 Historical Horticalc statistics in the evidence JSON are **not newly measured** and
 are deliberately excluded from the charts on this page.
@@ -41,6 +45,22 @@ counterions are outside this scorecard. Missing targets are not scored.
 Percentage statistics exclude zero targets; absolute residual metrics retain them.
 There were 0 formulation exceptions; their
 element rows are excluded, while attempted recipes remain in the recipe denominator.
+
+### Where targets were missed
+
+The largest miss is Si in Rice (Douglas Peckenpaugh), zero nutrients (`cmbpfud3e0092q8z9vq8gw25x:zero_nutrients`): target 100 mg/L, delivered 0 mg/L (-100.0%).
+
+| Nutrient | Failing targets |
+|---|---:|
+| Ca | 22/52 |
+| N_NO3 | 17/52 |
+| Mg | 12/52 |
+| S | 12/52 |
+| K | 6/52 |
+| N_NH4 | 2/10 |
+| Si | 2/2 |
+
+Per-case causes are tracked in [recipe-fit analysis #39](https://github.com/rafatahmed/Flahax/issues/39).
 
 ## Timing and memory
 
@@ -76,6 +96,8 @@ does not establish a cold filesystem cache.
 
 Peak memory is total process peak RSS, including the interpreter and setup,
 not the incremental allocation of the solver. Decimal MB are used.
+Only 6 workloads have a memory
+benchmark; the other workloads are timed only.
 
 | Workload / parameter | Peak process memory (MB) |
 |---|---:|
@@ -192,56 +214,56 @@ redistributed files; the archive explains the path-only redaction.
 :::{dropdown} All recipe cases
 | Case | Targets passing | Whole recipe |
 |---|---:|---|
-| cmbpfud0y006wq8z9ghn6t86g:zero_nutrients | 11/12 | Miss |
-| cmbpfud0y006wq8z9ghn6t86g:calcium_20_mg_l | 11/12 | Miss |
-| cmbpfud9f00eaq8z92ve3zic0:zero_nutrients | 10/12 | Miss |
-| cmbpfud9f00eaq8z92ve3zic0:calcium_20_mg_l | 11/12 | Miss |
-| cmbpfucsg0002q8z9a5q0u7nu:zero_nutrients | 12/12 | Pass |
-| cmbpfucsg0002q8z9a5q0u7nu:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud6y00c1q8z9emlc27x2:zero_nutrients | 12/12 | Pass |
-| cmbpfud6y00c1q8z9emlc27x2:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfudcu00haq8z9xwjoq1zt:zero_nutrients | 11/13 | Miss |
-| cmbpfudcu00haq8z9xwjoq1zt:calcium_20_mg_l | 13/13 | Pass |
-| cmbpfud7r00crq8z9qc0abr6h:zero_nutrients | 7/12 | Miss |
-| cmbpfud7r00crq8z9qc0abr6h:calcium_20_mg_l | 7/12 | Miss |
-| cmbpfudbu00giq8z9jquzw746:zero_nutrients | 9/13 | Miss |
-| cmbpfudbu00giq8z9jquzw746:calcium_20_mg_l | 13/13 | Pass |
-| cmbpfucvl002kq8z9in7tpn5y:zero_nutrients | 12/12 | Pass |
-| cmbpfucvl002kq8z9in7tpn5y:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfucun001uq8z9dgqeihsj:zero_nutrients | 12/12 | Pass |
-| cmbpfucun001uq8z9dgqeihsj:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud8k00dhq8z9yz59ziwb:zero_nutrients | 13/13 | Pass |
-| cmbpfud8k00dhq8z9yz59ziwb:calcium_20_mg_l | 13/13 | Pass |
-| cmbpfuddo00i2q8z9nldrxm9w:zero_nutrients | 13/13 | Pass |
-| cmbpfuddo00i2q8z9nldrxm9w:calcium_20_mg_l | 13/13 | Pass |
-| cmbpfud2n008cq8z99v63xpo5:zero_nutrients | 12/12 | Pass |
-| cmbpfud2n008cq8z99v63xpo5:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfudb100fqq8z9wcljgmyi:zero_nutrients | 7/13 | Miss |
-| cmbpfudb100fqq8z9wcljgmyi:calcium_20_mg_l | 7/13 | Miss |
-| cmbpfud3e0092q8z9vq8gw25x:zero_nutrients | 11/13 | Miss |
-| cmbpfud3e0092q8z9vq8gw25x:calcium_20_mg_l | 11/13 | Miss |
-| cmbpfuctq0014q8z9li5oo75d:zero_nutrients | 7/12 | Miss |
-| cmbpfuctq0014q8z9li5oo75d:calcium_20_mg_l | 7/12 | Miss |
-| cmbpfudel00iuq8z9l2wiwsfy:zero_nutrients | 12/12 | Pass |
-| cmbpfudel00iuq8z9l2wiwsfy:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfuda900f0q8z9hi9hu2gu:zero_nutrients | 11/12 | Miss |
-| cmbpfuda900f0q8z9hi9hu2gu:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud6400bbq8z9gwrj4cw7:zero_nutrients | 12/12 | Pass |
-| cmbpfud6400bbq8z9gwrj4cw7:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud5900alq8z907fk2r92:zero_nutrients | 12/12 | Pass |
-| cmbpfud5900alq8z907fk2r92:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud4a009vq8z953niqg47:zero_nutrients | 10/12 | Miss |
-| cmbpfud4a009vq8z953niqg47:calcium_20_mg_l | 10/12 | Miss |
-| cmbpfucxi0040q8z94o3m2bps:zero_nutrients | 12/12 | Pass |
-| cmbpfucxi0040q8z94o3m2bps:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfucz7005gq8z90ev9h6ao:zero_nutrients | 8/12 | Miss |
-| cmbpfucz7005gq8z90ev9h6ao:calcium_20_mg_l | 8/12 | Miss |
-| cmbpfucyc004qq8z9mdajrg3w:zero_nutrients | 8/12 | Miss |
-| cmbpfucyc004qq8z9mdajrg3w:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud030066q8z9fvdyru1m:zero_nutrients | 8/12 | Miss |
-| cmbpfud030066q8z9fvdyru1m:calcium_20_mg_l | 8/12 | Miss |
-| cmbpfucwh003aq8z9vmh9kner:zero_nutrients | 12/12 | Pass |
-| cmbpfucwh003aq8z9vmh9kner:calcium_20_mg_l | 12/12 | Pass |
-| cmbpfud1t007mq8z9w16hx6hw:zero_nutrients | 12/12 | Pass |
-| cmbpfud1t007mq8z9w16hx6hw:calcium_20_mg_l | 11/12 | Miss |
+| Chilli (maximumyield), zero nutrients (`cmbpfud0y006wq8z9ghn6t86g:zero_nutrients`) | 11/12 | Miss |
+| Chilli (maximumyield), calcium 20 mg l (`cmbpfud0y006wq8z9ghn6t86g:calcium_20_mg_l`) | 11/12 | Miss |
+| Cucumber (Howard Resh), zero nutrients (`cmbpfud9f00eaq8z92ve3zic0:zero_nutrients`) | 10/12 | Miss |
+| Cucumber (Howard Resh), calcium 20 mg l (`cmbpfud9f00eaq8z92ve3zic0:calcium_20_mg_l`) | 11/12 | Miss |
+| DEFAULT, zero nutrients (`cmbpfucsg0002q8z9a5q0u7nu:zero_nutrients`) | 12/12 | Pass |
+| DEFAULT, calcium 20 mg l (`cmbpfucsg0002q8z9a5q0u7nu:calcium_20_mg_l`) | 12/12 | Pass |
+| Generic Bloom (maximumyield), zero nutrients (`cmbpfud6y00c1q8z9emlc27x2:zero_nutrients`) | 12/12 | Pass |
+| Generic Bloom (maximumyield), calcium 20 mg l (`cmbpfud6y00c1q8z9emlc27x2:calcium_20_mg_l`) | 12/12 | Pass |
+| Generic Dry Season (Howard Resh), zero nutrients (`cmbpfudcu00haq8z9xwjoq1zt:zero_nutrients`) | 11/13 | Miss |
+| Generic Dry Season (Howard Resh), calcium 20 mg l (`cmbpfudcu00haq8z9xwjoq1zt:calcium_20_mg_l`) | 13/13 | Pass |
+| Generic Grow (maximumyield), zero nutrients (`cmbpfud7r00crq8z9qc0abr6h:zero_nutrients`) | 7/12 | Miss |
+| Generic Grow (maximumyield), calcium 20 mg l (`cmbpfud7r00crq8z9qc0abr6h:calcium_20_mg_l`) | 7/12 | Miss |
+| Generic Wet Season (Howard Resh), zero nutrients (`cmbpfudbu00giq8z9jquzw746:zero_nutrients`) | 9/13 | Miss |
+| Generic Wet Season (Howard Resh), calcium 20 mg l (`cmbpfudbu00giq8z9jquzw746:calcium_20_mg_l`) | 13/13 | Pass |
+| Generic for Berries (Growing Edge), zero nutrients (`cmbpfucvl002kq8z9in7tpn5y:zero_nutrients`) | 12/12 | Pass |
+| Generic for Berries (Growing Edge), calcium 20 mg l (`cmbpfucvl002kq8z9in7tpn5y:calcium_20_mg_l`) | 12/12 | Pass |
+| Hoagland solution, zero nutrients (`cmbpfucun001uq8z9dgqeihsj:zero_nutrients`) | 12/12 | Pass |
+| Hoagland solution, calcium 20 mg l (`cmbpfucun001uq8z9dgqeihsj:calcium_20_mg_l`) | 12/12 | Pass |
+| Lettuce 2 (Howard Resh), zero nutrients (`cmbpfud8k00dhq8z9yz59ziwb:zero_nutrients`) | 13/13 | Pass |
+| Lettuce 2 (Howard Resh), calcium 20 mg l (`cmbpfud8k00dhq8z9yz59ziwb:calcium_20_mg_l`) | 13/13 | Pass |
+| Lettuce General (Howard Resh), zero nutrients (`cmbpfuddo00i2q8z9nldrxm9w:zero_nutrients`) | 13/13 | Pass |
+| Lettuce General (Howard Resh), calcium 20 mg l (`cmbpfuddo00i2q8z9nldrxm9w:calcium_20_mg_l`) | 13/13 | Pass |
+| Melons (Douglas Peckenpaugh), zero nutrients (`cmbpfud2n008cq8z99v63xpo5:zero_nutrients`) | 12/12 | Pass |
+| Melons (Douglas Peckenpaugh), calcium 20 mg l (`cmbpfud2n008cq8z99v63xpo5:calcium_20_mg_l`) | 12/12 | Pass |
+| Pepper (Howard Resh), zero nutrients (`cmbpfudb100fqq8z9wcljgmyi:zero_nutrients`) | 7/13 | Miss |
+| Pepper (Howard Resh), calcium 20 mg l (`cmbpfudb100fqq8z9wcljgmyi:calcium_20_mg_l`) | 7/13 | Miss |
+| Rice (Douglas Peckenpaugh), zero nutrients (`cmbpfud3e0092q8z9vq8gw25x:zero_nutrients`) | 11/13 | Miss |
+| Rice (Douglas Peckenpaugh), calcium 20 mg l (`cmbpfud3e0092q8z9vq8gw25x:calcium_20_mg_l`) | 11/13 | Miss |
+| Strawberry Drip Irrigation (schundler.com), zero nutrients (`cmbpfuctq0014q8z9li5oo75d:zero_nutrients`) | 7/12 | Miss |
+| Strawberry Drip Irrigation (schundler.com), calcium 20 mg l (`cmbpfuctq0014q8z9li5oo75d:calcium_20_mg_l`) | 7/12 | Miss |
+| Strawberry Fruiting (growing edge), zero nutrients (`cmbpfudel00iuq8z9l2wiwsfy:zero_nutrients`) | 12/12 | Pass |
+| Strawberry Fruiting (growing edge), calcium 20 mg l (`cmbpfudel00iuq8z9l2wiwsfy:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomato (Howard Resh), zero nutrients (`cmbpfuda900f0q8z9hi9hu2gu:zero_nutrients`) | 11/12 | Miss |
+| Tomato (Howard Resh), calcium 20 mg l (`cmbpfuda900f0q8z9hi9hu2gu:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomato Stage.1 - 10-14 days (Howard Resh), zero nutrients (`cmbpfud6400bbq8z9gwrj4cw7:zero_nutrients`) | 12/12 | Pass |
+| Tomato Stage.1 - 10-14 days (Howard Resh), calcium 20 mg l (`cmbpfud6400bbq8z9gwrj4cw7:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomato Stage.2 - first cluster (Howard Resh), zero nutrients (`cmbpfud5900alq8z907fk2r92:zero_nutrients`) | 12/12 | Pass |
+| Tomato Stage.2 - first cluster (Howard Resh), calcium 20 mg l (`cmbpfud5900alq8z907fk2r92:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomato Stage.3 - to plant maturity (Howard Resh), zero nutrients (`cmbpfud4a009vq8z953niqg47:zero_nutrients`) | 10/12 | Miss |
+| Tomato Stage.3 - to plant maturity (Howard Resh), calcium 20 mg l (`cmbpfud4a009vq8z953niqg47:calcium_20_mg_l`) | 10/12 | Miss |
+| Tomatoes - Fourth Cluster (U of Florida), zero nutrients (`cmbpfucxi0040q8z94o3m2bps:zero_nutrients`) | 12/12 | Pass |
+| Tomatoes - Fourth Cluster (U of Florida), calcium 20 mg l (`cmbpfucxi0040q8z94o3m2bps:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomatoes - Second Cluster (U of Florida), zero nutrients (`cmbpfucz7005gq8z90ev9h6ao:zero_nutrients`) | 8/12 | Miss |
+| Tomatoes - Second Cluster (U of Florida), calcium 20 mg l (`cmbpfucz7005gq8z90ev9h6ao:calcium_20_mg_l`) | 8/12 | Miss |
+| Tomatoes - Third Cluster (U of Florida), zero nutrients (`cmbpfucyc004qq8z9mdajrg3w:zero_nutrients`) | 8/12 | Miss |
+| Tomatoes - Third Cluster (U of Florida), calcium 20 mg l (`cmbpfucyc004qq8z9mdajrg3w:calcium_20_mg_l`) | 12/12 | Pass |
+| Tomatoes - till First Cluster (U of Florida), zero nutrients (`cmbpfud030066q8z9fvdyru1m:zero_nutrients`) | 8/12 | Miss |
+| Tomatoes - till First Cluster (U of Florida), calcium 20 mg l (`cmbpfud030066q8z9fvdyru1m:calcium_20_mg_l`) | 8/12 | Miss |
+| Tomatoes - to termination (U of Florida), zero nutrients (`cmbpfucwh003aq8z9vmh9kner:zero_nutrients`) | 12/12 | Pass |
+| Tomatoes - to termination (U of Florida), calcium 20 mg l (`cmbpfucwh003aq8z9vmh9kner:calcium_20_mg_l`) | 12/12 | Pass |
+| Tropical Lettuce (Douglas Peckenpaugh), zero nutrients (`cmbpfud1t007mq8z9w16hx6hw:zero_nutrients`) | 12/12 | Pass |
+| Tropical Lettuce (Douglas Peckenpaugh), calcium 20 mg l (`cmbpfud1t007mq8z9w16hx6hw:calcium_20_mg_l`) | 11/12 | Miss |
 :::
