@@ -534,7 +534,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -549,6 +549,11 @@ Args:
     allow_carbonates: Permit carbonate products in nutrient fitting only;
         this does not establish dissolution or stock compatibility.
     ridge: L2 dose penalty, not a limit on the number of products.
+    maximum_concentrations: Optional mg/L ceilings for incidental ions, for
+        example {"Cl": 70}. An ion with a positive ceiling is admitted like
+        allow_ions and is not penalized up to the ceiling; a fit above it is
+        pulled back, and any remaining excess is reported in
+        limitViolations with feasible False. Omitted keeps the default.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
