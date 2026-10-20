@@ -1,6 +1,6 @@
 # Full Fertilizer Chemistry Coverage
 
-The current stock-chemistry and pH implementation is one source-versioned aqueous-equilibrium system. The authoritative [coverage matrix](chemistry-coverage-matrix.md) lists 197 aqueous entries and 28 phases. All 28 catalogue products convert to conserved analytical components before one simultaneous solve. See [the current model contract](fertilizer-equilibrium-model.md) and [release evidence](../evidence/release-evidence.md).
+The current stock-chemistry and pH implementation is one source-versioned aqueous-equilibrium system. The authoritative [coverage matrix](chemistry-coverage-matrix.md) lists 197 aqueous entries and 28 phases. All 30 catalogue products convert to conserved analytical components before one simultaneous solve. See [the current model contract](fertilizer-equilibrium-model.md) and [release evidence](../evidence/release-evidence.md).
 
 ## Current end-to-end coverage
 

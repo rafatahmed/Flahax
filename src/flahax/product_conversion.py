@@ -16,7 +16,7 @@ from .delivery_contracts import DeliveryError
 MOLAR_MASS = {"N": 14.0067, "P": 30.973762, "K": 39.0983, "Ca": 40.078,
               "Mg": 24.305, "S": 32.06, "Fe": 55.845, "Mn": 54.938044,
               "Zn": 65.38, "Cu": 63.546, "B": 10.81, "Mo": 95.95,
-              "Na": 22.989769}
+              "Na": 22.989769, "Cl": 35.45}
 
 @dataclass(frozen=True, slots=True)
 class ProductAnalyticalTotals:
@@ -87,7 +87,7 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     # Explicit profile components also catch macro formula counterions where
     # the assay omits their analytical total (for example Ca(NO3)2).
     if family == "macro_salt":
-        if "Ca+2" in chemistry.components: counterions["nitrate"] = 2 * totals.get("Ca", 0.0)
+        if "Ca+2" in chemistry.components and "NO3-" in chemistry.components: counterions["nitrate"] = 2 * totals.get("Ca", 0.0)
         elif "Mg+2" in chemistry.components and "NO3-" in chemistry.components: counterions["nitrate"] = 2 * totals.get("Mg", 0.0)
         elif "SO4-2" in chemistry.components:
             counterions["sulfate"] = (totals.get("Mg", 0.0) + totals.get("Fe", 0.0) + totals.get("Zn", 0.0)
@@ -105,7 +105,7 @@ def convert_catalogue_product_dose(product: Mapping[str, object], dose_g_per_kg_
     return convert_product_dose(product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water)
 
 
-_BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+',
+_BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+', 'Cl': 'Cl-',
           'Fe': 'Fe+3', 'Mn': 'Mn+2', 'Zn': 'Zn+2', 'Cu': 'Cu+2', 'boron': 'H3BO3',
           'molybdate': 'MoO4-2', 'phosphate': 'PO4-3', 'sulfate': 'SO4-2',
           'nitrate': 'NO3-', 'ammonium': 'NH4+', 'carbonate': 'CO3-2', 'urea': 'Ure',

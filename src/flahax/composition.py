@@ -22,6 +22,10 @@ IONS = frozenset({
 # a requested element.
 RESTRICTED_IONS = frozenset({"Na", "Cl"})
 
+# Restricted ions that recovery never admits on its own: the caller must target,
+# allow or set a maximum for them. Chloride salts change no default recipe.
+CONSENT_IONS = frozenset({"Cl"})
+
 ATOMIC = {
     "H": 1.00784,
     "B": 10.81,

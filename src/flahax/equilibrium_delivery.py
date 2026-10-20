@@ -132,7 +132,7 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
         if basis not in element_basis:
             continue
         ion = element_basis[basis]
-        molar_mass = 35.453 if ion=='Cl' else MOLAR_MASS[ion.split('_')[0]]
+        molar_mass = MOLAR_MASS[ion.split('_')[0]]
         value=amount*(2 if basis=='Ure' else 1)*molar_mass*water_mass*1000/recipe.final_volume.value
         water_ppm[ion]=water_ppm.get(ion,0.)+value
     achieved = forward(selected,grams_per_litre,water_ppm)

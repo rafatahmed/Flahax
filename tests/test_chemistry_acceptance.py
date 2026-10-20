@@ -16,7 +16,8 @@ class ChemistryAcceptanceTests(unittest.TestCase):
                 for key,amount in converted.totals.items():
                     mapping={'Ca':'Ca+2','Mg':'Mg+2','K':'K+','Na':'Na+','Fe':'Fe+2' if 'Iron II' in name else 'Fe+3',
                              'Mn':'Mn+2','Zn':'Zn+2','Cu':'Cu+2','phosphate':'PO4-3','sulfate':'SO4-2',
-                             'boron':'H3BO3','molybdate':'MoO4-2','ammonium':'NH4+','nitrate':'NO3-','urea':'Ure'}
+                             'boron':'H3BO3','molybdate':'MoO4-2','ammonium':'NH4+','nitrate':'NO3-','urea':'Ure',
+                             'Cl':'Cl-'}
                     self.assertAlmostEqual(basis[mapping[key]],amount,places=15)
                 result=solve_catalogue_product_doses({name:.01},6.,allow_precipitation=False).aqueous
                 for b,v in result.residuals.items():
@@ -27,6 +28,15 @@ class ChemistryAcceptanceTests(unittest.TestCase):
         self.assertAlmostEqual(2*urea['Ure'],.46646/14.0067)
         carbonate=catalogue_dose_totals({'Potassium Carbonate':1.})
         self.assertEqual(carbonate['K+'],2*carbonate['CO3-2'])
+
+    def test_chloride_salts_keep_chloride_and_add_no_nitrate(self):
+        calcium=catalogue_dose_totals({'Calcium Chloride (Dihydrate)':1.})
+        self.assertNotIn('NO3-',calcium)
+        self.assertAlmostEqual(calcium['Cl-'],2*calcium['Ca+2'],places=12)
+        potassium=catalogue_dose_totals({'Potassium Chloride':1.})
+        self.assertNotIn('NO3-',potassium)
+        self.assertAlmostEqual(potassium['Cl-'],potassium['K+'],places=12)
+        self.assertAlmostEqual(potassium['K+'],.5244693708642584/39.0983,places=12)
 
     def test_no_extra_dtpa_or_eddha_metal_families(self):
         for r in chemistry()['aqueous']:
