@@ -1,0 +1,67 @@
+# Competitor comparison (#40)
+
+Development-only harness that compares FlahaX with other open tools on the same
+inputs. None of these packages is a FlahaX runtime dependency.
+
+## Tools and pins
+
+| Tool | Version | Role | Licence |
+|---|---|---|---|
+| Horticalc | tag v0.6.7, commit db4e68c76639df2920f43be06c77dd4c16498863 | formulation (as shipped and aligned), EC | GPL-3.0-or-later |
+| PhreeqPython (embedded IPhreeqc) | 1.6.2 | chemistry reference, EC (specific conductance) | Apache-2.0 |
+| pyEQL | 1.7.0 | EC | LGPL-3.0-or-later |
+| Irriblend-DSW method | independent LP after Gallego-Elvira et al. (2021) | formulation baseline | not the authors' code (no licence declared) |
+
+pyfarm-nutrients is excluded: it calibrates EC heuristically and is not a formulation engine.
+
+## Tracks
+
+**Formulation** (`formulation_track.py`). Every engine gets the 30-product catalogue
+(products with an assay conflict excluded), the 26 shipped formulas and two waters.
+Each returned recipe is re-scored by the Benchmark v1 evaluator (catalogue assays,
+max(0.01 mg/L, 1 %) per target), so no engine's own reporting enters the score. A
+second scoreboard, *acceptable*, also requires that incidental ions stay within
+agronomic limits:
+- Cl ≤ 3 mmol/L and Na ≤ 3 mmol/L (De Kreij, Voogt & Baas 2003);
+- NH4-N ≤ min(10 % of N, 1.5 mmol/L);
+- no micronutrient above 2× its target.
+
+Timing compares like with like: one FlahaX fit against one Horticalc fit, with the
+`recommend()` pipeline reported separately.
+
+**Chemistry** (`chemistry_track.py`). Each PHREEQC golden fixture's own input runs
+through PhreeqPython on the pinned minteq.v4.dat (SHA-256 checked) merged with the
+FlahaX extensions. Two checks follow:
+- **Replay:** the live rows are checked against the stored PHREEQC 3.8.6 rows. Log
+  quantities are compared absolutely; molalities relatively above 1e-20; the charge
+  and percent-error residuals are not compared.
+- **FlahaX:** FlahaX is solved at the live prescribed pH and scored with Benchmark
+  v1's `evaluate_chemistry`.
+
+The database is reloaded for every fixture, because IPhreeqc keeps species and phase
+definitions between inputs.
+
+**EC** (`ec_track.py`). Accuracy is scored against the IUPAC molality-based KCl
+primary standards: Pratt et al. 2001, transcribed in
+`tests/fixtures/conductivity/iupac2001_kcl_table1.json` and checked against that
+paper's own polynomial. The catalogue recipes have no measured EC, so they are
+compared for agreement only. Every tool gets the same macronutrient totals.
+PHREEQC conductivity uses PhreeqPython's bundled phreeqc.dat, because minteq.v4.dat
+has no diffusion coefficients.
+
+## Run
+
+```bash
+python -m venv competitors-venv
+competitors-venv/Scripts/python -m pip install -r benchmarks/competitors/requirements.txt -c benchmarks/competitors/constraints.txt
+git clone --branch v0.6.7 https://github.com/onethree7/Horticalc.git horticalc
+PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m benchmarks.competitors.formulation_track --output out/formulation.json
+PYTHONPATH="src;." competitors-venv/Scripts/python -m benchmarks.competitors.chemistry_track --database path/to/minteq.v4.dat --output out/chemistry.json
+PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m benchmarks.competitors.ec_track --output out/ec.json
+```
+
+Use `:` instead of `;` in PYTHONPATH on Linux and macOS. minteq.v4.dat must match
+SHA-256 ab0a8f7c…5ae7: upstream phreeqc3-database commit
+26398a442446dc31463fb08c3d1cd06df609b633, with CRLF line endings.
+
+Timings are best of three on one machine. Compare them only within a single run.
