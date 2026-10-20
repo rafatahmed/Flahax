@@ -100,6 +100,11 @@ plan; they never operate pumps, valves or other hardware.
 
 ## Verification
 
+The [Benchmark v1 protocol](docs/site/evidence/benchmark-v1.md) separates
+formulation fit, numerical chemistry, runtime/memory measurements, and physical
+validation. Its reproducible reports include input hashes and failed cases;
+timings are informational, and physical validation remains separate.
+
 - 153 automated tests, including live replay of every catalogue product,
   phase and acid case against pinned PHREEQC 3.8.6 (USGS).
 - Hosted checks on Python 3.11, 3.12 and 3.13, plus clean wheel and source
