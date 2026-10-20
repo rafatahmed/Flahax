@@ -1,7 +1,7 @@
 (computational-assessment-g6)=
 # Computational assessment
 
-G6 is the release gate for scientific review of the chemistry. This page
+Before a release, the chemistry must pass a scientific-review gate. This page
 records how that gate was met for the planning package, on **2026-09-27**,
 before the 0.3.0 release.
 
@@ -22,7 +22,7 @@ release records, not by this assessment.
 
 The project owner asked for mathematical evidence with no laboratory work for
 this release and named **Rafat Al Khashan** as assessor. This replaces the
-earlier G6 requirement for independent scientific and bench or site sign-off,
+earlier gate requirement for independent scientific and bench or site sign-off,
 **for the planning package only**.
 
 The record keeps the named assessor apart from the automated evidence. It is
@@ -41,7 +41,7 @@ about stereoisomers are disclosed in the
 
 | Criterion | Evidence and assessment |
 |---|---|
-| Product identity and units | All 28 catalogue products keep their declared components. Equilibrium delivery (P5.5) matches products by ID and name, converts batch salt grams using explicit kg of water, and checks mass = g/L × L. No unit density is assumed. |
+| Product identity and units | All 28 catalogue products keep their declared components. Equilibrium delivery matches products by ID and name, converts batch salt grams using explicit kg of water, and checks mass = g/L × L. No unit density is assumed. |
 | Equilibrium conservation | `test_chemistry_acceptance.py` and the product and phase regressions hold each component to a 1e-9 relative plus 1e-15 mol/kg-water residual, including ligand and phase inventories. |
 | Mass action and convergence | Tests show simultaneous ligand solutions are independent of order and satisfy mass action; phases meet complementarity within finite iteration limits; invalid domains and non-convergence raise explicit errors. Agreement is shown for the tested cases, not promised for arbitrary inputs. |
 | Independent numerical reference | 21 PHREEQC golden families with raw captures and hashes, charge error ≤ 0.1 %, declared Davies and reference tolerances, and both the nitrate titration and the corrected PHREEQC `Fix_H+` target-pH proofs. This is an independently implemented calculation, not independent human review. See [PHREEQC reference fixtures](../models/reference-fixtures.md). |
@@ -71,6 +71,6 @@ That gate has since been met: the 0.4.0 release ran the tests on Python 3.11,
 
 No publishing, automatic merging, deployment, external database write, pump
 action or laboratory certification follows from this document. Integration
-with FlahaFAST (P7) belongs to that separate project and is not a FlahaX
+with FlahaFAST belongs to that separate project and is not a FlahaX
 release gate; this repository documents only the
 [consumer boundary](https://github.com/rafatahmed/Flahax/blob/main/INTEGRATION.md).
