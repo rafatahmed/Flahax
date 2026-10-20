@@ -3,9 +3,9 @@ import json
 import unittest
 from pathlib import Path
 
-from benchmarks.competitors.chemistry_track import reference_input, replay_difference
-from benchmarks.competitors.ec_track import MACRO, STANDARDS, inputs
-from benchmarks.competitors.formulation_track import CL_LIMIT, incidental
+from tools.competitors.chemistry_track import reference_input, replay_difference
+from tools.competitors.ec_track import MACRO, STANDARDS, inputs
+from tools.competitors.formulation_track import CL_LIMIT, incidental
 
 ROOT = Path(__file__).resolve().parents[1]
 
