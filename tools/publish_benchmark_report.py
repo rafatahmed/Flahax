@@ -122,6 +122,28 @@ def csv_bytes(rows, fields):
     return stream.getvalue().encode("utf-8")
 
 
+def scorecard_notice(kernel_pass, kernel_total, chemistry, missing_text, missing_count, manual):
+    """Admonition for the page head: a warning naming failed gates, or a note when none failed (#66)."""
+    workflow = (f"The [manual GitHub benchmark workflow]({manual['url']}) completed with "
+                f"conclusion **{manual['conclusion']}**.")
+    chem = f"{chemistry['passed']}/{chemistry['attempted']}"
+    if (kernel_pass == kernel_total and chemistry["passed"] == chemistry["attempted"]
+            and missing_count == 0 and manual["conclusion"] == "success"):
+        return f"""```{{note}}
+Every correctness gate passed: {kernel_pass}/{kernel_total} controlled NNLS cases, {chem}
+stored chemistry comparisons, and every timing workload completed. {workflow}
+Formulation target misses below are reported results, not gate failures. Passing
+pull-request CI checks are separate evidence.
+```"""
+    return f"""```{{warning}}
+The numerical scorecard is not fully passing: {kernel_pass}/{kernel_total} controlled
+NNLS cases and {chem} stored chemistry comparisons pass. {missing_text}
+{workflow} A completed capture is not necessarily a passing
+scientific scorecard; failed gates and timeouts are retained. Passing pull-request
+CI checks are separate evidence and do not mean this scorecard passed.
+```"""
+
+
 def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
            related_page=None, capture_kind="hosted",
            related_label="Results from the other recorded environment"):
@@ -313,14 +335,7 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
 baseline, including failures. It is not a release certification, a comparison
 against another product, or physical validation.
 {local_note}
-```{{warning}}
-The numerical scorecard is not fully passing: {kernel_pass}/{len(kernel)} controlled
-NNLS cases pass. {missing_text}
-The [manual GitHub benchmark workflow]({manual['url']}) completed with conclusion
-**{manual['conclusion']}**. A completed capture is not necessarily a passing
-scientific scorecard; failed gates and timeouts are retained. Passing pull-request
-CI checks are separate evidence and do not mean this scorecard passed.
-```
+{scorecard_notice(kernel_pass, len(kernel), chemistry, missing_text, len(missing), manual)}
 
 Read the [protocol and reproduction instructions](benchmark-v1.md) before comparing results.
 {related}
