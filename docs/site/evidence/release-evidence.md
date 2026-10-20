@@ -14,6 +14,10 @@ certification.
 
 Each section is a record written at the time. Words such as "unpublished",
 "remaining" or "outstanding" describe that moment, not today.
+
+Codes such as P2, P5.5 or G6 are work phases and release gates from the
+[implementation roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/implementation-roadmap.md).
+They are kept here because the records cite them.
 :::
 
 | Version | Date | Status | Record |
