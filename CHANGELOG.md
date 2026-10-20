@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fix the equilibrium solver failing to converge between pH 4.2 and 5.05 for chelate-rich mixed solutions (#52). From the cold start (every free activity at total/1000), Newton crawled toward strongly complexed free ions (EDTA, DTPA and EDDHA with Fe and Cu) until its iteration limit; an acid target of pH 5.0 for the mixed-product fixture failed. A failed solve now restarts from a continued-fraction mass-balance estimate (Wigley 1977). A pH 4-9 scan of the three mixed fixtures (1,503 solves) goes from 215 failures to none; converging solves are unchanged because the restart runs only after a failure.
 - The NNLS solver raises `InputError` when it is still not optimal at its iteration cap, instead of silently returning a non-optimal fit (#55). No benchmark fit reaches the cap.
 - `recommend()` reports `targetIonBalance`, the cation and anion meq/L implied by the formula (P as H2PO4-, S as SO4 2-), and warns when the sums differ by more than 10%. Eight shipped formulas exceed it, which explains most recipe misses (#39); for example Pepper (Howard Resh) is -39.5% and the U of Florida tomato clusters are +19% to +30%.
 - `recommend()` reports `unmetTargets`: each positive target missed by more than 1% with a reason (`no_source`, `limited_by_ceiling`, `incidental_tradeoff`, `conflicting_targets` with the conflicting targets, and whether chloride products would reach it) (#39). The 1% tolerance is documented as a FlahaX assumption.
