@@ -45,7 +45,7 @@ with its own releases.
 Python 3.11 or newer. There are no third-party runtime dependencies.
 
 ```bash
-python -m pip install flahax==0.4.0
+python -m pip install flahax==0.5.0
 ```
 
 Pin the version for reproducible work. `python -m pip install flahax`
@@ -160,7 +160,7 @@ and [CONTRIBUTING](https://github.com/rafatahmed/Flahax/blob/main/CONTRIBUTING.m
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.4.0) [Computer software].
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.5.0) [Computer software].
 https://pypi.org/project/flahax/
 
 ```bibtex
@@ -168,7 +168,7 @@ https://pypi.org/project/flahax/
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
-  version = {0.4.0},
+  version = {0.5.0},
   url     = {https://pypi.org/project/flahax/},
   license = {Apache-2.0}
 }
