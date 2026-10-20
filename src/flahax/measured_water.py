@@ -70,9 +70,12 @@ def _imbalance_percent(state):
 
 def _carbon_for_alkalinity(totals, ph, alkalinity, phases):
     """Total inorganic carbon whose speciation at pH gives the alkalinity."""
+    last = [solve({k: v for k, v in totals.items() if k != 'CO3-2'}, ph, phases=phases)]
+
     def alk(carbon):
-        return carbonate_alkalinity(solve(totals | {'CO3-2': carbon}, ph, phases=phases))
-    base = carbonate_alkalinity(solve({k: v for k, v in totals.items() if k != 'CO3-2'}, ph, phases=phases))
+        last[0] = solve(totals | {'CO3-2': carbon}, ph, phases=phases, start=last[0])  # warm start, #61
+        return carbonate_alkalinity(last[0])
+    base = carbonate_alkalinity(last[0])
     if alkalinity <= base:
         raise DeliveryError('alkalinity_out_of_range',
                             'measured alkalinity is not above the carbon-free alkalinity at the measured pH')
@@ -153,7 +156,7 @@ def balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, ba
             raise DeliveryError('balance_ion_exhausted', f'{balance_ion} cannot absorb the charge imbalance')
         if carbon_source == 'alkalinity':
             working['CO3-2'] = _carbon_for_alkalinity(working, measured_ph, alkalinity_eq_per_kg, phases)
-        state = solve(working, measured_ph, phases=phases)
+        state = solve(working, measured_ph, phases=phases, start=state)
     else:
         raise DeliveryError('nonconvergent', 'measured-pH charge balance did not close')
     return BalancedWaterAnalysis(dict(working), float(measured_ph), state, balance_ion, analysed,

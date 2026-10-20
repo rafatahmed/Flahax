@@ -34,8 +34,13 @@ def calculate_equilibrium_ph(totals, *, complete_analysis, carbon_boundary,
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
             raise DeliveryError('invalid_totals', 'analytical totals must be finite nonnegative numbers')
 
+    last = []
+
     def at(ph):
-        return solve(dict(totals), ph, phases=phases, temperature_c=temperature_c)
+        # Warm-start from the previous pH step (#61); the bracket sequence is unchanged.
+        last[:] = [solve(dict(totals), ph, phases=phases, temperature_c=temperature_c,
+                         start=last[0] if last else None)]
+        return last[0]
 
     # Start near neutral to avoid unnecessarily evaluating extreme acidic/basic
     # states outside the Davies range. No out-of-domain solve is extrapolated.
