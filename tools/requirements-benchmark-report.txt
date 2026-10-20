@@ -1,0 +1,2 @@
+# Publication tooling only; not a runtime or Read the Docs build dependency.
+matplotlib==3.10.8

@@ -58,3 +58,6 @@ tests/fixtures/phreeqc/**/*.sel -text whitespace=-blank-at-eol,-blank-at-eof
 tests/fixtures/phreeqc/**/*.screen -text whitespace=-blank-at-eol,-blank-at-eof
 tests/fixtures/phreeqc/**/error.inp -text whitespace=-blank-at-eol,-blank-at-eof
 tests/fixtures/phreeqc/**/*.json -text whitespace=cr-at-eol
+
+# Published evidence downloads must match their archived bytes and checksums.
+docs/site/_static/benchmarks/** -text whitespace=cr-at-eol

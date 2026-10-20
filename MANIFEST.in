@@ -10,6 +10,7 @@ include asv.conf.json
 recursive-include benchmarks *.py *.txt
 recursive-include docs *.md *.jpg *.png *.pdf
 recursive-include docs/site *.csv
+recursive-include docs/site/_static/benchmarks *.json *.svg *.zip *.sha256
 exclude docs/sources/04_Fertilizer.pdf
 exclude docs/sources/165357805552.pdf
 exclude docs/sources/215057776303.pdf
@@ -24,6 +25,7 @@ recursive-include src/flahax/data *.md
 recursive-include tests *.py
 recursive-include tests/fixtures *.json *.pqi *.out *.sel *.screen *.dat *.md *.inp
 recursive-include tools *.py *.ps1
+include tools/requirements-benchmark-report.txt
 recursive-include examples *.py *.md
 prune examples/tutorial
 global-exclude __pycache__
