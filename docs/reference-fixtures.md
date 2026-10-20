@@ -25,7 +25,7 @@ H2SO4 and C6H8O7) with `Fix_H+` at pH 6.5, initially charge-balanced pH,
 full captures and hashes. These extend, rather than replace, the product and
 phase evidence. They verify the new candidate-acid calculation in a bounded
 reference solution, not arbitrary commercial water or acid blends. See
-[the workflow guide](water-to-delivery.md) for tolerances and limitations.
+[the workflow guide](site/guide/water-to-delivery.md) for tolerances and limitations.
 Regenerate with `python tools/acid_selection_evidence.py` and verify with
 `PYTHONPATH=src python -m unittest tests.test_acid_reference -v` (set
 `FLAHAX_REQUIRE_PHREEQC=1` to require live replay).

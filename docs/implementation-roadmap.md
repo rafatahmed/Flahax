@@ -45,7 +45,7 @@ Audited against chemistry closure commit `20c41c43f785940c5045276bb47925159a119b
 
 ### Verification continuation — 2026-09-27
 
-P5.5 now provides the explicit catalogue-equilibrium delivery adapter. The complete Python 3.13 suite passes **107 tests with zero skips**, including pinned live PHREEQC. Clean wheel and sdist installs pass outside the checkout on Python 3.13 and were also exercised on Python 3.14. Fresh hash-pinned PHREEQC provisioning succeeds outside the repository. [Package verification](package-verification.md) documents commands, inputs, units and public return types.
+P5.5 now provides the explicit catalogue-equilibrium delivery adapter. The complete Python 3.13 suite passes **107 tests with zero skips**, including pinned live PHREEQC. Clean wheel and sdist installs pass outside the checkout on Python 3.13 and were also exercised on Python 3.14. Fresh hash-pinned PHREEQC provisioning succeeds outside the repository. [Package verification](site/api/package-verification.md) documents commands, inputs, units and public return types.
 
 P6.6/P6.7 remain active until the supported Python 3.11–3.13 hosted jobs actually pass; the previously observed GitHub account billing lock prevented execution. Local success is not hosted-CI acceptance.
 
@@ -169,7 +169,7 @@ P2/P3/P4 have bounded numerical implementations. Both measured-curve and equilib
 | P5.2 | Cross-stage constraint evaluation `[x]` | Recipe/stock identity and complete pH/pump composition fixture are tested |
 | P5.3 | Approval state machine `[x]` | Explicit state transitions; no implicit approval |
 | P5.4 | Human-readable report `[x]` | State, volume, stock, pump, pH, audit, and warning report implemented |
-| P5.5 | Catalogue-equilibrium result to composed delivery adapter `[x]` | `src/flahax/equilibrium_delivery.py`, `tests/test_equilibrium_delivery.py`: explicit water-mass conversion, assayed HNO3 mass/volume, nitrate rescoring, source hashes, dedicated acid channel, rejection guards, PHREEQC target agreement and recipe-to-reviewed-plan integration; `docs/package-verification.md` |
+| P5.5 | Catalogue-equilibrium result to composed delivery adapter `[x]` | `src/flahax/equilibrium_delivery.py`, `tests/test_equilibrium_delivery.py`: explicit water-mass conversion, assayed HNO3 mass/volume, nitrate rescoring, source hashes, dedicated acid channel, rejection guards, PHREEQC target agreement and recipe-to-reviewed-plan integration; `docs/site/api/package-verification.md` |
 
 P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integration gap with a distinct `EquilibriumPhPlan`; it preserves the existing `PhPlan` and low-level `AcidResult` contracts. The caller supplies fixed final solvent mass and final make-up volume; the model does not silently simulate dynamic dilution. Supersaturation or formed solids block delivery validation.
 

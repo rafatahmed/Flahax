@@ -50,7 +50,45 @@ for salt in result["salts"]:
 
 ## Where to go next
 
-- **Developers:** start with [Getting started](https://flahax.readthedocs.io/en/latest/getting-started/)
-  and the [API reference](https://flahax.readthedocs.io/en/latest/api/).
+- **Developers:** start with the [user manual](guide/manual.md)
+  and the [API reference](api/reference.md).
 - **Growers and agronomists:** read the
   [guide for growers and agronomists](https://flahax.readthedocs.io/en/latest/for-growers/).
+
+```{toctree}
+:caption: Getting started
+:hidden:
+
+guide/manual
+guide/usage
+```
+
+```{toctree}
+:caption: User guide
+:hidden:
+
+guide/water-to-delivery
+guide/site-planning
+guide/source-sheet-review
+guide/delivery-quantities
+guide/delivery-contracts
+guide/stock-planning
+guide/ph-planning
+guide/conductivity
+guide/materials
+```
+
+```{toctree}
+:caption: API reference
+:hidden:
+
+api/reference
+api/package-verification
+```
+
+```{toctree}
+:caption: Changelog
+:hidden:
+
+changelog
+```

@@ -20,11 +20,11 @@ The matrix below describes the 0.3.1 capabilities and their boundaries.
 | Stock planning API | Existing sourced compatibility/solubility/capacity checks | Caller must supply complete applicable records; absence from a pairwise table is not evidence of compatibility |
 | Injector design flow and inventory | `injector_sizing.py`, batch/area arithmetic and tests | Pump/venturi/Dosatron operating-point data still needed for a specific model |
 | Offline graphical capability report | `examples/run_all.py`, `visual_report.py`, `test_examples.py` | Separate pepper, manufacturer-screening and synthetic demonstrations; no cross-scenario dosing inference |
-| Traceable materials (identity, grade, lot, nutrient band) | `materials.py`, `material_identities.json`, material tests; [materials](materials.md) | Grades and lots are user supplied; band covers nutrient amounts only; undisclosed blends refused for chemistry |
+| Traceable materials (identity, grade, lot, nutrient band) | `materials.py`, `material_identities.json`, material tests; [materials](site/guide/materials.md) | Grades and lots are user supplied; band covers nutrient amounts only; undisclosed blends refused for chemistry |
 
 Paths in this matrix refer to `src/flahax/`, `tests/` or `examples/` as named.
-See [site planning](site-planning.md), [water-to-delivery](water-to-delivery.md),
-[EC methods](conductivity.md), [source review](source-sheet-review.md) and
+See [site planning](site/guide/site-planning.md), [water-to-delivery](site/guide/water-to-delivery.md),
+[EC methods](site/guide/conductivity.md), [source review](site/guide/source-sheet-review.md) and
 [runnable examples](../examples/README.md) for executable instructions.
 
 ## Preserved boundaries
