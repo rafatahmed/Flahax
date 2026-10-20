@@ -154,8 +154,8 @@ this budget includes setup. A timeout is a benchmark-budget failure, not proof
 that one solve exceeded 900 seconds or failed to converge. Preserve it as a
 missing measurement and use a separately identified run if changing the budget.
 The 2026-10-20 snapshots predate the solver speed-up for #37 (sparse Jacobian and
-bracketed root finding), which cut the acid-target call from about 70 s to about
-1 s on the recording laptop; compare only runs from the same revision.
+bracketed root finding), which cut the acid-target call from about 70 s to under
+2 s on the recording laptop; compare only runs from the same revision.
 
 The manual `Benchmark v1` CI workflow retains JSON, ASV records, and its
 measurement log as artifacts. A correctness failure makes the workflow fail.
