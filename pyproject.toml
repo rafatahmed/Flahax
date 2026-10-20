@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flahax"
-version = "0.4.0"
+version = "0.5.0"
 description = "Plant-nutrient chemistry engine: fertilizer formulation, aqueous equilibrium chemistry and auditable delivery planning."
 readme = "README.md"
 requires-python = ">=3.11"

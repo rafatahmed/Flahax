@@ -27,7 +27,7 @@ assert not importlib.metadata.requires('flahax'), 'unexpected runtime dependency
 manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
 assert f'FlahaX {flahax.__version__}' in manual
 examples = re.findall(r'```python\n(.*?)```', manual, re.S)
-assert len(examples) == 8
+assert len(examples) == 9
 api_reference = files('flahax').joinpath('data/API_REFERENCE.md').read_text(encoding='utf-8')
 assert sorted(re.findall(r'^### `([^`]+)`$', api_reference, re.M)) == sorted(flahax.__all__)
 for index, example in enumerate(examples):

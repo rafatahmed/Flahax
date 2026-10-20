@@ -14,7 +14,7 @@ authors:
   - family-names: Al Khashan
     given-names: Rafat A.
     orcid: https://orcid.org/0009-0009-4692-4552
-version: 0.4.0
+version: 0.5.0
 url: https://pypi.org/project/flahax/
 repository-code: https://github.com/rafatahmed/Flahax
 license: Apache-2.0
@@ -35,6 +35,6 @@ preferred-citation:
       given-names: Rafat A.
       orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
-  version: 0.4.0
+  version: 0.5.0
   url: https://pypi.org/project/flahax/
   license: Apache-2.0

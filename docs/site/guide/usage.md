@@ -12,7 +12,7 @@ From PyPI, inside a virtual environment (pin the version for reproducible
 work):
 
 ```powershell
-python -m pip install flahax==0.4.0
+python -m pip install flahax==0.5.0
 ```
 
 From a checkout of this repository:
