@@ -1,12 +1,12 @@
 # Benchmark results: Linux
 
-**Measured snapshot: 2026-10-20-linux-4dffdf8.** This page reports one clean-checkout development
+**Measured snapshot: 2026-10-20-linux-df0d30b.** This page reports one clean-checkout development
 baseline, including failures. It is not a release certification, a comparison
 against another product, or physical validation.
 
 ```{note}
 Every correctness gate passed: 7/7 controlled NNLS cases, 21/21
-stored chemistry comparisons, and every timing workload completed. The [manual GitHub benchmark workflow](https://github.com/rafatahmed/Flahax/actions/runs/39511463809) completed with conclusion **success**.
+stored chemistry comparisons, and every timing workload completed. The [manual GitHub benchmark workflow](https://github.com/rafatahmed/Flahax/actions/runs/39515183621) completed with conclusion **success**.
 Formulation target misses below are reported results, not gate failures. Passing
 pull-request CI checks are separate evidence.
 ```
@@ -38,7 +38,7 @@ are deliberately excluded from the charts on this page.
 | Completed timing workloads | 17/17 | Parameterized timings, with failures retained |
 | Physical validation | Not performed | No measured mixture/pH/titration/EC accuracy claim |
 
-![Target-fit pass fractions with separate element and whole-recipe denominators](../_static/benchmarks/2026-10-20-linux-4dffdf8/formulation.svg)
+![Target-fit pass fractions with separate element and whole-recipe denominators](../_static/benchmarks/2026-10-20-linux-df0d30b/formulation.svg)
 
 Formula targets are desired inputs, not proof of agronomic suitability.
 Reconstruction uses returned rounded doses and declared assays; unassayed
@@ -65,7 +65,7 @@ Per-case causes are tracked in [recipe-fit analysis #39](https://github.com/rafa
 
 ## Timing and memory
 
-![Completed timing samples, medians and ranges on a logarithmic millisecond axis](../_static/benchmarks/2026-10-20-linux-4dffdf8/timings.svg)
+![Completed timing samples, medians and ranges on a logarithmic millisecond axis](../_static/benchmarks/2026-10-20-linux-df0d30b/timings.svg)
 
 Dots are samples; diamonds are medians; bars show the observed minimum–maximum.
 These are single-machine, single-run observations, **not confidence intervals or
@@ -77,23 +77,23 @@ does not establish a cold filesystem cache.
 
 | Workload / parameter | Samples | Median (ms) | Observed range (ms) |
 |---|---:|---:|---|
-| Delivery | 10 | 15.81 | 15.66–16.88 |
-| Equilibrium: 'products/mixed_products' | 10 | 67.98 | 67.69–69.2 |
-| Equilibrium: 'phases/calcite' | 10 | 1.511 | 1.477–1.592 |
-| Equilibrium: 'phases/mixed_product_phases' | 10 | 70.99 | 69.04–72.56 |
-| Equilibrium: 'products/mixed_target_ph_nitric' | 10 | 69.31 | 68.06–70.49 |
-| Formulation: 0 | 10 | 33.65 | 33.44–33.84 |
-| Formulation: 20 | 10 | 19.67 | 19.46–19.76 |
-| Import | 10 | 108.3 | 107.6–121.6 |
-| IrrigationEC | 10 | 3.796 | 3.561–3.881 |
-| Kernel: 'exact' | 10 | 0.04472 | 0.04371–0.06476 |
-| Kernel: 'infeasible' | 10 | 0.02229 | 0.02018–0.04273 |
-| Kernel: 'water_exceeds_target' | 10 | 0.02699 | 0.02538–0.04814 |
-| Kernel: 'duplicate_columns' | 10 | 0.02645 | 0.0253–0.04908 |
-| Kernel: 'near_dependent' | 10 | 0.0583 | 0.05624–0.08498 |
-| Kernel: 'trace_scale' | 10 | 0.04286 | 0.04153–0.06533 |
-| Kernel: 'zero_target' | 10 | 0.02666 | 0.02551–0.0488 |
-| Library | 10 | 0.2231 | 0.2103–0.2592 |
+| Delivery | 10 | 15.19 | 15.03–16.04 |
+| Equilibrium: 'products/mixed_products' | 10 | 69.87 | 69.02–70.61 |
+| Equilibrium: 'phases/calcite' | 10 | 1.497 | 1.48–1.637 |
+| Equilibrium: 'phases/mixed_product_phases' | 10 | 70.08 | 69.89–70.25 |
+| Equilibrium: 'products/mixed_target_ph_nitric' | 10 | 69.14 | 68.75–69.59 |
+| Formulation: 0 | 10 | 19.6 | 19.52–19.78 |
+| Formulation: 20 | 10 | 15.93 | 15.74–16.12 |
+| Import | 10 | 112.5 | 111.2–122.4 |
+| IrrigationEC | 10 | 3.55 | 3.526–3.687 |
+| Kernel: 'exact' | 10 | 0.04711 | 0.04573–0.09249 |
+| Kernel: 'infeasible' | 10 | 0.02218 | 0.02156–0.04464 |
+| Kernel: 'water_exceeds_target' | 10 | 0.02788 | 0.02644–0.04996 |
+| Kernel: 'duplicate_columns' | 10 | 0.02867 | 0.02718–0.05334 |
+| Kernel: 'near_dependent' | 10 | 0.06292 | 0.06074–0.0881 |
+| Kernel: 'trace_scale' | 10 | 0.04653 | 0.04431–0.07141 |
+| Kernel: 'zero_target' | 10 | 0.02756 | 0.02719–0.04987 |
+| Library | 10 | 0.2303 | 0.2147–0.2576 |
 
 Peak memory is total process peak RSS, including the interpreter and setup,
 not the incremental allocation of the solver. Decimal MB are used.
@@ -102,12 +102,12 @@ benchmark; the other workloads are timed only.
 
 | Workload / parameter | Peak process memory (MB) |
 |---|---:|
-| Equilibrium: 'products/mixed_products' | 46.18 |
-| Equilibrium: 'phases/calcite' | 46.06 |
-| Equilibrium: 'phases/mixed_product_phases' | 46.31 |
-| Equilibrium: 'products/mixed_target_ph_nitric' | 46.21 |
-| Formulation: 0 | 46.23 |
-| Formulation: 20 | 46.08 |
+| Equilibrium: 'products/mixed_products' | 39.92 |
+| Equilibrium: 'phases/calcite' | 39.98 |
+| Equilibrium: 'phases/mixed_product_phases' | 40.11 |
+| Equilibrium: 'products/mixed_target_ph_nitric' | 39.97 |
+| Formulation: 0 | 40.03 |
+| Formulation: 20 | 40.00 |
 
 ## Retained limitations
 
@@ -132,40 +132,40 @@ aligned competitor comparisons and physical validation.
 
 ## Provenance and reproduction
 
-The normal [CI run](https://github.com/rafatahmed/Flahax/actions/runs/39511408924) for this exact revision is recorded separately
+The normal [CI run](https://github.com/rafatahmed/Flahax/actions/runs/39515081885) for this exact revision is recorded separately
 from these performance measurements. Its jobs are shown below; this is **not**
 the manual benchmark workflow. In particular, the hosted live-PHREEQC job is
 separate evidence and its results are not counted as benchmark cases.
 
 | Hosted check | Recorded conclusion |
 |---|---|
-| [docs](https://github.com/rafatahmed/Flahax/actions/runs/39511408924/job/118933052704) | success |
-| [phreeqc-live](https://github.com/rafatahmed/Flahax/actions/runs/39511408924/job/118933052827) | success |
-| [test (3.11)](https://github.com/rafatahmed/Flahax/actions/runs/39511408924/job/118933052961) | success |
-| [test (3.12)](https://github.com/rafatahmed/Flahax/actions/runs/39511408924/job/118933053043) | success |
-| [test (3.13)](https://github.com/rafatahmed/Flahax/actions/runs/39511408924/job/118933053083) | success |
+| [phreeqc-live](https://github.com/rafatahmed/Flahax/actions/runs/39515081885/job/118945185616) | success |
+| [test (3.13)](https://github.com/rafatahmed/Flahax/actions/runs/39515081885/job/118945185755) | success |
+| [docs](https://github.com/rafatahmed/Flahax/actions/runs/39515081885/job/118945185773) | success |
+| [test (3.12)](https://github.com/rafatahmed/Flahax/actions/runs/39515081885/job/118945185877) | success |
+| [test (3.11)](https://github.com/rafatahmed/Flahax/actions/runs/39515081885/job/118945185910) | success |
 
 
 ## Capture notes
 
-This hosted Linux capture measured clean revision 4dffdf864ed4d52b44705cb89b43ad1afa659ef3, after the equilibrium solver speed-up (#61, PR #62) and the ASV discovery fix (#64, PR #65). The manual workflow completed with conclusion success: all correctness scorecards and all ASV workloads. The earlier attempt on 61dda094c39ccd8810e63db63794f9e984c29cd6 (run 39510611814) measured no timings because ASV discovery failed (#64); it is not substituted for this capture. The Windows supplement still refers to revision 6373d23454080852504dbdad9fc0ecff2089550b and was not re-measured; do not pool environments. Normal CI for this revision is separate evidence.
+This hosted Linux capture measured clean revision df0d30bf4f62365056e0b0f250c75d0cf7206611, after the equilibrium solver speed-up (#61, PR #62), the ASV discovery fix (#64, PR #65) and the ceiling-constraint and NNLS optimality fix (#68, PR #69). The manual workflow completed with conclusion success: all correctness scorecards and all ASV workloads. Earlier captures are not substituted for this one: 61dda094c39ccd8810e63db63794f9e984c29cd6 (run 39510611814) measured no timings because ASV discovery failed (#64), and 4dffdf864ed4d52b44705cb89b43ad1afa659ef3 (run 39511463809) predates #69. The Windows supplement still refers to revision 6373d23454080852504dbdad9fc0ecff2089550b and was not re-measured; do not pool environments. Hosted runner CPUs vary between runs; compare timings only within one capture. Normal CI for this revision is separate evidence.
 
 
 ## Recorded environment
 
 | Field | Recorded value |
 |---|---|
-| Source revision | [4dffdf864ed4](https://github.com/rafatahmed/Flahax/commit/4dffdf864ed4d52b44705cb89b43ad1afa659ef3) |
+| Source revision | [df0d30bf4f62](https://github.com/rafatahmed/Flahax/commit/df0d30bf4f62365056e0b0f250c75d0cf7206611) |
 | Checkout | Clean before and after measurement |
-| Capture started (UTC) | 2026-10-20T22:55:16.376120+00:00 |
-| Capture finished (UTC) | 2026-10-20T22:55:40.988707+00:00 |
+| Capture started (UTC) | 2026-10-20T23:28:16.452120+00:00 |
+| Capture finished (UTC) | 2026-10-20T23:28:40.245151+00:00 |
 | Python | 3.13.16 (main, Oct  1 2026, 02:37:54) [GCC 13.3.0] |
-| OS / architecture | Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 / x86_64 |
+| OS / architecture | Linux-6.17.0-1022-azure-x86_64-with-glibc2.39 / x86_64 |
 | Processor (ASV model or platform label) | AMD EPYC 7763 64-Core Processor |
 | Logical CPUs | 4 |
-| RAM (ASV bytes) | 16760344576 |
+| RAM (ASV bytes) | 16766414848 |
 | Direct benchmark tooling | asv 0.6.6, scipy 1.18.1, numpy 2.5.4, asv-runner 0.3.2 |
-| Input manifest SHA-256 | `9b7ac5b421372b62dcee239735e675b16c2d43392ba07f76952f3b33cfc57955` |
+| Input manifest SHA-256 | `b25dc7d73e372e8ea5e4290404df37aac86aeeee4ecadaa6975d5f68c0680fe7` |
 
 Input manifests match before and after. They cover runtime/model/catalogue data,
 benchmark sources, tracked example helpers, stored reference captures, the historical
@@ -192,15 +192,15 @@ against the measured checkout before publishing files.
 
 ## Download the evidence
 
-- [Complete evidence ZIP](../_static/benchmarks/2026-10-20-linux-4dffdf8/evidence.zip) — scorecards, before/after metadata,
+- [Complete evidence ZIP](../_static/benchmarks/2026-10-20-linux-df0d30b/evidence.zip) — scorecards, before/after metadata,
   raw ASV records and logs, environment, CSVs, charts and renderer source.
-- [Machine-readable combined report](../_static/benchmarks/2026-10-20-linux-4dffdf8/baseline.json)
-- [Per-target formulation CSV](../_static/benchmarks/2026-10-20-linux-4dffdf8/formulation.csv)
-- [Timing summary CSV](../_static/benchmarks/2026-10-20-linux-4dffdf8/timings.csv)
-- [SHA-256 checksums of bundle contents](../_static/benchmarks/2026-10-20-linux-4dffdf8/CHECKSUMS.sha256)
-- Chart downloads: [target fit PNG](../_static/benchmarks/2026-10-20-linux-4dffdf8/formulation.png), [timing PNG](../_static/benchmarks/2026-10-20-linux-4dffdf8/timings.png).
+- [Machine-readable combined report](../_static/benchmarks/2026-10-20-linux-df0d30b/baseline.json)
+- [Per-target formulation CSV](../_static/benchmarks/2026-10-20-linux-df0d30b/formulation.csv)
+- [Timing summary CSV](../_static/benchmarks/2026-10-20-linux-df0d30b/timings.csv)
+- [SHA-256 checksums of bundle contents](../_static/benchmarks/2026-10-20-linux-df0d30b/CHECKSUMS.sha256)
+- Chart downloads: [target fit PNG](../_static/benchmarks/2026-10-20-linux-df0d30b/formulation.png), [timing PNG](../_static/benchmarks/2026-10-20-linux-df0d30b/timings.png).
 
-ZIP SHA-256: `a9de23e5a4264fa0d185a50387af644d1296fff7e258d3ebf5110c90fee9efc8`.
+ZIP SHA-256: `650e3e90a34ee3bc44b5e1d4abef09e802de0ec50ded9c4a72c7d9de76b21cb2`.
 
 User-home identifiers in paths were replaced for public redistribution.
 Numerical values and source/input hashes are unchanged. Checksums refer to the
