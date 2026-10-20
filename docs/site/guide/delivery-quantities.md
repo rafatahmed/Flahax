@@ -1,6 +1,7 @@
-# Delivery Quantities and Final-Solution Recipes (P1)
+(delivery-quantities-and-final-solution-recipes-p1)=
+# Units and batch quantities
 
-P1 adds a small, dependency-free quantity layer for delivery planning. It uses immutable dataclasses with explicit base units and rejects non-finite, negative, ambiguous, or dimensionally wrong values before later stock, pH, or pump logic receives them.
+The quantity layer uses immutable dataclasses with explicit base units and rejects non-finite, negative, ambiguous, or dimensionally wrong values before stock, pH, or pump logic receives them.
 
 ## Quantities
 
@@ -57,4 +58,4 @@ The mass fractions must be elemental fractions from 0 to 1 and cannot total more
 
 ## Boundary
 
-P1 does not calculate stock concentration, tank compatibility, reagent normality, pH dose, pump runtime, or hardware commands. Those remain P2–P4 work packages. Its role is to make their inputs dimensionally clear and preserve the original solver balance.
+The quantity layer does not calculate stock concentration, tank compatibility, reagent normality, pH dose, pump runtime, or hardware commands. Those calculations belong to their respective planning APIs. Its role is to make their inputs dimensionally clear and preserve the original solver balance.

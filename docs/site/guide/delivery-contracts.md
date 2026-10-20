@@ -1,10 +1,11 @@
-# Delivery Planning Contracts (P0)
+(delivery-planning-contracts-p0)=
+# Input schemas and validation
 
 `flahax.delivery_contracts` provides input validation and provenance for stock-tank, pH, and dosing planning. It validates data and records provenance. It does **not** calculate a stock recipe, pH dose, or pump command, and it does not connect to hardware.
 
 ## Current supported mode
 
-Schema version `0.1` supports **batch** planning records only. `proportional` injection is intentionally rejected with error code `unsupported_mode` until decision gate G0 is opened and its calibration/flow model is implemented.
+Schema version `0.1` supports **batch** planning records only. `proportional` injection is rejected with error code `unsupported_mode`; this schema does not implement a proportional-injection calibration or flow model.
 
 ## Public API
 
@@ -49,11 +50,11 @@ The records deliberately preserve their own source/revision metadata. A plan can
 ## Contract rules
 
 - Water analysis requires ion values and temperature. pH and alkalinity may be recorded when available; the measured-curve pH planner requires alkalinity; the separate equilibrium adapter requires complete analytical totals and measured initial pH.
-- Product assays are elemental percentages, not ppm. They reject total `N`, unknown ions, values outside 0–100%, and sums above 100.5%. Acid/base records may also carry sourced `densityKgPerL` and `normalityMeqPerL`; P3 requires both.
+- Product assays are elemental percentages, not ppm. They reject total `N`, unknown ions, values outside 0-100%, and sums above 100.5%. Acid/base records may also carry sourced `densityKgPerL` and `normalityMeqPerL`; the measured-curve pH planner requires both.
 - Compatibility rules currently represent sourced hard `separate` constraints across two or more product IDs.
 - Solubility limits require a product ID, maximum g/L, and minimum/maximum temperature range.
 - Titration curves require at least two strictly increasing acid/base demand points in meq/L. They are measurements for one water/reagent pair, not a generic pH formula.
-- Pump calibration records require non-zero flow, flow variation, and a valid volume range. They are evidence only; P0 cannot command a pump.
+- Pump calibration records require non-zero flow, flow variation, and a valid volume range. They are evidence only; input validation cannot command a pump.
 
 ## Errors
 
@@ -70,6 +71,7 @@ Invalid records raise `DeliveryError`, a subclass of `InputError`, with a stable
 | `unknown_ion` | Assay uses an ion outside the FlahaX ion schema |
 | `ambiguous_unit` | Input uses total nitrogen rather than nitrate/ammonium form |
 
-## P0 acceptance evidence
+(p0-acceptance-evidence)=
+## Validation coverage
 
 The test suite includes a valid batch fixture, deterministic audit replay, rejected unsupported mode, rejected total nitrogen assay, rejected incomplete calibration data, and rejected non-monotonic titration data. The contracts are intentionally strict: a later calculation must receive explicit data or fail with an actionable error.

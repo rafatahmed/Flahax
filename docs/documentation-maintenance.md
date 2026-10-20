@@ -19,6 +19,26 @@ validate a published artifact.
 
 ## Updating a function
 
+### Public site organization
+
+The public navigation has seven reader-facing sections: Get started, Growers
+and agronomists, User manual, API reference, Models and chemistry, Evidence
+and audits, and Changelog. Detailed workflow guides belong under the manual;
+input schemas and quantity types belong under the API reference. Source
+reviews, package verification, and dated validation logs belong under Evidence
+and audits. Keep development gates and work-package labels out of navigation
+and current usage instructions.
+
+Preserve public page URLs when reorganizing navigation. Preserve historical
+results, provenance, model identifiers, failure records, and limitations;
+relocation must not turn old local checks into current release acceptance.
+The planning logs are retained in
+[`planning-validation-history`](site/evidence/planning-validation-history.md);
+the superseded pH requirements are retained in
+[`ph-planning-requirements`](history/ph-planning-requirements.md).
+
+### API changes
+
 1. Describe its purpose, required inputs, units, defaults, return values and
    rejection behavior in its source docstring. Explain distinctions between
    missing, zero and unsupported values. Avoid promises beyond tested scope.

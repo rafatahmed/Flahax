@@ -4,7 +4,7 @@ Every number FlahaX calculates with can be traced to a **chemical identity**
 and a **source document**. Evidence:
 [materials identity audit](../evidence/audit/2026-10-18-materials-identity/review.md).
 
-**Position (owner's wording):** Catalogue size does not measure chemical
+Catalogue size does not measure chemical
 coverage or model accuracy. FlahaX's chemistry approach uses explicit
 chemical identities and composition assumptions. Its raw-material catalogue
 should distinguish chemical identity from supplier grade and batch assay,
@@ -131,7 +131,8 @@ ingredients and counterions.
 - An undisclosed blend is accepted by `recommend` (its record) and by
   `nutrient_band`.
 
-## Decisions
+(decisions)=
+## Catalogue composition assumptions
 
 - **D1:** Mg Nitrate is Mg(NO3)2.6H2O theoretical (N 10.93 %, Mg 9.48 %).
 - **D2:** Chelates are their defined sodium salts (Fe-EDTA 1, Mn/Zn/Cu-EDTA 2,
