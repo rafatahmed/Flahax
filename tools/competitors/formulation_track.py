@@ -118,7 +118,7 @@ def summarise(rows, wholes, times, products_used, attempted, extras):
 
 
 def run():
-    from benchmarks.competitors import horticalc_adapter as hc
+    from tools.competitors import horticalc_adapter as hc
     library = load_library()
     salts = library["salts"]
     usable = [s for s in salts if assay_conflict(s) is None]
