@@ -186,9 +186,9 @@ element. Recomputed historical means are not newly measured performance.
 The [maintainer review](audit/2026-10-17-flahax-vs-horticalc/review.md) takes
 precedence over the original report, including its EC and scope corrections.
 
-A new aligned competitor run is **not implemented** in v1. It requires pinned
-competitor code, a checked elemental-N translation, matching restrictions,
-regularization, simplification and objectives, and a common returned-dose
+A new aligned competitor run is not part of v1. It is published separately as
+the [competitor comparison](competitor-comparison.md): pinned competitor code, a
+checked assay translation, matching objectives, and the v1 returned-dose
 evaluator. Old scope claims must not describe current experimental EC support.
 
 ## Publication and remaining work

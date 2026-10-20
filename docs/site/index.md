@@ -157,6 +157,7 @@ Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>
 Release evidence <evidence/release-evidence>
 Benchmark specification and reproduction <evidence/benchmark-v1>
 Benchmark results and downloads <evidence/benchmark-results>
+Competitor comparison <evidence/competitor-comparison>
 Computational assessment <evidence/computational-review>
 Package verification <api/package-verification>
 Planning validation history <evidence/planning-validation-history>
