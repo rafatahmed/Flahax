@@ -30,6 +30,8 @@ from .product_conversion import counterion_sodium_mg_per_l
 
 # Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
+# Column additions allowed per column before NNLS reports non-convergence (#55).
+NNLS_ADDITION_FACTOR = 4
 # Double-precision unit round-off, for scale-aware NNLS optimality tests.
 ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
@@ -162,7 +164,7 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
         return [rhs[i] - pred[i] for i in range(m)]
 
     additions = 0
-    while additions < n * 4:
+    while True:
         resid = residual()
         weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
         candidates = [j for j in active if j not in rejected]
@@ -171,6 +173,9 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
         enter = max(candidates, key=lambda j: weights[j])
         if weights[enter] <= dual_tol:
             break
+        if additions >= NNLS_ADDITION_FACTOR * n:
+            # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
+            raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
         passive.append(enter)
         active.remove(enter)
         try:
