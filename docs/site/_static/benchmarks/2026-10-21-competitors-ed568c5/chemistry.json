@@ -1,0 +1,195 @@
+{
+  "base_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+  "cases": [
+    {
+      "fixture": "products/ch_micro",
+      "replay_max_difference": 4.957811938766099e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 112,
+      "phreeqpython_ms": 2.456900001561735,
+      "flahax_ms": 4.506400000536814
+    },
+    {
+      "fixture": "products/citrate",
+      "replay_max_difference": 4.796163466380676e-13,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 35,
+      "phreeqpython_ms": 0.9774999998626299,
+      "flahax_ms": 0.6384000007528812
+    },
+    {
+      "fixture": "products/cu_edta",
+      "replay_max_difference": 5.051958851254312e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 42,
+      "phreeqpython_ms": 1.2621999994735233,
+      "flahax_ms": 0.9295000054407865
+    },
+    {
+      "fixture": "products/fe_dtpa",
+      "replay_max_difference": 8.572698106945609e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 38,
+      "phreeqpython_ms": 1.1140000060549937,
+      "flahax_ms": 0.953099995967932
+    },
+    {
+      "fixture": "products/fe_eddha",
+      "replay_max_difference": 4.710898338089464e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 38,
+      "phreeqpython_ms": 1.1420000009820797,
+      "flahax_ms": 1.0275000022375025
+    },
+    {
+      "fixture": "products/fe_edta",
+      "replay_max_difference": 4.192202140984591e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 44,
+      "phreeqpython_ms": 1.210700000228826,
+      "flahax_ms": 1.056000000971835
+    },
+    {
+      "fixture": "products/mixed_products",
+      "replay_max_difference": 4.9684700798025005e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 243,
+      "phreeqpython_ms": 4.065599998284597,
+      "flahax_ms": 51.88040000211913
+    },
+    {
+      "fixture": "products/mixed_target_ph_nitric",
+      "replay_max_difference": 4.9471537977296975e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 275,
+      "phreeqpython_ms": 3.8864000016474165,
+      "flahax_ms": 54.50750000454718
+    },
+    {
+      "fixture": "products/mn_edta",
+      "replay_max_difference": 4.654054919228656e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 38,
+      "phreeqpython_ms": 1.1393999957363121,
+      "flahax_ms": 0.8518999966327101
+    },
+    {
+      "fixture": "products/zn_edta",
+      "replay_max_difference": 4.600764214046649e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 42,
+      "phreeqpython_ms": 1.5930000008665957,
+      "flahax_ms": 1.0689000046113506
+    },
+    {
+      "fixture": "phases/calcite",
+      "replay_max_difference": 4.809486142676178e-13,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 24,
+      "phreeqpython_ms": 1.3981000010971911,
+      "flahax_ms": 1.1702000047080219
+    },
+    {
+      "fixture": "phases/calcium_phosphate",
+      "replay_max_difference": 4.46753745109163e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 31,
+      "phreeqpython_ms": 1.5586999943479896,
+      "flahax_ms": 1.3361999954213388
+    },
+    {
+      "fixture": "phases/ferrous_phases",
+      "replay_max_difference": 4.74997818855627e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 39,
+      "phreeqpython_ms": 2.1781000032206066,
+      "flahax_ms": 1.5867999973124824
+    },
+    {
+      "fixture": "phases/gypsum",
+      "replay_max_difference": 1.874503544358685e-09,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 24,
+      "phreeqpython_ms": 1.3708999977097847,
+      "flahax_ms": 1.0464999941177666
+    },
+    {
+      "fixture": "phases/magnesium_salts",
+      "replay_max_difference": 4.618527782440651e-13,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 24,
+      "phreeqpython_ms": 1.4171000002534129,
+      "flahax_ms": 0.6453999958466738
+    },
+    {
+      "fixture": "phases/mixed_product_phases",
+      "replay_max_difference": 4.973799150320701e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 225,
+      "phreeqpython_ms": 13.205399998696521,
+      "flahax_ms": 55.70369999622926
+    },
+    {
+      "fixture": "phases/struvite",
+      "replay_max_difference": 4.32720526077901e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 28,
+      "phreeqpython_ms": 1.8742000029305927,
+      "flahax_ms": 1.5810000040801242
+    },
+    {
+      "fixture": "phases/trace_carbonates",
+      "replay_max_difference": 4.916955731459893e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 65,
+      "phreeqpython_ms": 2.6360999981989153,
+      "flahax_ms": 3.8867999974172562
+    },
+    {
+      "fixture": "phases/trace_hydroxides",
+      "replay_max_difference": 4.977351863999502e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 65,
+      "phreeqpython_ms": 2.9230999934952706,
+      "flahax_ms": 3.0815999998594634
+    },
+    {
+      "fixture": "phases/trace_phosphates",
+      "replay_max_difference": 4.884981308350689e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 78,
+      "phreeqpython_ms": 3.8578999956371263,
+      "flahax_ms": 4.939099999319296
+    },
+    {
+      "fixture": "phases/zero_stock",
+      "replay_max_difference": 2.9238833576528123e-12,
+      "flahax_passes": true,
+      "failed": [],
+      "checks": 24,
+      "phreeqpython_ms": 1.3120000003254972,
+      "flahax_ms": 0.5367999983718619
+    }
+  ],
+  "merged_sha256": "cbd2685777a10e31a21f7ea48ab934a49e1b45804cccc7b59f40c1c5162a70cd"
+}
