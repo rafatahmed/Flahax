@@ -1,0 +1,12 @@
+{
+  "typed_by": "transcription from the publicly available full text on De Gruyter Brill (https://www.degruyterbrill.com/document/doi/10.1351/pac200173111783/html), Table 1 p. 1788, 25 C row only; typed 2026-10-21",
+  "citation": "K. W. Pratt, W. F. Koch, Y. C. Wu and P. A. Berezansky, \"Molality-based primary standards of electrolytic conductivity (IUPAC Technical Report)\", Pure and Applied Chemistry 73(11), 1783-1793 (2001), DOI 10.1351/pac200173111783",
+  "notes": "Recommended values are corrected for the conductivity of CO2-saturated water (1.10 uS/cm at 25 C). Temperature on ITS-90. Solute NIST SRM 999 KCl. These molality-based values replace the demal-based OIML/IUPAC standards.",
+  "units": {"molality": "mol/kg", "kappa": "uS/cm", "expanded_uncertainty": "uS/cm, 2u_c"},
+  "temperature_c": 25.0,
+  "kcl": [
+    {"molality": 0.01, "kappa": 1408.23, "expanded_uncertainty": 0.42},
+    {"molality": 0.1, "kappa": 12824.6, "expanded_uncertainty": 5.1},
+    {"molality": 1.0, "kappa": 108620.0, "expanded_uncertainty": 43.0}
+  ]
+}
