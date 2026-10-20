@@ -33,6 +33,7 @@ Readers: the documentation is at <https://flahax.readthedocs.io/>. This index is
 
 ## Scientific model and evidence
 
+- [Benchmark v1 specification and reproduction](site/evidence/benchmark-v1.md): separate correctness and performance scorecards, fixed inputs, provenance, and retained failures.
 - [Formulation method](site/models/method.md)
 - [Current mixed-equilibrium model](site/models/fertilizer-equilibrium-model.md)
 - [Coverage summary](site/models/full-fertilizer-chemistry.md) and [exact reaction/phase matrix](site/models/chemistry-coverage-matrix.md)

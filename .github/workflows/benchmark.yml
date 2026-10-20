@@ -1,0 +1,43 @@
+name: Benchmark v1 (informational timing)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Install benchmark tooling
+        id: install
+        run: python -m pip install -e . -r benchmarks/requirements.txt
+      - name: Measurement semantics and correctness scorecards
+        run: |
+          python -m unittest tests.test_benchmark_baseline
+          python -m tools.benchmark_baseline --output build/benchmark-v1/before.json
+      - name: ASV measurements (no speed threshold)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        shell: bash
+        run: |
+          python -m asv machine --yes --machine github-linux
+          python -m asv check --python=same
+          python -m asv run HEAD --python=same --machine github-linux --set-commit-hash "$GITHUB_SHA" --record-samples --show-stderr 2>&1 | tee build/benchmark-v1/asv.log
+      - name: Record provenance and sample summary
+        if: always()
+        run: python -m tools.benchmark_baseline --metadata-only --compare-inputs build/benchmark-v1/before.json --asv-results build/asv/results --output build/benchmark-v1/after.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: benchmark-v1-${{ github.sha }}
+          path: |
+            build/benchmark-v1/
+            build/asv/results/

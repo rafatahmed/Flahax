@@ -1,0 +1,5 @@
+# Development tools only; FlahaX runtime dependencies remain empty.
+asv==0.6.6
+asv-runner==0.3.2
+numpy==2.5.4
+scipy==1.18.1
