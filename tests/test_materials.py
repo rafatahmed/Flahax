@@ -965,7 +965,9 @@ class ChelateSodiumReportTests(unittest.TestCase):
 
     def test_no_chelate_recipe_unchanged(self):
         from flahax.engine import recommend
-        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS)
+        # Pinned to the penalty-only fit: the #54 ammonium allowance changes this recipe
+        # independently of chelate sodium reporting (Ca 119.40 -> 119.98 mg/L).
+        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS, max_ammonium_fraction=None)
         self.assertNotIn('Mn EDTA', {s['name'] for s in result['salts']})
         self.assertEqual(len(result['rows']), len(self.NO_CHELATE_ROWS))
         for got, want in zip(result['rows'], self.NO_CHELATE_ROWS):
@@ -976,7 +978,9 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertEqual(len(result['incidentalContributions']), 1)
         self.assertAlmostEqual(result['incidentalContributions'][0]['ppm'],
                                self.NO_CHELATE_INCIDENTAL[0]['ppm'], places=9)
-        self.assertEqual(result['warnings'], [])
+        # The synthetic targets omit S, so the formula is unbalanced (+16.6%) and says so;
+        # no other warning, in particular no chelate-sodium note, may appear.
+        self.assertEqual([w for w in result['warnings'] if 'not electrically balanced' not in w], [])
 
     def test_helper_matches_chemistry(self):
         from flahax.product_conversion import catalogue_dose_totals, counterion_sodium_mg_per_l

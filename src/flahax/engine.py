@@ -22,6 +22,7 @@ from .composition import (
     assay_conflict,
     assay_drift,
     is_carbonate,
+    target_ion_balance,
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental
@@ -29,16 +30,34 @@ from .product_conversion import counterion_sodium_mg_per_l
 
 # Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
+# Column additions allowed per column before NNLS reports non-convergence (#55).
+NNLS_ADDITION_FACTOR = 4
 # Double-precision unit round-off, for scale-aware NNLS optimality tests.
 ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
 KEEP_GRAMS = 1e-6
 # A recipe is feasible when every requested ion is inside this Δ%.
 TOLERANCE_PCT = 1.0
-# Doublings of the pull on an incidental ion above its stated maximum (weight up to 2**12).
+# Pull on an incidental ion above its stated maximum: the fit is convex, so a binding
+# ceiling's optimum lies on the limit and a strong first weight reaches it in one refit
+# (#56); doubling continues only while it is still exceeded (up to 2**22).
+CEILING_FIRST_WEIGHT = 1024.0
 CEILING_STEPS = 13
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
+# Default ceiling on incidental NH4-N (#54): the smaller of 10% of the formula's total
+# target N and 1.5 mmol/L NH4. Owner decisions (2026-10-20) based on Dutch soilless
+# practice: NH4 at 5-15% of total N with at most 1-1.5 mmol/L (Van der Lugt et al.
+# 2016 handbook, after De Kreij, Voogt et al.), "heavy fruit bearing - max 90:10"
+# NO3:NH4 (Voogt, WUR lecture, edepot.wur.nl/13081), and Dutch standard solutions at
+# 5.9-8.8% NH4-N for most crops. Dickson & Fisher (2019, doi:10.21273/HORTSCI13959-19)
+# cite 5-10% (hydroponics) / 10-15% (substrate) to Sonneveld & Voogt (2009) without a
+# page; that primary text has not been verified.
+AMMONIUM_FRACTION = 0.10
+AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
+AMMONIUM_BASIS = ("incidental NH4-N up to min(10% of total target N, 1.5 mmol/L); owner "
+                  "decision based on Dutch soilless practice (De Kreij, Voogt et al.; Voogt "
+                  "'max 90:10'); see docs for references")
 
 
 def load_library() -> dict:
@@ -145,7 +164,7 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
         return [rhs[i] - pred[i] for i in range(m)]
 
     additions = 0
-    while additions < n * 4:
+    while True:
         resid = residual()
         weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
         candidates = [j for j in active if j not in rejected]
@@ -154,6 +173,9 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
         enter = max(candidates, key=lambda j: weights[j])
         if weights[enter] <= dual_tol:
             break
+        if additions >= NNLS_ADDITION_FACTOR * n:
+            # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
+            raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
         passive.append(enter)
         active.remove(enter)
         try:
@@ -279,7 +301,7 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
         if not over:
             break
         for symbol in over:
-            ceilings[symbol] = ceilings.get(symbol, 0.5) * 2.0
+            ceilings[symbol] = ceilings[symbol] * 2.0 if symbol in ceilings else CEILING_FIRST_WEIGHT
         solved = _fit(salts, targets, water, ridge, maxima, ceilings)
     return solved
 
@@ -452,6 +474,56 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
+def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset()) -> set[str]:
+    """Positive targets still missed by a least-squares fit on target rows alone."""
+    kept = {symbol: ppm for symbol, ppm in targets.items() if ppm > 0 and symbol not in drop}
+    if not kept or not salts:
+        return set(kept)
+    matrix, rhs = [], []
+    for symbol, target in kept.items():
+        matrix.append([ppm_per_gram(salt["elements"].get(symbol, 0.0)) / target for salt in salts])
+        rhs.append((target - float(water.get(symbol) or 0.0)) / target)
+    achieved = forward(salts, nnls(matrix, rhs), water)
+    return {symbol for symbol, target in kept.items()
+            if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT}
+
+
+def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
+    """Explain each missed positive target (#39). A least-squares diagnosis on the
+    target rows alone: it names a cause, it does not prove infeasibility."""
+    missed = [row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT]
+    if not missed:
+        return []
+    usable = [salt for salt in library if assay_conflict(salt) is None
+              and (allow_carbonates or not is_carbonate(salt))]
+    consent = {ion for ion in CONSENT_IONS if ion not in targets and ion not in allowed}
+    engine_pool = [salt for salt in usable if not consent.intersection(salt["elements"])]
+    final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
+    binding = sorted(ion for ion, limit in maxima.items()
+                     if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6))
+    base = _target_misses(engine_pool, targets, water)
+    with_chloride = None
+    out = []
+    for row in missed:
+        symbol = row["symbol"]
+        item = {"symbol": symbol, "target": row["target"], "final": row["final"], "deltaPct": row["deltaPct"]}
+        if not any(_supplies(salt, symbol) for salt in usable):
+            item["reason"] = "no_source"
+        elif not base:
+            item["reason"] = "limited_by_ceiling" if binding else "incidental_tradeoff"
+            item["bindingLimits"] = binding
+        else:
+            others = [t for t, ppm in targets.items() if ppm > 0 and t != symbol]
+            item["reason"] = "conflicting_targets"
+            item["conflictsWith"] = [t for t in others if not _target_misses(engine_pool, targets, water, {t})]
+            if consent:
+                if with_chloride is None:
+                    with_chloride = not _target_misses(usable, targets, water)
+                item["reachableWithChloride"] = with_chloride
+        out.append(item)
+    return out
+
+
 def _documents(value) -> list[dict]:
     """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
     if isinstance(value, dict) and value and all(
@@ -514,6 +586,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.02,
     maximum_concentrations: dict | None = None,
+    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -532,6 +605,11 @@ def recommend(
             allow_ions and is not penalized up to the ceiling; a fit above it is
             pulled back, and any remaining excess is reported in
             limitViolations with feasible False. Omitted keeps the default.
+        max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
+            none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
+            the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
+            NH4 (21.01 mg/L N). Default 0.10 (Dutch soilless practice; users may
+            raise it, e.g. to 0.15); None keeps the penalty-only fit.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -559,10 +637,31 @@ def recommend(
         validate_profile({ion: 0.0 for ion in allowed}, "allow_ions")
     maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
+    ammonium_limit = None
+    if max_ammonium_fraction is not None:
+        if (isinstance(max_ammonium_fraction, bool) or not isinstance(max_ammonium_fraction, (int, float))
+                or not 0 <= max_ammonium_fraction <= 1):
+            raise InputError("max_ammonium_fraction must be a number in [0, 1]")
+        total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
+        # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
+        if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
+            limit = min(max_ammonium_fraction * total_n, AMMONIUM_CAP_MG_PER_L)
+            if limit > 0:
+                maxima["N_NH4"] = limit
+                ammonium_limit = {"mgPerL": limit, "fractionOfTotalN": max_ammonium_fraction,
+                                  "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L, "basis": AMMONIUM_BASIS}
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
     warnings: list[str] = []
+    balance = target_ion_balance(targets)
+    if balance["exceedsWarning"]:
+        side = "cations" if balance["imbalancePercent"] > 0 else "anions"
+        warnings.append(
+            f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} vs "
+            f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
+            f"No salt combination meets every target exactly; the excess {side} need counter-ions "
+            "the formula does not list.")
     solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima)
     short = _short(solved["rows"], targets)
     if short:
@@ -600,4 +699,8 @@ def recommend(
         warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
+    solved["ammoniumLimit"] = ammonium_limit
+    solved["targetIonBalance"] = balance
+    solved["unmetTargets"] = _diagnose(library, targets, water, solved["rows"], maxima, allowed,
+                                       allow_carbonates)
     return solved

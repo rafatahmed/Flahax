@@ -112,6 +112,17 @@ class LeastSquares(unittest.TestCase):
         self.assertAlmostEqual(x[0], 1.0, places=6)
         self.assertAlmostEqual(x[1], 1.0, places=6)
 
+    def test_nnls_raises_instead_of_returning_at_its_iteration_cap(self):
+        from flahax import engine
+        original = engine.NNLS_ADDITION_FACTOR
+        engine.NNLS_ADDITION_FACTOR = 0
+        try:
+            with self.assertRaisesRegex(InputError, "did not reach optimality"):
+                nnls([[1.0, 0.0], [0.0, 1.0]], [1.0, 2.0])
+        finally:
+            engine.NNLS_ADDITION_FACTOR = original
+        self.assertEqual(nnls([[1.0, 0.0], [0.0, 1.0]], [1.0, 2.0]), [1.0, 2.0])
+
     def test_nnls_result_does_not_depend_on_problem_scale(self):
         matrix = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
         rhs = [2.0, 3.0, 5.0]
