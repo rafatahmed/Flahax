@@ -6,13 +6,13 @@ The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a pack
 
 To retain only artifacts that passed clean-install checks, use `python tools/verify_distribution.py --artifacts-dir dist/<version>`. The destination must be new or empty; existing release files are never overwritten. This command builds and tests locally; it does not tag, upload or publish. Afterward, run `python -m twine check --strict dist/<version>/*` in a development environment with `twine` installed. The build and metadata tools are not runtime dependencies. Releases themselves are built and uploaded by the [hardened release workflow](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md).
 
-## P6.6: installed distributions
+## Installed distributions
 
 Run `python -m pip install build` in a development virtual environment, then `python tools/verify_distribution.py`. The tool builds wheel and sdist (wheel from sdist), installs each non-editably in a separate temporary virtual environment, runs from outside the checkout with `-I` and without `PYTHONPATH`, and asserts the imported package is inside that environment. It verifies zero runtime dependencies, 28 catalogue products, the exact chemistry resource hash, catalogue solve, nitric target, equilibrium delivery adapter, and both `python -m flahax` and `flahax` CLI entry points. A JSON report containing distribution hashes and observed numerical values is written to `build/distribution-verification.json`. Nothing is published.
 
 The source distribution now includes offline fixture inputs/outputs, extensions and reproduction tools as well as tests; the wheel includes runtime Python and JSON resources only. Neither contains PHREEQC binaries. Python 3.11–3.13 CI runs source regression and clean distribution smoke checks. Local Python 3.14 testing is additional evidence, not a substitute for that matrix.
 
-## P6.7: mandatory live reference validation
+## Mandatory live reference validation
 
 `tools/provision_phreeqc.ps1` uses the [official USGS Windows 3.8.6-17100 installer](https://water.usgs.gov/water-resources/software/PHREEQC/). It verifies installer SHA-256 before administrative extraction into TEMP, then verifies executable and database SHA-256. An existing installation is reused only after hash verification. No PATH, base database or global installation is changed. The Windows CI job sets `FLAHAX_PHREEQC_ROOT` and `FLAHAX_REQUIRE_PHREEQC=1`; missing tools are an error, not a skipped success.
 
@@ -25,7 +25,7 @@ python -m unittest tests.test_product_phreeqc -v
 
 Ordinary tests may still skip live replay when PHREEQC is unavailable, while all checked-in golden regressions remain mandatory. CI uploads live test logs and distribution reports. Remote CI cannot be claimed passed while GitHub's account billing lock prevents jobs from starting.
 
-## P5.5: explicit equilibrium delivery API
+## Explicit equilibrium delivery API
 
 `plan_equilibrium_delivery` returns **EquilibriumPhPlan**, distinct from the measured-curve **PhPlan**. Both are accepted by `compose_delivery_plan`; no existing measured-curve signature or CLI recommendation contract changes. `plan_nitric_acid_target` and `plan_catalogue_nitric_target` return the numerical **AcidResult**; callers requiring reagent volume and delivery composition use the new adapter. Equal initial and target pH now returns exactly zero acid.
 

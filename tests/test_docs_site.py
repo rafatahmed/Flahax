@@ -49,6 +49,15 @@ class DocsSiteTests(unittest.TestCase):
             with self.subTest(path=str(path.relative_to(ROOT))):
                 self.assertIsNone(pattern.search(path.read_text(encoding='utf-8')))
 
+    def test_public_pages_have_no_roadmap_codes(self):
+        # Release evidence cites roadmap phases and gates and explains them once.
+        pattern = re.compile(r'\b[PG][0-9](?:\.[0-9])?\b')
+        for path in SITE.rglob('*.md'):
+            if path.name == 'release-evidence.md':
+                continue
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                self.assertIsNone(pattern.search(path.read_text(encoding='utf-8')))
+
     def test_published_readme_paths_resolve(self):
         names = ('method usage chemistry-coverage-matrix computational-review delivery-contracts '
                  'delivery-quantities equilibrium-kernel fertilizer-equilibrium-model '

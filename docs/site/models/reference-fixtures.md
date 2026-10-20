@@ -2,7 +2,7 @@
 
 FlahaX uses checked-in PHREEQC golden fixtures as its dependency-free scientific verification baseline. PHREEQC is **not** a runtime dependency of the package.
 
-## Current P2/P3 golden suite
+## Current golden suite
 
 The authoritative mixed-model evidence uses installed **PHREEQC 3.8.6-17100**, unmodified `minteq.v4.dat`, and the temporary FlahaX merge. The earlier reduced `phreeqc.dat` references below remain historical regressions, not the full mixed-model acceptance suite.
 
@@ -100,7 +100,7 @@ This is a deliberately small calcium–sulfate fixture—not an approval of a fe
 
 `calcite_allocation_probe.pqi` is the first phase-mass fixture. PHREEQC 3.8.9 adjusts calcite from `0.100000` to `0.100033792 mol/kgw`, reaches `SI(Calcite)=0`, and shifts pH to `8.07859`. FlahaX records this allocation with a typed sign convention: a decrease is dissolution; an increase is precipitation.
 
-## Required fixture families before P2/P3 completion
+## Fixture families required for stock-chemistry and pH acceptance
 
 | Family | Required model inputs | Expected outputs |
 |---|---|---|
