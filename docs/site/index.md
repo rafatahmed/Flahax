@@ -1,0 +1,56 @@
+# FlahaX
+
+**Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
+equilibrium chemistry and auditable delivery planning.**
+
+FlahaX turns a crop's nutrient formula and the grower's actual water into a
+fertilizer recipe, then checks what that recipe does in solution: which ions
+pair up, whether anything precipitates, what the pH will be, how much acid
+reaches a target pH, and how the recipe splits into stock tanks and injector
+flows. Every plan carries its units, model identifiers and source hashes, so
+a result can be reviewed and reproduced.
+
+## What sets it apart
+
+- **Verified against PHREEQC.** Every catalogue product, phase and acid case
+  is replayed live against pinned PHREEQC 3.8.6 (USGS).
+- **Traceable materials.** Material identity, grade, lot and nutrient band
+  are carried through the calculation.
+- **Every result with its source and stated limit.** Explicit units, model
+  identifiers, source hashes and `needs_input` instead of guessed values.
+  Plans are reviewable records, not operating authorizations.
+
+FlahaX has no third-party runtime dependencies. The evidence is
+computational: it has not been validated in the laboratory or in the field.
+
+## Install
+
+Python 3.11 or newer.
+
+```bash
+python -m pip install flahax
+```
+
+## Quick start
+
+Select salts for a crop formula, with 20 mg/L of calcium already in the water:
+
+```python
+from flahax import load_library, recommend
+
+result = recommend(
+    load_library()["salts"],
+    targets={"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54},
+    water={"Ca": 20},
+)
+
+for salt in result["salts"]:
+    print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
+```
+
+## Where to go next
+
+- **Developers:** start with [Getting started](https://flahax.readthedocs.io/en/latest/getting-started/)
+  and the [API reference](https://flahax.readthedocs.io/en/latest/api/).
+- **Growers and agronomists:** read the
+  [guide for growers and agronomists](https://flahax.readthedocs.io/en/latest/for-growers/).
