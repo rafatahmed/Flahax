@@ -556,8 +556,9 @@ Args:
         limitViolations with feasible False. Omitted keeps the default.
     max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
         none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-        the total target N (N_NO3 + N_NH4 + N_UREA). Default 0.10
-        (Sonneveld & Voogt 2009); None keeps the penalty-only fit.
+        the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
+        NH4 (21.01 mg/L N). Default 0.10 (Dutch soilless practice; users may
+        raise it, e.g. to 0.15); None keeps the penalty-only fit.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,

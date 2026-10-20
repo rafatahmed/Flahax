@@ -2,7 +2,7 @@
 import unittest
 
 from flahax import load_library, recommend
-from flahax.engine import AMMONIUM_FRACTION
+from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION
 
 LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
@@ -23,11 +23,18 @@ def total_n(targets):
 class AmmoniumLimitTests(unittest.TestCase):
     def test_default_is_ten_percent_of_total_n(self):
         self.assertEqual(AMMONIUM_FRACTION, 0.10)
-        targets = formula("Chilli (maximumyield)")["targets"]
+        targets = formula("Tomato (Howard Resh)")["targets"]  # total N 140 -> 14 mg/L
         result = recommend(SALTS, targets, {})
         self.assertEqual(result["ammoniumLimit"]["fractionOfTotalN"], 0.10)
         self.assertAlmostEqual(result["ammoniumLimit"]["mgPerL"], 0.10 * total_n(targets))
-        self.assertIn("Sonneveld", result["ammoniumLimit"]["basis"])
+        self.assertIn("Voogt", result["ammoniumLimit"]["basis"])
+
+    def test_absolute_cap_is_one_and_a_half_mmol(self):
+        self.assertAlmostEqual(AMMONIUM_CAP_MG_PER_L, 1.5 * 14.0067)
+        targets = formula("Chilli (maximumyield)")["targets"]  # total N 320 -> 32 > 21.01
+        result = recommend(SALTS, targets, {})
+        self.assertAlmostEqual(result["ammoniumLimit"]["mgPerL"], AMMONIUM_CAP_MG_PER_L)
+        self.assertLessEqual(final(result, "N_NH4"), AMMONIUM_CAP_MG_PER_L + 1e-12)
 
     def test_target_exact_recipes_now_pass_within_the_limit(self):
         for name in ("Chilli (maximumyield)", "Tomato (Howard Resh)"):
