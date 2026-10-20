@@ -11,6 +11,7 @@ from importlib.resources import files
 import json
 import math
 from .delivery_contracts import DeliveryError
+from .root_finding import shrink_bracket
 
 LN10 = math.log(10.)
 
@@ -50,6 +51,28 @@ def linear(a, b):
         x[i]=(a[i][n]-sum(a[i][j]*x[j] for j in range(i+1,n)))/a[i][i]
     return x
 
+def _damped_step(evaluate, x, residual, matrix):
+    """Levenberg-Marquardt step that lowers the squared residual, or None."""
+    m=len(residual)
+    normal=[[sum(matrix[r][i]*matrix[r][j] for r in range(m)) for j in range(m)] for i in range(m)]
+    gradient=[sum(matrix[r][i]*residual[r] for r in range(m)) for i in range(m)]
+    scale=[max(normal[i][i],1e-300) for i in range(m)]
+    merit=sum(v*v for v in residual)
+    damping=1e-3
+    for _ in range(40):
+        system=[[normal[i][j]+(damping*scale[i] if i==j else 0.) for j in range(m)] for i in range(m)]
+        try:
+            step=linear(system,[-g for g in gradient])
+        except DeliveryError:
+            step=None
+        if step is not None:
+            trial=[v+d for v,d in zip(x,step)]
+            got=evaluate(trial)
+            if got and sum(v*v for v in got[0])<merit:
+                return trial
+        damping*=10
+    return None
+
 def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
     if temperature_c != 25:
         raise DeliveryError('temperature_out_of_range','reaction dataset is restricted to 25 C')
@@ -71,6 +94,8 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
         raise DeliveryError('unknown_phase','phase not in the pinned reaction set')
     candidates={p:all_phases[p] for p in phases if set(all_phases[p]['powers'])<=permitted}
     stoich=[[r['powers'].get(b,0.) for b in bases] for r in records]
+    # Each species involves few components; iterate only its non-zero stoichiometry.
+    sparse=[[(j,v) for j,v in enumerate(s) if v] for s in stoich]
     strength=ionic_strength if ionic_strength is not None else min(.05,max(1e-8,sum(totals.values())))
     logs=[math.log10(totals[b])-3 for b in bases]
     active=[]
@@ -84,8 +109,14 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
     for outer in range(100):
         offsets=[r['beta']-ph*r['powers'].get('H+',0)+math.log10(water)*r['powers'].get('H2O',0)-lgamma(r['charge']) for r in records]
         def evaluate(x, jacobian=False):
-            amounts=[10.**max(-300,min(100,o+sum(a*v for a,v in zip(s,x[:n])))) for o,s in zip(offsets,stoich)]
-            sums=[sum(a*s[j] for a,s in zip(amounts,stoich))+sum(x[n+k]*all_phases[p]['powers'].get(b,0.) for k,p in enumerate(active)) for j,b in enumerate(bases)]
+            amounts=[10.**max(-300,min(100,o+sum(v*x[j] for j,v in nz))) for o,nz in zip(offsets,sparse)]
+            sums=[0.]*n
+            for a,nz in zip(amounts,sparse):
+                for j,v in nz:
+                    sums[j]+=a*v
+            for k,p in enumerate(active):
+                for j,b in enumerate(bases):
+                    sums[j]+=x[n+k]*all_phases[p]['powers'].get(b,0.)
             if any(v<=0 for v in sums):
                 return None
             residual=[math.log10(v/totals[b]) for b,v in zip(bases,sums)]
@@ -94,9 +125,16 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
                 residual.append(sum(r['powers'].get(b,0)*x[j] for j,b in enumerate(bases))-ph*r['powers'].get('H+',0)+math.log10(water)*r['powers'].get('H2O',0)-r['beta'])
             if not jacobian:
                 return residual,amounts
+            moments=[[0.]*n for _ in range(n)]
+            for a,nz in zip(amounts,sparse):
+                for j,vj in nz:
+                    weighted=a*vj
+                    row=moments[j]
+                    for k,vk in nz:
+                        row[k]+=weighted*vk
             matrix=[]
             for j,b in enumerate(bases):
-                row=[sum(a*s[j]*s[k] for a,s in zip(amounts,stoich))/sums[j] for k in range(n)]
+                row=[value/sums[j] for value in moments[j]]
                 row += [all_phases[p]['powers'].get(b,0.)/(sums[j]*LN10) for p in active]
                 matrix.append(row)
             for p in active:
@@ -120,7 +158,12 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.):
                         break
                     alpha*=.5
                 else:
-                    raise DeliveryError('nonconvergent',f'equilibrium line search stalled (residual {norm:g})')
+                    # A near-singular Jacobian can give a useless Newton direction
+                    # (seen after a cold start with a strong chelate); take a damped
+                    # least-squares step instead. Paths that converge today are unchanged.
+                    x=_damped_step(evaluate,x,residual,matrix)
+                    if x is None:
+                        raise DeliveryError('nonconvergent',f'equilibrium line search stalled (residual {norm:g})')
             else:
                 raise DeliveryError('nonconvergent','aqueous Newton iteration limit')
             logs=x[:n]
@@ -179,14 +222,12 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     target=at(0.)
     if target.charge_balance < initial.charge_balance-1e-12:
         raise DeliveryError('wrong_reagent_direction','target requires base')
-    while at(hi).charge_balance>initial.charge_balance:
+    f_lo=target.charge_balance-initial.charge_balance
+    while (f_hi:=at(hi).charge_balance-initial.charge_balance)>0:
+        lo,f_lo=hi,f_hi
         hi*=2
-    for _ in range(40):
-        mid=(lo+hi)/2
-        target=at(mid)
-        if target.charge_balance>initial.charge_balance:
-            lo=mid
-        else:
-            hi=mid
+    # Same final width as 40 bisection steps from [0, hi], in far fewer solves.
+    lo,hi=shrink_bracket(lambda dose:at(dose).charge_balance-initial.charge_balance,
+                         lo,f_lo,hi,f_hi,width=hi*2.**-40)
     dose=(lo+hi)/2
     return AcidResult(initial,at(dose),dose)
