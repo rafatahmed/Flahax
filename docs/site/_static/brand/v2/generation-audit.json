@@ -1,0 +1,118 @@
+{
+  "tool": "Built-in image_gen",
+  "referenceAudit": {
+    "image32": "Readable green/cyan wordmark and agricultural context. Banner is too dense for a documentation hero and depicts hardware control, numeric targets, and performance assertions beyond documented evidence.",
+    "image31": "Strong plant/water/chemistry relationship and stacked lockup. Molecular network is too intricate at small sizes; dark JPEG background prevents reusable transparency.",
+    "selectedDirection": "Square stacked leaf/droplet mark with three-node chemistry cutout, green and cyan, clear FlahaX wordmark. Banner represents software calculation and traceable records."
+  },
+  "prompts": {
+    "color": "Design ONE final square 1:1 FlahaX logo PNG with genuine transparent background. Reference image 1 is a busy banner: borrow only the dark green + cyan identity and clean wordmark. Reference image 2 is the primary conceptual reference: refine its leaf plus water droplet plus chemistry motif into a simpler professionally designed mark. DO NOT copy its black background. Square canvas, centered stacked logo, generous 12% safe margin, large symbol above wordmark. Icon: one elegant forest-green leaf on the left embracing one cyan-blue water droplet on right, joined at a crisp base. Integrate ONLY three circular nodes and two substantial connecting strokes into the droplet as abstract chemistry, no intricate rings, no thin dangling molecular branches. Deliberate transparent negative space between leaf and droplet and in leaf vein. Flat solid colors forest green #14623D and cyan #00A6CF, no gradients, no 3D, no shadows, no glow. Exact text below \"FlahaX\", dark forest green Flaha and cyan X, clean bold humanist sans-serif, carefully kerned. Emblem about 55% canvas height; text about 15% canvas height, no subtitle. Shape should remain recognizable as a small icon and in one-color print. Do not use white ink: light holes are actual transparent cutouts. No box, no badge, no checkerboard baked in, no slogan, no scientific performance claims. Deliver only one polished square logo, not variations or a contact sheet.",
+    "variants": [
+      [
+        "black",
+        "Edit the supplied FlahaX logo into its single-ink BLACK variant. Preserve exactly its square canvas, layout, leaf/droplet symbol silhouette, three circular molecular cutouts, spacing, and FlahaX typography. Change all opaque artwork and letters to uniform pure black #000000. Genuine transparent background and transparent holes, no white ink, no gray, no gradients, no shadows. Do not redesign, add, or remove anything. Deliver one square transparent PNG."
+      ],
+      [
+        "white",
+        "Edit the supplied FlahaX logo into its single-ink WHITE variant for dark backgrounds. Preserve exactly its square canvas, layout, leaf/droplet symbol silhouette, three circular molecular cutouts, spacing, and FlahaX typography. Change all opaque artwork and letters to uniform pure white #FFFFFF. Genuine transparent background and transparent holes, no black background or black ink, no gray, no gradients, no shadows. Do not redesign, add, or remove anything. Deliver one square transparent PNG."
+      ],
+      [
+        "banner",
+        "Create a coordinated wide 3:1 FlahaX banner PNG with genuine transparent background, using the provided logo as the exact brand reference. Keep all lettering and illustration safely inside 8% margins. Left third: the supplied leaf and blue droplet molecular symbol, reduced in size, above or beside the exact wordmark \"FlahaX\", forest green and cyan. Below a beautifully typeset short exact tagline split into two lines: \"Water. Nutrients. Chemistry.\" and \"Traceable plans.\" Right two-thirds: a refined flat vector-like conceptual workflow, in forest green #14623D and cyan #00A6CF, consisting of a small water droplet and crop leaf feeding a flask with three abstract connected ions, then a structured plan document with small schematic stock tank outlines A and B drawn ON THE DOCUMENT, not a physical pump installation. Under that document three concise exact labels: \"Units\", \"Model\", \"Sources\". Elegant connecting lines, robust strokes, ample negative space, professional scientific software branding. This is conceptual illustration of software calculations, not an equipment product. No numeric pH or EC claims, no fixed crop target, no fake chemical formulas, no checkmark seals, no shields, no guaranteed outcomes, no hardware controller, no photos, no gradients or shadows, no panel or colored background. Transparent negative space throughout. Strong readable balanced horizontal composition, not a contact sheet. Preserve the exact logo identity, do not invent another emblem."
+      ]
+    ],
+    "repairsAndBannerVariants": [
+      [
+        "white-logo-repair",
+        "flahax-logo-color.png",
+        "Produce a clean production WHITE SILHOUETTE version of this exact logo on genuine transparent alpha. Square canvas. The complete leaf, complete droplet, and complete word FlahaX must be solid uniform white, clean and opaque within every shape, smooth antialiased boundaries. Preserve the reference layout and its three ROUND transparent holes with two transparent joining lines and transparent leaf vein. Preserve empty space between symbol and lettering and inside letter counters. No stray pixels, speckles, grunge, white blobs between elements, fuzzy edges, erosion, texture, black ink, shadow, background or rectangle. This is precision logo recoloring, not an artistic interpretation. White foreground on transparent background, same square logo."
+      ],
+      [
+        "black-banner",
+        "flahax-banner-color.png",
+        "Convert the supplied banner to a clean single-color BLACK artwork on genuine transparent background, wide 3:1 canvas. Preserve composition, exact logo, all words, and workflow diagram. All foreground strokes and lettering pure black. All interior light molecular dots become transparent knockout holes for readability. No grayscale, no colored pixels, no white ink, no background, no shadows, no stray pixels. Crisp print-like edges. Keep exact text FlahaX / Water. Nutrients. Chemistry. / Traceable plans. / Units / Model / Sources and A / B. Do not redesign."
+      ],
+      [
+        "white-banner",
+        "flahax-banner-color.png",
+        "Convert the supplied banner to clean single-color WHITE artwork for placement on dark backgrounds, with genuine transparent background, wide 3:1 canvas. Preserve composition, exact logo, all words, and workflow diagram. All foreground strokes and lettering solid uniform opaque pure white. Interior molecular dots become transparent knockout holes for readability. Preserve all negative spaces and letter counters transparent. No gray, no colored pixels, no black ink, no background rectangle, no shadows, no speckles, no white blobs in empty space, no erosion, no grunge. Crisp clean vector-like edges. Keep exact text FlahaX / Water. Nutrients. Chemistry. / Traceable plans. / Units / Model / Sources and A / B. Do not redesign."
+      ]
+    ]
+  },
+  "status": "Complete: color originals plus deterministic black and white PNG variants; all alpha channels preserved exactly.",
+  "postprocessing": "User explicitly authorized direct PNG processing. Pillow replaced RGB with pure black or white, retaining the original alpha byte-for-byte. Generated monochrome attempts were superseded. Preview uses contrasting backgrounds only for presentation.",
+  "files": [
+    {
+      "file": "flahax-logo-color.png",
+      "width": 1254,
+      "height": 1254,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "df7292c78eb634d676f676bc9ffeb0659551c05218102f3b04ba09c1ab471b28"
+    },
+    {
+      "file": "flahax-logo-black.png",
+      "width": 1254,
+      "height": 1254,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ed9da56d26db93b17641b52958895a04bdf7ccc20cb7b841f0a36d80ef2c1004"
+    },
+    {
+      "file": "flahax-logo-white.png",
+      "width": 1254,
+      "height": 1254,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "b4352dcf304e8eea7fa5f124cfa1f04ea83c7ce80b77f215e9d452b8bf5bb019"
+    },
+    {
+      "file": "flahax-banner-color.png",
+      "width": 2172,
+      "height": 724,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "1c4c32215d9ba4df132187a4cee69ccf8f26e994043a16299ffe1963a01ebe91"
+    },
+    {
+      "file": "flahax-banner-black.png",
+      "width": 2172,
+      "height": 724,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "7d9cc385deed6213ef13913b9f70d03b0679eec82674452ccede67650f0a2b5d"
+    },
+    {
+      "file": "flahax-banner-white.png",
+      "width": 2172,
+      "height": 724,
+      "format": "PNG",
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "b9d646666d474370a391aea528150369f9cc14dc2f1cc30d8f7ff52287806919"
+    }
+  ]
+}

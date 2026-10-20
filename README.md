@@ -1,5 +1,10 @@
 # FlahaX
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/site/_static/brand/v2/flahax-banner-white.png">
+  <img src="docs/site/_static/brand/v2/flahax-banner-color.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="100%">
+</picture>
+
 **Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
 equilibrium chemistry and auditable delivery planning.**
 

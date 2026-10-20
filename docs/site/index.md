@@ -1,5 +1,12 @@
 # FlahaX
 
+```{raw} html
+<div class="flahax-brand-banner">
+  <img class="only-light" src="_static/brand/v2/flahax-banner-color.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="2172" height="724">
+  <img class="only-dark" src="_static/brand/v2/flahax-banner-white.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="2172" height="724">
+</div>
+```
+
 ```{rst-class} flahax-hero
 ```
 
