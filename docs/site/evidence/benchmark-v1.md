@@ -8,6 +8,10 @@ This is a versioned benchmark protocol, not a claim of physical validation.
 The scripts produce local JSON and ASV records; running them does not publish
 results or modify the chemistry model. Initial timings are informational.
 
+The [results page](benchmark-results.md) provides a dated clean-checkout
+snapshot, charts, per-case tables, and downloadable evidence. It retains
+failed numerical comparisons and missing timings explicitly.
+
 ## Four separate scorecards
 
 | Scorecard | v1 implementation | Interpretation |
@@ -110,7 +114,7 @@ python -m pip install -e . -r benchmarks/requirements.txt
 python -m unittest tests.test_benchmark_baseline
 python -m tools.benchmark_baseline --output build/benchmark-v1/baseline.json
 python -m asv check --python=same
-python -m asv machine --yes --machine flahax-local
+python -m asv machine --yes
 python -m asv run --python=same --quick --show-stderr --dry-run
 ```
 
@@ -121,7 +125,7 @@ the HEAD identifier; the manifest and dirty-tree flag are authoritative.
 
 ```console
 python -m tools.benchmark_baseline --metadata-only --output build/benchmark-v1/before.json
-python -m asv run --python=same --machine flahax-local --set-commit-hash COMMIT_SHA --record-samples --show-stderr
+python -m asv run --python=same --set-commit-hash COMMIT_SHA --record-samples --show-stderr
 python -m tools.benchmark_baseline --compare-inputs build/benchmark-v1/before.json --asv-results build/asv/results --output build/benchmark-v1/baseline.json
 ```
 
@@ -134,8 +138,12 @@ local results as evidence for a clean release.
 An existing environment (`--python=same`) executes the currently installed
 checkout and does not accept a positional revision range. Use a clean checkout
 of the intended commit, verify the package imports from it, and set
-`--set-commit-hash` to that checkout's HEAD. ASV's initial console revision label
-can reflect its configured branch; inspect the recorded hash and provenance.
+`--set-commit-hash` to that checkout's HEAD. The configuration defaults to `HEAD`,
+so detached checkouts do not require a local `main` branch. Inspect the recorded
+hash and provenance as well as the console output.
+Use the default machine registration above to retain automatically detected
+CPU, architecture and RAM fields; supplying only a custom machine name can
+leave those fields absent. The machine identity is retained in the raw results.
 
 ASV reruns setup between timing samples. Setup includes a warm calculation and
 correctness gate, so total wall time can substantially exceed the sum of the
@@ -154,7 +162,7 @@ For commit-to-commit timing, use the same runner and ASV's
 [continuous comparison](https://asv.readthedocs.io/en/stable/commands.html):
 
 ```console
-python -m asv continuous BASE_SHA CANDIDATE_SHA --machine flahax-local
+python -m asv continuous BASE_SHA CANDIDATE_SHA
 ```
 
 Use a common benchmark specification and input manifest, review failures before

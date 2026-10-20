@@ -104,6 +104,8 @@ The [Benchmark v1 protocol](docs/site/evidence/benchmark-v1.md) separates
 formulation fit, numerical chemistry, runtime/memory measurements, and physical
 validation. Its reproducible reports include input hashes and failed cases;
 timings are informational, and physical validation remains separate.
+See the [measured results and downloadable evidence](docs/site/evidence/benchmark-results.md)
+for tables, charts, provenance, and retained limitations.
 
 - 153 automated tests, including live replay of every catalogue product,
   phase and acid case against pinned PHREEQC 3.8.6 (USGS).
