@@ -121,7 +121,7 @@ the HEAD identifier; the manifest and dirty-tree flag are authoritative.
 
 ```console
 python -m tools.benchmark_baseline --metadata-only --output build/benchmark-v1/before.json
-python -m asv run HEAD --python=same --machine flahax-local --set-commit-hash COMMIT_SHA --record-samples --show-stderr
+python -m asv run --python=same --machine flahax-local --set-commit-hash COMMIT_SHA --record-samples --show-stderr
 python -m tools.benchmark_baseline --compare-inputs build/benchmark-v1/before.json --asv-results build/asv/results --output build/benchmark-v1/baseline.json
 ```
 
@@ -130,6 +130,12 @@ memory results, machine metadata, and failures. The baseline's performance
 summary does not replace ASV's records. Compare the before/after manifest
 hashes and reject a run if benchmark inputs changed. Do not relabel dirty
 local results as evidence for a clean release.
+
+An existing environment (`--python=same`) executes the currently installed
+checkout and does not accept a positional revision range. Use a clean checkout
+of the intended commit, verify the package imports from it, and set
+`--set-commit-hash` to that checkout's HEAD. ASV's initial console revision label
+can reflect its configured branch; inspect the recorded hash and provenance.
 
 ASV reruns setup between timing samples. Setup includes a warm calculation and
 correctness gate, so total wall time can substantially exceed the sum of the
