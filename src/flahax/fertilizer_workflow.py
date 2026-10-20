@@ -49,7 +49,7 @@ def _water_ppm(totals, mass, volume):
                'H3BO3':'B', 'MoO4-2':'Mo', 'Ure':'N_UREA'}
     ppm = {}
     for basis, ion in mapping.items():
-        molar = 35.453 if ion == 'Cl' else MOLAR_MASS[ion.split('_')[0]]
+        molar = MOLAR_MASS[ion.split('_')[0]]
         value = totals.get(basis, 0) * molar * mass * 1000 / volume
         ppm[ion] = ppm.get(ion, 0) + value * (2 if basis == 'Ure' else 1)
     return ppm
@@ -74,7 +74,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             raise DeliveryError('invalid_type', 'stage configurations must be mappings')
     targets = validate_profile(dict(targets), 'targets')
     water = validate_profile(dict(water), 'water')
-    recommendation = recommend(salts, targets, water)
+    recommendation = recommend(salts, targets, water, maximum_concentrations=maximum_concentrations)
     recommendation.update(assess_incidental(recommendation['rows'], maximum_concentrations))
     if recommendation['limitViolations']:
         recommendation['feasible'] = False

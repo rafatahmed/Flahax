@@ -15,7 +15,7 @@ FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 CHARGES = {
     'Na+': 1, 'K+': 1, 'NH4+': 1,
     'Ca+2': 2, 'Mg+2': 2, 'Fe+2': 2, 'Cu+2': 2, 'Zn+2': 2,
-    'NO3-': -1, 'SO4-2': -2, 'H2PO4-': -1, 'HPO4-2': -2, 'CO3-2': -2,
+    'NO3-': -1, 'Cl-': -1, 'SO4-2': -2, 'H2PO4-': -1, 'HPO4-2': -2, 'CO3-2': -2,
     'MoO4-2': -2, 'B(OH)4-': -1, 'citrate': -3,
     'Fe(III)-EDTA': -1, 'Mn-EDTA': -2, 'Zn-EDTA': -2, 'Cu-EDTA': -2,
     'Fe(III)-DTPA': -2, 'Fe(III)-o,o-EDDHA': -1,
@@ -108,7 +108,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'unknown_product')
 
     def test_identities_file_is_pinned(self):
-        self.assertEqual(IDENTITIES_SHA256, '7713f20cc7e8eb83ea4fa9e90bf36b875c81599c2965f9ddf96818e4c372c891')
+        self.assertEqual(IDENTITIES_SHA256, 'e527820ff5025ab4b6c1fb6f8db2f47ee0bb3355321689099d10cd129a12e5e4')
 
 
 DOC = {'supplier': 'Example Supplier', 'title': 'Technical data sheet TDS-1', 'issued': '2026-01-15',
@@ -485,7 +485,7 @@ class CatalogueMigrationTests(unittest.TestCase):
 
     def test_every_salt_links_to_identity(self):
         salts = self.salts()
-        self.assertEqual(len(salts), 28)
+        self.assertEqual(len(salts), 30)
         for name, salt in salts.items():
             with self.subTest(name=name):
                 self.assertEqual(salt['identityId'], identity_for_product(name)['id'])
@@ -494,7 +494,9 @@ class CatalogueMigrationTests(unittest.TestCase):
                 if salt['source'] is not None:
                     self.assertEqual(set(salt['source']),
                                      {'supplier', 'title', 'issued', 'entered', 'url', 'sha256'})
-        expected = {'Mg Nitrate': 'identity_theoretical', 'Calcium Nitrate (ag grade)': 'grade_typical'}
+        expected = {'Mg Nitrate': 'identity_theoretical', 'Calcium Nitrate (ag grade)': 'grade_typical',
+                    'Calcium Chloride (Dihydrate)': 'identity_theoretical',
+                    'Potassium Chloride': 'identity_theoretical'}
         for name, salt in salts.items():
             self.assertEqual(salt['analysisBasis'], expected.get(name, 'declared_catalogue'), name)
 

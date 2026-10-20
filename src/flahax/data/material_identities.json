@@ -134,6 +134,32 @@
       "notes": "Audit: identity consistent."
     },
     {
+      "id": "idn-calcium-chloride-dihydrate",
+      "products": [
+        "Calcium Chloride (Dihydrate)"
+      ],
+      "name": "Calcium chloride dihydrate",
+      "formula": "CaCl2.2H2O",
+      "hydration": "dihydrate",
+      "molecular_weight": 147.01,
+      "cas": "10035-04-8",
+      "ion_forms": {
+        "Ca+2": 1,
+        "Cl-": 2
+      },
+      "theoretical_analysis": {
+        "Ca": 27.262580594604245,
+        "Cl": 48.22887779224116
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 223506",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/223506",
+        "accessed": "2026-10-20"
+      },
+      "status": "identity_consistent",
+      "notes": "Added 2026-10-20: nitrate-free calcium source (#39). Sigma-Aldrich 223506, ACS reagent, assay 99.0-105.0%."
+    },
+    {
       "id": "idn-ch-micro-assumed-blend",
       "products": [
         "CH - micro"
@@ -522,6 +548,32 @@
       },
       "status": "identity_consistent",
       "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-potassium-chloride",
+      "products": [
+        "Potassium Chloride"
+      ],
+      "name": "Potassium chloride",
+      "formula": "KCl",
+      "hydration": "anhydrous",
+      "molecular_weight": 74.55,
+      "cas": "7447-40-7",
+      "ion_forms": {
+        "K+": 1,
+        "Cl-": 1
+      },
+      "theoretical_analysis": {
+        "K": 52.44693708642584,
+        "Cl": 47.55306291357415
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich P3911",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/p3911",
+        "accessed": "2026-10-20"
+      },
+      "status": "identity_consistent",
+      "notes": "Added 2026-10-20: chloride potassium source. Sigma-Aldrich P3911, ACS reagent, assay 99.0-100.5%."
     },
     {
       "id": "idn-potassium-nitrate",

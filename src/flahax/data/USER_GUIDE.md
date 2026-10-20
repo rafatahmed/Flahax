@@ -303,7 +303,7 @@ from flahax import balance_water_analysis, calculate_equilibrium_ph
 # Published Qatar well (Shomar et al. 2024, Table S1, station 104), mol/kg water.
 # CO3-2 is total inorganic carbon (38.75 mg/L as C).
 well = {'Na+': 680 / 22.98977e3, 'K+': 44.2 / 39.0983e3, 'Ca+2': 244 / 40.078e3,
-        'Mg+2': 100.8 / 24.305e3, 'Cl-': 1280.4 / 35.453e3, 'SO4-2': 723.3 / 96.06e3,
+        'Mg+2': 100.8 / 24.305e3, 'Cl-': 1280.4 / 35.45e3, 'SO4-2': 723.3 / 96.06e3,
         'NO3-': 15.38 / 62.004e3, 'CO3-2': 38.75 / 12.011e3}
 raw = calculate_equilibrium_ph(well, complete_analysis=True, carbon_boundary='closed', phases=[])
 assert raw.ph < 4.5                      # charge balance alone: far from the measured 7.8
@@ -311,7 +311,7 @@ assert raw.ph < 4.5                      # charge balance alone: far from the me
 balanced = balance_water_analysis(well, measured_ph=7.8)
 assert balanced.state.ph == 7.8
 assert abs(balanced.imbalance_percent + 3.52) < .01
-assert abs(balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal + .0952) < 1e-4
+assert abs(balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal + .0953) < 1e-4
 print(f'{balanced.imbalance_percent:.2f}% imbalance closed on {balanced.balance_ion}')
 ```
 
