@@ -2,8 +2,10 @@
 
 The current preparation comes first; dated audits below it are history.
 
-## 0.5.0 - preparation 2026-10-21
+## 0.5.0 - published 2026-10-20
 
+Published from `692108b` (tag `v0.5.0`); see the
+[publication evidence](site/evidence/release-evidence.md#050-publication---2026-10-20).
 Prepared on `release/0.5.0` from `main` at `9bea54a`. The evidence is the
 [0.5.0 preparation record](site/evidence/release-evidence.md#050-preparation---2026-10-21).
 
