@@ -1,4 +1,5 @@
-# Conservative Stock Planning (P2)
+(conservative-stock-planning-p2)=
+# Stock tank planning
 
 `plan_stocks` converts a feasible final-solution recipe into a compatible concentrated-stock plan. It is conservative by design: it uses only supplied, versioned compatibility and solubility records. It does not infer product compatibility from names, formulas, or nutrient assays.
 
@@ -58,7 +59,8 @@ The planner rejects:
 
 The planner evaluates valid tank assignments in tank-ID order and chooses one that uses the fewest tanks. It returns the first deterministic assignment at that minimum. This is an explainable constraint solution, not a chemical equilibrium calculation.
 
-## Mathematical verification is the completion criterion
+(mathematical-verification-is-the-completion-criterion)=
+## Model verification and limits
 
 The stock planner is a conservative constraint solver using caller-supplied rules. The separate coupled aqueous model is now verified against pinned PHREEQC; see [the current model](../models/fertilizer-equilibrium-model.md) and [coverage matrix](../models/chemistry-coverage-matrix.md). Dilute equilibrium verification does not certify concentrated stocks outside the Davies range.
 

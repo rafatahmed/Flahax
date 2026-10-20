@@ -168,20 +168,9 @@ It uses the pinned external 3.8.6-17100 installation and temporarily merges
 unchanged `minteq.v4.dat` with the existing chelate and phase extensions. No
 executable or merged database is checked in.
 
-### Local validation, 2026-09-28
+(local-validation-2026-09-28)=
+## Historical validation
 
-During water-to-delivery development, Windows / Python 3.14.0:
-
-| Command / check | Observed result |
-|---|---|
-| `PYTHONPATH=src FLAHAX_REQUIRE_PHREEQC=1 python -m unittest discover -s tests -t .` | 121 tests passed in 261.424 seconds; no skips |
-| Two subsequently added tests: changed catalogue assay and non-mapping maxima (`tests.test_water_workflow.WaterWorkflowTests`) | Both passed; 123 distinct tests exercised across these runs, not a claimed 123-test single run |
-| `python -m unittest tests.test_acid_reference -v` with required PHREEQC | Both golden comparison and live replay passed |
-| `.venv-verification/Scripts/python.exe tools/verify_distribution.py --report build/water-workflow-distribution-verification.json` | Clean wheel and sdist installs passed, including four existing manual examples, exports and CLI checks |
-| `python -m compileall -q src tools`; `git diff --check` | Passed |
-
-Historical record from the 0.3.1 development increment. The distribution check preceded final documentation-only edits. Its report is
-local build evidence, not a release artifact manifest. No new version was
-published, no hosted acceptance was claimed and the published 0.3.0 files were
-not replaced. Run the current complete suite again before release; these local
-results do not waive the normal supported-version/hosted verification gates.
+Dated development checks are preserved in the
+[planning validation history](../evidence/planning-validation-history.md#water-to-delivery-validation).
+They record those runs only and do not establish current release validation.

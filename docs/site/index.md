@@ -61,7 +61,8 @@ The equilibrium model, its coverage and the PHREEQC reference fixtures.
 :link: evidence/release-evidence
 :link-type: doc
 
-Release evidence, the computational assessment and independent audits.
+Release evidence, the owner's computational assessment, and audit reports
+with their scope and review status.
 :::
 ::::
 
@@ -106,23 +107,20 @@ for salt in result["salts"]:
 :hidden:
 
 Install and first steps <guide/usage>
-User manual <guide/manual>
+```
+
+```{toctree}
+:caption: Growers and agronomists
+:hidden:
+
 For growers and agronomists <growers>
 ```
 
 ```{toctree}
-:caption: Planning guides
+:caption: User manual
 :hidden:
 
-Water, targets and acid <guide/water-to-delivery>
-Site inputs and injectors <guide/site-planning>
-Delivery contracts (P0) <guide/delivery-contracts>
-Delivery quantities (P1) <guide/delivery-quantities>
-Stock planning (P2) <guide/stock-planning>
-pH planning (P3) <guide/ph-planning>
-EC planning <guide/conductivity>
-Traceable materials <guide/materials>
-Source-sheet review <guide/source-sheet-review>
+User manual <guide/manual>
 ```
 
 ```{toctree}
@@ -130,7 +128,6 @@ Source-sheet review <guide/source-sheet-review>
 :hidden:
 
 Public API <api/reference>
-Package verification <api/package-verification>
 ```
 
 ```{toctree}
@@ -151,7 +148,10 @@ Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>
 :hidden:
 
 Release evidence <evidence/release-evidence>
-Computational assessment (G6) <evidence/computational-review>
+Computational assessment <evidence/computational-review>
+Package verification <api/package-verification>
+Planning validation history <evidence/planning-validation-history>
+Fertilizer source review <guide/source-sheet-review>
 Audits <evidence/audit/README>
 FlahaX vs Horticalc audit <evidence/audit/2026-10-17-flahax-vs-horticalc/report>
 Horticalc audit review <evidence/audit/2026-10-17-flahax-vs-horticalc/review>
@@ -159,7 +159,7 @@ Materials identity audit review <evidence/audit/2026-10-18-materials-identity/re
 ```
 
 ```{toctree}
-:caption: Project
+:caption: Changelog
 :hidden:
 
 Changelog <changelog>

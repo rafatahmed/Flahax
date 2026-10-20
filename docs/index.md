@@ -40,6 +40,7 @@ Readers: the documentation is at <https://flahax.readthedocs.io/>. This index is
 - [Chelate parameter assumptions](site/models/flahax-chelate-thermodynamic-profile.md)
 - [Computational assessment](site/evidence/computational-review.md), [release evidence](site/evidence/release-evidence.md) and [roadmap](implementation-roadmap.md)
 - [Audits](site/evidence/audit/README.md): dated independent assessments with maintainer reviews, starting with the 2026-10-17 FlahaX vs Horticalc benchmark.
+- [Planning validation history](site/evidence/planning-validation-history.md): dated local checks preserved separately from current usage instructions.
 
 ## Maintainers and development
 
@@ -61,6 +62,7 @@ Readers: the documentation is at <https://flahax.readthedocs.io/>. This index is
 - [Reduced-equilibrium model history](history/reduced-equilibrium-model.md)
 - [Chemistry development history](history/full-fertilizer-development.md)
 - [Original delivery design](delivery-control-design.md)
+- [Historical pH requirements](history/ph-planning-requirements.md): original design wording; the implemented workflow is documented separately.
 - [Initial reference kernels](site/models/equilibrium-kernel.md)
 
 Scientific captures and failure reproducers remain in `tests/fixtures/phreeqc/`. Their provenance is retained rather than removed as unused documentation.

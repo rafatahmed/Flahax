@@ -1,4 +1,5 @@
-# Computational assessment (G6)
+(computational-assessment-g6)=
+# Computational assessment
 
 G6 is the release gate for scientific review of the chemistry. This page
 records how that gate was met for the planning package, on **2026-09-27**,
