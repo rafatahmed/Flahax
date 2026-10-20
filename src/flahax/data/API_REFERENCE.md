@@ -534,7 +534,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -554,6 +554,10 @@ Args:
         allow_ions and is not penalized up to the ceiling; a fit above it is
         pulled back, and any remaining excess is reported in
         limitViolations with feasible False. Omitted keeps the default.
+    max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
+        none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
+        the total target N (N_NO3 + N_NH4 + N_UREA). Default 0.10
+        (Sonneveld & Voogt 2009); None keeps the penalty-only fit.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,

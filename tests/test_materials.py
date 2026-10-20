@@ -965,7 +965,9 @@ class ChelateSodiumReportTests(unittest.TestCase):
 
     def test_no_chelate_recipe_unchanged(self):
         from flahax.engine import recommend
-        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS)
+        # Pinned to the penalty-only fit: the #54 ammonium allowance changes this recipe
+        # independently of chelate sodium reporting (Ca 119.40 -> 119.98 mg/L).
+        result = recommend(load_library()['salts'], self.NO_CHELATE_TARGETS, max_ammonium_fraction=None)
         self.assertNotIn('Mn EDTA', {s['name'] for s in result['salts']})
         self.assertEqual(len(result['rows']), len(self.NO_CHELATE_ROWS))
         for got, want in zip(result['rows'], self.NO_CHELATE_ROWS):
