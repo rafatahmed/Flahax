@@ -552,8 +552,9 @@ Args:
     maximum_concentrations: Optional mg/L ceilings for incidental ions, for
         example {"Cl": 70}. An ion with a positive ceiling is admitted like
         allow_ions and is not penalized up to the ceiling; a fit above it is
-        pulled back, and any remaining excess is reported in
-        limitViolations with feasible False. Omitted keeps the default.
+        solved again with the ion held on the ceiling as a constraint, and any
+        excess that cannot be removed is reported in limitViolations with
+        feasible False. Omitted keeps the default.
     max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
         none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
         the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
