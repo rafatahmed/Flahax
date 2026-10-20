@@ -75,6 +75,45 @@ def label(row):
     return parts[-2] + (": " + ", ".join(str(x) for x in params) if params else "")
 
 
+def count(n, singular, plural=None):
+    return f"{n} {singular if n == 1 else plural or singular + 's'}"
+
+
+def formula_names(source):
+    library = json.loads((source / "src/flahax/data/library.json").read_text(encoding="utf-8"))
+    return {f["id"]: f["name"] for f in library["formulas"]}
+
+
+def case_label(case_id, names):
+    """Readable recipe label; the catalogue ID stays visible for traceability."""
+    formula, _, water = case_id.partition(":")
+    return f"{names.get(formula, 'Unknown formula')}, {water.replace('_', ' ')} (`{case_id}`)"
+
+
+def is_pass(value):
+    return value is True or value == "True"
+
+
+def miss_summary(rows, names):
+    """Largest positive-target miss and failing targets by nutrient, from formulation rows."""
+    misses = [r for r in rows if not is_pass(r["passes"]) and float(r["target_mg_l"]) > 0]
+    if not misses:
+        return "All explicit nutrient targets pass in this capture."
+    worst = max(misses, key=lambda r: abs(float(r["error_percent"])))
+    totals, failures = {}, {}
+    for r in rows:
+        totals[r["ion"]] = totals.get(r["ion"], 0) + 1
+        if not is_pass(r["passes"]):
+            failures[r["ion"]] = failures.get(r["ion"], 0) + 1
+    table = "\n".join(f"| {ion} | {n}/{totals[ion]} |" for ion, n in
+                      sorted(failures.items(), key=lambda item: (-item[1], item[0])))
+    return (f"The largest miss is {worst['ion']} in {case_label(worst['case'], names)}: "
+            f"target {float(worst['target_mg_l']):g} mg/L, delivered "
+            f"{float(worst['delivered_mg_l']):g} mg/L "
+            f"({float(worst['error_percent']):+.1f}%).\n\n"
+            "| Nutrient | Failing targets |\n|---|---:|\n" + table)
+
+
 def csv_bytes(rows, fields):
     stream = io.StringIO(newline="")
     writer = csv.DictWriter(stream, fieldnames=fields)
@@ -84,7 +123,10 @@ def csv_bytes(rows, fields):
 
 
 def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
-           related_page=None):
+           related_page=None, capture_kind="hosted",
+           related_label="Results from the other recorded environment"):
+    if capture_kind not in ("hosted", "local"):
+        raise ValueError("Capture kind must be hosted or local")
     report = load_capture(capture)
     from tools.benchmark_baseline import asv_samples
     if asv_samples(asv) != report["performance"]:
@@ -233,8 +275,9 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
         + (f"{r['median_ms']:.4g} | {r['minimum_ms']:.4g}–{r['maximum_ms']:.4g}"
            if r["samples"] else "— | Missing; see limitations and ASV log") + " |"
         for r in timing_rows)
+    names = formula_names(source)
     recipe_table = "\n".join(
-        f"| {c['id']} | {sum(r['passes'] for r in c['rows'])}/{len(c['rows'])} | "
+        f"| {case_label(c['id'], names)} | {sum(r['passes'] for r in c['rows'])}/{len(c['rows'])} | "
         f"{'Pass' if c['whole_recipe_passes'] else 'Miss'} |"
         for c in report["formulation"]["cases"])
     kernel_failures = "\n".join(
@@ -247,7 +290,8 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
                              if r["asv_result"] is not None else "Missing; see ASV log") + " |"
         for r in report["performance"]["records"]
         if ".peakmem_" in r["benchmark"])
-    related = (f"\n[Results from the other recorded environment]({related_page}). "
+    memory_count = sum(".peakmem_" in r["benchmark"] for r in report["performance"]["records"])
+    related = (f"\n[{related_label}]({related_page}). "
                "Treat environments separately; this is not a controlled OS comparison.\n"
                if related_page else "")
     if related_page and page_stem == "benchmark-results":
@@ -256,18 +300,26 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
     capture_notes = ("\n## Capture notes\n\n" + notes_path.read_text(encoding="utf-8-sig")
                      if notes_path.exists() else "")
     environment_name = "Linux" if meta["os"].startswith("Linux") else "Windows"
-    page = f"""# Benchmark results: {environment_name}
+    local_note = ("\n**Local supplementary capture.** This was measured on a developer machine, "
+                  "not a hosted runner.\nIts timings reflect that machine's power and thermal "
+                  "state; use them only alongside the hosted capture.\n"
+                  if capture_kind == "local" else "")
+    title = environment_name + (" (local supplement)" if capture_kind == "local" else "")
+    missing_text = (f"{count(len(missing), 'timing workload')} "
+                    f"{'has' if len(missing) == 1 else 'have'} no completed measurement.")
+    page = f"""# Benchmark results: {title}
 
 **Measured snapshot: {snapshot}.** This page reports one clean-checkout development
 baseline, including failures. It is not a release certification, a comparison
 against another product, or physical validation.
-
+{local_note}
 ```{{warning}}
 The numerical scorecard is not fully passing: {kernel_pass}/{len(kernel)} controlled
-NNLS cases pass. {len(missing)} timing workloads have no completed measurement.
+NNLS cases pass. {missing_text}
 The [manual GitHub benchmark workflow]({manual['url']}) completed with conclusion
 **{manual['conclusion']}**. A completed capture is not necessarily a passing
-scientific scorecard; failed gates and timeouts are retained.
+scientific scorecard; failed gates and timeouts are retained. Passing pull-request
+CI checks are separate evidence and do not mean this scorecard passed.
 ```
 
 Read the [protocol and reproduction instructions](benchmark-v1.md) before comparing results.
@@ -298,6 +350,12 @@ Percentage statistics exclude zero targets; absolute residual metrics retain the
 There were {len(report['formulation']['failures'])} formulation exceptions; their
 element rows are excluded, while attempted recipes remain in the recipe denominator.
 
+### Where targets were missed
+
+{miss_summary(rows, names)}
+
+Per-case causes are tracked in [recipe-fit analysis #39](https://github.com/rafatahmed/Flahax/issues/39).
+
 ## Timing and memory
 
 ![Completed timing samples, medians and ranges on a logarithmic millisecond axis]({link}/timings.svg)
@@ -316,6 +374,8 @@ does not establish a cold filesystem cache.
 
 Peak memory is total process peak RSS, including the interpreter and setup,
 not the incremental allocation of the solver. Decimal MB are used.
+Only {count(memory_count, 'workload')} {'has' if memory_count == 1 else 'have'} a memory
+benchmark; the other workloads are timed only.
 
 | Workload / parameter | Peak process memory (MB) |
 |---|---:|
@@ -430,9 +490,12 @@ def main():
                         help="Unchanged checkout of the measured revision; hashes are verified")
     parser.add_argument("--page-stem", default="benchmark-results")
     parser.add_argument("--related-page", help="Relative link to a separate environment's results")
+    parser.add_argument("--related-label", default="Results from the other recorded environment")
+    parser.add_argument("--capture-kind", choices=("hosted", "local"), default="hosted",
+                        help="local marks a developer-machine capture as supplementary")
     args = parser.parse_args()
     print(render(args.capture, args.asv_results, args.site, args.snapshot, args.source_checkout,
-                 args.page_stem, args.related_page))
+                 args.page_stem, args.related_page, args.capture_kind, args.related_label))
 
 
 if __name__ == "__main__":
