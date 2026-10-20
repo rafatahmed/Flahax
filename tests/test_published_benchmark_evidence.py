@@ -8,7 +8,7 @@ import re
 import unittest
 import zipfile
 
-from tools.publish_benchmark_report import formula_names, miss_summary
+from tools.publish_benchmark_report import formula_names, miss_summary, scorecard_notice
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "docs/site/_static/benchmarks"
@@ -65,6 +65,29 @@ class PublishedEvidenceTests(unittest.TestCase):
                 self.assertIn(miss_summary(rows, names), page)
                 self.assertNotRegex(page, r"\b1 timing workloads\b")
                 self.assertNotRegex(page, r"(?m)^\| cmb[a-z0-9]+:")
+
+
+
+class ScorecardNoticeTests(unittest.TestCase):
+    """#66: the page head warns only when a gate actually failed."""
+    MANUAL = {"url": "https://example.invalid/run", "conclusion": "success"}
+
+    def test_all_gates_passing_gives_a_note(self):
+        text = scorecard_notice(7, 7, {"passed": 21, "attempted": 21}, "0 timing workloads have no "
+                                "completed measurement.", 0, self.MANUAL)
+        self.assertTrue(text.startswith("```{note}"))
+        self.assertNotIn("not fully passing", text)
+
+    def test_any_failed_gate_gives_a_warning(self):
+        failing = [(6, 7, {"passed": 21, "attempted": 21}, 0, self.MANUAL),
+                   (7, 7, {"passed": 20, "attempted": 21}, 0, self.MANUAL),
+                   (7, 7, {"passed": 21, "attempted": 21}, 1, self.MANUAL),
+                   (7, 7, {"passed": 21, "attempted": 21}, 0, dict(self.MANUAL, conclusion="failure"))]
+        for kernel_pass, total, chemistry, missing, manual in failing:
+            with self.subTest(kernel_pass=kernel_pass, chemistry=chemistry, missing=missing):
+                text = scorecard_notice(kernel_pass, total, chemistry, "missing text", missing, manual)
+                self.assertTrue(text.startswith("```{warning}"))
+                self.assertIn("not fully passing", text)
 
 
 if __name__ == "__main__":
