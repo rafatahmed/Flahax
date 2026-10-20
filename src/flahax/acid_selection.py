@@ -12,6 +12,7 @@ from .aqueous_model import solve, chemistry
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
+from .root_finding import shrink_bracket
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
 # mass fraction/density. Hydrated citric solids require a separately defined stock.
@@ -119,18 +120,18 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
                 if target.charge_balance < initial.charge_balance - 1e-12:
                     raise DeliveryError('wrong_reagent_direction', 'target requires base under this phase policy')
                 low, high = 0., 1e-6
+                g_low = target.charge_balance - initial.charge_balance
                 for _ in range(32):
-                    if at(high).charge_balance <= initial.charge_balance:
+                    g_high = at(high).charge_balance - initial.charge_balance
+                    if g_high <= 0:
                         break
+                    low, g_low = high, g_high
                     high *= 2
                 else:
                     raise DeliveryError('nonconvergent', 'acid demand could not be bracketed')
-                for _ in range(40):
-                    middle = (low + high) / 2
-                    if at(middle).charge_balance > initial.charge_balance:
-                        low = middle
-                    else:
-                        high = middle
+                # Same final width as 40 bisection steps from [0, high].
+                low, high = shrink_bracket(lambda d: at(d).charge_balance - initial.charge_balance,
+                                           low, g_low, high, g_high, width=high * 2. ** -40)
                 dose = (low + high) / 2
                 target = at(dose)
             grams = dose * mass * molar_mass / fraction

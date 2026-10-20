@@ -121,6 +121,23 @@ class Equilibrium:
     def track_final_state_iterations(self, fixture):
         return self.result.iterations
 
+    def track_search_solves(self, fixture):
+        # Total equilibrium solves per call; an acid target runs a search, so its
+        # final-state iterations alone understate the work.
+        from flahax import aqueous_model
+        original, count = aqueous_model.solve, [0]
+
+        def counted(*args, **kwargs):
+            count[0] += 1
+            return original(*args, **kwargs)
+
+        aqueous_model.solve = counted
+        try:
+            self.solve(self.data)
+        finally:
+            aqueous_model.solve = original
+        return count[0]
+
     def teardown(self, fixture):
         require_chemistry(self.data, self.result, self.acid)
 
