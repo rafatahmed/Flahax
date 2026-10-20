@@ -15,6 +15,7 @@
 - `recommend` results (and the workflow recommendation) now carry per-salt `provenance` (recordId, identityId, analysisBasis, documents, flags; `unattributed` when the record has none) and `identitiesSha256`; `solve_weights` and `forward` are unchanged.
 - Formulation rows now report formula counterion sodium not already assayed as elemental Na (chelate sodium, D2, and CH - micro's borax and molybdate sodium), added to the `Na` row and incidental review after the fit, with an `Na` target's `deltaPct` recomputed (pepper workflow incidental Na 0.048 -> 1.722 ppm; Tomatoes U of Florida clusters 2.1923 -> 2.7548, Lettuce General 2.2258 -> 2.5774, Generic Wet Season 2.5403 -> 2.7161 mg/L with CH - micro's borax/molybdate share); a tight Na maximum can make such recipes require review or be infeasible.
 - Add `calculate_irrigation_ec_band`: irrigation EC25 chemistry (pH, precipitation, EC) at nominal and nutrient band minimum and maximum ends; an end with an open band returns `not_supported` / `band_end_open`.
+- Documentation is published at https://flahax.readthedocs.io/ (Sphinx + MyST, versioned from the next release); internal specs and plans are no longer in the repository.
 
 ## 0.4.0 — 2026-10-17
 

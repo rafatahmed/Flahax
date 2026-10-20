@@ -1,5 +1,7 @@
 # FlahaX documentation
 
+Readers: the documentation is at <https://flahax.readthedocs.io/>. This index is for maintainers.
+
 ## Start here
 
 - [User manual](../src/flahax/data/USER_GUIDE.md) (version 0.4.0): the canonical, self-contained guide shipped inside the package.

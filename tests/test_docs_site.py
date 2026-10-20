@@ -52,6 +52,9 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertTrue(old.exists(), f'{old} must exist for published READMEs')
                 if name != 'index' and any(SITE.rglob(f'{name}.md')):
                     self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
+        audit = ROOT / 'docs' / 'audit' / '2026-10-18-materials-identity' / 'README.md'
+        self.assertTrue(audit.exists())
+        self.assertIn('https://flahax.readthedocs.io/', audit.read_text(encoding='utf-8'))
 
     def test_shipped_text_paths_resolve(self):
         for name in ('water-to-delivery', 'site-planning'):
