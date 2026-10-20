@@ -151,9 +151,10 @@ likely cause; it does not prove infeasibility.
 
 An incidental ion is one the products add but the formula does not ask for.
 Without a ceiling, each mg/L of it is penalized in the fit. With a ceiling in
-`maximum_concentrations` (mg/L), the ion is free up to that value, is pulled
-back if the fit exceeds it, and any remaining excess is reported in
-`limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
+`maximum_concentrations` (mg/L), the ion is free up to that value. If the fit
+would exceed it, the ceiling is applied as a constraint: the best fit to the
+targets with the ion held on its limit (less one part per million). Any excess
+that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
 **Ammonium default.** When the targets omit `N_NH4` and no `N_NH4` ceiling is
