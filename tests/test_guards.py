@@ -3,7 +3,7 @@ import unittest
 
 from flahax import InputError, gap_for, load_library, recommend
 from flahax.composition import assay_conflict, assay_drift, theoretical_assay
-from flahax.engine import _lstsq
+from flahax.engine import _lstsq, nnls
 
 TARGETS = {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}
 
@@ -79,14 +79,16 @@ class CompositionGuards(unittest.TestCase):
         # The 75 % acid is dosed from its stored solution assay, below the H3PO4 formula value.
         self.assertIn("P assay 23.706% vs formula 31.61%", notes["Phosphoric Acid (75%)"])
 
-    def test_the_fertilizer_list_has_no_chloride_salts(self):
-        chloride = [
-            salt["name"] for salt in load_library()["salts"]
-            if float(salt["elements"].get("Cl") or 0) > 0
-            and not str(salt["name"]).lower().startswith("test")
-            and salt.get("formula") != "Input Formula Here"
-        ]
-        self.assertEqual(chloride, [])
+    def test_chloride_salts_are_used_only_with_consent(self):
+        library = load_library()
+        chloride = sorted(salt["name"] for salt in library["salts"]
+                          if float(salt["elements"].get("Cl") or 0) > 0)
+        self.assertEqual(chloride, ["Calcium Chloride (Dihydrate)", "Potassium Chloride"])
+        for formula in library["formulas"]:
+            for water in ({}, {"Ca": 20}):
+                with self.subTest(formula=formula["name"], water=water):
+                    result = recommend(library["salts"], formula["targets"], water)
+                    self.assertFalse(set(chloride) & {s["name"] for s in result["salts"]})
 
 
 class LeastSquares(unittest.TestCase):
@@ -95,6 +97,29 @@ class LeastSquares(unittest.TestCase):
         solution = _lstsq([[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]], [1.0, 2.0, 1.0])
         self.assertAlmostEqual(solution[0], 1.0, places=8)
         self.assertAlmostEqual(solution[1], 1.0, places=8)
+
+    @staticmethod
+    def objective(matrix, rhs, x):
+        return sum((sum(a * w for a, w in zip(row, x)) - b) ** 2 for row, b in zip(matrix, rhs))
+
+    def test_nnls_does_not_stop_early_on_near_dependent_columns(self):
+        # Benchmark v1 near_dependent case (#36): the unique optimum is [1, 1] with
+        # objective ~0. A fixed 1e-10 stopping threshold stopped at objective 1.5e-12.
+        matrix = [[1.0, 1.0], [1.0, 1.000001], [0.0, 0.000001]]
+        rhs = [2.0, 2.000001, 0.000001]
+        x = nnls(matrix, rhs)
+        self.assertLess(self.objective(matrix, rhs, x), 1e-20)
+        self.assertAlmostEqual(x[0], 1.0, places=6)
+        self.assertAlmostEqual(x[1], 1.0, places=6)
+
+    def test_nnls_result_does_not_depend_on_problem_scale(self):
+        matrix = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
+        rhs = [2.0, 3.0, 5.0]
+        for scale in (1e-8, 1.0, 1e8):
+            with self.subTest(scale=scale):
+                x = nnls([[a * scale for a in row] for row in matrix], [b * scale for b in rhs])
+                self.assertAlmostEqual(x[0], 2.0, places=8)
+                self.assertAlmostEqual(x[1], 3.0, places=8)
 
 
 if __name__ == "__main__":

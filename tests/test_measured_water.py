@@ -8,7 +8,7 @@ from tests.test_water_workflow import products, TARGETS
 # Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, Table S1, station 104
 # (mg/L; IC is inorganic carbon as C). Measured pH 7.80.
 STATION_104 = {'Na+': 680 / 22.98977e3, 'K+': 44.2 / 39.0983e3, 'Ca+2': 244 / 40.078e3,
-               'Mg+2': 100.8 / 24.305e3, 'Cl-': 1280.4 / 35.453e3, 'SO4-2': 723.3 / 96.06e3,
+               'Mg+2': 100.8 / 24.305e3, 'Cl-': 1280.4 / 35.45e3, 'SO4-2': 723.3 / 96.06e3,
                'NO3-': 15.38 / 62.004e3, 'CO3-2': 38.75 / 12.011e3}
 WITHOUT_CARBON = {k: v for k, v in STATION_104.items() if k != 'CO3-2'}
 
@@ -30,7 +30,7 @@ class MeasuredWaterTests(unittest.TestCase):
         self.assertEqual(b.balance_ion, 'Cl-')
         self.assertEqual(b.carbon_source, 'inorganic_carbon')
         self.assertAlmostEqual(b.imbalance_percent, -3.52, places=2)
-        self.assertAlmostEqual(b.balance_adjustment_molal / b.analysed_balance_ion_molal, -.0952, places=4)
+        self.assertAlmostEqual(b.balance_adjustment_molal / b.analysed_balance_ion_molal, -.0953, places=4)
         self.assertEqual(b.analysed_balance_ion_molal, STATION_104['Cl-'])
         for name in STATION_104:
             if name != 'Cl-':
@@ -87,7 +87,7 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
         quarter = {k: v / 4 for k, v in STATION_104.items()}
         ppm = {'Ca': quarter['Ca+2'] * MOLAR_MASS['Ca'] * 1000, 'Mg': quarter['Mg+2'] * MOLAR_MASS['Mg'] * 1000,
                'K': quarter['K+'] * MOLAR_MASS['K'] * 1000, 'Na': quarter['Na+'] * MOLAR_MASS['Na'] * 1000,
-               'Cl': quarter['Cl-'] * 35.453 * 1000, 'S': quarter['SO4-2'] * MOLAR_MASS['S'] * 1000,
+               'Cl': quarter['Cl-'] * MOLAR_MASS['Cl'] * 1000, 'S': quarter['SO4-2'] * MOLAR_MASS['S'] * 1000,
                'N_NO3': quarter['NO3-'] * MOLAR_MASS['N'] * 1000}
         equilibrium = dict(water_totals=quarter, water_mass_kg=100, water_analysis_id='station-104-quarter',
                            complete_analysis=True, carbon_boundary='closed', temperature_c=25, phases=[],
