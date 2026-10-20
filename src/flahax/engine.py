@@ -32,6 +32,9 @@ from .product_conversion import counterion_sodium_mg_per_l
 EPS = 1e-10
 # Column additions allowed per column before NNLS reports non-convergence (#55).
 NNLS_ADDITION_FACTOR = 4
+# Smallest Cholesky pivot, relative to the column's squared norm, accepted by the Gram
+# path (#59); below it the subproblem is ill-conditioned and Householder decides.
+GRAM_PIVOT_FLOOR = 1e-8
 # Double-precision unit round-off, for scale-aware NNLS optimality tests.
 ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
@@ -140,8 +143,79 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
     return solution
 
 
-def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
-    """Lawson-Hanson non-negative least squares. matrix is rows × columns."""
+class _LazyGram:
+    """Column inner products computed on first use and cached for one NNLS solve."""
+
+    def __init__(self, cols):
+        self.cols = cols
+        self.rows = [dict() for _ in cols]
+
+    def __getitem__(self, i):
+        return _GramRow(self, i)
+
+
+class _GramRow:
+    __slots__ = ("gram", "i")
+
+    def __init__(self, gram, i):
+        self.gram, self.i = gram, i
+
+    def __getitem__(self, j):
+        i = self.i
+        a, b = (i, j) if i <= j else (j, i)
+        cache = self.gram.rows[a]
+        value = cache.get(b)
+        if value is None:
+            value = cache[b] = sum(x * y for x, y in zip(self.gram.cols[a], self.gram.cols[b]))
+        return value
+
+
+def _gram_lstsq(gram, cross, cols, rhs, passive):
+    """Least squares on the passive columns from a precomputed Gram matrix (#59).
+
+    Cholesky on G[P,P] plus two refinement steps against the original columns
+    (corrected semi-normal equations). Returns None when a pivot shows poor
+    conditioning, so the caller uses Householder and keeps its rank decisions.
+    """
+    k = len(passive)
+    chol = [[0.0] * k for _ in range(k)]
+    for i in range(k):
+        gi = gram[passive[i]]
+        for j in range(i + 1):
+            value = gi[passive[j]] - sum(chol[i][t] * chol[j][t] for t in range(j))
+            if i == j:
+                if value <= GRAM_PIVOT_FLOOR * gi[passive[i]]:
+                    return None
+                chol[i][i] = math.sqrt(value)
+            else:
+                chol[i][j] = value / chol[j][j]
+
+    def solve(vector):
+        y = [0.0] * k
+        for i in range(k):
+            y[i] = (vector[i] - sum(chol[i][t] * y[t] for t in range(i))) / chol[i][i]
+        z = [0.0] * k
+        for i in range(k - 1, -1, -1):
+            z[i] = (y[i] - sum(chol[t][i] * z[t] for t in range(i + 1, k))) / chol[i][i]
+        return z
+
+    z = solve([cross[j] for j in passive])
+    picked = [cols[j] for j in passive]
+    m = len(rhs)
+    for _ in range(2):
+        residual = [rhs[r] - sum(z[i] * picked[i][r] for i in range(k)) for r in range(m)]
+        delta = solve([sum(col[r] * residual[r] for r in range(m)) for col in picked])
+        z = [a + b for a, b in zip(z, delta)]
+    return z
+
+
+def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = None) -> list[float]:
+    """Lawson-Hanson non-negative least squares. matrix is rows × columns.
+
+    x0, when given, is a non-negative starting point (warm start, #59): its positive
+    entries form the initial passive set. The problem is convex, so the optimum is
+    the same; a nearby start needs far fewer column additions.
+    """
     if not matrix:
         return []
     cols = [[matrix[r][c] for r in range(len(matrix))] for c in range(len(matrix[0]))]
@@ -163,37 +237,24 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
         pred = _matvec(matrix, x)
         return [rhs[i] - pred[i] for i in range(m)]
 
-    additions = 0
-    while True:
-        resid = residual()
-        weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
-        candidates = [j for j in active if j not in rejected]
-        if not candidates:
-            break
-        enter = max(candidates, key=lambda j: weights[j])
-        if weights[enter] <= dual_tol:
-            break
-        if additions >= NNLS_ADDITION_FACTOR * n:
-            # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
-            raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
-        passive.append(enter)
-        active.remove(enter)
-        try:
-            sub = _lstsq([cols[j] for j in passive], rhs)
-        except ValueError:
-            passive.remove(enter)
-            active.append(enter)
-            rejected.add(enter)
-            continue
-        additions += 1
-        rejected.clear()
+    gram = _LazyGram(cols)
+    cross = [sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
+
+    def least_squares(chosen: list[int]) -> list[float]:
+        sub = _gram_lstsq(gram, cross, cols, rhs, chosen)
+        return _lstsq([cols[j] for j in chosen], rhs) if sub is None else sub
+
+    def settle(sub: list[float]) -> None:
+        """Move x toward the passive-set least-squares solution, dropping columns
+        that reach zero, until that solution is feasible."""
+        nonlocal passive
         while True:
             if all(value >= -EPS for value in sub):
                 for j in range(n):
                     x[j] = 0.0
                 for j, value in zip(passive, sub):
                     x[j] = max(0.0, value)
-                break
+                return
             alpha = min(
                 x[j] / (x[j] - trial)
                 for j, trial in zip(passive, sub)
@@ -210,9 +271,49 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
                     stay.append(j)
             passive = stay
             if not passive:
-                break
+                return
             # A subset of independent columns stays independent.
-            sub = _lstsq([cols[j] for j in passive], rhs)
+            sub = least_squares(passive)
+
+    if x0 is not None and len(x0) == n and all(math.isfinite(v) and v >= 0 for v in x0):
+        start = [j for j in range(n) if x0[j] > EPS]
+        if start:
+            try:
+                sub = least_squares(start)
+            except ValueError:
+                pass  # dependent start columns: fall back to the cold start
+            else:
+                for j in start:
+                    x[j] = x0[j]
+                passive = start
+                active = [j for j in range(n) if j not in start]
+                settle(sub)
+
+    additions = 0
+    while True:
+        resid = residual()
+        weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
+        candidates = [j for j in active if j not in rejected]
+        if not candidates:
+            break
+        enter = max(candidates, key=lambda j: weights[j])
+        if weights[enter] <= dual_tol:
+            break
+        if additions >= NNLS_ADDITION_FACTOR * n:
+            # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
+            raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
+        passive.append(enter)
+        active.remove(enter)
+        try:
+            sub = least_squares(passive)
+        except ValueError:
+            passive.remove(enter)
+            active.append(enter)
+            rejected.add(enter)
+            continue
+        additions += 1
+        rejected.clear()
+        settle(sub)
     return x
 
 
@@ -245,7 +346,8 @@ def forward(salts: list[dict], grams: list[float], water: dict | None = None) ->
 
 
 def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
-         maxima: dict | None = None, ceilings: dict[str, float] | None = None) -> dict:
+         maxima: dict | None = None, ceilings: dict[str, float] | None = None,
+         x0: list[float] | None = None) -> dict:
     """Non-negative grams. ridge is an L2 penalty on grams, not a salt count.
 
     An incidental ion with a stated positive maximum is not penalized; an ion in
@@ -282,15 +384,16 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
             row[index] = ridge
             matrix.append(row)
             rhs.append(0.0)
-    grams = nnls(matrix, rhs)
+    grams = nnls(matrix, rhs, x0)
     achieved = forward(salts, grams, water)
     loss, rows = score(achieved, targets)
     return {"grams": grams, "loss": loss, "rows": rows}
 
 
-def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, maxima: dict) -> dict:
+def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, maxima: dict,
+                x0: list[float] | None = None) -> dict:
     """Fit, then pull any incidental ion that passed its stated maximum back toward it."""
-    solved = _fit(salts, targets, water, ridge, maxima)
+    solved = _fit(salts, targets, water, ridge, maxima, x0=x0)
     ceilings: dict[str, float] = {}
     # Escalate the pull on each exceeded ion until it is within its maximum; a
     # remainder after the cap is reported by _report as a limit violation.
@@ -371,7 +474,8 @@ def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge
                 if not any(_supplies(salts[item], symbol) for item in others)
             ):
                 continue
-            trial = _fit_within([salts[item] for item in others], targets, water, ridge, maxima or {})
+            trial = _fit_within([salts[item] for item in others], targets, water, ridge, maxima or {},
+                                x0=[grams[item] for item in others])
             if not _still_within(trial["rows"], rows):
                 continue
             grams = [0.0] * len(salts)
