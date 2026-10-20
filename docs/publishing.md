@@ -44,12 +44,17 @@ pushing a tag.
    reference; write the changelog section; record readiness and evidence.
    Merge it by pull request after CI passes.
 2. Confirm the publication decision with the owner. Merging is not approval.
-3. Create the GitHub Release for tag `v<version>` on the merged `main`
+3. **Finalize the wording before tagging** (#71): on a short branch, date the
+   changelog section and change the manual's version line from "release
+   candidate ... not yet published" to "released <date>"; merge it after CI
+   passes. The tag must point at this commit, because the packaged manual and
+   the sdist changelog are fixed at upload.
+4. Create the GitHub Release for tag `v<version>` on that merged `main`
    commit, with the changelog section as its notes. Publishing it starts the
    workflow.
-4. Review the run: the guard notice, all test jobs, the live replay and the
+5. Review the run: the guard notice, all test jobs, the live replay and the
    artifact hashes in the build summary. Then approve the `pypi` deployment.
-5. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
+6. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
    environment, run the manual's examples and both CLI entry points, and
    record the date, run URL and hashes in [release evidence](site/evidence/release-evidence.md).
 
@@ -76,18 +81,21 @@ Dashboard settings, recorded here because they live outside the repository:
 - The default version is `latest` until that release, then `stable`.
 - Never put a Read the Docs token in the repository.
 
-## Checklist (in progress: 0.5.0)
+## Checklist (last run: 0.5.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
 - [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
-- [ ] Observe successful hosted Python 3.11–3.13 checks on the merged revision.
-- [ ] Obtain explicit publication authorization.
-- [ ] Publish the `v0.5.0` GitHub Release; review the run; approve the deployment.
-- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
-- [ ] Confirm the Read the Docs `stable` version builds `v0.5.0` and serves the benchmark pages (#48).
+- [x] Observe successful hosted Python 3.11–3.13 checks on the merged revision.
+- [ ] Date the changelog and the manual's version line, and merge, before tagging. **Missed for 0.5.0** (#71); do it for every release.
+- [x] Obtain explicit publication authorization.
+- [x] Publish the `v0.5.0` GitHub Release; review the run; approve the deployment.
+- [x] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+- [x] Confirm the Read the Docs `stable` version builds `v0.5.0` and serves the benchmark pages (#48).
 
-## Checklist (last run: 0.4.0)
+Completed 2026-10-20 apart from the finalize step. Copy this checklist, with that step, for the next release.
+
+## Checklist (0.4.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
@@ -125,6 +133,11 @@ package was uploaded.
 
 ## Release history
 
+- **0.5.0**, 2026-10-20: published through the hardened workflow (run
+  `39517327774`) from `692108b`; the deployment was approved at the owner's
+  instruction after artifact review, and verified by a fresh installation from
+  PyPI. The packaged manual and changelog still say "not yet published" (#71).
+  See the [0.5.0 publication evidence](site/evidence/release-evidence.md#050-publication---2026-10-20).
 - **0.4.0**, 2026-10-17: first Apache-2.0 release and first upload through the
   hardened workflow with Trusted Publishing (run `39043172800`), approved by
   the owner, verified by a fresh installation from PyPI. See the

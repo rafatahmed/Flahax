@@ -26,6 +26,39 @@ They are kept here because the records cite them.
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
 
+## 0.5.0 publication (2026-10-20)
+
+0.5.0 was published to PyPI on **2026-10-20** (23:51 UTC) by the hardened release
+workflow (run [`39517327774`](https://github.com/rafatahmed/Flahax/actions/runs/39517327774)),
+triggered by the GitHub Release for tag `v0.5.0` on `main` at `692108b` (merge of
+[PR #70](https://github.com/rafatahmed/Flahax/pull/70)). Hosted CI had passed on `692108b`
+([run 39517146974](https://github.com/rafatahmed/Flahax/actions/runs/39517146974): Python
+3.11, 3.12 and 3.13, live PHREEQC replay, docs). The owner authorized publication
+and instructed approval of the `pypi` deployment, which was then approved through
+the GitHub API after the review below.
+
+| Check | Result |
+|---|---|
+| Release guard | Tag `v0.5.0` matched `pyproject.toml`; "flahax 0.5.0 is not on PyPI; continuing to verification" |
+| Workflow gates on `692108b` | Tests on Python 3.11, 3.12 and 3.13 with clean wheel/sdist verification, live PHREEQC replay, one build with `twine check --strict` (both PASSED): all passed before the approval gate |
+| Pre-approval artifact review | The workflow's artifacts were downloaded and inspected before approval. `USER_GUIDE.md`, `API_REFERENCE.md`, `chemistry_25c.json` and `library.json` in both the wheel and the sdist match the hashes in the 0.5.0 preparation record. Metadata: version 0.5.0, `License-Expression: Apache-2.0`, `Requires-Python: >=3.11`, no runtime dependency. Sdist 468 files with no PDF and no `docs/publication/` file |
+| PyPI upload | Wheel 2026-10-20 23:51:03 UTC (172,854 bytes); sdist 23:51:05 UTC (5,117,131 bytes). PyPI reports 0.5.0 as the latest version, licence `Apache-2.0`, `Requires-Python >=3.11`, not yanked |
+| Hash identity | The SHA-256 values on PyPI equal those of the reviewed workflow artifacts, and a fresh `pip download` of the wheel matches |
+| Fresh install from PyPI | New Python 3.14.0 virtual environment outside the checkout, `pip install flahax==0.5.0`. The release smoke test from `tools/verify_distribution.py` passed: version, all public exports, nine manual examples, 30 catalogue products, both CLI entry points, planning EC 1.15 mS/cm; installed resource hashes as below |
+| Documentation | Read the Docs `stable` serves 0.5.0, including [Benchmark v1 results](https://flahax.readthedocs.io/en/stable/evidence/benchmark-results.html) (snapshot `2026-10-20-linux-df0d30b`) and the [competitor comparison](https://flahax.readthedocs.io/en/stable/evidence/competitor-comparison.html) (#48) |
+| Known wording defect | The published manual (line 5) says "release candidate prepared 2026-10-21; not yet published" and the sdist changelog says "0.5.0 — Unreleased": the finalize step that 0.4.0 performed before tagging was not done. Code and data are unaffected; corrected on `main` (#71) |
+
+| Artifact | SHA-256 |
+|---|---|
+| `flahax-0.5.0-py3-none-any.whl` | `c209476ae768f79da807068073aacbd55d3ffb6f59024f88e7cff83cb4359141` |
+| `flahax-0.5.0.tar.gz` | `08ca45bc53645a482a57d01a73c6b028f42ce7e7af288b930202d02887e5ab3c` |
+
+Installed resources: `USER_GUIDE.md` `92f5d5806b1f0931df05fe490b738b8b277486d70a21d6ea53e2839f36c5ffb9`;
+`API_REFERENCE.md` `db350573e41e407468d0ddb7bd7b86304c80562baf8d6b77d146d4f8df1ab9c8`;
+`chemistry_25c.json` `ad87363818ccc2471c1343a0791f9ae63798bc0b3530b5b710344aff3077188f`;
+`library.json` `dfc65ac7fc0060ebe760870b832e6c2c4febce2babf8cfa9defa6a858e28a05a`.
+The thermodynamic data are unchanged since 0.3.1.
+
 ## 0.5.0 preparation (2026-10-21)
 
 Prepared revision: `release/0.5.0`, cut from `main` at `9bea54a` (merge of

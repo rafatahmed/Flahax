@@ -1,6 +1,6 @@
 # Water-to-delivery development status
 
-Updated 2026-10-21. **0.5.0 is prepared, not published** (see the [0.5.0 preparation record](site/evidence/release-evidence.md#050-preparation---2026-10-21)). **0.4.0 is published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
+Updated 2026-10-21. **0.5.0 is published on PyPI** (tag `v0.5.0`; see the [0.5.0 publication evidence](site/evidence/release-evidence.md#050-publication---2026-10-20)). **0.4.0 was published on PyPI** (tag `v0.4.0`; Apache-2.0, measured-pH water balancing) through the [hardened release workflow](publishing.md); see the [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17). Before it, **0.3.1** was published (tag `v0.3.1`); see the
 [publication evidence](site/evidence/release-evidence.md#031-publication---2026-10-17).
 The matrix below describes the 0.3.1 capabilities and their boundaries.
 
