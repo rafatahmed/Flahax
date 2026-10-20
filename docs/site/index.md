@@ -1,5 +1,8 @@
 # FlahaX
 
+```{rst-class} flahax-hero
+```
+
 **Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
 equilibrium chemistry and auditable delivery planning.**
 
@@ -9,6 +12,58 @@ pair up, whether anything precipitates, what the pH will be, how much acid
 reaches a target pH, and how the recipe splits into stock tanks and injector
 flows. Every plan carries its units, model identifiers and source hashes, so
 a result can be reviewed and reproduced.
+
+```{raw} html
+<div class="flahax-badges"><span>Python 3.11+</span><span>No runtime dependencies</span><span>Checked against PHREEQC 3.8.6</span><span>Computational evidence only</span></div>
+```
+
+## Start here
+
+::::{grid} 1 2 2 2
+:gutter: 3
+
+:::{grid-item-card} Get started
+:link: guide/usage
+:link-type: doc
+
+Install FlahaX and run a first recipe from Python or the command line.
+:::
+
+:::{grid-item-card} Growers and agronomists
+:link: growers
+:link-type: doc
+
+What FlahaX gives you and how to read a plan, in plain words.
+:::
+
+:::{grid-item-card} User manual
+:link: guide/manual
+:link-type: doc
+
+The full workflow from water analysis to stock tanks, pH and EC.
+:::
+
+:::{grid-item-card} API reference
+:link: api/reference
+:link-type: doc
+
+Every public function, its inputs, outputs and contract.
+:::
+
+:::{grid-item-card} Models and chemistry
+:link: models/method
+:link-type: doc
+
+The equilibrium model, its coverage and the PHREEQC reference fixtures.
+:::
+
+:::{grid-item-card} Evidence and audits
+:link: evidence/release-evidence
+:link-type: doc
+
+Release evidence, the computational assessment and independent audits.
+:::
+::::
 
 ## What sets it apart
 
@@ -24,8 +79,6 @@ FlahaX has no third-party runtime dependencies. The evidence is
 computational: it has not been validated in the laboratory or in the field.
 
 ## Install
-
-Python 3.11 or newer.
 
 ```bash
 python -m pip install flahax
@@ -48,73 +101,66 @@ for salt in result["salts"]:
     print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
 ```
 
-## Where to go next
-
-- **Developers:** start with the [user manual](guide/manual.md)
-  and the [API reference](api/reference.md).
-- **Growers and agronomists:** read the
-  [guide for growers and agronomists](growers.md).
-
 ```{toctree}
-:caption: User guide
+:caption: Get started
 :hidden:
 
-guide/manual
-guide/usage
-guide/water-to-delivery
-guide/site-planning
-guide/source-sheet-review
-guide/delivery-quantities
-guide/delivery-contracts
-guide/stock-planning
-guide/ph-planning
-guide/conductivity
-guide/materials
+Install and first steps <guide/usage>
+User manual <guide/manual>
+For growers and agronomists <growers>
 ```
 
 ```{toctree}
-:caption: For growers and agronomists
+:caption: Planning guides
 :hidden:
 
-growers
+Water, targets and acid <guide/water-to-delivery>
+Site inputs and injectors <guide/site-planning>
+Delivery contracts (P0) <guide/delivery-contracts>
+Delivery quantities (P1) <guide/delivery-quantities>
+Stock planning (P2) <guide/stock-planning>
+pH planning (P3) <guide/ph-planning>
+EC planning <guide/conductivity>
+Traceable materials <guide/materials>
+Source-sheet review <guide/source-sheet-review>
 ```
 
 ```{toctree}
 :caption: API reference
 :hidden:
 
-api/reference
-api/package-verification
+Public API <api/reference>
+Package verification <api/package-verification>
 ```
 
 ```{toctree}
 :caption: Models and chemistry
 :hidden:
 
-models/method
-models/fertilizer-equilibrium-model
-models/equilibrium-kernel
-models/full-fertilizer-chemistry
-models/chemistry-coverage-matrix
-models/reference-fixtures
-models/flahax-chelate-thermodynamic-profile
+Method <models/method>
+Fertilizer equilibrium model <models/fertilizer-equilibrium-model>
+Equilibrium kernel <models/equilibrium-kernel>
+Full fertilizer chemistry <models/full-fertilizer-chemistry>
+Chemistry coverage matrix <models/chemistry-coverage-matrix>
+PHREEQC reference fixtures <models/reference-fixtures>
+Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>
 ```
 
 ```{toctree}
 :caption: Evidence and audits
 :hidden:
 
-evidence/computational-review
-evidence/release-evidence
-evidence/audit/README
-evidence/audit/2026-10-17-flahax-vs-horticalc/report
-evidence/audit/2026-10-17-flahax-vs-horticalc/review
-evidence/audit/2026-10-18-materials-identity/review
+Release evidence <evidence/release-evidence>
+Computational assessment (G6) <evidence/computational-review>
+Audits <evidence/audit/README>
+FlahaX vs Horticalc audit <evidence/audit/2026-10-17-flahax-vs-horticalc/report>
+Horticalc audit review <evidence/audit/2026-10-17-flahax-vs-horticalc/review>
+Materials identity audit review <evidence/audit/2026-10-18-materials-identity/review>
 ```
 
 ```{toctree}
-:caption: Changelog
+:caption: Project
 :hidden:
 
-changelog
+Changelog <changelog>
 ```

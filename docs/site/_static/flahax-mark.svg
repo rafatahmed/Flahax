@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FlahaX">
+  <rect width="64" height="64" rx="14" fill="#1f6b45"/>
+  <path d="M17 47C17 29 28 17 49 15c-1 21-12 33-30 33" fill="#8fdcae"/>
+  <path d="M19 46C26 36 33 29 43 22" fill="none" stroke="#1f6b45" stroke-width="3" stroke-linecap="round"/>
+  <path d="M46 34c3 4.5 5 7.6 5 10a5 5 0 0 1-10 0c0-2.4 2-5.5 5-10z" fill="#e8f6ee"/>
+</svg>
