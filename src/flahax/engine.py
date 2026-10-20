@@ -35,7 +35,10 @@ ROUNDOFF = 2.220446049250313e-16
 KEEP_GRAMS = 1e-6
 # A recipe is feasible when every requested ion is inside this Δ%.
 TOLERANCE_PCT = 1.0
-# Doublings of the pull on an incidental ion above its stated maximum (weight up to 2**12).
+# Pull on an incidental ion above its stated maximum: the fit is convex, so a binding
+# ceiling's optimum lies on the limit and a strong first weight reaches it in one refit
+# (#56); doubling continues only while it is still exceeded (up to 2**22).
+CEILING_FIRST_WEIGHT = 1024.0
 CEILING_STEPS = 13
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
@@ -287,7 +290,7 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
         if not over:
             break
         for symbol in over:
-            ceilings[symbol] = ceilings.get(symbol, 0.5) * 2.0
+            ceilings[symbol] = ceilings[symbol] * 2.0 if symbol in ceilings else CEILING_FIRST_WEIGHT
         solved = _fit(salts, targets, water, ridge, maxima, ceilings)
     return solved
 
@@ -460,6 +463,56 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
+def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset()) -> set[str]:
+    """Positive targets still missed by a least-squares fit on target rows alone."""
+    kept = {symbol: ppm for symbol, ppm in targets.items() if ppm > 0 and symbol not in drop}
+    if not kept or not salts:
+        return set(kept)
+    matrix, rhs = [], []
+    for symbol, target in kept.items():
+        matrix.append([ppm_per_gram(salt["elements"].get(symbol, 0.0)) / target for salt in salts])
+        rhs.append((target - float(water.get(symbol) or 0.0)) / target)
+    achieved = forward(salts, nnls(matrix, rhs), water)
+    return {symbol for symbol, target in kept.items()
+            if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT}
+
+
+def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
+    """Explain each missed positive target (#39). A least-squares diagnosis on the
+    target rows alone: it names a cause, it does not prove infeasibility."""
+    missed = [row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT]
+    if not missed:
+        return []
+    usable = [salt for salt in library if assay_conflict(salt) is None
+              and (allow_carbonates or not is_carbonate(salt))]
+    consent = {ion for ion in CONSENT_IONS if ion not in targets and ion not in allowed}
+    engine_pool = [salt for salt in usable if not consent.intersection(salt["elements"])]
+    final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
+    binding = sorted(ion for ion, limit in maxima.items()
+                     if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6))
+    base = _target_misses(engine_pool, targets, water)
+    with_chloride = None
+    out = []
+    for row in missed:
+        symbol = row["symbol"]
+        item = {"symbol": symbol, "target": row["target"], "final": row["final"], "deltaPct": row["deltaPct"]}
+        if not any(_supplies(salt, symbol) for salt in usable):
+            item["reason"] = "no_source"
+        elif not base:
+            item["reason"] = "limited_by_ceiling" if binding else "incidental_tradeoff"
+            item["bindingLimits"] = binding
+        else:
+            others = [t for t, ppm in targets.items() if ppm > 0 and t != symbol]
+            item["reason"] = "conflicting_targets"
+            item["conflictsWith"] = [t for t in others if not _target_misses(engine_pool, targets, water, {t})]
+            if consent:
+                if with_chloride is None:
+                    with_chloride = not _target_misses(usable, targets, water)
+                item["reachableWithChloride"] = with_chloride
+        out.append(item)
+    return out
+
+
 def _documents(value) -> list[dict]:
     """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
     if isinstance(value, dict) and value and all(
@@ -627,4 +680,6 @@ def recommend(
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     solved["ammoniumLimit"] = ammonium_limit
+    solved["unmetTargets"] = _diagnose(library, targets, water, solved["rows"], maxima, allowed,
+                                       allow_carbonates)
     return solved
