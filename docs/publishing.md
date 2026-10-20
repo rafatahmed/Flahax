@@ -63,6 +63,19 @@ was uploaded.)
 Withdrawn versions are **yanked** on PyPI, never deleted: PyPI keeps every
 uploaded filename, so a version number can be used only once.
 
+## Documentation site
+
+The documentation is built by Read the Docs from `docs/site/` (Sphinx + MyST;
+see `.readthedocs.yaml`) and published at <https://flahax.readthedocs.io/>.
+Dashboard settings, recorded here because they live outside the repository:
+
+- `latest` tracks `main`.
+- Pull request preview builds are on.
+- Tags v0.1.0 to v0.4.0 stay inactive.
+- An automation rule activates `v*` tags from the next release.
+- The default version is `latest` until that release, then `stable`.
+- Never put a Read the Docs token in the repository.
+
 ## Checklist (last run: 0.4.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
