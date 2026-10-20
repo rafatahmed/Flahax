@@ -27,7 +27,10 @@ from .composition import (
 from .nutrient_acceptance import assess_incidental
 from .product_conversion import counterion_sodium_mg_per_l
 
+# Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
+# Double-precision unit round-off, for scale-aware NNLS optimality tests.
+ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
 KEEP_GRAMS = 1e-6
 # A recipe is feasible when every requested ion is inside this Δ%.
@@ -80,9 +83,13 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
     m = len(b)
     matrix = [[columns[j][i] for j in range(n)] for i in range(m)]
     beta = b[:]
+    # Rank tests are relative so that rescaling a problem does not change its rank.
+    rank_tol = EPS * max(math.sqrt(sum(v * v for v in column)) for column in columns)
+    if rank_tol == 0.0:
+        raise ValueError("rank deficient least squares block")
     for k in range(min(n, m)):
         sigma = math.sqrt(sum(matrix[i][k] * matrix[i][k] for i in range(k, m)))
-        if sigma < EPS:
+        if sigma < rank_tol:
             raise ValueError("rank deficient least squares block")
         if matrix[k][k] < 0:
             sigma = -sigma
@@ -91,7 +98,7 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         for i in range(k + 1, m):
             reflector[i] = matrix[i][k]
         norm = sum(value * value for value in reflector)
-        if norm < EPS:
+        if norm < rank_tol * rank_tol:
             raise ValueError("rank deficient least squares block")
         for j in range(k, n):
             dot = sum(reflector[i] * matrix[i][j] for i in range(k, m))
@@ -107,7 +114,7 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         matrix[k][k] = -sigma
     solution = [0.0] * n
     for i in range(min(n, m) - 1, -1, -1):
-        if abs(matrix[i][i]) < EPS:
+        if abs(matrix[i][i]) < rank_tol:
             raise ValueError("rank deficient least squares block")
         total = beta[i] - sum(matrix[i][j] * solution[j] for j in range(i + 1, n))
         solution[i] = total / matrix[i][i]
@@ -124,28 +131,41 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
     x = [0.0] * n
     passive: list[int] = []
     active = list(range(n))
+    # Columns found numerically dependent on the passive set; skipped until x changes,
+    # as in Lawson-Hanson, so one dependent column cannot block the others.
+    rejected: set[int] = set()
+    # Optimality (dual) test at round-off level, scaled by |A| and |b|. A fixed
+    # absolute threshold stopped early on small or near-dependent problems (#36).
+    scale = max((abs(v) for row in matrix for v in row), default=0.0)
+    scale *= math.sqrt(sum(v * v for v in rhs))
+    dual_tol = 10.0 * max(m, n) * ROUNDOFF * scale
 
     def residual() -> list[float]:
         pred = _matvec(matrix, x)
         return [rhs[i] - pred[i] for i in range(m)]
 
-    for _ in range(n * 4):
+    additions = 0
+    while additions < n * 4:
         resid = residual()
         weights = [sum(col[i] * resid[i] for i in range(m)) for col in cols]
-        if not active:
+        candidates = [j for j in active if j not in rejected]
+        if not candidates:
             break
-        enter = max(active, key=lambda j: weights[j])
-        if weights[enter] <= EPS:
+        enter = max(candidates, key=lambda j: weights[j])
+        if weights[enter] <= dual_tol:
             break
         passive.append(enter)
         active.remove(enter)
+        try:
+            sub = _lstsq([cols[j] for j in passive], rhs)
+        except ValueError:
+            passive.remove(enter)
+            active.append(enter)
+            rejected.add(enter)
+            continue
+        additions += 1
+        rejected.clear()
         while True:
-            try:
-                sub = _lstsq([cols[j] for j in passive], rhs)
-            except ValueError:
-                passive.remove(enter)
-                active.append(enter)
-                break
             if all(value >= -EPS for value in sub):
                 for j in range(n):
                     x[j] = 0.0
@@ -169,6 +189,8 @@ def nnls(matrix: list[list[float]], rhs: list[float]) -> list[float]:
             passive = stay
             if not passive:
                 break
+            # A subset of independent columns stays independent.
+            sub = _lstsq([cols[j] for j in passive], rhs)
     return x
 
 
