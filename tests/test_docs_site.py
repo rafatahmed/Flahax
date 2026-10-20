@@ -53,6 +53,13 @@ class DocsSiteTests(unittest.TestCase):
                 if name != 'index' and any(SITE.rglob(f'{name}.md')):
                     self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
 
+    def test_shipped_text_paths_resolve(self):
+        for name in ('water-to-delivery', 'site-planning'):
+            with self.subTest(name=name):
+                old = ROOT / 'docs' / f'{name}.md'
+                self.assertTrue(old.exists())
+                self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
+
     def test_superpowers_ignored(self):
         lines = (ROOT / '.gitignore').read_text(encoding='utf-8').splitlines()
         self.assertIn('docs/superpowers/', [line.strip() for line in lines])

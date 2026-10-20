@@ -56,17 +56,11 @@ for salt in result["salts"]:
   [guide for growers and agronomists](https://flahax.readthedocs.io/en/latest/for-growers/).
 
 ```{toctree}
-:caption: Getting started
+:caption: User guide
 :hidden:
 
 guide/manual
 guide/usage
-```
-
-```{toctree}
-:caption: User guide
-:hidden:
-
 guide/water-to-delivery
 guide/site-planning
 guide/source-sheet-review
