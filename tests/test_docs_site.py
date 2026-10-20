@@ -43,6 +43,12 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertNotIn('superpowers', relative)
                 self.assertNotIn('publication', relative)
 
+    def test_site_has_no_local_user_paths(self):
+        pattern = re.compile(r'[A-Za-z]:[\\/]Users[\\/]|/home/[a-z]', re.IGNORECASE)
+        for path in SITE.rglob('*.md'):
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                self.assertIsNone(pattern.search(path.read_text(encoding='utf-8')))
+
     def test_published_readme_paths_resolve(self):
         names = ('method usage chemistry-coverage-matrix computational-review delivery-contracts '
                  'delivery-quantities equilibrium-kernel fertilizer-equilibrium-model '
