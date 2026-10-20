@@ -53,11 +53,11 @@ has no diffusion coefficients.
 
 ```bash
 python -m venv competitors-venv
-competitors-venv/Scripts/python -m pip install -r benchmarks/competitors/requirements.txt -c benchmarks/competitors/constraints.txt
+competitors-venv/Scripts/python -m pip install -r tools/competitors/requirements.txt -c tools/competitors/constraints.txt
 git clone --branch v0.6.7 https://github.com/onethree7/Horticalc.git horticalc
-PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m benchmarks.competitors.formulation_track --output out/formulation.json
-PYTHONPATH="src;." competitors-venv/Scripts/python -m benchmarks.competitors.chemistry_track --database path/to/minteq.v4.dat --output out/chemistry.json
-PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m benchmarks.competitors.ec_track --output out/ec.json
+PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m tools.competitors.formulation_track --output out/formulation.json
+PYTHONPATH="src;." competitors-venv/Scripts/python -m tools.competitors.chemistry_track --database path/to/minteq.v4.dat --output out/chemistry.json
+PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m tools.competitors.ec_track --output out/ec.json
 ```
 
 Use `:` instead of `;` in PYTHONPATH on Linux and macOS. minteq.v4.dat must match

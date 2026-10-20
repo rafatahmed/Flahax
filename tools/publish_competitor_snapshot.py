@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TRACKS = ("formulation.json", "chemistry.json", "ec.json")
-MEASURED_PATHS = ("src", "benchmarks")
+MEASURED_PATHS = ("src", "benchmarks", "tools/competitors")
 
 
 def git(*args):
@@ -56,7 +56,8 @@ def readme(env):
         "chemistry.json    FlahaX vs live PHREEQC (PhreeqPython 1.6.2) on the golden fixtures\n"
         "ec.json           EC25 against IUPAC KCl primary standards, and catalogue agreement\n"
         "environment.json  interpreter, platform and the full package list of the run\n\n"
-        "Protocol: benchmarks/competitors/README.md in the repository at the measured commit.\n"
+        "Protocol: tools/competitors/README.md in the repository at the measured commit\n"
+        "(benchmarks/competitors/README.md before #64).\n"
         "Timings are best of three on one machine; compare them only within this snapshot.\n")
 
 

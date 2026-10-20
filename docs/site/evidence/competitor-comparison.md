@@ -13,8 +13,8 @@ shared inputs, not physical validation of any nutrient solution.
 | [ec.json](../_static/benchmarks/2026-10-21-competitors-ed568c5/ec.json) | EC25 per standard and per recipe for every tool |
 | [environment.json](../_static/benchmarks/2026-10-21-competitors-ed568c5/environment.json) | Interpreter, platform and the full package list |
 
-The harness, its protocol and the run commands are in `benchmarks/competitors/`
-in the repository. Timings are the best of three calls on one machine; compare
+The harness, its protocol and the run commands are in `tools/competitors/`
+in the repository (`benchmarks/competitors/` at the measured commit). Timings are the best of three calls on one machine; compare
 them only within this page.
 
 ## Tools
