@@ -1,0 +1,7 @@
+# #40 competitor comparison: development tools only; FlahaX runtime dependencies remain empty.
+# Install with: python -m pip install -r requirements.txt -c constraints.txt
+# Horticalc is not on PyPI; clone tag v0.6.7 (commit db4e68c) and put its src/ on PYTHONPATH (README.md).
+numpy==2.5.4
+scipy==1.18.1
+phreeqpython==1.6.2
+pyEQL==1.7.0
