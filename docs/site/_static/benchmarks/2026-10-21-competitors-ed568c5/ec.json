@@ -1,0 +1,1336 @@
+{
+  "phreeqc_database": {
+    "file": "phreeqpython/database/phreeqc.dat",
+    "sha256": "6bb5ebc1d0ecca0e921c13a2241d05d3a3333b142d1d740b2ed03a786442bdf5"
+  },
+  "repeats": 3,
+  "standards": {
+    "source": "K. W. Pratt, W. F. Koch, Y. C. Wu and P. A. Berezansky, \"Molality-based primary standards of electrolytic conductivity (IUPAC Technical Report)\", Pure and Applied Chemistry 73(11), 1783-1793 (2001), DOI 10.1351/pac200173111783",
+    "rows": [
+      {
+        "molality": 0.01,
+        "reference_us_cm": 1408.23,
+        "expanded_uncertainty_us_cm": 0.42,
+        "flahax": {
+          "ec_us_cm": 1423.4939865576227,
+          "status": "estimated",
+          "reason": null,
+          "ms": 2.6559999969322234,
+          "error_percent": 1.0839128947418197
+        },
+        "horticalc": {
+          "ec_us_cm": 1423.435054347826,
+          "status": "estimated",
+          "ms": 0.014299999747890979,
+          "error_percent": 1.0797280520814097
+        },
+        "phreeqc": {
+          "ec_us_cm": 1396.0596513920832,
+          "status": "estimated",
+          "ph": 6.994260263935162,
+          "ms": 0.1238999975612387,
+          "error_percent": -0.8642301760306783
+        },
+        "pyeql": {
+          "ec_us_cm": 1390.1973439914523,
+          "status": "estimated",
+          "ms": 116.81600000156322,
+          "error_percent": -1.2805192339708533
+        }
+      },
+      {
+        "molality": 0.1,
+        "reference_us_cm": 12824.6,
+        "expanded_uncertainty_us_cm": 5.1,
+        "flahax": {
+          "ec_us_cm": null,
+          "status": "not_supported",
+          "reason": "ionic_strength_outside_domain",
+          "ms": 0.16529999993508682,
+          "error_percent": null
+        },
+        "horticalc": {
+          "ec_us_cm": 12975.14213908548,
+          "status": "estimated",
+          "ms": 0.015199999324977398,
+          "error_percent": 1.1738544600648675
+        },
+        "phreeqc": {
+          "ec_us_cm": 12491.302955107476,
+          "status": "estimated",
+          "ph": 6.980652670971543,
+          "ms": 0.23050000163493678,
+          "error_percent": -2.5988884245319492
+        },
+        "pyeql": {
+          "ec_us_cm": 12809.16635765629,
+          "status": "estimated",
+          "ms": 117.98750000161817,
+          "error_percent": -0.12034404459952547
+        }
+      },
+      {
+        "molality": 1.0,
+        "reference_us_cm": 108620.0,
+        "expanded_uncertainty_us_cm": 43.0,
+        "flahax": {
+          "ec_us_cm": null,
+          "status": "not_supported",
+          "reason": "ionic_strength_outside_domain",
+          "ms": 0.09549999958835542,
+          "error_percent": null
+        },
+        "horticalc": {
+          "ec_us_cm": 111434.37499999999,
+          "status": "estimated",
+          "ms": 0.009900002623908222,
+          "error_percent": 2.5910283557355784
+        },
+        "phreeqc": {
+          "ec_us_cm": 94675.21640597806,
+          "status": "estimated",
+          "ph": 6.95071655823023,
+          "ms": 0.10590000601951033,
+          "error_percent": -12.838136249329715
+        },
+        "pyeql": {
+          "ec_us_cm": 104153.44378995849,
+          "status": "estimated",
+          "ms": 117.80649999855086,
+          "error_percent": -4.1120937304746015
+        }
+      }
+    ]
+  },
+  "catalogue": {
+    "rows": [
+      {
+        "formula": "Chilli (maximumyield)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 3948.589104519652,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 3978.3671233353593,
+          "status": "estimated",
+          "reason": null,
+          "ms": 36.489699996309355,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 3908.883076815322,
+          "status": "estimated",
+          "ms": 0.024900000425986946,
+          "vs_flahax_percent": -1.746546871264698
+        },
+        "phreeqc": {
+          "ec_us_cm": 3917.9182896468014,
+          "status": "estimated",
+          "ph": 2.9482495055246654,
+          "ms": 0.3208999987691641,
+          "vs_flahax_percent": -1.5194382975364795
+        },
+        "pyeql": {
+          "ec_us_cm": 3944.2378335193316,
+          "status": "estimated",
+          "ms": 240.8514999988256,
+          "vs_flahax_percent": -0.857871804133914
+        },
+        "dropped_share_percent": -0.7484985144041167,
+        "spread_percent": 1.7647407170432057
+      },
+      {
+        "formula": "Cucumber (Howard Resh)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2309.3680442213695,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2280.8287576739012,
+          "status": "estimated",
+          "reason": null,
+          "ms": 30.501799999910872,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2557.570624940207,
+          "status": "estimated",
+          "ms": 0.03599999763537198,
+          "vs_flahax_percent": 12.133390827136893
+        },
+        "phreeqc": {
+          "ec_us_cm": 2259.109714719629,
+          "status": "estimated",
+          "ph": 8.61626495146463,
+          "ms": 0.4486999969230965,
+          "vs_flahax_percent": -0.95224347207995
+        },
+        "pyeql": {
+          "ec_us_cm": 2583.685104475226,
+          "status": "estimated",
+          "ms": 234.80790000030538,
+          "vs_flahax_percent": 13.278346556371567
+        },
+        "dropped_share_percent": 1.2512682704235,
+        "spread_percent": 13.410551755895938
+      },
+      {
+        "formula": "DEFAULT",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2208.741804353698,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2207.729072220378,
+          "status": "estimated",
+          "reason": null,
+          "ms": 23.805900003935676,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2354.543670730708,
+          "status": "estimated",
+          "ms": 0.02720000338740647,
+          "vs_flahax_percent": 6.650027866085684
+        },
+        "phreeqc": {
+          "ec_us_cm": 2195.7702319357154,
+          "status": "estimated",
+          "ph": 7.464545207385097,
+          "ms": 0.3257000062149018,
+          "vs_flahax_percent": -0.5416806090538628
+        },
+        "pyeql": {
+          "ec_us_cm": 2321.6951504526573,
+          "status": "estimated",
+          "ms": 242.63090000022203,
+          "vs_flahax_percent": 5.16214057541311
+        },
+        "dropped_share_percent": 0.04587212018283271,
+        "spread_percent": 6.99462634729046
+      },
+      {
+        "formula": "Generic Bloom (maximumyield)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1724.118952108387,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1721.9481835252436,
+          "status": "estimated",
+          "reason": null,
+          "ms": 24.33920000476064,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1817.5492265294554,
+          "status": "estimated",
+          "ms": 0.04170000465819612,
+          "vs_flahax_percent": 5.551911719462632
+        },
+        "phreeqc": {
+          "ec_us_cm": 1706.942341543317,
+          "status": "estimated",
+          "ph": 6.484579399069917,
+          "ms": 0.35480000224197283,
+          "vs_flahax_percent": -0.871445617556621
+        },
+        "pyeql": {
+          "ec_us_cm": 1819.7711102272328,
+          "status": "estimated",
+          "ms": 229.97529999702238,
+          "vs_flahax_percent": 5.680944852923631
+        },
+        "dropped_share_percent": 0.12606468672589077,
+        "spread_percent": 6.386946038843305
+      },
+      {
+        "formula": "Generic Dry Season (Howard Resh)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2413.09528414466,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2407.7792863504537,
+          "status": "estimated",
+          "reason": null,
+          "ms": 22.284899998339824,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2658.9062774883446,
+          "status": "estimated",
+          "ms": 0.02390000008745119,
+          "vs_flahax_percent": 10.42981773958742
+        },
+        "phreeqc": {
+          "ec_us_cm": 2414.001930014209,
+          "status": "estimated",
+          "ph": 6.641135679239325,
+          "ms": 0.3256999989389442,
+          "vs_flahax_percent": 0.258439122681664
+        },
+        "pyeql": {
+          "ec_us_cm": 2679.782112831499,
+          "status": "estimated",
+          "ms": 237.54159999953117,
+          "vs_flahax_percent": 11.296833892666648
+        },
+        "dropped_share_percent": 0.2207842647514502,
+        "spread_percent": 10.7082777474024
+      },
+      {
+        "formula": "Generic Grow (maximumyield)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2027.5334249080652,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2043.847558939753,
+          "status": "estimated",
+          "reason": null,
+          "ms": 35.61549999722047,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1837.0009737512476,
+          "status": "estimated",
+          "ms": 0.026100002287421376,
+          "vs_flahax_percent": -10.120450729496056
+        },
+        "phreeqc": {
+          "ec_us_cm": 2011.0102570221225,
+          "status": "estimated",
+          "ph": 3.1071565505999006,
+          "ms": 0.3262000027461909,
+          "vs_flahax_percent": -1.6066414431937903
+        },
+        "pyeql": {
+          "ec_us_cm": 1818.213761531473,
+          "status": "estimated",
+          "ms": 241.30829999921843,
+          "vs_flahax_percent": -11.03965882491391
+        },
+        "dropped_share_percent": -0.7982069876165787,
+        "spread_percent": 11.705923435019153
+      },
+      {
+        "formula": "Generic Wet Season (Howard Resh)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1619.3877155256746,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1505.0311644779856,
+          "status": "estimated",
+          "reason": null,
+          "ms": 32.64789999957429,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1763.7085195429781,
+          "status": "estimated",
+          "ms": 0.02479999966453761,
+          "vs_flahax_percent": 17.187508217128112
+        },
+        "phreeqc": {
+          "ec_us_cm": 1452.5319366826577,
+          "status": "estimated",
+          "ph": 9.34897155441665,
+          "ms": 0.338099998771213,
+          "vs_flahax_percent": -3.488248551553219
+        },
+        "pyeql": {
+          "ec_us_cm": 1758.725647472617,
+          "status": "estimated",
+          "ms": 230.15309999755118,
+          "vs_flahax_percent": 16.856427227712878
+        },
+        "dropped_share_percent": 7.5982845901634954,
+        "spread_percent": 19.2084391386109
+      },
+      {
+        "formula": "Generic for Berries (Growing Edge)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2222.3555066070508,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2258.388141950708,
+          "status": "estimated",
+          "reason": null,
+          "ms": 29.683399996429216,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2311.99473876371,
+          "status": "estimated",
+          "ms": 0.02510000194888562,
+          "vs_flahax_percent": 2.373666236429073
+        },
+        "phreeqc": {
+          "ec_us_cm": 2236.6593915252424,
+          "status": "estimated",
+          "ph": 3.860838604947196,
+          "ms": 0.3329999963170849,
+          "vs_flahax_percent": -0.9621353398843624
+        },
+        "pyeql": {
+          "ec_us_cm": 2290.0481261542513,
+          "status": "estimated",
+          "ms": 240.88789999950677,
+          "vs_flahax_percent": 1.4018840966901536
+        },
+        "dropped_share_percent": -1.5955023263863555,
+        "spread_percent": 3.3125029625634084
+      },
+      {
+        "formula": "Hoagland solution",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2208.741804353698,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2207.729072220378,
+          "status": "estimated",
+          "reason": null,
+          "ms": 22.880000004079193,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2354.543670730708,
+          "status": "estimated",
+          "ms": 0.0259000007645227,
+          "vs_flahax_percent": 6.650027866085684
+        },
+        "phreeqc": {
+          "ec_us_cm": 2195.7702319357154,
+          "status": "estimated",
+          "ph": 7.464545207385097,
+          "ms": 0.33460000122431666,
+          "vs_flahax_percent": -0.5416806090538628
+        },
+        "pyeql": {
+          "ec_us_cm": 2321.6951504526573,
+          "status": "estimated",
+          "ms": 220.62399999413174,
+          "vs_flahax_percent": 5.16214057541311
+        },
+        "dropped_share_percent": 0.04587212018283271,
+        "spread_percent": 6.99462634729046
+      },
+      {
+        "formula": "Lettuce 2 (Howard Resh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2252.5066403226865,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2283.422659136972,
+          "status": "estimated",
+          "reason": null,
+          "ms": 32.937899995886255,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2278.022392652652,
+          "status": "estimated",
+          "ms": 0.024100001610349864,
+          "vs_flahax_percent": -0.23649876919243917
+        },
+        "phreeqc": {
+          "ec_us_cm": 2270.7491569278804,
+          "status": "estimated",
+          "ph": 3.2657807726776653,
+          "ms": 0.5547999971895479,
+          "vs_flahax_percent": -0.555022179462894
+        },
+        "pyeql": {
+          "ec_us_cm": 2286.948972336281,
+          "status": "estimated",
+          "ms": 219.05030000198167,
+          "vs_flahax_percent": 0.15443103295829097
+        },
+        "dropped_share_percent": -1.3539332585045916,
+        "spread_percent": 0.7105849787316683
+      },
+      {
+        "formula": "Lettuce General (Howard Resh)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1959.4461581294352,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1930.5699936824253,
+          "status": "estimated",
+          "reason": null,
+          "ms": 32.01789999729954,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2121.2119052139988,
+          "status": "estimated",
+          "ms": 0.02559999848017469,
+          "vs_flahax_percent": 9.874902860576306
+        },
+        "phreeqc": {
+          "ec_us_cm": 1903.074301207181,
+          "status": "estimated",
+          "ph": 8.560370516063559,
+          "ms": 0.38049999420763925,
+          "vs_flahax_percent": -1.4242266566465323
+        },
+        "pyeql": {
+          "ec_us_cm": 2110.388690934004,
+          "status": "estimated",
+          "ms": 240.21950000314973,
+          "vs_flahax_percent": 9.31428012659552
+        },
+        "dropped_share_percent": 1.4957325837190005,
+        "spread_percent": 10.818647515550095
+      },
+      {
+        "formula": "Melons (Douglas Peckenpaugh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2633.13198237006,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2663.837185955953,
+          "status": "estimated",
+          "reason": null,
+          "ms": 31.3903999995091,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2836.9148387281584,
+          "status": "estimated",
+          "ms": 0.025000001187436283,
+          "vs_flahax_percent": 6.49730597968563
+        },
+        "phreeqc": {
+          "ec_us_cm": 2633.9155595082634,
+          "status": "estimated",
+          "ph": 3.9082534812391914,
+          "ms": 0.3288000007160008,
+          "vs_flahax_percent": -1.1232528251140739
+        },
+        "pyeql": {
+          "ec_us_cm": 2848.948411807054,
+          "status": "estimated",
+          "ms": 214.6169000043301,
+          "vs_flahax_percent": 6.949044289456885
+        },
+        "dropped_share_percent": -1.1526681791129811,
+        "spread_percent": 7.831040428839182
+      },
+      {
+        "formula": "Pepper (Howard Resh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2925.9242910824364,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2964.3245425709774,
+          "status": "estimated",
+          "reason": null,
+          "ms": 34.31889999774285,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2926.6985606127046,
+          "status": "estimated",
+          "ms": 0.02649999805726111,
+          "vs_flahax_percent": -1.2692936086424411
+        },
+        "phreeqc": {
+          "ec_us_cm": 2937.7456786697217,
+          "status": "estimated",
+          "ph": 3.035595486070648,
+          "ms": 0.34889999369625,
+          "vs_flahax_percent": -0.8966246279566881
+        },
+        "pyeql": {
+          "ec_us_cm": 2988.459634227082,
+          "status": "estimated",
+          "ms": 199.99169999937294,
+          "vs_flahax_percent": 0.8141851983309412
+        },
+        "dropped_share_percent": -1.2954132024706078,
+        "spread_percent": 2.09054344859189
+      },
+      {
+        "formula": "Rice (Douglas Peckenpaugh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2488.4746835127626,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2523.033450673173,
+          "status": "estimated",
+          "reason": null,
+          "ms": 29.632400000991765,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2695.180354672172,
+          "status": "estimated",
+          "ms": 0.02479999966453761,
+          "vs_flahax_percent": 6.823013145270362
+        },
+        "phreeqc": {
+          "ec_us_cm": 2529.053643661703,
+          "status": "estimated",
+          "ph": 3.883436766137165,
+          "ms": 0.3226999979233369,
+          "vs_flahax_percent": 0.23860932112984568
+        },
+        "pyeql": {
+          "ec_us_cm": 2681.353527833655,
+          "status": "estimated",
+          "ms": 212.27470000303583,
+          "vs_flahax_percent": 6.274989224508309
+        },
+        "dropped_share_percent": -1.3697308353636584,
+        "spread_percent": 6.6028635763556265
+      },
+      {
+        "formula": "Strawberry Drip Irrigation (schundler.com)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1864.8220625228214,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1890.8612575437521,
+          "status": "estimated",
+          "reason": null,
+          "ms": 35.28590000496479,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1679.2302469310846,
+          "status": "estimated",
+          "ms": 0.023799999326001853,
+          "vs_flahax_percent": -11.192307725823225
+        },
+        "phreeqc": {
+          "ec_us_cm": 1867.5928605118622,
+          "status": "estimated",
+          "ph": 2.967870538371938,
+          "ms": 0.31180000223685056,
+          "vs_flahax_percent": -1.2305713567856258
+        },
+        "pyeql": {
+          "ec_us_cm": 1702.4484592542565,
+          "status": "estimated",
+          "ms": 196.48749999760184,
+          "vs_flahax_percent": -9.964390435194904
+        },
+        "dropped_share_percent": -1.3771076495985746,
+        "spread_percent": 11.855858473342355
+      },
+      {
+        "formula": "Strawberry Fruiting (growing edge)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1597.1592154975328,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1616.539113494496,
+          "status": "estimated",
+          "reason": null,
+          "ms": 27.883000002475455,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1681.9441450261602,
+          "status": "estimated",
+          "ms": 0.02300000051036477,
+          "vs_flahax_percent": 4.045991277642358
+        },
+        "phreeqc": {
+          "ec_us_cm": 1603.6162439127118,
+          "status": "estimated",
+          "ph": 4.051340739131782,
+          "ms": 0.2808999997796491,
+          "vs_flahax_percent": -0.7994158306413368
+        },
+        "pyeql": {
+          "ec_us_cm": 1682.7663663215205,
+          "status": "estimated",
+          "ms": 216.7078999991645,
+          "vs_flahax_percent": 4.096854339878009
+        },
+        "dropped_share_percent": -1.19885116513323,
+        "spread_percent": 4.8080021058211795
+      },
+      {
+        "formula": "Tomato (Howard Resh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2305.102827875392,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2302.0405316251167,
+          "status": "estimated",
+          "reason": null,
+          "ms": 23.28490000218153,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2554.857541617288,
+          "status": "estimated",
+          "ms": 0.025600005756132305,
+          "vs_flahax_percent": 10.982300551141734
+        },
+        "phreeqc": {
+          "ec_us_cm": 2303.180344260543,
+          "status": "estimated",
+          "ph": 6.717762440554646,
+          "ms": 0.3508000008878298,
+          "vs_flahax_percent": 0.04951314365526649
+        },
+        "pyeql": {
+          "ec_us_cm": 2590.110303296257,
+          "status": "estimated",
+          "ms": 246.05769999470795,
+          "vs_flahax_percent": 12.51367070708258
+        },
+        "dropped_share_percent": 0.13302529682712727,
+        "spread_percent": 11.818018293599867
+      },
+      {
+        "formula": "Tomato Stage.1 - 10-14 days (Howard Resh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1353.679825404541,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1350.108085615953,
+          "status": "estimated",
+          "reason": null,
+          "ms": 23.571899997477885,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1430.3881274838284,
+          "status": "estimated",
+          "ms": 0.024499997380189598,
+          "vs_flahax_percent": 5.946193695392132
+        },
+        "phreeqc": {
+          "ec_us_cm": 1346.150479420461,
+          "status": "estimated",
+          "ph": 6.5856726653835125,
+          "ms": 0.3121999980066903,
+          "vs_flahax_percent": -0.2931325452870448
+        },
+        "pyeql": {
+          "ec_us_cm": 1429.0522442376857,
+          "status": "estimated",
+          "ms": 215.7063000049675,
+          "vs_flahax_percent": 5.847247302849556
+        },
+        "dropped_share_percent": 0.2645521367245385,
+        "spread_percent": 6.064954132487606
+      },
+      {
+        "formula": "Tomato Stage.2 - first cluster (Howard Resh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1944.7612102142357,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1941.9171167016802,
+          "status": "estimated",
+          "reason": null,
+          "ms": 22.555399998964276,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 2111.399301649411,
+          "status": "estimated",
+          "ms": 0.024900000425986946,
+          "vs_flahax_percent": 8.72757047610735
+        },
+        "phreeqc": {
+          "ec_us_cm": 1940.181801043039,
+          "status": "estimated",
+          "ph": 6.565831858878018,
+          "ms": 0.37590000283671543,
+          "vs_flahax_percent": -0.08936095385927434
+        },
+        "pyeql": {
+          "ec_us_cm": 2127.5239881542207,
+          "status": "estimated",
+          "ms": 219.2021000009845,
+          "vs_flahax_percent": 9.557919329110764
+        },
+        "dropped_share_percent": 0.1464580278990546,
+        "spread_percent": 9.227517537733132
+      },
+      {
+        "formula": "Tomato Stage.3 - to plant maturity (Howard Resh)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 2816.7312117841184,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 2780.9427296932845,
+          "status": "estimated",
+          "reason": null,
+          "ms": 31.069299999217037,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 3109.823550614323,
+          "status": "estimated",
+          "ms": 0.02540000423323363,
+          "vs_flahax_percent": 11.826234945777237
+        },
+        "phreeqc": {
+          "ec_us_cm": 2754.1928516839075,
+          "status": "estimated",
+          "ph": 8.575668002916652,
+          "ms": 0.32469999860040843,
+          "vs_flahax_percent": -0.9618996365425736
+        },
+        "pyeql": {
+          "ec_us_cm": 3131.599906926975,
+          "status": "estimated",
+          "ms": 224.64239999681013,
+          "vs_flahax_percent": 12.609291571867987
+        },
+        "dropped_share_percent": 1.2869190619679172,
+        "spread_percent": 12.818924577063116
+      },
+      {
+        "formula": "Tomatoes - Fourth Cluster (U of Florida)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1553.4745433734347,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1523.8259941413842,
+          "status": "estimated",
+          "reason": null,
+          "ms": 29.01719999499619,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1700.2482998118196,
+          "status": "estimated",
+          "ms": 0.022100000933278352,
+          "vs_flahax_percent": 11.577588671457374
+        },
+        "phreeqc": {
+          "ec_us_cm": 1494.5521339586733,
+          "status": "estimated",
+          "ph": 8.671892216102647,
+          "ms": 0.3302000041003339,
+          "vs_flahax_percent": -1.9210763102387896
+        },
+        "pyeql": {
+          "ec_us_cm": 1698.2994412918993,
+          "status": "estimated",
+          "ms": 220.43639999901643,
+          "vs_flahax_percent": 11.44969621343308
+        },
+        "dropped_share_percent": 1.9456650133308884,
+        "spread_percent": 12.822100179796497
+      },
+      {
+        "formula": "Tomatoes - Second Cluster (U of Florida)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1270.0412361771591,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1265.3587390848063,
+          "status": "estimated",
+          "reason": null,
+          "ms": 24.49660000274889,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1382.0839131425814,
+          "status": "estimated",
+          "ms": 0.02510000194888562,
+          "vs_flahax_percent": 9.22467047899782
+        },
+        "phreeqc": {
+          "ec_us_cm": 1253.109903071488,
+          "status": "estimated",
+          "ph": 7.873446634396838,
+          "ms": 0.31429999944521114,
+          "vs_flahax_percent": -0.9680129148337491
+        },
+        "pyeql": {
+          "ec_us_cm": 1386.8551482152523,
+          "status": "estimated",
+          "ms": 217.3793999972986,
+          "vs_flahax_percent": 9.601736280599793
+        },
+        "dropped_share_percent": 0.37005293026541874,
+        "spread_percent": 10.118020220371832
+      },
+      {
+        "formula": "Tomatoes - Third Cluster (U of Florida)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1420.6878288268606,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1389.3560818415922,
+          "status": "estimated",
+          "reason": null,
+          "ms": 51.30579999968177,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1544.444651998143,
+          "status": "estimated",
+          "ms": 0.12169999536126852,
+          "vs_flahax_percent": 11.162622180411862
+        },
+        "phreeqc": {
+          "ec_us_cm": 1360.468758839677,
+          "status": "estimated",
+          "ph": 8.703987604990727,
+          "ms": 1.298399998631794,
+          "vs_flahax_percent": -2.079187861158305
+        },
+        "pyeql": {
+          "ec_us_cm": 1544.4159456551986,
+          "status": "estimated",
+          "ms": 443.7300999998115,
+          "vs_flahax_percent": 11.160556018733114
+        },
+        "dropped_share_percent": 2.255127205672003,
+        "spread_percent": 12.603925667962818
+      },
+      {
+        "formula": "Tomatoes - till First Cluster (U of Florida)",
+        "dropped": [
+          "Citrate-3",
+          "Cu+2",
+          "Edta-4",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1201.3754689535301,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1198.744604102963,
+          "status": "estimated",
+          "reason": null,
+          "ms": 72.91470000200206,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1308.3148515194882,
+          "status": "estimated",
+          "ms": 0.1277999981539324,
+          "vs_flahax_percent": 9.140416318997179
+        },
+        "phreeqc": {
+          "ec_us_cm": 1186.3312502748904,
+          "status": "estimated",
+          "ph": 7.854433361950585,
+          "ms": 1.3468999968608841,
+          "vs_flahax_percent": -1.035529485228559
+        },
+        "pyeql": {
+          "ec_us_cm": 1315.4033730232898,
+          "status": "estimated",
+          "ms": 498.08479999774136,
+          "vs_flahax_percent": 9.731745070721232
+        },
+        "dropped_share_percent": 0.21946833725570158,
+        "spread_percent": 10.307640578924634
+      },
+      {
+        "formula": "Tomatoes - to termination (U of Florida)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1775.1410058313058,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1773.678785331167,
+          "status": "estimated",
+          "reason": null,
+          "ms": 45.68700000527315,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1915.1374418173236,
+          "status": "estimated",
+          "ms": 0.11169999925186858,
+          "vs_flahax_percent": 7.975438261767587
+        },
+        "phreeqc": {
+          "ec_us_cm": 1756.7443942470888,
+          "status": "estimated",
+          "ph": 7.62676185518445,
+          "ms": 0.6186000027810223,
+          "vs_flahax_percent": -0.9547608746369729
+        },
+        "pyeql": {
+          "ec_us_cm": 1905.6893130834364,
+          "status": "estimated",
+          "ms": 459.8963000025833,
+          "vs_flahax_percent": 7.442752816577292
+        },
+        "dropped_share_percent": 0.08243998362227334,
+        "spread_percent": 8.618564134370443
+      },
+      {
+        "formula": "Tropical Lettuce (Douglas Peckenpaugh)",
+        "dropped": [
+          "Cu+2",
+          "Edta-4",
+          "Fe+2",
+          "Fe+3",
+          "H3BO3",
+          "Mn+2",
+          "MoO4-2",
+          "Zn+2"
+        ],
+        "flahax_full_recipe": {
+          "ec_us_cm": 1813.223347306883,
+          "status": "estimated",
+          "reason": null
+        },
+        "flahax": {
+          "ec_us_cm": 1802.66099969523,
+          "status": "estimated",
+          "reason": null,
+          "ms": 33.87490000022808,
+          "vs_flahax_percent": 0.0
+        },
+        "horticalc": {
+          "ec_us_cm": 1888.6695188886479,
+          "status": "estimated",
+          "ms": 0.043300002289470285,
+          "vs_flahax_percent": 4.771197646587955
+        },
+        "phreeqc": {
+          "ec_us_cm": 1805.4665735254403,
+          "status": "estimated",
+          "ph": 5.986939242854001,
+          "ms": 0.7064000019454397,
+          "vs_flahax_percent": 0.15563513221201752
+        },
+        "pyeql": {
+          "ec_us_cm": 1852.4211599095233,
+          "status": "estimated",
+          "ms": 509.5508000013069,
+          "vs_flahax_percent": 2.760372594886462
+        },
+        "dropped_share_percent": 0.5859308884720305,
+        "spread_percent": 4.681233635688597
+      }
+    ]
+  },
+  "summary": {
+    "standards_error_percent": {
+      "flahax": {
+        "max_abs": 1.0839128947418197,
+        "count": 1,
+        "median_ms": 0.16529999993508682
+      },
+      "horticalc": {
+        "max_abs": 2.5910283557355784,
+        "count": 3,
+        "median_ms": 0.014299999747890979
+      },
+      "phreeqc": {
+        "max_abs": 12.838136249329715,
+        "count": 3,
+        "median_ms": 0.1238999975612387
+      },
+      "pyeql": {
+        "max_abs": 4.1120937304746015,
+        "count": 3,
+        "median_ms": 117.80649999855086
+      }
+    },
+    "catalogue_vs_flahax_percent": {
+      "flahax": {
+        "max_abs": 0.0,
+        "count": 26,
+        "median_ms": 31.069299999217037
+      },
+      "horticalc": {
+        "max_abs": 17.187508217128112,
+        "count": 26,
+        "median_ms": 0.02540000423323363
+      },
+      "phreeqc": {
+        "max_abs": 3.488248551553219,
+        "count": 26,
+        "median_ms": 0.33460000122431666
+      },
+      "pyeql": {
+        "max_abs": 16.856427227712878,
+        "count": 26,
+        "median_ms": 230.15309999755118
+      }
+    },
+    "catalogue_max_spread_percent": 19.2084391386109
+  }
+}
