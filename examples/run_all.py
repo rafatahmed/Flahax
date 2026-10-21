@@ -6,12 +6,13 @@ from pathlib import Path
 from . import pepper_formulation, mixed_chemistry, equilibrium_delivery, titration_and_stocks, cli_usage, ec_and_injection
 from .common import serializable
 from .visual_report import render_html
-from . import calculated_site_planning
+from . import calculated_site_planning, tomato_advanced, tomato_simple
 
 SCENARIOS = dict(pepper=pepper_formulation.run, chemistry=mixed_chemistry.run,
                  delivery=equilibrium_delivery.run, titration_stocks=titration_and_stocks.run,
                  cli=cli_usage.run, ec_injection=ec_and_injection.run,
-                 calculated_site=calculated_site_planning.run)
+                 calculated_site=calculated_site_planning.run,
+                 tomato_simple=tomato_simple.run, tomato_advanced=tomato_advanced.run)
 
 
 def markdown(report):
