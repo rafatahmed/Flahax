@@ -1,9 +1,33 @@
 # FlahaX examples
 
-Start with **`run_all`** for a full capability report, then read or run the
-individual modules. These examples use the current **unreleased checkout**,
-including the water-to-delivery APIs; a PyPI 0.3.0 installation alone is not
-sufficient. No PHREEQC installation or third-party Python dependency is needed.
+Start with the **tomato examples** below, or **`run_all`** for the full
+capability report, then read or run the individual modules. They run on the
+current checkout (FlahaX 0.5.0 or later). No PHREEQC installation or
+third-party Python dependency is needed.
+
+## Tomato: simple, advanced and a report
+
+From the repository root in PowerShell (`$env:PYTHONPATH = 'src'` first), or on
+POSIX with `PYTHONPATH=src` in front of each command:
+
+```powershell
+python -m examples.tomato_simple
+python -m examples.tomato_advanced
+python -m examples.tomato_report --output build/tomato-report
+```
+
+| Command | What it shows |
+|---|---|
+| `tomato_simple` | The shipped Howard Resh tomato formula in RO water: products and doses, a 1000 L batch, nutrient fit, the formula's ion balance, product identities and an EC estimate. The unacidified mix is pH 6.9, outside the 5.3-5.8 feed range, and the example says so. |
+| `tomato_advanced` | A published brackish well (Shomar et al. 2024, station 104) with Dutch open-system tomato targets (De Kreij, Voogt and Baas). Steps: balance the laboratory analysis at its measured pH; choose the largest blend with desalinated water that keeps Na and Cl within 3 mmol/L (9% well water); formulate on it, showing why phosphoric acid is withdrawn as a P source (it drives the feed to pH 3.8); speciate the mix; evaluate nitric and phosphoric acid (both refused, with FlahaX's reasons) and compute the nitric dose to pH 5.5, which also closes the nitrate gap; estimate EC; group concentrates into tanks; size injection; and run three growth-stage formulas, each as its own batch. |
+| `tomato_report` | `tomato-report.html`: both examples with charts and tables. `batch-sheet-simple.html` and `batch-sheet-advanced.html`: printable one-page grower sheets (water, what to weigh per tank, concentrate g/L, acid step, and measure-after-mixing lines). Offline HTML; print to PDF from the browser. |
+
+Concentrate tanks are grouped with the **cited Yara compatibility table**
+(`04_Fertilizer.pdf`, p. 65, read with p. 63) by `examples/tomato_tanks.py`; it
+states compatibility, not solubility, and products it does not list are marked
+"Not in table", never guessed. Example acid grades, the site figures for
+injection sizing and the 1:100 ratio are illustrative: replace them with your
+own certificates and site data, and measure EC and pH after mixing.
 
 From the repository root in PowerShell:
 
@@ -28,7 +52,7 @@ Always run from the checkout root, using `-m`, not by executing module files dir
 | Module / run command | Demonstrates | Important boundary |
 |---|---|---|
 | `python -m examples.pepper_formulation` | User's twelve fertilizers, crop targets, water nutrient subtraction, recommendation versus raw least squares, incidental NH4/Na review, 1000 L batch masses and missing-input diagnostics | Water Ca 20 is subtracted from crop Ca 104. Actual water acid/base data are not invented; pH remains uncalculated. Commercial phosphoric-acid grade needs confirmation. |
-| `python -m examples.mixed_chemistry` | All 28 catalogue dose conversions; one macro/trace equilibrium solve including Fe-DTPA, Fe-o,o-EDDHA, CH-micro and urea; species, complexes, activities, SI, conservation residuals, iterations; separate precipitation allocation and Davies rejection | Fixed pH is imposed, not predicted. g/kg-water is not g/L. Fe-DTPA/EDDHA remain Fe-only catalogue forms. |
+| `python -m examples.mixed_chemistry` | All 30 catalogue dose conversions; one macro/trace equilibrium solve including Fe-DTPA, Fe-o,o-EDDHA, CH-micro and urea; species, complexes, activities, SI, conservation residuals, iterations; separate precipitation allocation and Davies rejection | Fixed pH is imposed, not predicted. g/kg-water is not g/L. Fe-DTPA/EDDHA remain Fe-only catalogue forms. |
 | `python -m examples.equilibrium_delivery` | Complete synthetic water-to-recipe workflow, calculated initial pH, nitric/phosphoric comparison, HNO3 demand, commercial mass/volume and nutrient rescoring, stock concentration, pump runtime/uncertainty, composed validated plan, audit and human report | Fictional water/assays/limits/calibration. No operator approval, dosing execution or real equipment contact. |
 | `python -m examples.titration_and_stocks` | Matched water/reagent/curve interpolation, alkalinity conversion and added nitrate; two-tank assignment, concentration/capacity checks and rejection when evidence cannot support the request | Curve points and stock records are **synthetic**, not laboratory/manufacturer evidence. A water-only curve does not prove final fertilizer pH. |
 | `python -m examples.cli_usage` | JSON request/response through `python -m flahax` | CLI covers formulation, not automatic delivery. |
