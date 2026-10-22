@@ -779,6 +779,56 @@
       },
       "status": "identity_consistent",
       "notes": "Audit: identity consistent."
+    },
+    {
+      "id": "idn-potassium-hydroxide",
+      "products": [
+        "Potassium Hydroxide (45% solution)"
+      ],
+      "name": "Potassium hydroxide (aqueous solution)",
+      "formula": "KOH",
+      "hydration": "aqueous solution, not a crystal hydrate",
+      "molecular_weight": null,
+      "cas": "1310-58-3",
+      "ion_forms": {
+        "K+": 1,
+        "OH-": 1
+      },
+      "theoretical_analysis": {
+        "K": 69.68755447361863
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 417661 (45 wt. % solution)",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/417661",
+        "accessed": "2026-10-22"
+      },
+      "status": "aqueous_solution",
+      "notes": "Identity is the KOH solute; theoretical analysis is the pure-KOH value (K 69.69 %). The 45 % w/w solution is K 31.36 % and is dosed by product mass. Molecular weight is null because a solution has none (solute 56.11). Added 2026-10-22 as a pH-up reagent (#75)."
+    },
+    {
+      "id": "idn-potassium-bicarbonate",
+      "products": [
+        "Potassium Bicarbonate"
+      ],
+      "name": "Potassium hydrogen carbonate",
+      "formula": "KHCO3",
+      "hydration": "anhydrous",
+      "molecular_weight": 100.12,
+      "cas": "298-14-6",
+      "ion_forms": {
+        "K+": 1,
+        "HCO3-": 1
+      },
+      "theoretical_analysis": {
+        "K": 39.053724079335844
+      },
+      "comparator": {
+        "product": "Sigma-Aldrich 237205",
+        "url": "https://www.sigmaaldrich.com/US/en/product/sigald/237205",
+        "accessed": "2026-10-22"
+      },
+      "status": "identity_consistent",
+      "notes": "Added 2026-10-22 as a pH-up reagent (#75). Sigma-Aldrich 237205, ACS reagent, assay 99.7 % (ACS 99.7-100.5 %)."
     }
   ]
 }

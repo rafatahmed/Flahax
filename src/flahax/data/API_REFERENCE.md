@@ -794,7 +794,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages separately.
@@ -803,6 +803,11 @@ Water nutrient mg/L is mandatory ({} explicitly denotes zero nutrients).
 It is never silently promoted to a complete acid/base analysis. Optional
 configurations are mappings documented in docs/water-to-delivery.md.
 No stage performs external writes, mixing or equipment operation.
+
+ph_adjustment (products, maximum_reagent_volume_litres, optional
+preferred_product_id) plans the recipe and its pH reagent together (#74):
+acids or bases, with the reagent's nutrients counted as supply. It needs the
+equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import plan_fertilizer_workflow`.
 
@@ -1139,6 +1144,71 @@ solve_mixed_fertilizer_equilibrium(totals, ph, *, trace_totals=None, allow_preci
 ```
 
 Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve_mixed_fertilizer_equilibrium`.
+
+## flahax.ph_adjustment
+
+### `PhAdjustmentPlan`
+
+```text
+PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True) -> None
+```
+
+Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
+
+### `PhCandidate`
+
+```text
+PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None) -> None
+```
+
+Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import PhCandidate`.
+
+### `catalogue_ph_reagents`
+
+```text
+catalogue_ph_reagents()
+```
+
+Reagent records for the catalogue's sourced pH-up products (#75), ready for plan_coupled_ph.
+
+Acids are not in the catalogue as reagent grades: supply your own nitric or
+phosphoric acid record (assay and density from the supplier certificate).
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import catalogue_ph_reagents`.
+
+### `plan_coupled_ph`
+
+```text
+plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None)
+```
+
+Fit the recipe and its pH reagent together; one candidate per offered product.
+
+mix(recommendation) returns the mixed state (water and products, before any
+reagent) at its calculated pH. Candidates whose direction does not fit the feed
+are reported as not applicable. A candidate's dose is reported even when it is
+rejected, so the reason and the amount are both visible.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import plan_coupled_ph`.
+
+### `reagent_dose`
+
+```text
+reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=None)
+```
+
+Moles of reagent per kg water that bring an electroneutral solution to target_ph.
+
+Returns (dose_molal, state at target_ph). The reagent is neutral, so the
+solution's residual charge at the new pH must equal its residual at the initial
+pH; the dose adds the reagent's conserved ions (an acid's anion, a base's K+ and
+carbonate) with its protons or hydroxide implicit.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import reagent_dose`.
 
 ## flahax.ph_planning
 

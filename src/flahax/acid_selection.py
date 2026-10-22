@@ -12,7 +12,7 @@ from .aqueous_model import solve, chemistry
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
-from .root_finding import shrink_bracket
+from .ph_adjustment import reagent_dose
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
 # mass fraction/density. Hydrated citric solids require a separately defined stock.
@@ -107,36 +107,9 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
                 raise DeliveryError('inconsistent_assay', 'massFraction cannot exceed one')
             if target_ph > initial_ph:
                 raise DeliveryError('wrong_reagent_direction', 'acid selection cannot satisfy a base requirement')
-            basis, molar_mass, nutrients = ACIDS[formula]
-
-            last = [initial]
-
-            def at(dose, last=last):
-                amended = dict(totals)
-                amended[basis] = amended.get(basis, 0) + dose
-                last[0] = solve(amended, target_ph, phases=phases, start=last[0])  # warm start, #61
-                return last[0]
-
-            dose = 0.
-            target = initial if target_ph == initial_ph else at(0.)
-            if target_ph != initial_ph:
-                if target.charge_balance < initial.charge_balance - 1e-12:
-                    raise DeliveryError('wrong_reagent_direction', 'target requires base under this phase policy')
-                low, high = 0., 1e-6
-                g_low = target.charge_balance - initial.charge_balance
-                for _ in range(32):
-                    g_high = at(high).charge_balance - initial.charge_balance
-                    if g_high <= 0:
-                        break
-                    low, g_low = high, g_high
-                    high *= 2
-                else:
-                    raise DeliveryError('nonconvergent', 'acid demand could not be bracketed')
-                # Same final width as 40 bisection steps from [0, high].
-                low, high = shrink_bracket(lambda d: at(d).charge_balance - initial.charge_balance,
-                                           low, g_low, high, g_high, width=high * 2. ** -40)
-                dose = (low + high) / 2
-                target = at(dose)
+            _, molar_mass, nutrients = ACIDS[formula]
+            # The shared acid/base dose solve (#75); for acids it is the former bracketed search.
+            dose, target = reagent_dose(totals, initial_ph, target_ph, formula, phases=phases, initial=initial)
             grams = dose * mass * molar_mass / fraction
             litres = grams / (1000 * density)
             if litres > cap or litres > volume or grams * (1 - fraction) > mass * 1000:

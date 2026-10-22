@@ -16,7 +16,7 @@ pyfarm-nutrients is excluded: it calibrates EC heuristically and is not a formul
 
 ## Tracks
 
-**Formulation** (`formulation_track.py`). Every engine gets the 30-product catalogue
+**Formulation** (`formulation_track.py`). Every engine gets the nutrient catalogue (30 products at the published run; pH reagents excluded)
 (products with an assay conflict excluded), the 26 shipped formulas and two waters.
 Each returned recipe is re-scored by the Benchmark v1 evaluator (catalogue assays,
 max(0.01 mg/L, 1 %) per target), so no engine's own reporting enters the score. A

@@ -141,6 +141,8 @@ from .fertilizer_workflow import FertilizerWorkflow, WorkflowStage, plan_fertili
 __all__ += ["calculate_equilibrium_ph", "FertilizerWorkflow", "WorkflowStage", "plan_fertilizer_workflow"]
 from .acid_selection import AcidCandidate, AcidSelection, plan_acid_options
 __all__ += ["AcidCandidate", "AcidSelection", "plan_acid_options"]
+from .ph_adjustment import PhAdjustmentPlan, PhCandidate, catalogue_ph_reagents, plan_coupled_ph, reagent_dose
+__all__ += ["PhAdjustmentPlan", "PhCandidate", "catalogue_ph_reagents", "plan_coupled_ph", "reagent_dose"]
 from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
 __all__ += ["ECPrediction", "ECDeliveryPlan", "water_ec25", "ec_recipe_key", "plan_ec_delivery"]
 from .calculated_ec import estimate_manufacturer_ec
