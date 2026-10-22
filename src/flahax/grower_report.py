@@ -11,7 +11,7 @@ import math
 
 from . import __version__
 from .delivery_contracts import DeliveryError
-from .fertilizer_workflow import unreviewed_reason
+from .fertilizer_workflow import NOT_MODELLABLE, unreviewed_reason
 from .irrigation_ec import calculate_ec_from_totals
 from .saturation_policy import assess_saturation
 from .tank_grouping import group_tanks
@@ -169,6 +169,10 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
         ph = dict(status=ph_stage.status, direction=plan.direction, unadjusted_ph=plan.unadjusted_ph,
                   target_ph=plan.target_ph, selected=candidate(chosen) if chosen is not None else None,
                   candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'])
+    elif ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
+        # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet names it.
+        ph = dict(status=ph_stage.status, direction=None, unadjusted_ph=None, target_ph=workflow.target_ph,
+                  selected=None, candidates=[], message=ph_stage.message)
 
     chemistry = ec = None
     chem = workflow.stages.get('chemistry')
@@ -210,7 +214,10 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
     if chemistry:
         warnings += [f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}' for r in chemistry['review']]
         warnings += chemistry['advisories']
-    if ph_stage is not None:
+    if ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
+        status = 'blocked' if workflow.stages['formulation'].status == 'blocked' else 'requires_review'
+        warnings.append(f'{ph_stage.message}. pH was not planned: measure it after mixing and adjust before use.')
+    elif ph_stage is not None:
         # The pH plan carries its own refitted recipe: its stage decides.
         status = {'calculated': 'ready', 'requires_review': 'requires_review'}.get(ph_stage.status, 'blocked')
     elif any(workflow.stages[n].status == 'blocked' for n in ('formulation', 'chemistry') if n in workflow.stages):
@@ -310,6 +317,8 @@ def _reagent_line(summary):
     if ph is None:
         return 'pH was not planned: supply complete water chemistry and pH reagents to plan it.'
     chosen = ph['selected']
+    if chosen is None and ph['unadjusted_ph'] is None:
+        return f'No pH reagent was planned. {ph["message"]}. Measure the pH after mixing and adjust before use.'
     if chosen is None:
         return (f'No acceptable pH reagent: the feed mixes at pH {number(ph["unadjusted_ph"], 2)} and needs '
                 f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. '
@@ -355,7 +364,7 @@ def render_report(summary):
                 f'<li><b>{text(u["symbol"])}</b> {u["deltaPct"]:+.2f}% - {text(u["reason"])}</li>' for u in f['unmet'])
                 + '</ul>') if f['unmet'] else '')
             + '</section>')
-    if ph is not None:
+    if ph is not None and ph['unadjusted_ph'] is not None:
         body += ('<section><h2>pH adjustment</h2>'
                  f'<p>The recipe mixes at pH {number(ph["unadjusted_ph"], 2)}; it needs '
                  f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. Each '
