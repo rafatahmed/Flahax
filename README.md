@@ -51,6 +51,34 @@ python -m pip install flahax==0.5.0
 Pin the version for reproducible work. `python -m pip install flahax`
 installs the latest release.
 
+Already have FlahaX? Upgrade in place; one version lives in each Python
+environment, so there is nothing to install beside it:
+
+```bash
+python -m pip install --upgrade flahax
+python -c "import flahax; print(flahax.__version__)"
+```
+
+To keep an older version for comparison, install it in its own virtual
+environment.
+
+## For growers: `flahax mix`
+
+`flahax mix` asks five things in order (tank sizes and injection ratio, the
+water analysis as printed by the lab, the crop formula, the fertilizers you
+have, the target pH) and prints what to weigh into tank A and tank B and how
+much acid to put in the acid container. It saves the answers, so the next
+batch is one command:
+
+```bash
+flahax mix                          # first time: answer the five steps
+flahax mix sessions/my-tomato       # next time: no questions
+```
+
+`flahax mix` is on `main` and ships in the next release. Until then:
+`python -m pip install --upgrade "git+https://github.com/rafatahmed/Flahax.git@main"`.
+See [For growers and agronomists](https://flahax.readthedocs.io/en/latest/growers.html).
+
 ## Quick start
 
 Select salts for a crop formula, with 20 mg/L of calcium already in the water:
