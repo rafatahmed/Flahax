@@ -77,7 +77,7 @@ class MixTests(unittest.TestCase):
         self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B'])
         self.assertNotIn('Tank C', sheet)
         self.assertNotIn('<td>C</td>', sheet)
-        self.assertIn('2,000 L final solution', sheet)
+        self.assertIn('2,000 L of irrigation', sheet)
         self.assertEqual(summary['volumes'], {'irrigation_litres': 2000.0, 'prepared_litres':
                                               {'A': 20.0, 'B': 20.0, 'acid': 20.0},
                                               'capacity_litres': {'A': 20.0, 'B': 20.0, 'acid': 20.0}})

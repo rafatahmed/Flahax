@@ -20,7 +20,8 @@ from .batch_cli import BatchOptions, limit_entry, render, run_batch
 from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
-from .grower_report import number
+from .grower_report import number, render_report
+from .grower_sheet import STATUS_WORDS, key_reasons, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
@@ -348,7 +349,6 @@ def find_session(store, spec):
     raise DeliveryError('unknown_item', f'no session file {spec!r} (looked here and in {store.root / "sessions"})')
 
 
-STATUS_WORDS = {'ready': 'ready', 'requires_review': 'review notes before mixing', 'blocked': 'do not mix'}
 
 
 def summarize(summary, say):
@@ -356,11 +356,7 @@ def summarize(summary, say):
     volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
-    # Blocking reasons first: a blocked stage, a hard limit, or a stock that does not dissolve.
-    stopped = tuple(f'{n}:' for n, s in summary['stages'].items() if s['status'] == 'blocked')
-    reasons = sorted(summary['warnings'], key=lambda w: not (w.startswith(stopped) or 'exceeds the declared' in w
-                                                               or ' does not dissolve in tank ' in w))
-    for reason in reasons[:3]:
+    for reason in key_reasons(summary):
         say(f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (report.html)"}')
     if len(summary['warnings']) > 3:
         say(f'  ... {len(summary["warnings"]) - 3} more in report.html')
@@ -418,7 +414,10 @@ def main(argv=None, *, ask=input, say=print, store=None):
     except (DeliveryError, ValueError, OSError, KeyError) as exc:
         say(f'flahax mix: {exc}')
         return 1
-    files = render(summary)   # Task 8 gives each depth its own layout; every depth writes all three for now.
+    depth = session.get('depth', 1)
+    files = {'batch-sheet.html': render_mix_sheet(summary, depth), 'summary.json': render(summary)['summary.json']}
+    if depth >= 3:
+        files['report.html'] = render_report(summary)
     output.mkdir(parents=True)
     for file, content in files.items():
         (output / file).write_bytes(content.encode('utf-8'))
