@@ -258,6 +258,34 @@ class BatchCommandTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--limit', 'Cl', '--output', str(out) + '2')
 
+    def test_water_share_blends_the_analysis_with_ion_free_water(self):
+        # The grower walkthrough (#80): the station 104 well as 8% and 9% of the batch water.
+        with tempfile.TemporaryDirectory() as tmp:
+            water = self.write(tmp, 'well.json', dict(id='station-104', measured_ph=7.8, mg_per_litre=dict(
+                Ca=244, Mg=100.8, K=44.2, Na=680, Cl=1280.4, S=241.43, N_NO3=3.474, HCO3=196.9)))
+            limits = ('--limit', 'Na=68.97', '--limit', 'Cl=106.35', '--acid', 'HNO3:0.60:1.37')
+            runs = {}
+            for share in ('8', '9'):
+                out = Path(tmp) / share
+                code, _, err = self.run_batch('--formula', 'Tomato (Howard Resh)', '--water', water,
+                                              '--water-share', share, *limits, '--output', str(out))
+                runs[share] = code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
+            code, eight = runs['8']
+            self.assertEqual((code, eight['status']), (0, 'requires_review'))
+            self.assertAlmostEqual(eight['water']['analysis_mg_per_litre']['Cl'], 1280.4 * .08, places=9)
+            self.assertEqual(eight['water']['dilution_fraction'], .08)
+            self.assertTrue(all(row['decision'] == 'within_limit' for row in eight['limits']))
+            self.assertFalse(eight['formulation']['unmet'])
+            self.assertIn('N_NH4', eight['stages']['formulation']['message'])     # the review says why
+            self.assertIn('Hydroxylapatite', eight['stages']['ph_adjustment']['message'])
+            code, nine = runs['9']
+            self.assertEqual((code, nine['status']), (3, 'blocked'))
+            self.assertEqual([r['symbol'] for r in nine['limits'] if r['decision'] == 'exceeds_limit'], ['Cl'])
+            code, _, err = self.run_batch('--formula', 'Tomato (Howard Resh)', '--water', 'ro', '--water-share', '8',
+                                          '--output', str(Path(tmp) / 'ro'))
+            self.assertEqual(code, 1)
+            self.assertIn('--water-share needs a measured water analysis', err)
+
     def test_chloride_free_water_does_not_fail_on_the_default_balance_ion(self):
         water_totals = {'K+': .0005, 'NO3-': .0005, 'CO3-2': 0., 'Cl-': 0.}
         ph = measured_at_own_ph(water_totals)
