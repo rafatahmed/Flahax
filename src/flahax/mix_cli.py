@@ -23,58 +23,14 @@ from .engine import load_library
 from .grower_report import number
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
-from .product_conversion import MOLAR_MASS
+from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
 from .stock_volumes import prepare_stocks
 
-HCO3, CACO3 = 61.0168, 50.0435
-# Lab name -> (water key, g/mol of the ion as reported, charge, g/mol of the water key).
-# meq/L of phosphate is taken as H2PO4- (charge 1). Micronutrients are mg/L of the element in every unit.
-IONS = {
-    'Ca': ('Ca', MOLAR_MASS['Ca'], 2, MOLAR_MASS['Ca']), 'Mg': ('Mg', MOLAR_MASS['Mg'], 2, MOLAR_MASS['Mg']),
-    'K': ('K', MOLAR_MASS['K'], 1, MOLAR_MASS['K']), 'Na': ('Na', MOLAR_MASS['Na'], 1, MOLAR_MASS['Na']),
-    'NH4': ('N_NH4', 18.0385, 1, 14.0067), 'NO3': ('N_NO3', 62.0049, -1, 14.0067),
-    'Cl': ('Cl', MOLAR_MASS['Cl'], -1, MOLAR_MASS['Cl']), 'SO4': ('S', 96.06, -2, 32.06),
-    'PO4': ('P', 94.9712, -1, 30.973762), 'Alk': ('HCO3', HCO3, -1, HCO3),
-}
-MICROS = ('Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
-WATER_IONS = tuple(IONS) + MICROS
-UNITS = ('mg', 'meq', 'mmol')
 FORMULA_KEYS = ('N_NO3', 'N_NH4', 'P', 'K', 'Ca', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
 COMPOUND_KEYS = (('N_NO3', 'Nitric N'), ('N_NH4', 'Ammoniacal N'), ('N_UREA', 'Ureic N'), ('P2O5', 'P2O5'),
                  ('K2O', 'K2O'), ('CaO', 'CaO'), ('MgO', 'MgO'), ('SO3', 'SO3')) + tuple(
                      (m, m) for m in MICROS) + (('Na', 'Na'), ('Cl', 'Cl'))
 CHELATES = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
-WATER_SCREEN_PERCENT = 5.0
-
-
-def to_elements(values, units, alkalinity):
-    """Lab values (``WATER_IONS`` names) in ``units`` to the ``read_water`` keys in mg/L."""
-    out = {}
-    for ion, value in values.items():
-        if ion in MICROS:
-            out[ion] = float(value)
-            continue
-        key, ion_mass, charge, key_mass = IONS[ion]
-        if units == 'mg':
-            factor = HCO3 / CACO3 if ion == 'Alk' and alkalinity == 'CaCO3' else key_mass / ion_mass
-        elif units == 'mmol':
-            factor = key_mass * (2 if ion == 'Alk' and alkalinity == 'CaCO3' else 1)
-        else:   # meq: one meq of alkalinity is one meq of HCO3 however it is reported
-            factor = key_mass / abs(charge)
-        out[key] = float(value) * factor
-    return out
-
-
-def water_balance(mg):
-    """(cations, anions meq/L, % apart, contributions by lab name) of ``read_water`` keys."""
-    parts = {}
-    for ion, (key, _, charge, key_mass) in IONS.items():
-        if key in mg:
-            parts[ion] = mg[key] / key_mass * charge
-    cations = sum(v for v in parts.values() if v > 0)
-    anions = -sum(v for v in parts.values() if v < 0)
-    apart = 100 * abs(cations - anions) / (cations + anions) if cations + anions else 0.0
-    return cations, anions, apart, parts
 
 
 class Prompts:
@@ -110,12 +66,13 @@ class Prompts:
             return value
 
     def choose(self, prompt, options, default=1):
+        """0-based index of the chosen option; with ``default=None`` Enter asks again."""
         if prompt:
             self.say(prompt)
         for i, option in enumerate(options, 1):
             self.say(f'  {i}  {option}')
         while True:
-            answer = self.ask(f'Number [{default}]: ').strip() or str(default)
+            answer = self.ask(f'Number [{default}]: ' if default else 'Number: ').strip() or str(default)
             if answer.isdigit() and 1 <= int(answer) <= len(options):
                 return int(answer) - 1
             self.say(f'  Choose 1 to {len(options)}.')
@@ -173,42 +130,6 @@ def ask_spec(p):
                 irrigation_litres=irrigation)
 
 
-def ask_analysis(p, store):
-    while True:
-        name = p.new_name(store, 'waters', 'Name of this analysis (e.g. well 104)')
-        units = UNITS[p.choose('Units as printed on the report',
-                               ['mg/L of each ion (NO3, SO4, PO4 as the ion)', 'meq/L', 'mmol/L'])]
-        alkalinity = ('HCO3', 'CaCO3')[p.choose('Alkalinity reported as', ['HCO3', 'CaCO3'])]
-        ph = p.number('Measured pH', high=14, positive=True)
-        values, below = {}, {}
-        for ion in WATER_IONS:
-            label = f'Alkalinity as {alkalinity}' if ion == 'Alk' else ion
-            unit = 'mg/L' if ion in MICROS else {'mg': 'mg/L', 'meq': 'meq/L', 'mmol': 'mmol/L'}[units]
-            value = p.number(f'{label}, {unit}', blank=True)
-            if value is None:
-                pick = p.choose(f'{label} is blank:', ['not measured', 'measured zero', 'below detection limit'])
-                if pick == 1:
-                    value = 0.0
-                elif pick == 2:
-                    below[ion] = p.number(f'{label} detection limit, {unit}', positive=True)
-            if value is not None:
-                values[ion] = value
-        mg = to_elements(values, units, alkalinity)
-        cations, anions, apart, parts = water_balance(mg)
-        p.say(f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, {apart:.1f} % apart.')
-        if apart > WATER_SCREEN_PERCENT:
-            big = sorted(parts, key=lambda ion: -abs(parts[ion]))[:3]
-            p.say(f'Warning: cations and anions are {apart:.1f} % apart (screen {WATER_SCREEN_PERCENT:g} %). '
-                  'Largest: ' + ', '.join(f'{ion} {abs(parts[ion]):.2f} meq/L' for ion in big)
-                  + '. Check the units, and that NO3, SO4 and PO4 are the ion, not N, S or P.')
-            if p.choose('', ['Re-enter the analysis', 'Continue with it']) == 0:
-                continue
-        data = {'id': name, 'measured_ph': ph, 'mg_per_litre': mg}
-        if below:
-            data['below_detection'] = to_elements(below, units, alkalinity)
-        return name, data
-
-
 def ask_water(p, store, pending):
     p.say('2/5 Water analysis')
     saved = store.list('waters')
@@ -262,6 +183,12 @@ def ask_formula(p, store, pending, library):
     return ref, targets
 
 
+def ask_notes(p):
+    """Data-sheet compatibility notes, kept with the grade for the full report; ';' separates several."""
+    answer = p.text("Notes from the data sheet, e.g. 'tank pH above 4' (Enter = none)", '')
+    return [note.strip() for note in answer.split(';') if note.strip()]
+
+
 def add_single(p, catalogue):
     names = {s['name']: s for s in catalogue}
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
@@ -276,7 +203,8 @@ def add_single(p, catalogue):
     p.say('Label analysis, % w/w; Enter keeps the reference value.')
     analysis = {k: {'typical': p.number(f'{k}, %', round(v, 3), high=100)} for k, v in shipped['elements'].items()}
     grade = {'grade_id': f'grd-{slug(brand)}', 'identity_id': identity['id'], 'supplier': supplier,
-             'product': brand, 'composition': 'single', 'document': document, 'analysis': analysis}
+             'product': brand, 'composition': 'single', 'document': document, 'analysis': analysis,
+             'compatibility_notes': ask_notes(p)}
     try:
         material = resolve_material(product, grade=make_grade(grade))
     except DeliveryError as exc:
@@ -306,6 +234,7 @@ def add_compound(p):
         pick = p.choose('Chelating agent', ['EDTA', 'DTPA', 'EDDHA (o,o)', 'none', 'not stated'])
         if pick < 4:
             record['chelating_agent'] = CHELATES[pick]
+    record['compatibility_notes'] = ask_notes(p)
     try:
         grade = make_grade(record)
         material = resolve_material(name, grade=grade)
@@ -419,22 +348,35 @@ def find_session(store, spec):
     raise DeliveryError('unknown_item', f'no session file {spec!r} (looked here and in {store.root / "sessions"})')
 
 
+STATUS_WORDS = {'ready': 'ready', 'requires_review': 'review notes before mixing', 'blocked': 'do not mix'}
+
+
 def summarize(summary, say):
-    """The grower depth in the terminal: tanks, grams and the acid."""
+    """The grower depth in the terminal: status and reasons, tanks, grams and the acid."""
     volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
-    say(f'FlahaX {__version__}: {summary["title"]} - {summary["status"].replace("_", " ")}')
+    blocked = summary['status'] == 'blocked'
+    say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
+    # Blocking reasons first: a blocked stage, a hard limit, or a stock that does not dissolve.
+    stopped = tuple(f'{n}:' for n, s in summary['stages'].items() if s['status'] == 'blocked')
+    reasons = sorted(summary['warnings'], key=lambda w: not (w.startswith(stopped) or 'exceeds the declared' in w
+                                                               or ' does not dissolve in tank ' in w))
+    for reason in reasons[:3]:
+        say(f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (report.html)"}')
+    if len(summary['warnings']) > 3:
+        say(f'  ... {len(summary["warnings"]) - 3} more in report.html')
     say(f'Irrigation supplied: {number(volumes["irrigation_litres"], 0)} L at 1:{ratio:g}')
     for tank in summary['tanks']['tanks']:
         name = tank['name']
-        say(f'Tank {name}: prepare {number(volumes["prepared_litres"][name], 1)} L in your '
-            f'{number(volumes["capacity_litres"][name], 1)} L tank' + ('' if tank['acid_allowed'] else '; no acid'))
+        say(f'Tank {name}: ' + ('not to be prepared (do not mix)' if blocked else
+            f'prepare {number(volumes["prepared_litres"][name], 1)} L in your '
+            f'{number(volumes["capacity_litres"][name], 1)} L tank' + ('' if tank['acid_allowed'] else '; no acid')))
         for product in tank['products']:
-            say(f'  [ ] {product["name"]}: {number(product["gramsPerBatch"], 1)} g')
+            say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {number(product["gramsPerBatch"], 1)} g')
     selected = summary['ph'] and summary['ph']['selected']
-    if selected:
+    if selected and not blocked:
         say(f'Acid container: {number(selected["volume_ml_per_batch"], 0)} mL {selected["product"]}, added to water '
             f'and made up to {number(volumes["prepared_litres"]["acid"], 1)} L (acid to water, never water to acid)')
-    else:
+    elif not blocked:
         say('pH reagent: none planned' + (f'. {summary["ph"]["message"]}' if summary['ph'] and
                                           summary['ph'].get('message') else '; measure pH after mixing.'))
 

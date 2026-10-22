@@ -22,11 +22,11 @@ NITRIC = ['1', 'HNO3', '60', '1.37', 'Nitric acid 60%', '']      # new acid from
 END = ['', '1', '']                                              # pH 5.8; depth 1; session name
 
 
-def water(name, values, *, units='1', alkalinity='1', ph='7.5', share='', limits=''):
-    """A new analysis: ``values`` maps the lab's ion names to an entry or a (blank, choice[, limit]) tuple."""
-    answers = ['2', name, units, alkalinity, ph]
+def water(name, values, *, units='1', alkalinity='1', micro='1', ph='7.5', share='', limits=''):
+    """A new analysis: ``values`` maps lab ion names to one answer or a list of answers (Enter = not measured)."""
+    answers = ['2', name, units, alkalinity] + ([micro] if units != '1' else []) + [ph]
     for ion in WATER_IONS:
-        entry = values.get(ion, ('', '1'))
+        entry = values.get(ion, '')
         answers += [entry] if isinstance(entry, str) else list(entry)
     return answers + [share, limits]
 
@@ -83,6 +83,10 @@ class MixTests(unittest.TestCase):
                                               'capacity_litres': {'A': 20.0, 'B': 20.0, 'acid': 20.0}})
         self.assertEqual(summary['tanks']['temperature_c'], 25)
         self.assertTrue(any(line.startswith('Tank A') for line in lines), lines)
+        word = {'ready': 'ready', 'requires_review': 'review notes before mixing'}[summary['status']]
+        head = [line for line in lines if line.startswith('FlahaX') and ' - ' in line][-1]
+        self.assertTrue(head.endswith(word), head)
+        self.assertTrue(any(line.startswith('  [ ] ') for line in lines), lines)
         self.assertTrue(any('Nitric acid 60%' in line and 'mL' in line for line in lines), lines)
         store = Store(self.home)
         self.assertEqual(store.list('sessions'), ['tomato-howard-resh-ro'])
@@ -139,7 +143,7 @@ class MixTests(unittest.TestCase):
         self.assertIn('Ca', warning)
 
     def test_blank_is_never_guessed(self):
-        values = dict(BALANCED, Fe=('', '1'), Mn=('', '2'), Zn=('', '3', '0.02'))
+        values = dict(BALANCED, Fe='', Mn='0', Zn='<0.02')
         code, lines, _ = self.full(water_answers=water('blanks', values, alkalinity='2'))
         self.assertIn(code, (0, 3), lines)
         saved = Store(self.home).load('waters', 'blanks')
@@ -186,6 +190,79 @@ class MixTests(unittest.TestCase):
                           str(self.home / 'formulas/tomato-howard-resh-changed.json'), '--acid', 'HNO3:0.6:1.37',
                           '--output', str(Path(self.tmp.name) / 'batch')])
         self.assertIn(code, (0, 3), out.getvalue())
+
+    def test_blocked_result_says_do_not_mix_with_the_reason(self):
+        code, lines, _ = self.full(water_answers=['1', 'Na=1e-9'])
+        self.assertEqual(code, 3, lines)
+        head = next(i for i, line in enumerate(lines) if line.startswith('FlahaX') and ' - ' in line)
+        self.assertTrue(lines[head].endswith('do not mix'), lines[head])
+        self.assertIn('exceeds', '\n'.join(lines[head + 1:head + 5]))
+        self.assertFalse(any('[ ]' in line for line in lines), lines)
+        self.assertFalse(any('measure pH after mixing' in line or line.startswith('Acid container')
+                             for line in lines), lines)
+
+    def test_missing_alkalinity_is_asked_at_entry_never_defaulted(self):
+        values = {'Ca': '40.078', 'NO3': '124.0098', 'Alk': ['', '', '2']}   # Enter asks again; 2 = measured zero
+        code, lines, _ = self.full(water_answers=water('zero-alk', values))
+        self.assertIn(code, (0, 3), lines)
+        self.assertTrue(any('pH plan will be blocked' in line for line in lines), lines)
+        self.assertEqual(Store(self.home).load('waters', 'zero-alk')['mg_per_litre']['HCO3'], 0)
+        shutil.rmtree(self.home)
+        values = dict(BALANCED, Alk=['', '1', '122'])
+        self.full(water_answers=water('typed-alk', values), out='typed')
+        self.assertEqual(Store(self.home).load('waters', 'typed-alk')['mg_per_litre']['HCO3'], 122)
+
+    def test_micronutrients_in_umol_are_converted(self):
+        from flahax.mix_cli import to_elements
+        self.assertAlmostEqual(to_elements({'Fe': 1}, 'mmol', 'HCO3', 'umol')['Fe'], 0.055845, places=6)
+        self.assertAlmostEqual(to_elements({'B': 10}, 'meq', 'HCO3', 'umol')['B'], 0.1081, places=6)
+        # mmol/L report, micronutrients in umol/L: nine major ions not measured, alkalinity 1, then Fe.
+        code, lines, script = self.run_mix(SPEC + ['2', 'w', '3', '1', '2', '7.5'] + [''] * 9 + ['1'])
+        self.assertEqual(code, 1)
+        self.assertIn('Micronutrients on your report in', lines)
+        self.assertTrue(script.prompts[-1].startswith('Fe, µmol/L'), script.prompts[-1])
+        code, lines, script = self.run_mix(SPEC + ['2', 'w', '3', '1', '1', '7.5'] + [''] * 9 + ['1'])
+        self.assertTrue(script.prompts[-1].startswith('Fe, mg/L'), script.prompts[-1])
+
+    def test_phosphate_meq_assumption_is_shown(self):
+        code, _, script = self.run_mix(SPEC + ['2', 'w', '2', '1', '1', '7.5'] + [''] * 8)
+        self.assertEqual(code, 1)
+        self.assertTrue(script.prompts[-1].startswith('PO4, meq/L as H2PO4-'), script.prompts[-1])
+
+    def test_one_prompt_per_ion_reads_lab_notation(self):
+        from flahax.mix_water import lab_entry
+        self.assertEqual([lab_entry(a) for a in ('', '0', '0.4', '<0.02', '< 0.5')],
+                         [(None, None), (0.0, None), (0.4, None), (None, 0.02), (None, 0.5)])
+        for bad in ('abc', '<0', '-1', '<'):
+            with self.assertRaises(ValueError):
+                lab_entry(bad)
+        code, lines, script = self.run_mix(SPEC + ['2', 'w', '1', '1', '7.5', 'x', '<0.1'])
+        self.assertIn("  'x': type a number, 0, <limit, or Enter.", lines)
+        self.assertEqual(script.prompts[-3], script.prompts[-2])    # Ca asked again after 'x'
+        self.assertTrue(script.prompts[-1].startswith('Mg, mg/L'), script.prompts[-1])
+
+    def test_added_products_keep_notes_and_run_through_batch(self):
+        single = ['2', 'iron ii sulfate', 'Ferrous sulfate 97 %', 'Example Supplier', '2026-01-15', 'TDS-1', '', '',
+                  'use within a week']
+        compound = ['3', 'WS NPK 20-20-20 + TE', 'Van Iperen International', '2025-03-28', 'WS NPK sheet',
+                    '5', '3', '12', '20', '20', '', '', '', '0.056', '0.028', '0.008', '0.006', '0.01', '0.004', '', '',
+                    '1', 'tank pH above 4; keep dry']
+        target = Path(self.tmp.name) / 'out'
+        code, lines, _ = self.run_mix(SPEC + RO + TOMATO + ['1'] + single + compound + ['1', ''] + NITRIC + END,
+                                      '--output', str(target))
+        self.assertIn(code, (0, 3), lines)
+        self.assertIn('Added Ferrous sulfate 97 % as Iron II Sulfate (Hepahydrate).', lines)
+        store = Store(self.home).load('stores', 'my-fertilizers')
+        graded = {p['name']: p for p in store if 'grade' in p}
+        self.assertEqual(graded['Iron II Sulfate (Hepahydrate)']['grade']['compatibility_notes'], ['use within a week'])
+        self.assertEqual(graded['WS NPK 20-20-20 + TE']['grade']['compatibility_notes'], ['tank pH above 4', 'keep dry'])
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            code = batch(['--crop', 'tomato (howard', '--water', 'ro', '--acid', 'HNO3:0.6:1.37', '--products',
+                          str(self.home / 'stores/my-fertilizers.json'), '--output', str(Path(self.tmp.name) / 'b')])
+        self.assertIn(code, (0, 3), err.getvalue())
+        summary = json.loads((Path(self.tmp.name) / 'b/summary.json').read_text(encoding='utf-8'))
+        self.assertNotEqual(summary['stages']['chemistry']['status'], 'blocked', summary['stages']['chemistry'])
 
     def test_store_saves_atomically(self):
         store = Store(self.home)
