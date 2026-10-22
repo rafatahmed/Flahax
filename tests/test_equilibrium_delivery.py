@@ -154,6 +154,12 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         p=plan_equilibrium_delivery(**args)
         self.assertAlmostEqual(p.equilibrium.nitric_acid_molal,data['nitric_acid_molal'],
                                delta=2e-6+.03*data['nitric_acid_molal'])
+        # Only MnHPO4 and hydroxylapatite are supersaturated at the target: review-class phases
+        # (#78) travel as cited warnings instead of blocking. Validation still stops, now at the
+        # unreviewed incidental nutrients.
+        review = [w for w in p.warnings if w.startswith('Review: ')]
+        self.assertEqual(sorted(w.split()[1] for w in review), ['Hydroxylapatite', 'MnHPO4'])
+        self.assertFalse(any(w.startswith('Precipitation risk') for w in p.warnings))
         with self.assertRaises(DeliveryError) as caught:
             transition_plan(self.compose(p),'validated')
-        self.assertEqual(caught.exception.code,'precipitation_risk')
+        self.assertEqual(caught.exception.code,'incidental_review_required')

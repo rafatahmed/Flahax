@@ -21,6 +21,7 @@ from .delivery_contracts import DeliveryError
 from .engine import PH_REAGENT, TOLERANCE_PCT, load_library, recommend, score
 from .nutrient_acceptance import assess_incidental
 from .root_finding import shrink_bracket
+from .saturation_policy import assess_saturation, describe
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
 
@@ -109,6 +110,7 @@ class PhCandidate:
     error_code: str | None = None
     message: str | None = None
     product_record: dict | None = None
+    saturation: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -210,9 +212,11 @@ def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable
             candidates.append(PhCandidate(identity, formula, REAGENTS.get(formula, ('unknown',))[0], 'rejected',
                                           error_code=exc.code, message=str(exc),
                                           product_record=dict(product) if isinstance(product, Mapping) else None))
-    usable = [c for c in candidates if c.status in ('accepted', 'not_needed')
+    # Accepted plans first; a plan with review-only findings (#78) is usable after review.
+    usable = [c for c in candidates if c.status in ('accepted', 'not_needed', 'requires_review')
               and (preferred_product_id is None or c.product_id == preferred_product_id)]
-    selected = min(usable, key=lambda c: (c.loss, identifiers.index(c.product_id))).product_id if usable else None
+    selected = min(usable, key=lambda c: (c.status == 'requires_review', c.loss,
+                                          identifiers.index(c.product_id))).product_id if usable else None
     policy = ('explicit user choice; no fallback' if preferred_product_id is not None
               else 'lowest final nutrient loss; input order breaks ties')
     return PhAdjustmentPlan(float(target_ph), base_state.ph, direction, tuple(candidates), selected, policy,
@@ -294,17 +298,17 @@ def _couple(pool, targets, water, target_ph, product, fraction, density, molar_m
         status, code, message = 'rejected', 'dose_limit_exceeded', 'dose exceeds the reagent volume limit or solvent inventory'
     elif incidental['limitViolations']:
         status, code, message = 'rejected', 'nutrient_limit_exceeded', 'the plan exceeds an explicit nutrient maximum'
-    elif any(v > 1e-12 for v in target.precipitated.values()) or any(
-            si > 1e-7 for si in target.saturation_indices.values()):
-        risky = sorted((p for p, si in target.saturation_indices.items() if si > 1e-7),
-                       key=lambda p: -target.saturation_indices[p])
+    saturation = assess_saturation(target)
+    if status == 'accepted' and saturation['blocks']:
         status, code = 'rejected', 'precipitation_risk'
-        message = 'positive saturation index at the target pH: ' + ', '.join(
-            f'{p} {target.saturation_indices[p]:.2f}' for p in risky)
-    elif incidental['requiresReview']:
+        message = 'precipitation risk at the target pH: ' + '; '.join(describe(saturation))
+    elif status == 'accepted' and (incidental['requiresReview'] or saturation['review'] or saturation['advisories']):
         status = 'requires_review'
+        findings = describe(saturation) + saturation['advisories']
+        message = '; '.join(findings) if findings else 'incidental nutrient contributions need review'
     return PhCandidate(identity, formula, REAGENTS[formula][0], status, dose, grams, litres, contribution(dose),
-                       recommendation, mixed, target, len(cache), _loss(recommendation), code, message, dict(product))
+                       recommendation, mixed, target, len(cache), _loss(recommendation), code, message, dict(product),
+                       saturation)
 
 
 def catalogue_ph_reagents():

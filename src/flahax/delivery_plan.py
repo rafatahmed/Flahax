@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 import math
 from typing import Iterable, Mapping, Any
+from .saturation_policy import assess_saturation
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import FinalSolutionRecipe, VolumeLitres
 from .ph_planning import PhPlan
@@ -55,7 +56,8 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
         raise DeliveryError("incomplete_plan", "validated plan needs pH plan and pump commands")
     if target == 'validated' and isinstance(plan.ph_plan,EquilibriumPhPlan):
         result=plan.ph_plan.equilibrium.target
-        if any(v>1e-12 for v in result.precipitated.values()) or any(si>1e-7 for si in result.saturation_indices.values()):
+        # Review-class phases (#78) travel as plan warnings; operator approval is the review.
+        if assess_saturation(result)['blocks']:
             raise DeliveryError('precipitation_risk','equilibrium target cannot be approved with solids or positive SI')
         if plan.ph_plan.incidental_assessment and plan.ph_plan.incidental_assessment['requiresReview']:
             raise DeliveryError('incidental_review_required','incidental nutrient contributions need explicit limits before validation')
