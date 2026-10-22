@@ -6,6 +6,8 @@ from pathlib import Path
 from tools.competitors.chemistry_track import reference_input, replay_difference
 from tools.competitors.ec_track import MACRO, STANDARDS, inputs
 from tools.competitors.formulation_track import CL_LIMIT, incidental
+from tools.competitors.irriblend_adapter import COLUMNS, mmol_per_litre, translate, validate_translation
+from flahax import load_library
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -66,3 +68,36 @@ class IncidentalLimitTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IrriblendTranslationTests(unittest.TestCase):
+    """The catalogue in Irriblend-DSW's 'ferts' convention (mmol/g, phosphate as H2PO4-)."""
+
+    def setUp(self):
+        self.products = [s for s in load_library()["salts"] if s.get("role") != "ph_reagent"]
+        self.rows, self.excluded = translate(self.products)
+
+    def test_round_trip_is_exact_and_nothing_appears_from_nothing(self):
+        self.assertLess(validate_translation(self.products, self.rows), 1e-12)
+        self.assertEqual(set(self.rows) | set(self.excluded), {p["name"] for p in self.products})
+
+    def test_acids_and_dibasic_phosphates_carry_their_protons(self):
+        acid = self.rows["Phosphoric Acid (75%)"]
+        self.assertEqual(acid["H+"], -acid["H2PO4-"])          # as the authors enter phosphoric acid
+        dibasic = self.rows["Potassium Dibasic Phosphate"]
+        self.assertEqual(dibasic["H+"], dibasic["H2PO4-"])      # HPO4 2- = H2PO4- - H+
+        self.assertEqual(self.rows["Potassium Nitrate"]["H+"], 0.0)
+        self.assertAlmostEqual(self.rows["Potassium Nitrate"]["NO3-"], 13.856 * 10 / 14.0067, places=12)
+
+    def test_what_the_model_cannot_represent_is_left_out_with_a_reason(self):
+        for name in ("Iron EDTA", "Urea", "Potassium Citrate", "Sodium Molybdate (Dihydrate)"):
+            self.assertIn(name, self.excluded)
+        self.assertIn("citrate", self.excluded["Potassium Citrate"])
+
+    def test_targets_become_the_ion_vector(self):
+        vector = mmol_per_litre({"N_NO3": 140.067, "P": 30.973762, "S": 32.06})
+        self.assertEqual(len(vector), len(COLUMNS))
+        self.assertAlmostEqual(vector[0], 10.0, places=9)
+        self.assertAlmostEqual(vector[2], 1.0, places=9)
+        self.assertAlmostEqual(vector[6], 1.0, places=9)
+        self.assertEqual(vector[-1], 0.0)

@@ -5,3 +5,8 @@ numpy==2.5.4
 scipy==1.18.1
 phreeqpython==1.6.2
 pyEQL==1.7.0
+# Irriblend-DSW (MIT, commit a046d5c): its module imports these; clone it (README.md).
+pandas==3.0.6
+openpyxl==3.1.5
+matplotlib==3.11.2
+plotly==7.1.0
