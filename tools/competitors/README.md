@@ -10,9 +10,20 @@ inputs. None of these packages is a FlahaX runtime dependency.
 | Horticalc | tag v0.6.7, commit db4e68c76639df2920f43be06c77dd4c16498863 | formulation (as shipped and aligned), EC | GPL-3.0-or-later |
 | PhreeqPython (embedded IPhreeqc) | 1.6.2 | chemistry reference, EC (specific conductance) | Apache-2.0 |
 | pyEQL | 1.7.0 | EC | LGPL-3.0-or-later |
-| Irriblend-DSW method | independent LP after Gallego-Elvira et al. (2021) | formulation baseline | not the authors' code (no licence declared) |
+| Irriblend-DSW | commit a046d5c (code 197d650), `code/irriblend_dsw_funs.py` SHA-256 2a3c06f8…732e, unmodified | formulation: the authors' optimiser `ferti_eco_min` | MIT, Copyright (c) 2026 irriblend-dsw |
+| Irriblend-DSW method | independent LP after Gallego-Elvira et al. (2021) | formulation baseline beside the authors' code | FlahaX's own code (Apache-2.0) |
 
 pyfarm-nutrients is excluded: it calibrates EC heuristically and is not a formulation engine.
+
+Irriblend-DSW is Gallego-Elvira, B., Reca, J., Martin-Gorriz, B., Maestre-Valero, J. F. and
+Martinez-Alvarez, V. (2021), *Agricultural Water Management* 255, 107012,
+doi:10.1016/j.agwat.2021.107012, published at https://github.com/irriblend-dsw/irriblend-dsw-v1.
+The authors added the MIT licence on 2026-10-20 at our request; nothing of theirs is
+redistributed here. Its Colab notebook mounts Google Drive, so `irriblend_adapter.py`
+imports the unmodified module (hash-checked) and calls its optimiser directly; through the
+same calls it reproduces all 97 water blends of the authors' two published case-study
+outputs exactly. The adapter's docstring records the catalogue translation and the neutral
+settings (equal prices, non-binding EC cap, residual HCO3- 0).
 
 ## Tracks
 
@@ -28,6 +39,9 @@ agronomic limits:
 
 Timing compares like with like: one FlahaX fit against one Horticalc fit, with the
 `recommend()` pipeline reported separately.
+
+Irriblend-DSW models no micronutrients, so every engine is also scored on macronutrients
+only (`whole_recipes_passing_macro`, `macro_targets_passing`).
 
 **Chemistry** (`chemistry_track.py`). Each PHREEQC golden fixture's own input runs
 through PhreeqPython on the pinned minteq.v4.dat (SHA-256 checked) merged with the
@@ -55,7 +69,9 @@ has no diffusion coefficients.
 python -m venv competitors-venv
 competitors-venv/Scripts/python -m pip install -r tools/competitors/requirements.txt -c tools/competitors/constraints.txt
 git clone --branch v0.6.7 https://github.com/onethree7/Horticalc.git horticalc
-PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m tools.competitors.formulation_track --output out/formulation.json
+git clone https://github.com/irriblend-dsw/irriblend-dsw-v1.git irriblend
+git -C irriblend checkout a046d5c
+IRRIBLEND_DSW_CODE=irriblend/code PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m tools.competitors.formulation_track --output out/formulation.json
 PYTHONPATH="src;." competitors-venv/Scripts/python -m tools.competitors.chemistry_track --database path/to/minteq.v4.dat --output out/chemistry.json
 PYTHONPATH="src;.;horticalc/src" competitors-venv/Scripts/python -m tools.competitors.ec_track --output out/ec.json
 ```
