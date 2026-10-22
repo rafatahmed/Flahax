@@ -58,7 +58,7 @@ def _positive(value, name):
     return float(value)
 
 
-def _unreviewed(recommendation):
+def unreviewed_reason(recommendation):
     """Why a feasible formulation needs review: incidental nutrients with no declared maximum."""
     found = [f'{row["symbol"]} {row["ppm"]:.3g} mg/L' for row in recommendation['incidentalContributions']
              if row['assessment'] == 'requires_review']
@@ -128,7 +128,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                         value=recommendation, error_code=None if recommendation['feasible'] else 'infeasible_recipe')
     if recommendation['feasible'] and recommendation['requiresReview']:
         stages['formulation'].status = 'requires_review'
-        stages['formulation'].message = _unreviewed(recommendation)
+        stages['formulation'].message = unreviewed_reason(recommendation)
     recipe = None
     if final_volume is None:
         stages['batch'] = WorkflowStage('needs_input', required_inputs=('final_volume',))

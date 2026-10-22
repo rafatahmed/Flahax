@@ -11,6 +11,7 @@ import math
 
 from . import __version__
 from .delivery_contracts import DeliveryError
+from .fertilizer_workflow import unreviewed_reason
 from .irrigation_ec import calculate_ec_from_totals
 from .saturation_policy import assess_saturation
 from .tank_grouping import group_tanks
@@ -150,6 +151,8 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
         recipe = plan.unadjusted_recommendation
     else:
         recipe = workflow.recommendation
+    if stages['formulation']['status'] == 'requires_review':     # quote the recipe that is weighed, not the first fit
+        stages['formulation']['message'] = unreviewed_reason(recipe) or stages['formulation']['message']
 
     ph = None
     if plan is not None:
