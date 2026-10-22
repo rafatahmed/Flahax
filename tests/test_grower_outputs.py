@@ -209,6 +209,49 @@ class ReportTests(unittest.TestCase):
         self.assertIn('never acidify', render_batch_sheet(self.tomato))
 
 
+class IncidentalAssessmentTests(unittest.TestCase):
+    """One assessment of untargeted nutrients: recommend's ammonium allowance, with each source named (#92)."""
+    TOMATO = 'Tomato (Howard Resh)'
+    NITRIC = dict(products=[ACIDS[0]], maximum_reagent_volume_litres=5)
+
+    @staticmethod
+    def row(recommendation, symbol='N_NH4'):
+        return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
+
+    def test_first_fit_and_refit_rate_ammonium_alike(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC)
+        first, refit = self.row(flow.recommendation), self.row(flow.stages['ph_adjustment'].value.selected.recommendation)
+        self.assertEqual(first['assessment'], 'within_limit')
+        self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
+        self.assertEqual(refit['assessment'], 'within_limit')
+        self.assertEqual([r['symbol'] for r in flow.recommendation['incidentalContributions']
+                          if r['assessment'] == 'requires_review'], ['Na'])   # no Na maximum was declared
+        summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
+        self.assertNotIn('N_NH4', summary['stages']['formulation'].get('message') or '')
+
+    def test_each_incidental_names_the_products_that_supply_it(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC)
+        self.assertEqual(self.row(flow.recommendation)['source'], ['Calcium Nitrate (ag grade)'])
+        summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
+        rows = {r['symbol']: r for r in summary['formulation']['rows']}
+        self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
+        self.assertNotIn('source', rows['Ca'])
+
+    def test_declared_ammonium_maximum_wins_over_the_allowance(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, maximum_concentrations={'N_NH4': 5})
+        row = self.row(flow.recommendation)
+        self.assertEqual(row['maximumPpm'], 5)
+        self.assertLessEqual(row['ppm'], 5 + 1e-9)
+        self.assertIsNone(flow.recommendation['ammoniumLimit'])
+
+    def test_recipes_do_not_depend_on_how_the_workflow_assesses(self):
+        direct = recommend(PRODUCTS, FORMULAS[self.TOMATO], {})
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8)
+        self.assertEqual(flow.recommendation['salts'], direct['salts'])
+
+
 class BatchCommandTests(unittest.TestCase):
     def run_batch(self, *argv):
         out, err = io.StringIO(), io.StringIO()

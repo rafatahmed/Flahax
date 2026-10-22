@@ -21,6 +21,29 @@ def assess_incidental(rows, maximum_concentrations=None):
             'requiresReview': any(row['assessment'] == 'requires_review' for row in incidental)}
 
 
+def name_sources(assessment, dosed, library, water=None):
+    """Add ``source`` to each incidental row: the dosed products (and the water) that supply that nutrient.
+
+    ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre}); ``library`` the product records.
+    Formula counterion sodium (chelates, #84) names the product that carries it.
+    """
+    from .product_conversion import counterion_sodium_mg_per_l
+    records = {record.get('id'): record for record in library}
+    for row in assessment['incidentalContributions']:
+        names = []
+        for item in dosed:
+            record = records.get(item['id'])
+            if record is None:
+                continue
+            if row['symbol'] in record.get('elements', {}) or (
+                    row['symbol'] == 'Na' and counterion_sodium_mg_per_l([(record, item['gramsPerLitre'])]) > 0):
+                names.append(item['name'])
+        if (water or {}).get(row['symbol'], 0) > 0:
+            names.append('water')
+        row['source'] = names
+    return assessment
+
+
 def assess_water_basis(rows, maximum_concentrations, analytical_ppm, modelled_ppm):
     """Limits whose decision the charge balancing alone would change (#84).
 
