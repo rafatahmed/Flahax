@@ -1036,5 +1036,79 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertAlmostEqual(row['deltaPct'], 100.0 * (row['final'] - 5.0) / 5.0, places=9)
         self.assertNotAlmostEqual(row['deltaPct'], off_row['deltaPct'], places=6)
 
+
+class WorkflowGradeTests(unittest.TestCase):
+    """Interactive mix Task 3: a supplier label grade passes the chemistry and pH stages."""
+    # The only Fe source in Tomato (Howard Resh); magnesium sulfate shares Mg with Mg Nitrate.
+    NAME = 'Iron II Sulfate (Hepahydrate)'
+    NITRIC = dict(id='HNO3-example', source='EXAMPLE GRADE', revision='1', recordedAt='2026-10-22T00:00:00Z',
+                  chemicalFormula='HNO3', massFraction=.60, densityKgPerL=1.37)
+    RO = dict(water_totals={}, water_mass_kg=1000, water_analysis_id='RO', complete_analysis=True,
+              carbon_boundary='closed', temperature_c=25, phases=[])
+
+    def graded(self, scale, fe=1.0):
+        shipped = {s['name']: s for s in load_library()['salts']}[self.NAME]
+        record = {'grade_id': 'grd-feso4-97', 'identity_id': shipped['identityId'], 'supplier': 'Example Supplier',
+                  'product': 'Ferrous sulfate 97 %', 'composition': 'single', 'document': DOC,
+                  'analysis': {k: {'typical': v * scale * (fe if k == 'Fe' else 1.0)}
+                               for k, v in shipped['elements'].items()}}
+        material = resolve_material(self.NAME, grade=make_grade(record))
+        return dict(shipped, grade=record, elements=material.record['elements']), material
+
+    def workflow(self, product=None):
+        from flahax import VolumeLitres, plan_fertilizer_workflow
+        library = load_library()
+        salts = [product if product is not None and s['name'] == product['name'] else s for s in library['salts']]
+        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        return plan_fertilizer_workflow(salts, targets, {}, 5.8, final_volume=VolumeLitres(1000), equilibrium=self.RO,
+                                        ph_adjustment=dict(products=[self.NITRIC], maximum_reagent_volume_litres=5))
+
+    @staticmethod
+    def doses(recommendation):
+        return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
+
+    def test_label_grade_enters_chemistry_and_ph(self):
+        from flahax.product_conversion import catalogue_dose_totals
+        product, material = self.graded(0.97)
+        self.assertEqual(material.flags, ())
+        shipped, graded = self.workflow(), self.workflow(product)
+        for stage in ('chemistry', 'ph_adjustment'):
+            self.assertIn(graded.stages[stage].status, ('calculated', 'requires_review'), stage)
+        self.assertEqual(graded.stages['chemistry'].status, 'calculated')
+        fe_sources = [s['name'] for s in graded.recommendation['salts']
+                      if 'Fe' in {x['name']: x for x in load_library()['salts']}[s['name']]['elements']]
+        self.assertEqual(fe_sources, [self.NAME])
+        # Weighed doses are recorded to 1e-6 g/L; both rounding errors bound the ratio check.
+        self.assertAlmostEqual(self.doses(graded.recommendation)[self.NAME],
+                               self.doses(shipped.recommendation)[self.NAME] / 0.97, delta=0.5e-6 * (1 + 1 / 0.97))
+        # The conversion used the resolved label assay, not the catalogue assay.
+        chemistry = graded.stages['chemistry'].value
+        doses = chemistry['product_doses_g_per_kg_water']
+        self.assertEqual(chemistry['materials'][self.NAME], material)
+        label = catalogue_dose_totals(doses, materials={self.NAME: material})
+        catalogue = catalogue_dose_totals(doses)
+        self.assertAlmostEqual(chemistry['mixed'].totals['Fe+2'], label['Fe+2'], delta=1e-15)
+        self.assertAlmostEqual(label['Fe+2'], 0.97 * catalogue['Fe+2'], delta=1e-15)
+        selected = graded.stages['ph_adjustment'].value.selected
+        mixed_doses = self.doses(selected.recommendation)  # g/L x 1000 L / 1000 kg water
+        self.assertAlmostEqual(selected.mixed.totals['Fe+2'],
+                               catalogue_dose_totals(mixed_doses, materials={self.NAME: material})['Fe+2'], delta=1e-15)
+        # The graded record id (<catalogue id>+<grade id>) is found as well.
+        resolved_id = self.workflow(dict(product, id=material.record['id']))
+        self.assertEqual(resolved_id.stages['chemistry'].status, 'calculated')
+
+    def test_inconsistent_label_is_refused(self):
+        product, material = self.graded(0.97, fe=1.10)
+        self.assertIn('identity_inconsistent', material.flags)
+        stage = self.workflow(product).stages['chemistry']
+        self.assertEqual((stage.status, stage.error_code), ('blocked', 'identity_inconsistent'))
+        self.assertIn(self.NAME, stage.message)
+
+    def test_changed_assay_without_grade_is_still_refused(self):
+        product, _ = self.graded(0.97)
+        del product['grade']
+        stage = self.workflow(product).stages['chemistry']
+        self.assertEqual(stage.error_code, 'product_chemistry_mismatch')
+
 if __name__ == '__main__':
     unittest.main()
