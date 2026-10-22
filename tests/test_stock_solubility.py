@@ -116,5 +116,46 @@ class StockSolubilityTests(unittest.TestCase):
         self.assertFalse(summary['tanks']['solubility_checked'])
 
 
+class PackagedTableTests(unittest.TestCase):
+    """The owner-approved table (2026-10-23): density-1 lower bounds, sourced, rising with temperature."""
+
+    def setUp(self):
+        self.table = load_solubility_table()
+
+    def test_twenty_sourced_products_and_no_others(self):
+        self.assertEqual(len(self.table), 20)
+        for record in self.table:
+            self.assertTrue(record['source'])
+            points = record['points']
+            self.assertTrue(all(a[0] < b[0] and a[1] <= b[1] for a, b in zip(points, points[1:])), record['product'])
+        names = {r['product'] for r in self.table}
+        self.assertFalse(names & {'Mn EDTA', 'Iron EDTA', 'Potassium Citrate', 'CH - micro'})
+
+    def test_values_are_the_density_one_bound(self):
+        records = {r['product']: r for r in self.table}
+        self.assertEqual(limit_at(records['Potassium Sulfate']['points'], 20), 99.5)      # CRC 9.95 %
+        self.assertAlmostEqual(limit_at(records['Magnesium Sulfate (Heptahydrate)']['points'], 25), 538.6)
+
+    def test_calcium_nitrate_floor_from_20_to_40_c(self):
+        points = next(r for r in self.table if r['product'] == 'Calcium Nitrate (ag grade)')['points']
+        self.assertEqual([limit_at(points, t) for t in (20, 25, 40)], [545.9] * 3)
+        self.assertIsNone(limit_at(points, 15))
+
+    def test_tomato_at_25_c_dissolves_and_sulfate_at_200_to_1_in_the_cold_does_not(self):
+        flow = workflow('Tomato (Howard Resh)')
+
+        def packaged(ratio, temperature):   # the packaged table, not the test fixture
+            return summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO', injection_ratio=ratio,
+                                   temperature_c=temperature)
+        summary = packaged(100, 25)
+        status = {r['product']: r['status'] for r in summary['solubility']}
+        self.assertEqual({p for p, s in status.items() if s == 'not_checked'}, set(UNSOURCED))
+        self.assertTrue(all(s == 'ok' for p, s in status.items() if p not in UNSOURCED), status)
+        cold = packaged(200, 10)
+        row = next(r for r in cold['solubility'] if r['product'] == 'Potassium Sulfate')
+        self.assertEqual(row['status'], 'exceeds')
+        self.assertEqual(cold['status'], 'blocked')
+
+
 if __name__ == '__main__':
     unittest.main()
