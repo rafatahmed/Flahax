@@ -44,24 +44,27 @@ def ppm(totals):
 
 
 def workflow(water, salts, label):
+    """Formulate on the laboratory analysis; speciate the charge-balanced record (#84)."""
     return plan_fertilizer_workflow(
-        salts, targets(), ppm(water), TARGET_PH, final_volume=VolumeLitres(1000),
-        equilibrium=dict(water_totals=water, water_mass_kg=1000, water_analysis_id=label,
+        salts, targets(), ppm(water.analytical_totals), TARGET_PH, final_volume=VolumeLitres(1000),
+        equilibrium=dict(water_balance=water, water_mass_kg=1000, water_analysis_id=label,
                          complete_analysis=True, carbon_boundary='closed', temperature_c=25, phases=[]))
 
 
 def main():
     well = {ion: mg / GRAMS_PER_MOL[ion] / 1000 for ion, mg in WELL_MG_L.items()}
     balanced = balance_water_analysis(well, measured_ph=WELL_PH)
-    print(f'Well: imbalance {balanced.imbalance_percent:.1f}% at pH {WELL_PH}, closed by '
-          f'{100 * balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal:+.1f}% Cl')
+    print(f'Well: imbalance {balanced.imbalance_percent:.1f}% at pH {WELL_PH}; for the chemistry only it is closed by '
+          f'{100 * balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal:+.1f}% Cl. '
+          'Nutrients and limits use the laboratory values.')
 
     library = load_library()['salts']
-    raw = workflow(balanced.totals, library, 'station-104')
+    raw = workflow(balanced, library, 'station-104')
+    lab = ppm(balanced.analytical_totals)
     print(f"1. Well water alone: best tomato recipe misses by {raw.recommendation['maxAbsDeltaPct']:.0f}% "
-          f"(water Ca {ppm(balanced.totals)['Ca']:.0f}, S {ppm(balanced.totals)['S']:.0f} mg/L)")
+          f"(water Ca {lab['Ca']:.0f}, S {lab['S']:.0f} mg/L)")
 
-    blend = {k: v * BLEND for k, v in balanced.totals.items()}
+    blend = balanced.diluted(BLEND)
     acid_p = workflow(blend, library, 'station-104-blend')
     chem = acid_p.stages['chemistry'].value
     print(f"2. Blend, best mass balance: within {acid_p.recommendation['maxAbsDeltaPct']:.2f}% of every target, "

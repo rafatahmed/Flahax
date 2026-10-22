@@ -66,8 +66,9 @@ class MeasuredWaterTests(unittest.TestCase):
             (dict(totals=STATION_104, measured_ph=7.8, alkalinity_eq_per_kg=.003), 'ambiguous_carbon'),
             (dict(totals=WITHOUT_CARBON, measured_ph=7.8), 'missing_carbon'),
             (dict(totals=STATION_104, measured_ph=7.8, balance_ion='SO4-2'), 'unsupported_balance_ion'),
-            (dict(totals={k: v for k, v in STATION_104.items() if k != 'Cl-'}, measured_ph=7.8),
-             'missing_balance_ion'),
+            # Without chloride the well is far out of balance; the screen is widened to reach the ion check.
+            (dict(totals={k: v for k, v in STATION_104.items() if k != 'Cl-'}, measured_ph=7.8,
+                  maximum_imbalance_percent=100), 'missing_balance_ion'),
             (dict(totals=STATION_104, measured_ph=15), 'out_of_range'),
             (dict(totals=STATION_104, measured_ph=7.8, temperature_c=20), 'temperature_out_of_range'),
             (dict(totals=STATION_104 | {'Xx': 1}, measured_ph=7.8), 'invalid_totals'),
@@ -96,8 +97,12 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
         result = plan_fertilizer_workflow(products(), targets, ppm, 6.0, final_volume=VolumeLitres(100),
                                           equilibrium=equilibrium)
         chemistry = result.stages['chemistry']
-        self.assertEqual(chemistry.status, 'calculated', chemistry.message)
+        # Closed on chloride without a stated uncertainty: usable, but the chemistry asks for review (#84).
+        self.assertEqual(chemistry.status, 'requires_review', chemistry.message)
+        self.assertIn('without a stated measurement uncertainty', chemistry.message)
         balance = chemistry.value['water_balance']
+        self.assertEqual(balance.reconciliation, 'assumed')
+        self.assertEqual(chemistry.value['analytical_water_totals'], quarter)
         self.assertEqual(chemistry.value['water'].ph, 7.92)
         self.assertEqual(balance.balance_ion, 'Cl-')
         self.assertLessEqual(abs(balance.imbalance_percent), 5)

@@ -8,9 +8,26 @@ Water is ``ro`` (no ions) or a JSON file::
 
 Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
 bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in aerated water.
-The analysis is closed at its measured pH on chloride; one litre of water is
-taken as one kilogram. Acids are never assumed: pass your certificate values with
-``--acid``. The packaged bases (KOH 45%, KHCO3, K2CO3) are always evaluated.
+One litre of water is taken as one kilogram.
+
+A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
+water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
+measured-pH chemistry needs ``HCO3`` (0 if none). Optional keys:
+``"below_detection": {"Mn": 0.01}`` (detection limits, mg/L; taken as zero, never
+adjusted), ``"balance_ion": "Cl"`` or ``"Na"`` and
+``"balance_ion_uncertainty_percent": 10`` (the stated uncertainty of that ion).
+
+Nutrient targets and concentration limits use the analysis exactly as entered.
+For the chemistry only (pH, saturation, EC, reagent dose) the analysis is
+speciated at its measured pH: used unchanged if it already balances, otherwise
+closed on the balance ion, within its stated uncertainty, or as an assumption
+flagged for review. The report shows both and never lets that balancing pass or
+fail a limit (#84).
+
+Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
+the final solution); unspecified limits are not checked. Acids are never assumed
+either: pass your certificate values with ``--acid``. The packaged bases (KOH 45%,
+KHCO3, K2CO3) are always evaluated.
 """
 import argparse
 import json
@@ -23,7 +40,6 @@ from .delivery_quantities import VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
 from .grower_report import render_batch_sheet, render_report, summarize_batch
-from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents
 from .planning_cli import serializable
 from .product_conversion import MOLAR_MASS
@@ -52,17 +68,38 @@ def read_water(spec):
     if unknown:
         raise DeliveryError('unknown_field', 'unsupported water keys: ' + ', '.join(sorted(unknown))
                             + '; use ' + ', '.join(WATER_KEYS))
+    below = data.get('below_detection') or {}
+    if not isinstance(below, dict) or set(below) - set(WATER_KEYS):
+        raise DeliveryError('unknown_field', '"below_detection" maps water keys to detection limits in mg/L')
     totals = {}
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
         totals[basis] = totals.get(basis, 0) + float(mg) / grams / 1000
-    balanced = balance_water_analysis(totals, measured_ph=data['measured_ph'])
-    # Nutrient mg/L from the closed analysis, so the formulation sees the chloride the chemistry uses.
-    nutrients = {key: balanced.totals[basis] * grams * 1000 for key, (basis, grams) in WATER_KEYS.items()
-                 if key != 'HCO3' and balanced.totals.get(basis)}
-    label = (f"{data.get('id', Path(spec).stem)}: measured pH {data['measured_ph']}, analysis closed with "
-             f"{balanced.balance_adjustment_molal * 1000:+.3f} mmol/kg chloride ({balanced.imbalance_percent:+.2f}% imbalance)")
-    return label, nutrients, dict(water_totals=balanced.totals, water_analysis_id=str(data.get('id', Path(spec).stem)))
+    # Nutrients straight from the laboratory analysis; the workflow balances it for chemistry only.
+    nutrients = {key: float(mg) for key, mg in data['mg_per_litre'].items() if key != 'HCO3'}
+    analysis_id = str(data.get('id', Path(spec).stem))
+    label = f'{analysis_id}: laboratory analysis, measured pH {data["measured_ph"]}'
+    config = dict(water_totals=totals, measured_ph=data['measured_ph'], water_analysis_id=analysis_id,
+                  below_detection={WATER_KEYS[k][0]: float(v) / WATER_KEYS[k][1] / 1000 for k, v in below.items()})
+    if 'balance_ion' in data:
+        ions = {'Cl': 'Cl-', 'Na': 'Na+'}
+        if data['balance_ion'] not in ions:
+            raise DeliveryError('unsupported_balance_ion', '"balance_ion" must be "Cl" or "Na"')
+        config['balance_ion'] = ions[data['balance_ion']]
+    if 'balance_ion_uncertainty_percent' in data:
+        config['balance_ion_uncertainty_percent'] = float(data['balance_ion_uncertainty_percent'])
+    return label, nutrients, config
+
+
+def limit_entry(spec):
+    """``SYMBOL=MG_PER_L``: a maximum concentration in the final solution."""
+    symbol, _, value = spec.partition('=')
+    if not symbol.strip() or not value.strip():
+        raise argparse.ArgumentTypeError(f'--limit {spec}: expected SYMBOL=MG_PER_L, for example Cl=106.35')
+    try:
+        return symbol.strip(), float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'--limit {spec}: {value!r} is not a number') from None
 
 
 def acid_record(spec):
@@ -101,11 +138,13 @@ def build(args):
     label, water, chemistry = read_water(args.water)
     rules = json.loads(Path(args.rules).read_text(encoding='utf-8-sig')) if args.rules else ()
     reagents = [acid_record(a) for a in args.acid] + catalogue_ph_reagents()
+    limits = dict(args.limit)
     workflow = plan_fertilizer_workflow(
         products, targets, water, args.ph, final_volume=VolumeLitres(args.volume),
         equilibrium=dict(chemistry, water_mass_kg=args.volume, complete_analysis=True, carbon_boundary='closed',
                          temperature_c=25, phases=[]),
-        ph_adjustment=dict(products=reagents, maximum_reagent_volume_litres=args.max_reagent_litres or args.volume / 200))
+        ph_adjustment=dict(products=reagents, maximum_reagent_volume_litres=args.max_reagent_litres or args.volume / 200),
+        maximum_concentrations=limits or None)
     summary = summarize_batch(workflow, products, title=title, water_label=label, injection_ratio=args.ratio,
                               rules=rules)
     return {'report.html': render_report(summary), 'batch-sheet.html': render_batch_sheet(summary),
@@ -126,6 +165,9 @@ def main(argv=None):
     parser.add_argument('--ratio', type=float, default=100, help='final litres per litre of concentrate (default 100)')
     parser.add_argument('--acid', action='append', default=[], metavar='FORMULA:FRACTION:DENSITY[:NAME]',
                         help='an acid from your certificate, e.g. HNO3:0.60:1.37; repeat for more')
+    parser.add_argument('--limit', action='append', default=[], type=limit_entry, metavar='SYMBOL=MG_PER_L',
+                        help='a maximum concentration in the final solution, e.g. Cl=106.35; repeat for more. '
+                             'Checked on the laboratory analysis; none is assumed')
     parser.add_argument('--max-reagent-litres', type=float, help='largest reagent volume per batch (default volume/200)')
     parser.add_argument('--products', help='JSON array of your product records (default: the packaged catalogue)')
     parser.add_argument('--rules', help='JSON array of extra compatibilityRule records separating products')

@@ -224,9 +224,11 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
 | `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
 | `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |
-| `missing_carbon` or `ambiguous_carbon` | Measured-pH balancing needs inorganic carbon (`CO3-2`) or titrated alkalinity, exactly one of them. |
+| `missing_carbon` or `ambiguous_carbon` | Measured-pH balancing needs inorganic carbon (`CO3-2`, 0 for water measured carbon-free) or titrated alkalinity, exactly one of them. |
 | `alkalinity_out_of_range` | The alkalinity is not consistent with the measured pH and ions, or needs carbon beyond the dilute model. Check units (eq/kg, not mg/L as CaCO3). |
-| `missing_balance_ion`, `balance_ion_exhausted` or `unsupported_balance_ion` | Balance on `Cl-` or `Na+`, which must be present in the analysis and large enough to absorb the imbalance. |
+| `missing_balance_ion`, `balance_ion_exhausted` or `unsupported_balance_ion` | Balance on `Cl-` or `Na+`, which must be present in the analysis and large enough to absorb the imbalance. An analysis that already balances at its measured pH needs no balance ion. |
+| `fixed_balance_ion` or `reconciliation_out_of_bounds` | The analysis is out of balance and the balance ion is a measured zero, below detection or fixed, or the closure exceeds its stated uncertainty. FlahaX does not try another ion: review the analysis or state the uncertainty of a measured ion. Nutrient accounting is unaffected. |
+| `contradictory_water_inputs` | The water was given two ways that disagree (a `water_balance` record with `measured_ph`, or with other `water_totals`, or analytical totals that differ from the record's). Supply one. |
 | `activity_model_out_of_range` | The solution exceeds the accepted dilute model; do not extrapolate to concentrated stock. |
 | `wrong_reagent_direction` | Nitric acid cannot reach a target requiring base. |
 | `nutrient_tolerance_exceeded` | Review nitrate feedback and selected targets; changing tolerance needs a justified decision. |
@@ -362,10 +364,15 @@ assert abs(balanced.balance_adjustment_molal / balanced.analysed_balance_ion_mol
 print(f'{balanced.imbalance_percent:.2f}% imbalance closed on {balanced.balance_ion}')
 ```
 
-`balance_water_analysis` speciates the water at the measured pH, then closes
-the remaining charge on one named ion (`'Cl-'` by default, or `'Na+'`), as
-PHREEQC's `charge` option does. The analysis imbalance and the adjustment are
-returned for review. An imbalance above `maximum_imbalance_percent` (default
+`balance_water_analysis` speciates the water at the measured pH. If it
+already balances (within 0.0001 % of its total charge) it is used unchanged and
+no balance ion is needed; otherwise the remaining charge is closed on one named
+ion (`'Cl-'` by default, or `'Na+'`), as PHREEQC's `charge` option does, within
+`balance_ion_uncertainty_percent` when you state it ('reconciled') or as an
+assumption for review ('assumed'). The analysis imbalance and the adjustment are
+returned for review. The analysis itself stays in `analytical_totals`: targets
+and maximum concentrations always use it, and the balanced `totals` only feed
+the chemistry (#84). An imbalance above `maximum_imbalance_percent` (default
 5%) is rejected with `charge_imbalance_exceeded`: correct the analysis rather
 than forcing it. Supply inorganic carbon as `CO3-2`, or titrated total
 alkalinity as `alkalinity_eq_per_kg` (treated as carbonate alkalinity;

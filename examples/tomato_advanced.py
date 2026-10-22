@@ -1,6 +1,6 @@
 """Advanced tomato example: a published brackish well, from laboratory analysis to batch plan.
 
-Steps: balance the well analysis at its measured pH; choose the largest blend with
+Steps: balance the well analysis at its measured pH (for chemistry only); choose the largest blend with
 desalinated water that keeps Na and Cl within open-system limits; formulate Dutch
 tomato targets on that water; speciate the mix (pH, saturation indices); evaluate
 nitric and phosphoric acid; estimate EC; group concentrates into compatible tanks
@@ -64,9 +64,12 @@ def water_mg_l(totals):
 
 
 def largest_blend(balanced):
-    """Largest whole-percent share of well water whose Na and Cl stay within LIMITS_MG_L."""
+    """Largest whole-percent share of well water whose Na and Cl stay within LIMITS_MG_L.
+
+    Decided on the laboratory analysis, never on the charge-balanced model (#84).
+    """
     for percent in range(100, 0, -1):
-        water = water_mg_l({k: v * percent / 100 for k, v in balanced.totals.items()})
+        water = water_mg_l({k: v * percent / 100 for k, v in balanced.analytical_totals.items()})
         if all(water[ion] <= limit for ion, limit in LIMITS_MG_L.items()):
             return percent
     return 0
@@ -91,20 +94,24 @@ def run():
     well = {ion: mg / GRAMS_PER_MOL[ion] / 1000 for ion, mg in WELL_MG_L.items()}
     balanced = balance_water_analysis(well, measured_ph=WELL_PH)
 
-    # 2. Blend with desalinated (ion-free) water until Na and Cl meet the open-system limits.
+    # 2. Blend with desalinated (ion-free) water until Na and Cl meet the open-system limits,
+    #    on the laboratory values. The balanced model (Cl -9.5%) is for the chemistry only.
     percent = largest_blend(balanced)
-    blend = {k: v * percent / 100 for k, v in balanced.totals.items()}
+    blend_water = balanced.diluted(percent / 100)
+    blend = blend_water.totals                       # chemistry
+    blend_mg_l = water_mg_l(blend_water.analytical_totals)   # nutrients and limits
     blends = [dict(well_percent=p, **{k: round(v, 1) for k, v in water_mg_l(
-        {k: v * p / 100 for k, v in balanced.totals.items()}).items()})
-        for p in sorted({100, 25, percent}, reverse=True)]
+        {k: v * p / 100 for k, v in balanced.analytical_totals.items()}).items()},
+        Cl_model=round(water_mg_l({k: v * p / 100 for k, v in balanced.totals.items()})['Cl'], 1))
+        for p in sorted({100, 25, percent + 1, percent}, reverse=True)]
 
     # 3. Formulate on the blend and speciate the mix. With the whole catalogue the fit takes P
     #    from phosphoric acid and the feed ends far below the target pH; without it, potassium
     #    phosphate supplies P and both acids are evaluated against the targets.
     def plan(products):
         return plan_fertilizer_workflow(
-            products, goal, water_mg_l(blend), TARGET_PH, final_volume=VolumeLitres(BATCH_LITRES),
-            equilibrium=dict(water_totals=blend, water_mass_kg=BATCH_LITRES, complete_analysis=True,
+            products, goal, blend_mg_l, TARGET_PH, final_volume=VolumeLitres(BATCH_LITRES),
+            equilibrium=dict(water_balance=blend_water, water_mass_kg=BATCH_LITRES, complete_analysis=True,
                              water_analysis_id=f'station-104-{percent}pct', carbon_boundary='closed',
                              temperature_c=25, phases=[]))
     with_phosphoric = plan(salts)
@@ -146,7 +153,7 @@ def run():
     stages = []
     for name in STAGES:
         stage_targets = next(f['targets'] for f in library['formulas'] if f['name'] == name)
-        result = recommend(salts, stage_targets, water_mg_l(blend))
+        result = recommend(salts, stage_targets, blend_mg_l)
         stages.append(dict(stage=name, feasible=result['feasible'],
                            worst_miss_percent=max(abs(r['deltaPct']) for r in result['rows'] if r['deltaPct'] is not None),
                            ion_imbalance_percent=result['targetIonBalance']['imbalancePercent'],
@@ -157,6 +164,7 @@ def run():
         well=dict(analysis_mg_l=WELL_MG_L, measured_ph=WELL_PH, imbalance_percent=balanced.imbalance_percent,
                   chloride_adjustment_percent=100 * balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal),
         limits_mg_l=LIMITS_MG_L, blend_percent=percent, blends=blends, targets=goal, target_ph=TARGET_PH,
+        chloride_boundary_percent=100 * LIMITS_MG_L['Cl'] / WELL_MG_L['Cl-'],
         phosphoric_check=dict(
             phosphoric_g_per_litre=next((x['gramsPerLitre'] for x in with_phosphoric.recommendation['salts']
                                          if x['name'] == PHOSPHORIC), 0.0),
@@ -181,7 +189,8 @@ def run():
         tanks=tanks, injection_ratio=INJECTION_RATIO, site=SITE, sizing=sizing, stages=stages,
         assumptions=[
             'Well: Shomar et al. (2024) station 104, measured pH 7.80; desalinated water taken as ion-free.',
-            'Na and Cl limits: 3 mmol/L each, De Kreij, Voogt and Baas (2003), open systems.',
+            'Na and Cl limits: 3 mmol/L each, De Kreij, Voogt and Baas (2003), open systems; checked on the '
+            'laboratory analysis. The charge-balanced water (Cl closed) is used only for pH, saturation and EC.',
             'Targets: De Kreij, Voogt and Baas (1999) tomato, open system; target pH 5.5 from the same table.',
             'Phosphoric acid is withdrawn as a P source because, on this water, it drives the feed below the target pH.',
             'Acid grades are EXAMPLES (60% HNO3 1.37 kg/L; 75% H3PO4 1.58 kg/L); use your certificate.',

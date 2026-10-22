@@ -195,9 +195,13 @@ def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable
             fraction, density = _check_product(product)
             reagent_direction, _, molar_mass, nutrients = REAGENTS[formula]
             if direction == 'none':
-                candidates.append(PhCandidate(identity, formula, reagent_direction, 'not_needed', 0.0, 0.0,
+                # No reagent, but the same final acceptance as every dosed candidate (#84).
+                status, code, message, saturation = _judge(unadjusted, base_state, maximum_concentrations,
+                                                           accepted='not_needed')
+                candidates.append(PhCandidate(identity, formula, reagent_direction, status, 0.0, 0.0,
                                               0.0 if density else None, {}, unadjusted, base_state, base_state,
-                                              loss=_loss(unadjusted), product_record=dict(product)))
+                                              loss=_loss(unadjusted), error_code=code, message=message,
+                                              product_record=dict(product), saturation=saturation))
                 continue
             if reagent_direction != direction:
                 candidates.append(PhCandidate(identity, formula, reagent_direction, 'not_applicable',
@@ -225,6 +229,24 @@ def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable
 
 def _loss(recommendation):
     return sum((row['deltaPct'] / 100) ** 2 for row in recommendation['rows'] if row['deltaPct'] is not None)
+
+
+def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
+    """Final acceptance of one candidate: dose, hard limits, then saturation; review never outranks a rejection."""
+    incidental = assess_incidental(recommendation['rows'], maximum_concentrations)
+    saturation = assess_saturation(target)
+    if over_dose:
+        return 'rejected', 'dose_limit_exceeded', 'dose exceeds the reagent volume limit or solvent inventory', saturation
+    if incidental['limitViolations']:
+        return 'rejected', 'nutrient_limit_exceeded', 'the plan exceeds an explicit nutrient maximum', saturation
+    if saturation['blocks']:
+        return ('rejected', 'precipitation_risk',
+                'precipitation risk at the target pH: ' + '; '.join(describe(saturation)), saturation)
+    if incidental['requiresReview'] or saturation['review'] or saturation['advisories']:
+        findings = describe(saturation) + saturation['advisories']
+        return ('requires_review', None,
+                '; '.join(findings) if findings else 'incidental nutrient contributions need review', saturation)
+    return accepted, None, None, saturation
 
 
 def _couple(pool, targets, water, target_ph, product, fraction, density, molar_mass, nutrients, mix,
@@ -292,20 +314,8 @@ def _couple(pool, targets, water, target_ph, product, fraction, density, molar_m
             and not recommendation.get('limitViolations'))
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
-    status, code, message = 'accepted', None, None
-    incidental = assess_incidental(recommendation['rows'], maximum_concentrations)
-    if (litres is not None and (litres > cap or litres > volume)) or grams * (1 - fraction) > mass * 1000:
-        status, code, message = 'rejected', 'dose_limit_exceeded', 'dose exceeds the reagent volume limit or solvent inventory'
-    elif incidental['limitViolations']:
-        status, code, message = 'rejected', 'nutrient_limit_exceeded', 'the plan exceeds an explicit nutrient maximum'
-    saturation = assess_saturation(target)
-    if status == 'accepted' and saturation['blocks']:
-        status, code = 'rejected', 'precipitation_risk'
-        message = 'precipitation risk at the target pH: ' + '; '.join(describe(saturation))
-    elif status == 'accepted' and (incidental['requiresReview'] or saturation['review'] or saturation['advisories']):
-        status = 'requires_review'
-        findings = describe(saturation) + saturation['advisories']
-        message = '; '.join(findings) if findings else 'incidental nutrient contributions need review'
+    over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (1 - fraction) > mass * 1000
+    status, code, message, saturation = _judge(recommendation, target, maximum_concentrations, over_dose)
     return PhCandidate(identity, formula, REAGENTS[formula][0], status, dose, grams, litres, contribution(dose),
                        recommendation, mixed, target, len(cache), _loss(recommendation), code, message, dict(product),
                        saturation)

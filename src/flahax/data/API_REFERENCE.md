@@ -699,7 +699,7 @@ Source module: `flahax.equilibrium_delivery`. Import with `from flahax import Eq
 ### `plan_equilibrium_delivery`
 
 ```text
-plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent, temperature_c=25.0, phases=(), maximum_concentrations=None)
+plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent, temperature_c=25.0, phases=(), maximum_concentrations=None, analytical_water_totals=None)
 ```
 
 Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
@@ -708,6 +708,12 @@ Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
 reagent carrier water; final recipe volume is the make-up volume. No density
 or g/L == g/kg approximation is made. `phases` is the explicit equilibrium
 policy; positive target SI or solid formation prohibits delivery validation.
+
+`water_totals` drive the acid dose. Nutrient rows, target deviations and
+maximum concentrations use `analytical_water_totals`, the laboratory analysis
+(#84). Pass a `BalancedWaterAnalysis` as `water_totals` and both come from it;
+a plain mapping without `analytical_water_totals` is taken as the analysis
+itself, as before.
 
 Source module: `flahax.equilibrium_delivery`. Import with `from flahax import plan_equilibrium_delivery`.
 
@@ -774,10 +780,10 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None) -> None
 ```
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -1125,28 +1131,47 @@ Source module: `flahax.materials`. Import with `from flahax import resolve_mater
 ### `BalancedWaterAnalysis`
 
 ```text
-BalancedWaterAnalysis(totals: dict, measured_ph: float, state: flahax.aqueous_model.AqueousResult, balance_ion: str, analysed_balance_ion_molal: float, balance_adjustment_molal: float, imbalance_percent: float, inorganic_carbon_molal: float, carbon_source: str) -> None
+BalancedWaterAnalysis(totals: dict, measured_ph: float, state: flahax.aqueous_model.AqueousResult, balance_ion: str, analysed_balance_ion_molal: float, balance_adjustment_molal: float, imbalance_percent: float, inorganic_carbon_molal: float, carbon_source: str, analytical_totals: dict = None, alkalinity_eq_per_kg: float | None = None, analysis_id: str | None = None, dilution_fraction: float = 1.0, phases: tuple = (), units: str = 'mol/kg water', reconciliation: str = 'assumed', fixed: tuple = (), below_detection: dict = None, balance_ion_uncertainty_percent: float | None = None) -> None
 ```
 
-Analytical totals (mol/kg water) closed at the measured pH, with their audit.
+A water analysis closed at its measured pH: the laboratory record and the model, kept apart.
 
-Record fields: `totals`, `measured_ph`, `state`, `balance_ion`, `analysed_balance_ion_molal`, `balance_adjustment_molal`, `imbalance_percent`, `inorganic_carbon_molal`, `carbon_source`.
+``analytical_totals`` are the analysis as entered (mol/kg water) and decide every
+nutrient target and concentration limit. ``totals`` are the charge-balanced model
+used for chemistry. ``measured_ph`` and ``alkalinity_eq_per_kg`` are source
+measurements; ``state`` is the computed state of this (possibly diluted) water.
+``dilution_fraction`` is the share of the source water in ion-free water.
+
+Record fields: `totals`, `measured_ph`, `state`, `balance_ion`, `analysed_balance_ion_molal`, `balance_adjustment_molal`, `imbalance_percent`, `inorganic_carbon_molal`, `carbon_source`, `analytical_totals`, `alkalinity_eq_per_kg`, `analysis_id`, `dilution_fraction`, `phases`, `units`, `reconciliation`, `fixed`, `below_detection`, `balance_ion_uncertainty_percent`.
 
 Source module: `flahax.measured_water`. Import with `from flahax import BalancedWaterAnalysis`.
 
 ### `balance_water_analysis`
 
 ```text
-balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, balance_ion='Cl-', maximum_imbalance_percent=5.0, phases=(), temperature_c=25.0)
+balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, balance_ion='Cl-', maximum_imbalance_percent=5.0, phases=(), temperature_c=25.0, analysis_id=None, balance_ion_uncertainty_percent=None, fixed=(), below_detection=None)
 ```
 
 Close a complete water analysis at its measured pH.
 
-``totals`` are analytical totals in mol/kg water. Supply inorganic carbon
-either as ``totals['CO3-2']`` or as ``alkalinity_eq_per_kg`` (titrated total
-alkalinity treated as carbonate alkalinity), never both. The charge left at
-the measured pH is closed by changing ``balance_ion``. An imbalance above
-``maximum_imbalance_percent`` is rejected: fix the analysis, do not force it.
+``totals`` are analytical totals in mol/kg water. A component given as 0 is a
+measured zero and stays zero; an omitted component is not measured.
+``below_detection`` maps components reported below detection to their
+detection limit (mol/kg); they enter the chemistry as 0, are recorded, and are
+never adjusted. Supply inorganic carbon either as ``totals['CO3-2']`` (0 for
+explicitly carbon-free water) or as ``alkalinity_eq_per_kg`` (titrated total
+alkalinity treated as carbonate alkalinity), never both.
+
+The composition is first speciated at the measured pH. If its charge closes
+within ``CLOSURE_TOLERANCE`` it is returned unchanged (``reconciliation`` is
+'unchanged') and no balance ion is needed. Otherwise an imbalance above
+``maximum_imbalance_percent`` is rejected (fix the analysis, do not force it),
+and the rest is closed on ``balance_ion``, which must be measured, positive and
+not ``fixed``. With ``balance_ion_uncertainty_percent`` the adjustment must lie
+within that stated measurement uncertainty ('reconciled'); without it the
+closure is a modelling assumption ('assumed') that callers report for review.
+Nothing else is changed and no other ion is tried. The analysis itself is kept
+unchanged in ``analytical_totals`` (#84).
 
 Source module: `flahax.measured_water`. Import with `from flahax import balance_water_analysis`.
 
