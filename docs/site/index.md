@@ -160,6 +160,7 @@ Benchmark specification and reproduction <evidence/benchmark-v1>
 Benchmark results and downloads <evidence/benchmark-results>
 Competitor comparison <evidence/competitor-comparison>
 Computational assessment <evidence/computational-review>
+Physical validation protocol (draft) <evidence/physical-validation-protocol>
 Package verification <api/package-verification>
 Planning validation history <evidence/planning-validation-history>
 Fertilizer source review <guide/source-sheet-review>
