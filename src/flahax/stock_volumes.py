@@ -39,15 +39,15 @@ def prepare_stocks(*, tank_litres: Mapping, ratio: float, mode: str,
         raise DeliveryError('invalid_value', f'mode must be one of {MODES}, got {mode!r}')
 
     if mode == 'fill':
-        # Assumption: irrigation_litres is ignored in fill mode.
-        irrigation = min(capacity.values()) * ratio
+        # Assumption: irrigation_litres is ignored in fill mode. Each container is prepared to the smallest
+        # capacity directly: (x * ratio) / ratio can round 1 ulp above x.
+        prepared_each = min(capacity.values())
+        irrigation = prepared_each * ratio
     else:
         if irrigation_litres is None:
             raise DeliveryError('invalid_value', 'one-irrigation mode needs irrigation_litres')
         irrigation = _positive(irrigation_litres, 'irrigation_litres')
-
-    prepared_each = irrigation / ratio
-    if mode == 'once':
+        prepared_each = irrigation / ratio
         too_small = [name for name in CONTAINERS if prepared_each > capacity[name]]
         if too_small:
             raise DeliveryError('tank_too_small', f'{", ".join(too_small)} cannot hold {prepared_each:g} L each '
