@@ -167,7 +167,8 @@ def generate(exe,base,cases=None):
                     'runtime_molality_absolute':1e-10,'runtime_si_absolute':.25,
                     'acid_relative':.03,'acid_absolute':2e-6},
                   'hashes':{p.name:sha(p) for p in folder.iterdir() if p.suffix in ('.pqi','.sel','.out','.screen')}}
-            (folder/'expected.json').write_text(json.dumps(data,indent=2)+'\n')
+            # LF on every OS: fixture JSON is stored byte-exact (.gitattributes).
+            (folder/'expected.json').write_bytes((json.dumps(data,indent=2)+'\n').encode())
             print(name,'charge',max(abs(r['pct_err']) for r in rows),'acid',acid,flush=True)
 
 if __name__=='__main__':
