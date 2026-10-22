@@ -112,8 +112,9 @@ match before the chemistry stage converts fertilizer doses.
 
 The 25 C reaction set, Davies ionic-strength bound, phase allocation and
 convergence errors remain enforced. `phases=[]` means aqueous-only modelling,
-not proof that precipitation is impossible. Target supersaturation or solids
-prevent acid-plan acceptance. Calculated pH is restricted to [0,14], with a
+not proof that precipitation is impossible. Solids, or supersaturation of a
+phase that forms readily at feed conditions, prevent acid-plan acceptance; see
+[saturation indices and acceptance](#saturation-indices-and-acceptance). Calculated pH is restricted to [0,14], with a
 charge residual of at most 1e-12 mol-charge/kg-water. The present complete
 mixed reference is checked within 0.01 pH units at initial and acidified states.
 
@@ -178,9 +179,32 @@ or with inorganic carbon (KHCO3, K2CO3) under the closed carbon boundary.
 `catalogue_ph_reagents()` returns sourced records for the catalogue's three
 pH-up products (Potassium Hydroxide (45% solution), Potassium Bicarbonate,
 Potassium Carbonate); acids are supplied by the user with the assay and density
-from the supplier's certificate. The precipitation gate is unchanged: a plan
-whose target state has a positive saturation index is rejected, and the
-message names the phases.
+from the supplier's certificate. A plan is rejected when its target state has
+solids or a supersaturated phase that forms readily; phases that only need
+review make it `requires_review` (next section).
+
+## Saturation indices and acceptance
+
+A positive saturation index says a solid is thermodynamically possible, not
+that it forms. FlahaX and live PHREEQC 3.8.6 agree on every sign at the coupled
+target states (#78), so the question is which phases form at feed conditions.
+Four phases, supersaturated in most phosphate feeds, make a plan
+`requires_review` instead of rejecting it, each with its reason and sources:
+
+| Phase | Why it needs review, not rejection | Sources |
+|---|---|---|
+| Hydroxylapatite | Forms through amorphous, octacalcium-phosphate and brushite precursors; magnesium slows it. Brushite stays a hard gate | Nancollas, Tomazic & Tomson (1976) Croat. Chem. Acta 48(4), 431-438 |
+| Goethite | Forms slowly from ferrihydrite (months to years at 24 C); ferrihydrite stays a hard gate | Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284 |
+| MnHPO4 | The anhydrous phase's constant (log K -25.4) traces only to 1976 program data; not reported to form at 25 C or in dilute feeds | Ball & Nordstrom (1991) USGS OFR 91-183; Pedas et al. (2011) Front. Plant Sci. 2:37 |
+| Vivianite | An Fe(II) phosphate of reducing environments; the model holds Fe(II) fixed, but it oxidizes in an aerated feed | Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe et al. (2016) Earth-Sci. Rev. 158, 51 |
+
+When the feed contains iron(II) (for example from iron(II) sulfate), plans also
+carry an advisory: the iron oxidizes within hours (pH 6) to days (pH 5.5) and
+precipitates as amorphous Fe(III) phosphate; prefer a chelated iron source.
+Every other positive index, for example brushite, monetite, gypsum, struvite,
+calcite or ferrihydrite, still rejects the plan, and allocated solids always
+do. All indices are reported. The classification is in
+`flahax/saturation_policy.py`.
 
 ## Reproducible evidence
 

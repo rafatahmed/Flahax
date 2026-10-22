@@ -1160,10 +1160,10 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustm
 ### `PhCandidate`
 
 ```text
-PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None) -> None
+PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None) -> None
 ```
 
-Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`.
+Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhCandidate`.
 

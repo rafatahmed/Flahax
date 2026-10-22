@@ -13,6 +13,7 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
 from .ph_adjustment import reagent_dose
+from .saturation_policy import assess_saturation, describe
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
 # mass fraction/density. Hydrated citric solids require a separately defined stock.
@@ -123,9 +124,12 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
             assessment = assess_incidental(rows, maximum_concentrations)
             if assessment['limitViolations']:
                 raise DeliveryError('nutrient_limit_exceeded', 'acid plan exceeds an explicit nutrient maximum')
-            if any(v > 1e-12 for v in target.precipitated.values()) or any(si > 1e-7 for si in target.saturation_indices.values()):
-                raise DeliveryError('precipitation_risk', 'target solids or positive SI prohibit acid-plan acceptance')
-            candidates.append(AcidCandidate(identity, formula, 'requires_review' if assessment['requiresReview'] else 'accepted',
+            saturation = assess_saturation(target)
+            if saturation['blocks']:
+                raise DeliveryError('precipitation_risk', 'target solids or positive SI prohibit acid-plan acceptance: '
+                                    + '; '.join(describe(saturation)))
+            review = assessment['requiresReview'] or bool(saturation['review'] or saturation['advisories'])
+            candidates.append(AcidCandidate(identity, formula, 'requires_review' if review else 'accepted',
                                            dose, grams, litres, contribution, tuple(rows), loss, target,
                                            product_record=dict(product), incidental_assessment=assessment))
         except DeliveryError as exc:
