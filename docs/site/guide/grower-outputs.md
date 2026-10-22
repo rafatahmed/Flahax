@@ -107,7 +107,11 @@ another tank. pH reagents always have their own channel.
 The table states compatibility, not solubility. Check that every concentrate
 dissolves at its strength and temperature; `plan_stocks` does this with your
 sourced solubility limits, and `default_compatibility_rules(products)` gives it
-the same rules as records. Your own `compatibilityRule` records (`--rules`, or
+the same rules as records. `summarize_batch(..., temperature_c=25)` also lists
+each concentrate against sourced single-salt solubility at that temperature
+(`summary['solubility']`); a stock that does not dissolve blocks the batch. No
+solubility data are packaged yet, so every product shows "not checked" until a
+sourced table is approved. Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient
 rule.
 

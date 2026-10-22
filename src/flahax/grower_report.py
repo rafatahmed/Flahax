@@ -14,6 +14,7 @@ from .delivery_contracts import DeliveryError
 from .fertilizer_workflow import NOT_MODELLABLE, unreviewed_reason
 from .irrigation_ec import calculate_ec_from_totals
 from .saturation_policy import assess_saturation
+from .stock_solubility import SINGLE_SALT, check_stock_solubility, exceeds_message, load_solubility_table
 from .tank_grouping import group_tanks
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
@@ -123,14 +124,15 @@ def _water_and_limits(workflow, recipe):
     return water, limits
 
 
-def summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=()):
+def summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25):
     """Plain data for a grower report and batch sheet.
 
     ``workflow`` is a ``plan_fertilizer_workflow`` result with a final volume;
     ``products`` are the product records it was planned with (they give the tank
     grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
     a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-    is the recipe to weigh.
+    is the recipe to weigh. Each concentrate is checked against sourced solubility at
+    ``temperature_c`` (°C); a stock that does not dissolve blocks the batch.
     """
     batch = workflow.stages.get('batch')
     if batch is None or batch.status != 'calculated':
@@ -196,7 +198,9 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
 
     grouping = group_tanks(recipe['salts'], products, rules=rules)
-    tanks = dict(source=grouping.source, injection_ratio=injection_ratio, solubility_checked=False,
+    solubility = check_stock_solubility(grouping.tanks, injection_ratio, temperature_c, table=load_solubility_table())
+    tanks = dict(source=grouping.source, injection_ratio=injection_ratio, temperature_c=temperature_c,
+                 solubility_checked=bool(solubility) and all(r.status != 'not_checked' for r in solubility),
                  reagent_channel=list(grouping.reagent_channel),
                  separations=[list(s) for s in grouping.separations],
                  waived=[list(w) for w in grouping.waived],
@@ -242,6 +246,11 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
                             f'{row["maximumPpm"]:g} mg/L maximum (laboratory analysis).')
         if row['balancingChangesDecision'] and not any(row['note'] in w for w in warnings):
             warnings.append(row['note'])
+    # A stock that does not dissolve at the entered temperature blocks; nothing here lowers a block (#84).
+    for row in solubility:
+        if row.status == 'exceeds':
+            status = 'blocked'
+            warnings.append(exceeds_message(row, temperature_c))
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     return dict(
         title=title, water_label=water_label, flahax_version=__version__, batch_litres=litres,
@@ -254,12 +263,15 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
                                for r in recipe['rows'] if r['target'] or r['final'] > 1e-6],
                          unmet=recipe['unmetTargets'], ion_balance=recipe['targetIonBalance']),
         ph=ph, chemistry=chemistry, ec=ec, tanks=tanks, stages=stages, warnings=warnings,
+        solubility=[dict(tank=r.tank, product=r.product, stock_g_per_l=r.stock_g_per_l, limit_g_per_l=r.limit_g_per_l,
+                         status=r.status, source=r.source, note=SINGLE_SALT) for r in solubility],
         assumptions=[
             'Planning calculation, not a dosing instruction: measure EC and pH after mixing.',
             'Product grades are the supplied records; confirm them against supplier certificates.',
             'EC is the experimental speciation estimate (McCleskey 2012), not a measurement.',
             'Tanks follow ' + grouping.source + '; micronutrients and chelates go to tank A (FlahaX rule). '
-            'Stock solubility is not checked: confirm each concentrate dissolves at its strength and temperature.',
+            f'Stock solubility is checked per product at {temperature_c:g} °C against sourced single-salt data only; '
+            'products without data are listed as not checked: confirm those with your supplier.',
             'A positive saturation index is a precipitation risk, not a predicted rate.'])
 
 
@@ -451,11 +463,28 @@ def _tank_section(s, tanks):
     waived = ''.join(f'<li>{text(a)} / {text(b)}: {text(why)}</li>' for a, b, why in tanks['waived'])
     return ('<section><h2>Concentrate tanks</h2>'
             + table(['Tank', 'Product', f'g per {number(s["batch_litres"], 0)} L', f'Stock g/L at 1:{tanks["injection_ratio"]}',
-                     'Why here'], rows, 'Tanks from the default compatibility table (solubility not checked)')
+                     'Why here'], rows, 'Tanks from the default compatibility table')
+            + table(['Tank', 'Product', 'Stock g/L', f'Dissolves up to g/L at {number(tanks["temperature_c"], 1)} °C',
+                     'Solubility', 'Source'], _solubility_rows(s), 'Does each concentrate dissolve?')
+            + f'<p class="small">Solubility basis: {text(SINGLE_SALT)}.</p>'
             + (f'<ul>{notes}</ul>' if notes else '')
             + (f'<details><summary>Pairs kept apart</summary><ul>{separated}</ul></details>' if separated else '')
             + (f'<p>Shared by rule, against Yara p. 65:</p><ul>{waived}</ul>' if waived else '')
             + f'<p class="small">Source: {text(tanks["source"])}.</p></section>')
+
+
+SOLUBILITY_TEXT = {'ok': 'dissolves', 'exceeds': 'does not dissolve', 'not_checked': 'not checked'}
+
+
+def _solubility_rows(s):
+    return [(f'Tank {r["tank"]}', r['product'], number(r['stock_g_per_l'], 1), number(r['limit_g_per_l'], 1),
+             SOLUBILITY_TEXT[r['status']], r['source'] or 'no sourced data') for r in s['solubility']]
+
+
+def _unchecked_line(s):
+    names = [r['product'] for r in s['solubility'] if r['status'] == 'not_checked']
+    return ('Solubility not checked (no sourced data at this temperature): ' + ', '.join(names) + '. '
+            'Confirm these dissolve with your supplier.') if names else ''
 
 
 def render_batch_sheet(summary):
@@ -484,6 +513,14 @@ def render_batch_sheet(summary):
             f'<p class="small">Direct batch: dissolve everything in {number(litres, 0)} L. Concentrates: '
             f'{number(litres / ratio, 1)} L of each tank per batch at 1:{ratio}; keep the tanks apart as listed.</p>'
             + (f'<ul class="small">{tank_notes}</ul>' if tank_notes else '')
+            + f'<h2>Solubility at {number(tanks["temperature_c"], 1)} &deg;C</h2><table><thead><tr><th>Tank</th>'
+            '<th>Product</th><th class="num">Concentrate g/L</th><th class="num">Dissolves up to g/L</th><th>Result</th>'
+            '</tr></thead><tbody>'
+            + ''.join(f'<tr><td>{text(r[0])}</td><td>{text(r[1])}</td><td class="num">{r[2]}</td>'
+                      f'<td class="num">{r[3]}</td><td>{text(r[4])}</td></tr>' for r in _solubility_rows(s))
+            + '</tbody></table>'
+            + (f'<p class="small">{text(_unchecked_line(s))}</p>' if _unchecked_line(s) else '')
+            + f'<p class="small">Basis: {text(SINGLE_SALT)}.</p>'
             + f'<h2>pH</h2><div class="box warn">{text(_reagent_line(s))}</div>'
             + '<h2>Limits</h2><p class="small">' + text(_limits_text(s)) + '</p>'
             + (('<table><thead><tr><th>Nutrient</th><th class="num">Maximum mg/L</th><th class="num">Final mg/L '
@@ -496,6 +533,7 @@ def render_batch_sheet(summary):
             f'<tbody>{check_rows}</tbody></table>'
             '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span class="fill"></span> &nbsp; '
             'Signature <span class="fill"></span></p>'
-            '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock solubility is not '
-            'checked. Confirm products, assays and reagent grades against your supplier certificates.</p>')
+            '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock solubility is checked '
+            'only where sourced data exist. Confirm products, assays and reagent grades against your supplier '
+            'certificates.</p>')
     return _page(s['title'] + ' - batch sheet', body, SHEET_STYLE)
