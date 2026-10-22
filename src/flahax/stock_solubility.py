@@ -4,7 +4,7 @@ Stock strength is the product's grams per litre of final solution times the inje
 product (as sold, hydrate water included) per litre of stock, interpolated linearly between the nearest sourced
 temperature points; outside them, or for a product without a record, the row is ``not_checked``, never passed.
 
-Records (``data/solubility.json``, once the owner approves sourced values) are
+Records (``data/solubility.json``, sourced values approved by the owner on 2026-10-23) are
 ``{"product": catalogue name, "points": [[degC, g/L], ...], "source": citation, "notes": ...}``. Without that file
 every product is ``not_checked``.
 
