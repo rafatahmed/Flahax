@@ -244,13 +244,13 @@ def _document(record: Mapping, label: str) -> DocumentReference:
                              entered=raw['entered'], url=raw.get('url'), sha256=sha)
 
 
-def _nutrient_key(key: Any, label: str, conversions: dict) -> tuple[str, float]:
+def _nutrient_key(key: Any, label: str, conversions: dict, extra: tuple = ()) -> tuple[str, float]:
     """Map an analysis key to its elemental form and the factor that converts its value."""
     if key in OXIDE_FACTORS:
         element, factor = OXIDE_FACTORS[key]
         conversions[key] = {'element': element, 'factor': factor}
         return element, factor
-    if key in NUTRIENT_FORMS:
+    if key in NUTRIENT_FORMS or key in extra:
         return key, 1.0
     raise DeliveryError('invalid_value', f'{label}: unknown analysis key {key!r}')
 
@@ -342,10 +342,10 @@ def _range_excludes_theory(identity: dict, minimum: dict, maximum: dict) -> bool
 
 
 def _analysis_targets(key: Any, label: str, identity_id: str | None, conversions: dict,
-                      split: dict) -> list:
+                      split: dict, extra: tuple = ()) -> list:
     """Elemental forms an analysis key feeds, each with its multiplier."""
     if key != 'N':
-        return [_nutrient_key(key, label, conversions)]
+        return [_nutrient_key(key, label, conversions, extra)]
     theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
     forms = {form: theory[form] for form in N_FORMS if theory.get(form, 0) > 0}
     if not forms:
@@ -389,7 +389,9 @@ def make_grade(record: Mapping) -> Grade:
     split: dict = {}
     bands: dict = {band: {} for band in _BANDS}
     for key, stated in analysis.items():
-        targets = _analysis_targets(key, label, identity_id, conversions, split)
+        # A declared-ions compound may state its chloride: it closes the charge balance.
+        targets = _analysis_targets(key, label, identity_id, conversions, split,
+                                    ('Cl',) if composition == 'declared_ions' else ())
         if not isinstance(stated, Mapping) or set(stated) - set(_BANDS) or not set(stated) & {'typical', 'minimum'}:
             raise DeliveryError('invalid_value', f'{label} {key}: state a typical or minimum value '
                                 '(a maximum alone is not an assay)')
@@ -480,8 +482,8 @@ def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> Resol
         basis[key] = 'grade_typical' if in_typical else 'grade_minimum'
     check = declared_ions_check(grade)
     lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
-    # Na, Cl and S the label does not state are taken as zero.
-    unstated = () if all(k in elements for k in ('Na', 'Cl', 'S')) else ('unstated_Na_Cl_S',)
+    # Na, Cl and S the label does not state are taken as zero; each assumption is named.
+    unstated = tuple(f'unstated_{k}' for k in ('Na', 'Cl', 'S') if k not in elements)
     flags = _unique([*grade.flags, *lower_bound, *unstated, *(() if check.modellable else ('not_modellable',))])
     provenance = {
         'identityId': None, 'gradeId': grade.grade_id, 'lotId': None,

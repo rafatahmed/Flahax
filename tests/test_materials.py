@@ -1147,7 +1147,8 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertAlmostEqual(grade.typical['P'], 8.729, delta=0.0006)
         self.assertAlmostEqual(grade.typical['K'], 16.603, delta=0.0006)
         material = resolve_material(self.NAME, grade=grade)
-        self.assertIn('unstated_Na_Cl_S', material.flags)
+        self.assertEqual([f for f in material.flags if f.startswith('unstated_')],
+                         ['unstated_Na', 'unstated_Cl', 'unstated_S'])
 
     def test_hidden_acid_is_not_modellable(self):
         from flahax.materials import declared_ions_check
@@ -1179,6 +1180,52 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertGreater(rows['P']['final'], 0)
         self.assertGreater(rows['K']['final'], 0)
         self.assertIn(self.NAME, render_batch_sheet(summary))
+
+    def test_chloride_may_be_stated(self):
+        from flahax.materials import declared_ions_check
+        shipped = {s['name']: s['elements'] for s in load_library()['salts']}
+        kcl, kno3, mkp = (shipped[n] for n in ('Potassium Chloride', 'Potassium Nitrate',
+                                                'Potassium Monobasic Phosphate'))
+        label = {'N_NO3': kno3['N_NO3'] / 3, 'N_NH4': 0, 'N_UREA': 0, 'P': mkp['P'] / 3,
+                 'K': (kcl['K'] + kno3['K'] + mkp['K']) / 3, 'Cl': kcl['Cl'] / 3}
+
+        def grade(analysis):
+            return make_grade({'grade_id': 'grd-kcl-kno3-mkp', 'supplier': 'Example Supplier', 'product': 'NPK Cl',
+                               'composition': 'declared_ions', 'document': DOC,
+                               'analysis': {k: {'typical': v} for k, v in analysis.items()}})
+        stated = grade(label)
+        self.assertTrue(declared_ions_check(stated).modellable, declared_ions_check(stated).reason)
+        flags = resolve_material('NPK Cl', grade=stated).flags
+        self.assertEqual([f for f in flags if f.startswith('unstated_')], ['unstated_Na', 'unstated_S'])
+        unstated = grade({k: v for k, v in label.items() if k != 'Cl'})
+        self.assertFalse(declared_ions_check(unstated).modellable)
+        self.assertIn('unstated_Cl', resolve_material('NPK Cl', grade=unstated).flags)
+        with self.assertRaises(DeliveryError):  # chloride stays a declared-ions key only
+            make_grade({'grade_id': 'g', 'identity_id': identity_for_product('Potassium Chloride')['id'],
+                        'supplier': 'S', 'product': 'KCl', 'document': DOC, 'analysis': {'Cl': {'typical': 47}}})
+
+    def test_chelate_sodium_of_declared_compound_reaches_the_na_row(self):
+        from flahax import VolumeLitres, plan_fertilizer_workflow
+        from flahax.product_conversion import catalogue_dose_totals
+        product, material = self.product()
+        library = load_library()
+        # No other Na-bearing product: the Na row is counterion sodium only.
+        salts = [s for s in library['salts'] if not {'P', 'K', 'Na'} & set(s['elements'])] + [product]
+        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        workflow = plan_fertilizer_workflow(salts, targets, {}, 5.8, final_volume=VolumeLitres(1000),
+                                            equilibrium=self.RO)
+        recommendation = workflow.recommendation
+        doses = {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}  # 1000 L per 1000 kg water
+        self.assertIn(self.NAME, doses)
+        chemistry = workflow.stages['chemistry'].value
+        self.assertEqual(chemistry['materials'][self.NAME], material)
+        sodium = catalogue_dose_totals(doses, materials=chemistry['materials'])['Na+'] * 22.98977e3
+        na_row = next(r for r in recommendation['rows'] if r['symbol'] == 'Na')
+        self.assertAlmostEqual(na_row['final'] / sodium, 1.0, delta=1e-9)
+        self.assertAlmostEqual(chemistry['mixed'].totals['Na+'] * 22.98977e3, sodium, delta=1e-5 * sodium)
+        alone = catalogue_dose_totals({self.NAME: doses[self.NAME]}, materials={self.NAME: material})['Na+']
+        self.assertGreater(alone, 0)
+        self.assertTrue(any(w.startswith('Incidental Na includes') for w in recommendation['warnings']))
 
     def test_declared_compound_matches_equivalent_salts(self):
         from flahax.calculated_ph import calculate_equilibrium_ph
