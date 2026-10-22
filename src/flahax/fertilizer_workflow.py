@@ -13,6 +13,7 @@ from .measured_water import (DEFAULT_MAXIMUM_IMBALANCE_PERCENT, BalancedWaterAna
 from .equilibrium_delivery import plan_equilibrium_delivery
 from .ph_planning import plan_ph
 from .product_conversion import catalogue_dose_totals
+from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
@@ -56,6 +57,36 @@ def _positive(value, name):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
         raise DeliveryError('invalid_value', f'{name} must be finite and positive')
     return float(value)
+
+
+def _graded(supplied, library):
+    """Catalogue record and resolved material of a product carrying a supplier label grade.
+
+    The record keeps the catalogue name and formula, takes the resolved label assay as its
+    elements and is identified by the catalogue id or the resolved id (<catalogue id>+<grade id>).
+    """
+    name = supplied.get('name')
+    reference = next((p for p in library.values() if p['name'] == name), None)
+    if reference is None:
+        raise DeliveryError('product_chemistry_mismatch', f'graded product {name!r} is not a catalogue product')
+    grade = make_grade(supplied['grade'])
+    if 'identity_inconsistent' in grade.flags:
+        raise DeliveryError('identity_inconsistent', f'{name}: the analysis of grade {grade.grade_id!r} '
+                            f'does not fit the identity (charge residual {grade.charge_residual_percent:.2f} %)'
+                            if grade.charge_residual_percent is not None else
+                            f'{name}: the analysis range of grade {grade.grade_id!r} excludes the identity')
+    resolved = resolve_material(name, grade=grade)
+    if (supplied.get('id') not in (reference['id'], resolved.record['id'])
+            or supplied.get('formula') != reference.get('formula')
+            or supplied.get('elements') != resolved.record['elements']):
+        raise DeliveryError('product_chemistry_mismatch',
+                            f'{name}: a graded product keeps its catalogue identity and takes the label assay')
+    return reference, resolved
+
+
+def _dose_totals(doses, materials):
+    """Catalogue dose totals, converting graded products through their resolved material."""
+    return catalogue_dose_totals(doses, materials={n: m for n, m in materials.items() if n in doses})
 
 
 def unreviewed_reason(recommendation):
@@ -147,6 +178,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             stages['chemistry'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
         else:
             def chemical_states():
+                materials = {}
                 config = equilibrium
                 mass = _positive(config['water_mass_kg'], 'water_mass_kg')
                 if not isinstance(config['water_analysis_id'], str) or not config['water_analysis_id'].strip():
@@ -203,6 +235,11 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         raise DeliveryError('inconsistent_water_analysis', f'nutrient ppm and molal water disagree for {ion}')
                 library = {p['id']: p for p in load_library()['salts']}
                 for supplied in salts:
+                    if 'grade' in supplied:
+                        reference, resolved = _graded(supplied, library)
+                        materials[supplied['name']] = resolved
+                        library[supplied['id']] = reference
+                        continue
                     reference = library.get(supplied.get('id'))
                     if reference is None or any(supplied.get(key) != reference.get(key)
                                                 for key in ('name', 'formula', 'elements')):
@@ -215,10 +252,11 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         raise DeliveryError('product_chemistry_mismatch', 'chemistry requires exact catalogue identities')
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in catalogue_dose_totals(doses).items():
+                for basis, amount in _dose_totals(doses, materials).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 mixed = calculate_equilibrium_ph(totals, **kwargs)
                 return {'water': water_state, 'mixed': mixed, 'product_doses_g_per_kg_water': doses,
+                        'materials': materials,
                         'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
                         'water_totals': water_totals, 'analytical_water_totals': analytical, 'water_balance': balance}
             value = run('chemistry', chemical_states)
@@ -305,7 +343,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 for salt in final_solution_recipe(candidate, final_volume).salts:
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in catalogue_dose_totals(doses).items():
+                for basis, amount in _dose_totals(doses, stages['chemistry'].value['materials']).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 return calculate_equilibrium_ph(totals, **kwargs)
 
