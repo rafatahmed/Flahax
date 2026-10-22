@@ -249,13 +249,20 @@ def counterion_sodium_mg_per_l(salts_with_doses) -> float:
     Doses in g/L are treated as g/kg water. Sums the counterion sodium that
     ``convert_catalogue_product_dose`` reports for every dosed product: the chelate
     sodium (D2) of the EDTA, DTPA and EDDHA products and all of CH - micro's
-    sodium (chelate share plus its borax and molybdate). Sodium already assayed as
+    sodium (chelate share plus its borax and molybdate), and the chelate sodium of a
+    declared-ions compound (``declared_ion_totals``). Sodium already assayed as
     elemental Na (standalone borax, sodium molybdate) is not a counterion there and
     contributes nothing. Records without catalogue chemistry contribute nothing.
     """
     moles = 0.0
     for product, dose in salts_with_doses:
         if dose <= 0:
+            continue
+        grade = product.get('grade')
+        if isinstance(grade, Mapping) and grade.get('composition') == 'declared_ions':
+            # A data-sheet compound: its D2 chelate sodium, as its chemistry counts it; stated Na is elemental.
+            if 'Na' not in product['elements']:
+                moles += declared_ion_totals(product['elements'], grade.get('chelating_agent'), dose).get('Na+', 0.0)
             continue
         try:
             converted = convert_catalogue_product_dose(product, dose)
