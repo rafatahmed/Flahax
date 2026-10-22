@@ -15,7 +15,7 @@ FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 CHARGES = {
     'Na+': 1, 'K+': 1, 'NH4+': 1,
     'Ca+2': 2, 'Mg+2': 2, 'Fe+2': 2, 'Cu+2': 2, 'Zn+2': 2,
-    'NO3-': -1, 'Cl-': -1, 'SO4-2': -2, 'H2PO4-': -1, 'HPO4-2': -2, 'CO3-2': -2,
+    'NO3-': -1, 'Cl-': -1, 'SO4-2': -2, 'H2PO4-': -1, 'HPO4-2': -2, 'CO3-2': -2, 'HCO3-': -1, 'OH-': -1,
     'MoO4-2': -2, 'B(OH)4-': -1, 'citrate': -3,
     'Fe(III)-EDTA': -1, 'Mn-EDTA': -2, 'Zn-EDTA': -2, 'Cu-EDTA': -2,
     'Fe(III)-DTPA': -2, 'Fe(III)-o,o-EDDHA': -1,
@@ -108,7 +108,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'unknown_product')
 
     def test_identities_file_is_pinned(self):
-        self.assertEqual(IDENTITIES_SHA256, 'e527820ff5025ab4b6c1fb6f8db2f47ee0bb3355321689099d10cd129a12e5e4')
+        self.assertEqual(IDENTITIES_SHA256, '7c3526334f77e4fb9879b2aebbeebd6810aa354ed417c4d03059f373e9f85a22')
 
 
 DOC = {'supplier': 'Example Supplier', 'title': 'Technical data sheet TDS-1', 'issued': '2026-01-15',
@@ -485,7 +485,7 @@ class CatalogueMigrationTests(unittest.TestCase):
 
     def test_every_salt_links_to_identity(self):
         salts = self.salts()
-        self.assertEqual(len(salts), 30)
+        self.assertEqual(len(salts), 32)
         for name, salt in salts.items():
             with self.subTest(name=name):
                 self.assertEqual(salt['identityId'], identity_for_product(name)['id'])
@@ -496,9 +496,26 @@ class CatalogueMigrationTests(unittest.TestCase):
                                      {'supplier', 'title', 'issued', 'entered', 'url', 'sha256'})
         expected = {'Mg Nitrate': 'identity_theoretical', 'Calcium Nitrate (ag grade)': 'grade_typical',
                     'Calcium Chloride (Dihydrate)': 'identity_theoretical',
-                    'Potassium Chloride': 'identity_theoretical'}
+                    'Potassium Chloride': 'identity_theoretical',
+                    # pH-up reagents (#75, owner decisions 2026-10-22)
+                    'Potassium Carbonate': 'identity_theoretical', 'Potassium Bicarbonate': 'identity_theoretical',
+                    'Potassium Hydroxide (45% solution)': 'grade_typical'}
         for name, salt in salts.items():
             self.assertEqual(salt['analysisBasis'], expected.get(name, 'declared_catalogue'), name)
+
+    def test_ph_reagents_are_sourced_and_never_nutrient_salts(self):
+        salts = self.salts()
+        expected = {'Potassium Hydroxide (45% solution)': ('417661', 0.45 * 69.687554),
+                    'Potassium Bicarbonate': ('237205', 39.053724),
+                    'Potassium Carbonate': ('209619', 56.580316)}
+        for name, (code, potassium) in expected.items():
+            salt = salts[name]
+            self.assertEqual(salt['role'], 'ph_reagent', name)
+            self.assertAlmostEqual(salt['elements']['K'], potassium, places=5, msg=name)
+            self.assertTrue(salt['source']['url'].endswith(code), name)
+        self.assertEqual(salts['Potassium Hydroxide (45% solution)']['densityKgPerL'], 1.456)
+        self.assertEqual([s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'],
+                         sorted(expected))
 
     def test_phosphoric_acid_is_75_percent_basis(self):
         salt = self.salts()['Phosphoric Acid (75%)']

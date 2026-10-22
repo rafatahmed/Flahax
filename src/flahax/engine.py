@@ -51,6 +51,8 @@ CEILING_WEIGHT = 8.0
 CEILING_STEPS = 60
 # Converged when every active ceiling ion is within this fraction of its limit of its aim.
 CEILING_TOLERANCE = 1e-9
+# Catalogue products with this role adjust pH only (#75): formulation never selects them.
+PH_REAGENT = "ph_reagent"
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
 # Default ceiling on incidental NH4-N (#54): the smaller of 10% of the formula's total
@@ -574,6 +576,10 @@ def _eligible(library: list[dict], targets: dict, allow_ions: frozenset[str], al
         if conflict is not None:
             excluded.append({"id": salt.get("id"), "name": salt.get("name"), "reason": conflict})
             continue
+        if salt.get("role") == PH_REAGENT:
+            excluded.append({"id": salt.get("id"), "name": salt.get("name"),
+                             "reason": f"{salt.get('name')} is a pH reagent, not a nutrient salt"})
+            continue
         if is_carbonate(salt) and not allow_carbonates:
             excluded.append({
                 "id": salt.get("id"),
@@ -673,7 +679,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     missed = [row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT]
     if not missed:
         return []
-    usable = [salt for salt in library if assay_conflict(salt) is None
+    usable = [salt for salt in library if assay_conflict(salt) is None and salt.get("role") != PH_REAGENT
               and (allow_carbonates or not is_carbonate(salt))]
     consent = {ion for ion in CONSENT_IONS if ion not in targets and ion not in allowed}
     engine_pool = [salt for salt in usable if not consent.intersection(salt["elements"])]

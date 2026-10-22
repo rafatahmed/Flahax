@@ -14,6 +14,7 @@ from .ph_planning import plan_ph
 from .product_conversion import catalogue_dose_totals, MOLAR_MASS
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
+from .ph_adjustment import plan_coupled_ph
 from .nutrient_acceptance import assess_incidental
 
 
@@ -62,19 +63,24 @@ def _water_ppm(totals, mass, volume):
 
 def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None,
                              equilibrium=None, nitric=None, titration=None, stocks=None, acids=None,
-                             maximum_concentrations=None):
+                             maximum_concentrations=None, ph_adjustment=None):
     """Run available stages; expose missing inputs and rejected stages separately.
 
     Water nutrient mg/L is mandatory ({} explicitly denotes zero nutrients).
     It is never silently promoted to a complete acid/base analysis. Optional
     configurations are mappings documented in docs/water-to-delivery.md.
     No stage performs external writes, mixing or equipment operation.
+
+    ph_adjustment (products, maximum_reagent_volume_litres, optional
+    preferred_product_id) plans the recipe and its pH reagent together (#74):
+    acids or bases, with the reagent's nutrients counted as supply. It needs the
+    equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
     """
     if not isinstance(water, Mapping):
         raise DeliveryError('missing_field', 'explicit water nutrient concentrations are required')
     if isinstance(target_ph, bool) or not isinstance(target_ph, (int, float)) or not math.isfinite(target_ph) or not 0 <= target_ph <= 14:
         raise DeliveryError('out_of_range', 'target_ph must be finite in [0,14]')
-    for config in (equilibrium, nitric, titration, stocks, acids):
+    for config in (equilibrium, nitric, titration, stocks, acids, ph_adjustment):
         if config is not None and not isinstance(config, Mapping):
             raise DeliveryError('invalid_type', 'stage configurations must be mappings')
     targets = validate_profile(dict(targets), 'targets')
@@ -243,6 +249,37 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 maximum_concentrations=maximum_concentrations))
             if selection is not None and selection.selected_product_id is None:
                 stages['acid_selection'] = WorkflowStage('blocked', value=selection, error_code='no_acceptable_acid')
+
+    if not missing('ph_adjustment', ph_adjustment, ('products', 'maximum_reagent_volume_litres')):
+        if stages['chemistry'].status != 'calculated':
+            stages['ph_adjustment'] = WorkflowStage('blocked', error_code='chemistry_required',
+                                                    message='complete calculated chemistry is required')
+        else:
+            water_totals = stages['chemistry'].value['water_totals']
+            mass = equilibrium['water_mass_kg']
+            kwargs = {key: equilibrium[key] for key in ('complete_analysis', 'carbon_boundary', 'temperature_c', 'phases')}
+
+            def mix(candidate):
+                doses = {}
+                for salt in final_solution_recipe(candidate, final_volume).salts:
+                    doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
+                totals = dict(water_totals)
+                for basis, amount in catalogue_dose_totals(doses).items():
+                    totals[basis] = totals.get(basis, 0) + amount
+                return calculate_equilibrium_ph(totals, **kwargs)
+
+            plan = run('ph_adjustment', lambda: plan_coupled_ph(
+                salts, targets, water, target_ph, products=ph_adjustment['products'], mix=mix,
+                water_mass_kg=mass, final_volume_litres=final_volume.value,
+                maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
+                preferred_product_id=ph_adjustment.get('preferred_product_id'), phases=equilibrium['phases'],
+                maximum_concentrations=maximum_concentrations))
+            if plan is not None:
+                chosen = plan.selected
+                if chosen is None:
+                    stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent')
+                elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
+                    stages['ph_adjustment'].status = 'requires_review'
 
     if not missing('stocks', stocks, ('injection_ratio', 'tanks', 'compatibility_rules', 'solubility_limits', 'temperature')):
         if recipe is None:

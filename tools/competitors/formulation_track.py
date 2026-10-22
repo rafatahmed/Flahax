@@ -1,6 +1,6 @@
 """#40 formulation track: FlahaX vs Horticalc vs an Irriblend-method baseline.
 
-Every engine receives the same 30-product FlahaX catalogue, 26 shipped formulas
+Every engine receives the same FlahaX nutrient catalogue (pH reagents excluded), 26 shipped formulas
 and two waters. Each returned recipe is re-scored by the Benchmark v1 evaluator
 (catalogue assays, max(0.01 mg/L, 1%) tolerance), so no reporting convention of
 any engine enters the scores. Timings are the best of `REPEATS` calls on the same
@@ -121,7 +121,7 @@ def run():
     from tools.competitors import horticalc_adapter as hc
     library = load_library()
     salts = library["salts"]
-    usable = [s for s in salts if assay_conflict(s) is None]
+    usable = [s for s in salts if assay_conflict(s) is None and s.get('role') != 'ph_reagent']
     ferts = hc.translate(usable)
     translation_error = hc.validate_translation(usable, ferts)
     by_name = {s["name"]: s for s in usable}

@@ -97,6 +97,10 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     counterions = {k:v for k,v in counterions.items() if k not in totals and not (k=='sodium' and 'Na' in totals)}
     if chemistry.name == 'Potassium Carbonate':
         counterions['carbonate'] = totals.get('K',0.0) / 2.0
+    elif chemistry.name == 'Potassium Bicarbonate':
+        counterions['carbonate'] = totals.get('K',0.0)
+    # Potassium hydroxide adds only K+: its hydroxide is the proton deficit the
+    # charge balance closes, as the implicit protons of the acids are (#75).
     inert = max(0.0, 1.0 - sum(float(v) for v in assay.values()) / 100.0)
     return ProductAnalyticalTotals(chemistry, dose, totals, counterions, ligands, inert)
 
