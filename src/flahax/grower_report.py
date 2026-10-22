@@ -151,8 +151,12 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
         recipe = plan.unadjusted_recommendation
     else:
         recipe = workflow.recommendation
-    if stages['formulation']['status'] == 'requires_review':     # quote the recipe that is weighed, not the first fit
-        stages['formulation']['message'] = unreviewed_reason(recipe) or stages['formulation']['message']
+    # The incidental-nutrient review is judged on the recipe that is weighed, not the first fit. A block or any
+    # other reason is left alone: review never downgrades a block (#84).
+    form, reason = stages['formulation'], unreviewed_reason(recipe)
+    if form['status'] == 'calculated' or (form['status'] == 'requires_review'
+                                          and form['message'] == unreviewed_reason(workflow.recommendation)):
+        form['status'], form['message'] = ('requires_review', reason) if reason else ('calculated', None)
 
     ph = None
     if plan is not None:
@@ -199,9 +203,9 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
                                        for p in t.products]) for t in grouping.tanks])
 
     warnings = list(recipe['warnings'])
-    for name, stage in workflow.stages.items():
-        if stage.status in ('blocked', 'requires_review') and stage.message:
-            warnings.append(f'{name}: {stage.message}')
+    for name, stage in stages.items():
+        if stage['status'] in ('blocked', 'requires_review') and stage['message']:
+            warnings.append(f'{name}: {stage["message"]}')
     if chemistry:
         warnings += [f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}' for r in chemistry['review']]
         warnings += chemistry['advisories']
@@ -214,6 +218,8 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
         status = 'requires_review'      # pH not planned
         warnings.append('pH was not planned: measure it after mixing and adjust before use.')
 
+    if form['status'] == 'requires_review' and status == 'ready':
+        status = 'requires_review'
     water, limits = _water_and_limits(workflow, recipe)
     # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always blocks,
     # and a decision the charge balancing alone would change asks for review; review never downgrades a block.
