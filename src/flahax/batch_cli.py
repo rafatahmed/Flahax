@@ -214,6 +214,10 @@ def run_batch(options):
                               rules=rules, temperature_c=options.temperature_c)
     if volumes is not None:
         summary['volumes'] = asdict(volumes)
+    weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
+    summary['product_notes'] = {r['name']: list(r.get('compatibility_notes') or (r.get('grade') or {}).get('compatibility_notes') or [])
+                                for r in products if r.get('name') in weighed}
+    summary['product_notes'] = {k: v for k, v in summary['product_notes'].items() if v}
     return summary
 
 

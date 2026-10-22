@@ -400,6 +400,10 @@ def render_report(summary):
                  + '</section>')
     body += _water_section(s)
     body += _tank_section(s, tanks)
+    if s.get('product_notes'):
+        body += ('<section><h2>Data-sheet notes</h2><ul>' + ''.join(
+            f'<li>{text(name)}: {text("; ".join(notes))}</li>' for name, notes in s['product_notes'].items())
+            + '</ul><p class="small">As entered from the product data sheets; FlahaX does not check them.</p></section>')
     body += ('<section><h2>Stages</h2>'
              + table(['Stage', 'Status', 'Reason or missing input'],
                      [(n, st['status'], st['message'] or st['error_code'] or ', '.join(st['required_inputs']) or '')
