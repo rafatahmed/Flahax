@@ -21,6 +21,15 @@ def assess_incidental(rows, maximum_concentrations=None):
             'requiresReview': any(row['assessment'] == 'requires_review' for row in incidental)}
 
 
+def assessed_limits(maximum_concentrations, recommendation):
+    """The user's maxima plus the N_NH4 allowance ``recommend`` applied when none was declared."""
+    limits = dict(maximum_concentrations or {})
+    allowance = recommendation.get('ammoniumLimit')
+    if allowance and 'N_NH4' not in limits:
+        limits['N_NH4'] = allowance['mgPerL']
+    return limits
+
+
 def name_sources(assessment, dosed, library, water=None):
     """Add ``source`` to each incidental row: the dosed products (and the water) that supply that nutrient.
 

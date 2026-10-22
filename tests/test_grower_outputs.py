@@ -6,12 +6,15 @@ from pathlib import Path
 import re
 import tempfile
 import unittest
+from unittest import mock
 
 from flahax import (InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres, catalogue_ph_reagents,
                     default_compatibility_rules, final_solution_recipe, group_tanks, load_library,
                     plan_fertilizer_workflow, plan_stocks, recommend, render_batch_sheet, render_report,
                     summarize_batch)
 from flahax.batch_cli import main as batch
+from flahax.nutrient_acceptance import assess_incidental, assessed_limits
+from flahax.ph_adjustment import _judge
 from flahax.delivery_contracts import DeliveryError
 from flahax.tank_grouping import (ANALOGUE, CLASS_RULES, MICRO_PHOSPHATE, OWNER_TWO_TANKS, WAIVED_RULES,
                                   _class_conflict, product_classes)
@@ -238,6 +241,31 @@ class IncidentalAssessmentTests(unittest.TestCase):
         rows = {r['symbol']: r for r in summary['formulation']['rows']}
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
+
+    def test_ph_stage_and_candidates_do_not_review_ammonium(self):
+        limits = {'Na': 50}
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC, maximum_concentrations=limits)
+        stage = flow.stages['ph_adjustment']
+        chosen = stage.value.selected
+        self.assertEqual(self.row(chosen.recommendation)['assessment'], 'within_limit')
+        for candidate in stage.value.candidates:
+            self.assertNotIn('N_NH4', candidate.message or '')
+        self.assertNotIn('N_NH4', stage.message or '')
+        seen = []
+
+        def spy(rows, maxima=None):
+            seen.append(assess_incidental(rows, maxima))
+            return seen[-1]
+        with mock.patch('flahax.ph_adjustment.assess_incidental', spy):
+            status, _, message, _ = _judge(chosen.recommendation, chosen.target, limits)
+        self.assertNotIn('N_NH4', [r['symbol'] for r in seen[0]['incidentalContributions']
+                                   if r['assessment'] == 'requires_review'])
+        self.assertNotIn('N_NH4', message or '')
+        reviewed = assess_incidental(chosen.recommendation['rows'], assessed_limits(limits, chosen.recommendation))
+        self.assertNotIn('N_NH4', [r['symbol'] for r in reviewed['incidentalContributions']
+                                   if r['assessment'] == 'requires_review'])
+        self.assertEqual(status, chosen.status)
 
     def test_declared_ammonium_maximum_wins_over_the_allowance(self):
         flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, maximum_concentrations={'N_NH4': 5})
