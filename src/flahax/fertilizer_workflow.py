@@ -17,7 +17,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .nutrient_acceptance import assess_incidental, assess_water_basis, name_sources
+from .nutrient_acceptance import assess_incidental, assess_water_basis, assessed_limits, name_sources
 
 
 # Feed-solution pH guidance (research report 2026-10-20): Dutch soilless practice feeds at
@@ -114,15 +114,6 @@ def unreviewed_reason(recommendation):
              if row['assessment'] == 'requires_review']
     return ('incidental nutrients with no declared maximum: ' + ', '.join(found)
             + '; check them, or declare maximum concentrations') if found else None
-
-
-def assessed_limits(maximum_concentrations, recommendation):
-    """The user's maxima plus the N_NH4 allowance ``recommend`` applied when none was declared."""
-    limits = dict(maximum_concentrations or {})
-    allowance = recommendation.get('ammoniumLimit')
-    if allowance and 'N_NH4' not in limits:
-        limits['N_NH4'] = allowance['mgPerL']
-    return limits
 
 
 def _water_ppm(totals, mass, volume):
