@@ -17,6 +17,7 @@ from .engine import load_library, forward
 from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
 from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
+from .measured_water import BalancedWaterAnalysis, nutrient_mg_per_litre
 
 
 def _number(value, name, *, positive=False):
@@ -57,13 +58,19 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
                               reagent_channel_id,
                               maximum_reagent_volume, targets,
                               maximum_nutrient_error_percent, temperature_c=25., phases=(),
-                              maximum_concentrations=None):
+                              maximum_concentrations=None, analytical_water_totals=None):
     """Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
 
     `water_mass_kg` is the explicitly defined final solvent inventory, including
     reagent carrier water; final recipe volume is the make-up volume. No density
     or g/L == g/kg approximation is made. `phases` is the explicit equilibrium
     policy; positive target SI or solid formation prohibits delivery validation.
+
+    `water_totals` drive the acid dose. Nutrient rows, target deviations and
+    maximum concentrations use `analytical_water_totals`, the laboratory analysis
+    (#84). Pass a `BalancedWaterAnalysis` as `water_totals` and both come from it;
+    a plain mapping without `analytical_water_totals` is taken as the analysis
+    itself, as before.
     """
     if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible or not recipe.salts:
         raise DeliveryError('infeasible_recipe', 'a nonempty feasible FinalSolutionRecipe is required')
@@ -78,13 +85,27 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
         raise DeliveryError('missing_field', 'water_analysis_id is required')
     if not isinstance(reagent_channel_id,str) or not reagent_channel_id.strip():
         raise DeliveryError('missing_field', 'a dedicated reagent_channel_id is required')
+    if isinstance(water_totals, BalancedWaterAnalysis):
+        # A balanced record carries its own laboratory analysis: never substitute the model for it.
+        if analytical_water_totals is not None and dict(analytical_water_totals) != water_totals.analytical_totals:
+            raise DeliveryError('contradictory_water_inputs',
+                                'analytical_water_totals differ from the balanced record\'s analytical totals')
+        analytical_water_totals = water_totals.analytical_totals
+        water_totals = water_totals.totals
     if not isinstance(water_totals,Mapping):
         raise DeliveryError('missing_field', 'complete water_totals are required; use {} for explicitly pure water')
     water = dict(water_totals)
-    for basis, amount in water.items():
-        if basis not in chemistry()['bases']:
-            raise DeliveryError('invalid_totals', f'unknown water component {basis}')
-        _number(amount, basis)
+    if analytical_water_totals is None:
+        analytical = dict(water)
+    elif not isinstance(analytical_water_totals, Mapping):
+        raise DeliveryError('invalid_type', 'analytical_water_totals must be a mapping')
+    else:
+        analytical = dict(analytical_water_totals)
+    for inventory in (water, analytical):
+        for basis, amount in inventory.items():
+            if basis not in chemistry()['bases']:
+                raise DeliveryError('invalid_totals', f'unknown water component {basis}')
+            _number(amount, basis)
     if not isinstance(maximum_reagent_volume,VolumeLitres):
         raise DeliveryError('invalid_type', 'maximum_reagent_volume must be VolumeLitres')
     if not isinstance(targets,Mapping) or not targets:
@@ -128,18 +149,8 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
     if volume>maximum_reagent_volume.value or volume>recipe.final_volume.value:
         raise DeliveryError('dose_limit_exceeded', 'nitric acid volume exceeds the supplied limit or final volume')
     contribution = elemental_contribution(mass,{'N_NO3':fraction},recipe.final_volume)
-    water_ppm = {}
-    element_basis = {'Ca+2':'Ca','Mg+2':'Mg','K+':'K','Na+':'Na','Cl-':'Cl',
-                     'NO3-':'N_NO3','NH4+':'N_NH4','PO4-3':'P','SO4-2':'S',
-                     'Fe+3':'Fe','Fe+2':'Fe','Mn+2':'Mn','Zn+2':'Zn','Cu+2':'Cu',
-                     'H3BO3':'B','MoO4-2':'Mo','Ure':'N_UREA'}
-    for basis, amount in water.items():
-        if basis not in element_basis:
-            continue
-        ion = element_basis[basis]
-        molar_mass = MOLAR_MASS[ion.split('_')[0]]
-        value=amount*(2 if basis=='Ure' else 1)*molar_mass*water_mass*1000/recipe.final_volume.value
-        water_ppm[ion]=water_ppm.get(ion,0.)+value
+    # Nutrient accounting on the laboratory analysis; the dose above used the chemistry inventory.
+    water_ppm = nutrient_mg_per_litre(analytical, water_mass, recipe.final_volume.value)
     achieved = forward(selected,grams_per_litre,water_ppm)
     loss, rows = rescore_with_reagent(achieved,targets,contribution)
     for row in rows:
@@ -166,7 +177,9 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
     audit = {'modelVersion':'minteq-flahax-25c-v1','waterAnalysisId':water_analysis_id,
              'waterMassKg':water_mass,'reagentAssay':assay,'chemicalFormula':'HNO3',
              'reagentChannelId':reagent_channel_id,
-             'waterTotalsMolal':water,'initialPh':initial_ph,'targetPh':target_ph,
+             'waterTotalsMolal':water,'analyticalWaterTotalsMolal':analytical,
+             'nutrientBasis':'laboratory analysis' if analytical != water else 'supplied water totals',
+             'initialPh':initial_ph,'targetPh':target_ph,
              'finalVolumeLitres':recipe.final_volume.value,'productDosesGPerKgWater':doses,
              'temperatureC':temperature_c,'phases':list(phases),'maximumNutrientErrorPercent':tolerance,
              'maximumConcentrationsPpm':dict(maximum_concentrations or {}),

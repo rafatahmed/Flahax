@@ -8,20 +8,26 @@ from .composition import validate_profile
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import VolumeLitres, final_solution_recipe
 from .engine import recommend, gap_for, load_library
-from .measured_water import DEFAULT_MAXIMUM_IMBALANCE_PERCENT, balance_water_analysis
+from .measured_water import (DEFAULT_MAXIMUM_IMBALANCE_PERCENT, BalancedWaterAnalysis, balance_water_analysis,
+                             nutrient_mg_per_litre)
 from .equilibrium_delivery import plan_equilibrium_delivery
 from .ph_planning import plan_ph
-from .product_conversion import catalogue_dose_totals, MOLAR_MASS
+from .product_conversion import catalogue_dose_totals
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .nutrient_acceptance import assess_incidental
+from .nutrient_acceptance import assess_incidental, assess_water_basis
 
 
 # Feed-solution pH guidance (research report 2026-10-20): Dutch soilless practice feeds at
 # about pH 5.3-5.8 (Van der Lugt et al.; Savvas); 5.0-7.0 is the acceptable outer band.
 RECOMMENDED_FEED_PH = (5.3, 5.8)
 ACCEPTABLE_FEED_PH = (5.0, 7.0)
+# Chemistry a later stage may build on: calculated, or calculated on an assumed charge closure (review).
+USABLE = ('calculated', 'requires_review')
+ASSUMED_CLOSURE = ('the water analysis was closed on {ion} without a stated measurement uncertainty '
+                   '({change:+.2f}% {ion}); pH, saturation and dose rest on that assumption. Targets and limits '
+                   'use the laboratory values (#84).')
 
 @dataclass
 class WorkflowStage:
@@ -40,6 +46,10 @@ class FertilizerWorkflow:
     target_ph: float
     stages: dict = field(default_factory=dict)
     post_mix_measurement_required: bool = True
+    maximum_concentrations: dict | None = None
+    # Laboratory and charge-balanced water at the final volume, and the limits whose decision
+    # the balancing alone would change (#84). None when the water was not charge-balanced.
+    water_basis: dict | None = None
 
 
 def _positive(value, name):
@@ -49,16 +59,7 @@ def _positive(value, name):
 
 
 def _water_ppm(totals, mass, volume):
-    mapping = {'Ca+2':'Ca', 'Mg+2':'Mg', 'K+':'K', 'Na+':'Na', 'Cl-':'Cl',
-               'NO3-':'N_NO3', 'NH4+':'N_NH4', 'PO4-3':'P', 'SO4-2':'S',
-               'Fe+3':'Fe', 'Fe+2':'Fe', 'Mn+2':'Mn', 'Zn+2':'Zn', 'Cu+2':'Cu',
-               'H3BO3':'B', 'MoO4-2':'Mo', 'Ure':'N_UREA'}
-    ppm = {}
-    for basis, ion in mapping.items():
-        molar = MOLAR_MASS[ion.split('_')[0]]
-        value = totals.get(basis, 0) * molar * mass * 1000 / volume
-        ppm[ion] = ppm.get(ion, 0) + value * (2 if basis == 'Ure' else 1)
-    return ppm
+    return nutrient_mg_per_litre(totals, mass, volume)
 
 
 def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None,
@@ -130,6 +131,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
 
     required = ('water_totals', 'water_mass_kg', 'water_analysis_id', 'complete_analysis',
                 'carbon_boundary', 'temperature_c', 'phases')
+    if equilibrium is not None and equilibrium.get('water_balance') is not None:
+        required = required[1:]   # the balanced record carries its own analytical totals
     if not missing('chemistry', equilibrium, required):
         if recipe is None:
             stages['chemistry'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
@@ -140,11 +143,30 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 if not isinstance(config['water_analysis_id'], str) or not config['water_analysis_id'].strip():
                     raise DeliveryError('missing_field', 'water_analysis_id is required')
                 kwargs = {key: config[key] for key in ('complete_analysis', 'carbon_boundary', 'temperature_c', 'phases')}
-                balance = None
-                if config.get('measured_ph') is None:
+                balance = config.get('water_balance')
+                # Two inventories (#84): ``analytical`` is the laboratory analysis and decides targets
+                # and limits; ``water_totals`` is what the chemistry uses (balanced when it was closed).
+                if balance is not None:
+                    if not isinstance(balance, BalancedWaterAnalysis):
+                        raise DeliveryError('invalid_type', 'water_balance must be a BalancedWaterAnalysis')
+                    if config.get('measured_ph') is not None:
+                        raise DeliveryError('contradictory_water_inputs',
+                                            'supply measured_ph or a prepared water_balance, not both')
+                    if config.get('water_totals') is not None and dict(config['water_totals']) != balance.analytical_totals:
+                        raise DeliveryError('contradictory_water_inputs',
+                                            'water_totals differ from the water_balance analytical totals')
+                    if config['complete_analysis'] is not True or config['carbon_boundary'] != 'closed':
+                        raise DeliveryError('contradictory_water_inputs',
+                                            'a balanced analysis is complete with closed inorganic carbon')
+                    analytical = dict(balance.analytical_totals)
+                    water_state = balance.state
+                    water_totals = dict(balance.totals)
+                elif config.get('measured_ph') is None:
+                    analytical = dict(config['water_totals'])
                     water_state = calculate_equilibrium_ph(config['water_totals'], **kwargs)
                     water_totals = dict(config['water_totals'])
                 else:
+                    analytical = dict(config['water_totals'])
                     # Speciate at the laboratory's measured pH and close the charge
                     # on a named ion, instead of letting analytical error set the pH.
                     if config['complete_analysis'] is not True:
@@ -159,10 +181,14 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         balance_ion=config.get('balance_ion', 'Cl-'),
                         maximum_imbalance_percent=config.get('maximum_imbalance_percent',
                                                              DEFAULT_MAXIMUM_IMBALANCE_PERCENT),
-                        phases=config['phases'], temperature_c=config['temperature_c'])
+                        phases=config['phases'], temperature_c=config['temperature_c'],
+                        analysis_id=config['water_analysis_id'],
+                        balance_ion_uncertainty_percent=config.get('balance_ion_uncertainty_percent'),
+                        fixed=tuple(config.get('fixed', ())), below_detection=config.get('below_detection'))
                     water_state = balance.state
                     water_totals = dict(balance.totals)
-                expected = _water_ppm(config['water_totals'], mass, final_volume.value)
+                # The formulation's water mg/L must be the laboratory analysis, never the balanced model.
+                expected = _water_ppm(analytical, mass, final_volume.value)
                 for ion in set(expected) | set(water):
                     if not math.isclose(expected.get(ion, 0), water.get(ion, 0), rel_tol=1e-6, abs_tol=1e-6):
                         raise DeliveryError('inconsistent_water_analysis', f'nutrient ppm and molal water disagree for {ion}')
@@ -185,16 +211,22 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 mixed = calculate_equilibrium_ph(totals, **kwargs)
                 return {'water': water_state, 'mixed': mixed, 'product_doses_g_per_kg_water': doses,
                         'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
-                        'water_totals': water_totals, 'water_balance': balance}
-            run('chemistry', chemical_states)
+                        'water_totals': water_totals, 'analytical_water_totals': analytical, 'water_balance': balance}
+            value = run('chemistry', chemical_states)
+            balance = value and value['water_balance']
+            if balance is not None and balance and balance.reconciliation == 'assumed':
+                stages['chemistry'].status = 'requires_review'
+                stages['chemistry'].message = ASSUMED_CLOSURE.format(
+                    ion=balance.balance_ion, change=100 * balance.balance_adjustment_molal / balance.analysed_balance_ion_molal)
 
     if not missing('nitric', nitric, ('reagent', 'reagent_channel_id', 'maximum_reagent_volume', 'maximum_nutrient_error_percent')):
-        if stages['chemistry'].status != 'calculated':
+        if stages['chemistry'].status not in USABLE:
             stages['nitric'] = WorkflowStage('blocked', error_code='chemistry_required', message='complete calculated chemistry is required')
         else:
             run('nitric', lambda: plan_equilibrium_delivery(
                 recipe, water_mass_kg=equilibrium['water_mass_kg'],
                 water_totals=stages['chemistry'].value['water_totals'],
+                analytical_water_totals=stages['chemistry'].value['analytical_water_totals'],
                 water_analysis_id=equilibrium['water_analysis_id'], initial_ph=stages['chemistry'].value['mixed'].ph,
                 target_ph=target_ph, targets=targets, temperature_c=equilibrium['temperature_c'], phases=equilibrium['phases'],
                 maximum_concentrations=maximum_concentrations,
@@ -233,7 +265,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                     for p in acids['products'])):
             stages['acid_selection'] = WorkflowStage('blocked', error_code='unsupported_standard_acid',
                 message='Standard fertigation workflow accepts only nitric (HNO3) and phosphoric (H3PO4) products.')
-        elif stages['chemistry'].status != 'calculated':
+        elif stages['chemistry'].status not in USABLE:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='chemistry_required')
         elif not recommendation['feasible']:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='infeasible_recipe')
@@ -251,7 +283,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 stages['acid_selection'] = WorkflowStage('blocked', value=selection, error_code='no_acceptable_acid')
 
     if not missing('ph_adjustment', ph_adjustment, ('products', 'maximum_reagent_volume_litres')):
-        if stages['chemistry'].status != 'calculated':
+        if stages['chemistry'].status not in USABLE:
             stages['ph_adjustment'] = WorkflowStage('blocked', error_code='chemistry_required',
                                                     message='complete calculated chemistry is required')
         else:
@@ -278,6 +310,10 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 chosen = plan.selected
                 if chosen is None:
                     stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent')
+                elif assess_incidental(chosen.recommendation['rows'], maximum_concentrations)['limitViolations']:
+                    # Final acceptance on the laboratory basis: a hard limit is never downgraded to review.
+                    stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='nutrient_limit_exceeded',
+                                                            message='the selected plan exceeds an explicit nutrient maximum')
                 elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
                     stages['ph_adjustment'].status = 'requires_review'
 
@@ -287,4 +323,52 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
         else:
             run('stocks', lambda: plan_stocks(recipe, stocks['injection_ratio'], stocks['tanks'],
                                             stocks['compatibility_rules'], stocks['solubility_limits'], stocks['temperature']))
+
+    output.maximum_concentrations = dict(maximum_concentrations or {})
+    chemistry_stage = stages.get('chemistry')
+    if chemistry_stage is not None and chemistry_stage.status == 'requires_review':
+        # A plan built on an assumed charge closure is usable only after review; a block stays a block.
+        for name in ('nitric', 'acid_selection', 'ph_adjustment'):
+            if name in stages and stages[name].status == 'calculated':
+                stages[name].status = 'requires_review'
+                stages[name].message = '; '.join(filter(None, [stages[name].message, chemistry_stage.message]))
+    if chemistry_stage is not None and chemistry_stage.status in USABLE and chemistry_stage.value['water_balance']:
+        _review_water_basis(output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations)
     return output
+
+
+def _review_water_basis(output, mass, volume, maximum_concentrations):
+    """Record laboratory and balanced water side by side; flag limits the balancing alone would flip (#84)."""
+    stages, chemistry = output.stages, output.stages['chemistry'].value
+    balance = chemistry['water_balance']
+    analytical = _water_ppm(chemistry['analytical_water_totals'], mass, volume)
+    modelled = _water_ppm(chemistry['water_totals'], mass, volume)
+    finals = {'formulation': output.recommendation['rows']}
+    if stages.get('nitric') and stages['nitric'].value is not None:
+        finals['nitric'] = stages['nitric'].value.rows
+    if stages.get('titration') and stages['titration'].value is not None:
+        finals['titration'] = stages['titration'].value.rows
+    plan = stages['ph_adjustment'].value if stages.get('ph_adjustment') else None
+    if plan is not None and plan.selected is not None:
+        finals['ph_adjustment'] = plan.selected.recommendation['rows']
+    findings = {}
+    for name, rows in finals.items():
+        found = assess_water_basis(rows, maximum_concentrations, analytical, modelled)
+        if found:
+            findings[name] = found
+            stage = stages[name]
+            # Review never downgrades a hard failure: only a passing stage moves to review.
+            if stage.status == 'calculated':
+                stage.status = 'requires_review'
+            stage.message = '; '.join(filter(None, [stage.message] + [f['message'] for f in found]))
+    output.water_basis = {
+        'decisionBasis': 'laboratory analysis', 'analysisId': chemistry['water_analysis_id'],
+        'balanceIon': balance.balance_ion, 'imbalancePercent': balance.imbalance_percent,
+        'reconciliation': balance.reconciliation, 'fixed': list(balance.fixed),
+        'belowDetectionMolal': dict(balance.below_detection),
+        'balanceIonUncertaintyPercent': balance.balance_ion_uncertainty_percent,
+        'dilutionFraction': balance.dilution_fraction, 'measuredPh': balance.measured_ph,
+        'analyticalPpm': analytical, 'modelledPpm': modelled,
+        'adjustmentPpm': {ion: modelled.get(ion, 0.) - analytical.get(ion, 0.) for ion in set(analytical) | set(modelled)
+                          if abs(modelled.get(ion, 0.) - analytical.get(ion, 0.)) > 1e-9},
+        'findings': findings}

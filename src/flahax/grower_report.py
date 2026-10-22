@@ -91,6 +91,37 @@ def _stage(stage):
                 required_inputs=list(stage.required_inputs))
 
 
+def _water_and_limits(workflow, recipe):
+    """Laboratory and modelled water side by side, and every declared limit decided on the laboratory basis."""
+    basis = getattr(workflow, 'water_basis', None)
+    water = dict(decision_basis='laboratory analysis',
+                 analysis_mg_per_litre=dict(basis['analyticalPpm'] if basis else workflow.water),
+                 modelled_mg_per_litre=dict(basis['modelledPpm']) if basis else None,
+                 adjustment_mg_per_litre=dict(basis['adjustmentPpm']) if basis else {},
+                 balance_ion=basis['balanceIon'] if basis else None,
+                 reconciliation=basis['reconciliation'] if basis else None,
+                 balance_ion_uncertainty_percent=basis['balanceIonUncertaintyPercent'] if basis else None,
+                 below_detection=sorted(basis['belowDetectionMolal']) if basis else [],
+                 imbalance_percent=basis['imbalancePercent'] if basis else None,
+                 measured_ph=basis['measuredPh'] if basis else None,
+                 dilution_fraction=basis['dilutionFraction'] if basis else None)
+    finals = {row['symbol']: row['final'] for row in recipe['rows']}
+    limits = []
+    for ion, limit in sorted((getattr(workflow, 'maximum_concentrations', None) or {}).items()):
+        lab = finals.get(ion, 0.)
+        model = lab - basis['analyticalPpm'].get(ion, 0.) + basis['modelledPpm'].get(ion, 0.) if basis else None
+        exceeds = lab > limit + 1e-12
+        flips = model is not None and (model > limit + 1e-12) != exceeds
+        limits.append(dict(
+            symbol=ion, maximumPpm=limit, analyticalPpm=lab, modelledPpm=model,
+            decision='exceeds_limit' if exceeds else 'within_limit', basis='laboratory analysis',
+            balancingChangesDecision=flips,
+            note=(f'{ion}: {lab:.4g} mg/L on the laboratory analysis is {"above" if exceeds else "within"} the '
+                  f'{limit:g} mg/L maximum; the charge-balanced model gives {model:.4g} mg/L. The decision uses the '
+                  'laboratory value; check the analysis.') if flips else None))
+    return water, limits
+
+
 def summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=()):
     """Plain data for a grower report and batch sheet.
 
@@ -134,7 +165,7 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
 
     chemistry = ec = None
     chem = workflow.stages.get('chemistry')
-    if chem is not None and chem.status == 'calculated':
+    if chem is not None and chem.status in ('calculated', 'requires_review'):
         picked = chosen or rejected
         mixed = picked.mixed if picked is not None and picked.mixed is not None else chem.value['mixed']
         state = picked.target if picked is not None else mixed
@@ -179,9 +210,24 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
     else:
         status = 'requires_review'      # pH not planned
         warnings.append('pH was not planned: measure it after mixing and adjust before use.')
+
+    water, limits = _water_and_limits(workflow, recipe)
+    # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always blocks,
+    # and a decision the charge balancing alone would change asks for review; review never downgrades a block.
+    if any(row['decision'] == 'exceeds_limit' for row in limits):
+        status = 'blocked'
+    elif status == 'ready' and (any(row['balancingChangesDecision'] for row in limits)
+                                or (chem is not None and chem.status == 'requires_review')):
+        status = 'requires_review'
+    for row in limits:
+        if row['decision'] == 'exceeds_limit':
+            warnings.append(f'{row["symbol"]} {row["analyticalPpm"]:.4g} mg/L exceeds the declared '
+                            f'{row["maximumPpm"]:g} mg/L maximum (laboratory analysis).')
+        if row['balancingChangesDecision'] and not any(row['note'] in w for w in warnings):
+            warnings.append(row['note'])
     return dict(
         title=title, water_label=water_label, flahax_version=__version__, batch_litres=litres,
-        target_ph=workflow.target_ph, status=status,
+        target_ph=workflow.target_ph, status=status, water=water, limits=limits,
         formulation=dict(feasible=recipe['feasible'], salts=[dict(id=s['id'], name=s['name'], gramsPerLitre=s['gramsPerLitre'],
                                                                   gramsPerBatch=s['gramsPerLitre'] * litres)
                                                              for s in recipe['salts']],
@@ -319,6 +365,7 @@ def render_report(summary):
                  + ''.join(f'<p class="small"><b>{text(r["phase"])}</b>: {text(r["reason"])} Sources: '
                            f'{text(r["sources"])}</p>' for r in chem['review'])
                  + '</section>')
+    body += _water_section(s)
     body += _tank_section(s, tanks)
     body += ('<section><h2>Stages</h2>'
              + table(['Stage', 'Status', 'Reason or missing input'],
@@ -326,6 +373,53 @@ def render_report(summary):
                       for n, st in s['stages'].items()], 'Workflow stages')
              + '<h2>Assumptions</h2><ul>' + ''.join(f'<li>{text(a)}</li>' for a in s['assumptions']) + '</ul></section>')
     return _page(s['title'], body, STYLE)
+
+
+def _limit_rows(s):
+    return [(row['symbol'], number(row['maximumPpm'], 2), number(row['analyticalPpm'], 2),
+             'n/a' if row['modelledPpm'] is None else number(row['modelledPpm'], 2),
+             ('exceeds' if row['decision'] == 'exceeds_limit' else 'within')
+             + (' (balancing would change it: review)' if row['balancingChangesDecision'] else ''))
+            for row in s['limits']]
+
+
+def _limits_text(s):
+    if not s['limits']:
+        return 'No maximum concentrations were declared, so none were checked.'
+    return ('Limits are decided on the laboratory analysis plus everything added, at the final volume. '
+            'The charge-balanced value is shown for comparison only.')
+
+
+def _water_section(s):
+    w = s['water']
+    ions = sorted(set(w['analysis_mg_per_litre']) | set(w['modelled_mg_per_litre'] or {}))
+    rows = [(ion, number(w['analysis_mg_per_litre'].get(ion, 0.), 3),
+             'n/a' if w['modelled_mg_per_litre'] is None else number(w['modelled_mg_per_litre'].get(ion, 0.), 3),
+             f'{w["adjustment_mg_per_litre"][ion]:+.3f}' if ion in w['adjustment_mg_per_litre'] else '')
+            for ion in ions if w['analysis_mg_per_litre'].get(ion) or (w['modelled_mg_per_litre'] or {}).get(ion)]
+    state = w['reconciliation']
+    if state is None:
+        note = ''
+    elif state == 'unchanged':
+        note = (f'<p>The analysis closes its charge at its measured pH {number(w["measured_ph"], 2)}: no adjustment '
+                'was needed, and the chemistry uses it as measured.</p>')
+    else:
+        how = (f'within its stated ±{number(w["balance_ion_uncertainty_percent"], 2)}% measurement uncertainty'
+               if state == 'reconciled' else 'without a stated measurement uncertainty, so the chemistry needs review')
+        note = (f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out of charge balance '
+                f'at its measured pH {number(w["measured_ph"], 2)}) is closed on {text(w["balance_ion"])}, {how}. That is '
+                'a modelling step, not a corrected measurement: targets and limits use the laboratory values.</p>')
+    if w['below_detection']:
+        note += ('<p>Reported below detection (taken as zero, not confirmed zero): '
+                 + text(', '.join(w['below_detection'])) + '.</p>')
+    return ('<section><h2>Water and limits</h2>' + note
+            + (table(['Nutrient', 'Laboratory mg/L', 'Charge-balanced model mg/L', 'Adjustment'], rows,
+                     'Water in the final solution (decision basis: laboratory analysis)') if rows else
+               '<p>The water brings no ions.</p>')
+            + f'<p>{text(_limits_text(s))}</p>'
+            + (table(['Nutrient', 'Maximum mg/L', 'Final, laboratory basis', 'Final, model basis', 'Decision'],
+                     _limit_rows(s), 'Declared maximum concentrations') if s['limits'] else '')
+            + '</section>')
 
 
 def _tank_section(s, tanks):
@@ -368,6 +462,12 @@ def render_batch_sheet(summary):
             f'{number(litres / ratio, 1)} L of each tank per batch at 1:{ratio}; keep the tanks apart as listed.</p>'
             + (f'<ul class="small">{tank_notes}</ul>' if tank_notes else '')
             + f'<h2>pH</h2><div class="box warn">{text(_reagent_line(s))}</div>'
+            + '<h2>Limits</h2><p class="small">' + text(_limits_text(s)) + '</p>'
+            + (('<table><thead><tr><th>Nutrient</th><th class="num">Maximum mg/L</th><th class="num">Final mg/L '
+                '(laboratory basis)</th><th>Decision</th></tr></thead><tbody>'
+                + ''.join(f'<tr><td>{text(r[0])}</td><td class="num">{r[1]}</td><td class="num">{r[2]}</td>'
+                          f'<td>{text(r[4])}</td></tr>' for r in _limit_rows(s))
+                + '</tbody></table>') if s['limits'] else '')
             + (f'<h2>Read before mixing</h2><ul class="small">{warnings}</ul>' if warnings else '')
             + '<h2>Measure after mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
             f'<tbody>{check_rows}</tbody></table>'

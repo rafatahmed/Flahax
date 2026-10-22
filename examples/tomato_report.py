@@ -100,9 +100,10 @@ def simple_section(s):
 
 def advanced_section(a):
     w = a['well']
-    blend_rows = [(f"{b['well_percent']}%", number(b['Na'], 1), number(b['Cl'], 1), number(b['Ca'], 1),
-                   number(b['S'], 1), 'Yes' if b['Na'] <= a['limits_mg_l']['Na'] and b['Cl'] <= a['limits_mg_l']['Cl']
-                   else 'No') for b in a['blends']]
+    blend_rows = [(f"{b['well_percent']}%", number(b['Na'], 1), number(b['Cl'], 1), number(b['Cl_model'], 1),
+                   number(b['Ca'], 1), number(b['S'], 1),
+                   'Yes' if b['Na'] <= a['limits_mg_l']['Na'] and b['Cl'] <= a['limits_mg_l']['Cl'] else 'No')
+                  for b in a['blends']]
     rec = a['recipe']
     recipe_rows = [(x['name'], number(x['gramsPerLitre'], 4), number(x['gramsPerLitre'] * tomato_advanced.BATCH_LITRES, 1),
                     x['provenance']['identityId']) for x in rec['salts']]
@@ -128,16 +129,23 @@ def advanced_section(a):
     return ('<section id="advanced"><h2>2. Advanced: a published brackish well, from analysis to batch</h2>'
             '<div class="cards">'
             + card('Well analysis', f"{w['imbalance_percent']:+.2f}%", f"charge imbalance, closed at pH {w['measured_ph']}")
-            + card('Blend', f"{a['blend_percent']}% well", 'largest share within Na and Cl limits')
+            + card('Blend', f"{a['blend_percent']}% well", 'largest share within Na and Cl limits, laboratory values')
             + card('Feed pH', number(c['mixed_ph'], 2), f"target {a['target_ph']}")
             + card('EC25 estimate', f"{number(a['ec']['acidified']['ec25_ms_cm'], 2)} mS/cm", 'after acid, experimental')
             + '</div>'
             '<h3>Step 1. Balance the laboratory analysis</h3>'
             f'<p>The well (Shomar et al. 2024, station 104) is {number(w["imbalance_percent"], 2)}% out of charge '
-            f'balance at its measured pH {w["measured_ph"]}. FlahaX keeps the measured pH and closes the gap on '
-            f'chloride ({w["chloride_adjustment_percent"]:+.1f}%), instead of turning it into a pH error.</p>'
+            f'balance at its measured pH {w["measured_ph"]}. For the chemistry FlahaX keeps the measured pH and '
+            f'closes the gap on chloride ({w["chloride_adjustment_percent"]:+.1f}%), instead of turning it into a pH '
+            'error. That balanced chloride is a modelling assumption, not a corrected measurement: every limit and '
+            'target below uses the laboratory values.</p>'
             '<h3>Step 2. Choose the blend with desalinated water</h3>'
-            + table(['Well share', 'Na', 'Cl', 'Ca', 'S', 'Within 3 mmol/L Na and Cl'], blend_rows, 'Water quality by blend (mg/L)')
+            f'<p>The blend is chosen on the laboratory analysis. {a["blend_percent"]}% is the largest whole-percent '
+            f'share within both limits; {a["blend_percent"] + 1}% exceeds the chloride limit on the laboratory value '
+            'even though the balanced model would pass it. The continuous chloride boundary is about '
+            f'{number(a["chloride_boundary_percent"], 1)}% (ion-free dilution water assumed), not a safety margin.</p>'
+            + table(['Well share', 'Na', 'Cl (laboratory)', 'Cl (balanced model, not used)', 'Ca', 'S',
+                     'Within 3 mmol/L Na and Cl'], blend_rows, 'Water quality by blend (mg/L, laboratory basis)')
             + bars('Sodium and chloride by blend', [r[0] for r in blend_rows],
                    [('Na', [b['Na'] for b in a['blends']]), ('Cl', [b['Cl'] for b in a['blends']])], 'mg/L')
             + '<h3>Step 3. Formulate on that water</h3>'
