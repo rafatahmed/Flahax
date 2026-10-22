@@ -155,6 +155,19 @@ class BatchCommandTests(unittest.TestCase):
             with self.assertRaises(SystemExit):     # never overwrites
                 self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--output', str(target))
 
+    def test_review_reason_quotes_the_weighed_recipe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'sheet'
+            self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--ph', '5.8', '--volume', '1000',
+                           '--acid', 'HNO3:0.60:1.37:Nitric acid 60%', '--output', str(target))
+            summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
+        message = summary['stages']['formulation']['message']
+        final = {r['symbol']: r['final'] for r in summary['formulation']['rows']}
+        quoted = re.findall(r'(\w+) ([\d.]+) mg/L', message)
+        self.assertTrue(quoted, message)
+        for symbol, value in quoted:
+            self.assertEqual(float(value), float(f'{final[symbol]:.3g}'), f'{symbol}: {message}')
+
     def test_ambiguous_crop_lists_the_choices(self):
         code, _, err = self.run_batch('--crop', 'tomato', '--water', 'ro', '--output', 'unused-dir')
         self.assertEqual(code, 1)
