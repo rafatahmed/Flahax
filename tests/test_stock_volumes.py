@@ -19,6 +19,13 @@ class FillModeTests(unittest.TestCase):
         self.assertEqual(volumes.prepared_litres['B'], 20)
         self.assertEqual(volumes.capacity_litres['B'], 30)
 
+    def test_fill_never_prepares_more_than_the_tank_holds(self):
+        # 487.3 * 150.5 / 150.5 is 1 ulp above 487.3 in floating point.
+        volumes = prepare_stocks(tank_litres={'A': 487.3, 'B': 600, 'acid': 600}, ratio=150.5, mode='fill')
+        for name, litres in volumes.prepared_litres.items():
+            self.assertLessEqual(litres, volumes.capacity_litres[name])
+        self.assertEqual(volumes.prepared_litres, {'A': 487.3, 'B': 487.3, 'acid': 487.3})
+
 
 class OnceModeTests(unittest.TestCase):
     def test_one_irrigation_divides_by_ratio(self):
@@ -34,6 +41,20 @@ class OnceModeTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 'tank_too_small')
         for name in ('A', 'B', 'acid'):
             self.assertIn(name, str(raised.exception))
+
+    def test_exact_fit_passes(self):
+        # irrigation / ratio equals the capacity exactly: not too small.
+        volumes = prepare_stocks(tank_litres={'A': 10, 'B': 10, 'acid': 10}, ratio=100, mode='once',
+                                 irrigation_litres=1000)
+        self.assertEqual(volumes.prepared_litres, {'A': 10, 'B': 10, 'acid': 10})
+
+    def test_only_the_too_small_container_is_named(self):
+        with self.assertRaises(DeliveryError) as raised:
+            prepare_stocks(tank_litres={'A': 20, 'B': 5, 'acid': 20}, ratio=100, mode='once',
+                           irrigation_litres=1000)
+        self.assertEqual(raised.exception.code, 'tank_too_small')
+        self.assertTrue(str(raised.exception).startswith('B cannot hold'), str(raised.exception))
+        self.assertNotIn('acid', str(raised.exception))
 
 
 class ValidationTests(unittest.TestCase):
