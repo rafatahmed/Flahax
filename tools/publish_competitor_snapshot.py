@@ -52,7 +52,7 @@ def readme(env):
         "FlahaX competitor comparison (#40)\n\n"
         f"Measured commit: {env['measured_commit']}\n"
         f"Python {env['python']} on {env['platform']}\n\n"
-        "formulation.json  FlahaX vs Horticalc v0.6.7 vs an Irriblend-method LP baseline\n"
+        "formulation.json  FlahaX vs Horticalc v0.6.7 vs Irriblend-DSW (a046d5c) and an LP after its method\n"
         "chemistry.json    FlahaX vs live PHREEQC (PhreeqPython 1.6.2) on the golden fixtures\n"
         "ec.json           EC25 against IUPAC KCl primary standards, and catalogue agreement\n"
         "environment.json  interpreter, platform and the full package list of the run\n\n"
