@@ -17,7 +17,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .nutrient_acceptance import assess_incidental, assess_water_basis
+from .nutrient_acceptance import assess_incidental, assess_water_basis, name_sources
 
 
 # Feed-solution pH guidance (research report 2026-10-20): Dutch soilless practice feeds at
@@ -116,6 +116,15 @@ def unreviewed_reason(recommendation):
             + '; check them, or declare maximum concentrations') if found else None
 
 
+def assessed_limits(maximum_concentrations, recommendation):
+    """The user's maxima plus the N_NH4 allowance ``recommend`` applied when none was declared."""
+    limits = dict(maximum_concentrations or {})
+    allowance = recommendation.get('ammoniumLimit')
+    if allowance and 'N_NH4' not in limits:
+        limits['N_NH4'] = allowance['mgPerL']
+    return limits
+
+
 def _water_ppm(totals, mass, volume):
     return nutrient_mg_per_litre(totals, mass, volume)
 
@@ -145,7 +154,10 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
     targets = validate_profile(dict(targets), 'targets')
     water = validate_profile(dict(water), 'water')
     recommendation = recommend(salts, targets, water, maximum_concentrations=maximum_concentrations)
-    recommendation.update(assess_incidental(recommendation['rows'], maximum_concentrations))
+    # One assessment: the user's limits plus the ammonium allowance recommend applied (#92).
+    limits = assessed_limits(maximum_concentrations, recommendation)
+    recommendation.update(name_sources(assess_incidental(recommendation['rows'], limits),
+                                       recommendation['salts'], salts, water))
     if recommendation['limitViolations']:
         recommendation['feasible'] = False
     if not ACCEPTABLE_FEED_PH[0] <= target_ph <= ACCEPTABLE_FEED_PH[1]:
@@ -296,7 +308,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 analytical_water_totals=stages['chemistry'].value['analytical_water_totals'],
                 water_analysis_id=equilibrium['water_analysis_id'], initial_ph=stages['chemistry'].value['mixed'].ph,
                 target_ph=target_ph, targets=targets, temperature_c=equilibrium['temperature_c'], phases=equilibrium['phases'],
-                maximum_concentrations=maximum_concentrations,
+                maximum_concentrations=limits,
                 **{key: nitric[key] for key in ('reagent', 'reagent_channel_id', 'maximum_reagent_volume', 'maximum_nutrient_error_percent')}))
             if stages['nitric'].value is not None and stages['nitric'].value.incidental_assessment['requiresReview']:
                 stages['nitric'].status = 'requires_review'
@@ -319,11 +331,11 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                       'maximum_nutrient_error_percent')
                 if any(row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance for row in plan.rows):
                     raise DeliveryError('nutrient_tolerance_exceeded', 'titration dose violates a positive nutrient target')
-                if assess_incidental(plan.rows, maximum_concentrations)['limitViolations']:
+                if assess_incidental(plan.rows, limits)['limitViolations']:
                     raise DeliveryError('nutrient_limit_exceeded', 'titration dose exceeds an explicit nutrient maximum')
                 return plan
             plan = run('titration', titration_plan)
-            if plan is not None and assess_incidental(plan.rows, maximum_concentrations)['requiresReview']:
+            if plan is not None and assess_incidental(plan.rows, limits)['requiresReview']:
                 stages['titration'].status = 'requires_review'
 
     if not missing('acid_selection', acids, ('products', 'maximum_nutrient_error_percent', 'maximum_reagent_volume_litres')):
@@ -345,7 +357,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 maximum_nutrient_error_percent=acids['maximum_nutrient_error_percent'],
                 maximum_reagent_volume_litres=acids['maximum_reagent_volume_litres'],
                 preferred_product_id=acids.get('preferred_product_id'), phases=equilibrium['phases'],
-                maximum_concentrations=maximum_concentrations))
+                maximum_concentrations=limits))
             if selection is not None and selection.selected_product_id is None:
                 stages['acid_selection'] = WorkflowStage('blocked', value=selection, error_code='no_acceptable_acid')
 
@@ -381,7 +393,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 chosen = plan.selected
                 if chosen is None:
                     stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent')
-                elif assess_incidental(chosen.recommendation['rows'], maximum_concentrations)['limitViolations']:
+                elif assess_incidental(chosen.recommendation['rows'],
+                                         assessed_limits(maximum_concentrations, chosen.recommendation))['limitViolations']:
                     # Final acceptance on the laboratory basis: a hard limit is never downgraded to review.
                     stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='nutrient_limit_exceeded',
                                                             message='the selected plan exceeds an explicit nutrient maximum')

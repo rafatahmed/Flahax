@@ -242,13 +242,15 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
                             f'{row["maximumPpm"]:g} mg/L maximum (laboratory analysis).')
         if row['balancingChangesDecision'] and not any(row['note'] in w for w in warnings):
             warnings.append(row['note'])
+    sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     return dict(
         title=title, water_label=water_label, flahax_version=__version__, batch_litres=litres,
         target_ph=workflow.target_ph, status=status, water=water, limits=limits,
         formulation=dict(feasible=recipe['feasible'], salts=[dict(id=s['id'], name=s['name'], gramsPerLitre=s['gramsPerLitre'],
                                                                   gramsPerBatch=s['gramsPerLitre'] * litres)
                                                              for s in recipe['salts']],
-                         rows=[dict(symbol=r['symbol'], target=r['target'], final=r['final'], deltaPct=r['deltaPct'])
+                         rows=[dict(symbol=r['symbol'], target=r['target'], final=r['final'], deltaPct=r['deltaPct'],
+                                    **({} if r['target'] else {'source': sources.get(r['symbol'], [])}))
                                for r in recipe['rows'] if r['target'] or r['final'] > 1e-6],
                          unmet=recipe['unmetTargets'], ion_balance=recipe['targetIonBalance']),
         ph=ph, chemistry=chemistry, ec=ec, tanks=tanks, stages=stages, warnings=warnings,
