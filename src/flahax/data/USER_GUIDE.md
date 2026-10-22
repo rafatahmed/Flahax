@@ -223,7 +223,7 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `feasible` is false | Inspect all nutrient rows and available assays; do not force approval by hiding residuals. |
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
 | `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
-| `identity_inconsistent` | A label does not fit its chemical (its charges do not balance within 0.1 %). Check the label; rounded labels can trip this (#93). |
+| `identity_inconsistent` | A label does not fit its chemical: its charges are more than 1 % out of balance (rounded labels and commercial grades stay well inside; a one-point typing error does not). Check the label. |
 | `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
 | `too_many_tanks` | The products need more than two concentrate tanks under the rules; the message names the conflicting products. |
 | `tank_too_small` | One irrigation needs more stock than a tank holds; the message names the tank. |
