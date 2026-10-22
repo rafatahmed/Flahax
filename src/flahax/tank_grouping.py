@@ -10,6 +10,11 @@ applied here to every product from its elemental analysis:
 - magnesium with phosphate (page 65: magnesium nitrate and magnesium sulfate with
   potassium and ammonium phosphates and phosphoric acid).
 
+FlahaX rule (owner decision 2026-10-22): there are exactly two concentrate tanks, so
+the magnesium-phosphate rule is waived: magnesium sulfate shares tank B with the
+phosphates. The waiver is listed in ``WAIVED_RULES`` and reported for every pair it
+lets share a tank; products that still need a third tank are refused.
+
 FlahaX rule (owner decision, rafatahmed/Flahax#79): micronutrients and chelates go
 to tank A with the calcium products, because their doses are too small to
 precipitate there, and tank A is never acidified (page 63). They are kept out of
@@ -35,8 +40,16 @@ STRONG_ACIDS = frozenset({'HNO3', 'H3PO4', 'H2SO4'})
 CLASS_RULES = (
     ('calcium', 'phosphate', 'calcium and phosphate precipitate as calcium phosphate in a concentrate'),
     ('calcium', 'sulfate', 'calcium and sulfate precipitate as gypsum in a concentrate'),
-    ('magnesium', 'phosphate', 'magnesium and phosphate precipitate as magnesium phosphate in a concentrate'),
 )
+
+OWNER_TWO_TANKS = ('FlahaX rule (owner decision 2026-10-22): two tanks; '
+                   'magnesium sulfate shares tank B with the phosphates')
+# Sourced rules (p. 65) that the two-tank rule waives: (class, class, reason, waived by).
+WAIVED_RULES = (
+    ('magnesium', 'phosphate', 'magnesium and phosphate precipitate as magnesium phosphate in a concentrate',
+     OWNER_TWO_TANKS),
+)
+MAX_TANKS = 2
 
 # Page 65 products, for labelling only: catalogue name -> Yara name. Grouping uses the class rules.
 ANALOGUE = {
@@ -87,6 +100,7 @@ class TankGrouping:
     tanks: tuple
     reagent_channel: tuple      # pH reagents: dosed on their own channel
     separations: tuple          # (product, product, reason) pairs kept apart
+    waived: tuple = ()          # (product, product, reason) pairs a waived rule lets share a tank
     source: str = SOURCE
     solubility_checked: bool = False
 
@@ -108,14 +122,23 @@ def product_classes(record):
     return frozenset(classes)
 
 
-def _class_conflict(a, b):
+def _class_conflict(a, b, rules=CLASS_RULES):
     if 'micronutrient' in a | b:
         # FlahaX rule: the page 63/65 rules are waived for micronutrients (small doses), but they stay
         # out of phosphate concentrates (manganese and iron phosphates, #78).
         return MICRO_PHOSPHATE if 'phosphate' in a | b else None
-    for x, y, reason in CLASS_RULES:
+    for x, y, reason, *_ in rules:
         if (x in a and y in b) or (y in a and x in b):
             return reason
+    return None
+
+
+def _waived(a, b):
+    if 'micronutrient' in a | b:
+        return None
+    for x, y, _, why in WAIVED_RULES:
+        if (x in a and y in b) or (y in a and x in b):
+            return why
     return None
 
 
@@ -150,7 +173,8 @@ def group_tanks(salts, products, *, rules=()):
     follow by descending dose into the first tank without a conflict; acids never
     join a tank holding calcium or micronutrients. pH reagents are returned apart, for
     their own channel. ``rules`` are extra ``compatibilityRule`` records that
-    separate products by id; they also override the micronutrient rule.
+    separate products by id; they also override the micronutrient rule. At most
+    two tanks: products that need a third raise ``too_many_tanks``.
     """
     by_id = {p['id']: p for p in products}
     extra = [validate_compatibility_rule(r) for r in rules]
@@ -196,6 +220,10 @@ def group_tanks(salts, products, *, rules=()):
             tank.append(row)
             break
         else:
+            if len(tanks) == MAX_TANKS:
+                names = ', '.join(r[0]['name'] for t in tanks for r in t if reason(row, r))
+                raise DeliveryError('too_many_tanks', f'{row[0]["name"]} conflicts with {names or "every tank"}, so the '
+                                    f'products need more than {MAX_TANKS} concentrate tanks')
             tanks.append([row])
         basis.setdefault(row[0]['name'], 'acid: never with calcium or chelates' if acid else 'first tank without a conflict')
     tanks = [t for t in tanks if t]
@@ -207,6 +235,9 @@ def group_tanks(salts, products, *, rules=()):
                     why = reason(row, other)
                     if why:
                         separations.append((row[0]['name'], other[0]['name'], why))
+
+    waived = tuple((a[0]['name'], b[0]['name'], why) for tank in tanks for i, a in enumerate(tank)
+                   for b in tank[i + 1:] if (why := _waived(a[2], b[2])) and not reason(a, b))
 
     def notes(tank):
         names = {ANALOGUE.get(r[0]['name']) for r in tank} - {None}
@@ -221,4 +252,4 @@ def group_tanks(salts, products, *, rules=()):
             name='ABCDEFGH'[index],
             products=tuple(TankProduct(s['id'], s['name'], s['gramsPerLitre'], basis[s['name']]) for s, _, _ in tank),
             acid_allowed=not holds_a(tank), notes=notes(tank)))
-    return TankGrouping(tuple(built), reagents, tuple(separations))
+    return TankGrouping(tuple(built), reagents, tuple(separations), waived)

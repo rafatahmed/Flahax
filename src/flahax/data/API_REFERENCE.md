@@ -1628,10 +1628,10 @@ Source module: `flahax.tank_grouping`. Import with `from flahax import Concentra
 ### `TankGrouping`
 
 ```text
-TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
+TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, waived: tuple = (), source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
 ```
 
-Record fields: `tanks`, `reagent_channel`, `separations`, `source`, `solubility_checked`.
+Record fields: `tanks`, `reagent_channel`, `separations`, `waived`, `source`, `solubility_checked`.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import TankGrouping`.
 
@@ -1673,7 +1673,8 @@ Tank A takes the calcium products, then every micronutrient product; the others
 follow by descending dose into the first tank without a conflict; acids never
 join a tank holding calcium or micronutrients. pH reagents are returned apart, for
 their own channel. ``rules`` are extra ``compatibilityRule`` records that
-separate products by id; they also override the micronutrient rule.
+separate products by id; they also override the micronutrient rule. At most
+two tanks: products that need a third raise ``too_many_tanks``.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import group_tanks`.
 

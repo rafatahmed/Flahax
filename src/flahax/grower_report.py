@@ -195,6 +195,7 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
     tanks = dict(source=grouping.source, injection_ratio=injection_ratio, solubility_checked=False,
                  reagent_channel=list(grouping.reagent_channel),
                  separations=[list(s) for s in grouping.separations],
+                 waived=[list(w) for w in grouping.waived],
                  tanks=[dict(name=t.name, acid_allowed=t.acid_allowed, notes=list(t.notes),
                              stock_litres_per_batch=litres / injection_ratio,
                              products=[dict(id=p.product_id, name=p.name, gramsPerLitre=p.grams_per_litre,
@@ -436,11 +437,13 @@ def _tank_section(s, tanks):
             for t in tanks['tanks'] for p in t['products']]
     notes = ''.join(f'<li>Tank {text(t["name"])}: {text(n)}</li>' for t in tanks['tanks'] for n in t['notes'])
     separated = ''.join(f'<li>{text(a)} / {text(b)}: {text(why)}</li>' for a, b, why in tanks['separations'])
+    waived = ''.join(f'<li>{text(a)} / {text(b)}: {text(why)}</li>' for a, b, why in tanks['waived'])
     return ('<section><h2>Concentrate tanks</h2>'
             + table(['Tank', 'Product', f'g per {number(s["batch_litres"], 0)} L', f'Stock g/L at 1:{tanks["injection_ratio"]}',
                      'Why here'], rows, 'Tanks from the default compatibility table (solubility not checked)')
             + (f'<ul>{notes}</ul>' if notes else '')
             + (f'<details><summary>Pairs kept apart</summary><ul>{separated}</ul></details>' if separated else '')
+            + (f'<p>Shared by rule, against Yara p. 65:</p><ul>{waived}</ul>' if waived else '')
             + f'<p class="small">Source: {text(tanks["source"])}.</p></section>')
 
 
