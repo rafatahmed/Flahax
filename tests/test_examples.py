@@ -51,7 +51,7 @@ class CapabilityExamplesTests(unittest.TestCase):
 
     def test_chemistry_covers_catalogue_conservation_and_solids(self):
         result = self.results['chemistry']
-        self.assertEqual(len(result['catalogue_conversions_at_001_g_per_kg_water']), 30)
+        self.assertEqual(len(result['catalogue_conversions_at_001_g_per_kg_water']), 32)
         self.assertGreater(result['mixed']['species']['FeDtp-2'], 0)
         self.assertGreater(result['mixed']['species']['FeEdd-'], 0)
         self.assertTrue(any(v > 0 for v in result['precipitation']['precipitated'].values()))

@@ -1,6 +1,6 @@
    Input file: mixed_target_ph_nitric_target.pqi
   Output file: mixed_target_ph_nitric_target.out
-Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-h3kxqakx\minteq-flahax.dat
 
 ------------------
 Reading data base.
@@ -35,9 +35,10 @@ Reading input data for simulation 1.
 	 N(-3) 0.0001178007667759001
 	 Mg 0.00040567784406500725
 	 S(6) 0.00040580162195882717
-	 K 0.0028036257330881398
+	 K 0.0028036082497042004
 	 P 0.00036737545797633489
 	 Fe(3) 1.7369504879577404e-05
+	 Na 0.0015292716412360001
 	 Dtp 7.8789506670248004e-06
 	 Edd 3.2232070910556004e-06
 	 Zn 3.0590394616090553e-07
@@ -45,10 +46,9 @@ Reading input data for simulation 1.
 	 Cu(2) 8.6551474522393241e-08
 	 B 6.01295097132285e-06
 	 Mo 2.6055237102657637e-08
-	 Na 0.0015292622731350001
 	 Edta 8.4800348023605141e-06
 	 Ure 8.3256584348918744e-05
-	 C(4) 0.00072357365921280482
+	 C(4) 0.00072356491752083513
 	 Cl 0.002
 	SELECTED_OUTPUT
 	 file mixed_target_ph_nitric_target.sel
@@ -59,7 +59,7 @@ Reading input data for simulation 1.
 	 charge_balance true
 	 percent_error true
 	 water true
-	 totals Ca N(5) N(-3) Mg S(6) K P Fe(3) Dtp Edd Zn Mn(2) Cu(2) B Mo Na Edta Ure C(4) Cl
+	 totals Ca N(5) N(-3) Mg S(6) K P Fe(3) Na Dtp Edd Zn Mn(2) Cu(2) B Mo Edta Ure C(4) Cl
 	 molalities H3BO3 CO3-2 Ca+2 Cl- Cu+2 Fe+3 H+ K+ Mg+2 MoO4-2 NO3- Na+ PO4-3 SO4-2 Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 MgOH+ CaOH+ ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HSO4- NH4SO4- ZnSO4 Zn(SO4)2-2 CuSO4 FeSO4+ Fe(SO4)2- MnSO4 MgSO4 CaSO4 NaSO4- KSO4- NH3 CuNH3+2 CaNH3+2 Ca(NH3)2+2 CuNO3+ Cu(NO3)2 ZnNO3+ Zn(NO3)2 FeNO3+2 MnNO3+ Mn(NO3)2 CaNO3+ HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ MgPO4- MgH2PO4+ MgHPO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4- KHPO4- HCO3- H2CO3 ZnCO3 ZnHCO3+ CuCO3 CuHCO3+ Cu(CO3)2-2 MnHCO3+ MgCO3 MgHCO3+ CaHCO3+ CaCO3 NaCO3- NaHCO3 H2BO3- H5(BO3)2- H8(BO3)3- MgH2BO3+ CaH2BO3+ NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Mg(Edta)-2 MgH(Edta)- Ca(Edta)-2 CaH(Edta)- Na(Edta)-3 K(Edta)-3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd- Ure NH4+ Mn+2
 	 activities H3BO3 CO3-2 Ca+2 Cl- Cu+2 Fe+3 H+ K+ Mg+2 MoO4-2 NO3- Na+ PO4-3 SO4-2 Zn+2 Edta-4 OH- ZnOH+ Zn(OH)2 Zn(OH)3- Zn(OH)4-2 CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 MnOH+ Mn(OH)3- Mn(OH)4-2 MgOH+ CaOH+ ZnCl+ ZnCl2 ZnCl3- ZnCl4-2 ZnOHCl CuCl+ CuCl2 CuCl3- CuCl4-2 FeCl+2 FeCl2+ FeCl3 MnCl+ MnCl2 MnCl3- HSO4- NH4SO4- ZnSO4 Zn(SO4)2-2 CuSO4 FeSO4+ Fe(SO4)2- MnSO4 MgSO4 CaSO4 NaSO4- KSO4- NH3 CuNH3+2 CaNH3+2 Ca(NH3)2+2 CuNO3+ Cu(NO3)2 ZnNO3+ Zn(NO3)2 FeNO3+2 MnNO3+ Mn(NO3)2 CaNO3+ HPO4-2 H2PO4- H3PO4 FeH2PO4+2 FeHPO4+ MgPO4- MgH2PO4+ MgHPO4 CaHPO4 CaPO4- CaH2PO4+ NaHPO4- KHPO4- HCO3- H2CO3 ZnCO3 ZnHCO3+ CuCO3 CuHCO3+ Cu(CO3)2-2 MnHCO3+ MgCO3 MgHCO3+ CaHCO3+ CaCO3 NaCO3- NaHCO3 H2BO3- H5(BO3)2- H8(BO3)3- MgH2BO3+ CaH2BO3+ NaH2BO3 HMoO4- H2MoO4 Mo7O24-6 HMo7O24-5 H2Mo7O24-4 H3Mo7O24-3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Zn(Edta)-2 ZnH(Edta)- ZnOH(Edta)-3 Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Mn(Edta)-2 MnH(Edta)- Mg(Edta)-2 MgH(Edta)- Ca(Edta)-2 CaH(Edta)- Na(Edta)-3 K(Edta)-3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2 Edd-4 HEdd-3 H2Edd-2 H3Edd- H4Edd FeEdd- Ure NH4+ Mn+2
 	 si Zincite Cu(OH)2 Tenorite Ferrihydrite Goethite Pyrochroite Halite Smithsonite Malachite Rhodochrosite Calcite Epsomite Anhydrite Gypsum Zn3(PO4)2:4H2O Cu3(PO4)2 Strengite Mn3(PO4)2 MnHPO4 Hydroxylapatite CaHPO4:2H2O CaHPO4 Sylvite Struvite Kieserite
@@ -112,7 +112,7 @@ Initial solution 1.
                  Total alkalinity (eq/kg)  =   2.551e-04
                        Total CO2 (mol/kg)  =   7.236e-04
                          Temperature (°C)  =  25.00
-                  Electrical balance (eq)  =  -3.434e-19
+                  Electrical balance (eq)  =  -1.777e-18
  Percent error, 100*(Cat-|An|)/(Cat+|An|)  =  -0.00
                                Iterations  =  11
                                   Total H  = 1.110161e+02
@@ -147,7 +147,7 @@ C(4)          7.236e-04
    MgHCO3+         6.425e-07   5.848e-07    -6.192    -6.233    -0.041     (0)  
    NaHCO3          1.685e-07   1.685e-07    -6.773    -6.773     0.000     (0)  
    CO3-2           1.470e-08   1.010e-08    -7.833    -7.996    -0.163     (0)  
-   CaCO3           7.377e-09   7.377e-09    -8.132    -8.132     0.000     (0)  
+   CaCO3           7.376e-09   7.376e-09    -8.132    -8.132     0.000     (0)  
    MgCO3           2.228e-09   2.228e-09    -8.652    -8.652     0.000     (0)  
    MnHCO3+         2.173e-09   1.982e-09    -8.663    -8.703    -0.040     (0)  
    NaCO3-          2.864e-10   2.615e-10    -9.543    -9.582    -0.039     (0)  
@@ -165,7 +165,7 @@ Ca            7.111e-04
    CaHCO3+         2.022e-06   1.849e-06    -5.694    -5.733    -0.039     (0)  
    Ca(Edta)-2      7.194e-07   4.723e-07    -6.143    -6.326    -0.183     (0)  
    CaPO4-          1.154e-08   1.053e-08    -7.938    -7.977    -0.039     (0)  
-   CaCO3           7.377e-09   7.377e-09    -8.132    -8.132     0.000     (0)  
+   CaCO3           7.376e-09   7.376e-09    -8.132    -8.132     0.000     (0)  
    CaH(Edta)-      1.584e-09   1.426e-09    -8.800    -8.846    -0.046     (0)  
    CaH2BO3+        1.022e-10   9.268e-11    -9.990   -10.033    -0.043     (0)  
    CaOH+           1.012e-10   9.253e-11    -9.995   -10.034    -0.039     (0)  
@@ -516,6 +516,6 @@ Reading input data for simulation 2.
 ------------------------------------
 
 -------------------------------
-End of Run after 0.037 Seconds.
+End of Run after 0.044 Seconds.
 -------------------------------
 

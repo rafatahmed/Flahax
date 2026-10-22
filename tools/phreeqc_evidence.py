@@ -108,12 +108,14 @@ def execute(exe,db,folder,name,text):
             raise RuntimeError(f'{name}: rejected charge error {row["pct_err"]}%')
     return rows
 
-def generate(exe,base):
+def generate(exe,base,cases=None):
     FIXTURES.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='flahax-evidence-') as tmp:
         db=Path(tmp)/'minteq-flahax.dat'
         merge(base,db)
         for name,doses in CASES.items():
+            if cases and name not in cases:
+                continue
             folder=FIXTURES/name
             totals=catalogue_dose_totals(doses)
             # Explicit background electrolyte permits fixed-pH charge balance
@@ -165,12 +167,14 @@ def generate(exe,base):
                     'runtime_molality_absolute':1e-10,'runtime_si_absolute':.25,
                     'acid_relative':.03,'acid_absolute':2e-6},
                   'hashes':{p.name:sha(p) for p in folder.iterdir() if p.suffix in ('.pqi','.sel','.out','.screen')}}
-            (folder/'expected.json').write_text(json.dumps(data,indent=2)+'\n')
+            # LF on every OS: fixture JSON is stored byte-exact (.gitattributes).
+            (folder/'expected.json').write_bytes((json.dumps(data,indent=2)+'\n').encode())
             print(name,'charge',max(abs(r['pct_err']) for r in rows),'acid',acid,flush=True)
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--exe',type=Path,default=INSTALL/'bin/Release/phreeqc.exe')
     parser.add_argument('--database',type=Path,default=INSTALL/'database/minteq.v4.dat')
+    parser.add_argument('--case',action='append',help='recapture only this case (repeatable)')
     args=parser.parse_args()
-    generate(args.exe,args.database)
+    generate(args.exe,args.database,args.case)

@@ -65,6 +65,7 @@ configurations are mappings:
 |---|---|---|
 | `equilibrium` | `water_totals`, `water_mass_kg`, `water_analysis_id`, `complete_analysis`, `carbon_boundary`, `temperature_c`, `phases` | Complete fixed-valence analytical component totals in mol/kg-water; explicit final solvent inventory, 25 C, closed carbon, explicit phase list ; optional `measured_ph` (with `alkalinity_eq_per_kg`, `balance_ion`, `maximum_imbalance_percent`) speciates the water at its measured pH and closes the charge on one ion instead of solving pH from charge balance |
 | `acids` | `products`, `maximum_nutrient_error_percent`, `maximum_reagent_volume_litres` | Evaluate single-acid candidates; optional `preferred_product_id` forbids automatic fallback |
+| `ph_adjustment` | `products`, `maximum_reagent_volume_litres` | Plan the recipe and its pH reagent together, acid or base, with the reagent's nutrients counted as supply (see below); optional `preferred_product_id` |
 | `nitric` | `reagent`, `reagent_channel_id`, `maximum_reagent_volume`, `maximum_nutrient_error_percent` | Existing assay-qualified HNO3 delivery adapter; volume is `VolumeLitres` |
 | `titration` | `water_analysis`, `curve`, `reagent`, `maximum_reagent_volume` | Existing matched-record measured-curve API; optional positive-target tolerance defaults to 1% |
 | `stocks` | `injection_ratio`, `tanks`, `compatibility_rules`, `solubility_limits`, `temperature` | Existing typed stock planner, with sourced records and temperature-qualified limits |
@@ -146,6 +147,40 @@ Only accepted candidates can be selected. Automatic ranking minimizes final
 nutrient loss, with input order breaking ties; this is not a recommendation
 that the lowest-loss acid is operationally or agronomically best. No acid
 blending, cost optimization, handling protocol or autonomous dosing is added.
+
+## Recipe and pH reagent together
+
+The `acids` stage evaluates an acid against a recipe that already meets every
+target, so the acid's own nitrate, phosphorus or sulfur pushes the recipe past
+its targets and the plan is rejected. `ph_adjustment` plans them together:
+
+1. The recipe is fitted without pH reagents. Acids (nitric, phosphoric,
+   sulfuric, citric) are not offered as nutrient salts here: phosphoric acid
+   chosen as a P source drove five shipped formulas to pH 3.0-3.4 in RO water.
+2. The mixed feed is speciated at its calculated pH. Below the target it needs
+   a base; above it, an acid. Products of the other direction are reported as
+   `not_applicable`.
+3. For each applicable product, the dose that brings the mixed feed to the
+   target pH is solved on the same equilibrium model. Its nutrients (N from
+   nitric acid, P from phosphoric acid, K from the bases) are counted as supply,
+   like the water's, and the recipe is fitted again. This repeats until the
+   recipe and the dose agree; if the recipe switches products between nearby
+   doses, the nearer side is taken and its nutrients are rescored at the dose
+   that recipe needs.
+4. Every candidate reports its dose (mol/kg water, product grams and, with a
+   density, litres), nutrient contribution, recipe and target-pH state, even
+   when it is rejected. A plan is selected only from accepted candidates, by
+   lowest final nutrient loss.
+
+A recipe that misses a target still gets a pH plan: the miss stays in the
+recipe's `unmetTargets`. Bases are added as K+ with implicit hydroxide (KOH),
+or with inorganic carbon (KHCO3, K2CO3) under the closed carbon boundary.
+`catalogue_ph_reagents()` returns sourced records for the catalogue's three
+pH-up products (Potassium Hydroxide (45% solution), Potassium Bicarbonate,
+Potassium Carbonate); acids are supplied by the user with the assay and density
+from the supplier's certificate. The precipitation gate is unchanged: a plan
+whose target state has a positive saturation index is rejected, and the
+message names the phases.
 
 ## Reproducible evidence
 
