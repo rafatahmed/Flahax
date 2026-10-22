@@ -811,6 +811,44 @@ equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import plan_fertilizer_workflow`.
 
+## flahax.grower_report
+
+### `render_batch_sheet`
+
+```text
+render_batch_sheet(summary)
+```
+
+Printable A4 batch sheet from ``summarize_batch``.
+
+Source module: `flahax.grower_report`. Import with `from flahax import render_batch_sheet`.
+
+### `render_report`
+
+```text
+render_report(summary)
+```
+
+Self-contained HTML report from ``summarize_batch``.
+
+Source module: `flahax.grower_report`. Import with `from flahax import render_report`.
+
+### `summarize_batch`
+
+```text
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=())
+```
+
+Plain data for a grower report and batch sheet.
+
+``workflow`` is a ``plan_fertilizer_workflow`` result with a final volume;
+``products`` are the product records it was planned with (they give the tank
+grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
+a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
+is the recipe to weigh.
+
+Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
+
 ## flahax.injector_sizing
 
 ### `size_injection_requirements`
@@ -1549,6 +1587,70 @@ struvite_mixture_speciation(magnesium_molal: 'float', ammoniacal_nitrogen_molal:
 Solve Mg/P and NHx mass balances at supplied pH and ionic strength.
 
 Source module: `flahax.struvite_mixture`. Import with `from flahax import struvite_mixture_speciation`.
+
+## flahax.tank_grouping
+
+### `ConcentrateTank`
+
+```text
+ConcentrateTank(name: str, products: tuple, acid_allowed: bool, notes: tuple = ()) -> None
+```
+
+Record fields: `name`, `products`, `acid_allowed`, `notes`.
+
+Source module: `flahax.tank_grouping`. Import with `from flahax import ConcentrateTank`.
+
+### `TankGrouping`
+
+```text
+TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
+```
+
+Record fields: `tanks`, `reagent_channel`, `separations`, `source`, `solubility_checked`.
+
+Source module: `flahax.tank_grouping`. Import with `from flahax import TankGrouping`.
+
+### `TankProduct`
+
+```text
+TankProduct(product_id: str, name: str, grams_per_litre: float, basis: str) -> None
+```
+
+Record fields: `product_id`, `name`, `grams_per_litre`, `basis`.
+
+Source module: `flahax.tank_grouping`. Import with `from flahax import TankProduct`.
+
+### `default_compatibility_rules`
+
+```text
+default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z')
+```
+
+The default table as ``compatibilityRule`` records for ``plan_stocks``.
+
+One "separate" record per incompatible pair among ``products`` (catalogue or
+grade records with ``id``, ``elements`` and optional ``formula``). Micronutrient
+products are kept only from phosphate (FlahaX rule).
+
+Source module: `flahax.tank_grouping`. Import with `from flahax import default_compatibility_rules`.
+
+### `group_tanks`
+
+```text
+group_tanks(salts, products, *, rules=())
+```
+
+Group a recipe's products into concentrate tanks.
+
+``salts`` are recipe rows with ``id``, ``name`` and ``gramsPerLitre`` (as in
+``recommend(...)['salts']``); ``products`` are the records they came from.
+Tank A takes the calcium products, then every micronutrient product; the others
+follow by descending dose into the first tank without a conflict; acids never
+join a tank holding calcium or micronutrients. pH reagents are returned apart, for
+their own channel. ``rules`` are extra ``compatibilityRule`` records that
+separate products by id; they also override the micronutrient rule.
+
+Source module: `flahax.tank_grouping`. Import with `from flahax import group_tanks`.
 
 ## flahax.thermodynamics
 

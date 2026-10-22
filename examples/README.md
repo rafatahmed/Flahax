@@ -19,15 +19,17 @@ python -m examples.tomato_report --output build/tomato-report
 | Command | What it shows |
 |---|---|
 | `tomato_simple` | The shipped Howard Resh tomato formula in RO water: products and doses, a 1000 L batch, nutrient fit, the formula's ion balance, product identities and an EC estimate. The unacidified mix is pH 6.9, outside the 5.3-5.8 feed range, and the example says so. |
-| `tomato_advanced` | A published brackish well (Shomar et al. 2024, station 104) with Dutch open-system tomato targets (De Kreij, Voogt and Baas). Steps: balance the laboratory analysis at its measured pH; choose the largest blend with desalinated water that keeps Na and Cl within 3 mmol/L (9% well water); formulate on it, showing why phosphoric acid is withdrawn as a P source (it drives the feed to pH 3.8); speciate the mix; evaluate nitric and phosphoric acid (both refused, with FlahaX's reasons) and compute the nitric dose to pH 5.5, which also closes the nitrate gap; estimate EC; group concentrates into tanks; size injection; and run three growth-stage formulas, each as its own batch. |
+| `tomato_advanced` | A published brackish well (Shomar et al. 2024, station 104) with Dutch open-system tomato targets (De Kreij, Voogt and Baas). Steps: balance the laboratory analysis at its measured pH; choose the largest blend with desalinated water that keeps Na and Cl within 3 mmol/L (9% well water); formulate on it, showing why phosphoric acid is withdrawn as a P source (it drives the feed to pH 3.8); speciate the mix; evaluate nitric and phosphoric acid (nitric needs review of two review-class phases, phosphoric is refused for its P, with FlahaX's reasons) and compute the nitric dose to pH 5.5, which also closes the nitrate gap; estimate EC; group concentrates into tanks; size injection; and run three growth-stage formulas, each as its own batch. |
 | `tomato_report` | `tomato-report.html`: both examples with charts and tables. `batch-sheet-simple.html` and `batch-sheet-advanced.html`: printable one-page grower sheets (water, what to weigh per tank, concentrate g/L, acid step, and measure-after-mixing lines). Offline HTML; print to PDF from the browser. |
 
-Concentrate tanks are grouped with the **cited Yara compatibility table**
-(`04_Fertilizer.pdf`, p. 65, read with p. 63) by `examples/tomato_tanks.py`; it
-states compatibility, not solubility, and products it does not list are marked
-"Not in table", never guessed. Example acid grades, the site figures for
-injection sizing and the 1:100 ratio are illustrative: replace them with your
-own certificates and site data, and measure EC and pH after mixing.
+Concentrate tanks are grouped by the packaged default, `flahax.group_tanks`: the
+cited Yara compatibility table (`04_Fertilizer.pdf`, p. 65, read with p. 63) as
+three composition rules, with micronutrients and chelates in tank A beside the
+calcium products and tank A never acidified. It states compatibility, not
+solubility. Example acid grades, the site figures for injection sizing and the
+1:100 ratio are illustrative: replace them with your own certificates and site
+data, and measure EC and pH after mixing. For your own formula and water, the
+installed command `flahax batch` writes the same kind of report and batch sheet.
 
 From the repository root in PowerShell:
 

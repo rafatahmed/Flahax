@@ -14,8 +14,8 @@ import flahax
 
 from . import tomato_advanced, tomato_simple
 from .common import serializable
-from .tomato_tanks import group_tanks
 from .visual_report import bars, number, table, text
+from flahax.saturation_policy import REVIEW
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
 
@@ -112,10 +112,12 @@ def advanced_section(a):
                     + (f" (with {text(', '.join(u['conflictsWith']))})" if u.get('conflictsWith') else '') + '</li>'
                     for u in rec['unmet'])
     c, acid, pc = a['chemistry'], a['acid'], a['phosphoric_check']
-    si_rows = [(p, number(si, 2), 'supersaturated (risk)' if si > 0 else 'undersaturated') for p, si in c['saturation']]
+    review = set(REVIEW)
+    si_rows = [(p, number(si, 2), 'undersaturated' if si <= 0 else 'supersaturated, review (#78)' if p in review
+                else 'supersaturated, blocks') for p, si in c['saturation']]
     acid_rows = [(x['product'], x['status'], x['message'] or '') for x in acid['candidates']]
     ec_rows = [(label, number(e['ec25_ms_cm'], 2), number(e['ph'], 2), e['status']) for label, e in a['ec'].items()]
-    tank_rows = [(f'Tank {name}', p['name'], p['analogue'], number(p['gramsPerLitre'] * a['injection_ratio'], 2))
+    tank_rows = [(f'Tank {name}', p['name'], p['analogue'], number(p['gramsPerLitre'] * a['injection_ratio'], 2), p['basis'])
                  for name, tank in a['tanks']['tanks'].items() for p in tank['products']]
     sizing = a['sizing']
     size_rows = [(f'Tank {name}', number(ch['required_stock_litres'], 1), number(ch['required_flow_litres_per_hour'], 1))
@@ -156,16 +158,18 @@ def advanced_section(a):
             + f'<p class="warn">Nitric demand: about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of '
               f'{text(acid["nitric_grade"])} per {tomato_advanced.BATCH_LITRES} L to reach pH {a["target_ph"]}, adding '
               f'{number(acid["added_nitrate_n_mg_l"], 1)} mg/L nitrate-N (nitrate-N {number(acid["nitrate_before_mg_l"], 1)} '
-              f'&rarr; {number(acid["nitrate_after_mg_l"], 1)}, target {number(acid["nitrate_target_mg_l"], 1)}). FlahaX does '
-              'not accept the plan while these phases are supersaturated: '
+              f'&rarr; {number(acid["nitrate_after_mg_l"], 1)}, target {number(acid["nitrate_target_mg_l"], 1)}). FlahaX asks '
+              'for review before accepting it, because these phases are supersaturated: '
               + text(', '.join(f'{p} {si:.2f}' for p, si in acid['supersaturated_after_acid']) or 'none')
-              + '. A positive index is a risk, not a predicted rate: add the acid in steps and measure.</p>'
+              + '. They are review-class phases (cited reasons in flahax.saturation_policy), not a predicted '
+              'precipitate: add the acid in steps and measure.</p>'
             + table(['State', 'EC25 mS/cm', 'pH', 'Status'], ec_rows, 'Estimated EC (experimental, McCleskey 2012 conductivities)')
             + '<h3>Step 6. Concentrate tanks and injection</h3>'
-            + table(['Tank', 'Product', 'Compatibility-table analogue', f'Stock g/L at 1:{a["injection_ratio"]}'], tank_rows,
-                    'Tanks from the cited compatibility table (solubility not verified)')
-            + f'<p class="small">{text(a["tanks"]["source"])}. Not in the table: {text(", ".join(a["tanks"]["not_covered"]))}. '
-              f'{text(a["tanks"]["micronutrients"])}</p>'
+            + table(['Tank', 'Product', 'Page 65 analogue', f'Stock g/L at 1:{a["injection_ratio"]}', 'Why here'], tank_rows,
+                    'Tanks from the packaged default compatibility table (solubility not verified)')
+            + ''.join(f'<p class="small">Tank {text(name)}: {text(note)}</p>' for name, tank in a['tanks']['tanks'].items()
+                      for note in tank['notes'])
+            + f'<p class="small">Source: {text(a["tanks"]["source"])}.</p>'
             + table(['Channel', 'Stock needed (L)', 'Injection flow (L/h)'], size_rows,
                     f"Injection for {number(sizing['final_volume_litres'], 0)} L in {number(sizing['duration_hours'], 1)} h "
                     f"(illustrative {a['site']['active_area_m2']} m2, {a['site']['gross_depth_mm']} mm)")
@@ -189,10 +193,10 @@ def render_report(simple, advanced):
 def render_sheet(title, water, products, tanks, acid_note, checks, ratio=100, batch=1000):
     by_tank = {p['name']: name for name, tank in tanks['tanks'].items() for p in tank['products']}
     rows = ''.join(
-        f'<tr><td>{text(by_tank.get(p["name"], "Not in table"))}</td><td>{text(p["name"])}</td>'
+        f'<tr><td>{text(by_tank[p["name"]])}</td><td>{text(p["name"])}</td>'
         f'<td class="num">{number(p["gramsPerLitre"] * batch, 1)}</td>'
         f'<td class="num">{number(p["gramsPerLitre"] * ratio, 2)}</td><td><span class="tick"></span></td></tr>'
-        for p in sorted(products, key=lambda p: (by_tank.get(p['name'], 'Z'), -p['gramsPerLitre'])))
+        for p in sorted(products, key=lambda p: (by_tank[p['name']], -p['gramsPerLitre'])))
     check_rows = ''.join(f'<tr><td>{text(k)}</td><td>{text(v)}</td><td><span class="fill"></span></td></tr>'
                          for k, v in checks)
     body = (f'<h1>{text(title)}</h1><div class="meta">Batch sheet &middot; FlahaX {text(flahax.__version__)} &middot; '
@@ -202,8 +206,8 @@ def render_sheet(title, water, products, tanks, acid_note, checks, ratio=100, ba
             f'<th class="num">g per {batch} L batch</th><th class="num">Concentrate g/L at 1:{ratio}</th><th>Done</th>'
             f'</tr></thead><tbody>{rows}</tbody></table>'
             f'<p class="small">Direct batch: dissolve everything in {batch} L. Concentrates: keep tanks apart as listed '
-            f'({text(tanks["source"])}). Products marked "Not in table" have no entry there: ask your supplier where '
-            'they go and never acidify a tank with chelates. Stock solubility is not verified: check each concentrate.</p>'
+            f'({text(tanks["source"])}). Micronutrients and chelates are in tank A with calcium: never acidify '
+            'tank A. Stock solubility is not verified: check each concentrate.</p>'
             f'<h2>pH</h2><div class="box warn">{acid_note}</div>'
             '<h2>Measure after mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
             f'<tbody>{check_rows}</tbody></table>'
@@ -215,10 +219,11 @@ def render_sheet(title, water, products, tanks, acid_note, checks, ratio=100, ba
 
 
 def sheets(simple, advanced):
-    simple_salts = [dict(name=r['name'], gramsPerLitre=r['grams_per_litre']) for r in simple['recipe']]
+    simple_salts = [dict(id=r['id'], name=r['name'], gramsPerLitre=r['grams_per_litre']) for r in simple['recipe']]
     ec = simple['ec']
     simple_sheet = render_sheet(
-        f"{simple['formula']} - RO water", 'RO water, no nutrients', simple_salts, group_tanks(simple_salts),
+        f"{simple['formula']} - RO water", 'RO water, no nutrients', simple_salts,
+        tomato_advanced.tank_table(simple_salts, flahax.load_library()['salts']),
         f'Mixed pH is estimated at {number(ec["ph"], 2)}, outside the 5.3-5.8 feed range. Acid is needed but '
         'not calculated in the simple example; plan it on your water (see the advanced sheet).',
         [('EC25 (mS/cm)', f'about {number(ec["ec25_ms_cm"], 2)} (experimental)'), ('pH', '5.3-5.8 after acid')])
@@ -230,9 +235,9 @@ def sheets(simple, advanced):
         'within 3 mmol/L.',
         a['recipe']['salts'], a['tanks'],
         f'Add about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of {text(acid["nitric_grade"])} per 1000 L to go '
-        f'from pH {number(a["chemistry"]["mixed_ph"], 2)} to {a["target_ph"]}. Add in steps and measure: FlahaX flags a '
-        'precipitation risk (' + text(', '.join(p for p, _ in acid['supersaturated_after_acid'])) + ') and does not '
-        'accept an automatic acid plan. The example acid grade must be replaced by your certificate values.',
+        f'from pH {number(a["chemistry"]["mixed_ph"], 2)} to {a["target_ph"]}. Add in steps and measure: FlahaX asks for '
+        'review first (' + text(', '.join(p for p, _ in acid['supersaturated_after_acid'])) + ' supersaturated, '
+        'review-class). The example acid grade must be replaced by your certificate values.',
         [('EC25 (mS/cm)', f"about {number(a['ec']['acidified']['ec25_ms_cm'], 2)} (experimental)"),
          ('pH', str(a['target_ph'])), ('Nitrate-N (mg/L)', f"{number(acid['nitrate_after_mg_l'], 1)} with the acid")],
         ratio=a['injection_ratio'], batch=tomato_advanced.BATCH_LITRES)

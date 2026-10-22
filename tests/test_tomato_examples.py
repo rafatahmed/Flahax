@@ -5,12 +5,15 @@ import unittest
 from examples import tomato_advanced, tomato_simple
 from examples.common import serializable
 from examples.tomato_report import build
-from examples.tomato_tanks import ANALOGUE, INCOMPATIBLE, group_tanks
+from flahax import load_library
+from flahax.tank_grouping import _class_conflict, product_classes
+
+PRODUCTS = {p['name']: p for p in load_library()['salts']}
 
 
 def compatible(tank):
-    codes = [ANALOGUE[p['name']][0] for p in tank['products']]
-    return all(frozenset({a, b}) not in INCOMPATIBLE for i, a in enumerate(codes) for b in codes[i + 1:])
+    classes = [product_classes(PRODUCTS[p['name']]) for p in tank['products']]
+    return all(_class_conflict(a, b) is None for i, a in enumerate(classes) for b in classes[i + 1:])
 
 
 class SimpleTomatoTests(unittest.TestCase):
@@ -57,7 +60,8 @@ class AdvancedTomatoTests(unittest.TestCase):
     def test_acids_are_evaluated_and_the_nitric_dose_closes_the_nitrate_gap(self):
         acid = self.r['acid']
         self.assertEqual({c['product'] for c in acid['candidates']}, {'HNO3-example', 'H3PO4-example'})
-        self.assertIsNone(acid['selected'])   # supersaturated phases block acceptance
+        self.assertIsNone(acid['selected'])   # nitric needs review (#78); phosphoric misses P
+        self.assertEqual({c['product']: c['status'] for c in acid['candidates']}['HNO3-example'], 'requires_review')
         self.assertTrue(acid['supersaturated_after_acid'])
         self.assertGreater(acid['nitric_ml_per_batch'], 0)
         miss = abs(acid['nitrate_after_mg_l'] - acid['nitrate_target_mg_l']) / acid['nitrate_target_mg_l']
@@ -69,23 +73,6 @@ class AdvancedTomatoTests(unittest.TestCase):
             self.assertTrue(compatible(tank))
         self.assertEqual(len(self.r['stages']), 3)
         self.assertTrue(self.r['stages'][0]['feasible'])
-
-
-class TankGroupingTests(unittest.TestCase):
-    def test_magnesium_sulfate_needs_a_third_tank_with_phosphate_and_calcium(self):
-        salts = [dict(name=n, gramsPerLitre=g) for n, g in (
-            ('Calcium Nitrate (ag grade)', .9), ('Magnesium Sulfate (Heptahydrate)', .5),
-            ('Potassium Monobasic Phosphate', .1), ('Potassium Sulfate', .5), ('Iron EDTA', .02))]
-        grouped = group_tanks(salts)
-        self.assertEqual(len(grouped['tanks']), 3)
-        for tank in grouped['tanks'].values():
-            self.assertTrue(compatible(tank))
-        self.assertEqual(grouped['not_covered'], ['Iron EDTA'])
-
-    def test_every_listed_pair_uses_known_products(self):
-        codes = {code for code, _ in ANALOGUE.values()}
-        for pair in INCOMPATIBLE:
-            self.assertLessEqual(pair, codes)
 
 
 class TomatoReportTests(unittest.TestCase):
@@ -103,6 +90,9 @@ class TomatoReportTests(unittest.TestCase):
         for salt in serializable(tomato_advanced.run())['recipe']['salts']:
             self.assertIn(salt['name'], sheet)
         self.assertIn('<svg', files['tomato-report.html'])
+        # Micronutrients and chelates have a tank: A, with calcium (FlahaX rule, #79).
+        self.assertNotIn('Not in table', sheet)
+        self.assertIn('<td>A</td><td>Mn EDTA</td>', sheet)
 
 
 def _balanced_totals():
