@@ -19,6 +19,7 @@ that matches exactly one formula name and lists the matches otherwise. Use
 | Option | Meaning | Default |
 |---|---|---|
 | `--water` | `ro` (no ions) or a water-analysis JSON file (below) | required |
+| `--water-share` | use the analysed water as this percentage of the batch water, the rest ion-free (RO or desalinated); targets and limits scale the laboratory values, the chemistry is recomputed for the blend | 100 |
 | `--volume` | final batch litres | 1000 |
 | `--ph` | target feed pH | 5.8 |
 | `--ratio` | final litres per litre of concentrate | 100 |

@@ -40,6 +40,7 @@ from .delivery_quantities import VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
 from .grower_report import render_batch_sheet, render_report, summarize_batch
+from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents
 from .planning_cli import serializable
 from .product_conversion import MOLAR_MASS
@@ -91,6 +92,31 @@ def read_water(spec):
     return label, nutrients, config
 
 
+def blend(label, water, chemistry, percent):
+    """The analysed water as ``percent`` of the batch water, the rest ion-free (desalinated or RO).
+
+    Nutrients and limits scale the laboratory analysis; the chemistry dilutes its
+    measured-pH record (#84). If the analysis cannot be closed, the chemistry is
+    left out with the reason, and nutrient accounting goes on.
+    """
+    if chemistry.get('measured_ph') is None:
+        raise DeliveryError('invalid_value', '--water-share needs a measured water analysis file, not ro')
+    if not 0 < percent <= 100:
+        raise DeliveryError('invalid_value', '--water-share must be a percentage in (0, 100]')
+    fraction = percent / 100
+    options = {key: chemistry[key] for key in ('balance_ion', 'balance_ion_uncertainty_percent', 'below_detection')
+               if key in chemistry}
+    label = f'{percent:g}% {label}, {100 - percent:g}% ion-free water'
+    water = {key: value * fraction for key, value in water.items()}
+    try:
+        balanced = balance_water_analysis(chemistry['water_totals'], measured_ph=chemistry['measured_ph'],
+                                          analysis_id=chemistry['water_analysis_id'], **options)
+    except DeliveryError as exc:
+        return f'{label}. Chemistry not calculated: {exc}', water, None
+    return label, water, dict(water_balance=balanced.diluted(fraction),
+                              water_analysis_id=f'{chemistry["water_analysis_id"]}-{percent:g}pct')
+
+
 def limit_entry(spec):
     """``SYMBOL=MG_PER_L``: a maximum concentration in the final solution."""
     symbol, _, value = spec.partition('=')
@@ -136,13 +162,16 @@ def build(args):
         title = choose_formula(library, args.formula, args.crop)
         targets = next(f['targets'] for f in library['formulas'] if f['name'] == title)
     label, water, chemistry = read_water(args.water)
+    if args.water_share is not None:
+        label, water, chemistry = blend(label, water, chemistry, args.water_share)
     rules = json.loads(Path(args.rules).read_text(encoding='utf-8-sig')) if args.rules else ()
     reagents = [acid_record(a) for a in args.acid] + catalogue_ph_reagents()
     limits = dict(args.limit)
     workflow = plan_fertilizer_workflow(
         products, targets, water, args.ph, final_volume=VolumeLitres(args.volume),
-        equilibrium=dict(chemistry, water_mass_kg=args.volume, complete_analysis=True, carbon_boundary='closed',
-                         temperature_c=25, phases=[]),
+        equilibrium=None if chemistry is None else dict(
+            chemistry, water_mass_kg=args.volume, complete_analysis=True, carbon_boundary='closed',
+            temperature_c=25, phases=[]),
         ph_adjustment=dict(products=reagents, maximum_reagent_volume_litres=args.max_reagent_litres or args.volume / 200),
         maximum_concentrations=limits or None)
     summary = summarize_batch(workflow, products, title=title, water_label=label, injection_ratio=args.ratio,
@@ -160,6 +189,9 @@ def main(argv=None):
     pick.add_argument('--targets', help='JSON file of target mg/L (N_NO3 and N_NH4 as N)')
     parser.add_argument('--list-formulas', action='store_true', help='list the packaged formulas and exit')
     parser.add_argument('--water', help='"ro" or a water analysis JSON file (see above)')
+    parser.add_argument('--water-share', type=float, metavar='PERCENT',
+                        help='use the analysed water as this percentage of the batch water, the rest ion-free '
+                             '(desalinated or RO); default 100')
     parser.add_argument('--volume', type=float, default=1000, help='final batch litres (default 1000)')
     parser.add_argument('--ph', type=float, default=5.8, help='target feed pH (default 5.8)')
     parser.add_argument('--ratio', type=float, default=100, help='final litres per litre of concentrate (default 100)')
