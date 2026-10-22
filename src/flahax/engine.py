@@ -25,7 +25,7 @@ from .composition import (
     target_ion_balance,
     validate_profile,
 )
-from .nutrient_acceptance import assess_incidental
+from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l
 
 # Rank and feasibility threshold, relative to the problem's column scale.
@@ -911,6 +911,7 @@ def recommend(
         warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
                         f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
+    name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
     solved["targetIonBalance"] = balance
     solved["unmetTargets"] = _diagnose(library, targets, water, solved["rows"], maxima, allowed,

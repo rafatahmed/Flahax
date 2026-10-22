@@ -13,10 +13,12 @@ from .measured_water import (DEFAULT_MAXIMUM_IMBALANCE_PERCENT, BalancedWaterAna
 from .equilibrium_delivery import plan_equilibrium_delivery
 from .ph_planning import plan_ph
 from .product_conversion import catalogue_dose_totals
+from .material_chemistry import material_chemistry
+from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .nutrient_acceptance import assess_incidental, assess_water_basis
+from .nutrient_acceptance import assess_incidental, assess_water_basis, assessed_limits, name_sources
 
 
 # Feed-solution pH guidance (research report 2026-10-20): Dutch soilless practice feeds at
@@ -58,7 +60,57 @@ def _positive(value, name):
     return float(value)
 
 
-def _unreviewed(recommendation):
+def _graded(supplied, library):
+    """Catalogue record and resolved material of a product carrying a supplier label grade.
+
+    The record keeps the catalogue name and formula, takes the resolved label assay as its
+    elements and is identified by the catalogue id or the resolved id (<catalogue id>+<grade id>).
+    A compound declared from its data sheet (composition ``declared_ions``) is its own record,
+    identified by its grade id, which must not be a catalogue id.
+    """
+    name = supplied.get('name')
+    if isinstance(supplied['grade'], Mapping) and supplied['grade'].get('composition') == 'declared_ions':
+        resolved = resolve_material(name, grade=make_grade(supplied['grade']))
+        if (supplied.get('id') != resolved.record['id'] or supplied['id'] in library
+                or supplied.get('elements') != resolved.record['elements']):
+            raise DeliveryError('product_chemistry_mismatch', f'{name}: a declared compound is identified by its '
+                                'grade id and takes the label assay')
+        return dict(supplied), resolved
+    reference = next((p for p in library.values() if p['name'] == name), None)
+    if reference is None:
+        raise DeliveryError('product_chemistry_mismatch', f'graded product {name!r} is not a catalogue product')
+    grade = make_grade(supplied['grade'])
+    if 'identity_inconsistent' in grade.flags:
+        raise DeliveryError('identity_inconsistent', f'{name}: the analysis of grade {grade.grade_id!r} '
+                            f'does not fit the identity (charge residual {grade.charge_residual_percent:.2f} %)'
+                            if grade.charge_residual_percent is not None else
+                            f'{name}: the analysis range of grade {grade.grade_id!r} excludes the identity')
+    resolved = resolve_material(name, grade=grade)
+    if (supplied.get('id') not in (reference['id'], resolved.record['id'])
+            or supplied.get('formula') != reference.get('formula')
+            or supplied.get('elements') != resolved.record['elements']):
+        raise DeliveryError('product_chemistry_mismatch',
+                            f'{name}: a graded product keeps its catalogue identity and takes the label assay')
+    return reference, resolved
+
+
+def _dose_totals(doses, materials, products):
+    """Dose totals of the supplied records; graded products convert through their resolved material."""
+    return catalogue_dose_totals(doses, materials={n: m for n, m in materials.items() if n in doses},
+                                 products=products)
+
+
+# A dosed product whose declared ions cannot be modelled: nutrients stand, no pH is planned.
+NOT_MODELLABLE = 'ph_not_planned_for_product'
+
+
+def _not_planned(stage):
+    """A stage stopped by a product that cannot be modelled needs input; it is not a block."""
+    if stage.error_code == NOT_MODELLABLE:
+        stage.status = 'needs_input'
+
+
+def unreviewed_reason(recommendation):
     """Why a feasible formulation needs review: incidental nutrients with no declared maximum."""
     found = [f'{row["symbol"]} {row["ppm"]:.3g} mg/L' for row in recommendation['incidentalContributions']
              if row['assessment'] == 'requires_review']
@@ -95,7 +147,10 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
     targets = validate_profile(dict(targets), 'targets')
     water = validate_profile(dict(water), 'water')
     recommendation = recommend(salts, targets, water, maximum_concentrations=maximum_concentrations)
-    recommendation.update(assess_incidental(recommendation['rows'], maximum_concentrations))
+    # One assessment: the user's limits plus the ammonium allowance recommend applied (#92).
+    limits = assessed_limits(maximum_concentrations, recommendation)
+    recommendation.update(name_sources(assess_incidental(recommendation['rows'], limits),
+                                       recommendation['salts'], salts, water))
     if recommendation['limitViolations']:
         recommendation['feasible'] = False
     if not ACCEPTABLE_FEED_PH[0] <= target_ph <= ACCEPTABLE_FEED_PH[1]:
@@ -128,7 +183,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                         value=recommendation, error_code=None if recommendation['feasible'] else 'infeasible_recipe')
     if recommendation['feasible'] and recommendation['requiresReview']:
         stages['formulation'].status = 'requires_review'
-        stages['formulation'].message = _unreviewed(recommendation)
+        stages['formulation'].message = unreviewed_reason(recommendation)
     recipe = None
     if final_volume is None:
         stages['batch'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
@@ -147,6 +202,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             stages['chemistry'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
         else:
             def chemical_states():
+                materials, records = {}, {}
                 config = equilibrium
                 mass = _positive(config['water_mass_kg'], 'water_mass_kg')
                 if not isinstance(config['water_analysis_id'], str) or not config['water_analysis_id'].strip():
@@ -203,25 +259,38 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         raise DeliveryError('inconsistent_water_analysis', f'nutrient ppm and molal water disagree for {ion}')
                 library = {p['id']: p for p in load_library()['salts']}
                 for supplied in salts:
+                    if 'grade' in supplied:
+                        reference, resolved = _graded(supplied, library)
+                        materials[supplied['name']] = resolved
+                        library[supplied['id']] = reference
+                        continue
                     reference = library.get(supplied.get('id'))
-                    if reference is None or any(supplied.get(key) != reference.get(key)
-                                                for key in ('name', 'formula', 'elements')):
-                        raise DeliveryError('product_chemistry_mismatch',
-                                            'supplied products must retain catalogue identity and assay')
+                    if reference is not None:
+                        # A catalogue id is a claim to be that pre-filled material, unchanged.
+                        if any(supplied.get(key) != reference.get(key) for key in ('name', 'formula', 'elements')):
+                            raise DeliveryError('product_chemistry_mismatch',
+                                                'supplied products must retain catalogue identity and assay')
+                    else:
+                        # A material of its own: its formula, ions or analysis define it (Task 11).
+                        material_chemistry(supplied)
+                        library[supplied.get('id')] = supplied
+                    records[supplied['name']] = supplied
                 doses = {}
                 for salt in recipe.salts:
                     product = library.get(salt.salt_id)
                     if product is None or product['name'] != salt.name:
-                        raise DeliveryError('product_chemistry_mismatch', 'chemistry requires exact catalogue identities')
+                        raise DeliveryError('product_chemistry_mismatch', 'chemistry requires the supplied product records')
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in catalogue_dose_totals(doses).items():
+                for basis, amount in _dose_totals(doses, materials, records).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 mixed = calculate_equilibrium_ph(totals, **kwargs)
                 return {'water': water_state, 'mixed': mixed, 'product_doses_g_per_kg_water': doses,
+                        'materials': materials, 'products': records,
                         'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
                         'water_totals': water_totals, 'analytical_water_totals': analytical, 'water_balance': balance}
             value = run('chemistry', chemical_states)
+            _not_planned(stages['chemistry'])
             balance = value and value['water_balance']
             if balance is not None and balance and balance.reconciliation == 'assumed':
                 stages['chemistry'].status = 'requires_review'
@@ -238,7 +307,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 analytical_water_totals=stages['chemistry'].value['analytical_water_totals'],
                 water_analysis_id=equilibrium['water_analysis_id'], initial_ph=stages['chemistry'].value['mixed'].ph,
                 target_ph=target_ph, targets=targets, temperature_c=equilibrium['temperature_c'], phases=equilibrium['phases'],
-                maximum_concentrations=maximum_concentrations,
+                maximum_concentrations=limits,
                 **{key: nitric[key] for key in ('reagent', 'reagent_channel_id', 'maximum_reagent_volume', 'maximum_nutrient_error_percent')}))
             if stages['nitric'].value is not None and stages['nitric'].value.incidental_assessment['requiresReview']:
                 stages['nitric'].status = 'requires_review'
@@ -261,11 +330,11 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                       'maximum_nutrient_error_percent')
                 if any(row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance for row in plan.rows):
                     raise DeliveryError('nutrient_tolerance_exceeded', 'titration dose violates a positive nutrient target')
-                if assess_incidental(plan.rows, maximum_concentrations)['limitViolations']:
+                if assess_incidental(plan.rows, limits)['limitViolations']:
                     raise DeliveryError('nutrient_limit_exceeded', 'titration dose exceeds an explicit nutrient maximum')
                 return plan
             plan = run('titration', titration_plan)
-            if plan is not None and assess_incidental(plan.rows, maximum_concentrations)['requiresReview']:
+            if plan is not None and assess_incidental(plan.rows, limits)['requiresReview']:
                 stages['titration'].status = 'requires_review'
 
     if not missing('acid_selection', acids, ('products', 'maximum_nutrient_error_percent', 'maximum_reagent_volume_litres')):
@@ -287,12 +356,15 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 maximum_nutrient_error_percent=acids['maximum_nutrient_error_percent'],
                 maximum_reagent_volume_litres=acids['maximum_reagent_volume_litres'],
                 preferred_product_id=acids.get('preferred_product_id'), phases=equilibrium['phases'],
-                maximum_concentrations=maximum_concentrations))
+                maximum_concentrations=limits))
             if selection is not None and selection.selected_product_id is None:
                 stages['acid_selection'] = WorkflowStage('blocked', value=selection, error_code='no_acceptable_acid')
 
     if not missing('ph_adjustment', ph_adjustment, ('products', 'maximum_reagent_volume_litres')):
-        if stages['chemistry'].status not in USABLE:
+        if stages['chemistry'].error_code == NOT_MODELLABLE:
+            stages['ph_adjustment'] = WorkflowStage('needs_input', error_code=NOT_MODELLABLE,
+                                                    message=stages['chemistry'].message)
+        elif stages['chemistry'].status not in USABLE:
             stages['ph_adjustment'] = WorkflowStage('blocked', error_code='chemistry_required',
                                                     message='complete calculated chemistry is required')
         else:
@@ -305,7 +377,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 for salt in final_solution_recipe(candidate, final_volume).salts:
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in catalogue_dose_totals(doses).items():
+                for basis, amount in _dose_totals(doses, stages['chemistry'].value['materials'],
+                                                    stages['chemistry'].value['products']).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 return calculate_equilibrium_ph(totals, **kwargs)
 
@@ -315,11 +388,13 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
                 preferred_product_id=ph_adjustment.get('preferred_product_id'), phases=equilibrium['phases'],
                 maximum_concentrations=maximum_concentrations))
+            _not_planned(stages['ph_adjustment'])
             if plan is not None:
                 chosen = plan.selected
                 if chosen is None:
                     stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent')
-                elif assess_incidental(chosen.recommendation['rows'], maximum_concentrations)['limitViolations']:
+                elif assess_incidental(chosen.recommendation['rows'],
+                                         assessed_limits(maximum_concentrations, chosen.recommendation))['limitViolations']:
                     # Final acceptance on the laboratory basis: a hard limit is never downgraded to review.
                     stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='nutrient_limit_exceeded',
                                                             message='the selected plan exceeds an explicit nutrient maximum')

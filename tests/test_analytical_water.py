@@ -276,7 +276,7 @@ class BatchCommandTests(unittest.TestCase):
             self.assertEqual(eight['water']['dilution_fraction'], .08)
             self.assertTrue(all(row['decision'] == 'within_limit' for row in eight['limits']))
             self.assertFalse(eight['formulation']['unmet'])
-            self.assertIn('N_NH4', eight['stages']['formulation']['message'])     # the review says why
+            self.assertEqual(eight['stages']['formulation']['status'], 'calculated')   # the weighed recipe has no unreviewed incidentals
             self.assertIn('Hydroxylapatite', eight['stages']['ph_adjustment']['message'])
             code, nine = runs['9']
             self.assertEqual((code, nine['status']), (3, 'blocked'))

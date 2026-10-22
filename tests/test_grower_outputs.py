@@ -6,13 +6,18 @@ from pathlib import Path
 import re
 import tempfile
 import unittest
+from unittest import mock
 
 from flahax import (InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres, catalogue_ph_reagents,
                     default_compatibility_rules, final_solution_recipe, group_tanks, load_library,
                     plan_fertilizer_workflow, plan_stocks, recommend, render_batch_sheet, render_report,
                     summarize_batch)
 from flahax.batch_cli import main as batch
-from flahax.tank_grouping import ANALOGUE, MICRO_PHOSPHATE, _class_conflict, product_classes
+from flahax.nutrient_acceptance import assess_incidental, assessed_limits
+from flahax.ph_adjustment import _judge
+from flahax.delivery_contracts import DeliveryError
+from flahax.tank_grouping import (ANALOGUE, CLASS_RULES, MICRO_PHOSPHATE, OWNER_TWO_TANKS, WAIVED_RULES,
+                                  _class_conflict, product_classes)
 
 LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
@@ -45,8 +50,11 @@ class TankGroupingTests(unittest.TestCase):
     def test_composition_rules_reproduce_the_page_65_table(self):
         names = list(ANALOGUE)
         found = {frozenset({ANALOGUE[a], ANALOGUE[b]}) for i, a in enumerate(names) for b in names[i + 1:]
-                 if _class_conflict(product_classes(BY_NAME[a]), product_classes(BY_NAME[b]))}
+                 if _class_conflict(product_classes(BY_NAME[a]), product_classes(BY_NAME[b]),
+                                    CLASS_RULES + WAIVED_RULES)}
         self.assertEqual(found, PAGE_65_NO)
+        self.assertEqual([r[:2] for r in WAIVED_RULES], [('magnesium', 'phosphate')])
+        self.assertEqual(WAIVED_RULES[0][3], OWNER_TWO_TANKS)
 
     def test_micronutrients_join_calcium_in_tank_a_which_takes_no_acid(self):
         grouping = group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Magnesium Sulfate (Heptahydrate)', .5),
@@ -57,11 +65,44 @@ class TankGroupingTests(unittest.TestCase):
                          ['Calcium Nitrate (ag grade)', 'Zinc Sulfate (Monohydrate)', 'Iron EDTA'])
         self.assertFalse(tanks['A'].acid_allowed)
         self.assertTrue(any('never acidify' in n for n in tanks['A'].notes))
-        # Magnesium sulfate and the phosphates cannot share (p. 65), so three tanks.
-        self.assertEqual(len(grouping.tanks), 3)
-        self.assertNotEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
-                            grouping.tank_of('Potassium Monobasic Phosphate'))
+        # Owner rule: magnesium sulfate shares tank B with the phosphates, so two tanks.
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
+        self.assertEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
+                         grouping.tank_of('Potassium Monobasic Phosphate'))
         self.assertEqual(grouping.tank_of('Phosphoric Acid (75%)'), grouping.tank_of('Potassium Monobasic Phosphate'))
+
+    def test_tomato_fits_two_tanks(self):
+        recipe = workflow('Tomato (Howard Resh)').recommendation
+        grouping = group_tanks(recipe['salts'], PRODUCTS)
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
+        for name in ('Magnesium Sulfate (Heptahydrate)', 'Potassium Monobasic Phosphate', 'Potassium Dibasic Phosphate'):
+            self.assertEqual(grouping.tank_of(name), 'B', name)
+        pairs = {(a, b) for a, b, _ in grouping.waived}
+        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Monobasic Phosphate'), pairs)
+        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Dibasic Phosphate'), pairs)
+        self.assertEqual({why for *_, why in grouping.waived}, {OWNER_TWO_TANKS})
+
+    def test_calcium_separations_still_hold(self):
+        grouping = group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Magnesium Sulfate (Heptahydrate)', .5),
+                                    ('Potassium Sulfate', .4), ('Potassium Monobasic Phosphate', .1),
+                                    ('Potassium Dibasic Phosphate', .1)), PRODUCTS)
+        calcium = grouping.tank_of('Calcium Nitrate (ag grade)')
+        for tank in grouping.tanks:
+            if tank.name == calcium:
+                for p in tank.products:
+                    classes = product_classes(BY_NAME[p.name])
+                    self.assertFalse(classes & {'sulfate', 'phosphate'} and 'calcium' not in classes, p.name)
+
+    def test_more_than_two_tanks_is_refused(self):
+        rule = dict(schemaVersion='0.1', id='test-1', source='test', revision='1', recordedAt='2026-10-22T00:00:00Z',
+                    productIds=[BY_NAME['Potassium Sulfate']['id'], BY_NAME['Magnesium Sulfate (Heptahydrate)']['id']],
+                    constraint='separate', reason='test separation', temperatureMinC=0, temperatureMaxC=40)
+        with self.assertRaises(DeliveryError) as caught:
+            group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Potassium Sulfate', .4),
+                             ('Magnesium Sulfate (Heptahydrate)', .5), ('Potassium Monobasic Phosphate', .1)),
+                        PRODUCTS, rules=[rule])
+        self.assertEqual(caught.exception.code, 'too_many_tanks')
+        self.assertIn('Magnesium Sulfate (Heptahydrate)', str(caught.exception))
 
     def test_without_calcium_micronutrients_still_keep_away_from_phosphate(self):
         grouping = group_tanks(rows(('Potassium Nitrate', .5), ('Potassium Monobasic Phosphate', .2),
@@ -112,8 +153,44 @@ class ReportTests(unittest.TestCase):
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
+        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B'])
+        self.assertTrue(s['tanks']['waived'])
+        self.assertIn('two tanks', render_report(s))
         self.assertTrue(s['chemistry']['review'])
         json.dumps(s, allow_nan=False)
+
+    def test_review_is_judged_on_the_weighed_recipe_both_ways(self):
+        import copy
+        from unittest import mock
+        from flahax import grower_report
+        base = workflow('Tomato (Howard Resh)')
+        first = base.recommendation
+        stage = base.stages['formulation']
+        # first fit had incidentals, weighed recipe has none: review drops
+        with mock.patch.object(grower_report, 'unreviewed_reason', side_effect=lambda r: 'x 1 mg/L' if r is first else None):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'requires_review', 'x 1 mg/L'
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual((s['stages']['formulation']['status'], s['stages']['formulation']['message']), ('calculated', None))
+        self.assertFalse([w for w in s['warnings'] if w.startswith('formulation:')])
+        # first fit clean, weighed recipe has incidentals: review raised, overall status follows
+        with mock.patch.object(grower_report, 'unreviewed_reason', side_effect=lambda r: None if r is first else 'y 2 mg/L'):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'calculated', None
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual((s['stages']['formulation']['status'], s['stages']['formulation']['message']),
+                         ('requires_review', 'y 2 mg/L'))
+        self.assertIn('formulation: y 2 mg/L', s['warnings'])
+        self.assertEqual(s['status'], 'requires_review')
+        # a block is never downgraded
+        with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'blocked', 'nope'
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual(s['stages']['formulation']['status'], 'blocked')
 
     def test_blocked_plan_shows_the_reason_and_the_acid_free_recipe(self):
         s = self.chilli
@@ -135,6 +212,74 @@ class ReportTests(unittest.TestCase):
         self.assertIn('never acidify', render_batch_sheet(self.tomato))
 
 
+class IncidentalAssessmentTests(unittest.TestCase):
+    """One assessment of untargeted nutrients: recommend's ammonium allowance, with each source named (#92)."""
+    TOMATO = 'Tomato (Howard Resh)'
+    NITRIC = dict(products=[ACIDS[0]], maximum_reagent_volume_litres=5)
+
+    @staticmethod
+    def row(recommendation, symbol='N_NH4'):
+        return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
+
+    def test_first_fit_and_refit_rate_ammonium_alike(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC)
+        first, refit = self.row(flow.recommendation), self.row(flow.stages['ph_adjustment'].value.selected.recommendation)
+        self.assertEqual(first['assessment'], 'within_limit')
+        self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
+        self.assertEqual(refit['assessment'], 'within_limit')
+        self.assertEqual([r['symbol'] for r in flow.recommendation['incidentalContributions']
+                          if r['assessment'] == 'requires_review'], ['Na'])   # no Na maximum was declared
+        summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
+        self.assertNotIn('N_NH4', summary['stages']['formulation'].get('message') or '')
+
+    def test_each_incidental_names_the_products_that_supply_it(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC)
+        self.assertEqual(self.row(flow.recommendation)['source'], ['Calcium Nitrate (ag grade)'])
+        summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
+        rows = {r['symbol']: r for r in summary['formulation']['rows']}
+        self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
+        self.assertNotIn('source', rows['Ca'])
+
+    def test_ph_stage_and_candidates_do_not_review_ammonium(self):
+        limits = {'Na': 50}
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, final_volume=VolumeLitres(1000),
+                                        equilibrium=RO, ph_adjustment=self.NITRIC, maximum_concentrations=limits)
+        stage = flow.stages['ph_adjustment']
+        chosen = stage.value.selected
+        self.assertEqual(self.row(chosen.recommendation)['assessment'], 'within_limit')
+        for candidate in stage.value.candidates:
+            self.assertNotIn('N_NH4', candidate.message or '')
+        self.assertNotIn('N_NH4', stage.message or '')
+        seen = []
+
+        def spy(rows, maxima=None):
+            seen.append(assess_incidental(rows, maxima))
+            return seen[-1]
+        with mock.patch('flahax.ph_adjustment.assess_incidental', spy):
+            status, _, message, _ = _judge(chosen.recommendation, chosen.target, limits)
+        self.assertNotIn('N_NH4', [r['symbol'] for r in seen[0]['incidentalContributions']
+                                   if r['assessment'] == 'requires_review'])
+        self.assertNotIn('N_NH4', message or '')
+        reviewed = assess_incidental(chosen.recommendation['rows'], assessed_limits(limits, chosen.recommendation))
+        self.assertNotIn('N_NH4', [r['symbol'] for r in reviewed['incidentalContributions']
+                                   if r['assessment'] == 'requires_review'])
+        self.assertEqual(status, chosen.status)
+
+    def test_declared_ammonium_maximum_wins_over_the_allowance(self):
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, maximum_concentrations={'N_NH4': 5})
+        row = self.row(flow.recommendation)
+        self.assertEqual(row['maximumPpm'], 5)
+        self.assertLessEqual(row['ppm'], 5 + 1e-9)
+        self.assertIsNone(flow.recommendation['ammoniumLimit'])
+
+    def test_recipes_do_not_depend_on_how_the_workflow_assesses(self):
+        direct = recommend(PRODUCTS, FORMULAS[self.TOMATO], {})
+        flow = plan_fertilizer_workflow(PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8)
+        self.assertEqual(flow.recommendation['salts'], direct['salts'])
+
+
 class BatchCommandTests(unittest.TestCase):
     def run_batch(self, *argv):
         out, err = io.StringIO(), io.StringIO()
@@ -152,8 +297,24 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
             self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
             self.assertIn('Tank A', out)
+            self.assertNotIn('Tank C', out)
             with self.assertRaises(SystemExit):     # never overwrites
                 self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--output', str(target))
+
+    def test_review_reason_quotes_the_weighed_recipe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'sheet'
+            self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--ph', '5.8', '--volume', '1000',
+                           '--acid', 'HNO3:0.60:1.37:Nitric acid 60%', '--output', str(target))
+            summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
+        message = summary['stages']['formulation']['message']
+        final = {r['symbol']: r['final'] for r in summary['formulation']['rows']}
+        for text in (message, *(w for w in summary['warnings'] if w.startswith('formulation:'))):
+            quoted = re.findall(r'(\w+) ([\d.]+) mg/L', text)
+            self.assertTrue(quoted, text)
+            self.assertNotIn('10.4', text)
+            for symbol, value in quoted:
+                self.assertEqual(float(value), float(f'{final[symbol]:.3g}'), f'{symbol}: {text}')
 
     def test_ambiguous_crop_lists_the_choices(self):
         code, _, err = self.run_batch('--crop', 'tomato', '--water', 'ro', '--output', 'unused-dir')

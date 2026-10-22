@@ -6,6 +6,18 @@ and offline: the HTML has inline styles and charts, and no script, font or netwo
 access. These are planning documents, not dosing instructions: measure EC and pH
 after mixing.
 
+## Interactive: `flahax mix`
+
+`flahax mix` asks for the specification, water analysis, crop formula,
+fertilizers and target pH, saves each answer under `$FLAHAX_HOME` (default
+`~/.flahax`) in the same formats `flahax batch` reads, and writes the batch
+sheet at the chosen depth: grower (tank cards, acid container, checks),
+agronomist (adds the nutrient table, limits and pH path) or developer and
+manager (adds `report.html`). `summary.json` is always written. In Python,
+`grower_sheet.render_mix_sheet(summary, depth)` and
+`grower_sheet.agronomist_rows(summary)` give the same from any
+`batch_cli.run_batch` summary. See the [growers page](../growers.md).
+
 ## From the command line
 
 ```bash
@@ -82,13 +94,20 @@ warnings to read before mixing and blank lines for measured EC and pH.
 The default grouping (`group_tanks`) follows Yara, *Fertilizantes para
 fertirrigación*, page 65 mixing compatibility table, read with page 63. The
 table's twelve "No" pairs are exactly three rules, applied to every product from
-its elemental analysis:
+its elemental analysis. FlahaX waives the last one (see below):
 
 | Keep apart | Why |
 |---|---|
 | calcium and phosphate | calcium phosphate precipitates in a concentrate (pp. 63, 65) |
 | calcium and sulfate | gypsum precipitates in a concentrate (pp. 63, 65) |
-| magnesium and phosphate | magnesium phosphate precipitates in a concentrate (p. 65) |
+| magnesium and phosphate | magnesium phosphate precipitates in a concentrate (p. 65); **waived** by the two-tank rule |
+
+FlahaX rule (owner decision 2026-10-22): there are exactly **two** concentrate
+tanks, A and B. Magnesium sulfate shares tank B with the phosphates, against
+the magnesium-phosphate rule above. The report lists every pair this lets share
+a tank (`TankGrouping.waived`), and check the strength of tank B against your
+supplier's solubility data. Products that still need a third tank, for example
+because of rules of your own, are refused with `too_many_tanks`.
 
 FlahaX rule (owner decision, #79): micronutrients and chelates go to **tank A**
 with the calcium products, because their doses are too small to precipitate
@@ -100,7 +119,11 @@ another tank. pH reagents always have their own channel.
 The table states compatibility, not solubility. Check that every concentrate
 dissolves at its strength and temperature; `plan_stocks` does this with your
 sourced solubility limits, and `default_compatibility_rules(products)` gives it
-the same rules as records. Your own `compatibilityRule` records (`--rules`, or
+the same rules as records. `summarize_batch(..., temperature_c=25)` also lists
+each concentrate against sourced single-salt solubility at that temperature
+(`summary['solubility']`); a stock that does not dissolve blocks the batch. No
+solubility data are packaged yet, so every product shows "not checked" until a
+sourced table is approved. Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient
 rule.
 
