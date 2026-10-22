@@ -120,7 +120,8 @@ Read it from top to bottom before you weigh anything.
    injection ratio.
    - Tank A holds the calcium products, micronutrients and chelates. Never put
      acid into tank A.
-   - Keep the tanks apart as listed.
+   - Keep the two tanks apart. Magnesium sulfate shares tank B with the
+     phosphates by FlahaX's two-tank rule; the sheet lists each such pair.
    - FlahaX does not check that each concentrate dissolves at that strength.
      Check it with your supplier's solubility data.
 
@@ -166,10 +167,12 @@ value on the sheet rather than relying on this arithmetic alone.
 | A | Sodium Molybdate (Dihydrate) | 0.1 | 0.01 |
 | B | Potassium Sulfate | 501.7 | 50.17 |
 | B | Magnesium Sulfate (Heptahydrate) | 423.3 | 42.33 |
-| C | Potassium Monobasic Phosphate | 220.0 | 22.00 |
+| B | Potassium Monobasic Phosphate | 220.0 | 22.00 |
 
-- **Tanks.** Magnesium sulfate cannot share a concentrate with the phosphate
-  (Yara's compatibility table), so there are three tanks.
+- **Tanks.** There are two tanks. By FlahaX's rule magnesium sulfate shares
+  tank B with the phosphate, although Yara's compatibility table says not to
+  mix them: keep tank B's strength within what your supplier says dissolves,
+  and check it for cloudiness.
 - **Targets.** Every target is met within 1 %.
 - **pH.** The blend mixes at pH 5.84, so only **1.5 mL** of 60 % nitric acid
   per 1000 L brings it to 5.8.

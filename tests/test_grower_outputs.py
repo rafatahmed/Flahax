@@ -12,7 +12,9 @@ from flahax import (InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres,
                     plan_fertilizer_workflow, plan_stocks, recommend, render_batch_sheet, render_report,
                     summarize_batch)
 from flahax.batch_cli import main as batch
-from flahax.tank_grouping import ANALOGUE, MICRO_PHOSPHATE, _class_conflict, product_classes
+from flahax.delivery_contracts import DeliveryError
+from flahax.tank_grouping import (ANALOGUE, CLASS_RULES, MICRO_PHOSPHATE, OWNER_TWO_TANKS, WAIVED_RULES,
+                                  _class_conflict, product_classes)
 
 LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
@@ -45,8 +47,11 @@ class TankGroupingTests(unittest.TestCase):
     def test_composition_rules_reproduce_the_page_65_table(self):
         names = list(ANALOGUE)
         found = {frozenset({ANALOGUE[a], ANALOGUE[b]}) for i, a in enumerate(names) for b in names[i + 1:]
-                 if _class_conflict(product_classes(BY_NAME[a]), product_classes(BY_NAME[b]))}
+                 if _class_conflict(product_classes(BY_NAME[a]), product_classes(BY_NAME[b]),
+                                    CLASS_RULES + WAIVED_RULES)}
         self.assertEqual(found, PAGE_65_NO)
+        self.assertEqual([r[:2] for r in WAIVED_RULES], [('magnesium', 'phosphate')])
+        self.assertEqual(WAIVED_RULES[0][3], OWNER_TWO_TANKS)
 
     def test_micronutrients_join_calcium_in_tank_a_which_takes_no_acid(self):
         grouping = group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Magnesium Sulfate (Heptahydrate)', .5),
@@ -57,11 +62,44 @@ class TankGroupingTests(unittest.TestCase):
                          ['Calcium Nitrate (ag grade)', 'Zinc Sulfate (Monohydrate)', 'Iron EDTA'])
         self.assertFalse(tanks['A'].acid_allowed)
         self.assertTrue(any('never acidify' in n for n in tanks['A'].notes))
-        # Magnesium sulfate and the phosphates cannot share (p. 65), so three tanks.
-        self.assertEqual(len(grouping.tanks), 3)
-        self.assertNotEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
-                            grouping.tank_of('Potassium Monobasic Phosphate'))
+        # Owner rule: magnesium sulfate shares tank B with the phosphates, so two tanks.
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
+        self.assertEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
+                         grouping.tank_of('Potassium Monobasic Phosphate'))
         self.assertEqual(grouping.tank_of('Phosphoric Acid (75%)'), grouping.tank_of('Potassium Monobasic Phosphate'))
+
+    def test_tomato_fits_two_tanks(self):
+        recipe = workflow('Tomato (Howard Resh)').recommendation
+        grouping = group_tanks(recipe['salts'], PRODUCTS)
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
+        for name in ('Magnesium Sulfate (Heptahydrate)', 'Potassium Monobasic Phosphate', 'Potassium Dibasic Phosphate'):
+            self.assertEqual(grouping.tank_of(name), 'B', name)
+        pairs = {(a, b) for a, b, _ in grouping.waived}
+        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Monobasic Phosphate'), pairs)
+        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Dibasic Phosphate'), pairs)
+        self.assertEqual({why for *_, why in grouping.waived}, {OWNER_TWO_TANKS})
+
+    def test_calcium_separations_still_hold(self):
+        grouping = group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Magnesium Sulfate (Heptahydrate)', .5),
+                                    ('Potassium Sulfate', .4), ('Potassium Monobasic Phosphate', .1),
+                                    ('Potassium Dibasic Phosphate', .1)), PRODUCTS)
+        calcium = grouping.tank_of('Calcium Nitrate (ag grade)')
+        for tank in grouping.tanks:
+            if tank.name == calcium:
+                for p in tank.products:
+                    classes = product_classes(BY_NAME[p.name])
+                    self.assertFalse(classes & {'sulfate', 'phosphate'} and 'calcium' not in classes, p.name)
+
+    def test_more_than_two_tanks_is_refused(self):
+        rule = dict(schemaVersion='0.1', id='test-1', source='test', revision='1', recordedAt='2026-10-22T00:00:00Z',
+                    productIds=[BY_NAME['Potassium Sulfate']['id'], BY_NAME['Magnesium Sulfate (Heptahydrate)']['id']],
+                    constraint='separate', reason='test separation', temperatureMinC=0, temperatureMaxC=40)
+        with self.assertRaises(DeliveryError) as caught:
+            group_tanks(rows(('Calcium Nitrate (ag grade)', .9), ('Potassium Sulfate', .4),
+                             ('Magnesium Sulfate (Heptahydrate)', .5), ('Potassium Monobasic Phosphate', .1)),
+                        PRODUCTS, rules=[rule])
+        self.assertEqual(caught.exception.code, 'too_many_tanks')
+        self.assertIn('Magnesium Sulfate (Heptahydrate)', str(caught.exception))
 
     def test_without_calcium_micronutrients_still_keep_away_from_phosphate(self):
         grouping = group_tanks(rows(('Potassium Nitrate', .5), ('Potassium Monobasic Phosphate', .2),
@@ -112,6 +150,9 @@ class ReportTests(unittest.TestCase):
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
+        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B'])
+        self.assertTrue(s['tanks']['waived'])
+        self.assertIn('two tanks', render_report(s))
         self.assertTrue(s['chemistry']['review'])
         json.dumps(s, allow_nan=False)
 
@@ -185,6 +226,7 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
             self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
             self.assertIn('Tank A', out)
+            self.assertNotIn('Tank C', out)
             with self.assertRaises(SystemExit):     # never overwrites
                 self.run_batch('--crop', 'tomato (howard', '--water', 'ro', '--output', str(target))
 
