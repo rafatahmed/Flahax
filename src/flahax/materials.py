@@ -113,7 +113,8 @@ OXIDE_FACTORS = {
     'MgO': ('Mg', _oxide_factor('Mg', 1, 1)),
     'SO3': ('S', _oxide_factor('S', 1, 3)),
 }
-COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed'})
+COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed', 'declared_ions'})
+CHELATING_AGENTS = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
 _CHARGE_RESIDUAL_LIMIT_PERCENT = 0.1
@@ -165,6 +166,16 @@ class Grade:
     flags: tuple = ()
     form_split: dict = field(default_factory=dict)
     charge_residual_percent: float | None = None
+    chelating_agent: str | None = None
+    chelating_agent_stated: bool = False
+
+
+@dataclass(frozen=True)
+class DeclaredCheck:
+    modellable: bool
+    protons_per_phosphate: float | None
+    residual_percent: float | None
+    reason: str | None
 
 
 @dataclass(frozen=True)
@@ -190,6 +201,8 @@ class ResolvedMaterial:
     provenance: dict
     flags: tuple = ()
     components: tuple = ()  # disclosed blend: (identity_id, mass_fraction) pairs
+    chelating_agent: str | None = None  # declared_ions compound only
+    declared_check: DeclaredCheck | None = None  # declared_ions compound only
 
 
 def _text(record: Mapping, key: str, label: str) -> str:
@@ -231,13 +244,13 @@ def _document(record: Mapping, label: str) -> DocumentReference:
                              entered=raw['entered'], url=raw.get('url'), sha256=sha)
 
 
-def _nutrient_key(key: Any, label: str, conversions: dict) -> tuple[str, float]:
+def _nutrient_key(key: Any, label: str, conversions: dict, extra: tuple = ()) -> tuple[str, float]:
     """Map an analysis key to its elemental form and the factor that converts its value."""
     if key in OXIDE_FACTORS:
         element, factor = OXIDE_FACTORS[key]
         conversions[key] = {'element': element, 'factor': factor}
         return element, factor
-    if key in NUTRIENT_FORMS:
+    if key in NUTRIENT_FORMS or key in extra:
         return key, 1.0
     raise DeliveryError('invalid_value', f'{label}: unknown analysis key {key!r}')
 
@@ -291,20 +304,24 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
     return tuple(pairs)
 
 
-def _nutrient_charges(identity: dict) -> dict:
+def _nutrient_charges(identity: dict, table: Mapping | None = None) -> dict:
     """Mean charge per nutrient atom, from the identity's dissolved ion forms."""
+    table = _ION_NUTRIENT_CHARGE if table is None else table
     totals: dict = {}
     for ion, count in identity['ion_forms'].items():
-        if ion in _ION_NUTRIENT_CHARGE:
-            nutrient, charge = _ION_NUTRIENT_CHARGE[ion]
+        if ion in table:
+            nutrient, charge = table[ion]
             weighted, atoms = totals.get(nutrient, (0.0, 0.0))
             totals[nutrient] = (weighted + charge * count, atoms + count)
     return {nutrient: weighted / atoms for nutrient, (weighted, atoms) in totals.items()}
 
 
-def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
-    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion."""
-    charges = _nutrient_charges(identity)
+def _charge_residual_percent(identity: dict, declared: dict, table: Mapping | None = None) -> float | None:
+    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion.
+
+    ``table`` maps ion -> (nutrient, charge per atom); material_chemistry passes its wider table.
+    """
+    charges = _nutrient_charges(identity, table)
     signed = absolute = 0.0
     has_cation = has_anion = False
     for nutrient, percent in declared.items():
@@ -329,10 +346,10 @@ def _range_excludes_theory(identity: dict, minimum: dict, maximum: dict) -> bool
 
 
 def _analysis_targets(key: Any, label: str, identity_id: str | None, conversions: dict,
-                      split: dict) -> list:
+                      split: dict, extra: tuple = ()) -> list:
     """Elemental forms an analysis key feeds, each with its multiplier."""
     if key != 'N':
-        return [_nutrient_key(key, label, conversions)]
+        return [_nutrient_key(key, label, conversions, extra)]
     theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
     forms = {form: theory[form] for form in N_FORMS if theory.get(form, 0) > 0}
     if not forms:
@@ -354,7 +371,12 @@ def make_grade(record: Mapping) -> Grade:
     composition = record.get('composition', 'single')
     if composition not in COMPOSITIONS:
         raise DeliveryError('invalid_composition', f'{label}: composition must be one of {sorted(COMPOSITIONS)}')
+    chelating_agent = record.get('chelating_agent')
+    if chelating_agent not in CHELATING_AGENTS:
+        raise DeliveryError('invalid_value', f'{label}: chelating_agent must be one of {list(CHELATING_AGENTS)}')
     identity_id = record.get('identity_id')
+    if composition == 'declared_ions' and identity_id is not None:
+        raise DeliveryError('invalid_composition', f'{label}: a declared-ions compound has no single identity')
     if identity_id is None:
         if composition == 'single':
             raise DeliveryError('invalid_composition', f'{label}: a single-material grade must name its identity')
@@ -371,7 +393,9 @@ def make_grade(record: Mapping) -> Grade:
     split: dict = {}
     bands: dict = {band: {} for band in _BANDS}
     for key, stated in analysis.items():
-        targets = _analysis_targets(key, label, identity_id, conversions, split)
+        # A declared-ions compound may state its chloride: it closes the charge balance.
+        targets = _analysis_targets(key, label, identity_id, conversions, split,
+                                    ('Cl',) if composition == 'declared_ions' else ())
         if not isinstance(stated, Mapping) or set(stated) - set(_BANDS) or not set(stated) & {'typical', 'minimum'}:
             raise DeliveryError('invalid_value', f'{label} {key}: state a typical or minimum value '
                                 '(a maximum alone is not an assay)')
@@ -407,7 +431,79 @@ def make_grade(record: Mapping) -> Grade:
                  typical=bands['typical'], minimum=bands['minimum'], maximum=bands['maximum'],
                  impurity_limits=impurity_limits, composition=composition, components=components,
                  oxide_conversions=conversions, document=document, flags=flags, form_split=split,
-                 charge_residual_percent=residual)
+                 charge_residual_percent=residual, chelating_agent=chelating_agent,
+                 chelating_agent_stated='chelating_agent' in record)
+
+
+_MICRONUTRIENTS = ('Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
+_PROTONS_PER_PHOSPHATE = (1.0, 2.0)  # HPO4-2 .. H2PO4-, the forms in fertilizer salts
+# Labels and catalogue assays are rounded: 1 g KNO3 + 1 g KH2PO4 from the catalogue assays
+# implies 2.0001 H+ per P. A hidden acid moves it by tenths (K2O 10 instead of 20: 2.75).
+_PROTONS_ROUNDING = 0.01
+_DECLARED_RESIDUAL_LIMIT_PERCENT = 5.0
+
+
+def declared_ions_check(grade: Grade) -> DeclaredCheck:
+    """Whether a data-sheet compound's declared ions can be modelled.
+
+    Charges are those of the declared-ions conversion (phosphate as PO4-3, chelates as
+    their D2 sodium salts); implied protons per P = (anion charge - cation charge) / mol P.
+    """
+    from .product_conversion import declared_ion_charges  # deferred: product_conversion imports this module
+    declared = {**grade.minimum, **grade.typical}
+    missing = [form for form in N_FORMS if form not in declared]
+    if missing:
+        return DeclaredCheck(False, None, None, f'the label does not state {", ".join(missing)} '
+                             '(state every nitrogen form, 0 when absent)')
+    if any(declared.get(key, 0) > 0 for key in _MICRONUTRIENTS) and not grade.chelating_agent_stated:
+        return DeclaredCheck(False, None, None, 'the label states micronutrients but not whether they are '
+                             'chelated (chelating_agent)')
+    if grade.chelating_agent in ('DTPA', 'o,o-EDDHA') and any(declared.get(k, 0) > 0 for k in ('Mn', 'Zn', 'Cu')):
+        return DeclaredCheck(False, None, None, f'{grade.chelating_agent} sodium salts are defined for iron only (D2)')
+    phosphate, cations, anions = declared_ion_charges(declared, grade.chelating_agent)
+    if phosphate > 0:
+        protons = (anions + 3 * phosphate - cations) / phosphate
+        low, high = _PROTONS_PER_PHOSPHATE
+        if not low - _PROTONS_ROUNDING <= protons <= high + _PROTONS_ROUNDING:
+            return DeclaredCheck(False, protons, None, f'phosphate balance: the declared ions imply {protons:.2f} H+ '
+                                 f'per phosphate, outside {low:g}-{high:g} (HPO4-2 to H2PO4-)')
+        return DeclaredCheck(True, protons, None, None)
+    residual = 100.0 * (cations - anions) / (cations + anions) if cations + anions > 0 else 0.0
+    if abs(residual) > _DECLARED_RESIDUAL_LIMIT_PERCENT:
+        return DeclaredCheck(False, None, residual, f'charge balance: the declared ions leave a {residual:+.1f} % '
+                             f'residual (limit {_DECLARED_RESIDUAL_LIMIT_PERCENT:g} %)')
+    return DeclaredCheck(True, None, residual, None)
+
+
+def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> ResolvedMaterial:
+    """A data-sheet compound: elements are the label's, chemistry its declared ions."""
+    if lot is not None:
+        raise DeliveryError('material_mismatch', f'{product_name}: lots of a declared-ions compound are not supported')
+    elements, basis = {}, {}
+    for key in _unique([*grade.typical, *grade.minimum]):
+        in_typical = key in grade.typical
+        elements[key] = grade.typical[key] if in_typical else grade.minimum[key]
+        basis[key] = 'grade_typical' if in_typical else 'grade_minimum'
+    check = declared_ions_check(grade)
+    lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
+    # Na, Cl and S the label does not state are taken as zero; each assumption is named.
+    unstated = tuple(f'unstated_{k}' for k in ('Na', 'Cl', 'S') if k not in elements)
+    flags = _unique([*grade.flags, *lower_bound, *unstated, *(() if check.modellable else ('not_modellable',))])
+    provenance = {
+        'identityId': None, 'gradeId': grade.grade_id, 'lotId': None,
+        'documents': {'grade': asdict(grade.document), 'lot': None}, 'source': None,
+        'oxideConversions': {'grade': dict(grade.oxide_conversions), 'lot': {}}, 'assumed': False,
+        'identitiesSha256': IDENTITIES_SHA256, 'chelatingAgent': grade.chelating_agent,
+        'declaredCheck': asdict(check),
+    }
+    record = {'id': grade.grade_id, 'name': product_name, 'formula': None, 'elements': elements,
+              'provenance': {**provenance, 'recordId': grade.grade_id, 'analysisBasis': dict(basis),
+                             'flags': list(flags)}}
+    return ResolvedMaterial(name=product_name, identity_id=None, record=record, basis=basis,
+                            band_minimum={k: grade.minimum.get(k) for k in elements},
+                            band_maximum={k: grade.maximum.get(k) for k in elements},
+                            composition='declared_ions', provenance=provenance, flags=flags,
+                            chelating_agent=grade.chelating_agent, declared_check=check)
 
 
 def make_lot(record: Mapping) -> Lot:
@@ -488,8 +584,11 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
     With neither grade nor lot, the shipped catalogue record is used with its declared basis.
     With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
     ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
-    stays the product name.
+    stays the product name. A ``declared_ions`` grade (a compound entered from its data
+    sheet) names the product itself; its record id is the grade id.
     """
+    if grade is not None and grade.composition == 'declared_ions':
+        return _resolve_declared(product_name, grade, lot)
     identity = identity_for_product(product_name)
     identity_id = identity['id']
     salt = _shipped_salt(product_name)

@@ -19,7 +19,7 @@ from .aqueous_model import AqueousResult, solve
 from .composition import ATOMIC
 from .delivery_contracts import DeliveryError
 from .engine import PH_REAGENT, TOLERANCE_PCT, load_library, recommend, score
-from .nutrient_acceptance import assess_incidental
+from .nutrient_acceptance import assess_incidental, assessed_limits
 from .root_finding import shrink_bracket
 from .saturation_policy import assess_saturation, describe
 
@@ -233,7 +233,7 @@ def _loss(recommendation):
 
 def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
     """Final acceptance of one candidate: dose, hard limits, then saturation; review never outranks a rejection."""
-    incidental = assess_incidental(recommendation['rows'], maximum_concentrations)
+    incidental = assess_incidental(recommendation['rows'], assessed_limits(maximum_concentrations, recommendation))
     saturation = assess_saturation(target)
     if over_dose:
         return 'rejected', 'dose_limit_exceeded', 'dose exceeds the reagent volume limit or solvent inventory', saturation

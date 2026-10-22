@@ -156,12 +156,12 @@ Source module: `flahax.calculated_ph`. Import with `from flahax import calculate
 ### `ProductChemistry`
 
 ```text
-ProductChemistry(name: 'str', family: 'str', components: 'tuple[str, ...]', source_profile: 'str', temperature_c: 'float' = 25.0) -> None
+ProductChemistry(name: 'str', family: 'str', components: 'tuple[str, ...]', source_profile: 'str', temperature_c: 'float' = 25.0, ions: 'tuple' = ()) -> None
 ```
 
 Source-versioned chemical identity; not a nutrient-assay replacement.
 
-Record fields: `name`, `family`, `components`, `source_profile`, `temperature_c`.
+Record fields: `name`, `family`, `components`, `source_profile`, `temperature_c`, `ions`.
 
 Source module: `flahax.catalogue_chemistry`. Import with `from flahax import ProductChemistry`.
 
@@ -842,7 +842,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=())
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -851,7 +851,8 @@ Plain data for a grower report and batch sheet.
 ``products`` are the product records it was planned with (they give the tank
 grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
 a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-is the recipe to weigh.
+is the recipe to weigh. Each concentrate is checked against sourced solubility at
+``temperature_c`` (°C); a stock that does not dissolve blocks the batch.
 
 Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 
@@ -1015,6 +1016,26 @@ prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
+## flahax.material_chemistry
+
+### `material_chemistry`
+
+```text
+material_chemistry(record: 'Mapping', *, check: 'bool' = True) -> 'ProductChemistry'
+```
+
+The chemistry of a material record, from what it puts in the water.
+
+In order: (1) a ``declared_ions`` grade: its analysis (Task 4); (2) ``ions``, a mapping of
+ion to count per formula unit (e.g. ``{"K+": 1, "H2PO4-": 1}``), with an optional
+``chelating_agent`` that turns its metals into their complexes; (2b) the ``ion_forms`` of
+its identity (``identityId``, or a single grade's ``identity_id``): the catalogue's data;
+(3) ``formula``, parsed into fertilizer ions plus hydrate water; otherwise
+``material_undefined``. With ``check``, the ``elements`` of a record that is not a grade
+must fit its ions (the grade's own analysis is checked by ``make_grade``).
+
+Source module: `flahax.material_chemistry`. Import with `from flahax import material_chemistry`.
+
 ## flahax.materials
 
 ### `DocumentReference`
@@ -1030,10 +1051,10 @@ Source module: `flahax.materials`. Import with `from flahax import DocumentRefer
 ### `Grade`
 
 ```text
-Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None) -> None
+Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None, chelating_agent: str | None = None, chelating_agent_stated: bool = False) -> None
 ```
 
-Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`.
+Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`, `chelating_agent`, `chelating_agent_stated`.
 
 Source module: `flahax.materials`. Import with `from flahax import Grade`.
 
@@ -1050,10 +1071,10 @@ Source module: `flahax.materials`. Import with `from flahax import Lot`.
 ### `ResolvedMaterial`
 
 ```text
-ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = ()) -> None
+ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = (), chelating_agent: str | None = None, declared_check: flahax.materials.DeclaredCheck | None = None) -> None
 ```
 
-Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`.
+Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`, `chelating_agent`, `declared_check`.
 
 Source module: `flahax.materials`. Import with `from flahax import ResolvedMaterial`.
 
@@ -1122,7 +1143,8 @@ Pick each nutrient's assay: lot measured > grade typical > grade minimum > ident
 With neither grade nor lot, the shipped catalogue record is used with its declared basis.
 With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
 ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
-stays the product name.
+stays the product name. A ``declared_ions`` grade (a compound entered from its data
+sheet) names the product itself; its record id is the grade id.
 
 Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 
@@ -1420,7 +1442,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import Prod
 ### `catalogue_dose_totals`
 
 ```text
-catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None)
+catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None, products=None)
 ```
 
 Convert every assayed catalogue element into one conserved basis.
@@ -1429,7 +1451,8 @@ Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
 retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
 unhydrolysed. Rounded product assays do not establish unassayed counterions.
 ``materials`` optionally maps dosed product names to ``ResolvedMaterial``
-(user grade or lot); see ``catalogue_dose_contributions``.
+(user grade or lot); ``products`` supplies material records by name, for
+materials the catalogue does not hold; see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 
@@ -1439,7 +1462,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import cata
 convert_catalogue_product_dose(product: 'Mapping[str, object]', dose_g_per_kg_water: 'float') -> 'ProductAnalyticalTotals'
 ```
 
-Catalogue adapter. Equilibrium callers should retain the returned profile.
+Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material: ``convert_material_dose``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_catalogue_product_dose`.
 
@@ -1451,8 +1474,10 @@ convert_product_dose(product: 'Mapping[str, object]', chemistry: 'ProductChemist
 
 Convert a library assay using an explicit chemistry profile.
 
-Assays are elemental mass fractions.  Counterions/ligands are declared by
-the chemical family; unassayed remainder is retained as inert carrier.
+Assays are elemental mass fractions. Counterions and ligands the assay does not
+state follow from the profile's ions (``unstated_amounts``): chelate ligands and
+D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
+is retained as inert carrier.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_product_dose`.
 
@@ -1628,10 +1653,10 @@ Source module: `flahax.tank_grouping`. Import with `from flahax import Concentra
 ### `TankGrouping`
 
 ```text
-TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
+TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, waived: tuple = (), source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
 ```
 
-Record fields: `tanks`, `reagent_channel`, `separations`, `source`, `solubility_checked`.
+Record fields: `tanks`, `reagent_channel`, `separations`, `waived`, `source`, `solubility_checked`.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import TankGrouping`.
 
@@ -1673,7 +1698,8 @@ Tank A takes the calcium products, then every micronutrient product; the others
 follow by descending dose into the first tank without a conflict; acids never
 join a tank holding calcium or micronutrients. pH reagents are returned apart, for
 their own channel. ``rules`` are extra ``compatibilityRule`` records that
-separate products by id; they also override the micronutrient rule.
+separate products by id; they also override the micronutrient rule. At most
+two tanks: products that need a third raise ``too_many_tanks``.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import group_tanks`.
 
