@@ -3,75 +3,9 @@
 No JS, external fonts, plotting package or network connection is required.
 Graphs use the same serialized results as report.json, never invented values.
 """
-from html import escape
 import math
 
-
-def text(value):
-    return escape(str(value), quote=True)
-
-
-def number(value, digits=4):
-    if value is None:
-        return 'Not available'
-    if not isinstance(value, (int, float)) or not math.isfinite(value):
-        return text(value)
-    if value != 0 and abs(value) < .0001:
-        return f'{value:.3e}'
-    return f'{value:,.{digits}f}'.rstrip('0').rstrip('.') if digits else f'{value:,.0f}'
-
-
-def table(headers, rows, caption):
-    return ('<div class="table-scroll"><table><caption>'+text(caption)+'</caption><thead><tr>'
-            + ''.join('<th scope="col">'+text(h)+'</th>' for h in headers)
-            + '</tr></thead><tbody>'
-            + ''.join('<tr>'+''.join('<td>'+text(cell)+'</td>' for cell in row)+'</tr>' for row in rows)
-            + '</tbody></table></div>')
-
-
-def bars(title, labels, series, unit):
-    """Zero-based grouped bars with direct value labels and a visible axis."""
-    colors = ['#116c73', '#879bb0', '#e3a128']
-    values = [v for _, samples in series for v in samples if isinstance(v, (int, float)) and math.isfinite(v)]
-    maximum = max(values, default=0)
-    maximum = maximum*1.15 if maximum > 0 else 1
-    group = max(56, len(series)*21+12)
-    height = 94 + group*len(labels)
-    left, width = 265, 545
-    svg = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 {height}" role="img" aria-label="{text(title)}">',
-           '<title>'+text(title)+'</title>',
-           '<desc>Zero-based horizontal bars. Exact values and units also appear in the accompanying table. Missing values are not plotted.</desc>']
-    for i in range(5):
-        x = left + width*i/4
-        svg.append(f'<path d="M{x} 38 V{height-38}" stroke="#dbe4e8"/>')
-        svg.append(f'<text x="{x}" y="{height-16}" text-anchor="middle">{number(maximum*i/4, 2)}</text>')
-    for index, (name, _) in enumerate(series):
-        x = left + index*170
-        svg.append(f'<rect x="{x}" y="9" width="11" height="11" fill="{colors[index % 3]}"/>')
-        svg.append(f'<text x="{x+17}" y="19">{text(name)}</text>')
-    for row, label in enumerate(labels):
-        y = 45 + group*row
-        # Long product labels wrap into separate SVG text elements.
-        words, lines, line = str(label).split(), [], ''
-        for word in words:
-            if len(line+' '+word) > 31 and line:
-                lines.append(line)
-                line = word
-            else:
-                line = (line+' '+word).strip()
-        lines.append(line)
-        for j, line in enumerate(lines):
-            svg.append(f'<text x="12" y="{y+14+j*17}">{text(line)}</text>')
-        for j, (_, samples) in enumerate(series):
-            value = samples[row]
-            if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-                continue
-            size = width*value/maximum
-            by = y+j*21
-            svg.append(f'<rect x="{left}" y="{by}" width="{size}" height="14" rx="3" fill="{colors[j % 3]}"/>')
-            svg.append(f'<text x="{left+size+7}" y="{by+12}">{number(value, 3)}</text>')
-    svg.append('</svg>')
-    return '<figure><figcaption>'+text(title)+' <small>('+text(unit)+')</small></figcaption>'+''.join(svg)+'</figure>'
+from flahax.grower_report import bars, number, table, text  # noqa: F401  (shared with the package renderer)
 
 
 def render_html(report):

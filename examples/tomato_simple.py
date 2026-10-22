@@ -27,7 +27,7 @@ def run():
     identities = {s['name']: s['provenance']['identityId'] for s in result['salts']}
     return dict(
         formula=FORMULA, targets=targets, batch_litres=BATCH_LITRES, feasible=result['feasible'],
-        recipe=[dict(name=s.name, grams_per_litre=s.dose.value, grams_in_batch=s.mass.value,
+        recipe=[dict(id=s.salt_id, name=s.name, grams_per_litre=s.dose.value, grams_in_batch=s.mass.value,
                      identity=identities[s.name])
                 for s in batch.salts],
         nutrients=[dict(symbol=r['symbol'], target=r['target'], final=r['final'], deltaPct=r['deltaPct'])

@@ -9,12 +9,11 @@ own batch.
 
 Run from the repository root:  python -m examples.tomato_advanced
 """
-from flahax import (VolumeLitres, balance_water_analysis, calculate_ec_from_totals, load_library,
+from flahax import (VolumeLitres, balance_water_analysis, group_tanks, calculate_ec_from_totals, load_library,
                     plan_acid_options, plan_catalogue_nitric_target, plan_fertilizer_workflow, recommend,
                     size_injection_requirements)
 from flahax.product_conversion import MOLAR_MASS
-
-from .tomato_tanks import group_tanks
+from flahax.tank_grouping import ANALOGUE
 
 # Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, supplementary Table S1, station 104
 # (Qatar). Measured pH 7.80; mg/L; CO3-2 is total inorganic carbon expressed as C.
@@ -73,6 +72,16 @@ def largest_blend(balanced):
     return 0
 
 
+def tank_table(salts, products):
+    """The packaged default grouping (flahax.group_tanks) in the shape this report prints."""
+    grouping = group_tanks(salts, products)
+    return dict(source=grouping.source, separations=grouping.separations,
+                tanks={t.name: dict(products=[dict(name=p.name, analogue=ANALOGUE.get(p.name, 'by composition'),
+                                                   gramsPerLitre=p.grams_per_litre, basis=p.basis)
+                                              for p in t.products], notes=list(t.notes))
+                       for t in grouping.tanks})
+
+
 def run():
     library = load_library()
     salts = library['salts']
@@ -128,7 +137,7 @@ def run():
           for label, state in (('mixed', mixed), ('acidified', nitric.target))}
 
     # 6. Concentrate tanks from the cited compatibility table, then injection sizing.
-    tanks = group_tanks(recipe['salts'])
+    tanks = tank_table(recipe['salts'], salts)
     channels = {name: dict(final_litres_per_stock_litre=INJECTION_RATIO, available_stock_litres=50)
                 for name in tanks['tanks']}
     sizing = size_injection_requirements(channels=channels, **SITE)
@@ -176,7 +185,8 @@ def run():
             'Targets: De Kreij, Voogt and Baas (1999) tomato, open system; target pH 5.5 from the same table.',
             'Phosphoric acid is withdrawn as a P source because, on this water, it drives the feed below the target pH.',
             'Acid grades are EXAMPLES (60% HNO3 1.37 kg/L; 75% H3PO4 1.58 kg/L); use your certificate.',
-            'Tank grouping uses the cited Yara page 65 compatibility table; stock solubility is not verified.',
+            'Tank grouping is the packaged default (flahax.group_tanks): Yara page 63/65 rules, micronutrients and '
+            'chelates in tank A, which is never acidified. Stock solubility is not verified.',
             'Site figures for injection sizing are illustrative.',
             'Positive saturation indices mean a precipitation risk, not a predicted rate; measure after mixing.'])
 
@@ -214,7 +224,6 @@ def main():
     print('\nConcentrate tanks (1:%d):' % r['injection_ratio'])
     for name, tank in r['tanks']['tanks'].items():
         print(f"  Tank {name}: " + ', '.join(p['name'] for p in tank['products']))
-    print('  Not in the table:', ', '.join(r['tanks']['not_covered']))
     print('\nStages on the same water:')
     for s in r['stages']:
         print(f"  {s['stage']:<50} {'met' if s['feasible'] else 'missed'}; worst {s['worst_miss_percent']:.1f}%")
