@@ -112,13 +112,26 @@ class CoupledWorkflowTests(unittest.TestCase):
         self.assertTrue(computed)
         self.assertTrue(all(not c.recommendation['feasible'] for c in computed))   # reported, not hidden
 
-    def test_rejections_name_the_supersaturated_phases(self):
-        for workflow in (self.alkaline, self.acidic):
-            for c in workflow.stages['ph_adjustment'].value.candidates:
-                if c.status == 'rejected':
-                    self.assertEqual(c.error_code, 'precipitation_risk')
-                    self.assertIn('Hydroxylapatite', c.message)
-                    self.assertTrue(math.isfinite(c.reagent_mass_g))   # the amount is still reported
+    def test_review_phases_give_a_usable_plan_with_their_reasons(self):
+        # Hydroxylapatite and MnHPO4 are supersaturated in every phosphate feed; they are
+        # review-class (#78), so a plan is selected and the stage asks for review.
+        stage = self.alkaline.stages['ph_adjustment']
+        self.assertEqual(stage.status, 'requires_review')
+        chosen = stage.value.selected
+        self.assertIsNotNone(chosen)
+        self.assertFalse(chosen.saturation['blocks'])
+        self.assertIn('Hydroxylapatite', chosen.message)
+        self.assertTrue(math.isfinite(chosen.reagent_mass_g))
+
+    def test_readily_forming_phases_still_block_and_keep_the_dose(self):
+        # Chilli with a base: monetite (CaHPO4) is supersaturated, a hard phase.
+        stage = self.acidic.stages['ph_adjustment']
+        self.assertEqual(stage.status, 'blocked')
+        for c in stage.value.candidates:
+            if c.direction == 'base':
+                self.assertEqual(c.error_code, 'precipitation_risk')
+                self.assertIn('CaHPO4', [p for p, _ in c.saturation['blocking']])
+                self.assertTrue(math.isfinite(c.reagent_mass_g))
 
 
 if __name__ == '__main__':
