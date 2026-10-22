@@ -30,6 +30,7 @@ either: pass your certificate values with ``--acid``. The packaged bases (KOH 45
 KHCO3, K2CO3) are always evaluated.
 """
 import argparse
+from dataclasses import asdict, dataclass, field
 import json
 from pathlib import Path
 import sys
@@ -44,6 +45,7 @@ from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents
 from .planning_cli import serializable
 from .product_conversion import MOLAR_MASS
+from .stock_volumes import prepare_stocks
 
 # Water analysis key -> (basis, grams per mole of the reported quantity).
 WATER_KEYS = {
@@ -153,31 +155,80 @@ def choose_formula(library, formula, crop):
     return matches[0]
 
 
-def build(args):
+@dataclass
+class BatchOptions:
+    """The ``flahax batch`` flags, plus the interactive mix's tanks, fill mode, temperature and depth.
+
+    With ``tank_litres`` (keys A, B and acid) the batch volume is the irrigation the
+    stocks supply (``stock_volumes.prepare_stocks``) and ``volume`` is not used.
+    """
+    water: str
+    formula: str | None = None
+    crop: str | None = None
+    targets: str | None = None
+    water_share: float | None = None
+    volume: float = 1000
+    ph: float = 5.8
+    ratio: float = 100
+    acid: list = field(default_factory=list)
+    limit: list = field(default_factory=list)
+    max_reagent_litres: float | None = None
+    products: str | None = None
+    rules: str | None = None
+    tank_litres: dict | None = None
+    mode: str = 'fill'
+    irrigation_litres: float | None = None
+    temperature_c: float = 25
+    depth: int = 3
+
+
+def run_batch(options):
+    """The batch summary (``summarize_batch``); with tanks, ``summary['volumes']`` gives the stock volumes."""
+    volumes = None
+    if options.tank_litres is not None:
+        volumes = prepare_stocks(tank_litres=options.tank_litres, ratio=options.ratio, mode=options.mode,
+                                 irrigation_litres=options.irrigation_litres)
+    volume = options.volume if volumes is None else volumes.irrigation_litres
     library = load_library()
-    products = json.loads(Path(args.products).read_text(encoding='utf-8-sig')) if args.products else library['salts']
-    if args.targets:
-        targets, title = json.loads(Path(args.targets).read_text(encoding='utf-8-sig')), Path(args.targets).stem
+    products = (json.loads(Path(options.products).read_text(encoding='utf-8-sig')) if options.products
+                else library['salts'])
+    if options.targets:
+        targets, title = json.loads(Path(options.targets).read_text(encoding='utf-8-sig')), Path(options.targets).stem
     else:
-        title = choose_formula(library, args.formula, args.crop)
+        title = choose_formula(library, options.formula, options.crop)
         targets = next(f['targets'] for f in library['formulas'] if f['name'] == title)
-    label, water, chemistry = read_water(args.water)
-    if args.water_share is not None:
-        label, water, chemistry = blend(label, water, chemistry, args.water_share)
-    rules = json.loads(Path(args.rules).read_text(encoding='utf-8-sig')) if args.rules else ()
-    reagents = [acid_record(a) for a in args.acid] + catalogue_ph_reagents()
-    limits = dict(args.limit)
+    label, water, chemistry = read_water(options.water)
+    if options.water_share is not None:
+        label, water, chemistry = blend(label, water, chemistry, options.water_share)
+    rules = json.loads(Path(options.rules).read_text(encoding='utf-8-sig')) if options.rules else ()
+    reagents = [acid_record(a) for a in options.acid] + catalogue_ph_reagents()
+    limits = dict(options.limit)
     workflow = plan_fertilizer_workflow(
-        products, targets, water, args.ph, final_volume=VolumeLitres(args.volume),
+        products, targets, water, options.ph, final_volume=VolumeLitres(volume),
         equilibrium=None if chemistry is None else dict(
-            chemistry, water_mass_kg=args.volume, complete_analysis=True, carbon_boundary='closed',
+            chemistry, water_mass_kg=volume, complete_analysis=True, carbon_boundary='closed',
             temperature_c=25, phases=[]),
-        ph_adjustment=dict(products=reagents, maximum_reagent_volume_litres=args.max_reagent_litres or args.volume / 200),
+        ph_adjustment=dict(products=reagents, maximum_reagent_volume_litres=options.max_reagent_litres or volume / 200),
         maximum_concentrations=limits or None)
-    summary = summarize_batch(workflow, products, title=title, water_label=label, injection_ratio=args.ratio,
-                              rules=rules)
+    summary = summarize_batch(workflow, products, title=title, water_label=label, injection_ratio=options.ratio,
+                              rules=rules, temperature_c=options.temperature_c)
+    if volumes is not None:
+        summary['volumes'] = asdict(volumes)
+    return summary
+
+
+def render(summary):
+    """File name -> text: the report, the batch sheet and the JSON summary."""
     return {'report.html': render_report(summary), 'batch-sheet.html': render_batch_sheet(summary),
-            'summary.json': json.dumps(serializable(summary), indent=1, allow_nan=False) + '\n'}, summary
+            'summary.json': json.dumps(serializable(summary), indent=1, allow_nan=False) + '\n'}
+
+
+def build(args):
+    summary = run_batch(BatchOptions(
+        water=args.water, formula=args.formula, crop=args.crop, targets=args.targets, water_share=args.water_share,
+        volume=args.volume, ph=args.ph, ratio=args.ratio, acid=args.acid, limit=args.limit,
+        max_reagent_litres=args.max_reagent_litres, products=args.products, rules=args.rules))
+    return render(summary), summary
 
 
 def main(argv=None):
