@@ -222,6 +222,11 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | CLI says salts are required | Supply a nonempty array of product records; do not send targets alone. |
 | `feasible` is false | Inspect all nutrient rows and available assays; do not force approval by hiding residuals. |
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
+| `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
+| `identity_inconsistent` | A label does not fit its chemical (its charges do not balance within 0.1 %). Check the label; rounded labels can trip this (#93). |
+| `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
+| `too_many_tanks` | The products need more than two concentrate tanks under the rules; the message names the conflicting products. |
+| `tank_too_small` | One irrigation needs more stock than a tank holds; the message names the tank. |
 | `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
 | `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |
 | `missing_carbon` or `ambiguous_carbon` | Measured-pH balancing needs inorganic carbon (`CO3-2`, 0 for water measured carbon-free) or titrated alkalinity, exactly one of them. |

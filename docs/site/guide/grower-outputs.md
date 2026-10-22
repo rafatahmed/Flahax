@@ -6,6 +6,18 @@ and offline: the HTML has inline styles and charts, and no script, font or netwo
 access. These are planning documents, not dosing instructions: measure EC and pH
 after mixing.
 
+## Interactive: `flahax mix`
+
+`flahax mix` asks for the specification, water analysis, crop formula,
+fertilizers and target pH, saves each answer under `$FLAHAX_HOME` (default
+`~/.flahax`) in the same formats `flahax batch` reads, and writes the batch
+sheet at the chosen depth: grower (tank cards, acid container, checks),
+agronomist (adds the nutrient table, limits and pH path) or developer and
+manager (adds `report.html`). `summary.json` is always written. In Python,
+`grower_sheet.render_mix_sheet(summary, depth)` and
+`grower_sheet.agronomist_rows(summary)` give the same from any
+`batch_cli.run_batch` summary. See the [growers page](../growers.md).
+
 ## From the command line
 
 ```bash
