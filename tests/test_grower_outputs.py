@@ -170,5 +170,7 @@ class BatchCommandTests(unittest.TestCase):
                                           '--acid', 'HNO3:0.60:1.37', '--output', str(Path(tmp) / 'out'))
             self.assertIn(code, (0, 3), err)
             summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
-            self.assertEqual(summary['stages']['chemistry']['status'], 'calculated')
+            self.assertEqual(summary['stages']['chemistry']['status'], 'requires_review')
+            self.assertEqual(summary['water']['reconciliation'], 'assumed')
+            self.assertEqual(summary['water']['analysis_mg_per_litre']['Cl'], 1280.4)
             self.assertAlmostEqual(summary['chemistry']['water_ph'], 7.8, places=6)

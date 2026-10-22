@@ -80,17 +80,63 @@ cannot pass `validated_equilibrium` delivery composition.
 
 ## Measured-pH water balancing
 
+**Two inventories, two uses (#84).** Nutrient targets and maximum
+concentrations are always decided on the laboratory analysis after blending,
+plus everything added (products and pH reagent), at the final volume. The
+charge-balanced composition is an input to the chemistry only: pH, speciation,
+saturation, EC and the reagent dose. Closing the charge on chloride or sodium is
+a modelling step, not a corrected measurement, so it can never pass or fail a
+limit. When it would change a limit decision, the plan asks for review and says
+so; a laboratory-basis exceedance always blocks.
+
 `balance_water_analysis(totals, measured_ph=..., alkalinity_eq_per_kg=None,
-balance_ion='Cl-', maximum_imbalance_percent=5, phases=(), temperature_c=25)`
-speciates a laboratory analysis at its measured pH. Inorganic carbon comes
-from `totals['CO3-2']` or from titrated alkalinity (carbonate alkalinity:
-each carbon species counts 2 x C - H+ relative to H2CO3, plus OH- - H+), never
-both. The charge left at the measured pH is closed by changing `Cl-` or `Na+`,
-as PHREEQC's `charge` option does. The result records the analysed and
-adjusted balance-ion totals and the imbalance in percent of total
-equivalents. An imbalance above the limit is rejected
-(`charge_imbalance_exceeded`); the balance ion is never driven to zero
-(`balance_ion_exhausted`).
+balance_ion='Cl-', maximum_imbalance_percent=5, phases=(), temperature_c=25,
+analysis_id=None, balance_ion_uncertainty_percent=None, fixed=(),
+below_detection=None)` speciates a laboratory analysis at its measured pH.
+
+- **Zero, not measured, below detection.** A component given as 0 is a measured
+  zero and is held fixed; an omitted component is not measured.
+  `below_detection` records detection limits (mol/kg); those components enter
+  the chemistry as 0 and are never adjusted. Inorganic carbon comes from
+  `totals['CO3-2']` (0 for water measured carbon-free) or from titrated
+  alkalinity (carbonate alkalinity: each carbon species counts 2 x C - H+
+  relative to H2CO3, plus OH- - H+), never both; carbon not reported at all is
+  `missing_carbon`.
+- **Balance first.** If the composition's charge closes at the measured pH within
+  `CLOSURE_TOLERANCE` (0.0001 % of its total ionic charge, a numerical
+  tolerance), it is used unchanged (`reconciliation='unchanged'`) and no balance
+  ion is needed: a chloride-free water does not fail because the default
+  balance ion is chloride. Passing the 5 % screen does not make an analysis
+  balanced.
+- **Otherwise, explicit and bounded.** An imbalance above
+  `maximum_imbalance_percent` is rejected (`charge_imbalance_exceeded`). The
+  rest is closed on `balance_ion` (`Cl-` or `Na+`), as PHREEQC's `charge`
+  option does, only if that ion is measured, positive and not fixed
+  (`fixed_balance_ion`, `missing_balance_ion`); no other ion is tried. With
+  `balance_ion_uncertainty_percent` the adjustment must lie within that stated
+  measurement uncertainty (`reconciled`, else `reconciliation_out_of_bounds`).
+  Without it the closure is an assumption (`assumed`): the workflow's chemistry
+  stage, and every plan built on it, is `requires_review` with the reason.
+- **The record.** `analytical_totals` keeps the analysis as entered,
+  `totals` the model; `balance_ion`, `balance_adjustment_molal`,
+  `imbalance_percent`, `reconciliation`, `fixed`, `below_detection` and
+  `analysis_id` record what was done. `diluted(fraction)` blends it with
+  ion-free water: both inventories scale and the blend's chemistry is
+  recomputed; the source's measured pH stays as metadata. Blending two real
+  waters needs both analyses and is not supported.
+
+In `plan_fertilizer_workflow`, either pass the laboratory totals with
+`measured_ph` (and optional `alkalinity_eq_per_kg`, `balance_ion`,
+`balance_ion_uncertainty_percent`, `fixed`, `below_detection`) in the
+`equilibrium` record, or pass a prepared `water_balance` record (for example a
+diluted blend) instead of `water_totals`. The `water` mg/L must be the
+laboratory analysis; the balanced model's mg/L, or `water_balance` together with
+`measured_ph` or with different `water_totals`, is rejected. The result's
+`water_basis` lists laboratory and modelled water side by side and every limit
+the balancing alone would flip. `plan_equilibrium_delivery` takes
+`analytical_water_totals` (or a `BalancedWaterAnalysis` as `water_totals`): its
+nutrient rows and limits use the analysis, its dose the chemistry. A plain
+mapping without it keeps its previous meaning.
 
 Why: calculated pH from charge balance alone is extremely sensitive to
 analytical error in brackish water. For Shomar et al. (2024) station 104
