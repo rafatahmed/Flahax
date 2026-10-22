@@ -121,6 +121,7 @@ Install and first steps <guide/usage>
 :hidden:
 
 For growers and agronomists <growers>
+Batch report, sheet and tanks <guide/grower-outputs>
 ```
 
 ```{toctree}
