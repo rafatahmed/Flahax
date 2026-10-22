@@ -421,9 +421,28 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
     the scaled Lagrange multiplier. The ion's excess over its aim falls as the shift
     grows, so each shift is found by a bracketed (Illinois) search; a ceiling whose
     shift reaches zero with the ion below its aim is released. Each refit starts from
-    the last doses. A remainder after CEILING_STEPS (for example water alone above the
-    limit) is reported by _report as a limit violation.
+    the last doses. A remainder after CEILING_STEPS is reported by _report as a limit
+    violation.
+
+    A ceiling the water alone already reaches cannot be met: any product carrying that
+    ion only adds to the violation, which is the infinite-multiplier limit of the
+    search. Those products are left out of the fit directly (#86); searching instead
+    grew the shift without bound, and with a second binding ceiling NNLS failed.
     """
+    unreachable = {symbol for symbol, limit in maxima.items()
+                   if limit > 0 and symbol not in targets
+                   and float(water.get(symbol) or 0.0) >= limit * (1 - CEILING_MARGIN)}
+    if unreachable:
+        keep = [i for i, salt in enumerate(salts) if not any(salt["elements"].get(s, 0.0) for s in unreachable)]
+        solved = _fit_within([salts[i] for i in keep], targets, water, ridge,
+                             {s: v for s, v in maxima.items() if s not in unreachable},
+                             None if x0 is None else [x0[i] for i in keep])
+        grams = [0.0] * len(salts)
+        for index, value in zip(keep, solved["grams"]):
+            grams[index] = value
+        achieved = forward(salts, grams, water)
+        loss, rows = score(achieved, targets)
+        return {"grams": grams, "loss": loss, "rows": rows}
     cache: dict = {}
     solved = _fit(salts, targets, water, ridge, maxima, x0=x0, grams_cache=cache)
     # symbol -> [shift, (lo shift, lo excess > 0) or None, (hi shift, hi excess < 0) or None, side]
