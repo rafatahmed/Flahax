@@ -143,6 +143,10 @@ from .acid_selection import AcidCandidate, AcidSelection, plan_acid_options
 __all__ += ["AcidCandidate", "AcidSelection", "plan_acid_options"]
 from .ph_adjustment import PhAdjustmentPlan, PhCandidate, catalogue_ph_reagents, plan_coupled_ph, reagent_dose
 __all__ += ["PhAdjustmentPlan", "PhCandidate", "catalogue_ph_reagents", "plan_coupled_ph", "reagent_dose"]
+from .tank_grouping import ConcentrateTank, TankGrouping, TankProduct, default_compatibility_rules, group_tanks
+__all__ += ["ConcentrateTank", "TankGrouping", "TankProduct", "default_compatibility_rules", "group_tanks"]
+from .grower_report import render_batch_sheet, render_report, summarize_batch
+__all__ += ["render_batch_sheet", "render_report", "summarize_batch"]
 from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
 __all__ += ["ECPrediction", "ECDeliveryPlan", "water_ec25", "ec_recipe_key", "plan_ec_delivery"]
 from .calculated_ec import estimate_manufacturer_ec

@@ -217,6 +217,8 @@ Each command also accepts its documented JSON object on stdin without
 or phosphoric acid. EC is bounded manufacturer-anchor screening, not a
 general concentrated-stock model. Equipment sizing gives flow/volume
 requirements, not a manufacturer model or actuator commands.
+For a grower report and printable batch sheet from one formula and one water,
+use `flahax batch` (see [batch report, sheet and tanks](grower-outputs.md)).
 See [site inputs and schemas](site-planning.md), [source-sheet review](source-sheet-review.md)
 and [current development status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md).
 

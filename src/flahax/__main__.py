@@ -8,8 +8,12 @@ from flahax import InputError, recommend
 
 
 def main() -> int:
+    if sys.argv[1:2] == ['batch']:
+        from .batch_cli import main as batch
+        return batch(sys.argv[2:])
     parser = argparse.ArgumentParser(description='FlahaX nutrient recommendation and site planning')
-    parser.add_argument('command', nargs='?', default='recommend', choices=('recommend', 'workflow', 'ec', 'size'))
+    parser.add_argument('command', nargs='?', default='recommend', choices=('recommend', 'workflow', 'ec', 'size', 'batch'),
+                        help='batch: report and batch sheet (flahax batch --help)')
     parser.add_argument('--interactive', action='store_true', help='Request site inputs (workflow, ec or size)')
     args = parser.parse_args()
     if args.command != 'recommend':
