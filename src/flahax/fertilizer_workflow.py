@@ -64,8 +64,17 @@ def _graded(supplied, library):
 
     The record keeps the catalogue name and formula, takes the resolved label assay as its
     elements and is identified by the catalogue id or the resolved id (<catalogue id>+<grade id>).
+    A compound declared from its data sheet (composition ``declared_ions``) is its own record,
+    identified by its grade id, which must not be a catalogue id.
     """
     name = supplied.get('name')
+    if isinstance(supplied['grade'], Mapping) and supplied['grade'].get('composition') == 'declared_ions':
+        resolved = resolve_material(name, grade=make_grade(supplied['grade']))
+        if (supplied.get('id') != resolved.record['id'] or supplied['id'] in library
+                or supplied.get('elements') != resolved.record['elements']):
+            raise DeliveryError('product_chemistry_mismatch', f'{name}: a declared compound is identified by its '
+                                'grade id and takes the label assay')
+        return dict(supplied), resolved
     reference = next((p for p in library.values() if p['name'] == name), None)
     if reference is None:
         raise DeliveryError('product_chemistry_mismatch', f'graded product {name!r} is not a catalogue product')
@@ -87,6 +96,16 @@ def _graded(supplied, library):
 def _dose_totals(doses, materials):
     """Catalogue dose totals, converting graded products through their resolved material."""
     return catalogue_dose_totals(doses, materials={n: m for n, m in materials.items() if n in doses})
+
+
+# A dosed product whose declared ions cannot be modelled: nutrients stand, no pH is planned.
+NOT_MODELLABLE = 'ph_not_planned_for_product'
+
+
+def _not_planned(stage):
+    """A stage stopped by a product that cannot be modelled needs input; it is not a block."""
+    if stage.error_code == NOT_MODELLABLE:
+        stage.status = 'needs_input'
 
 
 def unreviewed_reason(recommendation):
@@ -260,6 +279,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
                         'water_totals': water_totals, 'analytical_water_totals': analytical, 'water_balance': balance}
             value = run('chemistry', chemical_states)
+            _not_planned(stages['chemistry'])
             balance = value and value['water_balance']
             if balance is not None and balance and balance.reconciliation == 'assumed':
                 stages['chemistry'].status = 'requires_review'
@@ -330,7 +350,10 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 stages['acid_selection'] = WorkflowStage('blocked', value=selection, error_code='no_acceptable_acid')
 
     if not missing('ph_adjustment', ph_adjustment, ('products', 'maximum_reagent_volume_litres')):
-        if stages['chemistry'].status not in USABLE:
+        if stages['chemistry'].error_code == NOT_MODELLABLE:
+            stages['ph_adjustment'] = WorkflowStage('needs_input', error_code=NOT_MODELLABLE,
+                                                    message=stages['chemistry'].message)
+        elif stages['chemistry'].status not in USABLE:
             stages['ph_adjustment'] = WorkflowStage('blocked', error_code='chemistry_required',
                                                     message='complete calculated chemistry is required')
         else:
@@ -353,6 +376,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
                 preferred_product_id=ph_adjustment.get('preferred_product_id'), phases=equilibrium['phases'],
                 maximum_concentrations=maximum_concentrations))
+            _not_planned(stages['ph_adjustment'])
             if plan is not None:
                 chosen = plan.selected
                 if chosen is None:

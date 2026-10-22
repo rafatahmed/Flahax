@@ -1110,5 +1110,94 @@ class WorkflowGradeTests(unittest.TestCase):
         stage = self.workflow(product).stages['chemistry']
         self.assertEqual(stage.error_code, 'product_chemistry_mismatch')
 
+
+class DeclaredCompoundTests(unittest.TestCase):
+    """Interactive mix Task 4: a compound entered from its data sheet is modelled from its declared ions."""
+    NAME = 'WS NPK 20-20-20 + TE'
+    VAN_IPEREN = {'supplier': 'Van Iperen International', 'title': 'WS NPK 20-20-20 + TE product information',
+                  'issued': '2025-03-28', 'entered': '2026-10-22'}
+    NITRIC = WorkflowGradeTests.NITRIC
+    RO = WorkflowGradeTests.RO
+
+    def grade(self, k2o=20):
+        analysis = {'N_NO3': 5, 'N_NH4': 3, 'N_UREA': 12, 'P2O5': 20, 'K2O': k2o,
+                    'B': 0.01, 'Cu': 0.006, 'Fe': 0.056, 'Mn': 0.028, 'Mo': 0.004, 'Zn': 0.008}
+        return make_grade({'grade_id': f'grd-vi-npk-20-20-{k2o}', 'supplier': 'Van Iperen International',
+                           'product': self.NAME, 'composition': 'declared_ions', 'chelating_agent': 'EDTA',
+                           'document': self.VAN_IPEREN,
+                           'analysis': {k: {'typical': v} for k, v in analysis.items()}}), analysis
+
+    def product(self, k2o=20):
+        grade, analysis = self.grade(k2o)
+        material = resolve_material(self.NAME, grade=grade)
+        record = {'grade_id': grade.grade_id, 'supplier': grade.supplier, 'product': self.NAME,
+                  'composition': 'declared_ions', 'chelating_agent': 'EDTA', 'document': self.VAN_IPEREN,
+                  'analysis': {k: {'typical': v} for k, v in analysis.items()}}
+        return {'id': material.record['id'], 'name': self.NAME, 'formula': None,
+                'elements': material.record['elements'], 'grade': record}, material
+
+    def test_van_iperen_20_20_20_is_modellable(self):
+        from flahax.materials import declared_ions_check
+        grade, _ = self.grade()
+        self.assertEqual(grade.composition, 'declared_ions')
+        self.assertEqual(grade.chelating_agent, 'EDTA')
+        check = declared_ions_check(grade)
+        self.assertTrue(check.modellable, check.reason)
+        self.assertAlmostEqual(check.protons_per_phosphate, 2.000, delta=0.001)
+        self.assertAlmostEqual(grade.typical['P'], 8.729, delta=0.0006)
+        self.assertAlmostEqual(grade.typical['K'], 16.603, delta=0.0006)
+        material = resolve_material(self.NAME, grade=grade)
+        self.assertIn('unstated_Na_Cl_S', material.flags)
+
+    def test_hidden_acid_is_not_modellable(self):
+        from flahax.materials import declared_ions_check
+        check = declared_ions_check(self.grade(k2o=10)[0])
+        self.assertFalse(check.modellable)
+        self.assertFalse(1.0 <= check.protons_per_phosphate <= 2.0)
+        self.assertIn('phosphate balance', check.reason)
+
+    def test_store_with_unmodellable_product_plans_no_acid(self):
+        from flahax import VolumeLitres, plan_fertilizer_workflow
+        from flahax.grower_report import render_batch_sheet, summarize_batch
+        product, _ = self.product(k2o=10)
+        library = load_library()
+        # The compound is the store's only P and K source, so the recipe must dose it.
+        salts = [s for s in library['salts'] if not {'P', 'K'} & set(s['elements'])] + [product]
+        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        workflow = plan_fertilizer_workflow(salts, targets, {}, 5.8, final_volume=VolumeLitres(1000),
+                                            equilibrium=self.RO,
+                                            ph_adjustment=dict(products=[self.NITRIC], maximum_reagent_volume_litres=5))
+        self.assertIn(self.NAME, [s['name'] for s in workflow.recommendation['salts']])
+        stage = workflow.stages['ph_adjustment']
+        self.assertEqual((stage.status, stage.error_code), ('needs_input', 'ph_not_planned_for_product'))
+        self.assertTrue(stage.message.startswith(f'pH cannot be planned with {self.NAME}: '), stage.message)
+        self.assertIn('phosphate balance', stage.message)
+        self.assertIsNone(stage.value)
+        summary = summarize_batch(workflow, salts, title='Tomato', water_label='RO')
+        self.assertIsNone(summary['ph']['selected'])
+        rows = {r['symbol']: r for r in summary['formulation']['rows']}
+        self.assertGreater(rows['P']['final'], 0)
+        self.assertGreater(rows['K']['final'], 0)
+        self.assertIn(self.NAME, render_batch_sheet(summary))
+
+    def test_declared_compound_matches_equivalent_salts(self):
+        from flahax.calculated_ph import calculate_equilibrium_ph
+        from flahax.product_conversion import catalogue_dose_totals
+        shipped = {s['name']: s['elements'] for s in load_library()['salts']}
+        kno3, mkp = shipped['Potassium Nitrate'], shipped['Potassium Monobasic Phosphate']
+        label = {'N_NO3': kno3['N_NO3'] / 2, 'N_NH4': 0, 'N_UREA': 0, 'P': mkp['P'] / 2,
+                 'K': (kno3['K'] + mkp['K']) / 2}
+        grade = make_grade({'grade_id': 'grd-kno3-mkp', 'supplier': 'Example Supplier', 'product': 'NK-P 1:1',
+                            'composition': 'declared_ions', 'document': DOC,
+                            'analysis': {k: {'typical': v} for k, v in label.items()}})
+        material = resolve_material('NK-P 1:1', grade=grade)
+        kwargs = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
+        compound = calculate_equilibrium_ph(catalogue_dose_totals({'NK-P 1:1': 2.0},
+                                                                  materials={'NK-P 1:1': material}), **kwargs)
+        salts = calculate_equilibrium_ph(catalogue_dose_totals({'Potassium Nitrate': 1.0,
+                                                                'Potassium Monobasic Phosphate': 1.0}), **kwargs)
+        self.assertAlmostEqual(compound.ph, salts.ph, delta=1e-6)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1030,10 +1030,10 @@ Source module: `flahax.materials`. Import with `from flahax import DocumentRefer
 ### `Grade`
 
 ```text
-Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None) -> None
+Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None, chelating_agent: str | None = None, chelating_agent_stated: bool = False) -> None
 ```
 
-Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`.
+Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`, `chelating_agent`, `chelating_agent_stated`.
 
 Source module: `flahax.materials`. Import with `from flahax import Grade`.
 
@@ -1050,10 +1050,10 @@ Source module: `flahax.materials`. Import with `from flahax import Lot`.
 ### `ResolvedMaterial`
 
 ```text
-ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = ()) -> None
+ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = (), chelating_agent: str | None = None, declared_check: flahax.materials.DeclaredCheck | None = None) -> None
 ```
 
-Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`.
+Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`, `chelating_agent`, `declared_check`.
 
 Source module: `flahax.materials`. Import with `from flahax import ResolvedMaterial`.
 
@@ -1122,7 +1122,8 @@ Pick each nutrient's assay: lot measured > grade typical > grade minimum > ident
 With neither grade nor lot, the shipped catalogue record is used with its declared basis.
 With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
 ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
-stays the product name.
+stays the product name. A ``declared_ions`` grade (a compound entered from its data
+sheet) names the product itself; its record id is the grade id.
 
 Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 

@@ -116,6 +116,60 @@ _BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+', '
           'EDTA': 'Edta-4', 'DTPA': 'Dtp-5', 'o,o-EDDHA': 'Edd-4', 'citrate': 'Citrate-3'}
 
 
+# Declared-ions compounds (a data sheet, no catalogue identity): label form -> equilibrium basis.
+_DECLARED_BASIS = {'N_NO3': 'NO3-', 'N_NH4': 'NH4+', 'N_UREA': 'Ure', 'P': 'PO4-3', 'S': 'SO4-2', 'B': 'H3BO3',
+                   'Mo': 'MoO4-2', 'K': 'K+', 'Ca': 'Ca+2', 'Mg': 'Mg+2', 'Na': 'Na+', 'Cl': 'Cl-',
+                   'Fe': 'Fe+3', 'Mn': 'Mn+2', 'Zn': 'Zn+2', 'Cu': 'Cu+2'}
+_DECLARED_CHARGE = {'NO3-': -1, 'NH4+': 1, 'Ure': 0, 'PO4-3': -3, 'SO4-2': -2, 'H3BO3': 0, 'MoO4-2': -2,
+                    'K+': 1, 'Ca+2': 2, 'Mg+2': 2, 'Na+': 1, 'Cl-': -1, 'Fe+3': 3, 'Mn+2': 2, 'Zn+2': 2,
+                    'Cu+2': 2, 'Edta-4': -4, 'Dtp-5': -5, 'Edd-4': -4}
+# D2 sodium salts: ligand basis and Na+ per chelated metal (NaFe(III)EDTA, Na2M(II)EDTA,
+# Na2Fe(III)DTPA, NaFe(III)-o,o-EDDHA). DTPA and o,o-EDDHA are defined for iron only.
+_DECLARED_CHELATES = {'EDTA': ('Edta-4', {'Fe': 1, 'Mn': 2, 'Zn': 2, 'Cu': 2}),
+                      'DTPA': ('Dtp-5', {'Fe': 2}), 'o,o-EDDHA': ('Edd-4', {'Fe': 1})}
+
+
+def declared_ion_totals(elements: Mapping[str, float], chelating_agent, dose_g_per_kg_water: float) -> dict:
+    """Equilibrium basis (mol/kg water) of a declared-ions compound, from its elemental label.
+
+    Totals follow the elemental basis as ``convert_product_dose`` does; urea counts per molecule.
+    Chelated metals bring their ligand and D2 sodium counterions, unless the label states Na.
+    Na, Cl and S the label does not state are zero; protons are implicit (charge balance).
+    """
+    dose = _finite_dose(dose_g_per_kg_water)
+    totals: dict = {}
+    for key, percent in elements.items():
+        if key not in _DECLARED_BASIS:
+            raise DeliveryError('unsupported_product_chemistry', f'no declared-ions basis for {key!r}')
+        moles = dose * float(percent) / 100.0 / MOLAR_MASS[key.split('_')[0]]
+        basis = _DECLARED_BASIS[key]
+        totals[basis] = totals.get(basis, 0.0) + (moles / 2.0 if key == 'N_UREA' else moles)
+    if chelating_agent is not None:
+        ligand, sodium = _DECLARED_CHELATES[chelating_agent]
+        chelated = {metal: totals.get(_DECLARED_BASIS[metal], 0.0) for metal in sodium}
+        totals[ligand] = sum(chelated.values())
+        if 'Na' not in elements:
+            totals['Na+'] = sum(count * chelated[metal] for metal, count in sodium.items())
+    return {basis: amount for basis, amount in totals.items() if amount}
+
+
+def declared_ion_charges(elements: Mapping[str, float], chelating_agent) -> tuple:
+    """(mol P, cation eq, anion eq without phosphate) per 100 g of a declared-ions compound."""
+    totals = declared_ion_totals(elements, chelating_agent, 100.0)
+    cations = sum(_DECLARED_CHARGE[b] * v for b, v in totals.items() if _DECLARED_CHARGE[b] > 0)
+    anions = -sum(_DECLARED_CHARGE[b] * v for b, v in totals.items() if _DECLARED_CHARGE[b] < 0 and b != 'PO4-3')
+    return totals.get('PO4-3', 0.0), cations, anions
+
+
+def _declared_unit(name: str, material, dose: float):
+    check = material.declared_check
+    if not check.modellable:
+        raise DeliveryError('ph_not_planned_for_product', f'pH cannot be planned with {name}: {check.reason}')
+    totals = declared_ion_totals(material.record['elements'], material.chelating_agent, dose)
+    chemistry = ProductChemistry(name, 'declared_ions', tuple(sorted(totals)), 'supplier data sheet (declared ions)')
+    return name, chemistry, totals
+
+
 def _check_materials(doses: Mapping[str, float], materials, *, allow_undisclosed: bool = False) -> dict:
     """Validate the optional resolved-material mapping against the dosed products.
 
@@ -150,7 +204,9 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
     A product in ``materials`` is converted from its resolved record through the
     chemistry profile of its identity's catalogue product. A disclosed blend
     contributes one unit per component identity: that identity's shipped catalogue
-    record and chemistry, at dose x mass fraction. An undisclosed blend raises
+    record and chemistry, at dose x mass fraction. A declared-ions compound is converted
+    from its label (``declared_ion_totals``); one that cannot be modelled raises
+    ``ph_not_planned_for_product``. An undisclosed blend raises
     ``composition_undisclosed``; nothing is computed for the rest of the mix.
     """
     from .engine import load_library
@@ -159,9 +215,12 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
     resolved = _check_materials(doses, materials)
     units = []
     for name, dose in doses.items():
+        material = resolved.get(name)
+        if material is not None and material.composition == 'declared_ions':
+            units.append(_declared_unit(name, material, dose))
+            continue
         if name not in library:
             raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
-        material = resolved.get(name)
         if material is None:
             parts = [(library[name], dose)]
         elif material.components:
