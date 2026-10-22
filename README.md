@@ -92,7 +92,7 @@ plan; they never operate pumps, valves or other hardware.
 | Layer | Capability | Boundary |
 |---|---|---|
 | Formulation | Chooses salts and grams from the full shipped library to meet a fixed crop formula after subtracting the source water | Non-negative least squares; the formula is not altered |
-| Equilibrium chemistry | One mixed aqueous model for all 30 catalogue products: 197 aqueous species, 28 solid phases, ion pairs, chelates and saturation indices | 25 °C, Davies activities up to ionic strength 0.1 mol/kg, fixed oxidation states, closed inorganic carbon |
+| Equilibrium chemistry | One mixed aqueous model for all 32 catalogue products: 197 aqueous species, 28 solid phases, ion pairs, chelates and saturation indices | 25 °C, Davies activities up to ionic strength 0.1 mol/kg, fixed oxidation states, closed inorganic carbon |
 | pH and acid | Calculated initial pH; nitric-acid dose to a target pH; standard workflow with nitric and phosphoric acid, using supplied assay and density | An initial dose estimate; measure after mixing |
 | Delivery planning | Stock-tank grouping with compatibility and solubility checks, reagent volumes, pump and injector flow sizing, composed delivery plans | Uses caller-supplied product, compatibility and equipment records; no equipment model selection |
 | Conductivity | Approximate EC screening for supported products; EC from a measured calibration profile | Dilute, pre-acid screening with unknown accuracy; no validated concentrated-stock model yet |

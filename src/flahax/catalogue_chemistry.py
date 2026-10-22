@@ -78,6 +78,8 @@ PRODUCT_CHEMISTRY: Mapping[str, ProductChemistry] = {
     "Mn EDTA": ProductChemistry("Mn EDTA", "edta_chelate", ("Na+", "Mn-EDTA"), PHREEQC_MINTEQ_V4),
     "Phosphoric Acid (75%)": ProductChemistry("Phosphoric Acid (75%)", "macro_acid", ("H3PO4",), PHREEQC_MINTEQ_V4),
     "Potassium Carbonate": ProductChemistry("Potassium Carbonate", "macro_salt", ("K+", "CO3-2"), PHREEQC_MINTEQ_V4),
+    "Potassium Bicarbonate": ProductChemistry("Potassium Bicarbonate", "macro_salt", ("K+", "HCO3-"), PHREEQC_MINTEQ_V4),
+    "Potassium Hydroxide (45% solution)": ProductChemistry("Potassium Hydroxide (45% solution)", "strong_base", ("K+", "OH-"), PHREEQC_MINTEQ_V4),
     "Potassium Chloride": ProductChemistry("Potassium Chloride", "macro_salt", ("K+", "Cl-"), PHREEQC_MINTEQ_V4),
     "Potassium Citrate": ProductChemistry("Potassium Citrate", "citrate_salt", ("K+", "citrate"), PHREEQC_MINTEQ_V4),
     "Potassium Dibasic Phosphate": ProductChemistry("Potassium Dibasic Phosphate", "macro_salt", ("K+", "HPO4-2"), PHREEQC_MINTEQ_V4),

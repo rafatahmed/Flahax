@@ -28,7 +28,7 @@ FlahaX selects fertilizer salts and their grams per litre for fixed nutrient tar
 
 Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions (by default ammonium) within stated limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
-The mixed model covers 30 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
+The mixed model covers 32 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
 Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. CH-micro includes those EDTA forms, borax and sodium molybdate. Do not substitute arbitrary product chemistry based on a similar name.
 

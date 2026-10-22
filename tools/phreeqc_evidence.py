@@ -108,12 +108,14 @@ def execute(exe,db,folder,name,text):
             raise RuntimeError(f'{name}: rejected charge error {row["pct_err"]}%')
     return rows
 
-def generate(exe,base):
+def generate(exe,base,cases=None):
     FIXTURES.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='flahax-evidence-') as tmp:
         db=Path(tmp)/'minteq-flahax.dat'
         merge(base,db)
         for name,doses in CASES.items():
+            if cases and name not in cases:
+                continue
             folder=FIXTURES/name
             totals=catalogue_dose_totals(doses)
             # Explicit background electrolyte permits fixed-pH charge balance
@@ -172,5 +174,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--exe',type=Path,default=INSTALL/'bin/Release/phreeqc.exe')
     parser.add_argument('--database',type=Path,default=INSTALL/'database/minteq.v4.dat')
+    parser.add_argument('--case',action='append',help='recapture only this case (repeatable)')
     args=parser.parse_args()
-    generate(args.exe,args.database)
+    generate(args.exe,args.database,args.case)
