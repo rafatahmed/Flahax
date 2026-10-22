@@ -58,6 +58,14 @@ def _positive(value, name):
     return float(value)
 
 
+def _unreviewed(recommendation):
+    """Why a feasible formulation needs review: incidental nutrients with no declared maximum."""
+    found = [f'{row["symbol"]} {row["ppm"]:.3g} mg/L' for row in recommendation['incidentalContributions']
+             if row['assessment'] == 'requires_review']
+    return ('incidental nutrients with no declared maximum: ' + ', '.join(found)
+            + '; check them, or declare maximum concentrations') if found else None
+
+
 def _water_ppm(totals, mass, volume):
     return nutrient_mg_per_litre(totals, mass, volume)
 
@@ -120,6 +128,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                         value=recommendation, error_code=None if recommendation['feasible'] else 'infeasible_recipe')
     if recommendation['feasible'] and recommendation['requiresReview']:
         stages['formulation'].status = 'requires_review'
+        stages['formulation'].message = _unreviewed(recommendation)
     recipe = None
     if final_volume is None:
         stages['batch'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
@@ -316,6 +325,10 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                                                             message='the selected plan exceeds an explicit nutrient maximum')
                 elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
                     stages['ph_adjustment'].status = 'requires_review'
+                    missed = ', '.join(f'{u["symbol"]} {u["deltaPct"]:+.1f}% ({u["reason"]})'
+                                       for u in chosen.recommendation.get('unmetTargets', []))
+                    stages['ph_adjustment'].message = '; '.join(filter(None, [
+                        chosen.message, f'targets missed: {missed}' if missed else None]))
 
     if not missing('stocks', stocks, ('injection_ratio', 'tanks', 'compatibility_rules', 'solubility_limits', 'temperature')):
         if recipe is None:
