@@ -46,9 +46,16 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertLessEqual(chosen['Na'], limits['Na'])
         self.assertLessEqual(chosen['Cl'], limits['Cl'])
         self.assertGreater(blends[25]['Cl'], limits['Cl'])
-        one_more = tomato_advanced.water_mg_l({k: v * (self.r['blend_percent'] + 1) / 100 for k, v in
-                                               _balanced_totals().items()})
-        self.assertTrue(one_more['Na'] > limits['Na'] or one_more['Cl'] > limits['Cl'])
+        # Decided on the laboratory analysis (#84): 8% passes, 9% fails on its measured chloride
+        # (115.2 mg/L) although the charge-balanced model (104.3 mg/L) would pass it.
+        self.assertEqual(self.r['blend_percent'], 8)
+        self.assertAlmostEqual(chosen['Na'], 54.4, places=1)
+        self.assertAlmostEqual(chosen['Cl'], 102.4, places=1)
+        self.assertGreater(blends[9]['Cl'], limits['Cl'])
+        self.assertLess(blends[9]['Cl_model'], limits['Cl'])
+        one_more = tomato_advanced.water_mg_l({k: v * .09 for k, v in _balanced().analytical_totals.items()})
+        self.assertGreater(one_more['Cl'], limits['Cl'])
+        self.assertAlmostEqual(self.r['chloride_boundary_percent'], 100 * limits['Cl'] / 1280.4, places=9)
 
     def test_phosphoric_acid_is_withdrawn_because_it_overacidifies(self):
         check = self.r['phosphoric_check']
@@ -95,10 +102,10 @@ class TomatoReportTests(unittest.TestCase):
         self.assertIn('<td>A</td><td>Mn EDTA</td>', sheet)
 
 
-def _balanced_totals():
+def _balanced():
     from flahax import balance_water_analysis
     well = {i: mg / tomato_advanced.GRAMS_PER_MOL[i] / 1000 for i, mg in tomato_advanced.WELL_MG_L.items()}
-    return balance_water_analysis(well, measured_ph=tomato_advanced.WELL_PH).totals
+    return balance_water_analysis(well, measured_ph=tomato_advanced.WELL_PH)
 
 
 if __name__ == '__main__':

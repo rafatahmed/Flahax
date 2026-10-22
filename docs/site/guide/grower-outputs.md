@@ -23,6 +23,7 @@ that matches exactly one formula name and lists the matches otherwise. Use
 | `--ph` | target feed pH | 5.8 |
 | `--ratio` | final litres per litre of concentrate | 100 |
 | `--acid` | `FORMULA:MASS_FRACTION:DENSITY[:NAME]` from your certificate, for example `HNO3:0.60:1.37`; repeat for more | none: acids are never assumed |
+| `--limit` | a maximum in the final solution, `SYMBOL=MG_PER_L`, for example `Cl=106.35`; repeat for more | none: limits are never assumed, and undeclared ones are not checked |
 | `--max-reagent-litres` | largest pH reagent volume per batch | volume / 200 |
 | `--products` | JSON array of your own product records | the packaged catalogue |
 | `--rules` | JSON array of extra `compatibilityRule` records | none |
@@ -43,9 +44,22 @@ for an input error.
 
 Elements are mg/L of the element (S as S, P as P, N_NO3 and N_NH4 as N);
 `HCO3` is bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in
-aerated water. The analysis is closed at its measured pH on chloride
-(`balance_water_analysis`), and an analysis more than 10 % out of charge balance
-is refused. One litre of water is taken as one kilogram.
+aerated water. One litre of water is taken as one kilogram.
+
+A value of 0 is a measured zero and stays zero (`"Cl": 0` for chloride-free
+water, `"HCO3": 0` for carbon-free water); an omitted ion is not measured.
+Optional keys: `"below_detection": {"Mn": 0.01}` (detection limits in mg/L;
+taken as zero, never adjusted), `"balance_ion": "Cl"` or `"Na"`, and
+`"balance_ion_uncertainty_percent": 10`, the stated uncertainty of that ion.
+
+Targets and `--limit` maximums use these laboratory values. For the chemistry
+only (pH, saturation, EC, reagent dose) the analysis is speciated at its
+measured pH: used unchanged if it already balances; otherwise closed on the
+balance ion within its stated uncertainty, or, without one, as an assumption
+that puts the plan in review. An analysis more than 5 % out of charge balance
+is refused, and no other ion is adjusted automatically. The report shows
+laboratory and modelled water side by side (see
+[measured-pH water balancing](water-to-delivery.md#measured-ph-water-balancing)).
 
 ## What the files say
 
@@ -55,7 +69,7 @@ The plan status is one of:
 |---|---|
 | `ready` | Every target is met and the pH plan is accepted. |
 | `requires_review` | Usable after review: a target is missed with its reason, or a review-class phase is supersaturated (see [saturation indices](water-to-delivery.md#saturation-indices-and-acceptance)). |
-| `blocked` | Not usable as planned: a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. |
+| `blocked` | Not usable as planned: a declared maximum is exceeded on the laboratory analysis, a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. A review never downgrades a block. |
 
 When a pH reagent is selected, the recipe to weigh is the refitted one that
 counts the reagent's nutrients. The batch sheet lists what to weigh per tank,
