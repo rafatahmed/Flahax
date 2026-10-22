@@ -115,6 +115,39 @@ class ReportTests(unittest.TestCase):
         self.assertTrue(s['chemistry']['review'])
         json.dumps(s, allow_nan=False)
 
+    def test_review_is_judged_on_the_weighed_recipe_both_ways(self):
+        import copy
+        from unittest import mock
+        from flahax import grower_report
+        base = workflow('Tomato (Howard Resh)')
+        first = base.recommendation
+        stage = base.stages['formulation']
+        # first fit had incidentals, weighed recipe has none: review drops
+        with mock.patch.object(grower_report, 'unreviewed_reason', side_effect=lambda r: 'x 1 mg/L' if r is first else None):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'requires_review', 'x 1 mg/L'
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual((s['stages']['formulation']['status'], s['stages']['formulation']['message']), ('calculated', None))
+        self.assertFalse([w for w in s['warnings'] if w.startswith('formulation:')])
+        # first fit clean, weighed recipe has incidentals: review raised, overall status follows
+        with mock.patch.object(grower_report, 'unreviewed_reason', side_effect=lambda r: None if r is first else 'y 2 mg/L'):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'calculated', None
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual((s['stages']['formulation']['status'], s['stages']['formulation']['message']),
+                         ('requires_review', 'y 2 mg/L'))
+        self.assertIn('formulation: y 2 mg/L', s['warnings'])
+        self.assertEqual(s['status'], 'requires_review')
+        # a block is never downgraded
+        with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
+            wf = copy.copy(base)
+            wf.stages = dict(base.stages, formulation=copy.copy(stage))
+            wf.stages['formulation'].status, wf.stages['formulation'].message = 'blocked', 'nope'
+            s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual(s['stages']['formulation']['status'], 'blocked')
+
     def test_blocked_plan_shows_the_reason_and_the_acid_free_recipe(self):
         s = self.chilli
         self.assertEqual(s['status'], 'blocked')
@@ -163,10 +196,12 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         message = summary['stages']['formulation']['message']
         final = {r['symbol']: r['final'] for r in summary['formulation']['rows']}
-        quoted = re.findall(r'(\w+) ([\d.]+) mg/L', message)
-        self.assertTrue(quoted, message)
-        for symbol, value in quoted:
-            self.assertEqual(float(value), float(f'{final[symbol]:.3g}'), f'{symbol}: {message}')
+        for text in (message, *(w for w in summary['warnings'] if w.startswith('formulation:'))):
+            quoted = re.findall(r'(\w+) ([\d.]+) mg/L', text)
+            self.assertTrue(quoted, text)
+            self.assertNotIn('10.4', text)
+            for symbol, value in quoted:
+                self.assertEqual(float(value), float(f'{final[symbol]:.3g}'), f'{symbol}: {text}')
 
     def test_ambiguous_crop_lists_the_choices(self):
         code, _, err = self.run_batch('--crop', 'tomato', '--water', 'ro', '--output', 'unused-dir')
