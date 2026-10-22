@@ -57,6 +57,22 @@ class IncidentalMaximumTests(unittest.TestCase):
             self.assertFalse(result["feasible"])
             self.assertEqual(result["limitViolations"][0]["symbol"], "Cl")
 
+    def test_a_ceiling_the_water_already_breaks_is_reported_not_a_solver_failure(self):
+        # #86: 9% of Shomar et al. (2024) station 104 brings 115.2 mg/L Cl, over a 106.35 mg/L
+        # (3 mmol/L) ceiling, while the Na ceiling binds. This raised "NNLS did not reach optimality".
+        well = {'Ca': 244, 'Mg': 100.8, 'K': 44.2, 'Na': 680, 'Cl': 1280.4, 'S': 241.43, 'N_NO3': 3.474}
+        water = {k: v * .09 for k, v in well.items()}
+        tomato = next(f["targets"] for f in LIBRARY["formulas"] if f["name"] == "Tomato (Howard Resh)")
+        result = recommend(LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35})
+        self.assertFalse(result["feasible"])
+        self.assertEqual([v["symbol"] for v in result["limitViolations"]], ["Cl"])
+        self.assertAlmostEqual(final(result, "Cl"), 1280.4 * .09, places=9)   # the products add none
+        # It is the infinite-multiplier limit: the fit without any chloride product.
+        reference = recommend([s for s in LIBRARY["salts"] if not s["elements"].get("Cl")], tomato, water,
+                              maximum_concentrations={"Na": 68.97, "Cl": 1e9})
+        self.assertEqual(result["salts"], reference["salts"])
+        self.assertEqual(result["loss"], reference["loss"])
+
     def test_invalid_maximum_is_rejected(self):
         with self.assertRaises(Exception):
             recommend(LIBRARY["salts"], FORMULA["targets"], {}, maximum_concentrations={"Cl": -1})
