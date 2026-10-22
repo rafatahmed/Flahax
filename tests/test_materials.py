@@ -304,11 +304,15 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
+        # 0.553 % is within the 1 % label limit (#93, owner 2026-10-23); a one-point Mg error is not.
         old = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
             'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}})
-        self.assertIn('identity_inconsistent', old.flags)
         self.assertAlmostEqual(old.charge_residual_percent, 0.553, places=3)
-        resolved = resolve_material('Mg Nitrate', grade=old)
+        self.assertNotIn('identity_inconsistent', old.flags)
+        wrong = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
+            'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 10.65}})
+        self.assertIn('identity_inconsistent', wrong.flags)
+        resolved = resolve_material('Mg Nitrate', grade=wrong)
         self.assertIn('identity_inconsistent', resolved.flags)
         theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
         exact = grade(identity_id='idn-magnesium-nitrate-hexahydrate', analysis={
@@ -752,7 +756,8 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertAlmostEqual(residual['percent'], 0.5532, places=3)
         r = self.ec({'Mg Nitrate': 1.0}, materials={'Mg Nitrate': retired})
         self.assertEqual((r.status, r.reason), ('not_supported', 'assay_charge_residual_too_large'))
-        self.assertIn('identity_inconsistent', r.audit['materials']['Mg Nitrate']['flags'])
+        # The label itself is within the 1 % limit (#93); the EC screen keeps its own 0.1 % gate.
+        self.assertNotIn('identity_inconsistent', r.audit['materials']['Mg Nitrate']['flags'])
         shipped = self.ec({'Mg Nitrate': 1.0})
         self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
 
@@ -1244,6 +1249,25 @@ class DeclaredCompoundTests(unittest.TestCase):
         salts = calculate_equilibrium_ph(catalogue_dose_totals({'Potassium Nitrate': 1.0,
                                                                 'Potassium Monobasic Phosphate': 1.0}), **kwargs)
         self.assertAlmostEqual(compound.ph, salts.ph, delta=1e-6)
+
+
+class LabelToleranceTests(unittest.TestCase):
+    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (owner, 2026-10-23)."""
+
+    def calcinit(self, cao):
+        return grade(grade_id='grd-yara-calcinit', supplier='Yara', product='YaraLiva Calcinit', identity_id=CAN,
+                     analysis={'N_NO3': {'typical': 14.4}, 'N_NH4': {'typical': 1.1}, 'CaO': {'typical': cao}})
+
+    def test_yaras_printed_calcinit_label_is_accepted(self):
+        label = self.calcinit(26.3)
+        self.assertAlmostEqual(label.charge_residual_percent, -0.565, places=3)
+        self.assertNotIn('identity_inconsistent', label.flags)
+        self.assertNotIn('identity_inconsistent', resolve_material('Calcium Nitrate (ag grade)', grade=label).flags)
+
+    def test_a_one_point_calcium_error_is_refused(self):
+        typo = self.calcinit(26.3 * 19.8 / 18.8)       # Ca 19.8 % typed for 18.8 %
+        self.assertGreater(abs(typo.charge_residual_percent), 1.0)
+        self.assertIn('identity_inconsistent', typo.flags)
 
 
 if __name__ == '__main__':
