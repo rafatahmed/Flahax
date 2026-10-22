@@ -9,6 +9,7 @@ from importlib.resources import files
 import math
 from typing import Mapping
 
+from .saturation_policy import assess_saturation
 from .aqueous_model import AcidResult, chemistry
 from .delivery_contracts import DeliveryError, validate_product_assay
 from .delivery_quantities import FinalSolutionRecipe, MassGrams, VolumeLitres, elemental_contribution, rescore_with_reagent
@@ -151,8 +152,11 @@ def plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals,
     warnings = ['Initial dose only; measure pH after mixing before any correction.']
     if assessment['requiresReview']:
         warnings.append('Incidental nutrient additions require review or explicit maximum-concentration limits.')
-    if any(v>1e-12 for v in result.target.precipitated.values()) or any(si>1e-7 for si in result.target.saturation_indices.values()):
+    saturation = assess_saturation(result.target)
+    if saturation['blocks']:
         warnings.append('Precipitation risk: target has formed solids or positive saturation indices; not valid for delivery approval.')
+    warnings += [f'Review: {p} SI {si:.2f}. {reason} Sources: {sources}' for p, si, reason, sources in saturation['review']]
+    warnings += saturation['advisories']
     # Dutch practice leaves 0.5-0.75 mmol/L HCO3 as a pH buffer (Van der Lugt et al.);
     # FlahaX doses to the target pH, so the residual is reported, not imposed.
     residual_bicarbonate = 1000*result.target.species.get('HCO3-',0.)
