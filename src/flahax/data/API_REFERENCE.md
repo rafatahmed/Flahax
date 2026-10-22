@@ -156,12 +156,12 @@ Source module: `flahax.calculated_ph`. Import with `from flahax import calculate
 ### `ProductChemistry`
 
 ```text
-ProductChemistry(name: 'str', family: 'str', components: 'tuple[str, ...]', source_profile: 'str', temperature_c: 'float' = 25.0) -> None
+ProductChemistry(name: 'str', family: 'str', components: 'tuple[str, ...]', source_profile: 'str', temperature_c: 'float' = 25.0, ions: 'tuple' = ()) -> None
 ```
 
 Source-versioned chemical identity; not a nutrient-assay replacement.
 
-Record fields: `name`, `family`, `components`, `source_profile`, `temperature_c`.
+Record fields: `name`, `family`, `components`, `source_profile`, `temperature_c`, `ions`.
 
 Source module: `flahax.catalogue_chemistry`. Import with `from flahax import ProductChemistry`.
 
@@ -1016,6 +1016,26 @@ prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
+## flahax.material_chemistry
+
+### `material_chemistry`
+
+```text
+material_chemistry(record: 'Mapping', *, check: 'bool' = True) -> 'ProductChemistry'
+```
+
+The chemistry of a material record, from what it puts in the water.
+
+In order: (1) a ``declared_ions`` grade: its analysis (Task 4); (2) ``ions``, a mapping of
+ion to count per formula unit (e.g. ``{"K+": 1, "H2PO4-": 1}``), with an optional
+``chelating_agent`` that turns its metals into their complexes; (2b) the ``ion_forms`` of
+its identity (``identityId``, or a single grade's ``identity_id``): the catalogue's data;
+(3) ``formula``, parsed into fertilizer ions plus hydrate water; otherwise
+``material_undefined``. With ``check``, the ``elements`` of a record that is not a grade
+must fit its ions (the grade's own analysis is checked by ``make_grade``).
+
+Source module: `flahax.material_chemistry`. Import with `from flahax import material_chemistry`.
+
 ## flahax.materials
 
 ### `DocumentReference`
@@ -1422,7 +1442,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import Prod
 ### `catalogue_dose_totals`
 
 ```text
-catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None)
+catalogue_dose_totals(doses: 'Mapping[str, float]', *, materials=None, products=None)
 ```
 
 Convert every assayed catalogue element into one conserved basis.
@@ -1431,7 +1451,8 @@ Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
 retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
 unhydrolysed. Rounded product assays do not establish unassayed counterions.
 ``materials`` optionally maps dosed product names to ``ResolvedMaterial``
-(user grade or lot); see ``catalogue_dose_contributions``.
+(user grade or lot); ``products`` supplies material records by name, for
+materials the catalogue does not hold; see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 
@@ -1441,7 +1462,7 @@ Source module: `flahax.product_conversion`. Import with `from flahax import cata
 convert_catalogue_product_dose(product: 'Mapping[str, object]', dose_g_per_kg_water: 'float') -> 'ProductAnalyticalTotals'
 ```
 
-Catalogue adapter. Equilibrium callers should retain the returned profile.
+Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material: ``convert_material_dose``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_catalogue_product_dose`.
 
@@ -1453,8 +1474,10 @@ convert_product_dose(product: 'Mapping[str, object]', chemistry: 'ProductChemist
 
 Convert a library assay using an explicit chemistry profile.
 
-Assays are elemental mass fractions.  Counterions/ligands are declared by
-the chemical family; unassayed remainder is retained as inert carrier.
+Assays are elemental mass fractions. Counterions and ligands the assay does not
+state follow from the profile's ions (``unstated_amounts``): chelate ligands and
+D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
+is retained as inert carrier.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_product_dose`.
 

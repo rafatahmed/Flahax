@@ -1,14 +1,16 @@
 """The explicit aqueous-chemistry identity of every shipped fertilizer.
 
 This is the input boundary for the unified P2/P3 equilibrium system.  A product
-may not enter an equilibrium calculation by its display name alone: it has a
-declared dissolved-component family, source profile, and temperature domain.
+may not enter an equilibrium calculation by its display name alone: it has
+dissolved ions, a family, a source profile, and a temperature domain.  Since
+interactive mix Task 11 these are read from what the material puts in the water
+(material_chemistry); ``PRODUCT_CHEMISTRY`` is a view of the catalogue's records.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from collections.abc import Mapping
 
 from .delivery_contracts import DeliveryError
 
@@ -22,6 +24,7 @@ class ProductChemistry:
     components: tuple[str, ...]
     source_profile: str
     temperature_c: float = 25.0
+    ions: tuple = ()  # (ion, count per formula unit) pairs; complexes carry their ligand
 
     def __post_init__(self) -> None:
         if not self.name or not self.family or not self.components or not self.source_profile:
@@ -58,40 +61,31 @@ def _ligand_profiles():
 
 
 LIGAND_PROFILES = _ligand_profiles()
-PRODUCT_CHEMISTRY: Mapping[str, ProductChemistry] = {
-    "Ammonium Dibasic Phosphate": ProductChemistry("Ammonium Dibasic Phosphate", "macro_salt", ("NH4+", "HPO4-2"), PHREEQC_MINTEQ_V4),
-    "Ammonium Monobasic Phosphate": ProductChemistry("Ammonium Monobasic Phosphate", "macro_salt", ("NH4+", "H2PO4-"), PHREEQC_MINTEQ_V4),
-    "Ammonium Nitrate": ProductChemistry("Ammonium Nitrate", "macro_salt", ("NH4+", "NO3-"), PHREEQC_MINTEQ_V4),
-    "Ammonium Sulfate": ProductChemistry("Ammonium Sulfate", "macro_salt", ("NH4+", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Boric Acid": ProductChemistry("Boric Acid", "boron", ("B(OH)3",), PHREEQC_MINTEQ_V4),
-    "Calcium Chloride (Dihydrate)": ProductChemistry("Calcium Chloride (Dihydrate)", "macro_salt", ("Ca+2", "Cl-"), PHREEQC_MINTEQ_V4),
-    "CH - micro": ProductChemistry("CH - micro", "edta_borax_molybdate_blend", ("Fe(III)-EDTA", "Mn-EDTA", "Zn-EDTA", "Cu-EDTA", "borax", "sodium molybdate"), "project-declared CH-micro composition, 2026-09-26; " + PHREEQC_MINTEQ_V4),
-    "Calcium Nitrate (ag grade)": ProductChemistry("Calcium Nitrate (ag grade)", "macro_salt", ("Ca+2", "NO3-", "NH4+"), PHREEQC_MINTEQ_V4),
-    "Copper EDTA": ProductChemistry("Copper EDTA", "edta_chelate", ("Na+", "Cu-EDTA"), PHREEQC_MINTEQ_V4),
-    "Copper Sulfate (pentahydrate)": ProductChemistry("Copper Sulfate (pentahydrate)", "free_metal_sulfate", ("Cu+2", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Iron DTPA": ProductChemistry("Iron DTPA", "dtpa_chelate", ("Na+", "Fe(III)-DTPA"), "Martell/Smith stability profile; Fe(III)-DTPA log beta 28.6 at 25 C"),
-    "Iron EDDHA": ProductChemistry("Iron EDDHA", "eddha_chelate", ("Na+", "Fe(III)-o,o-EDDHA"), "Yunta et al. 2003 o,o-EDDHA profile; Fe(III) log beta 35.1 at 25 C"),
-    "Iron EDTA": ProductChemistry("Iron EDTA", "edta_chelate", ("Na+", "Fe(III)-EDTA"), PHREEQC_MINTEQ_V4),
-    "Iron II Sulfate (Hepahydrate)": ProductChemistry("Iron II Sulfate (Hepahydrate)", "free_metal_sulfate", ("Fe+2", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Magnesium Sulfate (Heptahydrate)": ProductChemistry("Magnesium Sulfate (Heptahydrate)", "macro_salt", ("Mg+2", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Mg Nitrate": ProductChemistry("Mg Nitrate", "macro_salt", ("Mg+2", "NO3-"), PHREEQC_MINTEQ_V4),
-    "Mn EDTA": ProductChemistry("Mn EDTA", "edta_chelate", ("Na+", "Mn-EDTA"), PHREEQC_MINTEQ_V4),
-    "Phosphoric Acid (75%)": ProductChemistry("Phosphoric Acid (75%)", "macro_acid", ("H3PO4",), PHREEQC_MINTEQ_V4),
-    "Potassium Carbonate": ProductChemistry("Potassium Carbonate", "macro_salt", ("K+", "CO3-2"), PHREEQC_MINTEQ_V4),
-    "Potassium Bicarbonate": ProductChemistry("Potassium Bicarbonate", "macro_salt", ("K+", "HCO3-"), PHREEQC_MINTEQ_V4),
-    "Potassium Hydroxide (45% solution)": ProductChemistry("Potassium Hydroxide (45% solution)", "strong_base", ("K+", "OH-"), PHREEQC_MINTEQ_V4),
-    "Potassium Chloride": ProductChemistry("Potassium Chloride", "macro_salt", ("K+", "Cl-"), PHREEQC_MINTEQ_V4),
-    "Potassium Citrate": ProductChemistry("Potassium Citrate", "citrate_salt", ("K+", "citrate"), PHREEQC_MINTEQ_V4),
-    "Potassium Dibasic Phosphate": ProductChemistry("Potassium Dibasic Phosphate", "macro_salt", ("K+", "HPO4-2"), PHREEQC_MINTEQ_V4),
-    "Potassium Monobasic Phosphate": ProductChemistry("Potassium Monobasic Phosphate", "macro_salt", ("K+", "H2PO4-"), PHREEQC_MINTEQ_V4),
-    "Potassium Nitrate": ProductChemistry("Potassium Nitrate", "macro_salt", ("K+", "NO3-"), PHREEQC_MINTEQ_V4),
-    "Potassium Sulfate": ProductChemistry("Potassium Sulfate", "macro_salt", ("K+", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Sodium Borate (Decahydrate) (borax)": ProductChemistry("Sodium Borate (Decahydrate) (borax)", "boron", ("Na+", "B(OH)4-", "B(OH)3"), PHREEQC_MINTEQ_V4),
-    "Sodium Molybdate (Dihydrate)": ProductChemistry("Sodium Molybdate (Dihydrate)", "molybdate", ("Na+", "MoO4-2"), PHREEQC_MINTEQ_V4),
-    "Urea": ProductChemistry("Urea", "neutral_urea", ("CO(NH2)2"), "analytical urea; hydrolysis is kinetic and excluded from 25 C instantaneous equilibrium"),
-    "Zinc Sulfate (Monohydrate)": ProductChemistry("Zinc Sulfate (Monohydrate)", "free_metal_sulfate", ("Zn+2", "SO4-2"), PHREEQC_MINTEQ_V4),
-    "Zn EDTA": ProductChemistry("Zn EDTA", "edta_chelate", ("Na+", "Zn-EDTA"), PHREEQC_MINTEQ_V4),
-}
+
+
+class _CatalogueChemistry(Mapping):
+    """The catalogue's records through ``material_chemistry``, keyed by name; built on first use."""
+
+    _data: dict | None = None
+
+    def _records(self) -> dict:
+        if self._data is None:
+            from .engine import load_library  # deferred: the engine imports product_conversion
+            from .material_chemistry import material_chemistry
+            type(self)._data = {str(s['name']): material_chemistry(s) for s in load_library()['salts']}
+        return self._data
+
+    def __getitem__(self, name: str) -> ProductChemistry:
+        return self._records()[name]
+
+    def __iter__(self):
+        return iter(self._records())
+
+    def __len__(self) -> int:
+        return len(self._records())
+
+
+PRODUCT_CHEMISTRY: Mapping[str, ProductChemistry] = _CatalogueChemistry()
 
 
 def chemistry_for_product(name: str) -> ProductChemistry:

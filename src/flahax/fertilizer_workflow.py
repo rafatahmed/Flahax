@@ -13,6 +13,7 @@ from .measured_water import (DEFAULT_MAXIMUM_IMBALANCE_PERCENT, BalancedWaterAna
 from .equilibrium_delivery import plan_equilibrium_delivery
 from .ph_planning import plan_ph
 from .product_conversion import catalogue_dose_totals
+from .material_chemistry import material_chemistry
 from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
@@ -93,9 +94,10 @@ def _graded(supplied, library):
     return reference, resolved
 
 
-def _dose_totals(doses, materials):
-    """Catalogue dose totals, converting graded products through their resolved material."""
-    return catalogue_dose_totals(doses, materials={n: m for n, m in materials.items() if n in doses})
+def _dose_totals(doses, materials, products):
+    """Dose totals of the supplied records; graded products convert through their resolved material."""
+    return catalogue_dose_totals(doses, materials={n: m for n, m in materials.items() if n in doses},
+                                 products=products)
 
 
 # A dosed product whose declared ions cannot be modelled: nutrients stand, no pH is planned.
@@ -200,7 +202,7 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             stages['chemistry'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
         else:
             def chemical_states():
-                materials = {}
+                materials, records = {}, {}
                 config = equilibrium
                 mass = _positive(config['water_mass_kg'], 'water_mass_kg')
                 if not isinstance(config['water_analysis_id'], str) or not config['water_analysis_id'].strip():
@@ -263,22 +265,28 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                         library[supplied['id']] = reference
                         continue
                     reference = library.get(supplied.get('id'))
-                    if reference is None or any(supplied.get(key) != reference.get(key)
-                                                for key in ('name', 'formula', 'elements')):
-                        raise DeliveryError('product_chemistry_mismatch',
-                                            'supplied products must retain catalogue identity and assay')
+                    if reference is not None:
+                        # A catalogue id is a claim to be that pre-filled material, unchanged.
+                        if any(supplied.get(key) != reference.get(key) for key in ('name', 'formula', 'elements')):
+                            raise DeliveryError('product_chemistry_mismatch',
+                                                'supplied products must retain catalogue identity and assay')
+                    else:
+                        # A material of its own: its formula, ions or analysis define it (Task 11).
+                        material_chemistry(supplied)
+                        library[supplied.get('id')] = supplied
+                    records[supplied['name']] = supplied
                 doses = {}
                 for salt in recipe.salts:
                     product = library.get(salt.salt_id)
                     if product is None or product['name'] != salt.name:
-                        raise DeliveryError('product_chemistry_mismatch', 'chemistry requires exact catalogue identities')
+                        raise DeliveryError('product_chemistry_mismatch', 'chemistry requires the supplied product records')
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in _dose_totals(doses, materials).items():
+                for basis, amount in _dose_totals(doses, materials, records).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 mixed = calculate_equilibrium_ph(totals, **kwargs)
                 return {'water': water_state, 'mixed': mixed, 'product_doses_g_per_kg_water': doses,
-                        'materials': materials,
+                        'materials': materials, 'products': records,
                         'water_analysis_id': config['water_analysis_id'], 'carbon_boundary': config['carbon_boundary'],
                         'water_totals': water_totals, 'analytical_water_totals': analytical, 'water_balance': balance}
             value = run('chemistry', chemical_states)
@@ -369,7 +377,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
                 for salt in final_solution_recipe(candidate, final_volume).salts:
                     doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
                 totals = dict(water_totals)
-                for basis, amount in _dose_totals(doses, stages['chemistry'].value['materials']).items():
+                for basis, amount in _dose_totals(doses, stages['chemistry'].value['materials'],
+                                                    stages['chemistry'].value['products']).items():
                     totals[basis] = totals.get(basis, 0) + amount
                 return calculate_equilibrium_ph(totals, **kwargs)
 

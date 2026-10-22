@@ -2,7 +2,8 @@
 
 The conversion is deliberately a data boundary: the caller supplies a
 ``ProductChemistry`` profile, not a string which is interpreted by a solver.
-The catalogue adapter merely resolves that profile once.
+The profile comes from what the material puts in the water (material_chemistry):
+its formula, its ions, or its analysis. Catalogue products are pre-filled materials.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from typing import Mapping
 
 from .catalogue_chemistry import ProductChemistry, chemistry_for_product
 from .delivery_contracts import DeliveryError
+from .material_chemistry import chemistry_ions, material_chemistry, unstated_amounts
 
 MOLAR_MASS = {"N": 14.0067, "P": 30.973762, "K": 39.0983, "Ca": 40.078,
               "Mg": 24.305, "S": 32.06, "Fe": 55.845, "Mn": 54.938044,
@@ -37,8 +39,10 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
                          dose_g_per_kg_water: float) -> ProductAnalyticalTotals:
     """Convert a library assay using an explicit chemistry profile.
 
-    Assays are elemental mass fractions.  Counterions/ligands are declared by
-    the chemical family; unassayed remainder is retained as inert carrier.
+    Assays are elemental mass fractions. Counterions and ligands the assay does not
+    state follow from the profile's ions (``unstated_amounts``): chelate ligands and
+    D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
+    is retained as inert carrier.
     """
     dose = _finite_dose(dose_g_per_kg_water)
     if str(product.get("name", "")) != chemistry.name:
@@ -56,57 +60,20 @@ def convert_product_dose(product: Mapping[str, object], chemistry: ProductChemis
     if "S" in totals: totals["sulfate"] = totals.pop("S")
     if "B" in totals: totals["boron"] = totals.pop("B")
     if "Mo" in totals: totals["molybdate"] = totals.pop("Mo")
-    counterions: dict[str, float] = {}
-    ligands: dict[str, float] = {}
-    family = chemistry.family
-    # These relations follow the stated dissolved formula/profile, not label
-    # text. Assay values remain the authoritative analytical metal totals.
-    # D2: chelate sodium counterions per formula unit (NaFe(III)EDTA,
-    # Na2M(II)EDTA, Na2Fe(III)DTPA, NaFe(III)-o,o-EDDHA). They enter chemistry
-    # totals only and are never added to the product assay ``elements``.
-    edta_sodium = totals.get("Fe", 0.0) + 2 * sum(totals.get(k, 0.0) for k in ("Mn", "Zn", "Cu"))
-    if family == "edta_chelate":
-        ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-        counterions["sodium"] = edta_sodium
-    elif family == "dtpa_chelate":
-        ligands["DTPA"] = totals.get("Fe", 0.0)
-        counterions["sodium"] = 2 * totals.get("Fe", 0.0)
-    elif family == "eddha_chelate":
-        ligands["o,o-EDDHA"] = totals.get("Fe", 0.0)
-        counterions["sodium"] = totals.get("Fe", 0.0)
-    elif family == "citrate_salt":
-        ligands["citrate"] = totals.get("K", 0.0) / 3.0
-    elif family == "edta_borax_molybdate_blend":
-        ligands["EDTA"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-        counterions["sodium"] = (edta_sodium + 0.5 * totals.get("boron", 0.0)
-                                 + 2 * totals.get("molybdate", 0.0))
-    elif family == "boron" and "B(OH)4-" in chemistry.components:
-        counterions["sodium"] = 0.5 * totals.get("boron", 0.0)
-    elif family == "molybdate": counterions["sodium"] = 2 * totals.get("molybdate", 0.0)
-    elif family == "free_metal_sulfate": counterions["sulfate"] = sum(totals.get(k, 0.0) for k in ("Fe", "Mn", "Zn", "Cu"))
-    # Explicit profile components also catch macro formula counterions where
-    # the assay omits their analytical total (for example Ca(NO3)2).
-    if family == "macro_salt":
-        if "Ca+2" in chemistry.components and "NO3-" in chemistry.components: counterions["nitrate"] = 2 * totals.get("Ca", 0.0)
-        elif "Mg+2" in chemistry.components and "NO3-" in chemistry.components: counterions["nitrate"] = 2 * totals.get("Mg", 0.0)
-        elif "SO4-2" in chemistry.components:
-            counterions["sulfate"] = (totals.get("Mg", 0.0) + totals.get("Fe", 0.0) + totals.get("Zn", 0.0)
-                                          + 0.5 * totals.get("ammonium", 0.0))
-    # Assayed totals are authoritative; formula-inferred counterions fill only
-    # absent fields. They must never be added a second time to an assay total.
-    counterions = {k:v for k,v in counterions.items() if k not in totals and not (k=='sodium' and 'Na' in totals)}
-    if chemistry.name == 'Potassium Carbonate':
-        counterions['carbonate'] = totals.get('K',0.0) / 2.0
-    elif chemistry.name == 'Potassium Bicarbonate':
-        counterions['carbonate'] = totals.get('K',0.0)
-    # Potassium hydroxide adds only K+: its hydroxide is the proton deficit the
-    # charge balance closes, as the implicit protons of the acids are (#75).
+    # Assayed totals are authoritative; the ions fill only what the assay leaves out.
+    # Hydroxide (potassium hydroxide) stays implicit, like the protons of the acids (#75).
+    counterions, ligands = unstated_amounts(chemistry_ions(chemistry), totals)
     inert = max(0.0, 1.0 - sum(float(v) for v in assay.values()) / 100.0)
     return ProductAnalyticalTotals(chemistry, dose, totals, counterions, ligands, inert)
 
 def convert_catalogue_product_dose(product: Mapping[str, object], dose_g_per_kg_water: float) -> ProductAnalyticalTotals:
-    """Catalogue adapter. Equilibrium callers should retain the returned profile."""
+    """Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material: ``convert_material_dose``."""
     return convert_product_dose(product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water)
+
+
+def convert_material_dose(product: Mapping[str, object], dose_g_per_kg_water: float) -> ProductAnalyticalTotals:
+    """Convert any material record through its own chemistry (``material_chemistry``)."""
+    return convert_product_dose(product, material_chemistry(product), dose_g_per_kg_water)
 
 
 _BASIS = {'Ca': 'Ca+2', 'Mg': 'Mg+2', 'K': 'K+', 'Na': 'Na+', 'sodium': 'Na+', 'Cl': 'Cl-',
@@ -192,26 +159,40 @@ def _check_materials(doses: Mapping[str, float], materials, *, allow_undisclosed
     return dict(materials)
 
 
+def _named(products) -> dict:
+    """Product records by name, from a mapping or a sequence of records."""
+    if products is None:
+        return {}
+    records = products.values() if isinstance(products, Mapping) else products
+    named = {}
+    for record in records:
+        if not isinstance(record, Mapping) or not isinstance(record.get('name'), str):
+            raise DeliveryError('invalid_type', 'products must be material records with a name')
+        named[record['name']] = record
+    return named
+
+
 def _catalogue_product(identity_id: str, library: Mapping[str, Mapping]) -> Mapping:
     """The catalogue product an identity covers, as shipped (grade-free)."""
     from .materials import load_identities
     return library[load_identities()[identity_id]['products'][0]]
 
 
-def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
+def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, products=None):
     """Per conversion unit: (dosed product name, ProductChemistry, {basis: mol/kg water}).
 
-    A product in ``materials`` is converted from its resolved record through the
-    chemistry profile of its identity's catalogue product. A disclosed blend
-    contributes one unit per component identity: that identity's shipped catalogue
-    record and chemistry, at dose x mass fraction. A declared-ions compound is converted
-    from its label (``declared_ion_totals``); one that cannot be modelled raises
-    ``ph_not_planned_for_product``. An undisclosed blend raises
-    ``composition_undisclosed``; nothing is computed for the rest of the mix.
+    Each dosed name is a material record: from ``products`` (records, or a mapping of name to
+    record), else the catalogue's pre-filled record of that name. Its chemistry is what it
+    puts in the water (``material_chemistry``), never its name. A product in ``materials`` is
+    converted from its resolved record through its identity's ions. A disclosed blend
+    contributes one unit per component identity: that identity's shipped catalogue record,
+    at dose x mass fraction. A declared-ions compound is converted from its label
+    (``declared_ion_totals``); one that cannot be modelled raises ``ph_not_planned_for_product``.
+    An undisclosed blend raises ``composition_undisclosed``; nothing is computed for the rest.
     """
     from .engine import load_library
-    from .materials import load_identities
-    library = {str(item["name"]): item for item in load_library()["salts"]}
+    catalogue = {str(item["name"]): item for item in load_library()["salts"]}
+    library = {**catalogue, **_named(products)}
     resolved = _check_materials(doses, materials)
     units = []
     for name, dose in doses.items():
@@ -220,21 +201,24 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None):
             units.append(_declared_unit(name, material, dose))
             continue
         if name not in library:
-            raise DeliveryError("unknown_product", f"catalogue product {name!r} is not available")
+            raise DeliveryError("unknown_product", f"product {name!r} is not available")
         if material is None:
-            parts = [(library[name], dose)]
+            parts = [(library[name], dose, None)]
         elif material.components:
-            parts = [(_catalogue_product(identity_id, library), _finite_dose(dose) * fraction)
+            parts = [(_catalogue_product(identity_id, catalogue), _finite_dose(dose) * fraction, None)
                      for identity_id, fraction in material.components]
         else:
-            product_name = load_identities()[material.identity_id]['products'][0]
-            parts = [({**material.record, 'name': product_name}, dose)]
-        for product, amount in parts:
-            converted = convert_catalogue_product_dose(product, amount)
+            parts = [(material.record, dose, material.identity_id)]
+        for product, amount, identity_id in parts:
+            # A resolved grade or lot takes its identity's ions; its analysis was checked when graded.
+            chemistry = (material_chemistry({**product, 'identityId': identity_id}, check=False)
+                         if identity_id else material_chemistry(product))
+            converted = convert_product_dose(product, chemistry, amount)
+            ferrous = 'Fe+2' in chemistry_ions(chemistry)
             totals: dict = {}
             for source in (converted.totals, converted.counterions, converted.ligands):
                 for key, value in source.items():
-                    basis = 'Fe+2' if key == 'Fe' and product['name'] == 'Iron II Sulfate (Hepahydrate)' else _BASIS[key]
+                    basis = 'Fe+2' if key == 'Fe' and ferrous else _BASIS[key]
                     totals[basis] = totals.get(basis, 0.) + value
             units.append((name, converted.chemistry, totals))
     return units
@@ -252,7 +236,8 @@ def counterion_sodium_mg_per_l(salts_with_doses) -> float:
     sodium (chelate share plus its borax and molybdate), and the chelate sodium of a
     declared-ions compound (``declared_ion_totals``). Sodium already assayed as
     elemental Na (standalone borax, sodium molybdate) is not a counterion there and
-    contributes nothing. Records without catalogue chemistry contribute nothing.
+    contributes nothing. Every record is read through ``material_chemistry``; one that
+    does not define its chemistry contributes nothing.
     """
     moles = 0.0
     for product, dose in salts_with_doses:
@@ -265,24 +250,25 @@ def counterion_sodium_mg_per_l(salts_with_doses) -> float:
                 moles += declared_ion_totals(product['elements'], grade.get('chelating_agent'), dose).get('Na+', 0.0)
             continue
         try:
-            converted = convert_catalogue_product_dose(product, dose)
+            converted = convert_product_dose(product, material_chemistry(product, check=False), dose)
         except DeliveryError:
             continue
         moles += converted.counterions.get("sodium", 0.0)
     return moles * _NA_MG_PER_MOL
 
 
-def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None):
+def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None, products=None):
     """Convert every assayed catalogue element into one conserved basis.
 
     Hydration water/inert carrier is outside mol/kg *water* totals. Iron sulfate
     retains Fe(II); declared iron chelates retain Fe(III). Urea stays neutral and
     unhydrolysed. Rounded product assays do not establish unassayed counterions.
     ``materials`` optionally maps dosed product names to ``ResolvedMaterial``
-    (user grade or lot); see ``catalogue_dose_contributions``.
+    (user grade or lot); ``products`` supplies material records by name, for
+    materials the catalogue does not hold; see ``catalogue_dose_contributions``.
     """
     result = {}
-    for _, _, totals in catalogue_dose_contributions(doses, materials=materials):
+    for _, _, totals in catalogue_dose_contributions(doses, materials=materials, products=products):
         for basis, amount in totals.items():
             result[basis] = result.get(basis, 0.) + amount
     return result

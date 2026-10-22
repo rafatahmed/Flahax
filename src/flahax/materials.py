@@ -304,20 +304,24 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
     return tuple(pairs)
 
 
-def _nutrient_charges(identity: dict) -> dict:
+def _nutrient_charges(identity: dict, table: Mapping | None = None) -> dict:
     """Mean charge per nutrient atom, from the identity's dissolved ion forms."""
+    table = _ION_NUTRIENT_CHARGE if table is None else table
     totals: dict = {}
     for ion, count in identity['ion_forms'].items():
-        if ion in _ION_NUTRIENT_CHARGE:
-            nutrient, charge = _ION_NUTRIENT_CHARGE[ion]
+        if ion in table:
+            nutrient, charge = table[ion]
             weighted, atoms = totals.get(nutrient, (0.0, 0.0))
             totals[nutrient] = (weighted + charge * count, atoms + count)
     return {nutrient: weighted / atoms for nutrient, (weighted, atoms) in totals.items()}
 
 
-def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
-    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion."""
-    charges = _nutrient_charges(identity)
+def _charge_residual_percent(identity: dict, declared: dict, table: Mapping | None = None) -> float | None:
+    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion.
+
+    ``table`` maps ion -> (nutrient, charge per atom); material_chemistry passes its wider table.
+    """
+    charges = _nutrient_charges(identity, table)
     signed = absolute = 0.0
     has_cation = has_anion = False
     for nutrient, percent in declared.items():
