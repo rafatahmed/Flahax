@@ -670,6 +670,70 @@ class AuditWordingTests(unittest.TestCase):
         self.assertTrue(any(prompt.startswith('Name of this acid') for prompt in script.prompts))
 
 
+GOOD_SESSION = {
+    'spec': {
+        'tank_litres': {'A': 100.0, 'B': 100.0, 'acid': 10.0},
+        'ratio': 100.0,
+        'temperature_c': 25.0,
+        'mode': 'fill',
+        'irrigation_litres': None,
+    },
+    'water': 'ro',
+    'water_share': 100.0,
+    'limits': {},
+    'formula': 'Tomato (Howard Resh)',
+    'formula_title': 'Tomato (Howard Resh)',
+    'store': 'catalogue',
+    'acids': [],
+    'ph': 6.0,
+    'depth': 1,
+}
+
+
+class SessionFileTests(unittest.TestCase):  # 149
+    BROKEN = {
+        'a list': ([1, 2], 'not a JSON object'),
+        'no spec': ({k: v for k, v in GOOD_SESSION.items() if k != 'spec'}, "'spec' is missing"),
+        'share as text': (
+            {**GOOD_SESSION, 'water_share': 'all'},
+            "'water_share' must be a number",
+        ),
+        'limits as a list': ({**GOOD_SESSION, 'limits': [['Na', 69]]}, "'limits' must be"),
+        'acids as text': ({**GOOD_SESSION, 'acids': 'hno3'}, "'acids' must be a list of names"),
+        'depth 9': ({**GOOD_SESSION, 'depth': 9}, "'depth' must be 1, 2 or 3"),
+        'tanks as a list': (
+            {**GOOD_SESSION, 'spec': {**GOOD_SESSION['spec'], 'tank_litres': [1, 2, 3]}},
+            "'spec.tank_litres' must be",
+        ),
+    }
+
+    def run_session(self, data):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'broken.json'
+            path.write_text(json.dumps(data), encoding='utf-8')
+            lines = []
+            code = main(
+                [str(path), '--output', str(Path(tmp) / 'out')],
+                ask=Script([]),
+                say=lines.append,
+                store=Store(Path(tmp) / 'home'),
+            )
+            return code, lines, str(path)
+
+    def test_a_damaged_session_says_what_is_wrong(self):
+        for label, (data, problem) in self.BROKEN.items():
+            with self.subTest(label):
+                code, lines, path = self.run_session(data)
+                self.assertEqual(code, 1, lines)
+                self.assertTrue(lines[-1].startswith(f'flahax mix: session file {path}:'), lines)
+                self.assertIn(problem, lines[-1])
+
+    def test_a_good_session_passes_the_check(self):
+        from flahax.mix_cli import check_session
+
+        self.assertEqual(check_session(GOOD_SESSION, 'x.json'), GOOD_SESSION)
+
+
 class PromptInterfaceTests(unittest.TestCase):
     def prompts(self, answers):
         lines = []

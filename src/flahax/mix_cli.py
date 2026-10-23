@@ -600,6 +600,62 @@ def interview(p, store):
     return name, session, pending + [('sessions', name, session)]
 
 
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def check_session(data, path):
+    """The session read from ``path`` if it has the fields ``flahax mix`` writes, each of the
+    right type; raises DeliveryError ``invalid_session`` naming the file and the field.
+    """
+
+    def bad(problem):
+        raise DeliveryError('invalid_session', f'session file {path}: {problem}')
+
+    if not isinstance(data, dict):
+        bad('not a JSON object')
+    for key in ('spec', 'water', 'water_share', 'limits', 'formula', 'store', 'acids', 'ph'):
+        if key not in data:
+            bad(f'{key!r} is missing')
+    spec = data['spec']
+    if not isinstance(spec, dict):
+        bad("'spec' must be an object")
+    for key in ('tank_litres', 'ratio', 'temperature_c', 'mode'):
+        if key not in spec:
+            bad(f"'spec.{key}' is missing")
+    tanks = spec['tank_litres']
+    if not isinstance(tanks, dict) or not all(_is_number(v) for v in tanks.values()):
+        bad("'spec.tank_litres' must be an object of tank: litres")
+    for key in ('ratio', 'temperature_c'):
+        if not _is_number(spec[key]):
+            bad(f"'spec.{key}' must be a number")
+    if spec.get('irrigation_litres') is not None and not _is_number(spec['irrigation_litres']):
+        bad("'spec.irrigation_litres' must be a number or null")
+    for key in ('water', 'formula', 'store', 'mode'):
+        value = spec[key] if key == 'mode' else data[key]
+        if not isinstance(value, str):
+            bad(f"'{'spec.' if key == 'mode' else ''}{key}' must be text")
+    for key in ('water_share', 'ph'):
+        if not _is_number(data[key]):
+            bad(f'{key!r} must be a number')
+    limits = data['limits']
+    if not isinstance(limits, dict) or not all(_is_number(v) for v in limits.values()):
+        bad("'limits' must be an object of ion: mg/L")
+    acids = data['acids']
+    if not isinstance(acids, list) or not all(isinstance(a, str) for a in acids):
+        bad("'acids' must be a list of names")
+    if 'depth' in data and data['depth'] not in (1, 2, 3):
+        bad("'depth' must be 1, 2 or 3")
+    if not isinstance(data.get('formula_title', ''), str):
+        bad("'formula_title' must be text")
+    return data
+
+
+def load_session(path):
+    """A checked session from its file."""
+    return check_session(read_json(path, 'session'), path)
+
+
 def find_session(store, spec):
     """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds
     tomato-stage-1)."""
@@ -765,7 +821,7 @@ def main(argv=None, *, ask=input, say=print, store=None):
     try:
         if args.session:
             path = find_session(store, args.session)
-            name, session = path.stem, read_json(path, 'session')
+            name, session = path.stem, load_session(path)
         else:
             say(
                 f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; '

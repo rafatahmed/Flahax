@@ -15,12 +15,13 @@ import sys
 import threading
 
 from . import __version__
-from .batch_cli import read_json, run_batch
+from .batch_cli import run_batch
 from .delivery_contracts import DeliveryError
 from .mix_cli import (
     Prompts,
     find_session,
     interview,
+    load_session,
     number_answer,
     options_for,
     output_folder,
@@ -484,7 +485,7 @@ def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=Non
             prompts = TuiPrompts(term, g)
             if session_name:
                 path = find_session(store, session_name)
-                name, session = path.stem, read_json(path, 'session')
+                name, session = path.stem, load_session(path)
             else:
                 name, session, pending = interview(prompts, store)
                 for kind, item, data in pending:
