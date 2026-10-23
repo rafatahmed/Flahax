@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """``flahax mix``: five questions, then tank A, tank B and the acid.
 
     flahax mix                    ask the five steps, save the answers, write the sheets
@@ -9,10 +13,10 @@ target pH. Defaults are shown in brackets; Enter keeps them. Typed items are sav
 under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and only
 once every step is answered: Ctrl+C or end of input saves nothing.
 """
+
 import argparse
 from dataclasses import asdict
 from datetime import date
-import json
 import math
 from pathlib import Path
 
@@ -22,16 +26,35 @@ from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import number, render_report
-from .grower_sheet import STATUS_WORDS, grams, key_reasons, limited_by, litres, millilitres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
+from .grower_sheet import (
+    STATUS_WORDS,
+    grams,
+    key_reasons,
+    limited_by,
+    litres,
+    millilitres,
+    render_mix_sheet,
+)  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
 from .stock_volumes import prepare_stocks
 
 FORMULA_KEYS = ('N_NO3', 'N_NH4', 'P', 'K', 'Ca', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
-COMPOUND_KEYS = (('N_NO3', 'Nitric N'), ('N_NH4', 'Ammoniacal N'), ('N_UREA', 'Ureic N'), ('P2O5', 'P2O5'),
-                 ('K2O', 'K2O'), ('CaO', 'CaO'), ('MgO', 'MgO'), ('SO3', 'SO3')) + tuple(
-                     (m, m) for m in MICROS) + (('Na', 'Na'), ('Cl', 'Cl'))
+COMPOUND_KEYS = (
+    (
+        ('N_NO3', 'Nitric N'),
+        ('N_NH4', 'Ammoniacal N'),
+        ('N_UREA', 'Ureic N'),
+        ('P2O5', 'P2O5'),
+        ('K2O', 'K2O'),
+        ('CaO', 'CaO'),
+        ('MgO', 'MgO'),
+        ('SO3', 'SO3'),
+    )
+    + tuple((m, m) for m in MICROS)
+    + (('Na', 'Na'), ('Cl', 'Cl'))
+)
 CHELATES = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 
 
@@ -51,7 +74,9 @@ class Prompts:
 
     def number(self, prompt, default=None, *, blank=False, low=0.0, high=None, positive=False):
         while True:
-            shown = f' [{default:g}]' if default is not None else ' (Enter if blank)' if blank else ''
+            shown = (
+                f' [{default:g}]' if default is not None else ' (Enter if blank)' if blank else ''
+            )
             answer = self.ask(f'{prompt}{shown}: ').strip()
             if not answer and (default is not None or blank):
                 return default
@@ -60,10 +85,16 @@ class Prompts:
             except ValueError:
                 self.say(f'  {answer!r} is not a number.')
                 continue
-            if not math.isfinite(value) or value < low or (positive and value <= low) \
-                    or (high is not None and value > high):
-                self.say(f'  Enter a number {"above" if positive else "from"} {low:g}'
-                         + (f' up to {high:g}.' if high is not None else '.'))
+            if (
+                not math.isfinite(value)
+                or value < low
+                or (positive and value <= low)
+                or (high is not None and value > high)
+            ):
+                self.say(
+                    f'  Enter a number {"above" if positive else "from"} {low:g}'
+                    + (f' up to {high:g}.' if high is not None else '.')
+                )
                 continue
             return value
 
@@ -74,7 +105,9 @@ class Prompts:
         for i, option in enumerate(options, 1):
             self.say(f'  {i}  {option}')
         while True:
-            answer = self.ask(f'Number [{default}]: ' if default else 'Number: ').strip() or str(default)
+            answer = self.ask(f'Number [{default}]: ' if default else 'Number: ').strip() or str(
+                default
+            )
             if answer.isdigit() and 1 <= int(answer) <= len(options):
                 return int(answer) - 1
             self.say(f'  Choose 1 to {len(options)}.')
@@ -82,7 +115,11 @@ class Prompts:
     def search(self, prompt, names):
         """Part of a name narrows the list; Enter shows every name to choose from by number."""
         while True:
-            query = self.ask(f'{prompt} (part of the name; Enter lists all {len(names)}): ').strip().lower()
+            query = (
+                self.ask(f'{prompt} (part of the name; Enter lists all {len(names)}): ')
+                .strip()
+                .lower()
+            )
             matches = [n for n in names if query in n.lower()]
             if len(matches) == 1:
                 self.say(f'  {matches[0]}')
@@ -95,8 +132,13 @@ class Prompts:
         while True:
             self.typed = self.text(prompt, default)
             name = slug(self.typed)
-            if name not in store.list(kind) or self.choose(f'A saved {kind[:-1]} named {name} exists.',
-                                                           ['Use another name', 'Replace it']) == 1:
+            if (
+                name not in store.list(kind)
+                or self.choose(
+                    f'A saved {kind[:-1]} named {name} exists.', ['Use another name', 'Replace it']
+                )
+                == 1
+            ):
                 return name
 
     def document(self, supplier):
@@ -107,32 +149,61 @@ class Prompts:
                 break
             except ValueError:
                 self.say('  Use the form 2025-03-28.')
-        return {'supplier': supplier, 'title': self.text('Sheet title'), 'issued': issued,
-                'entered': date.today().isoformat()}
+        return {
+            'supplier': supplier,
+            'title': self.text('Sheet title'),
+            'issued': issued,
+            'entered': date.today().isoformat(),
+        }
 
 
 def ask_spec(p):
     p.say('1/5 Specification')
     a = p.number('Tank A capacity, L', 1000, positive=True)
     b = p.number('Tank B capacity, L', 1000, positive=True)
-    tanks = {'A': a, 'B': b, 'acid': p.number('Acid container capacity, L', min(a, b), positive=True)}
-    ratio = p.number('Injection ratio, litres of irrigation per litre of stock', 100, positive=True)
+    tanks = {
+        'A': a,
+        'B': b,
+        'acid': p.number('Acid container capacity, L', min(a, b), positive=True),
+    }
+    ratio = p.number(
+        'Injection ratio, litres of irrigation per litre of stock', 100, positive=True
+    )
     temperature = p.number('Stock temperature, °C', 25, high=60)
-    once = p.choose('How is stock prepared?', ['Fill the tanks full and run several irrigations from them',
-                                               'Make just enough for one irrigation']) == 1
+    once = (
+        p.choose(
+            'How is stock prepared?',
+            [
+                'Fill the tanks full and run several irrigations from them',
+                'Make just enough for one irrigation',
+            ],
+        )
+        == 1
+    )
     while True:
         irrigation = p.number('Irrigation, L', positive=True) if once else None
         try:
-            volumes = prepare_stocks(tank_litres=tanks, ratio=ratio, mode='once' if once else 'fill',
-                                     irrigation_litres=irrigation)
+            volumes = prepare_stocks(
+                tank_litres=tanks,
+                ratio=ratio,
+                mode='once' if once else 'fill',
+                irrigation_litres=irrigation,
+            )
             break
         except DeliveryError as exc:
             p.say(f'  {exc}')
-    p.say(f'  {number(volumes.irrigation_litres, 0)} L of irrigation; prepare '
-          f'{litres(volumes.prepared_litres["A"])} L in each container'
-          f'{limited_by(dict(asdict(volumes), mode="once" if once else "fill"))}.')
-    return dict(tank_litres=tanks, ratio=ratio, temperature_c=temperature, mode='once' if once else 'fill',
-                irrigation_litres=irrigation)
+    p.say(
+        f'  {number(volumes.irrigation_litres, 0)} L of irrigation; prepare '
+        f'{litres(volumes.prepared_litres["A"])} L in each container'
+        f'{limited_by(dict(asdict(volumes), mode="once" if once else "fill"))}.'
+    )
+    return dict(
+        tank_litres=tanks,
+        ratio=ratio,
+        temperature_c=temperature,
+        mode='once' if once else 'fill',
+        irrigation_litres=irrigation,
+    )
 
 
 def ask_water(p, store, pending):
@@ -146,7 +217,9 @@ def ask_water(p, store, pending):
         ref, data = ask_analysis(p, store)
         pending.append(('waters', ref, data))
     if ref != 'ro':
-        share = p.number('Share of this water in the irrigation, % (the rest RO)', 100, high=100, positive=True)
+        share = p.number(
+            'Share of this water in the irrigation, % (the rest RO)', 100, high=100, positive=True
+        )
     while True:
         answer = p.text('Concentration limits in the final solution, mg/L, e.g. Na=69 Cl=106', '')
         try:
@@ -160,15 +233,22 @@ def ask_formula(p, store, pending, library):
     p.say('3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
     saved = store.list('formulas')
     packaged = {f['name']: f['targets'] for f in library['formulas']}
-    pick = p.choose('Formula', ['A packaged formula', 'Start from a packaged formula and change it'] + saved
-                    + ['Type a new one'])
+    pick = p.choose(
+        'Formula',
+        ['A packaged formula', 'Start from a packaged formula and change it']
+        + saved
+        + ['Type a new one'],
+    )
     if pick < 2:
         ref = p.search('Crop formula', list(packaged))
         targets, title = dict(packaged[ref]), ref
         if pick == 1:
             changed = {k: p.number(f'{k}, mg/L', v) for k, v in targets.items()}
             if changed != targets:
-                targets, ref = changed, p.new_name(store, 'formulas', 'Save the changed formula as', f'{ref} changed')
+                targets, ref = (
+                    changed,
+                    p.new_name(store, 'formulas', 'Save the changed formula as', f'{ref} changed'),
+                )
                 title = p.typed
                 pending.append(('formulas', ref, targets))
     elif pick < 2 + len(saved):
@@ -178,15 +258,21 @@ def ask_formula(p, store, pending, library):
         ref = p.new_name(store, 'formulas', 'Name of the new formula')
         title = p.typed
         p.say('Targets in mg/L; nitrogen as NO3-N and NH4-N. Enter leaves a nutrient untargeted.')
-        targets = {k: v for k in FORMULA_KEYS if (v := p.number(f'{k}, mg/L', blank=True)) is not None}
+        targets = {
+            k: v for k in FORMULA_KEYS if (v := p.number(f'{k}, mg/L', blank=True)) is not None
+        }
         pending.append(('formulas', ref, targets))
     balance = target_ion_balance(targets)
-    p.say(f'Formula balance: cations {balance["cationsMeqPerL"]:.2f} meq/L, anions {balance["anionsMeqPerL"]:.2f} '
-          f'meq/L ({balance["imbalancePercent"]:+.1f} %).')
+    p.say(
+        f'Formula balance: cations {balance["cationsMeqPerL"]:.2f} meq/L, anions {balance["anionsMeqPerL"]:.2f} '
+        f'meq/L ({balance["imbalancePercent"]:+.1f} %).'
+    )
     if balance['exceedsWarning']:
-        p.say(f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} % out of balance, '
-              f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and unlisted counter-ions '
-              'will make up the difference.')
+        p.say(
+            f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} % out of balance, '
+            f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and unlisted counter-ions '
+            'will make up the difference.'
+        )
     return ref, targets, title
 
 
@@ -201,36 +287,60 @@ def add_single(p, catalogue):
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
     labels = {f'{i["name"]} ({", ".join(i["products"])})': i for i in identities}
     identity = labels[p.search('Chemical, e.g. calcium nitrate', list(labels))]
-    product = identity['products'][0] if len(identity['products']) == 1 else \
-        identity['products'][p.choose('Catalogue product', identity['products'])]
+    product = (
+        identity['products'][0]
+        if len(identity['products']) == 1
+        else identity['products'][p.choose('Catalogue product', identity['products'])]
+    )
     shipped = names[product]
     brand = p.text('Brand name on the label')
     supplier = p.text('Supplier')
     document = p.document(supplier)
     p.say('Label analysis, % w/w; Enter keeps the reference value.')
-    analysis = {k: {'typical': p.number(f'{k}, %', round(v, 3), high=100)} for k, v in shipped['elements'].items()}
-    grade = {'grade_id': f'grd-{slug(brand)}', 'identity_id': identity['id'], 'supplier': supplier,
-             'product': brand, 'composition': 'single', 'document': document, 'analysis': analysis,
-             'compatibility_notes': ask_notes(p)}
+    analysis = {
+        k: {'typical': p.number(f'{k}, %', round(v, 3), high=100)}
+        for k, v in shipped['elements'].items()
+    }
+    grade = {
+        'grade_id': f'grd-{slug(brand)}',
+        'identity_id': identity['id'],
+        'supplier': supplier,
+        'product': brand,
+        'composition': 'single',
+        'document': document,
+        'analysis': analysis,
+        'compatibility_notes': ask_notes(p),
+    }
     try:
         material = resolve_material(product, grade=make_grade(grade))
     except DeliveryError as exc:
         p.say(f'Not added: {exc}')
         return None
     if 'identity_inconsistent' in material.flags:
-        p.say(f'Not added (identity_inconsistent): the label of {brand} does not match {identity["name"]}. '
-              'Check the label values, or use the catalogue grade.')
+        p.say(
+            f'Not added (identity_inconsistent): the label of {brand} does not match {identity["name"]}. '
+            'Check the label values, or use the catalogue grade.'
+        )
         return None
     p.say(f'Added {brand} as {product}.')
-    return dict(shipped, id=material.record['id'], elements=material.record['elements'], grade=grade)
+    return dict(
+        shipped, id=material.record['id'], elements=material.record['elements'], grade=grade
+    )
 
 
 def add_compound(p):
     name = p.text('Product name on the data sheet')
     supplier = p.text('Supplier')
-    record = {'supplier': supplier, 'product': name, 'composition': 'declared_ions', 'document': p.document(supplier)}
+    record = {
+        'supplier': supplier,
+        'product': name,
+        'composition': 'declared_ions',
+        'document': p.document(supplier),
+    }
     record['grade_id'] = f'grd-{slug(name)}-{record["document"]["issued"]}'
-    p.say('Composition as printed, % w/w (oxides as oxides). Enter if the sheet does not state it.')
+    p.say(
+        'Composition as printed, % w/w (oxides as oxides). Enter if the sheet does not state it.'
+    )
     analysis = {}
     for key, label in COMPOUND_KEYS:
         value = p.number(f'{label}, %', blank=True, high=100)
@@ -249,10 +359,18 @@ def add_compound(p):
         p.say(f'Not added: {exc}')
         return None
     check = declared_ions_check(grade)
-    p.say('Full chemistry: the label balances.' if check.modellable else
-          f'Not modellable: {check.reason}. It can be formulated, but no pH reagent will be planned with it.')
-    return {'id': material.record['id'], 'name': name, 'formula': None, 'elements': material.record['elements'],
-            'grade': record}
+    p.say(
+        'Full chemistry: the label balances.'
+        if check.modellable
+        else f'Not modellable: {check.reason}. It can be formulated, but no pH reagent will be planned with it.'
+    )
+    return {
+        'id': material.record['id'],
+        'name': name,
+        'formula': None,
+        'elements': material.record['elements'],
+        'grade': record,
+    }
 
 
 def ask_products(p, store, pending, library):
@@ -269,14 +387,20 @@ def ask_products(p, store, pending, library):
         for i, s in enumerate(catalogue, 1):
             p.say(f'  {i:2}  {s["name"]}')
         while True:
-            picked = p.text('Numbers of the products you have, separated by spaces').replace(',', ' ').split()
+            picked = (
+                p.text('Numbers of the products you have, separated by spaces')
+                .replace(',', ' ')
+                .split()
+            )
             if all(n.isdigit() and 1 <= int(n) <= len(catalogue) for n in picked):
                 products = [catalogue[int(n) - 1] for n in dict.fromkeys(picked)]
                 break
             p.say(f'  Use numbers 1 to {len(catalogue)}.')
     added = False
-    while kind := p.choose('Add a product?', ['No', 'A single chemical with its label analysis',
-                                              'A compound from its data sheet']):
+    while kind := p.choose(
+        'Add a product?',
+        ['No', 'A single chemical with its label analysis', 'A compound from its data sheet'],
+    ):
         record = add_single(p, catalogue) if kind == 1 else add_compound(p)
         if record is not None:
             products, added = [x for x in products if x['name'] != record['name']] + [record], True
@@ -295,16 +419,32 @@ def ask_acids(p, store, pending):
         if pick < len(offer):
             chosen.append(offer[pick])
         elif pick == len(offer):
-            while (formula := ACID_FORMULAS.get(p.text('Acid formula (' + ', '.join(ACID_FORMULAS.values()) + ')',
-                                                       'HNO3').upper())) is None:
-                p.say('  FlahaX plans with these acids only: ' + ', '.join(ACID_FORMULAS.values()) + '.')
+            while (
+                formula := ACID_FORMULAS.get(
+                    p.text(
+                        'Acid formula (' + ', '.join(ACID_FORMULAS.values()) + ')', 'HNO3'
+                    ).upper()
+                )
+            ) is None:
+                p.say(
+                    '  FlahaX plans with these acids only: '
+                    + ', '.join(ACID_FORMULAS.values())
+                    + '.'
+                )
             fraction = p.number('Assay on the certificate, % w/w', positive=True, high=100) / 100
             density = p.number('Density on the certificate, kg/L', positive=True)
             while ':' in (name := p.text('Name', f'{formula} {fraction:.0%}')):
                 p.say('  A name cannot contain ":".')
-            ref = p.new_name(store, 'acids', 'Save as', name) if slug(name) in saved else slug(name)
-            pending.append(('acids', ref, {'formula': formula, 'fraction': fraction, 'density': density,
-                                           'name': name}))
+            ref = (
+                p.new_name(store, 'acids', 'Save as', name) if slug(name) in saved else slug(name)
+            )
+            pending.append(
+                (
+                    'acids',
+                    ref,
+                    {'formula': formula, 'fraction': fraction, 'density': density, 'name': name},
+                )
+            )
             chosen.append(ref)
         else:
             return chosen
@@ -312,11 +452,15 @@ def ask_acids(p, store, pending):
 
 def options_for(store, session):
     """``BatchOptions`` from a session; every saved item it names must exist."""
+
     def path(kind, name):
         file = store.path(kind, name)
         if not file.is_file():
-            raise DeliveryError('unknown_item', f'the session needs the saved {kind[:-1]} {name!r} ({file})')
+            raise DeliveryError(
+                'unknown_item', f'the session needs the saved {kind[:-1]} {name!r} ({file})'
+            )
         return str(file)
+
     spec, packaged = session['spec'], {f['name'] for f in load_library()['formulas']}
     acids = [store.load('acids', a) for a in session['acids']]
     return BatchOptions(
@@ -324,12 +468,18 @@ def options_for(store, session):
         formula=session['formula'] if session['formula'] in packaged else None,
         targets=None if session['formula'] in packaged else path('formulas', session['formula']),
         water_share=None if session['water_share'] >= 100 else session['water_share'],
-        ph=session['ph'], ratio=spec['ratio'],
+        ph=session['ph'],
+        ratio=spec['ratio'],
         acid=[f'{a["formula"]}:{a["fraction"]}:{a["density"]}:{a["name"]}' for a in acids],
         limit=list(session['limits'].items()),
         products=None if session['store'] == 'catalogue' else path('stores', session['store']),
-        tank_litres=spec['tank_litres'], mode=spec['mode'], irrigation_litres=spec['irrigation_litres'],
-        temperature_c=spec['temperature_c'], depth=session.get('depth', 1), title=session.get('formula_title'))
+        tank_litres=spec['tank_litres'],
+        mode=spec['mode'],
+        irrigation_litres=spec['irrigation_litres'],
+        temperature_c=spec['temperature_c'],
+        depth=session.get('depth', 1),
+        title=session.get('formula_title'),
+    )
 
 
 def interview(p, store):
@@ -342,18 +492,38 @@ def interview(p, store):
     acids = ask_acids(p, store, pending)
     p.say('5/5 pH requirement')
     ph = p.number('Target pH of the final solution', 5.8, high=14, positive=True)
-    depth = 1 + p.choose('Output depth', ['Grower: tanks A and B, and the acid',
-                                          'Agronomist: adds the nutrient table and the pH path', 'Full report'])
+    depth = 1 + p.choose(
+        'Output depth',
+        [
+            'Grower: tanks A and B, and the acid',
+            'Agronomist: adds the nutrient table and the pH path',
+            'Full report',
+        ],
+    )
     name = p.new_name(store, 'sessions', 'Save these answers as', f'{formula} {water}')
-    session = {'spec': spec, 'water': water, 'water_share': share, 'limits': limits, 'formula': formula,
-               'formula_title': formula_title,
-               'store': product_store, 'acids': acids, 'ph': ph, 'depth': depth}
+    session = {
+        'spec': spec,
+        'water': water,
+        'water_share': share,
+        'limits': limits,
+        'formula': formula,
+        'formula_title': formula_title,
+        'store': product_store,
+        'acids': acids,
+        'ph': ph,
+        'depth': depth,
+    }
     return name, session, pending + [('sessions', name, session)]
 
 
 def find_session(store, spec):
     """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds tomato-stage-1)."""
-    for candidate in (Path(spec), Path(spec + '.json'), store.root / spec, store.root / (spec + '.json')):
+    for candidate in (
+        Path(spec),
+        Path(spec + '.json'),
+        store.root / spec,
+        store.root / (spec + '.json'),
+    ):
         if candidate.is_file():
             return candidate
     name = spec.replace('\\', '/').split('sessions/', 1)[-1]
@@ -364,10 +534,11 @@ def find_session(store, spec):
     if candidate is not None and candidate.is_file():
         return candidate
     saved = store.list('sessions')
-    raise DeliveryError('unknown_item', f'no saved session {spec!r}. '
-                        + ('Saved: ' + ', '.join(saved) if saved else 'Nothing is saved yet: run flahax mix'))
-
-
+    raise DeliveryError(
+        'unknown_item',
+        f'no saved session {spec!r}. '
+        + ('Saved: ' + ', '.join(saved) if saved else 'Nothing is saved yet: run flahax mix'),
+    )
 
 
 def summarize(summary, say):
@@ -376,32 +547,61 @@ def summarize(summary, say):
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
     for reason in key_reasons(summary):
-        say(f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (full text on the batch sheet)"}')
+        say(
+            f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (full text on the batch sheet)"}'
+        )
     if len(summary['warnings']) > 3:
-        say(f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them all')
+        say(
+            f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them all'
+        )
     say(f'Irrigation supplied: {number(volumes["irrigation_litres"], 0)} L at 1:{ratio:g}')
     for tank in summary['tanks']['tanks']:
         name = tank['name']
-        say(f'Tank {name}: ' + ('not to be prepared (do not mix)' if blocked else
-            f'prepare {litres(volumes["prepared_litres"][name])} L in your '
-            f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
-            + ('' if tank['acid_allowed'] else '; no acid')))
+        say(
+            f'Tank {name}: '
+            + (
+                'not to be prepared (do not mix)'
+                if blocked
+                else f'prepare {litres(volumes["prepared_litres"][name])} L in your '
+                f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
+                + ('' if tank['acid_allowed'] else '; no acid')
+            )
+        )
         for product in tank['products']:
-            say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {grams(product["gramsPerBatch"])}')
+            say(
+                f'  {"-" if blocked else "[ ]"} {product["name"]}: {grams(product["gramsPerBatch"])}'
+            )
     selected = summary['ph'] and summary['ph']['selected']
     if selected and not blocked:
-        say(f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]}, added to water '
-            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, never water to acid)')
+        say(
+            f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]}, added to water '
+            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, never water to acid)'
+        )
     elif not blocked:
-        say('pH reagent: none planned' + (f'. {summary["ph"]["message"]}' if summary['ph'] and
-                                          summary['ph'].get('message') else '; measure pH after mixing.'))
+        say(
+            'pH reagent: none planned'
+            + (
+                f'. {summary["ph"]["message"]}'
+                if summary['ph'] and summary['ph'].get('message')
+                else '; measure pH after mixing.'
+            )
+        )
 
 
 def main(argv=None, *, ask=input, say=print, store=None):
-    parser = argparse.ArgumentParser(prog='flahax mix', description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('session', nargs='*', help='a saved session, e.g. tomato-ro (flahax mix sessions lists them)')
-    parser.add_argument('--output', help='new directory for the sheets (default: ./flahax-mix-<session>)')
+    parser = argparse.ArgumentParser(
+        prog='flahax mix',
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        'session',
+        nargs='*',
+        help='a saved session, e.g. tomato-ro (flahax mix sessions lists them)',
+    )
+    parser.add_argument(
+        '--output', help='new directory for the sheets (default: ./flahax-mix-<session>)'
+    )
     args = parser.parse_args(argv)
     if args.output and Path(args.output).exists():
         say(f'flahax mix: {args.output} already exists; choose a new directory')
@@ -411,18 +611,26 @@ def main(argv=None, *, ask=input, say=print, store=None):
     args.session = ' '.join(args.session)
     if args.session.strip('/\\') == 'sessions':
         saved = store.list('sessions')
-        say('Saved sessions: ' + ', '.join(saved) if saved else 'Nothing is saved yet: run flahax mix')
+        say(
+            'Saved sessions: ' + ', '.join(saved)
+            if saved
+            else 'Nothing is saved yet: run flahax mix'
+        )
         return 0
     try:
         if args.session:
             path = find_session(store, args.session)
             name, session = path.stem, read_json(path, 'session')
         else:
-            say(f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; Ctrl+C stops.')
+            say(
+                f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; Ctrl+C stops.'
+            )
             name, session, pending = interview(p, store)
             for kind, item, data in pending:
                 store.save(kind, item, data)
-            say(f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix sessions/{name}')
+            say(
+                f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix sessions/{name}'
+            )
     except (KeyboardInterrupt, EOFError):
         say('Stopped; nothing saved.')
         return 1
@@ -440,7 +648,10 @@ def main(argv=None, *, ask=input, say=print, store=None):
         say(f'flahax mix: {exc}')
         return 1
     depth = session.get('depth', 1)
-    files = {'batch-sheet.html': render_mix_sheet(summary, depth), 'summary.json': render(summary)['summary.json']}
+    files = {
+        'batch-sheet.html': render_mix_sheet(summary, depth),
+        'summary.json': render(summary)['summary.json'],
+    }
     if depth >= 3:
         files['report.html'] = render_report(summary)
     output.mkdir(parents=True)

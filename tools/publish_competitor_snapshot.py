@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Package a #40 competitor run as a static evidence snapshot for the docs site.
 
 No benchmark is run here. The three track outputs (formulation.json, chemistry.json,
@@ -5,6 +10,7 @@ ec.json) are copied byte for byte, an environment record is added, and everythin
 bundled in evidence.zip with SHA-256 checksums. Run it with the competitor
 environment's Python on the machine that measured, so the environment record is true.
 """
+
 import argparse
 import hashlib
 import json
@@ -20,7 +26,9 @@ MEASURED_PATHS = ("src", "benchmarks", "tools/competitors")
 
 
 def git(*args):
-    return subprocess.run(("git", *args), cwd=ROOT, check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(
+        ("git", *args), cwd=ROOT, check=True, capture_output=True, text=True
+    ).stdout.strip()
 
 
 def measured_commit(commit):
@@ -42,8 +50,11 @@ def environment(commit, freeze):
         "platform": platform.platform(),
         "machine": platform.machine(),
         "processor": platform.processor(),
-        "packages": sorted(line.strip() for line in freeze.read_text().splitlines()
-                           if line.strip() and not line.startswith("#")),
+        "packages": sorted(
+            line.strip()
+            for line in freeze.read_text().splitlines()
+            if line.strip() and not line.startswith("#")
+        ),
     }
 
 
@@ -58,7 +69,8 @@ def readme(env):
         "environment.json  interpreter, platform and the full package list of the run\n\n"
         "Protocol: tools/competitors/README.md in the repository at the measured commit\n"
         "(benchmarks/competitors/README.md before #64).\n"
-        "Timings are best of three on one machine; compare them only within this snapshot.\n")
+        "Timings are best of three on one machine; compare them only within this snapshot.\n"
+    )
 
 
 def publish(run, commit, freeze, destination):
@@ -66,8 +78,9 @@ def publish(run, commit, freeze, destination):
     files = {name: (run / name).read_bytes() for name in TRACKS}
     files["environment.json"] = (json.dumps(env, indent=2) + "\n").encode()
     files["README.txt"] = readme(env).encode()
-    files["CHECKSUMS.sha256"] = "".join(f"{hashlib.sha256(data).hexdigest()}  {name}\n"
-                                        for name, data in sorted(files.items())).encode()
+    files["CHECKSUMS.sha256"] = "".join(
+        f"{hashlib.sha256(data).hexdigest()}  {name}\n" for name, data in sorted(files.items())
+    ).encode()
     destination.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination / "evidence.zip", "w") as bundle:
         for name, data in sorted(files.items()):
@@ -81,12 +94,20 @@ def publish(run, commit, freeze, destination):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", type=Path, required=True, help="folder with the three track outputs")
+    parser.add_argument(
+        "--run", type=Path, required=True, help="folder with the three track outputs"
+    )
     parser.add_argument("--commit", required=True, help="commit the tracks were measured at")
-    parser.add_argument("--freeze", type=Path, required=True, help="pip freeze of the competitor environment")
-    parser.add_argument("--snapshot", required=True, help="snapshot name, e.g. 2026-10-21-competitors-ed568c5")
+    parser.add_argument(
+        "--freeze", type=Path, required=True, help="pip freeze of the competitor environment"
+    )
+    parser.add_argument(
+        "--snapshot", required=True, help="snapshot name, e.g. 2026-10-21-competitors-ed568c5"
+    )
     args = parser.parse_args()
-    digest = publish(args.run, args.commit, args.freeze, ROOT / "docs/site/_static/benchmarks" / args.snapshot)
+    digest = publish(
+        args.run, args.commit, args.freeze, ROOT / "docs/site/_static/benchmarks" / args.snapshot
+    )
     print(f"evidence.zip {digest}")
 
 

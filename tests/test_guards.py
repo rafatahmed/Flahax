@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Composition guards: assays match their formulas and total N is refused."""
+
 import math
 import unittest
 
@@ -60,7 +66,8 @@ class CompositionGuards(unittest.TestCase):
 
     def test_a_restricted_ion_is_admitted_only_as_the_sole_source(self):
         salts = [
-            salt for salt in load_library()["salts"]
+            salt
+            for salt in load_library()["salts"]
             if "Mo" not in salt["elements"] or "Na" in salt["elements"]
         ]
         result = recommend(salts, {**TARGETS, "Mo": 0.03}, {"Ca": 20})
@@ -72,7 +79,11 @@ class CompositionGuards(unittest.TestCase):
     def test_hydrate_formula_drift_is_reported_from_the_stored_assay(self):
         # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate
         # is now Mg(NO3)2.6H2O theory and no longer drifts; the retired row keeps the hydrate case.
-        retired = {"name": "Mg Nitrate", "formula": "Mg(NO3)2", "elements": {"N_NO3": 11, "Mg": 9.65}}
+        retired = {
+            "name": "Mg Nitrate",
+            "formula": "Mg(NO3)2",
+            "elements": {"N_NO3": 11, "Mg": 9.65},
+        }
         self.assertTrue(assay_drift(retired).startswith("Mg Nitrate"))
         notes = {salt["name"]: assay_drift(salt) for salt in load_library()["salts"]}
         self.assertIsNone(notes["Mg Nitrate"])
@@ -81,8 +92,9 @@ class CompositionGuards(unittest.TestCase):
 
     def test_chloride_salts_are_used_only_with_consent(self):
         library = load_library()
-        chloride = sorted(salt["name"] for salt in library["salts"]
-                          if float(salt["elements"].get("Cl") or 0) > 0)
+        chloride = sorted(
+            salt["name"] for salt in library["salts"] if float(salt["elements"].get("Cl") or 0) > 0
+        )
         self.assertEqual(chloride, ["Calcium Chloride (Dihydrate)", "Potassium Chloride"])
         for formula in library["formulas"]:
             for water in ({}, {"Ca": 20}):
@@ -114,6 +126,7 @@ class LeastSquares(unittest.TestCase):
 
     def test_nnls_raises_instead_of_returning_at_its_iteration_cap(self):
         from flahax import engine
+
         original = engine.NNLS_ADDITION_FACTOR
         engine.NNLS_ADDITION_FACTOR = 0
         try:

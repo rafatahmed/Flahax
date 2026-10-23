@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """#40 formulation track: FlahaX vs Horticalc vs Irriblend-DSW (the authors' optimiser) and an LP after its method.
 
 Every engine receives the same FlahaX nutrient catalogue (pH reagents excluded), 26 shipped formulas
@@ -9,6 +14,7 @@ pipeline are reported separately.
 
 Run with the pinned competitor environment (see README.md).
 """
+
 import argparse
 import json
 import math
@@ -53,6 +59,7 @@ def irriblend_method(products, targets, water):
     infeasible, as the published method does."""
     import numpy as np
     from scipy.optimize import linprog
+
     exact = {"N_NO3", "N_NH4", "P", "K", "Fe", "Mn", "Zn", "Cu", "B", "Mo"}
     at_least = {"Ca", "Mg", "S"}
     a_eq, b_eq, a_ub, b_ub = [], [], [], []
@@ -67,12 +74,22 @@ def irriblend_method(products, targets, water):
         elif ion in at_least:
             a_ub.append([-v for v in row])
             b_ub.append(-need)
-    result = linprog(np.ones(len(products)), A_ub=a_ub or None, b_ub=b_ub or None,
-                     A_eq=a_eq or None, b_eq=b_eq or None,
-                     bounds=[(0, None)] * len(products), method="highs")
+    result = linprog(
+        np.ones(len(products)),
+        A_ub=a_ub or None,
+        b_ub=b_ub or None,
+        A_eq=a_eq or None,
+        b_eq=b_eq or None,
+        bounds=[(0, None)] * len(products),
+        method="highs",
+    )
     if result.status != 0:
         return None
-    return {"salts": [{"id": p["id"], "gramsPerLitre": g} for p, g in zip(products, result.x) if g > 1e-9]}
+    return {
+        "salts": [
+            {"id": p["id"], "gramsPerLitre": g} for p, g in zip(products, result.x) if g > 1e-9
+        ]
+    }
 
 
 def score(salts, recipe, targets, water):
@@ -85,17 +102,28 @@ def incidental(salts, recipe, targets, water):
     by_id = {s["id"]: s for s in salts}
 
     def delivered(ion):
-        return water.get(ion, 0.0) + sum(item["gramsPerLitre"] * by_id[item["id"]]["elements"].get(ion, 0.0) * 10.0
-                                         for item in recipe["salts"])
+        return water.get(ion, 0.0) + sum(
+            item["gramsPerLitre"] * by_id[item["id"]]["elements"].get(ion, 0.0) * 10.0
+            for item in recipe["salts"]
+        )
+
     total_n = sum(targets.get(k, 0.0) for k in ("N_NO3", "N_NH4", "N_UREA"))
     ammonium_limit = min(0.10 * total_n, 1.5 * 14.0067)
-    out = {"Cl": 0.0 if targets.get("Cl", 0) > 0 else delivered("Cl"),
-           "Na": 0.0 if targets.get("Na", 0) > 0 else delivered("Na"),
-           "NH4_N": 0.0 if targets.get("N_NH4", 0) > 0 else delivered("N_NH4"),
-           "ammonium_limit": ammonium_limit,
-           "micro_ratio": max((delivered(m) / targets[m] for m in MICRO if targets.get(m, 0) > 0), default=0.0)}
-    out["within_limits"] = (out["Cl"] <= CL_LIMIT and out["Na"] <= NA_LIMIT
-                            and out["NH4_N"] <= ammonium_limit + 1e-9 and out["micro_ratio"] <= 2.0)
+    out = {
+        "Cl": 0.0 if targets.get("Cl", 0) > 0 else delivered("Cl"),
+        "Na": 0.0 if targets.get("Na", 0) > 0 else delivered("Na"),
+        "NH4_N": 0.0 if targets.get("N_NH4", 0) > 0 else delivered("N_NH4"),
+        "ammonium_limit": ammonium_limit,
+        "micro_ratio": max(
+            (delivered(m) / targets[m] for m in MICRO if targets.get(m, 0) > 0), default=0.0
+        ),
+    }
+    out["within_limits"] = (
+        out["Cl"] <= CL_LIMIT
+        and out["Na"] <= NA_LIMIT
+        and out["NH4_N"] <= ammonium_limit + 1e-9
+        and out["micro_ratio"] <= 2.0
+    )
     return out
 
 
@@ -103,17 +131,23 @@ def summarise(rows, wholes, times, products_used, attempted, extras, macro_whole
     pct = [abs(r["error_percent"]) for r in rows if r["error_percent"] is not None]
     macro = [r for r in rows if r["ion"] in MACRO]
     return {
-        "whole_recipes_passing_macro": sum(macro_wholes), "macro_targets_scored": len(macro),
+        "whole_recipes_passing_macro": sum(macro_wholes),
+        "macro_targets_scored": len(macro),
         "macro_targets_passing": sum(r["passes"] for r in macro),
-        "recipes_acceptable": sum(1 for whole, x in zip(wholes, extras) if whole and x["within_limits"]),
+        "recipes_acceptable": sum(
+            1 for whole, x in zip(wholes, extras) if whole and x["within_limits"]
+        ),
         "recipes_within_limits": sum(x["within_limits"] for x in extras),
         "max_incidental_cl_mg_l": max((x["Cl"] for x in extras), default=None),
         "max_incidental_nh4_n_mg_l": max((x["NH4_N"] for x in extras), default=None),
         "max_micro_ratio": max((x["micro_ratio"] for x in extras), default=None),
-        "recipes_attempted": attempted, "recipes_returned": len(wholes),
-        "whole_recipes_passing": sum(wholes), "targets_scored": len(rows),
+        "recipes_attempted": attempted,
+        "recipes_returned": len(wholes),
+        "whole_recipes_passing": sum(wholes),
+        "targets_scored": len(rows),
         "targets_passing": sum(r["passes"] for r in rows),
-        "targets_within_5pct": sum(p <= 5 for p in pct), "targets_exact": sum(p < EXACT_PERCENT for p in pct),
+        "targets_within_5pct": sum(p <= 5 for p in pct),
+        "targets_exact": sum(p < EXACT_PERCENT for p in pct),
         "rms_percent": math.sqrt(statistics.mean(p * p for p in pct)) if pct else None,
         "max_abs_percent": max(pct, default=None),
         "mean_products": statistics.mean(products_used) if products_used else None,
@@ -125,6 +159,7 @@ def summarise(rows, wholes, times, products_used, attempted, extras, macro_whole
 def run():
     from tools.competitors import horticalc_adapter as hc
     from tools.competitors.irriblend_adapter import PIN as IRRIBLEND_PIN, Irriblend
+
     library = load_library()
     salts = library["salts"]
     usable = [s for s in salts if assay_conflict(s) is None and s.get('role') != 'ph_reagent']
@@ -132,9 +167,19 @@ def run():
     translation_error = hc.validate_translation(usable, ferts)
     irriblend = Irriblend(usable)
     by_name = {s["name"]: s for s in usable}
-    engines = ("flahax_single_fit", "flahax_recommend", "flahax_recommend_cl_cap", "horticalc_as_shipped",
-               "horticalc_aligned", "irriblend_dsw", "irriblend_method")
-    acc = {e: {"rows": [], "wholes": [], "times": [], "products": [], "extras": [], "macro": []} for e in engines}
+    engines = (
+        "flahax_single_fit",
+        "flahax_recommend",
+        "flahax_recommend_cl_cap",
+        "horticalc_as_shipped",
+        "horticalc_aligned",
+        "irriblend_dsw",
+        "irriblend_method",
+    )
+    acc = {
+        e: {"rows": [], "wholes": [], "times": [], "products": [], "extras": [], "macro": []}
+        for e in engines
+    }
     cases = []
     for formula in library["formulas"]:
         for water_name, water in WATERS.items():
@@ -144,12 +189,19 @@ def run():
             runs["flahax_single_fit"] = ({"salts": fit["salts"]}, t)
             rec, t = timed(lambda: recommend(salts, targets, water))
             runs["flahax_recommend"] = ({"salts": rec["salts"]}, t)
-            capped, t = timed(lambda: recommend(salts, targets, water, maximum_concentrations={"Cl": CL_LIMIT}))
+            capped, t = timed(
+                lambda: recommend(salts, targets, water, maximum_concentrations={"Cl": CL_LIMIT})
+            )
             runs["flahax_recommend_cl_cap"] = ({"salts": capped["salts"]}, t)
             for config in hc.CONFIGS:
                 out, t = timed(lambda: hc.solve(ferts, targets, water, config))
-                recipe = {"salts": [{"id": by_name[f["name"]]["id"], "gramsPerLitre": f["grams"]}
-                                    for f in out.fertilizers if f["grams"] > 0]}
+                recipe = {
+                    "salts": [
+                        {"id": by_name[f["name"]]["id"], "gramsPerLitre": f["grams"]}
+                        for f in out.fertilizers
+                        if f["grams"] > 0
+                    ]
+                }
                 runs[f"horticalc_{config}"] = (recipe, t)
             dsw, t = timed(lambda: irriblend.solve(targets, water))
             runs["irriblend_dsw"] = (dsw, t)
@@ -168,18 +220,41 @@ def run():
                 acc[engine]["macro"].append(all(r["passes"] for r in rows if r["ion"] in MACRO))
                 acc[engine]["times"].append(seconds)
                 acc[engine]["products"].append(len(recipe["salts"]))
-                case[engine] = {"returned": True, "seconds": seconds, "whole_recipe_passes": whole,
-                                "incidental": extra,
-                                "doses": {s["id"]: s["gramsPerLitre"] for s in recipe["salts"]}}
+                case[engine] = {
+                    "returned": True,
+                    "seconds": seconds,
+                    "whole_recipe_passes": whole,
+                    "incidental": extra,
+                    "doses": {s["id"]: s["gramsPerLitre"] for s in recipe["salts"]},
+                }
             cases.append(case)
     attempted = len(library["formulas"]) * len(WATERS)
-    summary = {e: summarise(acc[e]["rows"], acc[e]["wholes"], acc[e]["times"], acc[e]["products"], attempted,
-                            acc[e]["extras"], acc[e]["macro"]) for e in engines}
+    summary = {
+        e: summarise(
+            acc[e]["rows"],
+            acc[e]["wholes"],
+            acc[e]["times"],
+            acc[e]["products"],
+            attempted,
+            acc[e]["extras"],
+            acc[e]["macro"],
+        )
+        for e in engines
+    }
     irriblend.close()
-    return {"translation_max_relative_error": translation_error, "horticalc": hc.PIN,
-            "irriblend_dsw": dict(IRRIBLEND_PIN, translation_max_relative_error=irriblend.translation_error,
-                                  products_translated=sorted(irriblend.rows), products_excluded=irriblend.excluded),
-            "repeats": REPEATS, "summary": summary, "cases": cases}
+    return {
+        "translation_max_relative_error": translation_error,
+        "horticalc": hc.PIN,
+        "irriblend_dsw": dict(
+            IRRIBLEND_PIN,
+            translation_max_relative_error=irriblend.translation_error,
+            products_translated=sorted(irriblend.rows),
+            products_excluded=irriblend.excluded,
+        ),
+        "repeats": REPEATS,
+        "summary": summary,
+        "cases": cases,
+    }
 
 
 def main():
@@ -189,13 +264,27 @@ def main():
     report = run()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     # scipy/numpy scalars (int64, bool_, float64) serialise as plain Python numbers.
-    args.output.write_text(json.dumps(report, indent=2, default=lambda v: v.item()), encoding="utf-8")
-    keys = ("whole_recipes_passing", "whole_recipes_passing_macro", "recipes_acceptable", "targets_passing",
-            "targets_exact", "rms_percent",
-            "max_incidental_cl_mg_l", "max_incidental_nh4_n_mg_l", "max_micro_ratio", "median_ms")
+    args.output.write_text(
+        json.dumps(report, indent=2, default=lambda v: v.item()), encoding="utf-8"
+    )
+    keys = (
+        "whole_recipes_passing",
+        "whole_recipes_passing_macro",
+        "recipes_acceptable",
+        "targets_passing",
+        "targets_exact",
+        "rms_percent",
+        "max_incidental_cl_mg_l",
+        "max_incidental_nh4_n_mg_l",
+        "max_micro_ratio",
+        "median_ms",
+    )
     print("engine".ljust(22), *[k[:14].rjust(15) for k in keys])
     for engine, s in report["summary"].items():
-        print(engine.ljust(22), *[(f"{s[k]:.2f}" if isinstance(s[k], float) else str(s[k])).rjust(15) for k in keys])
+        print(
+            engine.ljust(22),
+            *[(f"{s[k]:.2f}" if isinstance(s[k], float) else str(s[k])).rjust(15) for k in keys],
+        )
 
 
 if __name__ == "__main__":

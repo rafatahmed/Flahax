@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Bounded 25 °C fertilizer-ion equilibrium and precipitation screening.
 
 This is a dependency-free reduced model for a fully stated macronutrient
@@ -12,7 +16,6 @@ import math
 from typing import Mapping
 
 from .ammonia import ammonia_speciation
-from .competition import carbonate_competition
 from .delivery_contracts import DeliveryError
 from .equilibrium import davies_gamma
 from .phosphate_complexes import (
@@ -56,7 +59,9 @@ class FertilizerTotals:
         for name in self.__dataclass_fields__:
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
-                raise DeliveryError("out_of_range", f"{name} total must be finite and non-negative")
+                raise DeliveryError(
+                    "out_of_range", f"{name} total must be finite and non-negative"
+                )
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,49 +97,99 @@ def _valid_ph(value: float) -> float:
 
 
 def _carbonate(total: float, ph: float, gamma1: float, gamma2: float) -> dict[str, float]:
-    hydrogen_activity = 10.0 ** -ph
+    hydrogen_activity = 10.0**-ph
     denominator = (
         1.0 / gamma2
-        + 10.0 ** LOG_BETA_CARBONATE_BICARBONATE * hydrogen_activity / gamma1
-        + 10.0 ** LOG_BETA_CARBONATE_CO2 * hydrogen_activity**2
+        + 10.0**LOG_BETA_CARBONATE_BICARBONATE * hydrogen_activity / gamma1
+        + 10.0**LOG_BETA_CARBONATE_CO2 * hydrogen_activity**2
     )
     carbonate_activity = total / denominator if total else 0.0
     return {
         "CO3-2": carbonate_activity / gamma2,
-        "HCO3-": 10.0 ** LOG_BETA_CARBONATE_BICARBONATE * carbonate_activity * hydrogen_activity / gamma1,
-        "CO2": 10.0 ** LOG_BETA_CARBONATE_CO2 * carbonate_activity * hydrogen_activity**2,
+        "HCO3-": 10.0**LOG_BETA_CARBONATE_BICARBONATE
+        * carbonate_activity
+        * hydrogen_activity
+        / gamma1,
+        "CO2": 10.0**LOG_BETA_CARBONATE_CO2 * carbonate_activity * hydrogen_activity**2,
     }
 
 
-def _phosphate_complexes(calcium: float, magnesium: float, phosphate: float, sodium: float, ph: float, g1: float, g2: float, g3: float) -> dict[str, float]:
+def _phosphate_complexes(
+    calcium: float,
+    magnesium: float,
+    phosphate: float,
+    sodium: float,
+    ph: float,
+    g1: float,
+    g2: float,
+    g3: float,
+) -> dict[str, float]:
     """Fixed-point mass balance for the declared Ca/Mg/Na phosphate complexes."""
     if not phosphate:
         return {name: 0.0 for name in ("ca", "mg", "po4", "hpo4", "h2po4", "hap_si")}
-    h = 10.0 ** -ph
+    h = 10.0**-ph
     ca, mg = calcium * g2, magnesium * g2
-    acid_factor = 1 / g3 + 10.0 ** LOG_BETA_HPO4_25C * h / g2 + 10.0 ** LOG_BETA_H2PO4_25C * h**2 / g1 + 10.0 ** LOG_BETA_H3PO4_25C * h**3
+    acid_factor = (
+        1 / g3
+        + 10.0**LOG_BETA_HPO4_25C * h / g2
+        + 10.0**LOG_BETA_H2PO4_25C * h**2 / g1
+        + 10.0**LOG_BETA_H3PO4_25C * h**3
+    )
     po = phosphate / acid_factor
     for _ in range(60):
-        hpo = 10.0 ** LOG_BETA_HPO4_25C * po * h
-        h2 = 10.0 ** LOG_BETA_H2PO4_25C * po * h**2
-        h3 = 10.0 ** LOG_BETA_H3PO4_25C * po * h**3
-        ca_factor = 1 / g2 + 10.0 ** LOG_BETA_CA_HPO4 * hpo + 10.0 ** LOG_BETA_CA_H2PO4 * h2 / g1 + 10.0 ** LOG_BETA_CA_PO4 * po / g1
-        mg_factor = 1 / g2 + 10.0 ** LOG_BETA_MG_HPO4 * hpo + 10.0 ** LOG_BETA_MG_H2PO4 * h2 / g1 + 10.0 ** LOG_BETA_MG_PO4 * po / g1
+        hpo = 10.0**LOG_BETA_HPO4_25C * po * h
+        h2 = 10.0**LOG_BETA_H2PO4_25C * po * h**2
+        ca_factor = (
+            1 / g2
+            + 10.0**LOG_BETA_CA_HPO4 * hpo
+            + 10.0**LOG_BETA_CA_H2PO4 * h2 / g1
+            + 10.0**LOG_BETA_CA_PO4 * po / g1
+        )
+        mg_factor = (
+            1 / g2
+            + 10.0**LOG_BETA_MG_HPO4 * hpo
+            + 10.0**LOG_BETA_MG_H2PO4 * h2 / g1
+            + 10.0**LOG_BETA_MG_PO4 * po / g1
+        )
         next_ca = calcium / ca_factor if calcium else 0.0
         next_mg = magnesium / mg_factor if magnesium else 0.0
         na = sodium * g1
-        p_factor = (1 / g3 + 10.0 ** LOG_BETA_HPO4_25C * h / g2 + 10.0 ** LOG_BETA_H2PO4_25C * h**2 / g1 + 10.0 ** LOG_BETA_H3PO4_25C * h**3 + 10.0 ** LOG_BETA_CA_HPO4 * next_ca * g2 * 10.0 ** LOG_BETA_HPO4_25C * h + 10.0 ** LOG_BETA_MG_HPO4 * next_mg * g2 * 10.0 ** LOG_BETA_HPO4_25C * h + 10.0 ** LOG_BETA_CA_H2PO4 * next_ca * g2 * 10.0 ** LOG_BETA_H2PO4_25C * h**2 / g1 + 10.0 ** LOG_BETA_MG_H2PO4 * next_mg * g2 * 10.0 ** LOG_BETA_H2PO4_25C * h**2 / g1 + 10.0 ** LOG_BETA_CA_PO4 * next_ca * g2 / g1 + 10.0 ** LOG_BETA_MG_PO4 * next_mg * g2 / g1 + 10.0 ** LOG_BETA_NA_HPO4 * na * 10.0 ** LOG_BETA_HPO4_25C * h / g1)
+        p_factor = (
+            1 / g3
+            + 10.0**LOG_BETA_HPO4_25C * h / g2
+            + 10.0**LOG_BETA_H2PO4_25C * h**2 / g1
+            + 10.0**LOG_BETA_H3PO4_25C * h**3
+            + 10.0**LOG_BETA_CA_HPO4 * next_ca * g2 * 10.0**LOG_BETA_HPO4_25C * h
+            + 10.0**LOG_BETA_MG_HPO4 * next_mg * g2 * 10.0**LOG_BETA_HPO4_25C * h
+            + 10.0**LOG_BETA_CA_H2PO4 * next_ca * g2 * 10.0**LOG_BETA_H2PO4_25C * h**2 / g1
+            + 10.0**LOG_BETA_MG_H2PO4 * next_mg * g2 * 10.0**LOG_BETA_H2PO4_25C * h**2 / g1
+            + 10.0**LOG_BETA_CA_PO4 * next_ca * g2 / g1
+            + 10.0**LOG_BETA_MG_PO4 * next_mg * g2 / g1
+            + 10.0**LOG_BETA_NA_HPO4 * na * 10.0**LOG_BETA_HPO4_25C * h / g1
+        )
         next_po = phosphate / p_factor
-        if max(abs(next_ca-ca), abs(next_mg-mg), abs(next_po-po)) < 1e-14:
+        if max(abs(next_ca - ca), abs(next_mg - mg), abs(next_po - po)) < 1e-14:
             ca, mg, po = next_ca, next_mg, next_po
             break
         ca, mg, po = (ca + next_ca) / 2, (mg + next_mg) / 2, (po + next_po) / 2
-    hpo = 10.0 ** LOG_BETA_HPO4_25C * po * h
-    h2 = 10.0 ** LOG_BETA_H2PO4_25C * po * h**2
-    return {"ca": ca / g2, "mg": mg / g2, "po4": po / g3, "hpo4": hpo / g2, "h2po4": h2 / g1, "hap_si": 5 * math.log10(max(ca, 1e-300)) + 3 * math.log10(max(hpo, 1e-300)) + 4 * ph - LOG_K_HYDROXYAPATITE_HPO4}
+    hpo = 10.0**LOG_BETA_HPO4_25C * po * h
+    h2 = 10.0**LOG_BETA_H2PO4_25C * po * h**2
+    return {
+        "ca": ca / g2,
+        "mg": mg / g2,
+        "po4": po / g3,
+        "hpo4": hpo / g2,
+        "h2po4": h2 / g1,
+        "hap_si": 5 * math.log10(max(ca, 1e-300))
+        + 3 * math.log10(max(hpo, 1e-300))
+        + 4 * ph
+        - LOG_K_HYDROXYAPATITE_HPO4,
+    }
 
 
-def _at_fixed_ionic_strength(totals: FertilizerTotals, ph: float, ionic_strength: float) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
+def _at_fixed_ionic_strength(
+    totals: FertilizerTotals, ph: float, ionic_strength: float
+) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
     gamma1, gamma2, gamma3 = (davies_gamma(charge, ionic_strength) for charge in (1, 2, 3))
     sulfate = totals.sulfate
     calcium_available = totals.calcium
@@ -142,7 +197,16 @@ def _at_fixed_ionic_strength(totals: FertilizerTotals, ph: float, ionic_strength
     pair = 0.0
     for _ in range(20):
         if totals.phosphate:
-            phosphate_result = _phosphate_complexes(calcium_available, totals.magnesium, totals.phosphate, totals.sodium, ph, gamma1, gamma2, gamma3)
+            phosphate_result = _phosphate_complexes(
+                calcium_available,
+                totals.magnesium,
+                totals.phosphate,
+                totals.sodium,
+                ph,
+                gamma1,
+                gamma2,
+                gamma3,
+            )
             free_calcium = phosphate_result["ca"]
             free_magnesium = phosphate_result["mg"]
             free_phosphate = phosphate_result["po4"]
@@ -151,11 +215,18 @@ def _at_fixed_ionic_strength(totals: FertilizerTotals, ph: float, ionic_strength
         else:
             free_calcium, free_magnesium = calcium_available, totals.magnesium
             free_phosphate = hpo4 = h2po4 = 0.0
-        next_pair = 10.0 ** LOG_BETA_CASO4 * (free_calcium * gamma2) * (sulfate * gamma2)
+        next_pair = 10.0**LOG_BETA_CASO4 * (free_calcium * gamma2) * (sulfate * gamma2)
         next_pair = min(next_pair, totals.calcium, totals.sulfate)
         next_calcium = max(0.0, totals.calcium - next_pair)
         next_sulfate = max(0.0, totals.sulfate - next_pair)
-        if max(abs(next_pair - pair), abs(next_calcium - calcium_available), abs(next_sulfate - sulfate)) < 1e-14:
+        if (
+            max(
+                abs(next_pair - pair),
+                abs(next_calcium - calcium_available),
+                abs(next_sulfate - sulfate),
+            )
+            < 1e-14
+        ):
             pair, calcium_available, sulfate = next_pair, next_calcium, next_sulfate
             break
         pair = (pair + next_pair) / 2.0
@@ -180,22 +251,49 @@ def _at_fixed_ionic_strength(totals: FertilizerTotals, ph: float, ionic_strength
         **carbonate,
     }
     activities = {
-        name: amount * (gamma3 if name == "PO4-3" else gamma2 if name in {"Ca+2", "Mg+2", "HPO4-2", "SO4-2", "CO3-2"} else gamma1 if name in {"NH4+", "H2PO4-", "NO3-", "K+", "Na+", "Cl-", "HCO3-"} else 1.0)
+        name: amount
+        * (
+            gamma3
+            if name == "PO4-3"
+            else gamma2
+            if name in {"Ca+2", "Mg+2", "HPO4-2", "SO4-2", "CO3-2"}
+            else gamma1
+            if name in {"NH4+", "H2PO4-", "NO3-", "K+", "Na+", "Cl-", "HCO3-"}
+            else 1.0
+        )
         for name, amount in species.items()
     }
-    activities["H+"] = 10.0 ** -ph
+    activities["H+"] = 10.0**-ph
     activities["OH-"] = 10.0 ** (ph - 14.0)
     saturation = {
-        "Calcite": math.log10(max(activities["Ca+2"] * activities["CO3-2"], 1e-300)) - LOG_K_CALCITE,
+        "Calcite": math.log10(max(activities["Ca+2"] * activities["CO3-2"], 1e-300))
+        - LOG_K_CALCITE,
         "Gypsum": math.log10(max(activities["Ca+2"] * activities["SO4-2"], 1e-300)) - LOG_K_GYPSUM,
         "Hydroxyapatite": phosphate_result["hap_si"] if phosphate_result else float("-inf"),
-        "Struvite": math.log10(max(activities["Mg+2"] * activities["NH4+"] * activities["PO4-3"], 1e-300)) + 13.26,
+        "Struvite": math.log10(
+            max(activities["Mg+2"] * activities["NH4+"] * activities["PO4-3"], 1e-300)
+        )
+        + 13.26,
     }
     return species, activities, saturation
 
 
 def _ionic_strength(species: Mapping[str, float]) -> float:
-    charges = {"Ca+2": 2, "Mg+2": 2, "PO4-3": -3, "HPO4-2": -2, "H2PO4-": -1, "SO4-2": -2, "NH4+": 1, "NO3-": -1, "K+": 1, "Na+": 1, "Cl-": -1, "CO3-2": -2, "HCO3-": -1}
+    charges = {
+        "Ca+2": 2,
+        "Mg+2": 2,
+        "PO4-3": -3,
+        "HPO4-2": -2,
+        "H2PO4-": -1,
+        "SO4-2": -2,
+        "NH4+": 1,
+        "NO3-": -1,
+        "K+": 1,
+        "Na+": 1,
+        "Cl-": -1,
+        "CO3-2": -2,
+        "HCO3-": -1,
+    }
     return 0.5 * sum(species[name] * charge**2 for name, charge in charges.items())
 
 
@@ -205,7 +303,9 @@ def _fixed_ph_equilibrium(totals: FertilizerTotals, ph: float) -> FertilizerEqui
         species, activities, saturation = _at_fixed_ionic_strength(totals, ph, ionic_strength)
         updated = _ionic_strength(species)
         if updated > MAX_IONIC_STRENGTH:
-            raise DeliveryError("activity_model_out_of_range", "Davies model is limited to I <= 0.1 mol/kgw")
+            raise DeliveryError(
+                "activity_model_out_of_range", "Davies model is limited to I <= 0.1 mol/kgw"
+            )
         if abs(updated - ionic_strength) < 1e-9:
             return FertilizerEquilibrium(totals, ph, updated, species, activities, saturation, ())
         ionic_strength = (ionic_strength + updated) / 2.0
@@ -235,7 +335,9 @@ def _phase_limit(totals: FertilizerTotals, phase: str) -> float:
     return min(getattr(totals, name) / coefficient for name, coefficient in coefficients)
 
 
-def solve_legacy_phreeqc_macro(totals: FertilizerTotals, ph: float, *, allow_precipitation: bool = True) -> FertilizerEquilibrium:
+def solve_legacy_phreeqc_macro(
+    totals: FertilizerTotals, ph: float, *, allow_precipitation: bool = True
+) -> FertilizerEquilibrium:
     """Solve the declared 25 °C system at a specified pH.
 
     ``allow_precipitation`` applies named equilibrium allocations only for
@@ -260,7 +362,9 @@ def solve_legacy_phreeqc_macro(totals: FertilizerTotals, ph: float, *, allow_pre
                 low, high = 0.0, upper * (1 - 1e-12)
                 for _ in range(30):
                     middle = (low + high) / 2.0
-                    candidate = _fixed_ph_equilibrium(_remove_for_phase(current, phase, middle), ph)
+                    candidate = _fixed_ph_equilibrium(
+                        _remove_for_phase(current, phase, middle), ph
+                    )
                     if candidate.saturation_indices[phase] > 0:
                         low = middle
                     else:
@@ -277,18 +381,37 @@ def solve_legacy_phreeqc_macro(totals: FertilizerTotals, ph: float, *, allow_pre
             if not changed:
                 break
     result = _fixed_ph_equilibrium(current, ph)
-    return FertilizerEquilibrium(result.totals, result.ph, result.ionic_strength, result.species, result.activities, result.saturation_indices, tuple(allocations))
+    return FertilizerEquilibrium(
+        result.totals,
+        result.ph,
+        result.ionic_strength,
+        result.species,
+        result.activities,
+        result.saturation_indices,
+        tuple(allocations),
+    )
 
 
 def _alkalinity(result: FertilizerEquilibrium) -> float:
     s = result.species
-    return s["HCO3-"] + 2 * s["CO3-2"] + s["HPO4-2"] + 2 * s["PO4-3"] + result.activities["OH-"] / davies_gamma(1, result.ionic_strength) - result.activities["H+"] / davies_gamma(1, result.ionic_strength)
+    return (
+        s["HCO3-"]
+        + 2 * s["CO3-2"]
+        + s["HPO4-2"]
+        + 2 * s["PO4-3"]
+        + result.activities["OH-"] / davies_gamma(1, result.ionic_strength)
+        - result.activities["H+"] / davies_gamma(1, result.ionic_strength)
+    )
 
 
-def plan_legacy_phreeqc_nitric(totals: FertilizerTotals, initial_ph: float, target_ph: float, *, trace_totals=None) -> NitricAcidTargetPlan:
+def plan_legacy_phreeqc_nitric(
+    totals: FertilizerTotals, initial_ph: float, target_ph: float, *, trace_totals=None
+) -> NitricAcidTargetPlan:
     """Historical reduced phreeqc.dat fixture only; not mixed-product planning."""
     if trace_totals is not None:
-        raise DeliveryError('unsupported_legacy_input','use plan_nitric_acid_target for trace chemistry')
+        raise DeliveryError(
+            'unsupported_legacy_input', 'use plan_nitric_acid_target for trace chemistry'
+        )
     initial = solve_legacy_phreeqc_macro(totals, _valid_ph(initial_ph), allow_precipitation=False)
     target = solve_legacy_phreeqc_macro(totals, _valid_ph(target_ph), allow_precipitation=False)
     dose = _alkalinity(initial) - _alkalinity(target)
@@ -300,13 +423,17 @@ def plan_legacy_phreeqc_nitric(totals: FertilizerTotals, initial_ph: float, targ
 def solve_fertilizer_equilibrium(totals, ph, *, allow_precipitation=True):
     """Public macro entry point; uses the same model as product/mixed solves."""
     from .mixed_equilibrium import solve_mixed_fertilizer_equilibrium
-    return solve_mixed_fertilizer_equilibrium(totals,ph,allow_precipitation=allow_precipitation).macro
+
+    return solve_mixed_fertilizer_equilibrium(
+        totals, ph, allow_precipitation=allow_precipitation
+    ).macro
 
 
 def plan_nitric_acid_target(totals, initial_ph, target_ph, *, trace_totals=None):
     """Nitric acid adds conserved nitrate in the full mixed aqueous model."""
     from .aqueous_model import nitric_target
     from .mixed_equilibrium import analytical_basis
-    if not isinstance(totals,FertilizerTotals):
-        raise DeliveryError('invalid_type','totals must be FertilizerTotals')
-    return nitric_target(analytical_basis(totals,trace_totals),initial_ph,target_ph)
+
+    if not isinstance(totals, FertilizerTotals):
+        raise DeliveryError('invalid_type', 'totals must be FertilizerTotals')
+    return nitric_target(analytical_basis(totals, trace_totals), initial_ph, target_ph)

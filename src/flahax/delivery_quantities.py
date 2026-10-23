@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Immutable, unit-bearing quantities and final-solution recipe adaptation.
 
 All planning arithmetic uses base units (g, L, mg/L, °C, and min) and retains
@@ -44,7 +48,9 @@ class VolumeLitres:
     value: float
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "value", _value(self.value, "volume litres", minimum=0.0, strict=True))
+        object.__setattr__(
+            self, "value", _value(self.value, "volume litres", minimum=0.0, strict=True)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,7 +74,9 @@ class MilliEquivalentsPerLitre:
     value: float
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "value", _value(self.value, "milliequivalents per litre", minimum=0.0))
+        object.__setattr__(
+            self, "value", _value(self.value, "milliequivalents per litre", minimum=0.0)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +84,9 @@ class TemperatureCelsius:
     value: float
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "value", _value(self.value, "temperature Celsius", minimum=-273.15))
+        object.__setattr__(
+            self, "value", _value(self.value, "temperature Celsius", minimum=-273.15)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,7 +94,9 @@ class FlowLitresPerMinute:
     value: float
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "value", _value(self.value, "flow litres per minute", minimum=0.0, strict=True))
+        object.__setattr__(
+            self, "value", _value(self.value, "flow litres per minute", minimum=0.0, strict=True)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,7 +114,9 @@ class InjectionRatio:
     value: float
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "value", _value(self.value, "injection ratio", minimum=0.0, strict=True))
+        object.__setattr__(
+            self, "value", _value(self.value, "injection ratio", minimum=0.0, strict=True)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,7 +140,9 @@ class FinalSolutionRecipe:
         return MassGrams(sum(item.mass.value for item in self.salts))
 
 
-def final_solution_recipe(recommendation: Mapping[str, Any], final_volume: VolumeLitres) -> FinalSolutionRecipe:
+def final_solution_recipe(
+    recommendation: Mapping[str, Any], final_volume: VolumeLitres
+) -> FinalSolutionRecipe:
     """Adapt a FlahaX recommendation to exact salt masses for a final batch.
 
     The function consumes only ``result['salts']`` and retains its feasibility
@@ -152,9 +168,18 @@ def final_solution_recipe(recommendation: Mapping[str, Any], final_volume: Volum
             raise DeliveryError("invalid_value", f"recommendation.salts repeats {salt_id}")
         if not isinstance(name, str) or not name.strip():
             raise DeliveryError("missing_field", f"recommendation.salts[{index}].name is required")
-        dose = GramsPerLitre(_value(raw.get("gramsPerLitre"), f"recommendation.salts[{index}].gramsPerLitre", minimum=0.0, strict=True))
+        dose = GramsPerLitre(
+            _value(
+                raw.get("gramsPerLitre"),
+                f"recommendation.salts[{index}].gramsPerLitre",
+                minimum=0.0,
+                strict=True,
+            )
+        )
         seen.add(salt_id)
-        doses.append(SaltDose(salt_id, name.strip(), dose, MassGrams(dose.value * final_volume.value)))
+        doses.append(
+            SaltDose(salt_id, name.strip(), dose, MassGrams(dose.value * final_volume.value))
+        )
     feasible = recommendation.get("feasible")
     if not isinstance(feasible, bool):
         raise DeliveryError("missing_field", "recommendation.feasible must be a boolean")
@@ -179,10 +204,14 @@ def elemental_contribution(
         if symbol == "N":
             raise DeliveryError("ambiguous_unit", "split total N into N_NO3 and N_NH4")
         if symbol not in IONS:
-            raise DeliveryError("unknown_ion", f"elemental_mass_fractions has unknown ion {symbol}")
+            raise DeliveryError(
+                "unknown_ion", f"elemental_mass_fractions has unknown ion {symbol}"
+            )
         fraction = _value(raw_fraction, f"elemental_mass_fractions.{symbol}", minimum=0.0)
         if fraction > 1.0:
-            raise DeliveryError("out_of_range", f"elemental_mass_fractions.{symbol} cannot exceed 1")
+            raise DeliveryError(
+                "out_of_range", f"elemental_mass_fractions.{symbol} cannot exceed 1"
+            )
         total_fraction += fraction
         if total_fraction > 1.000001:
             raise DeliveryError("out_of_range", "elemental_mass_fractions adds to more than 1")
@@ -209,6 +238,8 @@ def rescore_with_reagent(
         if symbol not in IONS:
             raise DeliveryError("unknown_ion", f"contribution has unknown ion {symbol}")
         if not isinstance(amount, MilligramsPerLitre):
-            raise DeliveryError("invalid_type", f"contribution.{symbol} must be a MilligramsPerLitre value")
+            raise DeliveryError(
+                "invalid_type", f"contribution.{symbol} must be a MilligramsPerLitre value"
+            )
         final[symbol] = final.get(symbol, 0.0) + amount.value
     return score(final, clean_targets)

@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Tests for flahax.delivery_quantities."""
+
 import unittest
 from dataclasses import FrozenInstanceError
 
@@ -45,7 +51,10 @@ class DeliveryQuantities(unittest.TestCase):
         recipe = final_solution_recipe({"feasible": False, "salts": []}, VolumeLitres(1))
         self.assertFalse(recipe.feasible)
         with self.assertRaises(DeliveryError) as caught:
-            final_solution_recipe({"feasible": True, "salts": [{"id": "x", "name": "X", "gramsPerLitre": 0}]}, VolumeLitres(1))
+            final_solution_recipe(
+                {"feasible": True, "salts": [{"id": "x", "name": "X", "gramsPerLitre": 0}]},
+                VolumeLitres(1),
+            )
         self.assertEqual(caught.exception.code, "out_of_range")
 
     def test_reagent_elemental_contribution_is_in_ppm(self):
@@ -55,7 +64,9 @@ class DeliveryQuantities(unittest.TestCase):
         self.assertAlmostEqual(contribution["N_NO3"].value, 13.8)
         self.assertAlmostEqual(contribution["P"].value, 1.0)
         _loss, rows = rescore_with_reagent({"N_NO3": 100}, {"N_NO3": 113.8, "P": 1}, contribution)
-        self.assertAlmostEqual(next(row for row in rows if row["symbol"] == "N_NO3")["deltaPct"], 0)
+        self.assertAlmostEqual(
+            next(row for row in rows if row["symbol"] == "N_NO3")["deltaPct"], 0
+        )
         self.assertAlmostEqual(next(row for row in rows if row["symbol"] == "P")["deltaPct"], 0)
 
     def test_ambiguous_or_impossible_reagent_assay_is_rejected(self):

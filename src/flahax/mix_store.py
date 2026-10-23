@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Saved items for ``flahax mix``: plain JSON files ``flahax batch`` also reads.
 
 The root is ``$FLAHAX_HOME``, else ``~/.flahax``. Kinds: ``waters`` (the ``--water``
@@ -6,6 +10,7 @@ format), ``formulas`` (``--targets``), ``stores`` (``--products``), ``acids``
 refer to the other items by name). A save writes a temporary file and renames it, so
 a file is never left half written.
 """
+
 import json
 import os
 from pathlib import Path
@@ -25,7 +30,9 @@ def slug(name):
     """``Well 104`` -> ``well-104``: lower case letters, digits and single hyphens."""
     text = re.sub(r'[^a-z0-9]+', '-', str(name).lower()).strip('-')
     if not text:
-        raise DeliveryError('invalid_value', f'{name!r} needs at least one letter or digit to be saved')
+        raise DeliveryError(
+            'invalid_value', f'{name!r} needs at least one letter or digit to be saved'
+        )
     return text
 
 
@@ -35,7 +42,9 @@ class Store:
 
     def path(self, kind, name):
         if kind not in KINDS:
-            raise DeliveryError('invalid_value', f'unknown saved-item kind {kind!r}; use one of {KINDS}')
+            raise DeliveryError(
+                'invalid_value', f'unknown saved-item kind {kind!r}; use one of {KINDS}'
+            )
         return self.root / kind / f'{slug(name)}.json'
 
     def list(self, kind):
@@ -45,8 +54,11 @@ class Store:
     def load(self, kind, name):
         path = self.path(kind, name)
         if not path.is_file():
-            raise DeliveryError('unknown_item', f'no saved {kind[:-1]} named {name!r} in {path.parent}')
-        from .batch_cli import read_json      # names the file and the line if it is damaged
+            raise DeliveryError(
+                'unknown_item', f'no saved {kind[:-1]} named {name!r} in {path.parent}'
+            )
+        from .batch_cli import read_json  # names the file and the line if it is damaged
+
         return read_json(path, f'saved {kind[:-1]}')
 
     def save(self, kind, name, data):
@@ -55,7 +67,11 @@ class Store:
         handle, temp = tempfile.mkstemp(prefix=f'.{path.stem}-', suffix='.tmp', dir=path.parent)
         try:
             with os.fdopen(handle, 'wb') as stream:
-                stream.write((json.dumps(data, indent=1, ensure_ascii=False, allow_nan=False) + '\n').encode('utf-8'))
+                stream.write(
+                    (
+                        json.dumps(data, indent=1, ensure_ascii=False, allow_nan=False) + '\n'
+                    ).encode('utf-8')
+                )
             os.replace(temp, path)
         except BaseException:
             Path(temp).unlink(missing_ok=True)

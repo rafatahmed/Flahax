@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Tests for flahax.grower_sheet."""
+
 import json
 from pathlib import Path
 import tempfile
@@ -13,7 +19,9 @@ TANKS = {'A': 20, 'B': 20, 'acid': 20}
 
 
 def tomato_ro():
-    return run_batch(BatchOptions(water='ro', formula='Tomato (Howard Resh)', acid=NITRIC, tank_litres=TANKS))
+    return run_batch(
+        BatchOptions(water='ro', formula='Tomato (Howard Resh)', acid=NITRIC, tank_litres=TANKS)
+    )
 
 
 class SheetTests(unittest.TestCase):
@@ -23,8 +31,16 @@ class SheetTests(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory()
         well = Path(cls.tmp.name) / 'well.json'
         well.write_text(json.dumps(WELL), encoding='utf-8')
-        cls.well = run_batch(BatchOptions(water=str(well), formula='Tomato (Howard Resh)', water_share=8, acid=NITRIC,
-                                          limit=[('Na', 68.97), ('Cl', 106.35)], volume=1000))
+        cls.well = run_batch(
+            BatchOptions(
+                water=str(well),
+                formula='Tomato (Howard Resh)',
+                water_share=8,
+                acid=NITRIC,
+                limit=[('Na', 68.97), ('Cl', 106.35)],
+                volume=1000,
+            )
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -58,13 +74,15 @@ class SheetTests(unittest.TestCase):
         self.assertIsNone(rows['Na']['target'])
         self.assertAlmostEqual(rows['Na']['final'], 55.08, places=2)
         listed = [r['target'] is None for r in agronomist_rows(self.well)]
-        self.assertEqual(listed, sorted(listed))          # formula nutrients first, then the others
+        self.assertEqual(listed, sorted(listed))  # formula nutrients first, then the others
 
     def test_depth_one_has_no_nutrient_table(self):
         self.assertNotIn('Nutrients, mg/L', render_mix_sheet(self.ro, 1))
         two = render_mix_sheet(self.ro, 2)
         self.assertIn('Nutrients, mg/L', two)
-        self.assertIn('Calcium Nitrate (ag grade), not in formula', two)    # untargeted ammonium names its source
+        self.assertIn(
+            'Calcium Nitrate (ag grade), not in formula', two
+        )  # untargeted ammonium names its source
         self.assertIn('after fertilizers', two)
 
     def test_depth_three_names_the_waived_rule(self):

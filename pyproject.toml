@@ -56,3 +56,18 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 flahax = ["data/*.json", "data/*.md"]
+
+# Development style checks only (PEP 8, line length 99); not a runtime dependency.
+# Run: ruff format . && ruff check .   (ruff 0.8.4, pinned in CI)
+[tool.ruff]
+line-length = 99
+target-version = "py311"
+extend-exclude = ["docs/site/_static", "docs/publication"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.ruff.lint]
+preview = true
+select = ["E", "W", "F"]
+ignore = ["E501"]   # long strings and comments are rewrapped by hand in a follow-up (hardening 3b)

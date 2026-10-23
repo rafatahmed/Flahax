@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Generic thermodynamic entities for the growing fertilizer-chemistry model.
 
 The records are deliberately data-driven: a phase is defined by its dissolved
@@ -34,7 +38,9 @@ class MineralPhase:
         clean = {}
         for species, coefficient in self.dissolved_species.items():
             if not isinstance(species, str) or not species:
-                raise DeliveryError("invalid_value", "phase species names must be non-empty strings")
+                raise DeliveryError(
+                    "invalid_value", "phase species names must be non-empty strings"
+                )
             if isinstance(coefficient, bool):
                 raise DeliveryError("invalid_type", "phase coefficients must be numeric")
             try:
@@ -42,7 +48,9 @@ class MineralPhase:
             except (TypeError, ValueError) as exc:
                 raise DeliveryError("invalid_type", "phase coefficients must be numeric") from exc
             if not math.isfinite(value) or value == 0:
-                raise DeliveryError("invalid_value", "phase coefficients must be finite and non-zero")
+                raise DeliveryError(
+                    "invalid_value", "phase coefficients must be finite and non-zero"
+                )
             clean[species] = value
         if not math.isfinite(float(self.log_k)) or not math.isfinite(float(self.temperature_c)):
             raise DeliveryError("invalid_value", "phase log_k and temperature_c must be finite")
@@ -62,12 +70,16 @@ def phase_saturation_index(phase: MineralPhase, activities: Mapping[str, float])
     log_iap = 0.0
     for species, coefficient in phase.dissolved_species.items():
         if species not in activities:
-            raise DeliveryError("missing_species", f"activity for {species} is required by {phase.name}")
+            raise DeliveryError(
+                "missing_species", f"activity for {species} is required by {phase.name}"
+            )
         try:
             activity = float(activities[species])
         except (TypeError, ValueError) as exc:
             raise DeliveryError("invalid_type", f"activity for {species} must be numeric") from exc
         if not math.isfinite(activity) or activity <= 0:
-            raise DeliveryError("out_of_range", f"activity for {species} must be finite and greater than 0")
+            raise DeliveryError(
+                "out_of_range", f"activity for {species} must be finite and greater than 0"
+            )
         log_iap += coefficient * math.log10(activity)
     return log_iap - phase.log_k

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Stock solubility at the entered temperature and injection ratio (interactive mix, Task 6).
 
 The fixture holds values from the sourced draft table awaiting owner approval; nothing is packaged. Each value is g of
@@ -7,36 +11,51 @@ product per L of stock:
   Data 54, 1725) solution density where the point is inside its fit, otherwise with rho = 1 g/cm3 (a lower bound);
 - Calcium Nitrate (ag grade): Yara, YaraTera CALCINIT product sheet, 1200 g/L water at 20 C (lower bound 545.9 g/L).
 """
+
 import unittest
 from unittest import mock
 
 from flahax import group_tanks, render_batch_sheet, render_report, summarize_batch
-from flahax.stock_solubility import (SINGLE_SALT, SolubilityRow, check_stock_solubility, limit_at,
-                                     load_solubility_table)
+from flahax.stock_solubility import (
+    SINGLE_SALT,
+    SolubilityRow,
+    check_stock_solubility,
+    limit_at,
+    load_solubility_table,
+)
 from tests.test_grower_outputs import PRODUCTS, rows, workflow
 
 CRC = 'CRC Handbook of Chemistry and Physics, pp. 8-112 to 8-117'
-TABLE = [dict(product=name, points=points, source=source, notes='test fixture from the draft table')
-         for name, points, source in (
-             ('Calcium Nitrate (ag grade)', [[20, 545.9]], 'Yara, YaraTera CALCINIT product sheet'),
-             ('Boric Acid', [[10, 35.7], [20, 47.7]], CRC),
-             ('Copper Sulfate (pentahydrate)', [[10, 262.3], [20, 311.0]], CRC),
-             ('Iron II Sulfate (Hepahydrate)', [[10, 311.1], [20, 468.2]], CRC),
-             ('Zinc Sulfate (Monohydrate)', [[10, 355.7], [20, 571.1]], CRC),
-             ('Sodium Molybdate (Dihydrate)', [[10, 455.9], [20, 462.9]], CRC),
-             ('Mg Nitrate', [[10, 934.4], [20, 971.1]], CRC),
-             ('Potassium Sulfate', [[10, 90.6], [20, 107.5]], CRC),
-             ('Magnesium Sulfate (Heptahydrate)', [[10, 551.7], [20, 659.8]], CRC),
-             ('Potassium Dibasic Phosphate', [[10, 591.0], [20, 615.0]], CRC),
-             ('Potassium Monobasic Phosphate', [[10, 149.1], [20, 206.9]], CRC))]
+TABLE = [
+    dict(product=name, points=points, source=source, notes='test fixture from the draft table')
+    for name, points, source in (
+        ('Calcium Nitrate (ag grade)', [[20, 545.9]], 'Yara, YaraTera CALCINIT product sheet'),
+        ('Boric Acid', [[10, 35.7], [20, 47.7]], CRC),
+        ('Copper Sulfate (pentahydrate)', [[10, 262.3], [20, 311.0]], CRC),
+        ('Iron II Sulfate (Hepahydrate)', [[10, 311.1], [20, 468.2]], CRC),
+        ('Zinc Sulfate (Monohydrate)', [[10, 355.7], [20, 571.1]], CRC),
+        ('Sodium Molybdate (Dihydrate)', [[10, 455.9], [20, 462.9]], CRC),
+        ('Mg Nitrate', [[10, 934.4], [20, 971.1]], CRC),
+        ('Potassium Sulfate', [[10, 90.6], [20, 107.5]], CRC),
+        ('Magnesium Sulfate (Heptahydrate)', [[10, 551.7], [20, 659.8]], CRC),
+        ('Potassium Dibasic Phosphate', [[10, 591.0], [20, 615.0]], CRC),
+        ('Potassium Monobasic Phosphate', [[10, 149.1], [20, 206.9]], CRC),
+    )
+]
 UNSOURCED = {'Mn EDTA', 'Potassium Citrate'}
 
 
 def tomato(ratio, temperature):
     flow = workflow('Tomato (Howard Resh)')
     with mock.patch('flahax.grower_report.load_solubility_table', return_value=TABLE):
-        return flow, summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO', injection_ratio=ratio,
-                                     temperature_c=temperature)
+        return flow, summarize_batch(
+            flow,
+            PRODUCTS,
+            title='Tomato',
+            water_label='RO',
+            injection_ratio=ratio,
+            temperature_c=temperature,
+        )
 
 
 class LimitTests(unittest.TestCase):
@@ -52,7 +71,7 @@ class LimitTests(unittest.TestCase):
 
     def test_no_packaged_table_checks_nothing(self):
         self.assertEqual(load_solubility_table('no/such/solubility.json'), [])
-        grouping = group_tanks(rows(('Potassium Sulfate', .5)), PRODUCTS)
+        grouping = group_tanks(rows(('Potassium Sulfate', 0.5)), PRODUCTS)
         [row] = check_stock_solubility(grouping.tanks, 100, 20, table=[])
         self.assertEqual((row.status, row.limit_g_per_l, row.source), ('not_checked', None, None))
 
@@ -62,52 +81,98 @@ class StockSolubilityTests(unittest.TestCase):
         flow, summary = tomato(100, 20)
         grouping = group_tanks(flow.recommendation['salts'], PRODUCTS)
         found = check_stock_solubility(grouping.tanks, 100, 20, table=TABLE)
-        self.assertEqual({r.product for r in found}, {p.name for t in grouping.tanks for p in t.products})
+        self.assertEqual(
+            {r.product for r in found}, {p.name for t in grouping.tanks for p in t.products}
+        )
         for row in found:
             self.assertIsInstance(row, SolubilityRow)
             self.assertEqual(row.status, 'not_checked' if row.product in UNSOURCED else 'ok', row)
             self.assertEqual(row.tank, grouping.tank_of(row.product))
         k2so4 = next(r for r in found if r.product == 'Potassium Sulfate')
-        self.assertAlmostEqual(k2so4.stock_g_per_l, 100 * next(
-            p.grams_per_litre for t in grouping.tanks for p in t.products if p.name == 'Potassium Sulfate'))
+        self.assertAlmostEqual(
+            k2so4.stock_g_per_l,
+            100
+            * next(
+                p.grams_per_litre
+                for t in grouping.tanks
+                for p in t.products
+                if p.name == 'Potassium Sulfate'
+            ),
+        )
         self.assertEqual((k2so4.limit_g_per_l, k2so4.source), (107.5, CRC))
         # The summary checks the recipe it weighs (the pH plan's refit).
         self.assertNotEqual(summary['status'], 'blocked')
         weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
         self.assertEqual({r['product'] for r in summary['solubility']}, weighed)
         for row in summary['solubility']:
-            self.assertEqual(row['status'], 'not_checked' if row['product'] in UNSOURCED else 'ok', row)
+            self.assertEqual(
+                row['status'], 'not_checked' if row['product'] in UNSOURCED else 'ok', row
+            )
         self.assertTrue(all(r['note'] == SINGLE_SALT for r in summary['solubility']))
         self.assertFalse(any('does not dissolve' in w for w in summary['warnings']))
 
     def test_potassium_sulfate_at_1_200_and_10_c_blocks(self):
         _, summary = tomato(200, 10)
         row = next(r for r in summary['solubility'] if r['product'] == 'Potassium Sulfate')
-        self.assertEqual((row['status'], row['tank'], row['limit_g_per_l']), ('exceeds', 'B', 90.6))
+        self.assertEqual(
+            (row['status'], row['tank'], row['limit_g_per_l']), ('exceeds', 'B', 90.6)
+        )
         self.assertGreater(row['stock_g_per_l'], 90.6)
         self.assertEqual(summary['status'], 'blocked')
-        self.assertIn(f'Potassium Sulfate does not dissolve in tank B: {row["stock_g_per_l"]:.4g} g/L needed, '
-                      '90.6 g/L at 10 °C', summary['warnings'])
+        self.assertIn(
+            f'Potassium Sulfate does not dissolve in tank B: {row["stock_g_per_l"]:.4g} g/L needed, '
+            '90.6 g/L at 10 °C',
+            summary['warnings'],
+        )
         # Calcium nitrate has a 20 C point only: at 10 C it is not checked, never passed.
-        cal = next(r for r in summary['solubility'] if r['product'] == 'Calcium Nitrate (ag grade)')
+        cal = next(
+            r for r in summary['solubility'] if r['product'] == 'Calcium Nitrate (ag grade)'
+        )
         self.assertEqual(cal['status'], 'not_checked')
         self.assertIn('does not dissolve', render_batch_sheet(summary))
         self.assertIn('does not dissolve', render_report(summary))
 
     def test_a_block_elsewhere_is_never_downgraded(self):
         flow = workflow('Tomato (Howard Resh)')
-        with mock.patch('flahax.grower_report.load_solubility_table', return_value=TABLE), \
-                mock.patch('flahax.grower_report._water_and_limits',
-                           return_value=({}, [dict(symbol='Na', decision='exceeds_limit', analyticalPpm=99.0,
-                                                   maximumPpm=50.0, balancingChangesDecision=False, note='')])):
-            summary = summarize_batch(flow, PRODUCTS, title='T', water_label='RO', temperature_c=20)
+        with (
+            mock.patch('flahax.grower_report.load_solubility_table', return_value=TABLE),
+            mock.patch(
+                'flahax.grower_report._water_and_limits',
+                return_value=(
+                    {},
+                    [
+                        dict(
+                            symbol='Na',
+                            decision='exceeds_limit',
+                            analyticalPpm=99.0,
+                            maximumPpm=50.0,
+                            balancingChangesDecision=False,
+                            note='',
+                        )
+                    ],
+                ),
+            ),
+        ):
+            summary = summarize_batch(
+                flow, PRODUCTS, title='T', water_label='RO', temperature_c=20
+            )
         self.assertEqual(summary['status'], 'blocked')
 
     def test_a_product_without_a_record_is_not_checked_and_listed(self):
-        mine = dict(id='my-kno3', name='My Potassium Nitrate', formula='KNO3', elements={'N_NO3': 13.8, 'K': 38.6})
-        grouping = group_tanks([dict(id='my-kno3', name='My Potassium Nitrate', gramsPerLitre=.5)], PRODUCTS + [mine])
+        mine = dict(
+            id='my-kno3',
+            name='My Potassium Nitrate',
+            formula='KNO3',
+            elements={'N_NO3': 13.8, 'K': 38.6},
+        )
+        grouping = group_tanks(
+            [dict(id='my-kno3', name='My Potassium Nitrate', gramsPerLitre=0.5)], PRODUCTS + [mine]
+        )
         [row] = check_stock_solubility(grouping.tanks, 100, 20, table=TABLE)
-        self.assertEqual((row.product, row.status, row.limit_g_per_l), ('My Potassium Nitrate', 'not_checked', None))
+        self.assertEqual(
+            (row.product, row.status, row.limit_g_per_l),
+            ('My Potassium Nitrate', 'not_checked', None),
+        )
         _, summary = tomato(100, 20)
         sheet = render_batch_sheet(summary)
         self.assertIn('Solubility not checked', sheet)
@@ -127,26 +192,40 @@ class PackagedTableTests(unittest.TestCase):
         for record in self.table:
             self.assertTrue(record['source'])
             points = record['points']
-            self.assertTrue(all(a[0] < b[0] and a[1] <= b[1] for a, b in zip(points, points[1:])), record['product'])
+            self.assertTrue(
+                all(a[0] < b[0] and a[1] <= b[1] for a, b in zip(points, points[1:])),
+                record['product'],
+            )
         names = {r['product'] for r in self.table}
         self.assertFalse(names & {'Mn EDTA', 'Iron EDTA', 'Potassium Citrate', 'CH - micro'})
 
     def test_values_are_the_density_one_bound(self):
         records = {r['product']: r for r in self.table}
-        self.assertEqual(limit_at(records['Potassium Sulfate']['points'], 20), 99.5)      # CRC 9.95 %
-        self.assertAlmostEqual(limit_at(records['Magnesium Sulfate (Heptahydrate)']['points'], 25), 538.6)
+        self.assertEqual(limit_at(records['Potassium Sulfate']['points'], 20), 99.5)  # CRC 9.95 %
+        self.assertAlmostEqual(
+            limit_at(records['Magnesium Sulfate (Heptahydrate)']['points'], 25), 538.6
+        )
 
     def test_calcium_nitrate_floor_from_20_to_40_c(self):
-        points = next(r for r in self.table if r['product'] == 'Calcium Nitrate (ag grade)')['points']
+        points = next(r for r in self.table if r['product'] == 'Calcium Nitrate (ag grade)')[
+            'points'
+        ]
         self.assertEqual([limit_at(points, t) for t in (20, 25, 40)], [545.9] * 3)
         self.assertIsNone(limit_at(points, 15))
 
     def test_tomato_at_25_c_dissolves_and_sulfate_at_200_to_1_in_the_cold_does_not(self):
         flow = workflow('Tomato (Howard Resh)')
 
-        def packaged(ratio, temperature):   # the packaged table, not the test fixture
-            return summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO', injection_ratio=ratio,
-                                   temperature_c=temperature)
+        def packaged(ratio, temperature):  # the packaged table, not the test fixture
+            return summarize_batch(
+                flow,
+                PRODUCTS,
+                title='Tomato',
+                water_label='RO',
+                injection_ratio=ratio,
+                temperature_c=temperature,
+            )
+
         summary = packaged(100, 25)
         status = {r['product']: r['status'] for r in summary['solubility']}
         self.assertEqual({p for p, s in status.items() if s == 'not_checked'}, set(UNSOURCED))

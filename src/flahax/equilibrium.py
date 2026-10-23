@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Narrow, transparent aqueous-equilibrium kernels for FlahaX.
 
 This module intentionally does not claim full PHREEQC coverage. Its first
@@ -94,18 +98,18 @@ def davies_gamma(charge: int, ionic_strength: float) -> float:
         return 1.0
     root = math.sqrt(ionic_strength)
     log_gamma = -DAVIES_A_25C * charge * charge * (root / (1.0 + root) - 0.3 * ionic_strength)
-    return 10.0 ** log_gamma
+    return 10.0**log_gamma
 
 
 def _species_at_ph(ph: float, ionic_strength: float, log_pco2: float) -> dict[str, float]:
     gamma_1 = davies_gamma(1, ionic_strength)
     gamma_2 = davies_gamma(2, ionic_strength)
-    a_h = 10.0 ** -ph
+    a_h = 10.0**-ph
     a_co2 = 10.0 ** (LOG_K_CO2_HENRY_25C + log_pco2)
-    a_hco3 = 10.0 ** LOG_K1_CARBONIC_25C * a_co2 / a_h
-    a_co3 = 10.0 ** LOG_K2_CARBONIC_25C * a_hco3 / a_h
-    a_ca = 10.0 ** LOG_K_CALCITE_25C / a_co3
-    a_oh = 10.0 ** LOG_K_WATER_25C / a_h
+    a_hco3 = 10.0**LOG_K1_CARBONIC_25C * a_co2 / a_h
+    a_co3 = 10.0**LOG_K2_CARBONIC_25C * a_hco3 / a_h
+    a_ca = 10.0**LOG_K_CALCITE_25C / a_co3
+    a_oh = 10.0**LOG_K_WATER_25C / a_h
     return {
         "h": a_h / gamma_1,
         "oh": a_oh / gamma_1,
@@ -120,10 +124,14 @@ def _species_at_ph(ph: float, ionic_strength: float, log_pco2: float) -> dict[st
 
 def _charge_residual(ph: float, ionic_strength: float, log_pco2: float) -> float:
     species = _species_at_ph(ph, ionic_strength, log_pco2)
-    return 2.0 * species["ca"] + species["h"] - species["hco3"] - 2.0 * species["co3"] - species["oh"]
+    return (
+        2.0 * species["ca"] + species["h"] - species["hco3"] - 2.0 * species["co3"] - species["oh"]
+    )
 
 
-def solve_calcite_co2_equilibrium(log_pco2: float, temperature_c: float = 25.0) -> CalciteCo2Equilibrium:
+def solve_calcite_co2_equilibrium(
+    log_pco2: float, temperature_c: float = 25.0
+) -> CalciteCo2Equilibrium:
     """Solve open-CO2 calcite equilibrium with charge balance and Davies activities.
 
     Supported domain is exactly 25 °C. The equations are mass action for CO2,
@@ -135,7 +143,9 @@ def solve_calcite_co2_equilibrium(log_pco2: float, temperature_c: float = 25.0) 
     if not math.isfinite(log_pco2):
         raise DeliveryError("invalid_value", "log_pco2 must be finite")
     if temperature_c != 25.0:
-        raise DeliveryError("unsupported_temperature", "calcite CO2 kernel currently supports 25 °C only")
+        raise DeliveryError(
+            "unsupported_temperature", "calcite CO2 kernel currently supports 25 °C only"
+        )
     ionic_strength = 0.005
     ph = 7.0
     for _ in range(100):
@@ -150,7 +160,11 @@ def solve_calcite_co2_equilibrium(log_pco2: float, temperature_c: float = 25.0) 
         ph = (lower + upper) / 2.0
         species = _species_at_ph(ph, ionic_strength, log_pco2)
         updated = 0.5 * (
-            species["h"] + species["oh"] + species["hco3"] + 4.0 * species["co3"] + 4.0 * species["ca"]
+            species["h"]
+            + species["oh"]
+            + species["hco3"]
+            + 4.0 * species["co3"]
+            + 4.0 * species["ca"]
         )
         if abs(updated - ionic_strength) < 1e-12:
             ionic_strength = updated
@@ -182,8 +196,10 @@ def solve_gypsum_equilibrium(temperature_c: float = 25.0) -> GypsumEquilibrium:
     product. This is deliberately a pure-water, 25 °C kernel.
     """
     if temperature_c != 25.0:
-        raise DeliveryError("unsupported_temperature", "gypsum kernel currently supports 25 °C only")
-    target_iap = 10.0 ** LOG_K_GYPSUM_25C
+        raise DeliveryError(
+            "unsupported_temperature", "gypsum kernel currently supports 25 °C only"
+        )
+    target_iap = 10.0**LOG_K_GYPSUM_25C
     lower, upper = 0.0, 0.2
     for _ in range(100):
         free_molal = (lower + upper) / 2.0
@@ -197,7 +213,7 @@ def solve_gypsum_equilibrium(temperature_c: float = 25.0) -> GypsumEquilibrium:
     gamma = davies_gamma(2, ionic_strength)
     activity = gamma * free_molal
     iap = activity * activity
-    calcium_sulfate = 10.0 ** LOG_BETA_CASO4_25C * iap
+    calcium_sulfate = 10.0**LOG_BETA_CASO4_25C * iap
     total = free_molal + calcium_sulfate
     return GypsumEquilibrium(
         ionic_strength=ionic_strength,
