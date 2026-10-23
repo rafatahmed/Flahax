@@ -119,6 +119,9 @@ def ask_analysis(p, store):
             mg = to_elements(values, units, alkalinity, micro)
             cations, anions, apart, parts = water_balance(mg)
             p.say(f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, {apart:.1f} % apart.')
+            if not values.get('Cl'):
+                p.say('  Note: chloride is not measured (or zero). FlahaX closes the analysis at its pH on chloride; '
+                      'if it does not close exactly, the pH plan is blocked. Ask your lab for chloride and sodium.')
             if apart <= WATER_SCREEN_PERCENT:
                 break
             big = sorted(parts, key=lambda ion: -abs(parts[ion]))[:3]
