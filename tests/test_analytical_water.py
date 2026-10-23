@@ -87,13 +87,12 @@ class BalanceBeforeAdjustingTests(unittest.TestCase):
         b = balance_water_analysis(kno3 | {'CO3-2': 0.}, measured_ph=measured_at_own_ph(kno3 | {'CO3-2': 0.}))
         self.assertEqual(b.carbon_source, 'none')
 
-    def test_fixed_zero_chloride_is_never_adjusted_and_no_other_ion_is_tried(self):
-        # 1% more potassium than nitrate: out of balance, chloride measured zero.
+    def test_fixed_zero_chloride_is_never_adjusted_and_closes_on_the_alkalinity(self):
+        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100, owner 2026-10-23).
         water = {'K+': .00505, 'NO3-': .005, 'CO3-2': .0002, 'Cl-': 0.}
-        with self.assertRaises(DeliveryError) as raised:
-            balance_water_analysis(water, measured_ph=7)
-        self.assertEqual(raised.exception.code, 'fixed_balance_ion')
-        self.assertIn('No other ion is adjusted', str(raised.exception))
+        closed = balance_water_analysis(water, measured_ph=7)
+        self.assertEqual((closed.balance_ion, closed.reconciliation), ('CO3-2', 'closed_on_alkalinity'))
+        self.assertEqual(closed.totals['Cl-'], 0.)
         with self.assertRaises(DeliveryError) as raised:
             balance_water_analysis(water, measured_ph=7, balance_ion='Na+')
         self.assertEqual(raised.exception.code, 'missing_balance_ion')

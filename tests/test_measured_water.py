@@ -66,8 +66,8 @@ class MeasuredWaterTests(unittest.TestCase):
             (dict(totals=STATION_104, measured_ph=7.8, alkalinity_eq_per_kg=.003), 'ambiguous_carbon'),
             (dict(totals=WITHOUT_CARBON, measured_ph=7.8), 'missing_carbon'),
             (dict(totals=STATION_104, measured_ph=7.8, balance_ion='SO4-2'), 'unsupported_balance_ion'),
-            # Without chloride the well is far out of balance; the screen is widened to reach the ion check.
-            (dict(totals={k: v for k, v in STATION_104.items() if k != 'Cl-'}, measured_ph=7.8,
+            # A named balance ion that is absent still stops (no chloride closes on alkalinity by default, #100).
+            (dict(totals={k: v for k, v in STATION_104.items() if k != 'Na+'}, measured_ph=7.8, balance_ion='Na+',
                   maximum_imbalance_percent=100), 'missing_balance_ion'),
             (dict(totals=STATION_104, measured_ph=15), 'out_of_range'),
             (dict(totals=STATION_104, measured_ph=7.8, temperature_c=20), 'temperature_out_of_range'),
@@ -117,6 +117,29 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
                                           equilibrium=equilibrium)
         self.assertEqual(result.stages['chemistry'].status, 'blocked')
         self.assertEqual(result.stages['chemistry'].error_code, 'out_of_range')
+
+
+class NoChlorideTests(unittest.TestCase):
+    """#100 (owner 2026-10-23): a report without chloride closes on the alkalinity, not a block."""
+
+    def analysis(self, **extra):
+        totals = {'Ca+2': 1.6e-3, 'NO3-': 1e-3, **extra}
+        return balance_water_analysis(totals, measured_ph=7.5, alkalinity_eq_per_kg=2e-3, phases=[])
+
+    def test_no_chloride_closes_on_the_alkalinity(self):
+        for extra in ({}, {'Cl-': 0.}):              # not measured, and measured zero
+            with self.subTest(extra=extra):
+                water = self.analysis(**extra)
+                self.assertEqual(water.reconciliation, 'closed_on_alkalinity')
+                self.assertEqual(water.balance_ion, 'CO3-2')
+                self.assertLess(abs(water.state.charge_balance), 1e-12)
+                self.assertEqual(water.analytical_totals, {'Ca+2': 1.6e-3, 'NO3-': 1e-3, **extra})
+                self.assertGreater(water.balance_adjustment_molal, 0)     # more carbonate closes excess calcium
+                self.assertEqual(water.totals.get('Cl-', 0.), 0.)
+
+    def test_chloride_present_still_closes_on_chloride(self):
+        water = self.analysis(**{'Cl-': 2e-4})
+        self.assertEqual((water.balance_ion, water.reconciliation), ('Cl-', 'assumed'))
 
 
 if __name__ == '__main__':

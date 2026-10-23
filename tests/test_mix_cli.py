@@ -187,15 +187,17 @@ class MixTests(unittest.TestCase):
         saved = Store(self.home).load('waters', 'typo')
         self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=3)
 
-    def test_a_report_without_chloride_says_ask_your_lab(self):
-        # Owner decision on #100: keep closing on chloride, and say plainly what to measure.
+    def test_a_report_without_chloride_is_not_blocked(self):
+        # #100, owner 2026-10-23: no chloride -> closed on the alkalinity, noted in the full report only.
         clean = water('no-cl', {'Ca': '60.12', 'NO3': '62.0049', 'Alk': '100'}, alkalinity='2')
-        code, lines, _ = self.run_mix(SPEC + clean + TOMATO + CATALOGUE + NITRIC + END, '--output',
-                                      str(Path(self.tmp.name) / 'no-cl'))
-        self.assertTrue(any(l.startswith('  Note: chloride is not measured') for l in lines), lines)
-        self.assertEqual(code, 3)
-        reason = next(l for l in lines if l.startswith('  ! chemistry:'))
-        self.assertIn('Ask your lab for chloride and sodium', reason)
+        target = Path(self.tmp.name) / 'no-cl'
+        code, lines, _ = self.run_mix(SPEC + clean + TOMATO + CATALOGUE + NITRIC + ['', '3', ''], '--output',
+                                      str(target))
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertFalse(any('chloride' in l.lower() for l in lines), lines)
+        report = (target / 'report.html').read_text(encoding='utf-8')
+        self.assertIn('has no chloride, so it is closed on the alkalinity', report)
+        self.assertNotIn('chloride', (target / 'batch-sheet.html').read_text(encoding='utf-8').lower())
 
     def test_blank_is_never_guessed(self):
         values = dict(BALANCED, Fe='', Mn='0', Zn='<0.02')
