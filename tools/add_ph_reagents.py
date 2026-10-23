@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""One-off data change for #75: sourced pH-up reagents in the catalogue (owner decisions 2026-10-22).
+"""One-off data change for #75: sourced pH-up reagents in the catalogue (owner decisions
+2026-10-22).
 
 Adds Potassium Hydroxide (45% solution) and Potassium Bicarbonate, links Potassium
 Carbonate to its sourced identity-theoretical analysis, and marks all three
@@ -47,7 +48,8 @@ def main():
             '209619', 'Potassium carbonate, ACS reagent >=99.0% (209619) product specification'
         ),
         role='ph_reagent',
-        notes='Pure K2CO3 theoretical analysis (replaces the unsourced 56.581 %, owner decision 2026-10-22, #75). '
+        notes='Pure K2CO3 theoretical analysis (replaces the unsourced 56.581 %, owner decision '
+        '2026-10-22, #75). '
         'pH-up reagent only; never a nutrient salt in formulation.',
     )
     if 'Potassium Hydroxide (45% solution)' not in names:
@@ -66,7 +68,8 @@ def main():
                 'role': 'ph_reagent',
                 'massFraction': KOH_FRACTION,
                 'densityKgPerL': KOH_DENSITY,
-                'notes': '45 % w/w aqueous solution (43.0-47.0 % KOH by titration), 1.456 g/mL at 25 C; '
+                'notes': '45 % w/w aqueous solution (43.0-47.0 % KOH by titration), 1.456 g/mL '
+                'at 25 C; '
                 'product-mass dosing. pH-up reagent only; never a nutrient salt in formulation.',
             }
         )
@@ -85,7 +88,8 @@ def main():
                 ),
                 'role': 'ph_reagent',
                 'massFraction': 1.0,
-                'notes': 'Pure KHCO3 theoretical analysis; ACS assay 99.7-100.5 %. pH-up reagent only; '
+                'notes': 'Pure KHCO3 theoretical analysis; ACS assay 99.7-100.5 %. pH-up '
+                'reagent only; '
                 'adds alkalinity (bicarbonate); never a nutrient salt in formulation.',
             }
         )
@@ -113,8 +117,10 @@ def main():
                     'accessed': ACCESSED,
                 },
                 'status': 'aqueous_solution',
-                'notes': 'Identity is the KOH solute; theoretical analysis is the pure-KOH value (K 69.69 %). The 45 % w/w '
-                'solution is K 31.36 % and is dosed by product mass. Molecular weight is null because a solution '
+                'notes': 'Identity is the KOH solute; theoretical analysis is the pure-KOH '
+                'value (K 69.69 %). The 45 % w/w '
+                'solution is K 31.36 % and is dosed by product mass. Molecular weight is null '
+                'because a solution '
                 'has none (solute 56.11). Added 2026-10-22 as a pH-up reagent (#75).',
             }
         )
@@ -136,7 +142,8 @@ def main():
                     'accessed': ACCESSED,
                 },
                 'status': 'identity_consistent',
-                'notes': 'Added 2026-10-22 as a pH-up reagent (#75). Sigma-Aldrich 237205, ACS reagent, assay 99.7 % '
+                'notes': 'Added 2026-10-22 as a pH-up reagent (#75). Sigma-Aldrich 237205, ACS '
+                'reagent, assay 99.7 % '
                 '(ACS 99.7-100.5 %).',
             }
         )

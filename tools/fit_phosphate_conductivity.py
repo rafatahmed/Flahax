@@ -61,7 +61,8 @@ KHPO4_NOTE = (
 
 
 def points(fixture):
-    """Yield (salt, c mmol/dm3, Lambda, totals mol/kgw, kappa_obs mS/cm) for every Table III row."""
+    """Yield (salt, c mmol/dm3, Lambda, totals mol/kgw, kappa_obs mS/cm) for every Table III
+    row."""
     for c, molar in fixture['KH2PO4']:
         m = c / 1000 / WATER_DENSITY_KG_DM3
         yield 'KH2PO4', c, molar, {'K+': m, 'PO4-3': m}, molar * c / 1000

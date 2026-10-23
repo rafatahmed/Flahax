@@ -31,8 +31,10 @@ from .root_finding import shrink_bracket
 
 BALANCE_IONS = {'Cl-': -1, 'Na+': 1}
 DEFAULT_MAXIMUM_IMBALANCE_PERCENT = 5.0
-# Numerical closure, not an analytical screen: a composition whose charge residual at the measured pH
-# is within this fraction of its total ionic charge (0.0001 %) is already balanced and left unchanged.
+# Numerical closure, not an analytical screen: a composition whose charge residual at the measured
+# pH
+# is within this fraction of its total ionic charge (0.0001 %) is already balanced and left
+# unchanged.
 # Passing the 5 % screen above does not make an analysis balanced.
 CLOSURE_TOLERANCE = 1e-6
 UNITS = 'mol/kg water'
@@ -59,7 +61,8 @@ NUTRIENT_BASES = {
 
 
 ASK_LAB = (
-    'Ask your lab for chloride and alkalinity: FlahaX closes the small gap every analysis has on chloride, '
+    'Ask your lab for chloride and alkalinity: FlahaX closes the small gap every analysis has '
+    'on chloride, '
     'or on the alkalinity when there is no chloride.'
 )
 
@@ -236,7 +239,8 @@ def _carbon_for_alkalinity(totals, ph, alkalinity, phases):
 
 
 def _close_on_carbonate(working, state, measured_ph, phases, imbalance, carbon_source, record):
-    """Adjust total inorganic carbon until the charge closes at the measured pH (secant on CO3-2)."""
+    """Adjust total inorganic carbon until the charge closes at the measured pH (secant on
+    CO3-2)."""
     analysed = working['CO3-2']
     lo, f_lo = analysed, state.charge_balance
     hi = analysed * 1.01 + 1e-9
@@ -250,7 +254,8 @@ def _close_on_carbonate(working, state, measured_ph, phases, imbalance, carbon_s
         if carbon <= 0:
             raise DeliveryError(
                 'alkalinity_exhausted',
-                f'the analysis is {imbalance:.2f}% out of balance and has no chloride; closing it on '
+                f'the analysis is {imbalance:.2f}% out of balance and has no chloride; closing '
+                f'it on '
                 f'the alkalinity would need negative carbonate. {ASK_LAB}',
             )
         lo, f_lo = hi, f_hi
@@ -376,7 +381,8 @@ def balance_water_analysis(
                 f'{name} is reported both as a value and below detection',
             )
         totals[name] = 0.0
-    # Measured zeros and below-detection components are held fixed, like any component named in ``fixed``.
+    # Measured zeros and below-detection components are held fixed, like any component named in
+    # ``fixed``.
     fixed = tuple(
         sorted(set(fixed) | {k for k, v in totals.items() if v == 0} | set(below_detection))
     )
@@ -463,7 +469,8 @@ def balance_water_analysis(
         and (balance_ion in fixed or analysed <= 0)
         and carbon_source != 'none'
     ):
-        # No chloride to adjust: close the small gap on the carbonate, the value the measured pH already
+        # No chloride to adjust: close the small gap on the carbonate, the value the measured pH
+        # already
         # depends on and usually the least precise on a report (owner decision 2026-10-23, #100).
         return _close_on_carbonate(
             working, state, measured_ph, phases, imbalance, carbon_source, record
@@ -502,8 +509,10 @@ def balance_water_analysis(
         if abs(adjustment) > balance_ion_uncertainty_percent / 100 * analysed:
             raise DeliveryError(
                 'reconciliation_out_of_bounds',
-                f'closing the charge needs {100 * adjustment / analysed:+.2f}% {balance_ion}, outside its '
-                f'stated ±{balance_ion_uncertainty_percent:g}% uncertainty; chemistry needs review or a '
+                f'closing the charge needs {100 * adjustment / analysed:+.2f}% {balance_ion}, '
+                f'outside its '
+                f'stated ±{balance_ion_uncertainty_percent:g}% uncertainty; chemistry needs '
+                f'review or a '
                 'further analysis',
             )
         reconciliation = 'reconciled'

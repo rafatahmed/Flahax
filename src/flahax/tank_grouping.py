@@ -35,7 +35,10 @@ from dataclasses import dataclass
 from .delivery_contracts import DELIVERY_SCHEMA_VERSION, DeliveryError, validate_compatibility_rule
 from .engine import PH_REAGENT
 
-SOURCE = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules'
+SOURCE = (
+    'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 '
+    'mixing rules'
+)
 MICRONUTRIENTS = frozenset({'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'})
 # Elements a micronutrient product may carry besides its micronutrients (counter-ions).
 _MICRO_COMPANIONS = frozenset({'S', 'Na', 'Cl'})
@@ -81,7 +84,8 @@ ANALOGUE = {
     'Mg Nitrate': 'KRISTA-MAG',
     'Magnesium Sulfate (Heptahydrate)': 'KRISTA-MgS',
 }
-# Page 65 footnotes on compatible pairs: (*) solubility as potassium sulfate, (**) as magnesium sulfate.
+# Page 65 footnotes on compatible pairs: (*) solubility as potassium sulfate, (**) as magnesium
+# sulfate.
 FOOTNOTES = {
     frozenset({'KRISTA-K', 'AS'}): 'mixture solubility as potassium sulfate (p. 65 *)',
     frozenset({'KRISTA-MAG', 'KRISTA-SOP'}): 'mixture solubility as magnesium sulfate (p. 65 **)',
@@ -91,7 +95,8 @@ FOOTNOTES = {
 }
 FLAHAX_RULE = 'FlahaX rule (owner decision, rafatahmed/Flahax#79)'
 MICRO_PHOSPHATE = (
-    'micronutrients stay out of phosphate concentrates, where manganese and iron phosphates can form '
+    'micronutrients stay out of phosphate concentrates, where manganese and iron phosphates can '
+    'form '
     '(#78); with calcium their small doses are harmless (FlahaX rule)'
 )
 TANK_A_RULE = (
@@ -154,7 +159,8 @@ def product_classes(record):
 
 def _class_conflict(a, b, rules=CLASS_RULES):
     if 'micronutrient' in a | b:
-        # FlahaX rule: the page 63/65 rules are waived for micronutrients (small doses), but they stay
+        # FlahaX rule: the page 63/65 rules are waived for micronutrients (small doses), but they
+        # stay
         # out of phosphate concentrates (manganese and iron phosphates, #78).
         return MICRO_PHOSPHATE if 'phosphate' in a | b else None
     for x, y, reason, *_ in rules:

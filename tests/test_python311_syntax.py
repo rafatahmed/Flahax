@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Code must run on the oldest supported Python (3.11): no f-string reusing its own quote inside a field.
+"""Code must run on the oldest supported Python (3.11): no f-string reusing its own quote inside a
+field.
 
-Python 3.12 (PEP 701) allows f'{x.strip(' ')}'; 3.11 rejects it, so a module written on a newer Python
-would fail to import on 3.11. Runs where tokenize reports f-string parts (Python 3.12 and later); on 3.11
+Python 3.12 (PEP 701) allows f'{x.strip(' ')}'; 3.11 rejects it, so a module written on a newer
+Python
+would fail to import on 3.11. Runs where tokenize reports f-string parts (Python 3.12 and later);
+on 3.11
 the import of every module already catches it.
 """
 

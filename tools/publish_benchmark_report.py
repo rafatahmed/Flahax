@@ -132,7 +132,8 @@ def csv_bytes(rows, fields):
 
 
 def scorecard_notice(kernel_pass, kernel_total, chemistry, missing_text, missing_count, manual):
-    """Admonition for the page head: a warning naming failed gates, or a note when none failed (#66)."""
+    """Admonition for the page head: a warning naming failed gates, or a note when none failed
+    (#66)."""
     workflow = (
         f"The [manual GitHub benchmark workflow]({manual['url']}) completed with "
         f"conclusion **{manual['conclusion']}**."
@@ -406,7 +407,8 @@ def render(
     )
     names = formula_names(source)
     recipe_table = "\n".join(
-        f"| {case_label(c['id'], names)} | {sum(r['passes'] for r in c['rows'])}/{len(c['rows'])} | "
+        f"| {case_label(c['id'], names)} | "
+        f"{sum(r['passes'] for r in c['rows'])}/{len(c['rows'])} | "
         f"{'Pass' if c['whole_recipe_passes'] else 'Miss'} |"
         for c in report["formulation"]["cases"]
     )
@@ -620,7 +622,7 @@ redistributed files; the archive explains the path-only redaction.
 |---|---:|---|
 {recipe_table}
 :::
-"""
+"""  # noqa: E501
     (site / "evidence" / (page_stem + ".md")).write_text(page, encoding="utf-8")
     return destination
 

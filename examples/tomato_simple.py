@@ -76,7 +76,8 @@ def run():
         assumptions=[
             'Shipped Howard Resh tomato formula; RO water with no nutrients.',
             'EC is the experimental speciation estimate (McCleskey 2012), not a measurement.',
-            'Measure EC and pH after mixing; this is a planning calculation, not a dosing instruction.',
+            'Measure EC and pH after mixing; this is a planning calculation, not a dosing '
+            'instruction.',
         ],
     )
 
@@ -84,17 +85,20 @@ def run():
 def main():
     report = run()
     print(
-        f"{report['formula']} in RO water: {'every target met' if report['feasible'] else 'some targets missed'}"
+        f"{report['formula']} in RO water: "
+        f"{'every target met' if report['feasible'] else 'some targets missed'}"
     )
     print(f"\nWeigh for {report['batch_litres']} L:")
     for item in report['recipe']:
         print(
-            f"  {item['name']:<38} {item['grams_in_batch']:9.1f} g   ({item['grams_per_litre']:.4f} g/L)"
+            f"  {item['name']:<38} {item['grams_in_batch']:9.1f} g   "
+            f"({item['grams_per_litre']:.4f} g/L)"
         )
     print('\nNutrients (mg/L): target -> delivered')
     for row in report['nutrients']:
         print(
-            f"  {row['symbol']:<6} {row['target']:8.2f} -> {row['final']:8.2f}  ({row['deltaPct']:+.2f}%)"
+            f"  {row['symbol']:<6} {row['target']:8.2f} -> {row['final']:8.2f}  "
+            f"({row['deltaPct']:+.2f}%)"
         )
     balance = report['ion_balance']
     print(
@@ -103,7 +107,8 @@ def main():
     )
     ec = report['ec']
     print(
-        f"Estimated EC25: {ec['ec25_ms_cm']:.2f} mS/cm at pH {ec['ph']:.2f} ({ec['status']}, experimental)"
+        f"Estimated EC25: {ec['ec25_ms_cm']:.2f} mS/cm at pH {ec['ph']:.2f} ({ec['status']}, "
+        f"experimental)"
     )
     if not 5.3 <= ec['ph'] <= 5.8:
         print(

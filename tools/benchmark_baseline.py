@@ -81,7 +81,8 @@ def provenance():
         ROOT / "pyproject.toml",
         ROOT / ".github/workflows/benchmark.yml",
         ROOT
-        / "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv",
+        / "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc"
+        / "data/bench_formulation_variants.csv",
         Path(__file__).resolve(),
     ]:
         inputs[path.relative_to(ROOT).as_posix()] = digest(path)
@@ -362,7 +363,8 @@ def main(argv=None):
                 failed = True
         path = (
             ROOT
-            / "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc/data/bench_formulation_variants.csv"
+            / "docs/site/evidence/audit/2026-10-17-flahax-vs-horticalc"
+            / "data/bench_formulation_variants.csv"
         )
         report["historical"] = historical(path)
     if args.asv_results:

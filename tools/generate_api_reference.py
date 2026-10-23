@@ -35,17 +35,25 @@ def render():
         '| Task | Entry point | Contract |',
         '|---|---|---|',
         '| Nutrient fit | `recommend`, `solve_weights` | Elemental mg/L in; product g/L out |',
-        '| Staged site workflow | `plan_fertilizer_workflow` | Explicit water; inspect every stage status |',
-        '| One mixed chemistry solve | `solve_catalogue_product_doses` | Product g/kg water; fixed pH |',
+        '| Staged site workflow | `plan_fertilizer_workflow` | Explicit water; inspect every '
+        'stage status |',
+        '| One mixed chemistry solve | `solve_catalogue_product_doses` | Product g/kg water; '
+        'fixed pH |',
         '| Calculated pH | `calculate_equilibrium_ph` | Complete analytical mol/kg-water totals |',
-        '| Nitric reagent volume | `plan_equilibrium_delivery` | Final solvent mass, assay and density |',
-        '| Standard acid candidates | `plan_acid_options` | Workflow restricts to nitric/phosphoric |',
+        '| Nitric reagent volume | `plan_equilibrium_delivery` | Final solvent mass, assay and '
+        'density |',
+        '| Standard acid candidates | `plan_acid_options` | Workflow restricts to '
+        'nitric/phosphoric |',
         '| Stock compatibility | `plan_stocks` | Sourced rules and solubility limits required |',
-        '| Measured titration | `plan_ph` | Matching measured curve, not inferred water chemistry |',
-        '| Approximate EC | `estimate_manufacturer_ec` | Restricted pre-acid irrigation screening |',
+        '| Measured titration | `plan_ph` | Matching measured curve, not inferred water '
+        'chemistry |',
+        '| Approximate EC | `estimate_manufacturer_ec` | Restricted pre-acid irrigation '
+        'screening |',
         '| Calibrated EC | `plan_ec_delivery` | Matching measured profiles |',
-        '| Injector requirements | `size_injection_requirements` | Volume/flow only, not model selection |',
-        '| Calibrated delivery | `plan_pump_command`, `compose_delivery_plan` | Planning only; no hardware I/O |',
+        '| Injector requirements | `size_injection_requirements` | Volume/flow only, not model '
+        'selection |',
+        '| Calibrated delivery | `plan_pump_command`, `compose_delivery_plan` | Planning only; '
+        'no hardware I/O |',
         '',
         '## Compatibility and error handling',
         '',

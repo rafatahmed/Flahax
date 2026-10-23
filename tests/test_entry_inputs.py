@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bad input at every entry point gets a plain message and an exit code, never a traceback (#117)."""
+"""Bad input at every entry point gets a plain message and an exit code, never a traceback
+(#117)."""
 
 import contextlib
 import io

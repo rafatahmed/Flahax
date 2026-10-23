@@ -54,7 +54,8 @@ with tempfile.TemporaryDirectory(prefix='flahax-debug-') as tmp:
         text += (
             '\nEQUILIBRIUM_PHASES 1\n Fix_H+ -6 HNO3 1\nSELECTED_OUTPUT\n -file '
             + name
-            + '.sel\n -reset false\n -high_precision true\n -pH true\n -percent_error true\n -pe true\n -totals Fe(3) Fe(2) N(5) N(-3) Dtp\n -equilibrium_phases Fix_H+\nEND\n'
+            + '.sel\n -reset false\n -high_precision true\n -pH true\n -percent_error true\n '
+            '-pe true\n -totals Fe(3) Fe(2) N(5) N(-3) Dtp\n -equilibrium_phases Fix_H+\nEND\n'
         )
         (folder / (name + '.pqi')).write_text(text)
         result = subprocess.run(
