@@ -1,4 +1,4 @@
-# FlahaX 0.6.0 — User Manual
+# FlahaX 0.6.1.dev0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 

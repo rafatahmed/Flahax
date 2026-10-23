@@ -26,6 +26,29 @@ They are kept here because the records cite them.
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
 
+## 0.6.0 publication (2026-10-24)
+
+0.6.0 was published to PyPI on **2026-10-24** (22:24 UTC on 2026-10-23) by the hardened release
+workflow ([run 40032809873](https://github.com/rafatahmed/Flahax/actions/runs/40032809873)), triggered by the GitHub Release for tag `v0.6.0` on `main` at
+`03e03ef` (merge of #156, the finalize step). Hosted CI on that commit had passed on Linux
+(Python 3.11-3.14), Windows and macOS (3.13), with the docs build and the live PHREEQC replay.
+
+| Check | Result |
+|---|---|
+| Release guard | Tag `v0.6.0` matched `pyproject.toml`; 0.6.0 was new on PyPI |
+| Workflow tests | Python 3.11, 3.12, 3.13 and 3.14 and the live PHREEQC replay passed on the tagged commit |
+| Approval | The owner approved the `pypi` deployment after the gates passed |
+| PyPI upload | Wheel 22:24:31 UTC (288,855 bytes); sdist 22:24:33 UTC (5,437,125 bytes). PyPI reports 0.6.0 with licence `Apache-2.0`, `Requires-Python >=3.11`, Development Status 4 - Beta, no runtime dependency, not yanked |
+| Fresh install from PyPI | New Python 3.14 virtual environment outside the checkout, `pip install flahax==0.6.0`: `flahax --version` prints FlahaX 0.6.0; 135 public names; the README example meets every target within 1 %; the packaged manual is the 0.6.0 manual; `flahax batch` writes the sheet, report and summary; `flahax mix --help` lists `--plain` |
+| Documentation | Read the Docs `stable` serves the restructured site (#155); old addresses such as `growers.html` redirect |
+| Archive | Zenodo version DOI [10.5281/zenodo.23605679](https://doi.org/10.5281/zenodo.23605679); concept DOI [10.5281/zenodo.23605678](https://doi.org/10.5281/zenodo.23605678) |
+| Wording | The packaged changelog and manual are dated 2026-10-24 (finalize step, #71) |
+
+| File | SHA-256 |
+|---|---|
+| `flahax-0.6.0-py3-none-any.whl` | `06954424329c5a128acc713cdbdea7e2e6f8cab7d9447706a74ffd507c1cfa70` |
+| `flahax-0.6.0.tar.gz` | `8453b7004844ba6295b57357e3eacc2185e9e8284ce7de2d6971782d052b82a2` |
+
 ## 0.5.0 publication (2026-10-20)
 
 0.5.0 was published to PyPI on **2026-10-20** (23:51 UTC) by the hardened release
