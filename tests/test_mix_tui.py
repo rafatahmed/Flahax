@@ -199,6 +199,14 @@ class FrameTests(unittest.TestCase):
         self.assertTrue(all(len(line) <= 79 for line in lines))
         self.assertTrue(any(line.endswith('…') for line in lines))
 
+    def test_no_faint_text(self):
+        # Owner's trial 2026-10-23: faint text (SGR 2) vanished on a translucent grey theme,
+        # hiding the key help, the inactive steps and the "Filter:" label.
+        for width in (90, 120):
+            for kind in ('choice', 'filter', 'ticks', 'field'):
+                lines = frame(self.wizard(), Question(kind, 'Q', ['a', 'b']), width, 30, UTF8)
+                self.assertFalse(any('\x1b[2m' in line for line in lines), (width, kind))
+
     def test_frame_ascii_fallback(self):
         text = '\n'.join(frame(self.wizard(), self.question(), 90, 30, glyphs('cp437')))
         self.assertNotIn('─', text)
