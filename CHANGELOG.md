@@ -36,6 +36,7 @@ single-salt lower bounds, and there is no physical validation yet (#41).
 
 ### Changed
 
+- The documentation site is organised for its readers (Diátaxis): Get started, a grower, an agronomist and a developer and researcher guide, Reference (command line, Python API, input files, error codes), Explanation, Evidence and Project, with diagrams; moved pages redirect from their old addresses.
 - `flahax --help` describes every command, with examples and links to the documentation and the issue tracker; the README follows the order a reader needs (installation, quick start, commands, troubleshooting); the changelog follows Keep a Changelog 1.1.0 for every release.
 - Supplier labels may differ from their chemical's charge balance by up to 1 % (was 0.1 %) (#93).
 - A water report without chloride closes its charge balance on alkalinity instead of being blocked (#100).

@@ -12,7 +12,7 @@ requirements and scope; a result from one method does not validate another.
 
 For the new **no-new-measurements** manufacturer-anchor screening path and
 interactive CLI, see [site planning](site-planning.md) and the
-[source-sheet review](source-sheet-review.md). The calibrated method below
+[source-sheet review](../evidence/source-sheet-review.md). The calibrated method below
 is optional and separate; no measured profile is required by the new screening
 command. Neither method invents concentrated-stock evidence.
 

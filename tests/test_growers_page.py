@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The growers page's worked example (#80) must match what flahax batch produces."""
+"""The worked example in "A batch from files" (#80, was the growers page) matches flahax batch."""
 
 import contextlib
 import io
@@ -14,7 +14,7 @@ import unittest
 
 from flahax.batch_cli import main as batch
 
-PAGE = Path(__file__).resolve().parents[1] / 'docs/site/growers.md'
+PAGE = Path(__file__).resolve().parents[1] / 'docs/site/agronomist/batch-command.md'
 WELL = dict(
     id='station-104',
     measured_ph=7.8,

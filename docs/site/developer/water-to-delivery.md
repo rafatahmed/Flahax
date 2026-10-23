@@ -35,7 +35,7 @@ authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)
 lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
 Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
 requires confirmation before physical use.
-See [traceable materials](materials.md) for supplying that grade or lot.
+See [traceable materials](../agronomist/formula-and-products.md) for supplying that grade or lot.
 
 ## Public orchestration
 

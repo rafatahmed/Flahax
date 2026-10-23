@@ -218,8 +218,8 @@ or phosphoric acid. EC is bounded manufacturer-anchor screening, not a
 general concentrated-stock model. Equipment sizing gives flow/volume
 requirements, not a manufacturer model or actuator commands.
 For a grower report and printable batch sheet from one formula and one water,
-use `flahax batch` (see [batch report, sheet and tanks](grower-outputs.md)).
-See [site inputs and schemas](site-planning.md), [source-sheet review](source-sheet-review.md)
+use `flahax batch` (see [batch report, sheet and tanks](../agronomist/reading-results.md)).
+See [site inputs and schemas](site-planning.md), [source-sheet review](../evidence/source-sheet-review.md)
 and [current development status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md).
 
 ## Source water chemistry from a laboratory analysis (0.4.0)

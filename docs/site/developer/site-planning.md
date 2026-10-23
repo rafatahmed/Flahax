@@ -83,7 +83,7 @@ Pass this object to `python -m flahax ec`: **1.52 mS/cm**, status
 not the pepper recipe. Coefficients come from the supplied SQM sheet, with
 source hash/page retained in results. Exact commercial identities are required;
 generic catalogue names are not aliases. Full method limits and source review:
-[source-sheet review](source-sheet-review.md).
+[source-sheet review](../evidence/source-sheet-review.md).
 
 Alternatively provide `water_tds_ppm` and `tds_factor`, not water EC as well.
 This is a meter-equivalent conversion, not a universal gravimetric TDS law.

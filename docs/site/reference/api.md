@@ -6,9 +6,5 @@
 These references describe the records and units used by the public planning
 functions. Validation of a record does not establish physical performance.
 
-```{toctree}
-:maxdepth: 1
-
-Input schemas and validation <../guide/delivery-contracts>
-Units and batch quantities <../guide/delivery-quantities>
-```
+- [Input schemas and validation](../developer/delivery-contracts.md)
+- [Units and batch quantities](../developer/delivery-quantities.md)
