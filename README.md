@@ -209,7 +209,7 @@ GitHub's "Cite this repository" button reads
 
 FlahaX is written and maintained by Rafat A. Al Khashan
 ([ORCID 0009-0009-4692-4552](https://orcid.org/0009-0009-4692-4552),
-rafat.khashan82@gmail.com) at Flaha.
+rafat.khashan82@gmail.com) at Flaha Agri Tech.
 
 It builds on published data, each value cited where it is used:
 thermodynamic constants from USGS PHREEQC 3.8.6 (Parkhurst and Appelo 2013,

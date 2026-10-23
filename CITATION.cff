@@ -20,14 +20,14 @@ authors:
   - family-names: Al Khashan
     given-names: Rafat A.
     email: rafat.khashan82@gmail.com
-    affiliation: Flaha
+    affiliation: Flaha Agri Tech
     orcid: https://orcid.org/0009-0009-4692-4552
-  - name: Flaha
+  - name: Flaha Agri Tech
 contact:
   - family-names: Al Khashan
     given-names: Rafat A.
     email: rafat.khashan82@gmail.com
-    affiliation: Flaha
+    affiliation: Flaha Agri Tech
 version: 0.5.0
 date-released: "2026-10-20"
 url: https://flahax.readthedocs.io/
@@ -55,7 +55,7 @@ preferred-citation:
   authors:
     - family-names: Al Khashan
       given-names: Rafat A.
-      affiliation: Flaha
+      affiliation: Flaha Agri Tech
       orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
   version: 0.5.0

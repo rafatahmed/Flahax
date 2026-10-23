@@ -13,7 +13,7 @@ license-files = ["LICEN[CS]E*", "NOTICE"]
 authors = [{ name = "Rafat A. Al Khashan", email = "rafat.khashan82@gmail.com" }]
 maintainers = [
     { name = "Rafat A. Al Khashan", email = "rafat.khashan82@gmail.com" },
-    { name = "Flaha" },
+    { name = "Flaha Agri Tech" },
 ]
 keywords = [
     "fertilizer", "fertigation", "hydroponics", "nutrient-solution", "plant-nutrition", "agronomy",
