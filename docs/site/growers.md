@@ -226,7 +226,7 @@ Take a whole percent below the chloride figure, 8 %, and blend the rest with
 RO water. The products add a little sodium (the molybdate), so check the final
 value on the sheet rather than relying on this arithmetic alone.
 
-**Run** the command from step 3. FlahaX 0.5.0 gives this sheet:
+**Run** the command from step 3. FlahaX 0.6.0 gives this sheet:
 
 | Tank | Product | g per 1000 L | Concentrate g/L at 1:100 |
 |---|---|---:|---:|
