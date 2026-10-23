@@ -15,8 +15,12 @@ import unittest
 from unittest import mock
 
 from flahax.batch_cli import main as batch
-from flahax.mix_cli import WATER_IONS, main
+from flahax.mix_cli import WATER_IONS, Prompts, main, number_answer, use_tui
+from flahax import __version__
 from flahax.mix_store import Store
+from tests.test_output_consistency import ANSWERS
+
+FIXTURES = Path(__file__).resolve().parent / 'fixtures' / 'mix'
 
 SPEC = ['20', '20', '20', '', '', '1']  # tanks A, B, acid; ratio; temperature; fill
 RO = ['1', '']  # RO water; no limits
@@ -591,6 +595,91 @@ class MixTests(unittest.TestCase):
         self.assertEqual(
             sorted(p.name for p in (self.home / 'waters').iterdir()), ['well-104.json']
         )
+
+
+def owner_transcript():
+    """Every prompt and line of the owner's session (line mode), temp folder and version hidden."""
+    with tempfile.TemporaryDirectory() as tmp:
+        answers, lines = list(ANSWERS), []
+
+        def ask(prompt):
+            lines.append('? ' + prompt)
+            return answers.pop(0)
+
+        with mock.patch.dict(os.environ, {'FLAHAX_HOME': str(Path(tmp) / 'home')}):
+            main(
+                ['--output', str(Path(tmp) / 'out')],
+                ask=ask,
+                say=lambda *a: lines.append(' '.join(map(str, a))),
+            )
+    # Paths under the temporary folder use "/" so the transcript is the same on every system.
+    masked = [line.replace(tmp, '<TMP>').replace(__version__, '<VERSION>') for line in lines]
+    masked = [line.replace('\\', '/') if '<TMP>' in line else line for line in masked]
+    return '\n'.join(masked) + '\n'
+
+
+class LineModeTranscriptTests(unittest.TestCase):
+    def test_plain_transcript_unchanged(self):
+        expected = (FIXTURES / 'owner-session-plain.txt').read_text(encoding='utf-8')
+        self.assertEqual(owner_transcript().splitlines(), expected.splitlines())
+
+
+class TtyStream(io.StringIO):
+    def isatty(self):
+        return True
+
+
+class UseTuiTests(unittest.TestCase):
+    def test_use_tui_rules(self):
+        tty = TtyStream()
+        with mock.patch('flahax.mix_cli.supported', return_value=True):
+            self.assertTrue(use_tui(False, input, print, tty, tty))
+            self.assertFalse(use_tui(True, input, print, tty, tty))
+            self.assertFalse(use_tui(False, Script([]), print, tty, tty))
+            self.assertFalse(use_tui(False, input, lambda *a: None, tty, tty))
+        with mock.patch('flahax.mix_cli.supported', return_value=False):
+            self.assertFalse(use_tui(False, input, print, tty, tty))
+
+    def test_plain_flag_is_accepted(self):
+        lines = []
+        with mock.patch.dict(os.environ, {'FLAHAX_HOME': tempfile.mkdtemp()}):
+            self.assertEqual(main(['--plain', 'sessions'], ask=Script([]), say=lines.append), 0)
+        self.assertEqual(lines, ['Nothing is saved yet: run flahax mix'])
+
+
+class PromptInterfaceTests(unittest.TestCase):
+    def prompts(self, answers):
+        lines = []
+        return Prompts(Script(answers), lines.append), lines
+
+    def test_number_answer(self):
+        self.assertEqual(number_answer('', 5), (5, None))
+        self.assertEqual(number_answer('x', None), (None, "  'x' is not a number."))
+        self.assertEqual(
+            number_answer('0', None, positive=True), (None, '  Enter a number above 0.')
+        )
+        self.assertEqual(
+            number_answer('70', 25, high=60), (None, '  Enter a number from 0 up to 60.')
+        )
+        self.assertIsNone(number_answer('nan', None)[0])
+        self.assertEqual(number_answer('', None, blank=True), (None, None))
+        self.assertEqual(number_answer('7.5', None), (7.5, None))
+
+    def test_pick_many_plain(self):
+        p, lines = self.prompts(['3 1 3'])
+        self.assertEqual(p.pick_many('Fertilizers', ['a', 'b', 'c']), [2, 0])
+        self.assertIn('   1  a', lines)
+        p, lines = self.prompts(['0', '2'])
+        self.assertEqual(p.pick_many('Fertilizers', ['a', 'b', 'c']), [1])
+        self.assertIn('  Use numbers 1 to 3.', lines)
+
+    def test_step_and_answered_plain(self):
+        p, lines = self.prompts([])
+        p.step(5)
+        p.answered('Tanks', 'A 20 L')
+        self.assertEqual(lines, [])
+        p.step(5, '5/5 pH requirement')
+        self.assertEqual(lines, ['5/5 pH requirement'])
 
 
 if __name__ == '__main__':

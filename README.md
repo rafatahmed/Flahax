@@ -78,6 +78,11 @@ flahax mix                          # first time: answer the five steps
 flahax mix sessions/my-tomato       # next time: no questions
 ```
 
+In a terminal it opens full screen: arrow keys and Enter choose, typing filters a
+long list, Space ticks your fertilizers, and the result has three views (Tanks,
+Nutrients, Notes) switched with Tab. `flahax mix --plain` asks line by line
+instead, and scripts and pipes get the line-by-line mode automatically.
+
 `flahax mix` is on `main` and ships in the next release. Until then:
 `python -m pip install --upgrade "git+https://github.com/rafatahmed/Flahax.git@main"`.
 See [For growers and agronomists](https://flahax.readthedocs.io/en/latest/growers.html).
