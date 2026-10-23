@@ -63,7 +63,7 @@ Always run from the checkout root, using `-m`, not by executing module files dir
 
 Interactive site inputs are available through `python -m flahax workflow --interactive`,
 `python -m flahax ec --interactive` and `python -m flahax size --interactive`.
-See [site planning](../docs/site/guide/site-planning.md) for JSON schemas and boundaries.
+See [site planning](../docs/site/developer/site-planning.md) for JSON schemas and boundaries.
 
 The examples cover the user-facing capability families. Older reduced
 speciation kernels and compatibility wrappers remain available and tested in
@@ -99,7 +99,7 @@ an operating fertigation system. Substitute verified, matching records and
 measure after mixing. The model remains bounded to 25 C/dilute conditions;
 stock compatibility is rule-based, not a high-concentration equilibrium model.
 EC estimates require recipe/source-matched measured profiles; see the
-[EC guide](../docs/site/guide/conductivity.md). There is no universal EC predictor, cost optimizer, disease/yield model, unrestricted
+[EC guide](../docs/site/developer/conductivity.md). There is no universal EC predictor, cost optimizer, disease/yield model, unrestricted
 gas/redox chemistry, autonomous hardware control or FlahaFAST integration in
 these examples.
 
