@@ -20,6 +20,15 @@ PHASES = ['Calcite', 'Gypsum', 'Anhydrite', 'Epsomite', 'Kieserite',
           'Malachite', 'Strengite', 'Vivianite', 'Mn3(PO4)2', 'MnHPO4',
           'Zn3(PO4)2:4H2O', 'Cu3(PO4)2', 'Halite', 'Sylvite']
 
+# The USGS User Rights Notice requires modified PHREEQC data to say what changed, by whom and when.
+NOTICE = ('Modified data, not the original USGS files. Equilibrium constants at 25 C converted to JSON by Rafat'
+          ' A. Al Khashan for FlahaX (first committed 2026-09-27) from PHREEQC 3.8.6 minteq.v4.dat (U.S. '
+          'Geological Survey; SHA-256 in database_sha256, original at source_url), keeping only the species and'
+          ' phases FlahaX uses, with kieserite and sylvite from PHREEQC 3.8.6 pitzer.dat and FlahaX extensions '
+          'marked by their own source field. The USGS User Rights Notice for PHREEQC applies: see NOTICE. Cite '
+          'Parkhurst and Appelo (2013), USGS Techniques and Methods 6-A43.')
+
+
 def side(text):
     values = {}
     for term in text.strip().split(' + '):
@@ -133,6 +142,7 @@ def build(database):
         raise ValueError(f'unresolved phase names: {missing}')
     data = dict(schema=1, temperature_c=25, database_sha256=hashlib.sha256(raw).hexdigest(),
                 source_url='https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat',
+                notice=NOTICE,
                 bases=BASES, aqueous=list(selected.values()), phases=list(phases.values()),
                 aliases={'Hydroxyapatite': 'Hydroxylapatite', 'Hopeite': 'Zn3(PO4)2:4H2O',
                          'Brushite': 'CaHPO4:2H2O', 'B(OH)3':'H3BO3', 'B(OH)4-':'H2BO3-'})

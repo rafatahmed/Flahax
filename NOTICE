@@ -8,5 +8,130 @@ Licensed under the Apache License, Version 2.0. Redistributions and
 derivative works must retain this NOTICE file, as section 4(d) of the
 license requires.
 
+Author and maintainer: Rafat A. Al Khashan <rafat.khashan82@gmail.com>,
+ORCID https://orcid.org/0009-0009-4692-4552. Organisation: Flaha Agri Tech.
+
 If you use FlahaX in published work, please cite it as described in
 CITATION.cff.
+
+
+THIRD-PARTY DATA
+================
+
+FlahaX ships numerical data from the sources below. Each value keeps its
+citation in the data file named. Numerical facts are cited, not relicensed:
+the Apache-2.0 license covers FlahaX's code and its own compilation, not the
+underlying measurements.
+
+1. USGS PHREEQC 3.8.6 thermodynamic data (src/flahax/data/chemistry_25c.json)
+   - 205 aqueous species, phases and equilibrium constants at 25 C from the
+     database minteq.v4.dat, distributed with PHREEQC by the U.S. Geological
+     Survey (source pinned by SHA-256
+     ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7,
+     https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat).
+     minteq.v4.dat derives from the U.S. EPA MINTEQA2 version 4 database.
+   - Phase constants for kieserite (log K -0.123) and sylvite (log K 0.9)
+     from the PHREEQC 3.8.6 database pitzer.dat.
+   - MODIFICATIONS: these records are not the original files. Rafat A. Al
+     Khashan converted the 25 C constants to JSON for FlahaX (first
+     committed 2026-09-27), keeping only the species and phases FlahaX
+     uses, and added FlahaX extensions marked in the file by their own
+     "source" field (flahax-chelates-25c.dat, flahax-phases-25c.dat). The
+     original database is available from the USGS at the URL above.
+   - The USGS User Rights Notice for PHREEQC applies to this data and is
+     reproduced in full at the end of this file.
+   - Please acknowledge: Parkhurst, D. L. and Appelo, C. A. J. (2013)
+     Description of input and examples for PHREEQC version 3, U.S.
+     Geological Survey Techniques and Methods 6-A43, doi:10.3133/tm6A43;
+     and the USGS.
+
+2. FlahaX thermodynamic extensions (chemistry_25c.json, source fields
+   flahax-chelates-25c.dat and flahax-phases-25c.dat)
+   - Struvite: Ronteltap, Maurer and Gujer (2007), Water Research 41,
+     977-984, doi:10.1016/j.watres.2006.11.046.
+   - o,o-EDDHA: Yunta et al. (2003), Inorganic Chemistry 42, 5412-5421,
+     doi:10.1021/ic034333j.
+   - DTPA: Smith and Martell critical stability constants and NIST SRD 46.
+   Details: docs/site/models/flahax-chelate-thermodynamic-profile.md.
+
+3. Electrical conductivity (src/flahax/data/conductivity_mccleskey2012.json)
+   - McCleskey, Nordstrom, Ryan and Ball (2012), Geochimica et
+     Cosmochimica Acta 77, 369-382, doi:10.1016/j.gca.2011.10.031, Table 1.
+   - Pethybridge, Talbot and House (2006), Journal of Solution Chemistry
+     35, 381-393, doi:10.1007/s10953-005-9003-z, Table IV.
+   - CRC Handbook of Chemistry and Physics, 85th ed., Vanysek, Ionic
+     conductivity and diffusion at infinite dilution; PHREEQC phreeqc.dat
+     diffusion coefficients.
+   - Manufacturer EC anchors (src/flahax/calculated_ec.py): SQM, Ultrasol
+     Macronutrients brochure, page 2.
+
+4. Stock solubility (src/flahax/data/solubility.json, owner-approved
+   2026-10-23)
+   - CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous
+     Solubility of Inorganic Compounds at Various Temperatures,
+     pp. 8-112 to 8-117 (18 products).
+   - Yara, YaraTera CALCINIT product sheet (calcium nitrate, ag grade).
+   - U.S. Coast Guard CHRIS / NOAA CAMEO Chemicals, Urea (URE), item 9.24.
+
+5. Fertilizer catalogue and identities (src/flahax/data/library.json,
+   material_identities.json)
+   - Product assays from supplier documents named in each record: Haifa
+     Group (Haifa Cal NG technical data sheet), Sigma-Aldrich (ACS reagent
+     specifications), ChemicalBook technical data sheets.
+   - Chemical identities and theoretical analyses: FlahaX materials audit,
+     docs/audit/2026-10-18-materials-identity.
+
+6. Concentrate-tank compatibility (src/flahax/tank_grouping.py)
+   - Yara, Fertilizantes para fertirrigacion, p. 65 mixing compatibility
+     table and p. 63 mixing rules.
+
+7. Crop formulas (src/flahax/data/library.json, "formulas")
+   - Published nutrient formulas as named in the library: Howard Resh;
+     Douglas Peckenpaugh; maximumyield; Growing Edge; University of
+     Florida; schundler.com; and the Hoagland solution (Hoagland and Arnon).
+
+Trademarks (YaraLiva, YaraTera, Calcinit, Krista, Ultrasol, Haifa) belong
+to their owners and are used only to identify sources.
+
+
+USGS USER RIGHTS NOTICE (PHREEQC, applies to the data in item 1)
+================================================================
+
+This software and related material (data and (or) documentation),
+contained in or furnished in connection with PHREEQC, are made available
+by the U.S. Geological Survey (USGS) to be used in the public interest
+and in the advancement of science.  You may, without any fee or cost,
+use, copy, modify, or distribute this software, and any derivative works
+thereof, and its supporting documentation, subject to the following
+restrictions and understandings.
+
+If you distribute copies or modifications of the software and related
+material, make sure the recipients receive a copy of this notice and
+receive or can get a copy of the original distribution.  If the software
+and (or) related material are modified and distributed, it must be
+made clear that the recipients do not have the original and they must
+be informed of the extent of the modifications.  For example, modified
+files must include a prominent notice stating the modifications made, the
+author of the modifications, and the date the modifications were made.
+This restriction is necessary to guard against problems introduced in the
+software by others, reflecting negatively on the reputation of the USGS.
+
+The software is public property and you therefore have the right to
+the source code, if desired.
+
+You may charge fees for distribution, warranties, and services provided
+in connection with the software or derivative works thereof.  The name
+USGS can be used in any advertising or publicity to endorse or promote
+any products or commercial entity using this software if specific
+written permission is obtained from the USGS.
+
+The user agrees to appropriately acknowledge the authors and the USGS
+in publications that result from the use of this software or in products
+that include this software in whole or in part.
+
+Although this software program has been used by the U.S. Geological
+Survey (USGS), no warranty, expressed or implied, is made by the USGS
+or the U.S. Government as to the accuracy and functioning of the
+program and related program material nor shall the fact of distribution
+constitute any such warranty, and no responsibility is assumed by the
+USGS in connection therewith.

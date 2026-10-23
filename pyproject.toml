@@ -5,22 +5,35 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flahax"
 version = "0.6.0.dev0"
-description = "Plant-nutrient chemistry engine: fertilizer formulation, aqueous equilibrium chemistry and auditable delivery planning."
+description = "Fertilizer recipe, pH and acid plan and A/B stock tanks from a water analysis and a crop formula: an interactive command for growers and agronomists on a pure-Python nutrient-chemistry engine checked against PHREEQC."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*", "NOTICE"]
-authors = [{ name = "Flaha" }]
-keywords = ["fertilizer", "hydroponics", "fertigation", "nutrient-solution", "plant-nutrition", "formulation", "aqueous-chemistry", "equilibrium"]
+authors = [{ name = "Rafat A. Al Khashan", email = "rafat.khashan82@gmail.com" }]
+maintainers = [
+    { name = "Rafat A. Al Khashan", email = "rafat.khashan82@gmail.com" },
+    { name = "Flaha Agri Tech" },
+]
+keywords = [
+    "fertilizer", "fertigation", "hydroponics", "nutrient-solution", "plant-nutrition", "agronomy",
+    "formulation", "stock-solution", "A/B-tanks", "pH", "acid-dosing", "water-analysis",
+    "aqueous-chemistry", "equilibrium", "speciation", "PHREEQC",
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
     "Intended Audience :: Science/Research",
+    "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
@@ -31,6 +44,9 @@ Homepage = "https://github.com/rafatahmed/Flahax"
 Documentation = "https://flahax.readthedocs.io/"
 Source = "https://github.com/rafatahmed/Flahax"
 Issues = "https://github.com/rafatahmed/Flahax/issues"
+Changelog = "https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md"
+Citation = "https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff"
+"Growers guide" = "https://flahax.readthedocs.io/en/latest/growers.html"
 
 [project.scripts]
 flahax = "flahax.__main__:main"
