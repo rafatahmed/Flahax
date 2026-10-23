@@ -1,20 +1,41 @@
-"""Read targets and water as JSON on stdin. Write a recommendation on stdout."""
+"""The ``flahax`` command. Growers start with ``flahax mix``; with JSON piped in, it writes a recommendation."""
 
 import json
 import sys
 import argparse
 
-from flahax import InputError, recommend
+from flahax import InputError, __version__, recommend
+
+WELCOME = f"""FlahaX {__version__}: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
+
+  flahax mix              answer five questions and get the batch sheet (growers and agronomists)
+  flahax mix sessions/X   repeat a saved batch without questions
+  flahax batch --help     the same in one command, for scripts
+  flahax --help           every command; developers can also pipe JSON into flahax
+"""
 
 
 def main() -> int:
+    try:
+        return _main()
+    except KeyboardInterrupt:
+        print('Stopped.', file=sys.stderr)
+        return 130
+
+
+def _main() -> int:
+    if not sys.argv[1:] and sys.stdin.isatty():
+        print(WELCOME, end='')
+        return 0
     if sys.argv[1:2] == ['batch']:
         from .batch_cli import main as batch
         return batch(sys.argv[2:])
     if sys.argv[1:2] == ['mix']:
         from .mix_cli import main as mix
         return mix(sys.argv[2:])
-    parser = argparse.ArgumentParser(description='FlahaX nutrient recommendation and site planning')
+    parser = argparse.ArgumentParser(prog='flahax', description='FlahaX nutrient recommendation and site planning. '
+                                     'Growers: flahax mix. Without a command, a JSON request is read from stdin.')
+    parser.add_argument('--version', action='version', version=f'FlahaX {__version__}')
     parser.add_argument('command', nargs='?', default='recommend', choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix'),
                         help='batch: report and batch sheet (flahax batch --help); mix: interactive five-step entry')
     parser.add_argument('--interactive', action='store_true', help='Request site inputs (workflow, ec or size)')
@@ -32,6 +53,9 @@ def main() -> int:
             return 1
     if args.interactive:
         parser.error('Use workflow --interactive to request site-specific inputs')
+    if sys.stdin.isatty():
+        print('Reading a JSON request from the keyboard; end it with Ctrl+Z then Enter (Windows) or Ctrl+D. '
+              'Growers: use flahax mix.', file=sys.stderr)
     try:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError:
