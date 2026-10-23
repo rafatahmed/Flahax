@@ -120,6 +120,23 @@ class ResultViewTests(unittest.TestCase):
             for line in results_lines(self.summary, view, 100, 40, 0, glyphs('latin-1'), 'out'):
                 line.encode('latin-1')
 
+    def test_no_ph_path_no_ph_line(self):  # 130
+        summary = copy.deepcopy(self.summary)
+        summary['chemistry'] = None
+        summary['ph'] = None
+        self.assertFalse(any(line.strip().startswith('pH:') for line in screen(summary, 1)))
+
+    def test_status_colour_follows_the_status(self):  # 132
+        def status_line(summary):
+            lines = results_lines(summary, 0, 100, 40, 0, UTF8, 'out')
+            return lines[2]
+
+        ready = copy.deepcopy(self.summary)
+        ready['status'] = 'ready'
+        self.assertIn('\x1b[92m', status_line(ready))
+        self.assertIn('\x1b[91m', status_line(self.blocked))
+        self.assertIn('\x1b[93m', status_line(self.summary))
+
     def test_results_keys(self):
         self.assertEqual(handle_results(2, 0, 'TAB'), (0, 0, False))
         self.assertEqual(handle_results(0, 0, 'SHIFT_TAB'), (2, 0, False))

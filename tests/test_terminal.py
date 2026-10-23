@@ -13,6 +13,7 @@ from flahax.terminal import (
     decode_posix,
     decode_windows,
     glyphs,
+    read_windows_key,
     supported,
 )
 
@@ -44,6 +45,14 @@ class KeyDecodingTests(unittest.TestCase):
                 self.assertEqual(decode_windows(chars), key)
         with self.assertRaises(KeyboardInterrupt):
             decode_windows('\x03')
+
+    def test_windows_a_grave_is_a_letter(self):  # 127
+        reads = iter(['\u00e0'])
+        self.assertEqual(read_windows_key(lambda: next(reads), lambda: False), '\u00e0')
+        reads = iter(['\xe0', 'H'])
+        self.assertEqual(read_windows_key(lambda: next(reads), lambda: True), 'UP')
+        reads = iter(['\x00', 'P'])
+        self.assertEqual(read_windows_key(lambda: next(reads), lambda: True), 'DOWN')
 
     def test_decode_posix(self):
         self.assertEqual(decode_posix(b'\x1b[A'), ['UP'])
@@ -90,10 +99,18 @@ class TerminalTests(unittest.TestCase):
         self.assertTrue(written.endswith('\x1b[0m\x1b[?25h\x1b[?1049l'))
         self.assertEqual(term.modes, ['on', 'off'])
 
+    def test_draw_places_the_cursor(self):  # 132
+        term = RecordingTerminal()
+        term.draw(['ab_'], cursor=(1, 3))
+        self.assertTrue(term.stream.getvalue().endswith('\x1b[J\x1b[1;3H\x1b[?25h'))
+        term = RecordingTerminal()
+        term.draw(['ab'])
+        self.assertTrue(term.stream.getvalue().endswith('\x1b[J\x1b[?25l'))
+
     def test_draw_clears_each_line(self):
         term = RecordingTerminal()
         term.draw(['a', 'b'])
-        self.assertEqual(term.stream.getvalue(), '\x1b[H\x1b[2Ka\r\n\x1b[2Kb\r\n\x1b[J')
+        self.assertEqual(term.stream.getvalue(), '\x1b[H\x1b[2Ka\r\n\x1b[2Kb\r\n\x1b[J\x1b[?25l')
 
 
 class Latin1Stream(io.StringIO):

@@ -14,6 +14,7 @@ from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, lim
 from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, cut, paint, wrap
 
 VIEWS = ('Tanks', 'Nutrients', 'Notes')
+STATUS_STYLE = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'error'}
 KEYS = 'Tab Next view   {up}{down} Scroll   Q Quit'
 COLUMNS = (('Nutrient', 9), ('Target', 9), ('From water', 11), ('Required', 9))
 COLUMNS += (('Achieved', 9), ('Final', 9), ('Diff', 18))
@@ -153,7 +154,8 @@ def _nutrient_rows(summary):
         path.append(f'after fertilizers {number(ph["mixed_ph"], 2)}')
     if ph and ph['selected']:
         path.append(f'after {ph["selected"]["direction"]} {number(ph["target_ph"], 2)}')
-    rows += [[]] + [[('pH: ' + ', '.join(path) + ' (measure it)', None)]]
+    if path:
+        rows += [[]] + [[('pH: ' + ', '.join(path) + ' (measure it)', None)]]
     return rows
 
 
@@ -180,7 +182,8 @@ def results_lines(summary, view, width, height, scroll, g, output):
         tabs.append(('  ', None))
     status = STATUS_WORDS[summary['status']]
     used = sum(len(t) for t, _ in tabs)
-    tabs.append((' ' * max(1, usable - used - len(status) - 2) + status, 'warn'))
+    tabs.append((' ' * max(1, usable - used - len(status) - 2), None))
+    tabs.append((status, STATUS_STYLE[summary['status']]))
     lines = [
         paint([(title + __version__.rjust(max(1, usable - len(title))), 'accent')], usable, g),
         paint([('  ' + g['h'] * (usable - 4), 'accent')], usable, g),
