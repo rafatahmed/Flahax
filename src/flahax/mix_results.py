@@ -10,14 +10,14 @@ the sheet's rounding, so the screen and the sheet always agree.
 
 from . import __version__
 from .grower_report import _reagent_line, grams, litres, millilitres, number
-from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by
+from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by, readable
 from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, cut, paint, wrap
 
 VIEWS = ('Tanks', 'Nutrients', 'Notes')
 STATUS_STYLE = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'error'}
 KEYS = 'Tab Next view   {up}{down} Scroll   Q Quit'
-COLUMNS = (('Nutrient', 9), ('Target', 9), ('From water', 11), ('Required', 9))
-COLUMNS += (('Achieved', 9), ('Final', 9), ('Diff', 18))
+COLUMNS = (('Nutrient', 7), ('Target', 8), ('From water', 10), ('Required', 8))
+COLUMNS += (('Achieved', 8), ('Final', 8), ('Diff', 18))
 
 
 def first_view(summary):
@@ -63,7 +63,7 @@ def _tank_rows(summary, width, g):
             else f'prepare {litres(volumes["prepared_litres"][name])} L in your '
             f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
         )
-        body = [[(head, 'error' if blocked else None)]]
+        body = [[(line, 'error' if blocked else None)] for line in wrap(head, inner, lines=4)]
         for product in tank['products']:
             weight = grams(product['gramsPerBatch'])
             label = cut(
@@ -105,16 +105,12 @@ def _tank_rows(summary, width, g):
     ratio = summary['tanks']['injection_ratio']
     mode = 'prepared full' if volumes.get('mode') == 'fill' else 'one irrigation'
     temperature = summary['tanks'].get('temperature_c')
-    rows.append(
-        [
-            (
-                f'1:{ratio:g} injection {g["dot"]} {mode}'
-                + (f' {g["dot"]} {temperature:g} {g["deg"]}C' if temperature is not None else '')
-                + f' {g["dot"]} {dissolves}',
-                'dim',
-            )
-        ]
+    footer = (
+        f'1:{ratio:g} injection {g["dot"]} {mode}'
+        + (f' {g["dot"]} {temperature:g} {g["deg"]}C' if temperature is not None else '')
+        + f' {g["dot"]} {dissolves}'
     )
+    rows.extend([[(line, 'dim')] for line in wrap(footer, width, lines=3)])
     return rows
 
 
@@ -125,7 +121,7 @@ def _nutrient_rows(summary):
     rows = [
         [
             (
-                ''.join(
+                ' '.join(
                     name.rjust(w) if i else name.ljust(w) for i, (name, w) in enumerate(COLUMNS)
                 ),
                 'accent',
@@ -143,7 +139,7 @@ def _nutrient_rows(summary):
             cell(r['final']),
             diff,
         )
-        line = ''.join(
+        line = ' '.join(
             c.rjust(w) if i else c.ljust(w) for i, (c, (_, w)) in enumerate(zip(cells, COLUMNS))
         )
         style = 'dim' if r['target'] is None else 'warn' if abs(r['diff_pct']) > 1 else None
@@ -165,13 +161,16 @@ def _note_rows(summary, width):
     rows = []
     for warning in ordered:
         style = 'error' if warning in blocking else None
-        for i, line in enumerate(wrap(warning, width - 4, lines=10**6)):
+        for i, line in enumerate(wrap(readable(warning), width - 4, lines=10**6)):
             rows.append([(('- ' if i == 0 else '  ') + line, style)])
     return rows or [[('No notes.', 'dim')]]
 
 
-def results_lines(summary, view, width, height, scroll, g, output):
-    """The lines to draw for one results view, scrolled by ``scroll`` rows."""
+def results_lines(summary, view, width, height, scroll, g, output, message=None):
+    """The lines to draw for one results view, scrolled by ``scroll`` rows.
+
+    ``message`` (a question such as the leave confirmation) replaces the "Sheets:" line.
+    """
     if width < MIN_WIDTH or height < MIN_HEIGHT:
         return [SMALL]
     usable = width - 1
@@ -199,9 +198,15 @@ def results_lines(summary, view, width, height, scroll, g, output):
         body = _note_rows(summary, usable - 2)
     room = height - 1 - len(lines) - 2
     scroll = max(0, min(scroll, len(body) - room))
-    for row in body[scroll : scroll + room]:
+    shown = body[scroll : scroll + room]
+    if scroll > 0:
+        shown[0] = [(f'{g["up"]} more above', 'warn')]
+    if scroll + room < len(body):
+        shown[-1] = [(f'{g["down"]} more below ({g["up"]}{g["down"]} to scroll)', 'warn')]
+    for row in shown:
         lines.append(paint([('  ', None)] + row, usable, g))
     lines += [''] * (height - 3 - len(lines))
-    lines.append(paint([(f'  Sheets: {output}', 'dim')], usable, g))
+    footer = [(f'  {message}', 'warn')] if message else [(f'  Sheets: {output}', 'dim')]
+    lines.append(paint(footer, usable, g))
     lines.append(paint([('  ' + KEYS.format(**g), 'dim')], usable, g))
     return lines

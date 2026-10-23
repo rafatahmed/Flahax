@@ -46,13 +46,16 @@ class KeyDecodingTests(unittest.TestCase):
         with self.assertRaises(KeyboardInterrupt):
             decode_windows('\x03')
 
-    def test_windows_a_grave_is_a_letter(self):  # 127
-        reads = iter(['\u00e0'])
-        self.assertEqual(read_windows_key(lambda: next(reads), lambda: False), '\u00e0')
-        reads = iter(['\xe0', 'H'])
-        self.assertEqual(read_windows_key(lambda: next(reads), lambda: True), 'UP')
-        reads = iter(['\x00', 'P'])
-        self.assertEqual(read_windows_key(lambda: next(reads), lambda: True), 'DOWN')
+    def test_windows_arrows_without_kbhit(self):
+        # Owner's trial in Windows Terminal (2026-10-23): after the prefix, kbhit() is False
+        # although the second code follows; reading it only when kbhit() was True typed letters.
+        for first, second, key in (
+            ('\xe0', 'H', 'UP'),
+            ('\xe0', 'P', 'DOWN'),
+            ('\x00', 'K', 'LEFT'),
+        ):
+            reads = iter([first, second])
+            self.assertEqual(read_windows_key(lambda: next(reads)), key)
 
     def test_decode_posix(self):
         self.assertEqual(decode_posix(b'\x1b[A'), ['UP'])

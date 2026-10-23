@@ -40,7 +40,7 @@ STYLE = {
     'ok': '\x1b[92m',
     'warn': '\x1b[93m',
     'error': '\x1b[91m',
-    'dim': '\x1b[2m',
+    'dim': '',  # the terminal's normal colour: faint text vanished on some themes
     'selected': '\x1b[7m',
     None: '',
 }
@@ -48,6 +48,7 @@ HELP = {
     'choice': '{up}{down} Move   Enter Choose   Esc Quit',
     'filter': '{up}{down} Move   Type to filter   Enter Choose   Esc Quit',
     'ticks': '{up}{down} Move   Space Tick   Type to filter   Enter Next   Esc Quit',
+    'ticks-filtered': '{up}{down} Move   Tab Tick   Type to filter   Enter Next   Esc Quit',
     'field': 'Type   Backspace Edit   Enter Next   Esc Quit',
 }
 
@@ -76,6 +77,7 @@ class Wizard:
     step: int = 1
     answers: list = field(default_factory=list)
     messages: list = field(default_factory=list)
+    progress: str | None = None  # e.g. the lab values typed so far in this step
 
 
 def visible(question):
@@ -112,7 +114,7 @@ def handle(question, key, validate=None):
         question.selected = 0
     elif key == 'END':
         question.selected = max(0, len(shown) - 1)
-    elif key == ' ' and question.kind == 'ticks':
+    elif question.kind == 'ticks' and (key == 'TAB' or (key == ' ' and not question.query)):
         if shown:
             index = shown[question.selected]
             if index in question.ticked:
@@ -137,6 +139,13 @@ def handle(question, key, validate=None):
         question.query += key
         question.selected, question.error = 0, ''
     return question
+
+
+def help_for(question):
+    """The key-help template for a question: in a filtered tick list Tab ticks, not Space."""
+    if question.kind == 'ticks' and question.query:
+        return HELP['ticks-filtered']
+    return HELP[question.kind]
 
 
 def cut(text, width, g):
@@ -178,7 +187,7 @@ def steps_pane(wizard, g):
     rows = [[('Your batch', 'accent')]]
     for label, value in wizard.answers:
         rows.append([(f'{g["tick"]} {label}', 'ok')])
-        rows.append([(f'  {value}', None)])
+        rows.extend([[(f'  {line}', None)] for line in str(value).split('\n')])
     rows.append([(f'{g["here"]} {STEPS[wizard.step - 1]}', 'accent')])
     rows.extend([[(f'  {name}', 'dim')] for name in STEPS[wizard.step :]])
     return rows
@@ -200,6 +209,8 @@ def step_bar(wizard, g):
 def question_rows(wizard, question, width, height, g):
     """The question area: messages, prompt, filter or field, options and the error line."""
     rows = []
+    if wizard.progress:
+        rows.extend([[(line, 'ok')] for line in wrap(wizard.progress, width)])
     for message in wizard.messages:
         rows.extend([[(line, 'warn')] for line in wrap(message.strip(), width)])
     if question is None:
@@ -264,7 +275,7 @@ def frame(wizard, question, width, height, g):
     lines += [''] * (height - 2 - len(lines))
     lines.append(
         paint(
-            [('  ' + HELP[question.kind].format(**g) if question else 'Esc Quit', 'dim')],
+            [('  ' + help_for(question).format(**g) if question else 'Esc Quit', 'dim')],
             usable,
             g,
         )
@@ -391,7 +402,11 @@ class TuiPrompts(Prompts):
 
     def step(self, index, heading=None):
         """Move the step bar to step ``index``."""
-        self.wizard.step = index
+        self.wizard.step, self.wizard.progress = index, None
+
+    def progress(self, text):
+        """Show ``text`` above the questions of this step until it changes (None hides it)."""
+        self.wizard.progress = text
 
     def answered(self, label, value):
         """Add a finished step's short answer to "Your batch"."""
@@ -428,10 +443,11 @@ def calculate(prompts, work):
 
 
 def show_results(term, g, summary, output, ahead=()):
-    """The results screen until Q or Esc; ``ahead`` are keys typed while it was calculated."""
+    """The results screen until Q or Esc, then Y; ``ahead``: keys typed during the calculation."""
     from .mix_results import first_view, handle_results, results_lines  # imports this module
 
     view, scroll, shown, key, ahead = first_view(summary), 0, None, None, list(ahead)
+    leave = f'Leave the results? The sheets are saved in {output}. Y/N'
     while True:
         width, height = term.size()
         lines = results_lines(summary, view, width, height, scroll, g, str(output))
@@ -442,8 +458,14 @@ def show_results(term, g, summary, output, ahead=()):
         if key is None:
             continue
         view, scroll, done = handle_results(view, scroll, key)
-        if done:
-            return
+        while done:  # a stray Q or Esc must not close the screen: ask first
+            width, height = term.size()
+            term.draw(results_lines(summary, view, width, height, scroll, g, str(output), leave))
+            answer = ahead.pop(0) if ahead else term.read_key()
+            if answer in ('y', 'Y'):
+                return
+            done = answer is None
+        shown = None
 
 
 def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):

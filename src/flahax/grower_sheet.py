@@ -11,6 +11,8 @@ the limits and the pH path. Depth 3 (developer, manager) writes the full report 
 Every number comes from ``summarize_batch``, i.e. from the recipe that is weighed.
 """
 
+import re
+
 from .grower_report import (
     SHEET_STYLE,
     STATUS_WORDS,
@@ -25,6 +27,24 @@ from .grower_report import (
 )
 
 LABEL = {'N_NO3': 'NO3-N', 'N_NH4': 'NH4-N', 'N_UREA': 'Urea-N'}
+REASON_WORDS = {
+    '(no_source)': '(no product supplies it)',
+    '(conflicting_targets)': '(conflicts with other targets)',
+}
+
+
+def readable(warning):
+    """A warning in grower words: NO3-N for N_NO3, plain reasons, "pH adjustment:" for a stage."""
+    stage = re.match(r'([a-z]+(?:_[a-z]+)*): ', warning)
+    if stage:
+        name = stage.group(1).replace('_', ' ')
+        name = 'pH' + name[2:] if name.startswith('ph ') else name.capitalize()
+        warning = f'{name}: {warning[stage.end():]}'
+    for code, words in REASON_WORDS.items():
+        warning = warning.replace(code, words)
+    return re.sub(r'\bN_(NO3|NH4|UREA)\b', lambda m: LABEL[m.group(0)], warning)
+
+
 CARD_STYLE = (
     SHEET_STYLE
     + """
@@ -211,7 +231,7 @@ def _agronomist_section(summary):
         )
     else:
         adds = ''
-    reasons = ''.join(f'<li>{text(w)}</li>' for w in summary['warnings'])
+    reasons = ''.join(f'<li>{text(readable(w))}</li>' for w in summary['warnings'])
     return (
         table
         + (
@@ -237,7 +257,7 @@ def render_mix_sheet(summary, depth=1):
     blocked = s['status'] == 'blocked'
     css = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'stop'}[s['status']]
     supplied = volumes['irrigation_litres'] if volumes else s['batch_litres']
-    notes = ''.join(f'<li>{text(w)}</li>' for w in key_reasons(s))
+    notes = ''.join(f'<li>{text(readable(w))}</li>' for w in key_reasons(s))
     head = (
         f'<h1>{text(s["title"])}</h1><div class="meta">FlahaX {text(s["flahax_version"])} '
         f'&middot; '
