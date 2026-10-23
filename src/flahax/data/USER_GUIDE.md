@@ -244,6 +244,95 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 
 Python callers should handle `InputError` for formulation and `DeliveryError` (with its stable `code`) for planning. Retain input provenance and rejection reasons.
 
+### Error code reference
+
+Every `DeliveryError` carries one of these codes; its message names the value or file at fault. Codes above are not repeated. A test keeps this list complete.
+
+**Input values and files**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `invalid_value` | A number or text is out of its allowed range or form (for example a negative volume, a pH outside 0-14, a duplicate ID). | Correct the named value. |
+| `invalid_type` | A value has the wrong kind (a list where a mapping is needed, text where a number is needed). | Supply the kind the message names. |
+| `missing_field` | A required input is absent (targets, reagent records, a document field). | Add the named field. |
+| `unknown_field` | A key is not recognised, for example an unsupported water key. | Use the keys the message lists. |
+| `out_of_range` | A physical input is outside what the model accepts (pH, ionic strength, concentrations). | Check units and values; FlahaX does not extrapolate. |
+| `unknown_ion` | A nutrient or ion symbol is not one FlahaX knows. | Use N_NO3, N_NH4, P, K, Ca, Mg, S, Fe, Mn, Zn, Cu, B, Mo, Na, Cl. |
+| `invalid_ions` | A water or nutrient profile for a quantity conversion is not a valid map of ion symbols to mg/L. | Correct the profile the message names. |
+| `ambiguous_unit` | A quantity could be read two ways, such as total N. | Split it as the message says (N_NO3 and N_NH4). |
+| `unknown_formula` / `ambiguous_formula` | `--formula` names no packaged formula, or `--crop` matches several. | Use `--list-formulas` and give the exact name. |
+| `unknown_item` | `flahax mix` cannot find a saved session or item. | Run `flahax mix sessions` to list them. |
+| `unknown_command` | Not one of `workflow`, `ec`, `size`. | Use one of those. |
+
+**Water analysis**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `incomplete_water_analysis` | The chemistry needs a complete analysis declared as complete. | Supply every measured ion and mark the analysis complete. |
+| `inconsistent_water_analysis` | Two water inputs disagree (formulation mg/L against chemistry totals, or titration water against formulation water). | Use one analysis for every stage. |
+| `invalid_totals` | Analytical totals are not a mapping of known components to non-negative numbers. | Correct the named component. |
+| `alkalinity_exhausted` | The report has no chloride and is so far out of balance that closing on the alkalinity would need negative carbonate. | Check the analysis with the laboratory; ask for chloride and alkalinity. |
+| `unsupported_carbon_boundary` | Calculated pH needs inorganic carbon treated as closed. | Use `carbon_boundary='closed'`. |
+| `ph_not_bracketed` | No charge-balanced pH exists between 0 and 14 for these totals. | The inputs are inconsistent; check the analysis and doses. |
+
+**Products and materials**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `invalid_composition` | A material's ions, chelating agent or blend components are not consistent. | Correct the ions, agent or components named. |
+| `unknown_identity` | A grade names a chemical identity FlahaX does not ship. | Use an identity from the catalogue, or define the material by formula or ions. |
+| `material_mismatch` | A grade, lot or material record does not match the product it is attached to. | Attach it to the product it describes. |
+| `product_chemistry_mismatch` | A product record differs from its catalogue identity without a grade that explains it, or a compound's id is not its grade id. | Give the label as a grade, or use the catalogue record unchanged. |
+| `unsupported_product_chemistry` | No chemistry can be built for the product (unknown name, or phosphate without its form). | Define it by formula, ions or a complete data-sheet analysis. |
+| `composition_undisclosed` | A blend of undisclosed composition is used for chemistry. | Enter it from its data sheet, or use it for nutrients only. |
+| `catalogue_chemistry_mismatch` | The packaged catalogue and its chemistry records disagree (a packaging fault). | Report it as a bug. |
+| `missing_document_reference` | A supplier grade lacks its document (supplier, title, date). | Add the data-sheet reference. |
+| `inconsistent_assay` | An assay is impossible (mass fraction above one, more nitrate than pure nitric acid). | Check the certificate values. |
+| `invalid_identity_record` | A packaged identity record is malformed (a packaging fault). | Report it as a bug. |
+
+**Recipe, limits and pH**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `infeasible_recipe` | A stage needs a recipe that meets its targets, and this one misses them or breaks a declared maximum. | Read the formulation reason; adjust targets, products or limits. |
+| `nutrient_limit_exceeded` | A plan exceeds a maximum you declared. | Lower the source of that nutrient or the water share; the limit is never relaxed for you. |
+| `incidental_review_required` | Nutrients the formula did not ask for have no declared maximum, so the plan cannot be validated. | Declare maxima for them, or accept the review. |
+| `unsupported_reagent` | The pH reagent is not one FlahaX models. | Use HNO3, H3PO4, H2SO4 or C6H8O7 (acids) or the packaged bases. |
+| `dose_limit_exceeded` | The reagent dose exceeds the volume or the limit you set. | Raise the limit only if the equipment allows, or change the target pH. |
+| `missing_measurement` | A measured value is needed (reagent density, water pH and alkalinity). | Measure it and supply it. |
+| `outside_titration_range` | The target pH lies outside the measured titration curve. | Extend the titration, or choose a target inside it. |
+| `mismatched_record` | A titration curve or pump channel belongs to another water or stock. | Use the records that belong together. |
+
+**Chemistry model**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `nonconvergent` | The equilibrium solver did not converge. | Report the inputs as a bug; FlahaX never returns an unconverged answer. |
+| `temperature_out_of_range` / `unsupported_temperature` / `temperature_outside_reference` / `temperature_reference_mismatch` | The chemistry and conductivity data are for 25 °C. | Use 25 °C for chemistry; stock solubility uses your temperature separately. |
+| `unknown_phase` / `missing_species` | A mineral or species is not in the pinned reaction set. | Use phases from the shipped set. |
+| `unsupported_ionic_strength` | Outside the dilute model (ionic strength above 0.1). | Do not apply the dilute model to concentrated stock. |
+| `unsupported_legacy_input` | An old input form that a newer function replaces. | Use the function the message names. |
+
+**Stocks, tanks and injection**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `capacity_exceeded` | Every tank is smaller than the stock volume needed. | Use larger tanks or a higher injection ratio. |
+| `solubility_exceeded` / `missing_solubility_limit` | A stock exceeds its solubility, or has no limit at that temperature (stock planner). | Dilute (lower ratio), warm the stock room, or supply the limit. |
+| `no_stock_assignment` | No tank arrangement satisfies the compatibility rules. | Add a tank or change products. |
+| `invalid_ratio` / `ambiguous_volume` / `unknown_equipment_type` | Injection sizing inputs are inconsistent. | Correct the ratio, give one volume form, choose dosing_pump, venturi or dosatron. |
+| `dry_tank_risk` / `out_of_calibration_range` | The stock cannot supply the planned injection, or the pump is asked outside its calibration. | Prepare more stock or recalibrate. |
+| `inconsistent_recipe` | Recipe, stocks and products refer to different items (duplicates, missing products). | Rebuild the plan from one recipe. |
+
+**Delivery plans, EC and reference data**
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `cross_stage_constraint` / `incomplete_plan` / `invalid_plan_transition` | A delivery plan's stages do not belong together, a stage is missing, or a state change is not allowed. | Build every stage from the same recipe and follow the plan states. |
+| `invalid_ec_profile` / `mismatched_ec_profile` / `outside_ec_calibration` / `ambiguous_ec_input` / `unknown_channel` | A measured EC calibration is malformed, belongs elsewhere, or is asked outside its range; or EC and TDS were both given. | Supply one complete calibration for this recipe, channel and water, and one reading. |
+| `invalid_ph_input` / `invalid_phase_policy` / `incomplete_prediction` / `invalid_audit_inputs` | Calculated-EC options conflict. | Follow the option rules in the message. |
+| `invalid_fixture` | A PHREEQC reference fixture is unreadable or of an unsupported schema (verification tooling). | Recapture the fixture with the pinned PHREEQC. |
+
 ## 9. Verification and reproducibility
 
 From an installed development checkout, run `python -m unittest discover -s tests -t .` and `python -m compileall -q src tools`. Use `PYTHONPATH=src` if the checkout is not installed. Reference acceptance also requires the pinned external PHREEQC run with `FLAHAX_REQUIRE_PHREEQC=1`; the executable is never a runtime package dependency.

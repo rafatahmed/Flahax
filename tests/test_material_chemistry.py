@@ -147,7 +147,9 @@ class MaterialChemistryTests(unittest.TestCase):
             with self.assertRaises(DeliveryError) as caught:
                 material_chemistry(record)
             self.assertEqual(caught.exception.code, 'material_undefined')
-            self.assertIn(f'Mystery: {UNDEFINED}', str(caught.exception))
+            self.assertIn(UNDEFINED, str(caught.exception))
+            if 'formula' in record:      # a trade name typed where the formula belongs
+                self.assertIn("'Ch micro' is a name, not a chemical formula", str(caught.exception))
 
     def test_counterions_follow_the_ions_not_the_name(self):
         products = {'My potash': {'name': 'My potash', 'formula': 'K2CO3', 'elements': {'K': 56.58}},
