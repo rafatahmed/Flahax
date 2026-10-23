@@ -222,6 +222,7 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | CLI says salts are required | Supply a nonempty array of product records; do not send targets alone. |
 | `feasible` is false | Inspect all nutrient rows and available assays; do not force approval by hiding residuals. |
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
+| `missing_file` or `invalid_json` | A file named on the command line (water, targets, products, rules, a saved item or session) is missing, unreadable or not valid JSON; the message names the file and the line and column. |
 | `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
 | `identity_inconsistent` | A label does not fit its chemical: its charges are more than 1 % out of balance (rounded labels and commercial grades stay well inside; a one-point typing error does not). Check the label. |
 | `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
