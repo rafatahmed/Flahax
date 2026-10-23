@@ -58,6 +58,31 @@ COMPOUND_KEYS = (
 CHELATES = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 
 
+def number_answer(answer, default, *, blank=False, low=0.0, high=None, positive=False):
+    """(value, None) for an acceptable typed number, else (None, the message to show).
+
+    Enter gives the default, or None when ``blank`` allows it.
+    """
+    answer = answer.strip()
+    if not answer and (default is not None or blank):
+        return default, None
+    try:
+        value = float(answer)
+    except ValueError:
+        return None, f'  {answer!r} is not a number.'
+    if (
+        not math.isfinite(value)
+        or value < low
+        or (positive and value <= low)
+        or (high is not None and value > high)
+    ):
+        return None, (
+            f'  Enter a number {"above" if positive else "from"} {low:g}'
+            + (f' up to {high:g}.' if high is not None else '.')
+        )
+    return value, None
+
+
 class Prompts:
     """The questions of ``flahax mix``; ``ask`` reads an answer and ``say`` prints."""
 
@@ -83,26 +108,17 @@ class Prompts:
             shown = (
                 f' [{default:g}]' if default is not None else ' (Enter if blank)' if blank else ''
             )
-            answer = self.ask(f'{prompt}{shown}: ').strip()
-            if not answer and (default is not None or blank):
-                return default
-            try:
-                value = float(answer)
-            except ValueError:
-                self.say(f'  {answer!r} is not a number.')
-                continue
-            if (
-                not math.isfinite(value)
-                or value < low
-                or (positive and value <= low)
-                or (high is not None and value > high)
-            ):
-                self.say(
-                    f'  Enter a number {"above" if positive else "from"} {low:g}'
-                    + (f' up to {high:g}.' if high is not None else '.')
-                )
-                continue
-            return value
+            value, error = number_answer(
+                self.ask(f'{prompt}{shown}: '),
+                default,
+                blank=blank,
+                low=low,
+                high=high,
+                positive=positive,
+            )
+            if error is None:
+                return value
+            self.say(error)
 
     def choose(self, prompt, options, default=1):
         """0-based index of the chosen option; with ``default=None`` Enter asks again."""
@@ -133,6 +149,28 @@ class Prompts:
             if matches:
                 return matches[self.choose(f'{len(matches)} match:', matches)]
             self.say(f'  Nothing matches {query!r}; press Enter to see the whole list.')
+
+    def pick_many(self, prompt, names):
+        """0-based indices of the names chosen, in the order typed and without repeats."""
+        for i, name in enumerate(names, 1):
+            self.say(f'  {i:2}  {name}')
+        while True:
+            picked = (
+                self.text('Numbers of the products you have, separated by spaces')
+                .replace(',', ' ')
+                .split()
+            )
+            if all(n.isdigit() and 1 <= int(n) <= len(names) for n in picked):
+                return [int(n) - 1 for n in dict.fromkeys(picked)]
+            self.say(f'  Use numbers 1 to {len(names)}.')
+
+    def step(self, index, heading=None):
+        """Step ``index`` of five begins; the line mode shows ``heading`` when there is one."""
+        if heading:
+            self.say(heading)
+
+    def answered(self, label, value):
+        """A finished step's short answer; the line mode shows nothing."""
 
     def new_name(self, store, kind, prompt, default=None):
         """A name for a new saved item; an existing name is used only when the user chooses to
@@ -171,7 +209,7 @@ def ask_spec(p):
     """Step 1: tank and acid container sizes, injection ratio, stock temperature and how the stock
     is prepared, as ``prepare_stocks`` options.
     """
-    p.say('1/5 Specification')
+    p.step(1, '1/5 Specification')
     a = p.number('Tank A capacity, L', 1000, positive=True)
     b = p.number('Tank B capacity, L', 1000, positive=True)
     tanks = {
@@ -223,7 +261,7 @@ def ask_water(p, store, pending):
     """Step 2: the water (RO, saved or new), its share and the concentration limits; returns
     (reference, share, limits).
     """
-    p.say('2/5 Water analysis')
+    p.step(2, '2/5 Water analysis')
     saved = store.list('waters')
     pick = p.choose('Water', ['RO water (no ions)'] + saved + ['A new analysis'])
     ref, share = 'ro', 100.0
@@ -249,7 +287,7 @@ def ask_formula(p, store, pending, library):
     """Step 3: the crop formula (packaged, changed, saved or typed); returns (reference, targets,
     title).
     """
-    p.say('3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
+    p.step(3, '3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
     saved = store.list('formulas')
     packaged = {f['name']: f['targets'] for f in library['formulas']}
     pick = p.choose(
@@ -406,7 +444,7 @@ def add_compound(p):
 
 def ask_products(p, store, pending, library):
     """Step 4: the fertilizers available; returns (reference, products)."""
-    p.say('4/5 Fertilizers available')
+    p.step(4, '4/5 Fertilizers available')
     catalogue, saved = library['salts'], store.list('stores')
     pick = p.choose('Fertilizers', ['The whole catalogue'] + saved + ['Tick what I have'])
     if pick == 0:
@@ -416,18 +454,8 @@ def ask_products(p, store, pending, library):
         products = store.load('stores', ref)
     else:
         ref = None
-        for i, s in enumerate(catalogue, 1):
-            p.say(f'  {i:2}  {s["name"]}')
-        while True:
-            picked = (
-                p.text('Numbers of the products you have, separated by spaces')
-                .replace(',', ' ')
-                .split()
-            )
-            if all(n.isdigit() and 1 <= int(n) <= len(catalogue) for n in picked):
-                products = [catalogue[int(n) - 1] for n in dict.fromkeys(picked)]
-                break
-            p.say(f'  Use numbers 1 to {len(catalogue)}.')
+        names = [s['name'] for s in catalogue]
+        products = [catalogue[i] for i in p.pick_many('Fertilizers you have', names)]
     added = False
     while kind := p.choose(
         'Add a product?',
@@ -519,12 +547,24 @@ def interview(p, store):
     """The five steps; returns (session name, session, items to save). Nothing is written here."""
     library, pending = load_library(), []
     spec = ask_spec(p)
+    tanks = spec['tank_litres']
+    p.answered(
+        'Tanks',
+        f'A {tanks["A"]:g} L, B {tanks["B"]:g} L, acid {tanks["acid"]:g} L; '
+        f'1:{spec["ratio"]:g}, {spec["temperature_c"]:g} °C',
+    )
     water, share, limits = ask_water(p, store, pending)
+    p.answered('Water', 'RO' if water == 'ro' else f'{water} ({share:g} %)')
     formula, _, formula_title = ask_formula(p, store, pending, library)
-    product_store, _ = ask_products(p, store, pending, library)
+    p.answered('Formula', formula_title)
+    product_store, products = ask_products(p, store, pending, library)
+    p.answered('Fertilizers', f'{len(products)} products')
+    p.step(5)
     acids = ask_acids(p, store, pending)
-    p.say('5/5 pH requirement')
+    p.answered('Acids', ', '.join(acids) or 'none')
+    p.step(5, '5/5 pH requirement')
     ph = p.number('Target pH of the final solution', 5.8, high=14, positive=True)
+    p.answered('Target pH', f'{ph:g}')
     depth = 1 + p.choose(
         'Output depth',
         [
