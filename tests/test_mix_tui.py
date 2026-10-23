@@ -4,11 +4,17 @@
 # its results are calculations, not dosing instructions.
 """Tests for flahax.mix_tui: the wizard widgets, the frame and the full-screen prompts."""
 
+import os
+from pathlib import Path
 import re
+import tempfile
 import unittest
+from unittest import mock
 
-from flahax.mix_cli import number_answer
-from flahax.mix_tui import Question, Wizard, frame, handle, visible
+from flahax.mix_cli import Prompts, interview, number_answer
+from flahax.mix_store import Store
+from flahax.mix_tui import Question, TuiPrompts, Wizard, frame, handle, visible
+from tests.test_output_consistency import ANSWERS
 from flahax.terminal import glyphs
 
 UTF8 = glyphs('utf-8')
@@ -28,6 +34,53 @@ def press(question, keys, validate=None):
 
 def typed(text):
     return list(text)
+
+
+def entry(text):
+    return typed(text) + ['ENTER']
+
+
+# The owner's session (tests/test_output_consistency.py ANSWERS) as keys on the wizard.
+OWNER_KEYS = (
+    entry('100')
+    + entry('100')
+    + entry('10')
+    + entry('100')
+    + entry('25')
+    + ['ENTER', 'ENTER', 'ENTER', 'ENTER']  # fill the tanks; RO; no limits; a packaged formula
+    + typed('tomato')
+    + ['DOWN', 'ENTER']  # the second formula matching "tomato"
+    + ['ENTER', 'ENTER', 'ENTER']  # whole catalogue; add nothing; a new acid
+    + entry('HNO3')
+    + entry('65')
+    + entry('1.3')
+    + entry('HNO3 65%')
+    + ['ENTER']  # done with acids
+    + entry('6')
+    + ['DOWN', 'DOWN', 'ENTER']
+    + entry('tomato stage 1')
+)
+
+
+class FakeTerm:
+    """The terminal methods TuiPrompts uses, from a key script; it keeps every frame drawn."""
+
+    def __init__(self, keys, sizes=((100, 30),)):
+        self.keys, self.sizes, self.frames = list(keys), list(sizes), []
+
+    def read_key(self, timeout=0.1):
+        if not self.keys:
+            raise AssertionError('ran out of keys')
+        return self.keys.pop(0)
+
+    def size(self):
+        return self.sizes.pop(0) if len(self.sizes) > 1 else self.sizes[0]
+
+    def draw(self, lines):
+        self.frames.append(plain(lines))
+
+    def show_cursor(self, on):
+        pass
 
 
 class WidgetTests(unittest.TestCase):
@@ -117,6 +170,59 @@ class FrameTests(unittest.TestCase):
         self.assertNotIn('─', text)
         self.assertNotIn('✓', text)
         self.assertIn('+ Spec', ANSI.sub('', text))
+
+
+class TuiPromptsTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        patch = mock.patch.dict(os.environ, {'FLAHAX_HOME': self.tmp.name})
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_interview_same_session_as_plain(self):
+        answers = list(ANSWERS)
+        plain_run = interview(
+            Prompts(lambda prompt: answers.pop(0), lambda *a: None),
+            Store(Path(self.tmp.name) / 'plain'),
+        )
+        term = FakeTerm(OWNER_KEYS)
+        tui_run = interview(TuiPrompts(term, UTF8), Store(Path(self.tmp.name) / 'tui'))
+        self.assertEqual(term.keys, [])
+        self.assertEqual(tui_run[:2], plain_run[:2])
+        self.assertEqual(tui_run[2], plain_run[2])
+
+    def test_say_shows_until_next_answer(self):
+        term = FakeTerm(entry('x'))
+        p = TuiPrompts(term, UTF8)
+        p.say('Added X as Y.')
+        self.assertEqual(p.text('Name'), 'x')
+        self.assertIn('Added X as Y.', '\n'.join(term.frames[0]))
+        self.assertNotIn('Added X as Y.', '\n'.join(p.current_frame()))
+
+    def test_escape_confirms(self):
+        term = FakeTerm(['a', 'ESC', 'n', 'b', 'ENTER'])
+        self.assertEqual(TuiPrompts(term, UTF8).text('Name'), 'ab')
+        self.assertTrue(any('Quit without saving? Y/N' in '\n'.join(f) for f in term.frames))
+        with self.assertRaises(KeyboardInterrupt):
+            TuiPrompts(FakeTerm(['ESC', 'y']), UTF8).text('Name')
+
+    def test_resize_mid_question(self):
+        term = FakeTerm(['a', None, 'b', 'ENTER'], sizes=[(100, 30), (70, 20), (100, 30)])
+        self.assertEqual(TuiPrompts(term, UTF8).text('Name'), 'ab')
+        self.assertIn(['Enlarge the window to at least 80 x 24. Q quits.'], term.frames)
+
+    def test_ask_gives_raw_text_for_lab_values(self):
+        from flahax.mix_water import ask_ion
+
+        p = TuiPrompts(FakeTerm(entry('<0.02') + ['ENTER']), UTF8)
+        self.assertEqual(p.ask('Na: '), '<0.02')
+        self.assertEqual(ask_ion(p, 'Cl'), (None, None))
+
+    def test_text_needs_an_answer(self):
+        term = FakeTerm(['ENTER', 'z', 'ENTER'])
+        self.assertEqual(TuiPrompts(term, UTF8).text('Name'), 'z')
+        self.assertTrue(any('This one is needed.' in '\n'.join(f) for f in term.frames))
 
 
 if __name__ == '__main__':

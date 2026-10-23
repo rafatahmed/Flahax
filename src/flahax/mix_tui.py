@@ -12,6 +12,7 @@ console.
 from dataclasses import dataclass, field
 
 from . import __version__
+from .mix_cli import Prompts, number_answer
 
 STEPS = ('Spec', 'Water', 'Formula', 'Fertilizers', 'Acid and pH')
 MIN_WIDTH, MIN_HEIGHT, TWO_PANES = 80, 24, 100
@@ -246,3 +247,99 @@ def frame(wizard, question, width, height, g):
     lines += [''] * (height - 2 - len(lines))
     lines.append(paint([('  ' + HELP[question.kind if question else 'choice'], 'dim')], usable, g))
     return lines
+
+
+class TuiPrompts(Prompts):
+    """The ``flahax mix`` questions on the full screen; the five steps call it like ``Prompts``.
+
+    ``term`` reads keys and draws (``flahax.terminal.Terminal`` or a test double); ``g`` is the
+    glyph set from ``flahax.terminal.glyphs``.
+    """
+
+    def __init__(self, term, g):
+        # Not Prompts.__init__: it stores ask and say on the instance, hiding the methods below.
+        self.term, self.g, self.wizard = term, g, Wizard()
+
+    def current_frame(self, question=None):
+        """The lines for the current state at the current window size."""
+        width, height = self.term.size()
+        return frame(self.wizard, question, width, height, self.g)
+
+    def _confirm_quit(self, question):
+        self.wizard.messages.append('Quit without saving? Y/N')
+        self.term.draw(self.current_frame(question))
+        self.wizard.messages.pop()
+        while (key := self.term.read_key()) is None:
+            pass
+        if key in ('y', 'Y'):
+            raise KeyboardInterrupt
+
+    def _run(self, question, validate=None):
+        while True:
+            lines = self.current_frame(question)
+            self.term.draw(lines)
+            key = self.term.read_key()
+            if lines == [SMALL]:
+                if key in ('q', 'Q'):
+                    raise KeyboardInterrupt
+                continue
+            if key == 'ESC':
+                self._confirm_quit(question)
+                continue
+            question = handle(question, key, validate)
+            if question.done:
+                self.wizard.messages.clear()
+                return question.answer
+
+    def say(self, *parts):
+        """Show a message above the next question (kept until it is answered)."""
+        text = ' '.join(str(part) for part in parts).strip()
+        if text:
+            self.wizard.messages = (self.wizard.messages + [text])[-6:]
+
+    def ask(self, prompt):
+        """A raw typed answer (empty allowed), as ``input`` would give it."""
+        return self._run(Question('field', prompt.rstrip().rstrip(':')))
+
+    def text(self, prompt, default=None):
+        """A non-empty answer, or the default on Enter when there is one."""
+
+        def check(text):
+            if text.strip():
+                return text.strip(), None
+            if default is not None:
+                return default, None
+            return None, 'This one is needed.'
+
+        hint = '' if default is None else f'[{default or "none"}]'
+        return self._run(Question('field', prompt, hint=hint), check)
+
+    def number(self, prompt, default=None, *, blank=False, low=0.0, high=None, positive=False):
+        """A number within the limits; the message shows under the field until it is valid."""
+
+        def check(text):
+            return number_answer(text, default, blank=blank, low=low, high=high, positive=positive)
+
+        hint = f'[{default:g}]' if default is not None else '(Enter if blank)' if blank else ''
+        return self._run(Question('field', prompt, hint=hint), check)
+
+    def choose(self, prompt, options, default=1):
+        """0-based index of the chosen option; the default starts highlighted."""
+        start = 0 if default is None else max(0, min(default - 1, len(options) - 1))
+        return self._run(Question('choice', prompt or 'Choose', list(options), selected=start))
+
+    def search(self, prompt, names):
+        """A name chosen from a list that narrows as you type."""
+        return names[self._run(Question('filter', prompt, list(names)))]
+
+    def pick_many(self, prompt, names):
+        """0-based indices ticked with Space, in the order ticked."""
+        return self._run(Question('ticks', prompt, list(names)))
+
+    def step(self, index, heading=None):
+        """Move the step bar to step ``index``."""
+        self.wizard.step = index
+
+    def answered(self, label, value):
+        """Add a finished step's short answer to "Your batch"."""
+        self.wizard.answers.append((label, value))
