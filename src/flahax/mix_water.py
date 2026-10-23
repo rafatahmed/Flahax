@@ -134,6 +134,10 @@ def ask_analysis(p, store):
 
         for ion in WATER_IONS:
             label = label_of(ion)
+            entered = [f'{i} {v:g}' for i, v in values.items()] + [
+                f'{i} <{v:g}' for i, v in below.items()
+            ]
+            p.progress('Entered: ' + ', '.join(entered) if entered else None)
             value, limit = ask_ion(p, label)
             if ion == 'Alk' and value is None and limit is None:
                 p.say(
@@ -146,6 +150,7 @@ def ask_analysis(p, store):
                 else:
                     value = 0.0
             keep(ion, value, limit)
+        p.progress(None)
         while True:
             mg = to_elements(values, units, alkalinity, micro)
             cations, anions, apart, parts = water_balance(mg)

@@ -52,7 +52,8 @@ Acids for the pH plan
 ? Acid formula (HNO3, H3PO4, H2SO4, C6H8O7) [HNO3]: 
 ? Assay on the certificate, % w/w: 
 ? Density on the certificate, kg/L: 
-? Name [HNO3 65%]: 
+? Name of this acid [HNO3 65%]: 
+  Added HNO3 65% for the pH plan.
 Acids for the pH plan
   1  A new acid from its certificate
   2  Done
@@ -69,7 +70,7 @@ Saved the answers as <TMP>/home/sessions/tomato-stage-1.json; next time: flahax 
 FlahaX <VERSION>: Tomato Stage.1 - 10-14 days (Howard Resh) - review notes before mixing
   ! Sodium Molybdate (Dihydrate) is included because Mo stayed more than 1% short without it. It also carries Na.
   ! Incidental Na includes formula counterion sodium (chelates D2, CH - micro borax/molybdate): 1.7424 mg/L.
-  ! formulation: incidental nutrients with no declared maximum: Na 1.75 mg/L; check them, or declare maximum concentrations
+  ! Formulation: incidental nutrients with no declared maximum: Na 1.75 mg/L; check them, or declare maximum concentrations
   ... 4 more notes: choose output 2 or 3 to see them all
 Irrigation supplied: 1,000 L at 1:100
 Tank A: prepare 10 L in your 100 L tank (your 10 L acid container sets the batch); no acid

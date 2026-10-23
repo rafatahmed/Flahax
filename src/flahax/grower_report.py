@@ -61,6 +61,8 @@ def number(value, digits=4):
         return 'Not available'
     if not isinstance(value, (int, float)) or not math.isfinite(value):
         return text(value)
+    if abs(value) < 1e-9:
+        value = 0.0  # floating-point noise such as 7e-15 mg/L
     if value != 0 and abs(value) < 0.0001:
         return f'{value:.3e}'
     return f'{value:,.{digits}f}'.rstrip('0').rstrip('.') if digits else f'{value:,.0f}'
