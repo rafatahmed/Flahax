@@ -1,25 +1,63 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Coupled recipe and pH reagent planning (#74, #75, #76, #77)."""
+
 import math
 import unittest
 
-from flahax import (VolumeLitres, calculate_equilibrium_ph, catalogue_dose_totals, catalogue_ph_reagents, load_library,
-                    plan_fertilizer_workflow, reagent_dose, recommend)
+from flahax import (
+    VolumeLitres,
+    calculate_equilibrium_ph,
+    catalogue_dose_totals,
+    catalogue_ph_reagents,
+    load_library,
+    plan_fertilizer_workflow,
+    reagent_dose,
+    recommend,
+)
 from flahax.delivery_contracts import DeliveryError
 from flahax.ph_adjustment import REAGENTS
 
 LIBRARY = load_library()
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
-ACIDS = [dict(id=f'{f}-example', source='EXAMPLE GRADE', revision='1', recordedAt='2026-10-22T00:00:00Z',
-              chemicalFormula=f, massFraction=m, densityKgPerL=d) for f, m, d in (('HNO3', .60, 1.37), ('H3PO4', .75, 1.58))]
-RO = dict(water_totals={}, water_mass_kg=1000, water_analysis_id='RO', complete_analysis=True,
-          carbon_boundary='closed', temperature_c=25, phases=[])
+ACIDS = [
+    dict(
+        id=f'{f}-example',
+        source='EXAMPLE GRADE',
+        revision='1',
+        recordedAt='2026-10-22T00:00:00Z',
+        chemicalFormula=f,
+        massFraction=m,
+        densityKgPerL=d,
+    )
+    for f, m, d in (('HNO3', 0.60, 1.37), ('H3PO4', 0.75, 1.58))
+]
+RO = dict(
+    water_totals={},
+    water_mass_kg=1000,
+    water_analysis_id='RO',
+    complete_analysis=True,
+    carbon_boundary='closed',
+    temperature_c=25,
+    phases=[],
+)
 CLOSED = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
 
 
 def coupled(formula, target_ph=5.8):
-    return plan_fertilizer_workflow(LIBRARY['salts'], FORMULAS[formula], {}, target_ph, final_volume=VolumeLitres(1000),
-                                    equilibrium=RO, ph_adjustment=dict(products=ACIDS + catalogue_ph_reagents(),
-                                                                       maximum_reagent_volume_litres=5))
+    return plan_fertilizer_workflow(
+        LIBRARY['salts'],
+        FORMULAS[formula],
+        {},
+        target_ph,
+        final_volume=VolumeLitres(1000),
+        equilibrium=RO,
+        ph_adjustment=dict(
+            products=ACIDS + catalogue_ph_reagents(), maximum_reagent_volume_litres=5
+        ),
+    )
 
 
 def amended_ph(candidate):
@@ -33,17 +71,23 @@ def amended_ph(candidate):
 
 class ReagentDoseTests(unittest.TestCase):
     def setUp(self):
-        self.acidic = calculate_equilibrium_ph({'K+': .004, 'PO4-3': .004}, **CLOSED)   # KH2PO4-like, pH ~4.6
+        self.acidic = calculate_equilibrium_ph(
+            {'K+': 0.004, 'PO4-3': 0.004}, **CLOSED
+        )  # KH2PO4-like, pH ~4.6
 
     def test_bases_raise_the_ph_to_exactly_the_target(self):
         for formula in ('KOH', 'KHCO3', 'K2CO3'):
             with self.subTest(formula):
-                dose, state = reagent_dose(self.acidic.totals, self.acidic.ph, 5.8, formula, initial=self.acidic)
+                dose, _ = reagent_dose(
+                    self.acidic.totals, self.acidic.ph, 5.8, formula, initial=self.acidic
+                )
                 self.assertGreater(dose, 0)
                 totals = dict(self.acidic.totals)
                 for basis, n in REAGENTS[formula][1].items():
                     totals[basis] = totals.get(basis, 0) + n * dose
-                self.assertAlmostEqual(calculate_equilibrium_ph(totals, **CLOSED).ph, 5.8, places=5)
+                self.assertAlmostEqual(
+                    calculate_equilibrium_ph(totals, **CLOSED).ph, 5.8, places=5
+                )
 
     def test_wrong_direction_is_refused(self):
         with self.assertRaises(DeliveryError) as raised:
@@ -57,20 +101,30 @@ class CatalogueTests(unittest.TestCase):
     def test_catalogue_offers_three_sourced_bases(self):
         records = {r['chemicalFormula']: r for r in catalogue_ph_reagents()}
         self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3'})
-        self.assertEqual((records['KOH']['massFraction'], records['KOH']['densityKgPerL']), (.45, 1.456))
+        self.assertEqual(
+            (records['KOH']['massFraction'], records['KOH']['densityKgPerL']), (0.45, 1.456)
+        )
 
     def test_recommend_never_selects_a_ph_reagent(self):
         result = recommend(LIBRARY['salts'], {'K': 300}, {}, allow_carbonates=True)
-        self.assertFalse({s['name'] for s in result['salts']} & {
-            'Potassium Hydroxide (45% solution)', 'Potassium Bicarbonate', 'Potassium Carbonate'})
+        self.assertFalse(
+            {s['name'] for s in result['salts']}
+            & {
+                'Potassium Hydroxide (45% solution)',
+                'Potassium Bicarbonate',
+                'Potassium Carbonate',
+            }
+        )
 
 
 class CoupledWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.alkaline = coupled('Tomato (Howard Resh)')     # mixes near pH 6.9 in RO water
-        cls.acidic = coupled('Chilli (maximumyield)')       # mixed at pH 3 when phosphoric acid was a P source
-        cls.unbalanced = coupled('Pepper (Howard Resh)')    # formula 39% out of ion balance
+        cls.alkaline = coupled('Tomato (Howard Resh)')  # mixes near pH 6.9 in RO water
+        cls.acidic = coupled(
+            'Chilli (maximumyield)'
+        )  # mixed at pH 3 when phosphoric acid was a P source
+        cls.unbalanced = coupled('Pepper (Howard Resh)')  # formula 39% out of ion balance
 
     def test_alkaline_feed_gets_acids_with_their_nutrients_counted(self):
         plan = self.alkaline.stages['ph_adjustment'].value
@@ -88,8 +142,12 @@ class CoupledWorkflowTests(unittest.TestCase):
         # slightly, and the miss is explained, not hidden.
         nitric = by_formula['HNO3'].recommendation
         self.assertEqual({u['symbol'] for u in nitric['unmetTargets']}, {'N_NO3', 'Ca'})
-        self.assertTrue(all(u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) < 2
-                            for u in nitric['unmetTargets']))
+        self.assertTrue(
+            all(
+                u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) < 2
+                for u in nitric['unmetTargets']
+            )
+        )
         for c in plan.candidates:
             if c.direction == 'base':
                 self.assertEqual(c.status, 'not_applicable')
@@ -97,8 +155,12 @@ class CoupledWorkflowTests(unittest.TestCase):
     def test_acidic_feed_gets_a_base_and_phosphoric_acid_is_not_a_p_source(self):
         plan = self.acidic.stages['ph_adjustment'].value
         self.assertEqual(plan.direction, 'base')
-        self.assertGreater(plan.unadjusted_ph, 4.0)   # was 2.99 with phosphoric acid as a P source (#76)
-        self.assertNotIn('Phosphoric Acid (75%)', [s['name'] for s in plan.unadjusted_recommendation['salts']])
+        self.assertGreater(
+            plan.unadjusted_ph, 4.0
+        )  # was 2.99 with phosphoric acid as a P source (#76)
+        self.assertNotIn(
+            'Phosphoric Acid (75%)', [s['name'] for s in plan.unadjusted_recommendation['salts']]
+        )
         bases = [c for c in plan.candidates if c.direction == 'base']
         self.assertEqual({c.formula for c in bases}, {'KOH', 'KHCO3', 'K2CO3'})
         for c in bases:
@@ -110,7 +172,9 @@ class CoupledWorkflowTests(unittest.TestCase):
         self.assertIsNotNone(plan)
         computed = [c for c in plan.candidates if c.dose_molal]
         self.assertTrue(computed)
-        self.assertTrue(all(not c.recommendation['feasible'] for c in computed))   # reported, not hidden
+        self.assertTrue(
+            all(not c.recommendation['feasible'] for c in computed)
+        )  # reported, not hidden
 
     def test_review_phases_give_a_usable_plan_with_their_reasons(self):
         # Hydroxylapatite and MnHPO4 are supersaturated in every phosphate feed; they are

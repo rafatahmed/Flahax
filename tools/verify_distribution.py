@@ -1,8 +1,14 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Build and smoke-test wheel and sdist in separate clean, non-editable installs.
 
 Run with a development interpreter containing `build`. Does not publish.
 Build/install dependencies are confined to temporary virtual environments.
 """
+
 import argparse
 import hashlib
 import json
@@ -80,68 +86,138 @@ print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue
 
 def verify(report, interpreter, artifacts_dir=None):
     if artifacts_dir is not None and artifacts_dir.exists() and any(artifacts_dir.iterdir()):
-        raise RuntimeError('artifact destination is not empty; refusing to overwrite release files')
+        raise RuntimeError(
+            'artifact destination is not empty; refusing to overwrite release files'
+        )
     env = dict(os.environ)
     env.pop('PYTHONPATH', None)
     env.pop('PYTHONHOME', None)
     with tempfile.TemporaryDirectory(prefix='flahax-distribution-') as tmp:
         folder = Path(tmp)
-        artifacts = folder/'artifacts'
-        subprocess.run([sys.executable,'-m','build','--outdir',str(artifacts)],cwd=ROOT,env=env,check=True)
+        artifacts = folder / 'artifacts'
+        subprocess.run(
+            [sys.executable, '-m', 'build', '--outdir', str(artifacts)],
+            cwd=ROOT,
+            env=env,
+            check=True,
+        )
         results = []
         for index, artifact in enumerate(sorted(artifacts.iterdir())):
             if artifact.suffix == '.whl':
                 with zipfile.ZipFile(artifact) as archive:
-                    names=archive.namelist()
+                    names = archive.namelist()
             else:
                 with tarfile.open(artifact) as archive:
-                    names=archive.getnames()
-                if not any(n.endswith('/tests/fixtures/phreeqc/products/fe_dtpa/expected.json') for n in names):
+                    names = archive.getnames()
+                if not any(
+                    n.endswith('/tests/fixtures/phreeqc/products/fe_dtpa/expected.json')
+                    for n in names
+                ):
                     raise RuntimeError('sdist is missing its reference evidence')
-            if any(Path(n).suffix.lower() in ('.exe','.dll','.msi') for n in names):
+            if any(Path(n).suffix.lower() in ('.exe', '.dll', '.msi') for n in names):
                 raise RuntimeError('unexpected binary in package distribution')
-            local_sources = {'04_Fertilizer.pdf', '165357805552.pdf', '215057776303.pdf', '215726931002.pdf', 'yaravita-micronutrients-products-and-services-guide.pdf'}
-            if any(Path(n).name in local_sources or ('/docs/sources/' in n and n.lower().endswith('.pdf')) for n in names):
+            local_sources = {
+                '04_Fertilizer.pdf',
+                '165357805552.pdf',
+                '215057776303.pdf',
+                '215726931002.pdf',
+                'yaravita-micronutrients-products-and-services-guide.pdf',
+            }
+            if any(
+                Path(n).name in local_sources
+                or ('/docs/sources/' in n and n.lower().endswith('.pdf'))
+                for n in names
+            ):
                 raise RuntimeError('local-only manufacturer PDF leaked into a distribution')
-            install = folder/f'install-{index}'
-            subprocess.run([interpreter,'-m','venv',str(install)],cwd=folder,env=env,check=True)
-            scripts = install/('Scripts' if os.name == 'nt' else 'bin')
-            python = scripts/('python.exe' if os.name == 'nt' else 'python')
-            cli = scripts/('flahax.exe' if os.name == 'nt' else 'flahax')
-            subprocess.run([str(python),'-m','pip','install','--no-deps',str(artifact)],cwd=folder,env=env,check=True)
-            run = subprocess.run([str(python),'-I','-c',SMOKE,str(cli)],cwd=folder,env=env,text=True,capture_output=True,check=True)
+            install = folder / f'install-{index}'
+            subprocess.run(
+                [interpreter, '-m', 'venv', str(install)], cwd=folder, env=env, check=True
+            )
+            scripts = install / ('Scripts' if os.name == 'nt' else 'bin')
+            python = scripts / ('python.exe' if os.name == 'nt' else 'python')
+            cli = scripts / ('flahax.exe' if os.name == 'nt' else 'flahax')
+            subprocess.run(
+                [str(python), '-m', 'pip', 'install', '--no-deps', str(artifact)],
+                cwd=folder,
+                env=env,
+                check=True,
+            )
+            run = subprocess.run(
+                [str(python), '-I', '-c', SMOKE, str(cli)],
+                cwd=folder,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
             result = json.loads(run.stdout)
-            if result['manual_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/USER_GUIDE.md').read_bytes()).hexdigest():
+            if (
+                result['manual_sha256']
+                != hashlib.sha256(
+                    (ROOT / 'src/flahax/data/USER_GUIDE.md').read_bytes()
+                ).hexdigest()
+            ):
                 raise RuntimeError('packaged user manual differs from source')
             if not Path(result.pop('module')).resolve().is_relative_to(install.resolve()):
                 raise RuntimeError('smoke imported source checkout rather than installed package')
-            catalogue = json.loads((ROOT/'src/flahax/data/library.json').read_bytes())
+            catalogue = json.loads((ROOT / 'src/flahax/data/library.json').read_bytes())
             if result['catalogue_count'] != len(catalogue['salts']):
                 raise RuntimeError('missing packaged catalogue data')
             # Verify the builder retained the resource bytes from this checkout.
-            if result['api_reference_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/API_REFERENCE.md').read_bytes()).hexdigest():
+            if (
+                result['api_reference_sha256']
+                != hashlib.sha256(
+                    (ROOT / 'src/flahax/data/API_REFERENCE.md').read_bytes()
+                ).hexdigest()
+            ):
                 raise RuntimeError('packaged API reference differs from source')
-            source = (ROOT/'src/flahax/data/chemistry_25c.json').read_bytes()
+            source = (ROOT / 'src/flahax/data/chemistry_25c.json').read_bytes()
             if result['chemistry_sha256'] != hashlib.sha256(source).hexdigest():
                 raise RuntimeError('packaged chemistry data differs from source')
-            if result['library_sha256'] != hashlib.sha256((ROOT/'src/flahax/data/library.json').read_bytes()).hexdigest():
+            if (
+                result['library_sha256']
+                != hashlib.sha256((ROOT / 'src/flahax/data/library.json').read_bytes()).hexdigest()
+            ):
                 raise RuntimeError('packaged catalogue differs from source')
-            results.append({'artifact':artifact.name,'sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'result':result})
+            results.append(
+                {
+                    'artifact': artifact.name,
+                    'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
+                    'result': result,
+                }
+            )
         if len(results) != 2 or results[0]['result'] != results[1]['result']:
             raise RuntimeError('wheel and sdist smoke results differ')
         if artifacts_dir is not None:
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             for result in results:
-                shutil.copy2(artifacts/result['artifact'], artifacts_dir/result['artifact'])
-        report.parent.mkdir(parents=True,exist_ok=True)
-        report.write_text(json.dumps({'status':'passed','build_python':sys.version,'installs':results},indent=2)+'\n')
-        print('PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points')
+                shutil.copy2(artifacts / result['artifact'], artifacts_dir / result['artifact'])
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(
+            json.dumps(
+                {'status': 'passed', 'build_python': sys.version, 'installs': results}, indent=2
+            )
+            + '\n'
+        )
+        print(
+            'PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points'
+        )
 
 
 if __name__ == '__main__':
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--report',type=Path,default=ROOT/'build/distribution-verification.json')
-    parser.add_argument('--python',default=sys.executable,help='interpreter used for clean installs and smoke tests')
-    parser.add_argument('--artifacts-dir',type=Path,help='retain verified artifacts in a new or empty directory; never uploads')
-    args=parser.parse_args()
-    verify(args.report,args.python,args.artifacts_dir)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--report', type=Path, default=ROOT / 'build/distribution-verification.json'
+    )
+    parser.add_argument(
+        '--python',
+        default=sys.executable,
+        help='interpreter used for clean installs and smoke tests',
+    )
+    parser.add_argument(
+        '--artifacts-dir',
+        type=Path,
+        help='retain verified artifacts in a new or empty directory; never uploads',
+    )
+    args = parser.parse_args()
+    verify(args.report, args.python, args.artifacts_dir)

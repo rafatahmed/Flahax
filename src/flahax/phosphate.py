@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Narrow orthophosphate acid/base speciation from PHREEQC `phreeqc.dat`.
 
 This module calculates only the four uncomplexed orthophosphate forms at a
@@ -48,7 +52,11 @@ def orthophosphate_speciation(
     to molality. The declared domain is 0 <= ionic strength <= 0.1 mol/kgw;
     outside it, this reduced Davies model is deliberately rejected.
     """
-    for name, value in (("total phosphate", total_phosphate_molal), ("pH", ph), ("ionic strength", ionic_strength)):
+    for name, value in (
+        ("total phosphate", total_phosphate_molal),
+        ("pH", ph),
+        ("ionic strength", ionic_strength),
+    ):
         if not math.isfinite(value):
             raise DeliveryError("invalid_value", f"{name} must be finite")
     if total_phosphate_molal < 0:
@@ -56,19 +64,26 @@ def orthophosphate_speciation(
     if not 0.0 <= ph <= 14.0:
         raise DeliveryError("out_of_range", "pH must be in [0, 14]")
     if not 0.0 <= ionic_strength <= 0.1:
-        raise DeliveryError("unsupported_ionic_strength", "phosphate kernel supports ionic strength in [0, 0.1]")
+        raise DeliveryError(
+            "unsupported_ionic_strength", "phosphate kernel supports ionic strength in [0, 0.1]"
+        )
 
-    a_h = 10.0 ** -ph
+    a_h = 10.0**-ph
     gamma_1 = davies_gamma(1, ionic_strength)
     gamma_2 = davies_gamma(2, ionic_strength)
     gamma_3 = davies_gamma(3, ionic_strength)
     factors = {
         "po4": 1.0,
-        "hpo4": 10.0 ** LOG_BETA_HPO4_25C * a_h,
-        "h2po4": 10.0 ** LOG_BETA_H2PO4_25C * a_h * a_h,
-        "h3po4": 10.0 ** LOG_BETA_H3PO4_25C * a_h * a_h * a_h,
+        "hpo4": 10.0**LOG_BETA_HPO4_25C * a_h,
+        "h2po4": 10.0**LOG_BETA_H2PO4_25C * a_h * a_h,
+        "h3po4": 10.0**LOG_BETA_H3PO4_25C * a_h * a_h * a_h,
     }
-    denominator = factors["po4"] / gamma_3 + factors["hpo4"] / gamma_2 + factors["h2po4"] / gamma_1 + factors["h3po4"]
+    denominator = (
+        factors["po4"] / gamma_3
+        + factors["hpo4"] / gamma_2
+        + factors["h2po4"] / gamma_1
+        + factors["h3po4"]
+    )
     po4_activity = total_phosphate_molal / denominator
     activities = {name: po4_activity * factor for name, factor in factors.items()}
     return OrthophosphateSpeciation(

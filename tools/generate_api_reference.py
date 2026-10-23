@@ -1,4 +1,10 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Generate the shipped public API inventory; --check detects signature drift."""
+
 import argparse
 from collections import defaultdict
 from dataclasses import fields, is_dataclass
@@ -13,16 +19,21 @@ DESTINATION = ROOT / 'src/flahax/data/API_REFERENCE.md'
 
 def render():
     lines = [
-        f'# FlahaX {flahax.__version__} - Public API reference', '',
+        f'# FlahaX {flahax.__version__} - Public API reference',
+        '',
         'Generated from `flahax.__all__`, runtime signatures and source docstrings.',
         'Do not edit this inventory by hand. Regenerate with',
         '`PYTHONPATH=src python tools/generate_api_reference.py` (PowerShell:',
-        '`$env:PYTHONPATH="src"; python tools/generate_api_reference.py`).', '',
+        '`$env:PYTHONPATH="src"; python tools/generate_api_reference.py`).',
+        '',
         'Start with the [User Manual](USER_GUIDE.md) for units, complete examples,',
         'input provenance, errors and scientific limits. This inventory is not a',
-        'substitute for the linked workflow contracts or a claim of field validation.', '',
-        '## Choosing an entry point', '',
-        '| Task | Entry point | Contract |', '|---|---|---|',
+        'substitute for the linked workflow contracts or a claim of field validation.',
+        '',
+        '## Choosing an entry point',
+        '',
+        '| Task | Entry point | Contract |',
+        '|---|---|---|',
         '| Nutrient fit | `recommend`, `solve_weights` | Elemental mg/L in; product g/L out |',
         '| Staged site workflow | `plan_fertilizer_workflow` | Explicit water; inspect every stage status |',
         '| One mixed chemistry solve | `solve_catalogue_product_doses` | Product g/kg water; fixed pH |',
@@ -34,8 +45,10 @@ def render():
         '| Approximate EC | `estimate_manufacturer_ec` | Restricted pre-acid irrigation screening |',
         '| Calibrated EC | `plan_ec_delivery` | Matching measured profiles |',
         '| Injector requirements | `size_injection_requirements` | Volume/flow only, not model selection |',
-        '| Calibrated delivery | `plan_pump_command`, `compose_delivery_plan` | Planning only; no hardware I/O |', '',
-        '## Compatibility and error handling', '',
+        '| Calibrated delivery | `plan_pump_command`, `compose_delivery_plan` | Planning only; no hardware I/O |',
+        '',
+        '## Compatibility and error handling',
+        '',
         'Only the names listed here are the top-level import surface. Submodule',
         'helpers are not automatically public contracts. Legacy single-system kernels',
         'remain available for compatibility and reference tests; do not combine their',
@@ -43,7 +56,8 @@ def render():
         'Signatures show keyword-only arguments after `*`; omitted defaults do not',
         'supply missing measured chemistry. Handle `InputError` and `DeliveryError`',
         'as described in the manual. A returned result is not necessarily an approved',
-        'plan: inspect feasibility, stage status, residuals and warnings.', '',
+        'plan: inspect feasibility, stage status, residuals and warnings.',
+        '',
     ]
     grouped = defaultdict(list)
     for name in sorted(flahax.__all__):
@@ -64,7 +78,10 @@ def render():
             if doc and not (is_dataclass(obj) and doc.startswith(name + '(')):
                 lines += [doc, '']
             if is_dataclass(obj):
-                lines += ['Record fields: ' + ', '.join(f'`{f.name}`' for f in fields(obj)) + '.', '']
+                lines += [
+                    'Record fields: ' + ', '.join(f'`{f.name}`' for f in fields(obj)) + '.',
+                    '',
+                ]
             lines += [f'Source module: `{module}`. Import with `from flahax import {name}`.', '']
     return '\n'.join(lines)
 

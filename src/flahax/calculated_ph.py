@@ -1,9 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Charge-balanced pH from declared complete analytical totals, not nutrient ppm.
 
 The caller supplies the closed-carbon/fixed-valence inventory. No missing ion,
 alkalinity, CO2 reservoir or balancing salt is invented. The inner mass-action
 model and phase policy are identical to the fixed-pH solver.
 """
+
 import math
 from collections.abc import Mapping, Sequence
 
@@ -11,8 +16,9 @@ from .aqueous_model import solve
 from .delivery_contracts import DeliveryError
 
 
-def calculate_equilibrium_ph(totals, *, complete_analysis, carbon_boundary,
-                             phases, temperature_c=25.):
+def calculate_equilibrium_ph(
+    totals, *, complete_analysis, carbon_boundary, phases, temperature_c=25.0
+):
     """Return AqueousResult at zero net charge within the existing Davies domain.
 
     Completeness is a caller declaration of analytical coverage, not a claim
@@ -20,38 +26,61 @@ def calculate_equilibrium_ph(totals, *, complete_analysis, carbon_boundary,
     table alone is not a complete analysis. Charge adjustment changes only pH.
     """
     if complete_analysis is not True:
-        raise DeliveryError('incomplete_water_analysis', 'complete analytical totals must be explicitly declared')
+        raise DeliveryError(
+            'incomplete_water_analysis', 'complete analytical totals must be explicitly declared'
+        )
     if carbon_boundary != 'closed':
-        raise DeliveryError('unsupported_carbon_boundary', 'calculated pH requires closed analytical inorganic carbon')
+        raise DeliveryError(
+            'unsupported_carbon_boundary',
+            'calculated pH requires closed analytical inorganic carbon',
+        )
     if not isinstance(totals, Mapping):
         raise DeliveryError('invalid_totals', 'analytical totals must be a mapping')
     if isinstance(temperature_c, bool) or temperature_c != 25:
-        raise DeliveryError('temperature_out_of_range', 'calculated pH requires the 25 C reaction set')
+        raise DeliveryError(
+            'temperature_out_of_range', 'calculated pH requires the 25 C reaction set'
+        )
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
-        raise DeliveryError('invalid_type', 'supply an explicit phase sequence, or [] for aqueous-only')
+        raise DeliveryError(
+            'invalid_type', 'supply an explicit phase sequence, or [] for aqueous-only'
+        )
     phases = tuple(phases)
     for value in totals.values():
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
-            raise DeliveryError('invalid_totals', 'analytical totals must be finite nonnegative numbers')
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or value < 0
+        ):
+            raise DeliveryError(
+                'invalid_totals', 'analytical totals must be finite nonnegative numbers'
+            )
 
     last = []
 
     def at(ph):
         # Warm-start from the previous pH step (#61); the bracket sequence is unchanged.
-        last[:] = [solve(dict(totals), ph, phases=phases, temperature_c=temperature_c,
-                         start=last[0] if last else None)]
+        last[:] = [
+            solve(
+                dict(totals),
+                ph,
+                phases=phases,
+                temperature_c=temperature_c,
+                start=last[0] if last else None,
+            )
+        ]
         return last[0]
 
     # Start near neutral to avoid unnecessarily evaluating extreme acidic/basic
     # states outside the Davies range. No out-of-domain solve is extrapolated.
-    middle = at(7.)
+    middle = at(7.0)
     if abs(middle.charge_balance) <= 1e-12:
         return middle
     direction = 1 if middle.charge_balance > 0 else -1
     previous = middle
     bracket = None
     for index in range(1, 15):
-        ph = 7. + direction * .5 * index
+        ph = 7.0 + direction * 0.5 * index
         current = at(ph)
         if abs(current.charge_balance) <= 1e-12:
             return current
@@ -60,7 +89,9 @@ def calculate_equilibrium_ph(totals, *, complete_analysis, carbon_boundary,
             break
         previous = current
     if bracket is None:
-        raise DeliveryError('ph_not_bracketed', 'no charge-balanced pH in the supported [0,14] interval')
+        raise DeliveryError(
+            'ph_not_bracketed', 'no charge-balanced pH in the supported [0,14] interval'
+        )
     low, high = bracket
     for _ in range(60):
         current = at((low.ph + high.ph) / 2)

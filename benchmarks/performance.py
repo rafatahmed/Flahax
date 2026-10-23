@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """ASV timings: setup/validation outside timing; invalid results fail teardown."""
+
 import subprocess
 import sys
 
@@ -13,8 +18,13 @@ class Import:
 
     def time_fresh_process_import(self):
         # Includes interpreter/process startup; OS filesystem cache is NOT cold.
-        subprocess.run([sys.executable, "-c", "import flahax"], check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=60)
+        subprocess.run(
+            [sys.executable, "-c", "import flahax"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            timeout=60,
+        )
 
 
 class Library:
@@ -25,6 +35,7 @@ class Library:
 
     def setup(self):
         from flahax import load_library
+
         self.load = load_library
         if not self.load()["salts"]:
             raise ValueError("Empty catalogue")
@@ -48,6 +59,7 @@ class Kernel:
     def setup(self, case):
         from flahax.engine import nnls
         from scipy.optimize import nnls as reference
+
         self.solve = nnls
         self.matrix, self.rhs = NNLS_CASES[case]
         weights, _ = reference(self.matrix, self.rhs)
@@ -75,6 +87,7 @@ class Formulation:
     def setup(self, calcium):
         from flahax import load_library, recommend
         from .cases import evaluate_recipe
+
         self.solve, self.evaluate = recommend, evaluate_recipe
         self.products = load_library()["salts"]
         self.water = {"Ca": calcium}
@@ -97,8 +110,12 @@ class Formulation:
 class Equilibrium:
     rounds = 1
     warmup_time = 0
-    params = ["products/mixed_products", "phases/calcite", "phases/mixed_product_phases",
-              "products/mixed_target_ph_nitric"]
+    params = [
+        "products/mixed_products",
+        "phases/calcite",
+        "phases/mixed_product_phases",
+        "products/mixed_target_ph_nitric",
+    ]
     param_names = ["fixture"]
     repeat = 10
     number = 1
@@ -106,6 +123,7 @@ class Equilibrium:
 
     def setup(self, fixture):
         from .cases import solve_fixture
+
         self.data = read_fixture(fixture)
         self.solve = solve_fixture
         self.result, self.acid = self.solve(self.data)
@@ -125,6 +143,7 @@ class Equilibrium:
         # Total equilibrium solves per call; an acid target runs a search, so its
         # final-state iterations alone understate the work.
         from flahax import aqueous_model
+
         original, count = aqueous_model.solve, [0]
 
         def counted(*args, **kwargs):
@@ -150,10 +169,12 @@ class IrrigationEC:
 
     def setup(self):
         from flahax import calculate_ec_from_totals
+
         self.solve = calculate_ec_from_totals
-        self.totals = {"K+": .01, "Cl-": .01}
-        self.kwargs = dict(solution_id="benchmark-v1-kcl", ph_mode="calculated",
-                           phase_policy="dissolved")
+        self.totals = {"K+": 0.01, "Cl-": 0.01}
+        self.kwargs = dict(
+            solution_id="benchmark-v1-kcl", ph_mode="calculated", phase_policy="dissolved"
+        )
         self.result = self.solve(self.totals, **self.kwargs)
         self.teardown()
 
@@ -161,7 +182,7 @@ class IrrigationEC:
         self.result = self.solve(self.totals, **self.kwargs)
 
     def teardown(self):
-        if self.result.status != "estimated" or abs(self.result.ec25_ms_cm - 1.4235) > .001:
+        if self.result.status != "estimated" or abs(self.result.ec25_ms_cm - 1.4235) > 0.001:
             raise ValueError("Experimental EC regression changed; not a physical accuracy test")
 
 
@@ -176,9 +197,11 @@ class Delivery:
         # Existing synthetic composed workflow; includes record construction.
         # Root is needed for examples in isolated ASV environments.
         from .cases import ROOT
+
         if str(ROOT) not in sys.path:
             sys.path.append(str(ROOT))
         from examples.equilibrium_delivery import run
+
         self.run = run
         self.result = self.run()
         self.teardown()

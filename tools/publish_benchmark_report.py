@@ -1,8 +1,14 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Render a clean benchmark capture as static docs and a portable evidence bundle.
 
 No benchmark is run and no external service is modified by this command.
 Install tools/requirements-benchmark-report.txt to regenerate the charts.
 """
+
 import argparse
 import copy
 import csv
@@ -37,8 +43,7 @@ def load_capture(capture):
         raise ValueError("Input stability was not verified")
     metadata = before["metadata"]
     expected = sha(json.dumps(metadata["input_sha256"], sort_keys=True).encode())
-    after_expected = sha(json.dumps(
-        after["metadata"]["input_sha256"], sort_keys=True).encode())
+    after_expected = sha(json.dumps(after["metadata"]["input_sha256"], sort_keys=True).encode())
     if expected != metadata["input_manifest_sha256"] or after_expected != expected:
         raise ValueError("Invalid input manifest digest")
     records = after["performance"]["records"]
@@ -105,13 +110,17 @@ def miss_summary(rows, names):
         totals[r["ion"]] = totals.get(r["ion"], 0) + 1
         if not is_pass(r["passes"]):
             failures[r["ion"]] = failures.get(r["ion"], 0) + 1
-    table = "\n".join(f"| {ion} | {n}/{totals[ion]} |" for ion, n in
-                      sorted(failures.items(), key=lambda item: (-item[1], item[0])))
-    return (f"The largest miss is {worst['ion']} in {case_label(worst['case'], names)}: "
-            f"target {float(worst['target_mg_l']):g} mg/L, delivered "
-            f"{float(worst['delivered_mg_l']):g} mg/L "
-            f"({float(worst['error_percent']):+.1f}%).\n\n"
-            "| Nutrient | Failing targets |\n|---|---:|\n" + table)
+    table = "\n".join(
+        f"| {ion} | {n}/{totals[ion]} |"
+        for ion, n in sorted(failures.items(), key=lambda item: (-item[1], item[0]))
+    )
+    return (
+        f"The largest miss is {worst['ion']} in {case_label(worst['case'], names)}: "
+        f"target {float(worst['target_mg_l']):g} mg/L, delivered "
+        f"{float(worst['delivered_mg_l']):g} mg/L "
+        f"({float(worst['error_percent']):+.1f}%).\n\n"
+        "| Nutrient | Failing targets |\n|---|---:|\n" + table
+    )
 
 
 def csv_bytes(rows, fields):
@@ -124,11 +133,17 @@ def csv_bytes(rows, fields):
 
 def scorecard_notice(kernel_pass, kernel_total, chemistry, missing_text, missing_count, manual):
     """Admonition for the page head: a warning naming failed gates, or a note when none failed (#66)."""
-    workflow = (f"The [manual GitHub benchmark workflow]({manual['url']}) completed with "
-                f"conclusion **{manual['conclusion']}**.")
+    workflow = (
+        f"The [manual GitHub benchmark workflow]({manual['url']}) completed with "
+        f"conclusion **{manual['conclusion']}**."
+    )
     chem = f"{chemistry['passed']}/{chemistry['attempted']}"
-    if (kernel_pass == kernel_total and chemistry["passed"] == chemistry["attempted"]
-            and missing_count == 0 and manual["conclusion"] == "success"):
+    if (
+        kernel_pass == kernel_total
+        and chemistry["passed"] == chemistry["attempted"]
+        and missing_count == 0
+        and manual["conclusion"] == "success"
+    ):
         return f"""```{{note}}
 Every correctness gate passed: {kernel_pass}/{kernel_total} controlled NNLS cases, {chem}
 stored chemistry comparisons, and every timing workload completed. {workflow}
@@ -144,17 +159,25 @@ CI checks are separate evidence and do not mean this scorecard passed.
 ```"""
 
 
-def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
-           related_page=None, capture_kind="hosted",
-           related_label="Results from the other recorded environment"):
+def render(
+    capture,
+    asv,
+    site,
+    snapshot,
+    source,
+    page_stem="benchmark-results",
+    related_page=None,
+    capture_kind="hosted",
+    related_label="Results from the other recorded environment",
+):
     if capture_kind not in ("hosted", "local"):
         raise ValueError("Capture kind must be hosted or local")
     report = load_capture(capture)
     from tools.benchmark_baseline import asv_samples
+
     if asv_samples(asv) != report["performance"]:
         raise ValueError("ASV source records do not match the captured summary")
-    machines = [json.loads(p.read_text(encoding="utf-8-sig"))
-                for p in asv.rglob("machine.json")]
+    machines = [json.loads(p.read_text(encoding="utf-8-sig")) for p in asv.rglob("machine.json")]
     if len(machines) != 1:
         raise ValueError("A published capture must contain exactly one ASV machine")
     machine = machines[0]
@@ -171,7 +194,8 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
         raise ValueError("Hosted checks refer to a different revision")
     ci_table = "\n".join(
         f"| [{job['name']}]({job['url']}) | {job['conclusion'] or job['status']} |"
-        for job in hosted["jobs"])
+        for job in hosted["jobs"]
+    )
     manual = json.loads((capture / "manual-workflow.json").read_text(encoding="utf-8-sig"))
     if manual["headSha"] != meta["git_commit"] or manual["status"] != "completed":
         raise ValueError("Manual benchmark workflow must have completed at the measured revision")
@@ -181,20 +205,24 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
         if sha((source / relative).read_bytes()) != expected:
             raise ValueError("Measured source/input changed: " + relative)
     archive = {}
-    for relative in ("asv.conf.json", "benchmarks/requirements.txt",
-                     ".github/workflows/benchmark.yml"):
+    for relative in (
+        "asv.conf.json",
+        "benchmarks/requirements.txt",
+        ".github/workflows/benchmark.yml",
+    ):
         archive["configuration/" + relative] = (source / relative).read_bytes()
     archive["baseline.json"] = redact(json.dumps(report, indent=2, allow_nan=False)).encode()
     for path in sorted(capture.iterdir()):
         if path.is_file() and path.suffix in (".json", ".txt", ".log"):
-            archive["capture/" + path.name] = redact(
-                path.read_text(encoding="utf-8-sig")).encode()
+            archive["capture/" + path.name] = redact(path.read_text(encoding="utf-8-sig")).encode()
     for path in sorted(asv.rglob("*.json")):
         archive["asv/" + redact(path.relative_to(asv).as_posix())] = redact(
-            path.read_text(encoding="utf-8-sig")).encode()
+            path.read_text(encoding="utf-8-sig")
+        ).encode()
     archive["publish_benchmark_report.py"] = Path(__file__).read_bytes()
-    archive["requirements-benchmark-report.txt"] = Path(__file__).with_name(
-        "requirements-benchmark-report.txt").read_bytes()
+    archive["requirements-benchmark-report.txt"] = (
+        Path(__file__).with_name("requirements-benchmark-report.txt").read_bytes()
+    )
     archive["README.txt"] = (
         "Clean-checkout Benchmark v1 capture. Numerical failures are retained.\n"
         "Paths identifying user home directories have been replaced with USER_HOME.\n"
@@ -210,27 +238,53 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
     for case in report["formulation"]["cases"]:
         for row in case["rows"]:
             rows.append({"case": case["id"], **row})
-    fields = ["case", "ion", "target_mg_l", "delivered_mg_l", "error_mg_l",
-              "error_percent", "tolerance_mg_l", "passes"]
+    fields = [
+        "case",
+        "ion",
+        "target_mg_l",
+        "delivered_mg_l",
+        "error_mg_l",
+        "error_percent",
+        "tolerance_mg_l",
+        "passes",
+    ]
     archive["formulation.csv"] = csv_bytes(rows, fields)
     timings = [r for r in report["performance"]["records"] if ".time_" in r["benchmark"]]
     measured = [r for r in timings if r["status"] == "measured"]
     missing = [r for r in timings if r["status"] != "measured"]
-    timing_rows = [{"workload": label(r), "status": r["status"], "samples": r["sample_count"],
-                    "median_ms": r["median_seconds"] * 1000 if r["sample_count"] else "",
-                    "minimum_ms": min(r["samples_seconds"]) * 1000 if r["sample_count"] else "",
-                    "maximum_ms": max(r["samples_seconds"]) * 1000 if r["sample_count"] else ""}
-                   for r in timings]
+    timing_rows = [
+        {
+            "workload": label(r),
+            "status": r["status"],
+            "samples": r["sample_count"],
+            "median_ms": r["median_seconds"] * 1000 if r["sample_count"] else "",
+            "minimum_ms": min(r["samples_seconds"]) * 1000 if r["sample_count"] else "",
+            "maximum_ms": max(r["samples_seconds"]) * 1000 if r["sample_count"] else "",
+        }
+        for r in timings
+    ]
     archive["timings.csv"] = csv_bytes(timing_rows, list(timing_rows[0]))
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    archive["renderer-environment.json"] = json.dumps({
-        "python": sys.version, "matplotlib": matplotlib.__version__,
-        "renderer_sha256": sha(Path(__file__).read_bytes()),
-    }, indent=2).encode()
-    plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 11,
-                         "svg.fonttype": "none", "svg.hashsalt": "flahax-benchmark-v1"})
+
+    archive["renderer-environment.json"] = json.dumps(
+        {
+            "python": sys.version,
+            "matplotlib": matplotlib.__version__,
+            "renderer_sha256": sha(Path(__file__).read_bytes()),
+        },
+        indent=2,
+    ).encode()
+    plt.rcParams.update(
+        {
+            "font.family": "DejaVu Sans",
+            "font.size": 11,
+            "svg.fonttype": "none",
+            "svg.hashsalt": "flahax-benchmark-v1",
+        }
+    )
     element_pass = sum(r["passes"] for r in rows)
     recipe_pass = sum(c["whole_recipe_passes"] for c in report["formulation"]["cases"])
     recipe_total = report["formulation"]["attempted"]
@@ -240,39 +294,79 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
     for i, (passed, total) in enumerate(counts):
         fraction = 100 * passed / total
         ax.barh(i, fraction, color="#16654a")
-        ax.barh(i, 100-fraction, left=fraction, color="#e7a34b")
-        ax.text(2, i, f"{passed}/{total} pass ({fraction:.1f}%)",
-                va="center", color="white", weight="bold")
-    ax.set(yticks=[0, 1], yticklabels=["Explicit nutrient targets", "Complete recipes"],
-           xlim=(0, 100), xlabel="Percent of each denominator",
-           title="Target fit from returned rounded doses")
+        ax.barh(i, 100 - fraction, left=fraction, color="#e7a34b")
+        ax.text(
+            2,
+            i,
+            f"{passed}/{total} pass ({fraction:.1f}%)",
+            va="center",
+            color="white",
+            weight="bold",
+        )
+    ax.set(
+        yticks=[0, 1],
+        yticklabels=["Explicit nutrient targets", "Complete recipes"],
+        xlim=(0, 100),
+        xlabel="Percent of each denominator",
+        title="Target fit from returned rounded doses",
+    )
     ax.invert_yaxis()
-    fig.text(.5, -.03, "Tolerance: max(0.01 mg/L, 1% of target). Not crop safety or physical accuracy.",
-             ha="center", fontsize=10)
+    fig.text(
+        0.5,
+        -0.03,
+        "Tolerance: max(0.01 mg/L, 1% of target). Not crop safety or physical accuracy.",
+        ha="center",
+        fontsize=10,
+    )
     for extension in ("svg", "png"):
         output = io.BytesIO()
-        fig.savefig(output, format=extension, bbox_inches="tight",
-                    metadata={"Date": None} if extension == "svg" else None)
+        fig.savefig(
+            output,
+            format=extension,
+            bbox_inches="tight",
+            metadata={"Date": None} if extension == "svg" else None,
+        )
         archive["formulation." + extension] = output.getvalue()
     plt.close(fig)
-    fig, ax = plt.subplots(figsize=(11, max(5, len(measured)*.36)), layout="constrained")
+    fig, ax = plt.subplots(figsize=(11, max(5, len(measured) * 0.36)), layout="constrained")
     for i, row in enumerate(measured):
-        values = [x*1000 for x in row["samples_seconds"]]
+        values = [x * 1000 for x in row["samples_seconds"]]
         median = statistics.median(values)
-        ax.plot(values, [i]*len(values), "o", color="#91bfc4", markersize=4)
-        ax.errorbar(median, i, xerr=[[median-min(values)], [max(values)-median]],
-                    fmt="D", color="#124c52", capsize=3, markersize=5)
-    ax.set(yticks=range(len(measured)), yticklabels=[label(r) for r in measured],
-           xscale="log", xlabel="Milliseconds per call (log scale)",
-           title="Completed timings: samples, median, and observed range")
+        ax.plot(values, [i] * len(values), "o", color="#91bfc4", markersize=4)
+        ax.errorbar(
+            median,
+            i,
+            xerr=[[median - min(values)], [max(values) - median]],
+            fmt="D",
+            color="#124c52",
+            capsize=3,
+            markersize=5,
+        )
+    ax.set(
+        yticks=range(len(measured)),
+        yticklabels=[label(r) for r in measured],
+        xscale="log",
+        xlabel="Milliseconds per call (log scale)",
+        title="Completed timings: samples, median, and observed range",
+    )
     ax.invert_yaxis()
-    ax.grid(axis="x", alpha=.2)
-    fig.text(.5, -.025, f"{len(missing)} missing timings excluded from plot; listed in the table. "
-             "Ranges are not confidence intervals.", ha="center", fontsize=10)
+    ax.grid(axis="x", alpha=0.2)
+    fig.text(
+        0.5,
+        -0.025,
+        f"{len(missing)} missing timings excluded from plot; listed in the table. "
+        "Ranges are not confidence intervals.",
+        ha="center",
+        fontsize=10,
+    )
     for extension in ("svg", "png"):
         output = io.BytesIO()
-        fig.savefig(output, format=extension, bbox_inches="tight",
-                    metadata={"Date": None} if extension == "svg" else None)
+        fig.savefig(
+            output,
+            format=extension,
+            bbox_inches="tight",
+            metadata={"Date": None} if extension == "svg" else None,
+        )
         archive["timings." + extension] = output.getvalue()
     plt.close(fig)
     checksums = "".join(f"{sha(data)}  {name}\n" for name, data in sorted(archive.items()))
@@ -284,8 +378,16 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
             info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             zipped.writestr(info, data)
-    for name in ("baseline.json", "formulation.csv", "timings.csv", "CHECKSUMS.sha256",
-                 "formulation.svg", "formulation.png", "timings.svg", "timings.png"):
+    for name in (
+        "baseline.json",
+        "formulation.csv",
+        "timings.csv",
+        "CHECKSUMS.sha256",
+        "formulation.svg",
+        "formulation.png",
+        "timings.svg",
+        "timings.png",
+    ):
         (destination / name).write_bytes(archive[name])
     (destination / "evidence.zip").write_bytes(bundle.getvalue())
     link = "../_static/benchmarks/" + snapshot
@@ -294,41 +396,69 @@ def render(capture, asv, site, snapshot, source, page_stem="benchmark-results",
     chemistry = report["chemistry"]
     time_table = "\n".join(
         f"| {r['workload']} | {r['samples']} | "
-        + (f"{r['median_ms']:.4g} | {r['minimum_ms']:.4g}–{r['maximum_ms']:.4g}"
-           if r["samples"] else "— | Missing; see limitations and ASV log") + " |"
-        for r in timing_rows)
+        + (
+            f"{r['median_ms']:.4g} | {r['minimum_ms']:.4g}–{r['maximum_ms']:.4g}"
+            if r["samples"]
+            else "— | Missing; see limitations and ASV log"
+        )
+        + " |"
+        for r in timing_rows
+    )
     names = formula_names(source)
     recipe_table = "\n".join(
         f"| {case_label(c['id'], names)} | {sum(r['passes'] for r in c['rows'])}/{len(c['rows'])} | "
         f"{'Pass' if c['whole_recipe_passes'] else 'Miss'} |"
-        for c in report["formulation"]["cases"])
-    kernel_failures = "\n".join(
-        f"- `{r['case']}`: objective gap {r.get('objective_gap', float('nan')):.6g}; "
-        f"tolerance {r.get('tolerance', float('nan')):.6g}."
-        for r in kernel if not r["passes"]) or "- None in this capture."
+        for c in report["formulation"]["cases"]
+    )
+    kernel_failures = (
+        "\n".join(
+            f"- `{r['case']}`: objective gap {r.get('objective_gap', float('nan')):.6g}; "
+            f"tolerance {r.get('tolerance', float('nan')):.6g}."
+            for r in kernel
+            if not r["passes"]
+        )
+        or "- None in this capture."
+    )
     versions = ", ".join(f"{k} {v}" for k, v in meta["tool_versions"].items())
     memory_table = "\n".join(
-        f"| {label(r)} | " + (f"{r['asv_result']/1e6:.2f}"
-                             if r["asv_result"] is not None else "Missing; see ASV log") + " |"
+        f"| {label(r)} | "
+        + (
+            f"{r['asv_result'] / 1e6:.2f}"
+            if r["asv_result"] is not None
+            else "Missing; see ASV log"
+        )
+        + " |"
         for r in report["performance"]["records"]
-        if ".peakmem_" in r["benchmark"])
+        if ".peakmem_" in r["benchmark"]
+    )
     memory_count = sum(".peakmem_" in r["benchmark"] for r in report["performance"]["records"])
-    related = (f"\n[{related_label}]({related_page}). "
-               "Treat environments separately; this is not a controlled OS comparison.\n"
-               if related_page else "")
+    related = (
+        f"\n[{related_label}]({related_page}). "
+        "Treat environments separately; this is not a controlled OS comparison.\n"
+        if related_page
+        else ""
+    )
     if related_page and page_stem == "benchmark-results":
         related += f"\n:::{{toctree}}\n:hidden:\n\n{Path(related_page).stem}\n:::\n"
     notes_path = capture / "publication-notes.txt"
-    capture_notes = ("\n## Capture notes\n\n" + notes_path.read_text(encoding="utf-8-sig")
-                     if notes_path.exists() else "")
+    capture_notes = (
+        "\n## Capture notes\n\n" + notes_path.read_text(encoding="utf-8-sig")
+        if notes_path.exists()
+        else ""
+    )
     environment_name = "Linux" if meta["os"].startswith("Linux") else "Windows"
-    local_note = ("\n**Local supplementary capture.** This was measured on a developer machine, "
-                  "not a hosted runner.\nIts timings reflect that machine's power and thermal "
-                  "state; use them only alongside the hosted capture.\n"
-                  if capture_kind == "local" else "")
+    local_note = (
+        "\n**Local supplementary capture.** This was measured on a developer machine, "
+        "not a hosted runner.\nIts timings reflect that machine's power and thermal "
+        "state; use them only alongside the hosted capture.\n"
+        if capture_kind == "local"
+        else ""
+    )
     title = environment_name + (" (local supplement)" if capture_kind == "local" else "")
-    missing_text = (f"{count(len(missing), 'timing workload')} "
-                    f"{'has' if len(missing) == 1 else 'have'} no completed measurement.")
+    missing_text = (
+        f"{count(len(missing), 'timing workload')} "
+        f"{'has' if len(missing) == 1 else 'have'} no completed measurement."
+    )
     page = f"""# Benchmark results: {title}
 
 **Measured snapshot: {snapshot}.** This page reports one clean-checkout development
@@ -346,8 +476,8 @@ are deliberately excluded from the charts on this page.
 
 | Scorecard | Result | Meaning |
 |---|---|---|
-| Nutrient targets | {element_pass}/{len(rows)} ({100*element_pass/len(rows):.2f}%) | Explicit catalogue-assay targets within max(0.01 mg/L, 1%) |
-| Complete recipes | {recipe_pass}/{recipe_total} ({100*recipe_pass/recipe_total:.2f}%) | Every target passes; denominator includes attempted recipes |
+| Nutrient targets | {element_pass}/{len(rows)} ({100 * element_pass / len(rows):.2f}%) | Explicit catalogue-assay targets within max(0.01 mg/L, 1%) |
+| Complete recipes | {recipe_pass}/{recipe_total} ({100 * recipe_pass / recipe_total:.2f}%) | Every target passes; denominator includes attempted recipes |
 | RMS target deviation | {fit['rms_percent']:.3f}% | Percentage deviations across positive targets |
 | Maximum absolute target deviation | {fit['max_absolute_percent']:.3f}% | Largest percentage miss across positive targets |
 | Nutrient RMSE | {fit['rmse_mg_l']:.3f} mg/L | Absolute concentration residuals across explicit targets |
@@ -501,16 +631,35 @@ def main():
     parser.add_argument("--asv-results", type=Path, required=True)
     parser.add_argument("--site", type=Path, required=True)
     parser.add_argument("--snapshot", required=True)
-    parser.add_argument("--source-checkout", type=Path, required=True,
-                        help="Unchanged checkout of the measured revision; hashes are verified")
+    parser.add_argument(
+        "--source-checkout",
+        type=Path,
+        required=True,
+        help="Unchanged checkout of the measured revision; hashes are verified",
+    )
     parser.add_argument("--page-stem", default="benchmark-results")
     parser.add_argument("--related-page", help="Relative link to a separate environment's results")
     parser.add_argument("--related-label", default="Results from the other recorded environment")
-    parser.add_argument("--capture-kind", choices=("hosted", "local"), default="hosted",
-                        help="local marks a developer-machine capture as supplementary")
+    parser.add_argument(
+        "--capture-kind",
+        choices=("hosted", "local"),
+        default="hosted",
+        help="local marks a developer-machine capture as supplementary",
+    )
     args = parser.parse_args()
-    print(render(args.capture, args.asv_results, args.site, args.snapshot, args.source_checkout,
-                 args.page_stem, args.related_page, args.capture_kind, args.related_label))
+    print(
+        render(
+            args.capture,
+            args.asv_results,
+            args.site,
+            args.snapshot,
+            args.source_checkout,
+            args.page_stem,
+            args.related_page,
+            args.capture_kind,
+            args.related_label,
+        )
+    )
 
 
 if __name__ == "__main__":

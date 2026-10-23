@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Fixed-pH Ca/Mg orthophosphate complexation kernel at 25 °C."""
 
 from __future__ import annotations
@@ -52,7 +56,7 @@ def hydroxyapatite_hpo4_activity_at_equilibrium(calcium_activity: float, ph: flo
     if not math.isfinite(ph) or not 0 <= ph <= 14:
         raise DeliveryError("out_of_range", "pH must be finite and in [0, 14]")
     log_hpo4 = (LOG_K_HYDROXYAPATITE_HPO4 - 5 * math.log10(calcium_activity) - 4 * ph) / 3
-    return 10.0 ** log_hpo4
+    return 10.0**log_hpo4
 
 
 def _solve_linear3(matrix: list[list[float]], vector: list[float]) -> list[float]:
@@ -67,12 +71,19 @@ def _solve_linear3(matrix: list[list[float]], vector: list[float]) -> list[float
         for row in range(3):
             if row != column:
                 scale = augmented[row][column]
-                augmented[row] = [value - scale * base for value, base in zip(augmented[row], augmented[column])]
+                augmented[row] = [
+                    value - scale * base for value, base in zip(augmented[row], augmented[column])
+                ]
     return [augmented[row][3] for row in range(3)]
 
 
 def calcium_magnesium_phosphate_speciation(
-    calcium_molal: float, magnesium_molal: float, phosphate_molal: float, sodium_molal: float, ph: float, ionic_strength: float
+    calcium_molal: float,
+    magnesium_molal: float,
+    phosphate_molal: float,
+    sodium_molal: float,
+    ph: float,
+    ionic_strength: float,
 ) -> CalciumMagnesiumPhosphateSpeciation:
     """Solve source-defined Ca/Mg phosphate complexes at fixed pH and I.
 
@@ -88,36 +99,67 @@ def calcium_magnesium_phosphate_speciation(
     if not 0 <= ph <= 14 or not 0 <= ionic_strength <= 0.1:
         raise DeliveryError("out_of_range", "pH must be in [0, 14] and ionic strength in [0, 0.1]")
     g1, g2, g3 = (davies_gamma(charge, ionic_strength) for charge in (1, 2, 3))
-    a_h = 10.0 ** -ph
+    a_h = 10.0**-ph
 
     def species(logs: list[float]) -> dict[str, float]:
-        a_ca, a_mg, a_po4 = (10.0 ** value for value in logs)
-        a_hpo4 = 10.0 ** LOG_BETA_HPO4_25C * a_po4 * a_h
-        a_h2po4 = 10.0 ** LOG_BETA_H2PO4_25C * a_po4 * a_h**2
-        a_h3po4 = 10.0 ** LOG_BETA_H3PO4_25C * a_po4 * a_h**3
+        a_ca, a_mg, a_po4 = (10.0**value for value in logs)
+        a_hpo4 = 10.0**LOG_BETA_HPO4_25C * a_po4 * a_h
+        a_h2po4 = 10.0**LOG_BETA_H2PO4_25C * a_po4 * a_h**2
+        a_h3po4 = 10.0**LOG_BETA_H3PO4_25C * a_po4 * a_h**3
         a_na = sodium_molal * g1
         result = {
-            "ca": a_ca / g2, "mg": a_mg / g2, "po4": a_po4 / g3,
-            "hpo4": a_hpo4 / g2, "h2po4": a_h2po4 / g1, "h3po4": a_h3po4,
-            "ca_hpo4": 10.0 ** LOG_BETA_CA_HPO4 * a_ca * a_hpo4,
-            "mg_hpo4": 10.0 ** LOG_BETA_MG_HPO4 * a_mg * a_hpo4,
-            "ca_h2po4": 10.0 ** LOG_BETA_CA_H2PO4 * a_ca * a_h2po4 / g1,
-            "mg_h2po4": 10.0 ** LOG_BETA_MG_H2PO4 * a_mg * a_h2po4 / g1,
-            "ca_po4": 10.0 ** LOG_BETA_CA_PO4 * a_ca * a_po4 / g1,
-            "mg_po4": 10.0 ** LOG_BETA_MG_PO4 * a_mg * a_po4 / g1,
-            "na_hpo4": 10.0 ** LOG_BETA_NA_HPO4 * a_na * a_hpo4 / g1,
-            "a_ca": a_ca, "a_hpo4": a_hpo4,
+            "ca": a_ca / g2,
+            "mg": a_mg / g2,
+            "po4": a_po4 / g3,
+            "hpo4": a_hpo4 / g2,
+            "h2po4": a_h2po4 / g1,
+            "h3po4": a_h3po4,
+            "ca_hpo4": 10.0**LOG_BETA_CA_HPO4 * a_ca * a_hpo4,
+            "mg_hpo4": 10.0**LOG_BETA_MG_HPO4 * a_mg * a_hpo4,
+            "ca_h2po4": 10.0**LOG_BETA_CA_H2PO4 * a_ca * a_h2po4 / g1,
+            "mg_h2po4": 10.0**LOG_BETA_MG_H2PO4 * a_mg * a_h2po4 / g1,
+            "ca_po4": 10.0**LOG_BETA_CA_PO4 * a_ca * a_po4 / g1,
+            "mg_po4": 10.0**LOG_BETA_MG_PO4 * a_mg * a_po4 / g1,
+            "na_hpo4": 10.0**LOG_BETA_NA_HPO4 * a_na * a_hpo4 / g1,
+            "a_ca": a_ca,
+            "a_hpo4": a_hpo4,
         }
-        result["ca_total"] = result["ca"] + result["ca_hpo4"] + result["ca_h2po4"] + result["ca_po4"]
-        result["mg_total"] = result["mg"] + result["mg_hpo4"] + result["mg_h2po4"] + result["mg_po4"]
-        result["p_total"] = sum(result[name] for name in ("po4", "hpo4", "h2po4", "h3po4", "ca_hpo4", "mg_hpo4", "ca_h2po4", "mg_h2po4", "ca_po4", "mg_po4", "na_hpo4"))
+        result["ca_total"] = (
+            result["ca"] + result["ca_hpo4"] + result["ca_h2po4"] + result["ca_po4"]
+        )
+        result["mg_total"] = (
+            result["mg"] + result["mg_hpo4"] + result["mg_h2po4"] + result["mg_po4"]
+        )
+        result["p_total"] = sum(
+            result[name]
+            for name in (
+                "po4",
+                "hpo4",
+                "h2po4",
+                "h3po4",
+                "ca_hpo4",
+                "mg_hpo4",
+                "ca_h2po4",
+                "mg_h2po4",
+                "ca_po4",
+                "mg_po4",
+                "na_hpo4",
+            )
+        )
         return result
 
     targets = (calcium_molal, magnesium_molal, phosphate_molal)
-    logs = [math.log10(calcium_molal * g2), math.log10(magnesium_molal * g2), math.log10(phosphate_molal * g3)]
+    logs = [
+        math.log10(calcium_molal * g2),
+        math.log10(magnesium_molal * g2),
+        math.log10(phosphate_molal * g3),
+    ]
     for _ in range(30):
         current = species(logs)
-        residual = [math.log10(current[name] / target) for name, target in zip(("ca_total", "mg_total", "p_total"), targets)]
+        residual = [
+            math.log10(current[name] / target)
+            for name, target in zip(("ca_total", "mg_total", "p_total"), targets)
+        ]
         if max(abs(value) for value in residual) < 1e-12:
             break
         step = 1e-5
@@ -128,12 +170,31 @@ def calcium_magnesium_phosphate_speciation(
                 perturbed = logs[:]
                 perturbed[column] += step
                 changed = species(perturbed)
-                changed_residual = math.log10(changed[("ca_total", "mg_total", "p_total")[row]] / targets[row])
+                changed_residual = math.log10(
+                    changed[("ca_total", "mg_total", "p_total")[row]] / targets[row]
+                )
                 jacobian[row].append((changed_residual - residual[row]) / step)
         delta = _solve_linear3(jacobian, [-value for value in residual])
         logs = [value + min(1.0, max(-1.0, adjustment)) for value, adjustment in zip(logs, delta)]
     else:
         raise DeliveryError("nonconvergent", "phosphate complexation did not converge")
     result = species(logs)
-    hap_iap = 5 * math.log10(result["a_ca"]) + 3 * math.log10(result["a_hpo4"]) - 4 * math.log10(a_h)
-    return CalciumMagnesiumPhosphateSpeciation(calcium_molal, magnesium_molal, phosphate_molal, sodium_molal, ph, ionic_strength, result["ca"], result["mg"], result["po4"], result["hpo4"], result["h2po4"], result["ca_hpo4"], result["mg_hpo4"], hap_iap - LOG_K_HYDROXYAPATITE_HPO4)
+    hap_iap = (
+        5 * math.log10(result["a_ca"]) + 3 * math.log10(result["a_hpo4"]) - 4 * math.log10(a_h)
+    )
+    return CalciumMagnesiumPhosphateSpeciation(
+        calcium_molal,
+        magnesium_molal,
+        phosphate_molal,
+        sodium_molal,
+        ph,
+        ionic_strength,
+        result["ca"],
+        result["mg"],
+        result["po4"],
+        result["hpo4"],
+        result["h2po4"],
+        result["ca_hpo4"],
+        result["mg_hpo4"],
+        hap_iap - LOG_K_HYDROXYAPATITE_HPO4,
+    )

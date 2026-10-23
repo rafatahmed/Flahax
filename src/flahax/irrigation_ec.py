@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """EXPERIMENTAL: speciation-based irrigation EC from McCleskey et al. (2012).
 
 Source: McCleskey, Nordstrom, Ryan, Ball (2012) Geochim. Cosmochim. Acta 77,
@@ -10,6 +14,7 @@ fitted to Pethybridge, Talbot and House (2006) Table III by
 tools/fit_phosphate_conductivity.py (decision O1). Not validated for
 concentrated nutrient solutions; every result carries QUALIFIER.
 """
+
 import copy
 import hashlib
 import math
@@ -47,7 +52,9 @@ def load_conductivity_coefficients() -> dict:
 def _supplementary():
     """Supplementary 25 C ion rows (decision O1); the species name is the ion name."""
     block = _load().get('supplementary', {})
-    return {ion: row for ion, row in block.items() if isinstance(row, dict) and 'lambda0_25c' in row}
+    return {
+        ion: row for ion, row in block.items() if isinstance(row, dict) and 'lambda0_25c' in row
+    }
 
 
 @lru_cache(maxsize=1)
@@ -61,8 +68,9 @@ def covered_species() -> frozenset:
     return frozenset(_coverage())
 
 
-def ionic_molal_conductivity(ion: str, ionic_strength: float,
-                             temperature_c: float = 25.0) -> float:
+def ionic_molal_conductivity(
+    ion: str, ionic_strength: float, temperature_c: float = 25.0
+) -> float:
     """Eq. 8: lambda = lambda0(T) - A(T)*sqrt(I)/(1 + B*sqrt(I)), T in C.
 
     Supplementary ions (H2PO4-, HPO4-2) have 25 C coefficients only; any other
@@ -71,8 +79,9 @@ def ionic_molal_conductivity(ion: str, ionic_strength: float,
     row = _load()['ions'].get(ion) if isinstance(ion, str) else None
     extra = _supplementary().get(ion) if isinstance(ion, str) and row is None else None
     if row is None and extra is None:
-        raise DeliveryError('unknown_ion',
-                            f'no McCleskey 2012 Table 1 or supplementary coefficient for {ion!r}')
+        raise DeliveryError(
+            'unknown_ion', f'no McCleskey 2012 Table 1 or supplementary coefficient for {ion!r}'
+        )
     for name, v in (('ionic_strength', ionic_strength), ('temperature_c', temperature_c)):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
             raise DeliveryError('invalid_value', f'{name} must be a finite number')
@@ -81,11 +90,16 @@ def ionic_molal_conductivity(ion: str, ionic_strength: float,
     root = math.sqrt(ionic_strength)
     if extra is not None:
         if temperature_c != 25:
-            raise DeliveryError('temperature_outside_reference',
-                                f'supplementary coefficient for {ion!r} is for 25 C only')
+            raise DeliveryError(
+                'temperature_outside_reference',
+                f'supplementary coefficient for {ion!r} is for 25 C only',
+            )
         return extra['lambda0_25c'] - extra['A_25c'] * root / (1 + extra['B'] * root)
     t = float(temperature_c)
-    poly = lambda c: c[0] * t * t + c[1] * t + c[2]
+
+    def poly(c):
+        return c[0] * t * t + c[1] * t + c[2]
+
     return poly(row['lambda0']) - poly(row['A']) * root / (1 + row['B'] * root)
 
 
@@ -99,12 +113,29 @@ _ASSAY_LIMIT_PERCENT = 0.1
 # limiting-conductivity table (Adamson 1973, p. 512) no ion other than H+ and OH- (always
 # covered by McCleskey) exceeds it; the highest are SO4-2 at 79.8 and Br- at 78.4.
 LAMBDA_MAX_PER_CHARGE = 80.0
-_CORE_AUDIT_KEYS = frozenset((
-    'temperature_reference_c', 'ph_mode', 'ph', 'phase_policy', 'phases', 'carbon_boundary',
-    'chemistrySha256', 'coefficientsSha256', 'equation', 'speciesMappingVersion',
-    'conductivity_units', 'unit_conversions', 'solver_iterations', 'charge_balance', 'model',
-    'uncovered_bound_ms_cm', 'lambda_max_per_charge', 'supplementaryCoefficients',
-    'phosphate_fit_max_ionic_strength'))
+_CORE_AUDIT_KEYS = frozenset(
+    (
+        'temperature_reference_c',
+        'ph_mode',
+        'ph',
+        'phase_policy',
+        'phases',
+        'carbon_boundary',
+        'chemistrySha256',
+        'coefficientsSha256',
+        'equation',
+        'speciesMappingVersion',
+        'conductivity_units',
+        'unit_conversions',
+        'solver_iterations',
+        'charge_balance',
+        'model',
+        'uncovered_bound_ms_cm',
+        'lambda_max_per_charge',
+        'supplementaryCoefficients',
+        'phosphate_fit_max_ionic_strength',
+    )
+)
 
 
 @dataclass(frozen=True)
@@ -120,6 +151,7 @@ class IrrigationECResult:
     they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
     charge is conservative, the true value tends to lie in the lower half of the range.
     """
+
     status: str
     ec25_ms_cm: float | None
     known_species_subtotal_ms_cm: float | None
@@ -143,7 +175,9 @@ class IrrigationECResult:
 
 @lru_cache(maxsize=1)
 def _chemistry_sha256():
-    return hashlib.sha256(files('flahax').joinpath('data/chemistry_25c.json').read_bytes()).hexdigest()
+    return hashlib.sha256(
+        files('flahax').joinpath('data/chemistry_25c.json').read_bytes()
+    ).hexdigest()
 
 
 @lru_cache(maxsize=1)
@@ -160,8 +194,17 @@ def _require_id(value, name):
         raise DeliveryError('missing_field', f'{name} must be a nonempty string')
 
 
-def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbon_boundary,
-                      assay_residual_eq, assay_residual_percent=None):
+def _validate_request(
+    *,
+    ph_mode,
+    ph,
+    phase_policy,
+    phases,
+    temperature_c,
+    carbon_boundary,
+    assay_residual_eq,
+    assay_residual_percent=None,
+):
     """Validate mode inputs; return (phases tuple, not_supported reason or None).
 
     Invalid input raises DeliveryError. Temperature and carbon boundary outside
@@ -173,20 +216,27 @@ def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbo
             raise DeliveryError('invalid_ph_input', "ph_mode='calculated' takes no supplied pH")
     elif ph_mode == 'supplied':
         if not _is_number(ph) or not 0 <= ph <= 14:
-            raise DeliveryError('invalid_ph_input', "ph_mode='supplied' needs a finite pH in [0, 14]")
+            raise DeliveryError(
+                'invalid_ph_input', "ph_mode='supplied' needs a finite pH in [0, 14]"
+            )
     else:
         raise DeliveryError('invalid_ph_input', "ph_mode must be 'calculated' or 'supplied'")
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
         raise DeliveryError('invalid_phase_policy', 'phases must be a sequence of phase names')
     phases = tuple(phases)
-    if not (phase_policy == 'dissolved' and phases == ()
-            or phase_policy == 'equilibrated' and phases):
-        raise DeliveryError('invalid_phase_policy',
-                            "phase_policy 'dissolved' needs phases=(); 'equilibrated' needs a nonempty phase list")
+    if not (
+        phase_policy == 'dissolved' and phases == () or phase_policy == 'equilibrated' and phases
+    ):
+        raise DeliveryError(
+            'invalid_phase_policy',
+            "phase_policy 'dissolved' needs phases=(); 'equilibrated' needs a nonempty phase list",
+        )
     if not _is_number(assay_residual_eq):
         raise DeliveryError('invalid_value', 'assay charge residual must be a finite number')
     if assay_residual_percent is not None and not _is_number(assay_residual_percent):
-        raise DeliveryError('invalid_value', 'assay charge residual percent must be a finite number')
+        raise DeliveryError(
+            'invalid_value', 'assay charge residual percent must be a finite number'
+        )
     if not _is_number(temperature_c):
         raise DeliveryError('invalid_value', 'temperature_c must be a finite number')
     if temperature_c != 25:
@@ -196,46 +246,103 @@ def _validate_request(*, ph_mode, ph, phase_policy, phases, temperature_c, carbo
     return phases, None
 
 
-def _audit(*, ph_mode, ph, phase_policy, phases, carbon_boundary, state, audit_inputs,
-           uncovered_bound=None, supplementary_used=False):
+def _audit(
+    *,
+    ph_mode,
+    ph,
+    phase_policy,
+    phases,
+    carbon_boundary,
+    state,
+    audit_inputs,
+    uncovered_bound=None,
+    supplementary_used=False,
+):
     inputs = dict(audit_inputs or {})
     clash = sorted(_CORE_AUDIT_KEYS & set(inputs))
     if clash:
-        raise DeliveryError('invalid_audit_inputs', f'audit_inputs may not override model keys: {clash}')
+        raise DeliveryError(
+            'invalid_audit_inputs', f'audit_inputs may not override model keys: {clash}'
+        )
     data = _load()
-    audit = {'temperature_reference_c': 25, 'ph_mode': ph_mode, 'ph': ph,
-             'phase_policy': phase_policy, 'phases': tuple(phases),
-             'carbon_boundary': carbon_boundary, 'solution_id': inputs.pop('solution_id', None),
-             'chemistrySha256': _chemistry_sha256(), 'coefficientsSha256': COEFFICIENTS_SHA256,
-             'equation': data['model_id'], 'speciesMappingVersion': data['species_mapping_version'],
-             'conductivity_units': CONDUCTIVITY_UNITS, 'unit_conversions': [],
-             'solver_iterations': state.iterations if state is not None else None,
-             'charge_balance': state.charge_balance if state is not None else None,
-             'model': MODEL_VERSION, 'uncovered_bound_ms_cm': uncovered_bound,
-             'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE,
-             # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
-             # the fit's data reach only this ionic strength.
-             'supplementaryCoefficients': supplementary_used,
-             'phosphate_fit_max_ionic_strength':
-                 data['supplementary']['fit']['max_ionic_strength'] if supplementary_used else None}
+    audit = {
+        'temperature_reference_c': 25,
+        'ph_mode': ph_mode,
+        'ph': ph,
+        'phase_policy': phase_policy,
+        'phases': tuple(phases),
+        'carbon_boundary': carbon_boundary,
+        'solution_id': inputs.pop('solution_id', None),
+        'chemistrySha256': _chemistry_sha256(),
+        'coefficientsSha256': COEFFICIENTS_SHA256,
+        'equation': data['model_id'],
+        'speciesMappingVersion': data['species_mapping_version'],
+        'conductivity_units': CONDUCTIVITY_UNITS,
+        'unit_conversions': [],
+        'solver_iterations': state.iterations if state is not None else None,
+        'charge_balance': state.charge_balance if state is not None else None,
+        'model': MODEL_VERSION,
+        'uncovered_bound_ms_cm': uncovered_bound,
+        'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE,
+        # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
+        # the fit's data reach only this ionic strength.
+        'supplementaryCoefficients': supplementary_used,
+        'phosphate_fit_max_ionic_strength': data['supplementary']['fit']['max_ionic_strength']
+        if supplementary_used
+        else None,
+    }
     audit.update(inputs)
     return audit
 
 
-def _not_supported_unsolved(reason, *, ph_mode, ph, phase_policy, phases, carbon_boundary,
-                            assay_residual_eq, assay_residual_percent, audit_inputs):
+def _not_supported_unsolved(
+    reason,
+    *,
+    ph_mode,
+    ph,
+    phase_policy,
+    phases,
+    carbon_boundary,
+    assay_residual_eq,
+    assay_residual_percent,
+    audit_inputs,
+):
     return IrrigationECResult(
-        status='not_supported', ec25_ms_cm=None, known_species_subtotal_ms_cm=None,
-        contributions_ms_cm={}, transport_numbers={}, missing_species=(),
+        status='not_supported',
+        ec25_ms_cm=None,
+        known_species_subtotal_ms_cm=None,
+        contributions_ms_cm={},
+        transport_numbers={},
+        missing_species=(),
         unrecorded_counterions_eq_per_kgw=None,
         assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': assay_residual_percent},
-        reason=reason, ph=ph, ionic_strength=None, precipitated_molal={}, warnings=(),
-        audit=_audit(ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
-                     carbon_boundary=carbon_boundary, state=None, audit_inputs=audit_inputs))
+        reason=reason,
+        ph=ph,
+        ionic_strength=None,
+        precipitated_molal={},
+        warnings=(),
+        audit=_audit(
+            ph_mode=ph_mode,
+            ph=ph,
+            phase_policy=phase_policy,
+            phases=phases,
+            carbon_boundary=carbon_boundary,
+            state=None,
+            audit_inputs=audit_inputs,
+        ),
+    )
 
 
-def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay_residual_eq,
-                   assay_residual_percent, audit_inputs) -> IrrigationECResult:
+def _ec_from_state(
+    state: AqueousResult,
+    *,
+    ph_mode,
+    phase_policy,
+    phases,
+    assay_residual_eq,
+    assay_residual_percent,
+    audit_inputs,
+) -> IrrigationECResult:
     """EXPERIMENTAL: EC25 from an already-solved 25 C, closed-carbon state.
 
     The caller has validated the mode inputs (see _validate_request). Status
@@ -254,7 +361,7 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
     if assay_residual_percent is not None:
         percent = assay_residual_percent
     else:
-        percent = 100 * assay_residual_eq / equivalents if equivalents else 0.
+        percent = 100 * assay_residual_eq / equivalents if equivalents else 0.0
     contributions, missing = {}, []
     for name in sorted(state.species):
         molal, charge = state.species[name], charges.get(name, 0)
@@ -266,8 +373,11 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
             missing.append({'name': name, 'charge': charge, 'molal': molal})
     warnings = ()
     if phase_policy == 'dissolved':
-        warnings = tuple(f'{phase} supersaturated (SI {si:.3f}); no kinetic interpretation'
-                         for phase, si in sorted(state.saturation_indices.items()) if si > 0)
+        warnings = tuple(
+            f'{phase} supersaturated (SI {si:.3f}); no kinetic interpretation'
+            for phase, si in sorted(state.saturation_indices.items())
+            if si > 0
+        )
     unrecorded = None
     excess = state.charge_balance - assay_residual_eq
     if abs(percent) > _ASSAY_LIMIT_PERCENT:
@@ -296,28 +406,53 @@ def _ec_from_state(state: AqueousResult, *, ph_mode, phase_policy, phases, assay
     else:
         ec, transport = None, {}
     return IrrigationECResult(
-        status=status, ec25_ms_cm=ec,
-        known_species_subtotal_ms_cm=subtotal if status == 'partial' or bound is not None else None,
-        contributions_ms_cm=contributions, transport_numbers=transport,
-        bounded=bound is not None, ec25_range_ms_cm=ec_range, uncertainty_ms_cm=uncertainty,
+        status=status,
+        ec25_ms_cm=ec,
+        known_species_subtotal_ms_cm=subtotal
+        if status == 'partial' or bound is not None
+        else None,
+        contributions_ms_cm=contributions,
+        transport_numbers=transport,
+        bounded=bound is not None,
+        ec25_range_ms_cm=ec_range,
+        uncertainty_ms_cm=uncertainty,
         uncovered_bound_ms_cm=bound,
-        missing_species=tuple(missing), unrecorded_counterions_eq_per_kgw=unrecorded,
+        missing_species=tuple(missing),
+        unrecorded_counterions_eq_per_kgw=unrecorded,
         assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': percent},
-        reason=reason, ph=state.ph, ionic_strength=strength,
+        reason=reason,
+        ph=state.ph,
+        ionic_strength=strength,
         precipitated_molal={p: v for p, v in state.precipitated.items() if v > 0},
         warnings=warnings,
-        audit=_audit(ph_mode=ph_mode, ph=state.ph, phase_policy=phase_policy, phases=phases,
-                     carbon_boundary='closed', state=state, audit_inputs=audit_inputs,
-                     uncovered_bound=bound,
-                     supplementary_used=any(n in supplementary for n in contributions)))
+        audit=_audit(
+            ph_mode=ph_mode,
+            ph=state.ph,
+            phase_policy=phase_policy,
+            phases=phases,
+            carbon_boundary='closed',
+            state=state,
+            audit_inputs=audit_inputs,
+            uncovered_bound=bound,
+            supplementary_used=any(n in supplementary for n in contributions),
+        ),
+    )
 
 
-def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: str, ph_mode: str,
-                             ph: float | None = None, phase_policy: str, phases: Sequence[str] = (),
-                             carbon_boundary: str = 'closed', temperature_c: float = 25.0,
-                             assay_charge_residual_eq_per_kgw: float = 0.0,
-                             assay_charge_residual_percent: float | None = None,
-                             audit_inputs: Mapping | None = None) -> IrrigationECResult:
+def calculate_ec_from_totals(
+    totals_molal: Mapping[str, float],
+    *,
+    solution_id: str,
+    ph_mode: str,
+    ph: float | None = None,
+    phase_policy: str,
+    phases: Sequence[str] = (),
+    carbon_boundary: str = 'closed',
+    temperature_c: float = 25.0,
+    assay_charge_residual_eq_per_kgw: float = 0.0,
+    assay_charge_residual_percent: float | None = None,
+    audit_inputs: Mapping | None = None,
+) -> IrrigationECResult:
     """EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
@@ -339,41 +474,72 @@ def calculate_ec_from_totals(totals_molal: Mapping[str, float], *, solution_id: 
     """
     _require_id(solution_id, 'solution_id')
     phases, reason = _validate_request(
-        ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
-        temperature_c=temperature_c, carbon_boundary=carbon_boundary,
+        ph_mode=ph_mode,
+        ph=ph,
+        phase_policy=phase_policy,
+        phases=phases,
+        temperature_c=temperature_c,
+        carbon_boundary=carbon_boundary,
         assay_residual_eq=assay_charge_residual_eq_per_kgw,
-        assay_residual_percent=assay_charge_residual_percent)
+        assay_residual_percent=assay_charge_residual_percent,
+    )
     inputs = {**dict(audit_inputs or {}), 'solution_id': solution_id}
-    common = dict(ph_mode=ph_mode, phase_policy=phase_policy, phases=phases,
-                  assay_residual_eq=assay_charge_residual_eq_per_kgw,
-                  assay_residual_percent=assay_charge_residual_percent, audit_inputs=inputs)
+    common = dict(
+        ph_mode=ph_mode,
+        phase_policy=phase_policy,
+        phases=phases,
+        assay_residual_eq=assay_charge_residual_eq_per_kgw,
+        assay_residual_percent=assay_charge_residual_percent,
+        audit_inputs=inputs,
+    )
     if reason is not None:
         return _not_supported_unsolved(reason, ph=ph, carbon_boundary=carbon_boundary, **common)
     try:
         if ph_mode == 'calculated':
-            state = calculate_equilibrium_ph(totals_molal, complete_analysis=True,
-                                             carbon_boundary='closed', phases=phases)
+            state = calculate_equilibrium_ph(
+                totals_molal, complete_analysis=True, carbon_boundary='closed', phases=phases
+            )
         else:
             state = solve(totals_molal, ph, phases=phases)
     except DeliveryError as error:
         if error.code != 'activity_model_out_of_range':
             raise
-        return _not_supported_unsolved('ionic_strength_outside_domain', ph=ph,
-                                       carbon_boundary=carbon_boundary, **common)
+        return _not_supported_unsolved(
+            'ionic_strength_outside_domain', ph=ph, carbon_boundary=carbon_boundary, **common
+        )
     return _ec_from_state(state, **common)
 
 
 _ASSAY_CHARGES = {
-    'Ca+2': 2, 'Mg+2': 2, 'Fe+2': 2, 'Mn+2': 2, 'Zn+2': 2, 'Cu+2': 2, 'Fe+3': 3,
-    'K+': 1, 'Na+': 1, 'NH4+': 1, 'NO3-': -1, 'Cl-': -1,
-    'SO4-2': -2, 'MoO4-2': -2, 'CO3-2': -2, 'Edta-4': -4, 'Edd-4': -4, 'Dtp-5': -5,
-    'Citrate-3': -3, 'H3BO3': 0, 'Ure': 0}
+    'Ca+2': 2,
+    'Mg+2': 2,
+    'Fe+2': 2,
+    'Mn+2': 2,
+    'Zn+2': 2,
+    'Cu+2': 2,
+    'Fe+3': 3,
+    'K+': 1,
+    'Na+': 1,
+    'NH4+': 1,
+    'NO3-': -1,
+    'Cl-': -1,
+    'SO4-2': -2,
+    'MoO4-2': -2,
+    'CO3-2': -2,
+    'Edta-4': -4,
+    'Edd-4': -4,
+    'Dtp-5': -5,
+    'Citrate-3': -3,
+    'H3BO3': 0,
+    'Ure': 0,
+}
 _PHOSPHATE_FORM_CHARGES = {'H2PO4-': -1, 'HPO4-2': -2, 'H3PO4': 0}
 
 
 @dataclass(frozen=True)
 class DeclaredPureWater:
     """EXPERIMENTAL: declared ion-free water (RO or distilled) with an id."""
+
     water_id: str
     kind: str = 'RO'
 
@@ -381,12 +547,16 @@ class DeclaredPureWater:
         if not isinstance(self.water_id, str) or not self.water_id.strip():
             raise DeliveryError('missing_field', 'DeclaredPureWater needs a nonempty water_id')
         if self.kind not in ('RO', 'distilled'):
-            raise DeliveryError('invalid_value', "DeclaredPureWater kind must be 'RO' or 'distilled'")
+            raise DeliveryError(
+                'invalid_value', "DeclaredPureWater kind must be 'RO' or 'distilled'"
+            )
 
 
 def _validate_doses(doses):
     if not isinstance(doses, Mapping):
-        raise DeliveryError('invalid_value', 'doses must be a mapping of product name to g/kg water')
+        raise DeliveryError(
+            'invalid_value', 'doses must be a mapping of product name to g/kg water'
+        )
     for name, dose in doses.items():
         if not _is_number(dose) or dose < 0:
             raise DeliveryError('invalid_value', f'dose for {name!r} must be a finite number >= 0')
@@ -402,25 +572,32 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, material
     """
     _validate_doses(doses_g_per_kg_water)
     net = absolute = 0.0
-    for name, product_chemistry, totals in catalogue_dose_contributions(doses_g_per_kg_water,
-                                                                        materials=materials):
+    for name, product_chemistry, totals in catalogue_dose_contributions(
+        doses_g_per_kg_water, materials=materials
+    ):
         components = product_chemistry.components
-        phosphate_z = next((z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None)
+        phosphate_z = next(
+            (z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None
+        )
         # Borax (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3) declares -0.5 per B;
         # equilibrium totals keep the neutral H3BO3 basis and pH forms borate.
         boron_z = -0.5 if ('B(OH)4-' in components or 'borax' in components) else 0
         for basis, amount in totals.items():
             if basis == 'PO4-3':
                 if phosphate_z is None:
-                    raise DeliveryError('unsupported_product_chemistry',
-                                        f'{name!r} has phosphate but no declared phosphate form')
+                    raise DeliveryError(
+                        'unsupported_product_chemistry',
+                        f'{name!r} has phosphate but no declared phosphate form',
+                    )
                 z = phosphate_z
             elif basis == 'H3BO3':
                 z = boron_z
             elif basis in _ASSAY_CHARGES:
                 z = _ASSAY_CHARGES[basis]
             else:
-                raise DeliveryError('unsupported_product_chemistry', f'no assay charge for {basis!r}')
+                raise DeliveryError(
+                    'unsupported_product_chemistry', f'no assay charge for {basis!r}'
+                )
             net += z * amount
             absolute += abs(z) * amount
     return {'eq_per_kgw': net, 'percent': 100 * net / absolute if absolute > 0 else 0.0}
@@ -429,18 +606,27 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, material
 def _materials_audit(doses: Mapping[str, float], materials) -> dict:
     """Provenance with per-nutrient basis for every dosed product (shipped unless in materials)."""
     chosen = dict(materials or {})
-    return {name: material_audit_entry(chosen.get(name) or resolve_material(name)) for name in doses}
+    return {
+        name: material_audit_entry(chosen.get(name) or resolve_material(name)) for name in doses
+    }
 
 
-def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe_id: str,
-                            water: BalancedWaterAnalysis | DeclaredPureWater,
-                            water_analysis_id: str | None = None,
-                            reagent_additions_molal: Mapping[str, float] | None = None,
-                            reagent_id: str | None = None, ph_mode: str, ph: float | None = None,
-                            phase_policy: str, phases: Sequence[str] = (),
-                            carbon_boundary: str = 'closed',
-                            temperature_c: float = 25.0,
-                            materials: Mapping | None = None) -> IrrigationECResult:
+def calculate_irrigation_ec(
+    doses_g_per_kg_water: Mapping[str, float],
+    *,
+    recipe_id: str,
+    water: BalancedWaterAnalysis | DeclaredPureWater,
+    water_analysis_id: str | None = None,
+    reagent_additions_molal: Mapping[str, float] | None = None,
+    reagent_id: str | None = None,
+    ph_mode: str,
+    ph: float | None = None,
+    phase_policy: str,
+    phases: Sequence[str] = (),
+    carbon_boundary: str = 'closed',
+    temperature_c: float = 25.0,
+    materials: Mapping | None = None,
+) -> IrrigationECResult:
     """EXPERIMENTAL: irrigation EC25 of a catalogue recipe in stated water.
 
     Water is a BalancedWaterAnalysis (with water_analysis_id) or a
@@ -454,33 +640,50 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
     _require_id(recipe_id, 'recipe_id')
     if isinstance(water, BalancedWaterAnalysis):
         if not isinstance(water_analysis_id, str) or not water_analysis_id.strip():
-            raise DeliveryError('incomplete_water_analysis', 'water_analysis_id is required with a BalancedWaterAnalysis')
+            raise DeliveryError(
+                'incomplete_water_analysis',
+                'water_analysis_id is required with a BalancedWaterAnalysis',
+            )
         totals = dict(water.totals)
         water_kind, water_id = 'balanced_analysis', water_analysis_id
     elif isinstance(water, DeclaredPureWater):
         if water_analysis_id is not None:
-            raise DeliveryError('incomplete_water_analysis', 'DeclaredPureWater takes no water_analysis_id')
+            raise DeliveryError(
+                'incomplete_water_analysis', 'DeclaredPureWater takes no water_analysis_id'
+            )
         totals = {}
         water_kind, water_id = f'declared_pure:{water.kind}', water.water_id
     else:
-        raise DeliveryError('incomplete_water_analysis',
-                            'supply a balanced complete analysis or DeclaredPureWater')
+        raise DeliveryError(
+            'incomplete_water_analysis', 'supply a balanced complete analysis or DeclaredPureWater'
+        )
     _validate_doses(doses_g_per_kg_water)
     additions = dict(reagent_additions_molal or {})
     if bool(additions) != (reagent_id is not None):
-        raise DeliveryError('missing_field', 'reagent_id is required if and only if reagent additions are given')
+        raise DeliveryError(
+            'missing_field', 'reagent_id is required if and only if reagent additions are given'
+        )
     if additions:
         _require_id(reagent_id, 'reagent_id')
     bases = set(chemistry()['bases'])
     for name, amount in additions.items():
         if name not in bases or not _is_number(amount) or amount < 0:
-            raise DeliveryError('invalid_value', f'reagent addition {name!r} must be a catalogue base with a finite amount >= 0')
+            raise DeliveryError(
+                'invalid_value',
+                f'reagent addition {name!r} must be a catalogue base with a finite amount >= 0',
+            )
     audit_inputs = {
-        'recipe_id': recipe_id, 'water_kind': water_kind, 'water_id': water_id,
-        'reagent_id': reagent_id, 'reagent_additions_molal': dict(additions),
+        'recipe_id': recipe_id,
+        'water_kind': water_kind,
+        'water_id': water_id,
+        'reagent_id': reagent_id,
+        'reagent_additions_molal': dict(additions),
         'doses_g_per_kg_water': dict(doses_g_per_kg_water),
-        'catalogueSha256': hashlib.sha256(files('flahax').joinpath('data/library.json').read_bytes()).hexdigest(),
-        'identitiesSha256': IDENTITIES_SHA256}
+        'catalogueSha256': hashlib.sha256(
+            files('flahax').joinpath('data/library.json').read_bytes()
+        ).hexdigest(),
+        'identitiesSha256': IDENTITIES_SHA256,
+    }
     try:
         dose_totals = catalogue_dose_totals(doses_g_per_kg_water, materials=materials)
         residual = assay_charge_residual(doses_g_per_kg_water, materials=materials)
@@ -488,30 +691,58 @@ def calculate_irrigation_ec(doses_g_per_kg_water: Mapping[str, float], *, recipe
         if error.code != 'composition_undisclosed':
             raise
         # Mode inputs are still validated; then the whole chemistry result is refused.
-        phases, _ = _validate_request(ph_mode=ph_mode, ph=ph, phase_policy=phase_policy, phases=phases,
-                                      temperature_c=temperature_c, carbon_boundary=carbon_boundary,
-                                      assay_residual_eq=0.0)
-        audit_inputs.update(materials=_materials_audit(doses_g_per_kg_water, materials),
-                            assay_charge_residual_declared_percent=None, solution_id=recipe_id)
-        return _not_supported_unsolved('composition_undisclosed', ph_mode=ph_mode, ph=ph,
-                                       phase_policy=phase_policy, phases=phases,
-                                       carbon_boundary=carbon_boundary, assay_residual_eq=None,
-                                       assay_residual_percent=None, audit_inputs=audit_inputs)
+        phases, _ = _validate_request(
+            ph_mode=ph_mode,
+            ph=ph,
+            phase_policy=phase_policy,
+            phases=phases,
+            temperature_c=temperature_c,
+            carbon_boundary=carbon_boundary,
+            assay_residual_eq=0.0,
+        )
+        audit_inputs.update(
+            materials=_materials_audit(doses_g_per_kg_water, materials),
+            assay_charge_residual_declared_percent=None,
+            solution_id=recipe_id,
+        )
+        return _not_supported_unsolved(
+            'composition_undisclosed',
+            ph_mode=ph_mode,
+            ph=ph,
+            phase_policy=phase_policy,
+            phases=phases,
+            carbon_boundary=carbon_boundary,
+            assay_residual_eq=None,
+            assay_residual_percent=None,
+            audit_inputs=audit_inputs,
+        )
     for basis, amount in dose_totals.items():
         totals[basis] = totals.get(basis, 0.0) + amount
     for basis, amount in additions.items():
         totals[basis] = totals.get(basis, 0.0) + amount
-    audit_inputs.update(materials=_materials_audit(doses_g_per_kg_water, materials),
-                        assay_charge_residual_declared_percent=residual['percent'])
+    audit_inputs.update(
+        materials=_materials_audit(doses_g_per_kg_water, materials),
+        assay_charge_residual_declared_percent=residual['percent'],
+    )
     return calculate_ec_from_totals(
-        totals, solution_id=recipe_id, ph_mode=ph_mode, ph=ph, phase_policy=phase_policy,
-        phases=phases, carbon_boundary=carbon_boundary, temperature_c=temperature_c,
+        totals,
+        solution_id=recipe_id,
+        ph_mode=ph_mode,
+        ph=ph,
+        phase_policy=phase_policy,
+        phases=phases,
+        carbon_boundary=carbon_boundary,
+        temperature_c=temperature_c,
         assay_charge_residual_eq_per_kgw=residual['eq_per_kgw'],
-        assay_charge_residual_percent=residual['percent'], audit_inputs=audit_inputs)
+        assay_charge_residual_percent=residual['percent'],
+        audit_inputs=audit_inputs,
+    )
 
 
-BAND_END_NOTE = ('Band ends are corner cases (every product at its minimum, or every product '
-                 'at its maximum), not statistical bounds.')
+BAND_END_NOTE = (
+    'Band ends are corner cases (every product at its minimum, or every product '
+    'at its maximum), not statistical bounds.'
+)
 
 
 def _end_material(material, end: str):
@@ -525,8 +756,9 @@ def _end_material(material, end: str):
     return replace(material, record={**material.record, 'elements': elements})
 
 
-def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
-                                 materials: Mapping | None = None, **kwargs) -> dict:
+def calculate_irrigation_ec_band(
+    doses_g_per_kg_water: Mapping[str, float], *, materials: Mapping | None = None, **kwargs
+) -> dict:
     """EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
 
     Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
@@ -546,20 +778,37 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
         built = {name: _end_material(material, end) for name, material in sources.items()}
         if any(material is None for material in built.values()):
             # The nominal call above already validated every input (mode and phase errors raise).
-            result[end] = replace(nominal, status='not_supported', reason='band_end_open',
-                                  ec25_ms_cm=None, known_species_subtotal_ms_cm=None,
-                                  contributions_ms_cm={}, transport_numbers={}, missing_species=(),
-                                  unrecorded_counterions_eq_per_kgw=None,
-                                  assay_charge_residual={'eq_per_kgw': None, 'percent': None},
-                                  ph=None, ionic_strength=None, precipitated_molal={}, warnings=(),
-                                  bounded=False, ec25_range_ms_cm=None, uncertainty_ms_cm=None,
-                                  uncovered_bound_ms_cm=None,
-                                  audit={**nominal.audit, 'band_end': end, 'ph': None,
-                                         'solver_iterations': None, 'charge_balance': None,
-                                         'uncovered_bound_ms_cm': None,
-                                         'supplementaryCoefficients': False,
-                                         'phosphate_fit_max_ionic_strength': None,
-                                         'assay_charge_residual_declared_percent': None})
+            result[end] = replace(
+                nominal,
+                status='not_supported',
+                reason='band_end_open',
+                ec25_ms_cm=None,
+                known_species_subtotal_ms_cm=None,
+                contributions_ms_cm={},
+                transport_numbers={},
+                missing_species=(),
+                unrecorded_counterions_eq_per_kgw=None,
+                assay_charge_residual={'eq_per_kgw': None, 'percent': None},
+                ph=None,
+                ionic_strength=None,
+                precipitated_molal={},
+                warnings=(),
+                bounded=False,
+                ec25_range_ms_cm=None,
+                uncertainty_ms_cm=None,
+                uncovered_bound_ms_cm=None,
+                audit={
+                    **nominal.audit,
+                    'band_end': end,
+                    'ph': None,
+                    'solver_iterations': None,
+                    'charge_balance': None,
+                    'uncovered_bound_ms_cm': None,
+                    'supplementaryCoefficients': False,
+                    'phosphate_fit_max_ionic_strength': None,
+                    'assay_charge_residual_declared_percent': None,
+                },
+            )
             continue
         ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
         result[end] = replace(ended, audit={**ended.audit, 'band_end': end})
@@ -567,8 +816,9 @@ def calculate_irrigation_ec_band(doses_g_per_kg_water: Mapping[str, float], *,
     return result
 
 
-def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
-                                      phase_policy: str = 'dissolved') -> IrrigationECResult:
+def calculate_irrigation_ec_from_plan(
+    plan: EquilibriumPhPlan, *, phase_policy: str = 'dissolved'
+) -> IrrigationECResult:
     """EXPERIMENTAL: irrigation EC25 on an EquilibriumPhPlan's own target state.
 
     The plan's solved target state is used as supplied at plan.target_ph and is
@@ -578,36 +828,66 @@ def calculate_irrigation_ec_from_plan(plan: EquilibriumPhPlan, *,
     """
     plan_audit = plan.audit
     doses = dict(plan_audit['productDosesGPerKgWater'])
-    recipe_id = 'plan-recipe:' + hashlib.sha256(json.dumps(
-        {'productDosesGPerKgWater': plan_audit['productDosesGPerKgWater'],
-         'finalVolumeLitres': plan_audit['finalVolumeLitres']}, sort_keys=True).encode('utf-8')).hexdigest()
+    recipe_id = (
+        'plan-recipe:'
+        + hashlib.sha256(
+            json.dumps(
+                {
+                    'productDosesGPerKgWater': plan_audit['productDosesGPerKgWater'],
+                    'finalVolumeLitres': plan_audit['finalVolumeLitres'],
+                },
+                sort_keys=True,
+            ).encode('utf-8')
+        ).hexdigest()
+    )
     residual = assay_charge_residual(doses)
     phases, reason = _validate_request(
-        ph_mode='supplied', ph=plan.target_ph, phase_policy=phase_policy,
-        phases=tuple(plan_audit['phases']), temperature_c=plan_audit['temperatureC'],
-        carbon_boundary='closed', assay_residual_eq=residual['eq_per_kgw'],
-        assay_residual_percent=residual['percent'])
+        ph_mode='supplied',
+        ph=plan.target_ph,
+        phase_policy=phase_policy,
+        phases=tuple(plan_audit['phases']),
+        temperature_c=plan_audit['temperatureC'],
+        carbon_boundary='closed',
+        assay_residual_eq=residual['eq_per_kgw'],
+        assay_residual_percent=residual['percent'],
+    )
     audit_inputs = {
-        'solution_id': recipe_id, 'recipe_id': recipe_id, 'water_kind': 'plan_water_totals',
-        'water_id': plan.water_analysis_id, 'reagent_id': plan.reagent_id,
-        'reagent_molal': plan.equilibrium.nitric_acid_molal, 'doses_g_per_kg_water': doses,
+        'solution_id': recipe_id,
+        'recipe_id': recipe_id,
+        'water_kind': 'plan_water_totals',
+        'water_id': plan.water_analysis_id,
+        'reagent_id': plan.reagent_id,
+        'reagent_molal': plan.equilibrium.nitric_acid_molal,
+        'doses_g_per_kg_water': doses,
         'catalogueSha256': plan_audit['catalogueSha256'],
         'waterTotalsMolal': dict(plan_audit['waterTotalsMolal']),
         'initialPh': plan_audit['initialPh'],
         'assay_charge_residual_declared_percent': residual['percent'],
         # The plan's own material provenance, copied so the EC audit stands on its own.
         'materials': copy.deepcopy(plan_audit['materials']),
-        'identitiesSha256': plan_audit['identitiesSha256']}
-    common = dict(ph_mode='supplied', phase_policy=phase_policy, phases=phases,
-                  assay_residual_eq=residual['eq_per_kgw'], assay_residual_percent=residual['percent'],
-                  audit_inputs=audit_inputs)
+        'identitiesSha256': plan_audit['identitiesSha256'],
+    }
+    common = dict(
+        ph_mode='supplied',
+        phase_policy=phase_policy,
+        phases=phases,
+        assay_residual_eq=residual['eq_per_kgw'],
+        assay_residual_percent=residual['percent'],
+        audit_inputs=audit_inputs,
+    )
     if reason is not None:
-        return _not_supported_unsolved(reason, ph=plan.target_ph, carbon_boundary='closed', **common)
+        return _not_supported_unsolved(
+            reason, ph=plan.target_ph, carbon_boundary='closed', **common
+        )
     return _ec_from_state(plan.equilibrium.target, **common)
 
 
-def compare_measured_ec(prediction: IrrigationECResult, *, measured_ec25_ms_cm: float,
-                        meter_reference_temperature_c: float) -> dict:
+def compare_measured_ec(
+    prediction: IrrigationECResult,
+    *,
+    measured_ec25_ms_cm: float,
+    meter_reference_temperature_c: float,
+) -> dict:
     """EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or tolerance.
 
     ``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
@@ -615,17 +895,28 @@ def compare_measured_ec(prediction: IrrigationECResult, *, measured_ec25_ms_cm: 
     prediction is not bounded (it has no range). It is a fact, not a pass/fail.
     """
     if prediction.status != 'estimated':
-        raise DeliveryError('incomplete_prediction', 'only an estimated prediction can be compared')
+        raise DeliveryError(
+            'incomplete_prediction', 'only an estimated prediction can be compared'
+        )
     if not _is_number(meter_reference_temperature_c) or meter_reference_temperature_c != 25:
-        raise DeliveryError('temperature_reference_mismatch', 'meter reference temperature must be 25 C')
+        raise DeliveryError(
+            'temperature_reference_mismatch', 'meter reference temperature must be 25 C'
+        )
     if not _is_number(measured_ec25_ms_cm) or measured_ec25_ms_cm < 0:
-        raise DeliveryError('invalid_value', 'measured_ec25_ms_cm must be a finite non-negative number')
+        raise DeliveryError(
+            'invalid_value', 'measured_ec25_ms_cm must be a finite non-negative number'
+        )
     predicted = prediction.ec25_ms_cm
     difference = measured_ec25_ms_cm - predicted
     ec_range = prediction.ec25_range_ms_cm if prediction.bounded else None
     within = None if ec_range is None else ec_range[0] <= measured_ec25_ms_cm <= ec_range[1]
-    return {'predicted_ec25_ms_cm': predicted, 'measured_ec25_ms_cm': measured_ec25_ms_cm,
-            'difference_ms_cm': difference,
-            'relative_difference_percent': 100 * difference / predicted if predicted else None,
-            'audit': dict(prediction.audit), 'qualifier': prediction.qualifier,
-            'ec25_range_ms_cm': ec_range, 'within_range': within}
+    return {
+        'predicted_ec25_ms_cm': predicted,
+        'measured_ec25_ms_cm': measured_ec25_ms_cm,
+        'difference_ms_cm': difference,
+        'relative_difference_percent': 100 * difference / predicted if predicted else None,
+        'audit': dict(prediction.audit),
+        'qualifier': prediction.qualifier,
+        'ec25_range_ms_cm': ec_range,
+        'within_range': within,
+    }

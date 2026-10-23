@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Feed-pH guidance and residual bicarbonate reporting (research report 2026-10-20)."""
+
 import unittest
 
 from flahax import load_library, plan_fertilizer_workflow
@@ -9,7 +14,9 @@ TARGETS = next(f for f in LIBRARY["formulas"] if f["name"] == "Hoagland solution
 
 
 def notes(target_ph):
-    return plan_fertilizer_workflow(LIBRARY["salts"], TARGETS, {}, target_ph).recommendation["warnings"]
+    return plan_fertilizer_workflow(LIBRARY["salts"], TARGETS, {}, target_ph).recommendation[
+        "warnings"
+    ]
 
 
 class FeedPhGuidanceTests(unittest.TestCase):

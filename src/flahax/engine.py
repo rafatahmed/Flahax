@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """FlahaX salt-combination search.
 
 The crop formula is fixed. This season's water is subtracted from it.
@@ -65,9 +69,11 @@ CEILING_MARGIN = 1e-6
 # page; that primary text has not been verified.
 AMMONIUM_FRACTION = 0.10
 AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
-AMMONIUM_BASIS = ("incidental NH4-N up to min(10% of total target N, 1.5 mmol/L); owner "
-                  "decision based on Dutch soilless practice (De Kreij, Voogt et al.; Voogt "
-                  "'max 90:10'); see docs for references")
+AMMONIUM_BASIS = (
+    "incidental NH4-N up to min(10% of total target N, 1.5 mmol/L); owner "
+    "decision based on Dutch soilless practice (De Kreij, Voogt et al.; Voogt "
+    "'max 90:10'); see docs for references"
+)
 
 
 def load_library() -> dict:
@@ -215,8 +221,12 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     return z
 
 
-def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = None,
-         gram: "_LazyGram | None" = None) -> list[float]:
+def nnls(
+    matrix: list[list[float]],
+    rhs: list[float],
+    x0: list[float] | None = None,
+    gram: "_LazyGram | None" = None,
+) -> list[float]:
     """Lawson-Hanson non-negative least squares. matrix is rows × columns.
 
     x0, when given, is a non-negative starting point (warm start, #59): its positive
@@ -314,7 +324,9 @@ def nnls(matrix: list[list[float]], rhs: list[float], x0: list[float] | None = N
         enter = max(candidates, key=lambda j: weights[j])
         if additions >= NNLS_ADDITION_FACTOR * n:
             # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
-            raise InputError(f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions")
+            raise InputError(
+                f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions"
+            )
         passive.append(enter)
         active.remove(enter)
         try:
@@ -358,9 +370,16 @@ def forward(salts: list[dict], grams: list[float], water: dict | None = None) ->
     return achieved
 
 
-def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
-         maxima: dict | None = None, ceilings: dict[str, tuple[float, float]] | None = None,
-         x0: list[float] | None = None, grams_cache: dict | None = None) -> dict:
+def _fit(
+    salts: list[dict],
+    targets: dict,
+    water: dict,
+    ridge: float,
+    maxima: dict | None = None,
+    ceilings: dict[str, tuple[float, float]] | None = None,
+    x0: list[float] | None = None,
+    grams_cache: dict | None = None,
+) -> dict:
     """Non-negative grams. ridge is an L2 penalty on grams, not a salt count.
 
     An incidental ion with a stated positive maximum is not penalized; an ion in
@@ -370,10 +389,14 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
     """
     maxima = maxima or {}
     ceilings = ceilings or {}
-    symbols = list(dict.fromkeys([
-        *targets.keys(),
-        *(symbol for salt in salts for symbol in salt["elements"]),
-    ]))
+    symbols = list(
+        dict.fromkeys(
+            [
+                *targets.keys(),
+                *(symbol for salt in salts for symbol in salt["elements"]),
+            ]
+        )
+    )
     matrix = []
     rhs = []
     for symbol in symbols:
@@ -411,8 +434,14 @@ def _fit(salts: list[dict], targets: dict, water: dict, ridge: float,
     return {"grams": grams, "loss": loss, "rows": rows}
 
 
-def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, maxima: dict,
-                x0: list[float] | None = None) -> dict:
+def _fit_within(
+    salts: list[dict],
+    targets: dict,
+    water: dict,
+    ridge: float,
+    maxima: dict,
+    x0: list[float] | None = None,
+) -> dict:
     """Fit, then hold any incidental ion that passed its stated maximum on that maximum.
 
     The fit is convex, so a binding ceiling's optimum lies on the limit (#68). Each
@@ -429,14 +458,27 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
     search. Those products are left out of the fit directly (#86); searching instead
     grew the shift without bound, and with a second binding ceiling NNLS failed.
     """
-    unreachable = {symbol for symbol, limit in maxima.items()
-                   if limit > 0 and symbol not in targets
-                   and float(water.get(symbol) or 0.0) >= limit * (1 - CEILING_MARGIN)}
+    unreachable = {
+        symbol
+        for symbol, limit in maxima.items()
+        if limit > 0
+        and symbol not in targets
+        and float(water.get(symbol) or 0.0) >= limit * (1 - CEILING_MARGIN)
+    }
     if unreachable:
-        keep = [i for i, salt in enumerate(salts) if not any(salt["elements"].get(s, 0.0) for s in unreachable)]
-        solved = _fit_within([salts[i] for i in keep], targets, water, ridge,
-                             {s: v for s, v in maxima.items() if s not in unreachable},
-                             None if x0 is None else [x0[i] for i in keep])
+        keep = [
+            i
+            for i, salt in enumerate(salts)
+            if not any(salt["elements"].get(s, 0.0) for s in unreachable)
+        ]
+        solved = _fit_within(
+            [salts[i] for i in keep],
+            targets,
+            water,
+            ridge,
+            {s: v for s, v in maxima.items() if s not in unreachable},
+            None if x0 is None else [x0[i] for i in keep],
+        )
         grams = [0.0] * len(salts)
         for index, value in zip(keep, solved["grams"]):
             grams[index] = value
@@ -477,8 +519,11 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
             lo, hi = state[1], state[2]
             # While NNLS keeps its active set the excess is affine in the shift, so a
             # secant through two points on one side lands on the root.
-            secant = (shift - excess * (shift - last[0]) / (excess - last[1])
-                      if last is not None and last[1] != excess else math.nan)
+            secant = (
+                shift - excess * (shift - last[0]) / (excess - last[1])
+                if last is not None and last[1] != excess
+                else math.nan
+            )
             if lo is None:
                 shift = secant if 0 <= secant < shift else shift / 2  # come back down
             elif hi is None:
@@ -499,13 +544,19 @@ def _fit_within(salts: list[dict], targets: dict, water: dict, ridge: float, max
             state[0], state[3] = shift, side
         if converged:
             break
-        ceilings = {symbol: (CEILING_WEIGHT, maxima[symbol] * (1 - CEILING_MARGIN) - state[0])
-                    for symbol, state in search.items()}
-        solved = _fit(salts, targets, water, ridge, maxima, ceilings, x0=solved["grams"], grams_cache=cache)
+        ceilings = {
+            symbol: (CEILING_WEIGHT, maxima[symbol] * (1 - CEILING_MARGIN) - state[0])
+            for symbol, state in search.items()
+        }
+        solved = _fit(
+            salts, targets, water, ridge, maxima, ceilings, x0=solved["grams"], grams_cache=cache
+        )
     return solved
 
 
-def solve_weights(salts: list[dict], targets: dict, water: dict | None = None, ridge: float = 0.0) -> dict:
+def solve_weights(
+    salts: list[dict], targets: dict, water: dict | None = None, ridge: float = 0.0
+) -> dict:
     """Non-negative grams per litre minimizing squared Δ%."""
     targets = validate_profile(targets, "targets")
     water = validate_profile(water or {}, "water")
@@ -524,20 +575,18 @@ def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
     chosen = []
     for salt, gram in zip(salts, grams):
         if gram > KEEP_GRAMS:
-            chosen.append({
-                "id": salt["id"],
-                "name": salt["name"],
-                "gramsPerLitre": round(gram, 6),
-            })
+            chosen.append(
+                {
+                    "id": salt["id"],
+                    "name": salt["name"],
+                    "gramsPerLitre": round(gram, 6),
+                }
+            )
     return chosen
 
 
 def _delta_map(rows: list[dict]) -> dict[str, float]:
-    return {
-        row["symbol"]: abs(row["deltaPct"])
-        for row in rows
-        if row["deltaPct"] is not None
-    }
+    return {row["symbol"]: abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None}
 
 
 def _still_within(new_rows: list[dict], old_rows: list[dict]) -> bool:
@@ -553,8 +602,14 @@ def _supplies(salt: dict, symbol: str) -> bool:
     return float(salt["elements"].get(symbol) or 0.0) > 0
 
 
-def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge: float,
-              maxima: dict | None = None) -> dict:
+def _simplify(
+    salts: list[dict],
+    targets: dict,
+    water: dict,
+    solved: dict,
+    ridge: float,
+    maxima: dict | None = None,
+) -> dict:
     """Drop a salt when the refit still meets every requested ion."""
     grams = solved["grams"][:]
     rows = solved["rows"]
@@ -564,14 +619,25 @@ def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge
         changed = False
         for index in sorted(active, key=lambda item: grams[item]):
             others = [item for item in active if item != index]
-            requested = [symbol for symbol, ppm in targets.items() if ppm > 0 and _supplies(salts[index], symbol)]
+            requested = [
+                symbol
+                for symbol, ppm in targets.items()
+                if ppm > 0 and _supplies(salts[index], symbol)
+            ]
             if any(
-                symbol for symbol in requested
+                symbol
+                for symbol in requested
                 if not any(_supplies(salts[item], symbol) for item in others)
             ):
                 continue
-            trial = _fit_within([salts[item] for item in others], targets, water, ridge, maxima or {},
-                                x0=[grams[item] for item in others])
+            trial = _fit_within(
+                [salts[item] for item in others],
+                targets,
+                water,
+                ridge,
+                maxima or {},
+                x0=[grams[item] for item in others],
+            )
             if not _still_within(trial["rows"], rows):
                 continue
             grams = [0.0] * len(salts)
@@ -587,7 +653,9 @@ def _simplify(salts: list[dict], targets: dict, water: dict, solved: dict, ridge
     return solved
 
 
-def _eligible(library: list[dict], targets: dict, allow_ions: frozenset[str], allow_carbonates: bool):
+def _eligible(
+    library: list[dict], targets: dict, allow_ions: frozenset[str], allow_carbonates: bool
+):
     excluded = []
     ready = []
     for salt in library:
@@ -596,27 +664,36 @@ def _eligible(library: list[dict], targets: dict, allow_ions: frozenset[str], al
             excluded.append({"id": salt.get("id"), "name": salt.get("name"), "reason": conflict})
             continue
         if salt.get("role") == PH_REAGENT:
-            excluded.append({"id": salt.get("id"), "name": salt.get("name"),
-                             "reason": f"{salt.get('name')} is a pH reagent, not a nutrient salt"})
+            excluded.append(
+                {
+                    "id": salt.get("id"),
+                    "name": salt.get("name"),
+                    "reason": f"{salt.get('name')} is a pH reagent, not a nutrient salt",
+                }
+            )
             continue
         if is_carbonate(salt) and not allow_carbonates:
-            excluded.append({
-                "id": salt.get("id"),
-                "name": salt.get("name"),
-                "reason": f"{salt.get('name')} contains carbonate, which is not dissolved in a default recipe",
-            })
+            excluded.append(
+                {
+                    "id": salt.get("id"),
+                    "name": salt.get("name"),
+                    "reason": f"{salt.get('name')} contains carbonate, which is not dissolved in a default recipe",
+                }
+            )
             continue
         carried = RESTRICTED_IONS.intersection(salt["elements"])
         blocked = {ion for ion in carried if ion not in targets and ion not in allow_ions}
         if blocked:
-            excluded.append({
-                "id": salt.get("id"),
-                "name": salt.get("name"),
-                "reason": (
-                    f"{salt.get('name')} carries {', '.join(sorted(blocked))}, "
-                    "which this formula does not ask for"
-                ),
-            })
+            excluded.append(
+                {
+                    "id": salt.get("id"),
+                    "name": salt.get("name"),
+                    "reason": (
+                        f"{salt.get('name')} carries {', '.join(sorted(blocked))}, "
+                        "which this formula does not ask for"
+                    ),
+                }
+            )
             continue
         ready.append(salt)
     return ready, excluded
@@ -631,7 +708,8 @@ def _short(rows: list[dict], targets: dict) -> list[str]:
     final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
     floor = 1.0 - TOLERANCE_PCT / 100.0
     return [
-        symbol for symbol, ppm in targets.items()
+        symbol
+        for symbol, ppm in targets.items()
         if ppm > 0 and final.get(symbol, 0.0) < ppm * floor
     ]
 
@@ -688,23 +766,36 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         matrix.append([ppm_per_gram(salt["elements"].get(symbol, 0.0)) / target for salt in salts])
         rhs.append((target - float(water.get(symbol) or 0.0)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
-    return {symbol for symbol, target in kept.items()
-            if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT}
+    return {
+        symbol
+        for symbol, target in kept.items()
+        if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT
+    }
 
 
 def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
     """Explain each missed positive target (#39). A least-squares diagnosis on the
     target rows alone: it names a cause, it does not prove infeasibility."""
-    missed = [row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT]
+    missed = [
+        row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT
+    ]
     if not missed:
         return []
-    usable = [salt for salt in library if assay_conflict(salt) is None and salt.get("role") != PH_REAGENT
-              and (allow_carbonates or not is_carbonate(salt))]
+    usable = [
+        salt
+        for salt in library
+        if assay_conflict(salt) is None
+        and salt.get("role") != PH_REAGENT
+        and (allow_carbonates or not is_carbonate(salt))
+    ]
     consent = {ion for ion in CONSENT_IONS if ion not in targets and ion not in allowed}
     engine_pool = [salt for salt in usable if not consent.intersection(salt["elements"])]
     final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
-    binding = sorted(ion for ion, limit in maxima.items()
-                     if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6))
+    binding = sorted(
+        ion
+        for ion, limit in maxima.items()
+        if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6)
+    )
     base = _target_misses(engine_pool, targets, water)
     with_chloride = None
     dropped_ok: dict[str, bool] = {}  # each drop-one fit is shared by every missed target
@@ -717,7 +808,12 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     out = []
     for row in missed:
         symbol = row["symbol"]
-        item = {"symbol": symbol, "target": row["target"], "final": row["final"], "deltaPct": row["deltaPct"]}
+        item = {
+            "symbol": symbol,
+            "target": row["target"],
+            "final": row["final"],
+            "deltaPct": row["deltaPct"],
+        }
         if not any(_supplies(salt, symbol) for salt in usable):
             item["reason"] = "no_source"
         elif not base:
@@ -737,8 +833,11 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
 
 def _documents(value) -> list[dict]:
     """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
-    if isinstance(value, dict) and value and all(
-            item is None or isinstance(item, dict) for item in value.values()):
+    if (
+        isinstance(value, dict)
+        and value
+        and all(item is None or isinstance(item, dict) for item in value.values())
+    ):
         value = list(value.values())
     if isinstance(value, dict):
         return [dict(value)]
@@ -766,11 +865,18 @@ def _provenance(record: dict) -> dict:
             "documents": _documents(record.get("source")),
             "flags": [],
         }
-    return {"recordId": record["id"], "identityId": None, "analysisBasis": "unattributed",
-            "documents": [], "flags": []}
+    return {
+        "recordId": record["id"],
+        "identityId": None,
+        "analysisBasis": "unattributed",
+        "documents": [],
+        "flags": [],
+    }
 
 
-def _report(rows: list[dict], grams: list[float], warnings: list[str], maxima: dict | None = None) -> dict:
+def _report(
+    rows: list[dict], grams: list[float], warnings: list[str], maxima: dict | None = None
+) -> dict:
     deltas = [abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None]
     undesired = [
         {"symbol": row["symbol"], "ppm": round(row["final"], 4)}
@@ -779,7 +885,9 @@ def _report(rows: list[dict], grams: list[float], warnings: list[str], maxima: d
     ]
     incidental = assess_incidental(rows, maxima)
     return {
-        "feasible": bool(deltas) and max(deltas) <= TOLERANCE_PCT and not incidental["limitViolations"],
+        "feasible": bool(deltas)
+        and max(deltas) <= TOLERANCE_PCT
+        and not incidental["limitViolations"],
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
         "undesiredIons": undesired,
@@ -851,8 +959,11 @@ def recommend(
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
     ammonium_limit = None
     if max_ammonium_fraction is not None:
-        if (isinstance(max_ammonium_fraction, bool) or not isinstance(max_ammonium_fraction, (int, float))
-                or not 0 <= max_ammonium_fraction <= 1):
+        if (
+            isinstance(max_ammonium_fraction, bool)
+            or not isinstance(max_ammonium_fraction, (int, float))
+            or not 0 <= max_ammonium_fraction <= 1
+        ):
             raise InputError("max_ammonium_fraction must be a number in [0, 1]")
         total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
         # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
@@ -860,8 +971,12 @@ def recommend(
             limit = min(max_ammonium_fraction * total_n, AMMONIUM_CAP_MG_PER_L)
             if limit > 0:
                 maxima["N_NH4"] = limit
-                ammonium_limit = {"mgPerL": limit, "fractionOfTotalN": max_ammonium_fraction,
-                                  "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L, "basis": AMMONIUM_BASIS}
+                ammonium_limit = {
+                    "mgPerL": limit,
+                    "fractionOfTotalN": max_ammonium_fraction,
+                    "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L,
+                    "basis": AMMONIUM_BASIS,
+                }
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     if not salts:
         raise InputError("no salt remains after the assay and ion checks")
@@ -873,19 +988,29 @@ def recommend(
             f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} vs "
             f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
             f"No salt combination meets every target exactly; the excess {side} need counter-ions "
-            "the formula does not list.")
-    solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima)
+            "the formula does not list."
+        )
+    solved = _simplify(
+        salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima
+    )
     short = _short(solved["rows"], targets)
     if short:
         salts, excluded, recovered = _recover(library, salts, excluded, targets, short)
         warnings.extend(recovered)
         if recovered:
-            solved = _simplify(salts, targets, water, _fit_within(salts, targets, water, ridge, maxima),
-                               ridge, maxima)
+            solved = _simplify(
+                salts,
+                targets,
+                water,
+                _fit_within(salts, targets, water, ridge, maxima),
+                ridge,
+                maxima,
+            )
     solved["salts"] = _chosen(salts, solved["grams"])
     chosen_names = {item["name"] for item in solved["salts"]}
     warnings = [
-        note for note in warnings
+        note
+        for note in warnings
         if " is included" not in note or note.split(" is included", 1)[0] in chosen_names
     ]
     solved["saltIds"] = [item["id"] for item in solved["salts"]]
@@ -895,11 +1020,15 @@ def recommend(
         drift = assay_drift(by_id[item["id"]])
         if drift:
             warnings.append(drift)
-    from .materials import IDENTITIES_SHA256  # local: keeps engine importable without the catalogue at load
+    from .materials import (
+        IDENTITIES_SHA256,
+    )  # local: keeps engine importable without the catalogue at load
+
     solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
     counterion_na = counterion_sodium_mg_per_l(
-        [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]])
+        [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]]
+    )
     if counterion_na > 0:
         na_row = next((row for row in solved["rows"] if row["symbol"] == "Na"), None)
         if na_row is None:
@@ -908,12 +1037,15 @@ def recommend(
         na_row["final"] += counterion_na
         if na_row["target"] is not None and na_row["target"] > 0:
             na_row["deltaPct"] = 100.0 * (na_row["final"] - na_row["target"]) / na_row["target"]
-        warnings.append("Incidental Na includes formula counterion sodium (chelates D2, "
-                        f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L.")
+        warnings.append(
+            "Incidental Na includes formula counterion sodium (chelates D2, "
+            f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L."
+        )
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
     solved["targetIonBalance"] = balance
-    solved["unmetTargets"] = _diagnose(library, targets, water, solved["rows"], maxima, allowed,
-                                       allow_carbonates)
+    solved["unmetTargets"] = _diagnose(
+        library, targets, water, solved["rows"], maxima, allowed, allow_carbonates
+    )
     return solved

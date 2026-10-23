@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """The ASV suite must import the way ASV discovers it (#64).
 
 ASV makes only the benchmark package importable, through its own meta-path
@@ -5,6 +9,7 @@ importer (asv_runner._aux.update_sys_path), and imports every module under it.
 The repository root is not on sys.path, so a module there that imports `tools`
 (or a development-only package) aborts discovery and no timing runs.
 """
+
 import json
 import subprocess
 import sys
@@ -43,8 +48,12 @@ class AsvDiscoveryTests(unittest.TestCase):
     def test_every_benchmark_module_imports_without_the_repository_root(self):
         config = json.loads((ROOT / "asv.conf.json").read_text())
         benchmark_dir = (ROOT / config["benchmark_dir"]).resolve()
-        run = subprocess.run([sys.executable, "-c", DISCOVER, str(ROOT), str(benchmark_dir)],
-                             cwd=benchmark_dir.parent.parent, capture_output=True, text=True)
+        run = subprocess.run(
+            [sys.executable, "-c", DISCOVER, str(ROOT), str(benchmark_dir)],
+            cwd=benchmark_dir.parent.parent,
+            capture_output=True,
+            text=True,
+        )
         self.assertEqual(run.returncode, 0, run.stderr)
         imported = json.loads(run.stdout)
         self.assertIn(f"{benchmark_dir.name}.performance", imported)

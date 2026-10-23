@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Incidental ammonium is allowed up to a share of the formula's total N (#54)."""
+
 import unittest
 
 from flahax import load_library, recommend
@@ -57,7 +62,9 @@ class AmmoniumLimitTests(unittest.TestCase):
         targets = dict(formula("Chilli (maximumyield)")["targets"], N_NH4=0)
         result = recommend(SALTS, targets, {})
         self.assertIsNone(result["ammoniumLimit"])
-        self.assertEqual(result["salts"], recommend(SALTS, targets, {}, max_ammonium_fraction=None)["salts"])
+        self.assertEqual(
+            result["salts"], recommend(SALTS, targets, {}, max_ammonium_fraction=None)["salts"]
+        )
 
     def test_explicit_maximum_overrides_the_fraction(self):
         targets = formula("Chilli (maximumyield)")["targets"]

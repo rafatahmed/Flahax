@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Conservative, data-driven stock-tank planning for a final FlahaX recipe.
 
 The planner does not infer chemistry from a product name. Every product needs
@@ -70,7 +74,9 @@ def _validated_tanks(tanks: Iterable[StockTank]) -> tuple[StockTank, ...]:
     try:
         clean = tuple(tanks)
     except TypeError as exc:
-        raise DeliveryError("invalid_type", "tanks must be an iterable of StockTank values") from exc
+        raise DeliveryError(
+            "invalid_type", "tanks must be an iterable of StockTank values"
+        ) from exc
     if not clean:
         raise DeliveryError("missing_field", "at least one stock tank is required")
     ids = set()
@@ -124,7 +130,9 @@ def plan_stocks(
     if not isinstance(recipe, FinalSolutionRecipe):
         raise DeliveryError("invalid_type", "recipe must be a FinalSolutionRecipe value")
     if not recipe.feasible:
-        raise DeliveryError("infeasible_recipe", "an infeasible nutrient recipe cannot produce a stock plan")
+        raise DeliveryError(
+            "infeasible_recipe", "an infeasible nutrient recipe cannot produce a stock plan"
+        )
     if not isinstance(injection_ratio, InjectionRatio):
         raise DeliveryError("invalid_type", "injection_ratio must be an InjectionRatio value")
     if not isinstance(temperature, TemperatureCelsius):
@@ -158,7 +166,9 @@ def plan_stocks(
             f"every tank is smaller than the required {stock_volume.value:g} L stock volume",
         )
     if not prepared:
-        return StockPlan(recipe, injection_ratio, temperature, (), tuple(rule["id"] for rule in rules), ())
+        return StockPlan(
+            recipe, injection_ratio, temperature, (), tuple(rule["id"] for rule in rules), ()
+        )
 
     selected: tuple[int, ...] | None = None
     for count in range(1, len(usable_tanks) + 1):
@@ -172,7 +182,10 @@ def plan_stocks(
         if selected is not None:
             break
     if selected is None:
-        raise DeliveryError("no_stock_assignment", "no compatible assignment exists for the supplied tanks and rules")
+        raise DeliveryError(
+            "no_stock_assignment",
+            "no compatible assignment exists for the supplied tanks and rules",
+        )
 
     groups: list[list[tuple[Any, GramsPerLitre, str]]] = [[] for _ in range(max(selected) + 1)]
     for item, tank_index in zip(prepared, selected):
@@ -186,7 +199,10 @@ def plan_stocks(
             StockTankPlan(
                 usable_tanks[index],
                 stock_volume,
-                tuple(StockSaltDose(salt.salt_id, salt.name, concentration) for salt, concentration, _limit_id in group),
+                tuple(
+                    StockSaltDose(salt.salt_id, salt.name, concentration)
+                    for salt, concentration, _limit_id in group
+                ),
             )
         )
         used_limit_ids.extend(limit_id for _salt, _concentration, limit_id in group)

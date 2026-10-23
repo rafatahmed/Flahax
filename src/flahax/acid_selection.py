@@ -1,9 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Evaluate user-supplied acid products against the same mixed equilibrium model.
 
 No fertilizer target is interpreted as a water-quality measurement. Acid product
 purity, density and provenance are explicit; formulations are never silently
 relaxed to accommodate nutrient-bearing acid additions.
 """
+
 from dataclasses import dataclass
 import math
 from collections.abc import Mapping, Sequence
@@ -52,15 +57,32 @@ class AcidSelection:
 
 
 def _positive(value, name):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
         raise DeliveryError('invalid_value', f'{name} must be finite and positive')
     return float(value)
 
 
-def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
-                      final_volume_litres, achieved, targets,
-                      maximum_nutrient_error_percent, maximum_reagent_volume_litres,
-                      preferred_product_id=None, phases=(), maximum_concentrations=None):
+def plan_acid_options(
+    totals,
+    initial_ph,
+    target_ph,
+    *,
+    products,
+    water_mass_kg,
+    final_volume_litres,
+    achieved,
+    targets,
+    maximum_nutrient_error_percent,
+    maximum_reagent_volume_litres,
+    preferred_product_id=None,
+    phases=(),
+    maximum_concentrations=None,
+):
     """Rank accepted single-acid plans by nutrient loss, or respect an explicit ID.
 
     Products: id, source, revision, recordedAt, chemicalFormula, massFraction
@@ -72,7 +94,12 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
     tolerance = _positive(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
     for ph in (initial_ph, target_ph):
-        if isinstance(ph, bool) or not isinstance(ph, (int, float)) or not math.isfinite(ph) or not 0 <= ph <= 14:
+        if (
+            isinstance(ph, bool)
+            or not isinstance(ph, (int, float))
+            or not math.isfinite(ph)
+            or not 0 <= ph <= 14
+        ):
             raise DeliveryError('out_of_range', 'pH must be finite in [0,14]')
     rescore_with_reagent(achieved, targets, {})
     if not targets:
@@ -80,17 +107,23 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
     if not isinstance(products, (list, tuple)) or not products:
         raise DeliveryError('missing_field', 'sourced aqueous acid product records are required')
     identifiers = [p.get('id') if isinstance(p, Mapping) else None for p in products]
-    if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(set(identifiers)) != len(identifiers):
+    if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(
+        set(identifiers)
+    ) != len(identifiers):
         raise DeliveryError('invalid_value', 'acid product IDs must be unique nonempty strings')
     if preferred_product_id is not None and preferred_product_id not in identifiers:
-        raise DeliveryError('unknown_product', 'requested acid product is not in the supplied list')
+        raise DeliveryError(
+            'unknown_product', 'requested acid product is not in the supplied list'
+        )
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
         raise DeliveryError('invalid_type', 'phases must be an explicit sequence')
     phases = tuple(phases)
     initial = solve(totals, initial_ph, phases=phases)
     records = {r['name']: r for r in chemistry()['aqueous']}
-    absolute_charge = sum(abs(records[n]['charge']) * value for n, value in initial.species.items())
-    if abs(initial.charge_balance) > max(1e-12, .001 * absolute_charge):
+    absolute_charge = sum(
+        abs(records[n]['charge']) * value for n, value in initial.species.items()
+    )
+    if abs(initial.charge_balance) > max(1e-12, 0.001 * absolute_charge):
         raise DeliveryError('charge_imbalance', 'initial mixed solution must be charge balanced')
     candidates = []
     for product in products:
@@ -101,42 +134,97 @@ def plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg,
                 if not isinstance(product.get(key), str) or not product[key].strip():
                     raise DeliveryError('missing_field', f'acid product {key} is required')
             if formula not in ACIDS:
-                raise DeliveryError('unsupported_reagent', 'supported identities: HNO3, H3PO4, H2SO4, C6H8O7')
+                raise DeliveryError(
+                    'unsupported_reagent', 'supported identities: HNO3, H3PO4, H2SO4, C6H8O7'
+                )
             fraction = _positive(product.get('massFraction'), 'massFraction')
             density = _positive(product.get('densityKgPerL'), 'densityKgPerL')
             if fraction > 1:
                 raise DeliveryError('inconsistent_assay', 'massFraction cannot exceed one')
             if target_ph > initial_ph:
-                raise DeliveryError('wrong_reagent_direction', 'acid selection cannot satisfy a base requirement')
+                raise DeliveryError(
+                    'wrong_reagent_direction', 'acid selection cannot satisfy a base requirement'
+                )
             _, molar_mass, nutrients = ACIDS[formula]
             # The shared acid/base dose solve (#75); for acids it is the former bracketed search.
-            dose, target = reagent_dose(totals, initial_ph, target_ph, formula, phases=phases, initial=initial)
+            dose, target = reagent_dose(
+                totals, initial_ph, target_ph, formula, phases=phases, initial=initial
+            )
             grams = dose * mass * molar_mass / fraction
             litres = grams / (1000 * density)
             if litres > cap or litres > volume or grams * (1 - fraction) > mass * 1000:
-                raise DeliveryError('dose_limit_exceeded', 'dose exceeds volume or final solvent inventory')
-            contribution = {ion: dose * mass * molar * 1000 / volume for ion, molar in nutrients.items()}
-            loss, rows = rescore_with_reagent(achieved, targets,
-                                             {ion: MilligramsPerLitre(value) for ion, value in contribution.items()})
+                raise DeliveryError(
+                    'dose_limit_exceeded', 'dose exceeds volume or final solvent inventory'
+                )
+            contribution = {
+                ion: dose * mass * molar * 1000 / volume for ion, molar in nutrients.items()
+            }
+            loss, rows = rescore_with_reagent(
+                achieved,
+                targets,
+                {ion: MilligramsPerLitre(value) for ion, value in contribution.items()},
+            )
             for row in rows:
                 if row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance:
-                    raise DeliveryError('nutrient_tolerance_exceeded', f'acid plan violates {row["symbol"]} target')
+                    raise DeliveryError(
+                        'nutrient_tolerance_exceeded', f'acid plan violates {row["symbol"]} target'
+                    )
             assessment = assess_incidental(rows, maximum_concentrations)
             if assessment['limitViolations']:
-                raise DeliveryError('nutrient_limit_exceeded', 'acid plan exceeds an explicit nutrient maximum')
+                raise DeliveryError(
+                    'nutrient_limit_exceeded', 'acid plan exceeds an explicit nutrient maximum'
+                )
             saturation = assess_saturation(target)
             if saturation['blocks']:
-                raise DeliveryError('precipitation_risk', 'target solids or positive SI prohibit acid-plan acceptance: '
-                                    + '; '.join(describe(saturation)))
-            review = assessment['requiresReview'] or bool(saturation['review'] or saturation['advisories'])
-            candidates.append(AcidCandidate(identity, formula, 'requires_review' if review else 'accepted',
-                                           dose, grams, litres, contribution, tuple(rows), loss, target,
-                                           product_record=dict(product), incidental_assessment=assessment))
+                raise DeliveryError(
+                    'precipitation_risk',
+                    'target solids or positive SI prohibit acid-plan acceptance: '
+                    + '; '.join(describe(saturation)),
+                )
+            review = assessment['requiresReview'] or bool(
+                saturation['review'] or saturation['advisories']
+            )
+            candidates.append(
+                AcidCandidate(
+                    identity,
+                    formula,
+                    'requires_review' if review else 'accepted',
+                    dose,
+                    grams,
+                    litres,
+                    contribution,
+                    tuple(rows),
+                    loss,
+                    target,
+                    product_record=dict(product),
+                    incidental_assessment=assessment,
+                )
+            )
         except DeliveryError as exc:
-            candidates.append(AcidCandidate(identity, formula, 'rejected', error_code=exc.code,
-                                           message=str(exc), product_record=dict(product)))
-    accepted = [c for c in candidates if c.status == 'accepted' and
-                (preferred_product_id is None or c.product_id == preferred_product_id)]
-    selected = min(accepted, key=lambda c: (c.loss, identifiers.index(c.product_id))).product_id if accepted else None
-    policy = 'explicit user choice; no fallback' if preferred_product_id is not None else 'lowest final nutrient loss; input order breaks ties'
+            candidates.append(
+                AcidCandidate(
+                    identity,
+                    formula,
+                    'rejected',
+                    error_code=exc.code,
+                    message=str(exc),
+                    product_record=dict(product),
+                )
+            )
+    accepted = [
+        c
+        for c in candidates
+        if c.status == 'accepted'
+        and (preferred_product_id is None or c.product_id == preferred_product_id)
+    ]
+    selected = (
+        min(accepted, key=lambda c: (c.loss, identifiers.index(c.product_id))).product_id
+        if accepted
+        else None
+    )
+    policy = (
+        'explicit user choice; no fallback'
+        if preferred_product_id is not None
+        else 'lowest final nutrient loss; input order breaks ties'
+    )
     return AcidSelection(tuple(candidates), selected, policy)

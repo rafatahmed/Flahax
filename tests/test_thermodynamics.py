@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Tests for flahax.thermodynamics."""
+
 import unittest
 
 from flahax import DeliveryError
@@ -6,11 +12,9 @@ from flahax.thermodynamics import MineralPhase, phase_saturation_index
 
 class ThermodynamicPhases(unittest.TestCase):
     def test_calcite_saturation_index_uses_activity_not_concentration(self):
-        calcite = MineralPhase(
-            "Calcite", {"Ca+2": 1, "CO3-2": 1}, -8.45, "phreeqc.dat", 25
-        )
+        calcite = MineralPhase("Calcite", {"Ca+2": 1, "CO3-2": 1}, -8.45, "phreeqc.dat", 25)
         self.assertAlmostEqual(
-            phase_saturation_index(calcite, {"Ca+2": 10 ** -2.91, "CO3-2": 10 ** -5.54}),
+            phase_saturation_index(calcite, {"Ca+2": 10**-2.91, "CO3-2": 10**-5.54}),
             0.0,
             places=2,
         )

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Traceable material catalogue: the shipped chemical-identity layer.
 
 An identity is what a material *is* (formula, hydration, molecular weight,
@@ -10,6 +14,7 @@ Records are shipped in data/material_identities.json, pinned by SHA-256.
 The loader fails closed if a record is malformed or if a stored theoretical
 analysis disagrees with composition.theoretical_assay for a parseable formula.
 """
+
 import hashlib
 import json
 import math
@@ -27,10 +32,29 @@ _RESOURCE = 'data/material_identities.json'
 _RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
 IDENTITIES_SHA256 = hashlib.sha256(_RAW).hexdigest()
 
-IDENTITY_STATUSES = frozenset({'identity_consistent', 'chelate_salt_defined', 'commercial_double_salt',
-                               'aqueous_solution', 'assumed_blend'})
-_REQUIRED = ('id', 'products', 'name', 'formula', 'hydration', 'molecular_weight', 'cas',
-             'ion_forms', 'theoretical_analysis', 'comparator', 'status', 'notes')
+IDENTITY_STATUSES = frozenset(
+    {
+        'identity_consistent',
+        'chelate_salt_defined',
+        'commercial_double_salt',
+        'aqueous_solution',
+        'assumed_blend',
+    }
+)
+_REQUIRED = (
+    'id',
+    'products',
+    'name',
+    'formula',
+    'hydration',
+    'molecular_weight',
+    'cas',
+    'ion_forms',
+    'theoretical_analysis',
+    'comparator',
+    'status',
+    'notes',
+)
 _THEORY_TOLERANCE = 1e-9
 
 
@@ -60,8 +84,12 @@ def _check(record: dict) -> None:
     computed = theoretical_assay(formula) if formula else None
     if computed:
         stored = record['theoretical_analysis']
-        if set(stored) != set(computed) or any(abs(stored[k] - computed[k]) > _THEORY_TOLERANCE for k in computed):
-            _invalid(identity_id, 'theoretical_analysis disagrees with composition.theoretical_assay')
+        if set(stored) != set(computed) or any(
+            abs(stored[k] - computed[k]) > _THEORY_TOLERANCE for k in computed
+        ):
+            _invalid(
+                identity_id, 'theoretical_analysis disagrees with composition.theoretical_assay'
+            )
 
 
 @lru_cache(maxsize=1)
@@ -75,7 +103,9 @@ def _load() -> tuple[dict, dict]:
         identities[record['id']] = record
         for product in record['products']:
             if product in by_product:
-                _invalid(record['id'], f'product {product!r} already mapped to {by_product[product]}')
+                _invalid(
+                    record['id'], f'product {product!r} already mapped to {by_product[product]}'
+                )
             by_product[product] = record['id']
     return identities, by_product
 
@@ -96,8 +126,23 @@ def identity_for_product(name: str) -> dict:
 
 # --- Grades (technical data sheets) and lots (certificates of analysis) ---------------------
 
-NUTRIENT_FORMS = ('N_NO3', 'N_NH4', 'N_UREA', 'P', 'K', 'Ca', 'Mg', 'S',
-                  'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo', 'Na')
+NUTRIENT_FORMS = (
+    'N_NO3',
+    'N_NH4',
+    'N_UREA',
+    'P',
+    'K',
+    'Ca',
+    'Mg',
+    'S',
+    'Fe',
+    'Mn',
+    'Zn',
+    'Cu',
+    'B',
+    'Mo',
+    'Na',
+)
 
 
 def _oxide_factor(element: str, count: int, oxygens: int) -> float:
@@ -131,13 +176,29 @@ _FRACTION_TOLERANCE = 1e-9
 # Dissolved ion form -> (nutrient form it carries, charge per nutrient atom). Each listed
 # form carries one atom of its nutrient. Forms without a nutrient (CO3-2, citrate) are absent.
 _ION_NUTRIENT_CHARGE = {
-    'NO3-': ('N_NO3', -1), 'NH4+': ('N_NH4', 1), 'CO(NH2)2': ('N_UREA', 0),
-    'K+': ('K', 1), 'Na+': ('Na', 1), 'Ca+2': ('Ca', 2), 'Mg+2': ('Mg', 2),
-    'Fe+2': ('Fe', 2), 'Cu+2': ('Cu', 2), 'Zn+2': ('Zn', 2),
-    'SO4-2': ('S', -2), 'H2PO4-': ('P', -1), 'HPO4-2': ('P', -2), 'H3PO4': ('P', 0),
-    'MoO4-2': ('Mo', -2), 'B(OH)4-': ('B', -1), 'B(OH)3': ('B', 0),
-    'Fe(III)-EDTA': ('Fe', -1), 'Mn-EDTA': ('Mn', -2), 'Zn-EDTA': ('Zn', -2), 'Cu-EDTA': ('Cu', -2),
-    'Fe(III)-DTPA': ('Fe', -2), 'Fe(III)-o,o-EDDHA': ('Fe', -1),
+    'NO3-': ('N_NO3', -1),
+    'NH4+': ('N_NH4', 1),
+    'CO(NH2)2': ('N_UREA', 0),
+    'K+': ('K', 1),
+    'Na+': ('Na', 1),
+    'Ca+2': ('Ca', 2),
+    'Mg+2': ('Mg', 2),
+    'Fe+2': ('Fe', 2),
+    'Cu+2': ('Cu', 2),
+    'Zn+2': ('Zn', 2),
+    'SO4-2': ('S', -2),
+    'H2PO4-': ('P', -1),
+    'HPO4-2': ('P', -2),
+    'H3PO4': ('P', 0),
+    'MoO4-2': ('Mo', -2),
+    'B(OH)4-': ('B', -1),
+    'B(OH)3': ('B', 0),
+    'Fe(III)-EDTA': ('Fe', -1),
+    'Mn-EDTA': ('Mn', -2),
+    'Zn-EDTA': ('Zn', -2),
+    'Cu-EDTA': ('Cu', -2),
+    'Fe(III)-DTPA': ('Fe', -2),
+    'Fe(III)-o,o-EDDHA': ('Fe', -1),
 }
 
 
@@ -227,7 +288,9 @@ def _number(value: Any, label: str, *, ceiling: float | None = 100.0) -> float:
 def _document(record: Mapping, label: str) -> DocumentReference:
     raw = record.get('document')
     if not isinstance(raw, Mapping):
-        raise DeliveryError('missing_document_reference', f'{label}: a document reference is required')
+        raise DeliveryError(
+            'missing_document_reference', f'{label}: a document reference is required'
+        )
     for key in ('supplier', 'title', 'issued', 'entered'):
         if not isinstance(raw.get(key), str) or not raw[key].strip():
             raise DeliveryError('missing_document_reference', f'{label}: document needs {key}')
@@ -235,15 +298,25 @@ def _document(record: Mapping, label: str) -> DocumentReference:
         try:
             date.fromisoformat(raw[key])
         except ValueError as exc:
-            raise DeliveryError('invalid_value', f'{label}: document {key} must be an ISO date') from exc
+            raise DeliveryError(
+                'invalid_value', f'{label}: document {key} must be an ISO date'
+            ) from exc
     for key in ('url', 'sha256'):
         if raw.get(key) is not None and not isinstance(raw[key], str):
             raise DeliveryError('invalid_value', f'{label}: document {key} must be a string')
     sha = raw.get('sha256')
-    if sha is not None and (len(sha) != 64 or any(c not in '0123456789abcdef' for c in sha.lower())):
+    if sha is not None and (
+        len(sha) != 64 or any(c not in '0123456789abcdef' for c in sha.lower())
+    ):
         raise DeliveryError('invalid_value', f'{label}: document sha256 must be 64 hex characters')
-    return DocumentReference(supplier=raw['supplier'], title=raw['title'], issued=raw['issued'],
-                             entered=raw['entered'], url=raw.get('url'), sha256=sha)
+    return DocumentReference(
+        supplier=raw['supplier'],
+        title=raw['title'],
+        issued=raw['issued'],
+        entered=raw['entered'],
+        url=raw.get('url'),
+        sha256=sha,
+    )
 
 
 def _nutrient_key(key: Any, label: str, conversions: dict, extra: tuple = ()) -> tuple[str, float]:
@@ -265,7 +338,9 @@ def _elemental(values: Any, label: str, conversions: dict) -> dict:
     for key, raw in values.items():
         element, factor = _nutrient_key(key, label, conversions)
         if element in out:
-            raise DeliveryError('invalid_value', f'{label}: {element} stated twice (elemental and oxide)')
+            raise DeliveryError(
+                'invalid_value', f'{label}: {element} stated twice (elemental and oxide)'
+            )
         out[element] = _number(raw, f'{label} {key}') * factor
     return out
 
@@ -282,10 +357,14 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
         raise DeliveryError('invalid_composition', f'{label}: components must be a list')
     if composition != 'disclosed':
         if raw:
-            raise DeliveryError('invalid_composition', f'{label}: a {composition} grade has no components')
+            raise DeliveryError(
+                'invalid_composition', f'{label}: a {composition} grade has no components'
+            )
         return ()
     if not raw:
-        raise DeliveryError('invalid_composition', f'{label}: a disclosed blend must list its components')
+        raise DeliveryError(
+            'invalid_composition', f'{label}: a disclosed blend must list its components'
+        )
     pairs = []
     for item in raw:
         if isinstance(item, Mapping):
@@ -295,14 +374,24 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
         else:
             raise DeliveryError('invalid_composition', f'{label}: component {item!r} is malformed')
         _known_identity(identity_id, label)
-        if (isinstance(fraction, bool) or not isinstance(fraction, (int, float))
-                or not math.isfinite(fraction) or not 0 < fraction <= 1):
-            raise DeliveryError('invalid_composition', f'{label}: mass fraction {fraction!r} must be in (0, 1]')
+        if (
+            isinstance(fraction, bool)
+            or not isinstance(fraction, (int, float))
+            or not math.isfinite(fraction)
+            or not 0 < fraction <= 1
+        ):
+            raise DeliveryError(
+                'invalid_composition', f'{label}: mass fraction {fraction!r} must be in (0, 1]'
+            )
         pairs.append((identity_id, float(fraction)))
     if len({identity_id for identity_id, _ in pairs}) != len(pairs):
-        raise DeliveryError('invalid_composition', f'{label}: a component identity is listed twice')
+        raise DeliveryError(
+            'invalid_composition', f'{label}: a component identity is listed twice'
+        )
     if sum(fraction for _, fraction in pairs) > 1 + _FRACTION_TOLERANCE:
-        raise DeliveryError('invalid_composition', f'{label}: component mass fractions sum above 1')
+        raise DeliveryError(
+            'invalid_composition', f'{label}: component mass fractions sum above 1'
+        )
     return tuple(pairs)
 
 
@@ -318,7 +407,9 @@ def _nutrient_charges(identity: dict, table: Mapping | None = None) -> dict:
     return {nutrient: weighted / atoms for nutrient, (weighted, atoms) in totals.items()}
 
 
-def _charge_residual_percent(identity: dict, declared: dict, table: Mapping | None = None) -> float | None:
+def _charge_residual_percent(
+    identity: dict, declared: dict, table: Mapping | None = None
+) -> float | None:
     """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion.
 
     ``table`` maps ion -> (nutrient, charge per atom); material_chemistry passes its wider table.
@@ -343,19 +434,29 @@ def _range_excludes_theory(identity: dict, minimum: dict, maximum: dict) -> bool
     theory = identity['theoretical_analysis']
     if not theory:
         return False
-    return any(not minimum[key] <= theory.get(key, 0.0) <= maximum[key]
-               for key in set(minimum) & set(maximum))
+    return any(
+        not minimum[key] <= theory.get(key, 0.0) <= maximum[key]
+        for key in set(minimum) & set(maximum)
+    )
 
 
-def _analysis_targets(key: Any, label: str, identity_id: str | None, conversions: dict,
-                      split: dict, extra: tuple = ()) -> list:
+def _analysis_targets(
+    key: Any,
+    label: str,
+    identity_id: str | None,
+    conversions: dict,
+    split: dict,
+    extra: tuple = (),
+) -> list:
     """Elemental forms an analysis key feeds, each with its multiplier."""
     if key != 'N':
         return [_nutrient_key(key, label, conversions, extra)]
     theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
     forms = {form: theory[form] for form in N_FORMS if theory.get(form, 0) > 0}
     if not forms:
-        raise DeliveryError('invalid_value', f'{label}: total N needs an identity whose theory states N forms')
+        raise DeliveryError(
+            'invalid_value', f'{label}: total N needs an identity whose theory states N forms'
+        )
     total = sum(forms.values())
     split['N'] = {form: value / total for form, value in forms.items()}
     return list(split['N'].items())
@@ -372,16 +473,24 @@ def make_grade(record: Mapping) -> Grade:
     product = _text(record, 'product', label)
     composition = record.get('composition', 'single')
     if composition not in COMPOSITIONS:
-        raise DeliveryError('invalid_composition', f'{label}: composition must be one of {sorted(COMPOSITIONS)}')
+        raise DeliveryError(
+            'invalid_composition', f'{label}: composition must be one of {sorted(COMPOSITIONS)}'
+        )
     chelating_agent = record.get('chelating_agent')
     if chelating_agent not in CHELATING_AGENTS:
-        raise DeliveryError('invalid_value', f'{label}: chelating_agent must be one of {list(CHELATING_AGENTS)}')
+        raise DeliveryError(
+            'invalid_value', f'{label}: chelating_agent must be one of {list(CHELATING_AGENTS)}'
+        )
     identity_id = record.get('identity_id')
     if composition == 'declared_ions' and identity_id is not None:
-        raise DeliveryError('invalid_composition', f'{label}: a declared-ions compound has no single identity')
+        raise DeliveryError(
+            'invalid_composition', f'{label}: a declared-ions compound has no single identity'
+        )
     if identity_id is None:
         if composition == 'single':
-            raise DeliveryError('invalid_composition', f'{label}: a single-material grade must name its identity')
+            raise DeliveryError(
+                'invalid_composition', f'{label}: a single-material grade must name its identity'
+            )
     else:
         _known_identity(identity_id, label)
     components = _components(record.get('components'), composition, label)
@@ -396,45 +505,82 @@ def make_grade(record: Mapping) -> Grade:
     bands: dict = {band: {} for band in _BANDS}
     for key, stated in analysis.items():
         # A declared-ions compound may state its chloride: it closes the charge balance.
-        targets = _analysis_targets(key, label, identity_id, conversions, split,
-                                    ('Cl',) if composition == 'declared_ions' else ())
-        if not isinstance(stated, Mapping) or set(stated) - set(_BANDS) or not set(stated) & {'typical', 'minimum'}:
-            raise DeliveryError('invalid_value', f'{label} {key}: state a typical or minimum value '
-                                '(a maximum alone is not an assay)')
+        targets = _analysis_targets(
+            key,
+            label,
+            identity_id,
+            conversions,
+            split,
+            ('Cl',) if composition == 'declared_ions' else (),
+        )
+        if (
+            not isinstance(stated, Mapping)
+            or set(stated) - set(_BANDS)
+            or not set(stated) & {'typical', 'minimum'}
+        ):
+            raise DeliveryError(
+                'invalid_value',
+                f'{label} {key}: state a typical or minimum value '
+                '(a maximum alone is not an assay)',
+            )
         for element, factor in targets:
             if any(element in bands[band] for band in _BANDS):
                 raise DeliveryError('invalid_value', f'{label}: {element} stated twice')
             for band, raw in stated.items():
                 bands[band][element] = _number(raw, f'{label} {key} {band}') * factor
-            ordered = [bands[band][element] for band in ('minimum', 'typical', 'maximum')
-                       if element in bands[band]]
+            ordered = [
+                bands[band][element]
+                for band in ('minimum', 'typical', 'maximum')
+                if element in bands[band]
+            ]
             if ordered != sorted(ordered):
-                raise DeliveryError('invalid_value', f'{label} {key}: needs minimum <= typical <= maximum')
+                raise DeliveryError(
+                    'invalid_value', f'{label} {key}: needs minimum <= typical <= maximum'
+                )
 
     impurities = record.get('impurity_limits') or {}
     if not isinstance(impurities, Mapping):
         raise DeliveryError('invalid_value', f'{label}: impurity_limits must be a mapping')
-    impurity_limits = {str(key): _number(value, f'{label} impurity {key}', ceiling=None)
-                       for key, value in impurities.items()}
+    impurity_limits = {
+        str(key): _number(value, f'{label} impurity {key}', ceiling=None)
+        for key, value in impurities.items()
+    }
 
     flags, residual = (), None
     if composition == 'single':
         identity = load_identities()[identity_id]
         # Declared forms only: typical, else minimum; forms split from total N are inferred, not declared.
         inferred = set(split.get('N', ()))
-        declared = {key: value for key, value in {**bands['minimum'], **bands['typical']}.items()
-                    if key not in inferred}
+        declared = {
+            key: value
+            for key, value in {**bands['minimum'], **bands['typical']}.items()
+            if key not in inferred
+        }
         residual = _charge_residual_percent(identity, declared)
-        if ((residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT)
-                or (identity['status'] not in _RANGE_TEST_EXEMPT
-                    and _range_excludes_theory(identity, bands['minimum'], bands['maximum']))):
+        if (residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT) or (
+            identity['status'] not in _RANGE_TEST_EXEMPT
+            and _range_excludes_theory(identity, bands['minimum'], bands['maximum'])
+        ):
             flags = ('identity_inconsistent',)
-    return Grade(grade_id=grade_id, identity_id=identity_id, supplier=supplier, product=product,
-                 typical=bands['typical'], minimum=bands['minimum'], maximum=bands['maximum'],
-                 impurity_limits=impurity_limits, composition=composition, components=components,
-                 oxide_conversions=conversions, document=document, flags=flags, form_split=split,
-                 charge_residual_percent=residual, chelating_agent=chelating_agent,
-                 chelating_agent_stated='chelating_agent' in record)
+    return Grade(
+        grade_id=grade_id,
+        identity_id=identity_id,
+        supplier=supplier,
+        product=product,
+        typical=bands['typical'],
+        minimum=bands['minimum'],
+        maximum=bands['maximum'],
+        impurity_limits=impurity_limits,
+        composition=composition,
+        components=components,
+        oxide_conversions=conversions,
+        document=document,
+        flags=flags,
+        form_split=split,
+        charge_residual_percent=residual,
+        chelating_agent=chelating_agent,
+        chelating_agent_stated='chelating_agent' in record,
+    )
 
 
 _MICRONUTRIENTS = ('Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
@@ -451,36 +597,72 @@ def declared_ions_check(grade: Grade) -> DeclaredCheck:
     Charges are those of the declared-ions conversion (phosphate as PO4-3, chelates as
     their D2 sodium salts); implied protons per P = (anion charge - cation charge) / mol P.
     """
-    from .product_conversion import declared_ion_charges  # deferred: product_conversion imports this module
+    from .product_conversion import (
+        declared_ion_charges,
+    )  # deferred: product_conversion imports this module
+
     declared = {**grade.minimum, **grade.typical}
     missing = [form for form in N_FORMS if form not in declared]
     if missing:
-        return DeclaredCheck(False, None, None, f'the label does not state {", ".join(missing)} '
-                             '(state every nitrogen form, 0 when absent)')
-    if any(declared.get(key, 0) > 0 for key in _MICRONUTRIENTS) and not grade.chelating_agent_stated:
-        return DeclaredCheck(False, None, None, 'the label states micronutrients but not whether they are '
-                             'chelated (chelating_agent)')
-    if grade.chelating_agent in ('DTPA', 'o,o-EDDHA') and any(declared.get(k, 0) > 0 for k in ('Mn', 'Zn', 'Cu')):
-        return DeclaredCheck(False, None, None, f'{grade.chelating_agent} sodium salts are defined for iron only (D2)')
+        return DeclaredCheck(
+            False,
+            None,
+            None,
+            f'the label does not state {", ".join(missing)} '
+            '(state every nitrogen form, 0 when absent)',
+        )
+    if (
+        any(declared.get(key, 0) > 0 for key in _MICRONUTRIENTS)
+        and not grade.chelating_agent_stated
+    ):
+        return DeclaredCheck(
+            False,
+            None,
+            None,
+            'the label states micronutrients but not whether they are '
+            'chelated (chelating_agent)',
+        )
+    if grade.chelating_agent in ('DTPA', 'o,o-EDDHA') and any(
+        declared.get(k, 0) > 0 for k in ('Mn', 'Zn', 'Cu')
+    ):
+        return DeclaredCheck(
+            False,
+            None,
+            None,
+            f'{grade.chelating_agent} sodium salts are defined for iron only (D2)',
+        )
     phosphate, cations, anions = declared_ion_charges(declared, grade.chelating_agent)
     if phosphate > 0:
         protons = (anions + 3 * phosphate - cations) / phosphate
         low, high = _PROTONS_PER_PHOSPHATE
         if not low - _PROTONS_ROUNDING <= protons <= high + _PROTONS_ROUNDING:
-            return DeclaredCheck(False, protons, None, f'phosphate balance: the declared ions imply {protons:.2f} H+ '
-                                 f'per phosphate, outside {low:g}-{high:g} (HPO4-2 to H2PO4-)')
+            return DeclaredCheck(
+                False,
+                protons,
+                None,
+                f'phosphate balance: the declared ions imply {protons:.2f} H+ '
+                f'per phosphate, outside {low:g}-{high:g} (HPO4-2 to H2PO4-)',
+            )
         return DeclaredCheck(True, protons, None, None)
     residual = 100.0 * (cations - anions) / (cations + anions) if cations + anions > 0 else 0.0
     if abs(residual) > _DECLARED_RESIDUAL_LIMIT_PERCENT:
-        return DeclaredCheck(False, None, residual, f'charge balance: the declared ions leave a {residual:+.1f} % '
-                             f'residual (limit {_DECLARED_RESIDUAL_LIMIT_PERCENT:g} %)')
+        return DeclaredCheck(
+            False,
+            None,
+            residual,
+            f'charge balance: the declared ions leave a {residual:+.1f} % '
+            f'residual (limit {_DECLARED_RESIDUAL_LIMIT_PERCENT:g} %)',
+        )
     return DeclaredCheck(True, None, residual, None)
 
 
 def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> ResolvedMaterial:
     """A data-sheet compound: elements are the label's, chemistry its declared ions."""
     if lot is not None:
-        raise DeliveryError('material_mismatch', f'{product_name}: lots of a declared-ions compound are not supported')
+        raise DeliveryError(
+            'material_mismatch',
+            f'{product_name}: lots of a declared-ions compound are not supported',
+        )
     elements, basis = {}, {}
     for key in _unique([*grade.typical, *grade.minimum]):
         in_typical = key in grade.typical
@@ -490,22 +672,46 @@ def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> Resol
     lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
     # Na, Cl and S the label does not state are taken as zero; each assumption is named.
     unstated = tuple(f'unstated_{k}' for k in ('Na', 'Cl', 'S') if k not in elements)
-    flags = _unique([*grade.flags, *lower_bound, *unstated, *(() if check.modellable else ('not_modellable',))])
+    flags = _unique(
+        [*grade.flags, *lower_bound, *unstated, *(() if check.modellable else ('not_modellable',))]
+    )
     provenance = {
-        'identityId': None, 'gradeId': grade.grade_id, 'lotId': None,
-        'documents': {'grade': asdict(grade.document), 'lot': None}, 'source': None,
-        'oxideConversions': {'grade': dict(grade.oxide_conversions), 'lot': {}}, 'assumed': False,
-        'identitiesSha256': IDENTITIES_SHA256, 'chelatingAgent': grade.chelating_agent,
+        'identityId': None,
+        'gradeId': grade.grade_id,
+        'lotId': None,
+        'documents': {'grade': asdict(grade.document), 'lot': None},
+        'source': None,
+        'oxideConversions': {'grade': dict(grade.oxide_conversions), 'lot': {}},
+        'assumed': False,
+        'identitiesSha256': IDENTITIES_SHA256,
+        'chelatingAgent': grade.chelating_agent,
         'declaredCheck': asdict(check),
     }
-    record = {'id': grade.grade_id, 'name': product_name, 'formula': None, 'elements': elements,
-              'provenance': {**provenance, 'recordId': grade.grade_id, 'analysisBasis': dict(basis),
-                             'flags': list(flags)}}
-    return ResolvedMaterial(name=product_name, identity_id=None, record=record, basis=basis,
-                            band_minimum={k: grade.minimum.get(k) for k in elements},
-                            band_maximum={k: grade.maximum.get(k) for k in elements},
-                            composition='declared_ions', provenance=provenance, flags=flags,
-                            chelating_agent=grade.chelating_agent, declared_check=check)
+    record = {
+        'id': grade.grade_id,
+        'name': product_name,
+        'formula': None,
+        'elements': elements,
+        'provenance': {
+            **provenance,
+            'recordId': grade.grade_id,
+            'analysisBasis': dict(basis),
+            'flags': list(flags),
+        },
+    }
+    return ResolvedMaterial(
+        name=product_name,
+        identity_id=None,
+        record=record,
+        basis=basis,
+        band_minimum={k: grade.minimum.get(k) for k in elements},
+        band_maximum={k: grade.maximum.get(k) for k in elements},
+        composition='declared_ions',
+        provenance=provenance,
+        flags=flags,
+        chelating_agent=grade.chelating_agent,
+        declared_check=check,
+    )
 
 
 def make_lot(record: Mapping) -> Lot:
@@ -517,7 +723,9 @@ def make_lot(record: Mapping) -> Lot:
     lot_id = _text(record, 'lot_id', label)
     grade_id, identity_id = record.get('grade_id'), record.get('identity_id')
     if (grade_id is None) == (identity_id is None):
-        raise DeliveryError('material_mismatch', f'{label}: name exactly one of grade_id or identity_id')
+        raise DeliveryError(
+            'material_mismatch', f'{label}: name exactly one of grade_id or identity_id'
+        )
     if grade_id is not None:
         grade_id = _text(record, 'grade_id', label)
     else:
@@ -529,13 +737,23 @@ def make_lot(record: Mapping) -> Lot:
     uncertainty = _elemental(record.get('uncertainty') or {}, f'{label} uncertainty', conversions)
     extra = set(uncertainty) - set(measured)
     if extra:
-        raise DeliveryError('invalid_value', f'{label}: uncertainty given for unmeasured {sorted(extra)}')
-    return Lot(lot_id=lot_id, grade_id=grade_id, identity_id=identity_id, measured=measured,
-               uncertainty=uncertainty, document=document, oxide_conversions=conversions)
+        raise DeliveryError(
+            'invalid_value', f'{label}: uncertainty given for unmeasured {sorted(extra)}'
+        )
+    return Lot(
+        lot_id=lot_id,
+        grade_id=grade_id,
+        identity_id=identity_id,
+        measured=measured,
+        uncertainty=uncertainty,
+        document=document,
+        oxide_conversions=conversions,
+    )
 
 
 def _shipped_salt(name: str) -> dict:
     from .engine import load_library  # deferred: the engine may later import this module
+
     for salt in load_library()['salts']:
         if salt['name'] == name:
             return salt
@@ -553,34 +771,54 @@ def _blend_implied(grade: Grade) -> tuple[dict, bool]:
     max(5 % of declared, 0.05 % points) is unreconciled; it is reported, never rejected.
     """
     declared = {**grade.minimum, **grade.typical}
-    assays = [(_shipped_salt(load_identities()[identity_id]['products'][0])['elements'], fraction)
-              for identity_id, fraction in grade.components]
-    implied = {key: sum(fraction * elements.get(key, 0.0) for elements, fraction in assays)
-               for key in declared}
-    unreconciled = any(abs(implied[key] - value) > max(_BLEND_RELATIVE_TOLERANCE * value,
-                                                        _BLEND_ABSOLUTE_TOLERANCE)
-                       for key, value in declared.items())
+    assays = [
+        (_shipped_salt(load_identities()[identity_id]['products'][0])['elements'], fraction)
+        for identity_id, fraction in grade.components
+    ]
+    implied = {
+        key: sum(fraction * elements.get(key, 0.0) for elements, fraction in assays)
+        for key in declared
+    }
+    unreconciled = any(
+        abs(implied[key] - value)
+        > max(_BLEND_RELATIVE_TOLERANCE * value, _BLEND_ABSOLUTE_TOLERANCE)
+        for key, value in declared.items()
+    )
     return implied, unreconciled
 
 
-def _check_linkage(product_name: str, identity_id: str, grade: Grade | None, lot: Lot | None) -> None:
+def _check_linkage(
+    product_name: str, identity_id: str, grade: Grade | None, lot: Lot | None
+) -> None:
     if grade is not None and grade.identity_id is not None and grade.identity_id != identity_id:
-        raise DeliveryError('material_mismatch',
-                            f'grade {grade.grade_id!r} is {grade.identity_id}, not {identity_id} ({product_name})')
+        raise DeliveryError(
+            'material_mismatch',
+            f'grade {grade.grade_id!r} is {grade.identity_id}, not {identity_id} ({product_name})',
+        )
     if lot is None:
         return
     if grade is not None:
         if lot.grade_id != grade.grade_id:
-            raise DeliveryError('material_mismatch', f'lot {lot.lot_id!r} belongs to '
-                                f'{lot.grade_id or lot.identity_id}, not grade {grade.grade_id!r}')
+            raise DeliveryError(
+                'material_mismatch',
+                f'lot {lot.lot_id!r} belongs to '
+                f'{lot.grade_id or lot.identity_id}, not grade {grade.grade_id!r}',
+            )
     elif lot.grade_id is not None:
-        raise DeliveryError('material_mismatch', f'lot {lot.lot_id!r} names grade {lot.grade_id!r}; pass that grade')
+        raise DeliveryError(
+            'material_mismatch',
+            f'lot {lot.lot_id!r} names grade {lot.grade_id!r}; pass that grade',
+        )
     elif lot.identity_id != identity_id:
-        raise DeliveryError('material_mismatch',
-                            f'lot {lot.lot_id!r} is {lot.identity_id}, not {identity_id} ({product_name})')
+        raise DeliveryError(
+            'material_mismatch',
+            f'lot {lot.lot_id!r} is {lot.identity_id}, not {identity_id} ({product_name})',
+        )
 
 
-def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot | None = None) -> ResolvedMaterial:
+def resolve_material(
+    product_name: str, *, grade: Grade | None = None, lot: Lot | None = None
+) -> ResolvedMaterial:
     """Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
 
     With neither grade nor lot, the shipped catalogue record is used with its declared basis.
@@ -603,7 +841,8 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         band_minimum = {key: None for key in elements}
         band_maximum = {key: None for key in elements}
         composition = salt.get('composition') or (
-            'disclosed' if identity['status'] == 'assumed_blend' else 'single')
+            'disclosed' if identity['status'] == 'assumed_blend' else 'single'
+        )
         flags: tuple = ()
         components: tuple = ()  # the shipped assumed blend keeps its own chemistry profile
         source = salt.get('source')
@@ -613,7 +852,9 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         if grade is None or grade.identity_id == identity_id:
             theory = dict(identity['theoretical_analysis'])
             if identity['status'] == 'chelate_salt_defined':
-                theory.pop('Na', None)  # D2: chelate sodium is a counterion, never a formulation element
+                theory.pop(
+                    'Na', None
+                )  # D2: chelate sodium is a counterion, never a formulation element
         measured = lot.measured if lot is not None else {}
         uncertainty = lot.uncertainty if lot is not None else {}
         typical = grade.typical if grade is not None else {}
@@ -649,8 +890,13 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         implied = None
         source = None  # the catalogue document does not describe a user grade or lot
         lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
-        flags = _unique([*(grade.flags if grade is not None else ()), *lower_bound,
-                         *(('lot_outside_grade_range',) if outside else ())])
+        flags = _unique(
+            [
+                *(grade.flags if grade is not None else ()),
+                *lower_bound,
+                *(('lot_outside_grade_range',) if outside else ()),
+            ]
+        )
         if grade is not None and grade.components:
             implied, unreconciled = _blend_implied(grade)
             if unreconciled:
@@ -671,11 +917,15 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         'identityId': None if blend else identity_id,
         'gradeId': grade.grade_id if grade is not None else None,
         'lotId': lot.lot_id if lot is not None else None,
-        'documents': {'grade': asdict(grade.document) if grade is not None else None,
-                      'lot': asdict(lot.document) if lot is not None else None},
+        'documents': {
+            'grade': asdict(grade.document) if grade is not None else None,
+            'lot': asdict(lot.document) if lot is not None else None,
+        },
         'source': dict(source) if source is not None else None,
-        'oxideConversions': {'grade': dict(grade.oxide_conversions) if grade is not None else {},
-                             'lot': dict(lot.oxide_conversions) if lot is not None else {}},
+        'oxideConversions': {
+            'grade': dict(grade.oxide_conversions) if grade is not None else {},
+            'lot': dict(lot.oxide_conversions) if lot is not None else {},
+        },
         'assumed': assumed,
         'identitiesSha256': IDENTITIES_SHA256,
     }
@@ -685,13 +935,30 @@ def resolve_material(product_name: str, *, grade: Grade | None = None, lot: Lot 
         provenance['blendImpliedAnalysis'] = implied
     # A blend has no single formula; the host's would make assay checks compare the wrong compound.
     formula = None if blend else identity['formula'] or salt.get('formula')
-    record = {'id': record_id, 'name': salt['name'], 'formula': formula, 'elements': elements,
-              'provenance': {**provenance, 'recordId': record_id, 'analysisBasis': dict(basis),
-                             'flags': list(flags)}}
-    return ResolvedMaterial(name=product_name, identity_id=identity_id, record=record, basis=basis,
-                            band_minimum=band_minimum, band_maximum=band_maximum,
-                            composition=composition, provenance=provenance, flags=flags,
-                            components=components)
+    record = {
+        'id': record_id,
+        'name': salt['name'],
+        'formula': formula,
+        'elements': elements,
+        'provenance': {
+            **provenance,
+            'recordId': record_id,
+            'analysisBasis': dict(basis),
+            'flags': list(flags),
+        },
+    }
+    return ResolvedMaterial(
+        name=product_name,
+        identity_id=identity_id,
+        record=record,
+        basis=basis,
+        band_minimum=band_minimum,
+        band_maximum=band_maximum,
+        composition=composition,
+        provenance=provenance,
+        flags=flags,
+        components=components,
+    )
 
 
 def material_audit_entry(material: ResolvedMaterial) -> dict:
@@ -701,24 +968,34 @@ def material_audit_entry(material: ResolvedMaterial) -> dict:
     product), else None.
     """
     bases = set(material.basis.values())
-    return {**material.provenance, 'basis': dict(material.basis),
-            'analysisBasis': bases.pop() if len(bases) == 1 else None,
-            'composition': material.composition, 'flags': list(material.flags),
-            'components': [list(pair) for pair in material.components]}
+    return {
+        **material.provenance,
+        'basis': dict(material.basis),
+        'analysisBasis': bases.pop() if len(bases) == 1 else None,
+        'composition': material.composition,
+        'flags': list(material.flags),
+        'components': [list(pair) for pair in material.components],
+    }
 
 
 BAND_NOTE = 'Band applies to nutrient amounts only; chemistry is reported at the nominal assay.'
 
 
-def nutrient_band(doses_g_per_litre: Mapping[str, float], *,
-                  materials: Mapping[str, ResolvedMaterial] | None = None) -> dict:
+def nutrient_band(
+    doses_g_per_litre: Mapping[str, float],
+    *,
+    materials: Mapping[str, ResolvedMaterial] | None = None,
+) -> dict:
     """Delivered nutrient (mg/L) at nominal and band-end assays for the same doses.
 
     Linear re-evaluation (mg/L = g/L x % x 10); the solver is never called. A nutrient
     whose contributor has an open band end gets ``None`` for that end of the total.
     Products without a resolved material use the shipped record with no band.
     """
-    from .product_conversion import _check_materials  # deferred: avoids a circular import with product_conversion
+    from .product_conversion import (
+        _check_materials,
+    )  # deferred: avoids a circular import with product_conversion
+
     resolved = _check_materials(doses_g_per_litre, materials, allow_undisclosed=True)
     nutrients: dict = {}
     basis: dict = {}
@@ -726,11 +1003,14 @@ def nutrient_band(doses_g_per_litre: Mapping[str, float], *,
         material = resolved.get(name) or resolve_material(name)
         basis[name] = dict(material.basis)
         for key, percent in material.record['elements'].items():
-            entry = nutrients.setdefault(key, {'nominal_mg_per_l': 0.0, 'minimum_mg_per_l': 0.0,
-                                               'maximum_mg_per_l': 0.0})
+            entry = nutrients.setdefault(
+                key, {'nominal_mg_per_l': 0.0, 'minimum_mg_per_l': 0.0, 'maximum_mg_per_l': 0.0}
+            )
             entry['nominal_mg_per_l'] += dose * percent * 10
-            for end, edge in (('minimum_mg_per_l', material.band_minimum),
-                              ('maximum_mg_per_l', material.band_maximum)):
+            for end, edge in (
+                ('minimum_mg_per_l', material.band_minimum),
+                ('maximum_mg_per_l', material.band_maximum),
+            ):
                 bound = edge.get(key)
                 if entry[end] is not None:
                     entry[end] = None if bound is None else entry[end] + dose * bound * 10
