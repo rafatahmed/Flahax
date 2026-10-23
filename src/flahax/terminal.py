@@ -94,9 +94,21 @@ def _control(char):
 
 def decode_windows(chars):
     """The key named by ``msvcrt.getwch`` output (two characters for arrows and other keys)."""
-    if chars[:1] in ('\x00', '\xe0'):
-        return WINDOWS_PREFIXED.get(chars[1:2], 'OTHER')
+    if len(chars) == 2 and chars[0] in ('\x00', '\xe0'):
+        return WINDOWS_PREFIXED.get(chars[1], 'OTHER')
     return _control(chars[:1])
+
+
+def read_windows_key(getwch, kbhit):
+    """One key from ``msvcrt``: a prefix code takes the next code only when it is already there.
+
+    Windows reports both the arrow-key prefix and the letter a-grave as U+00E0; an extended key
+    delivers its two codes together, a typed letter comes alone.
+    """
+    chars = getwch()
+    if chars in ('\x00', '\xe0') and kbhit():
+        chars += getwch()
+    return decode_windows(chars)
 
 
 def decode_posix(data):
@@ -137,6 +149,21 @@ def glyphs(encoding):
     return dict(UNICODE)
 
 
+def _kernel32():
+    """kernel32 with the console functions' argument and return types declared."""
+    import ctypes
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.GetStdHandle.argtypes = [wintypes.DWORD]
+    kernel.GetStdHandle.restype = wintypes.HANDLE
+    kernel.GetConsoleMode.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    kernel.GetConsoleMode.restype = wintypes.BOOL
+    kernel.SetConsoleMode.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel.SetConsoleMode.restype = wintypes.BOOL
+    return kernel
+
+
 def supported(stdin=None, stdout=None):
     """True when both streams are a terminal whose mode the wizard can set."""
     stdin, stdout = stdin or sys.stdin, stdout or sys.stdout
@@ -147,11 +174,10 @@ def supported(stdin=None, stdout=None):
             import ctypes
             from ctypes import wintypes
 
-            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-            kernel.GetStdHandle.restype = wintypes.HANDLE
+            kernel = _kernel32()
             mode = wintypes.DWORD()
             return all(
-                kernel.GetConsoleMode(kernel.GetStdHandle(handle), ctypes.byref(mode))
+                kernel.GetConsoleMode(kernel.GetStdHandle(handle & 0xFFFFFFFF), ctypes.byref(mode))
                 for handle in (-10, -11)
             )
         import termios
@@ -196,9 +222,8 @@ class Terminal:
             import ctypes
             from ctypes import wintypes
 
-            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-            kernel.GetStdHandle.restype = wintypes.HANDLE
-            handle = kernel.GetStdHandle(-11)
+            kernel = _kernel32()
+            handle = kernel.GetStdHandle(-11 & 0xFFFFFFFF)
             mode = wintypes.DWORD()
             if not kernel.GetConsoleMode(handle, ctypes.byref(mode)):
                 raise TerminalUnavailable('not a console')
@@ -226,10 +251,7 @@ class Terminal:
                 if time.monotonic() >= deadline:
                     return None
                 time.sleep(0.01)
-            chars = msvcrt.getwch()
-            if chars in ('\x00', '\xe0'):
-                chars += msvcrt.getwch()
-            return decode_windows(chars)
+            return read_windows_key(msvcrt.getwch, msvcrt.kbhit)
         import select
 
         fd = sys.stdin.fileno()
@@ -245,9 +267,10 @@ class Terminal:
         """(columns, rows) of the window."""
         return tuple(shutil.get_terminal_size((80, 24)))
 
-    def draw(self, lines):
-        """Replace the screen with these lines in one write."""
+    def draw(self, lines, cursor=None):
+        """Replace the screen with these lines in one write; show the cursor at (row, column)."""
         text = '\x1b[H' + ''.join(f'\x1b[2K{line}\r\n' for line in lines) + '\x1b[J'
+        text += f'\x1b[{cursor[0]};{cursor[1]}H\x1b[?25h' if cursor else '\x1b[?25l'
         encoding = getattr(self.stream, 'encoding', None)
         if encoding:
             text = text.encode(encoding, 'replace').decode(encoding)

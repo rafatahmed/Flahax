@@ -70,7 +70,7 @@ class FakeTerm:
     """The terminal methods TuiPrompts uses, from a key script; it keeps every frame drawn."""
 
     def __init__(self, keys, sizes=((100, 30),)):
-        self.keys, self.sizes, self.frames = list(keys), list(sizes), []
+        self.keys, self.sizes, self.frames, self.cursors = list(keys), list(sizes), [], []
 
     def read_key(self, timeout=0.1):
         if not self.keys:
@@ -80,8 +80,9 @@ class FakeTerm:
     def size(self):
         return self.sizes.pop(0) if len(self.sizes) > 1 else self.sizes[0]
 
-    def draw(self, lines):
+    def draw(self, lines, cursor=None):
         self.frames.append(plain(lines))
+        self.cursors.append(cursor)
 
     def show_cursor(self, on):
         pass
@@ -265,6 +266,61 @@ class UnavailableTerm(IdleTerm):
         raise TerminalUnavailable('cannot switch on ANSI output in this console')
 
 
+class IssueTests(unittest.TestCase):
+    def test_two_pane_message_that_fits_is_not_cut(self):  # 125
+        message = 'A' * 30 + ' ' + 'B' * 31
+        text = '\n'.join(
+            plain(frame(Wizard(messages=[message]), Question('field', 'Q'), 100, 30, UTF8))
+        )
+        self.assertIn('B' * 31, text)
+        self.assertNotIn('…', text)
+
+    def test_long_prompt_wraps(self):  # 126
+        prompt = 'Na (Enter = not measured, 0 = measured zero, <DL = below detection, e.g. <0.02)'
+        for width in (80, 100):
+            text = '\n'.join(plain(frame(Wizard(), Question('field', prompt), width, 30, UTF8)))
+            self.assertIn('<0.02)', text)
+
+    def test_quit_prompt_ignores_y_in_a_small_window(self):  # 131
+        term = FakeTerm(
+            ['ESC', 'y', 'n', 'a', 'ENTER'], sizes=[(100, 30), (70, 20), (100, 30), (100, 30)]
+        )
+        self.assertEqual(TuiPrompts(term, UTF8).text('Name'), 'a')
+
+    def test_quit_prompt_redraws_on_resize(self):  # 131
+        term = FakeTerm(['ESC', None, 'n', 'a', 'ENTER'], sizes=[(100, 30), (100, 30), (90, 30)])
+        TuiPrompts(term, UTF8).text('Name')
+        asked = [f for f in term.frames if 'Quit without saving? Y/N' in '\n'.join(f)]
+        self.assertEqual(sorted(len(f[0]) for f in asked), [89, 99])
+
+    def test_quit_prompt_after_saving(self):  # 129
+        term = FakeTerm(['ESC', 'n', 'a', 'ENTER'])
+        prompts = TuiPrompts(term, UTF8)
+        prompts.saved = True
+        prompts.text('Name')
+        self.assertTrue(
+            any(
+                'Quit now? The sheets will not be written. Y/N' in '\n'.join(f)
+                for f in term.frames
+            )
+        )
+
+    def test_unchanged_screen_is_not_redrawn(self):  # 132
+        term = FakeTerm([None, None, 'a', None, 'ENTER'])
+        TuiPrompts(term, UTF8).text('Name')
+        self.assertEqual(len(term.frames), 2)
+
+    def test_cursor_shows_in_a_text_field(self):  # 132
+        term = FakeTerm(['a', 'b', 'ENTER'])
+        TuiPrompts(term, UTF8).text('Name')
+        row, column = term.cursors[-1]
+        self.assertTrue(term.frames[-1][row - 1].rstrip().endswith('ab_'))
+        self.assertEqual(term.frames[-1][row - 1][column - 1], '_')
+        choice = FakeTerm(['ENTER'])
+        TuiPrompts(choice, UTF8).choose('Pick', ['a', 'b'])
+        self.assertEqual(choice.cursors, [None])
+
+
 class FallbackTests(unittest.TestCase):
     def test_run_tui_reports_an_unusable_console(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -358,6 +414,14 @@ class RunTuiTests(unittest.TestCase):
             term, code, lines = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'error')
         self.assertTrue(term.exited)
         self.assertEqual((code, lines[-1]), (1, 'flahax mix: boom'))
+
+    def test_ctrl_c_on_results_keeps_the_result(self):  # 128
+        # The batch is ready at once, so Ctrl+C arrives on the results screen.
+        with mock.patch('flahax.mix_tui.calculate', return_value=(self.summary, [])):
+            term, code, lines = self.run_tui(['CTRL_C'], 'plain-home', 'tomato stage 1', 'ctrl-c')
+        self.assertTrue(term.exited)
+        self.assertEqual(code, 0)
+        self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html'), lines)
 
     def test_run_tui_blocked_exit_code(self):
         blocked = copy.deepcopy(self.summary)

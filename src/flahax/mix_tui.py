@@ -10,6 +10,7 @@ console.
 """
 
 from dataclasses import dataclass, field
+import re
 import sys
 import threading
 
@@ -33,6 +34,7 @@ MIN_WIDTH, MIN_HEIGHT, TWO_PANES = 80, 24, 100
 PANE = 30
 SMALL = 'Enlarge the window to at least 80 x 24. Q quits.'
 SPINNER = '|/-\\'
+ANSI = re.compile(r'\x1b\[[0-9;?]*[A-Za-z]')
 STYLE = {
     'accent': '\x1b[1;96m',
     'ok': '\x1b[92m',
@@ -203,7 +205,7 @@ def question_rows(wizard, question, width, height, g):
     if question is None:
         return rows
     prompt = f'{question.prompt} {question.hint}'.rstrip()
-    rows.append([(prompt, 'accent')])
+    rows.extend([[(line, 'accent')] for line in wrap(prompt, width)])
     if question.kind == 'field':
         rows.append([('> ', 'accent'), (question.text + '_', None)])
     if question.kind in ('filter', 'ticks'):
@@ -241,7 +243,7 @@ def frame(wizard, question, width, height, g):
     if width >= TWO_PANES:
         right_width = usable - PANE - 3
         left = steps_pane(wizard, g)
-        right = question_rows(wizard, question, right_width, body_height, g)
+        right = question_rows(wizard, question, right_width - 2, body_height, g)
         for i in range(min(body_height, max(len(left), len(right)))):
             row = left[i] if i < len(left) else []
             text = ''.join(t for t, _ in row)
@@ -280,25 +282,55 @@ class TuiPrompts(Prompts):
     def __init__(self, term, g):
         # Not Prompts.__init__: it stores ask and say on the instance, hiding the methods below.
         self.term, self.g, self.wizard = term, g, Wizard()
+        self.saved = False  # True once the answers are saved: quitting then only skips the sheets
+        self._shown = None
 
     def current_frame(self, question=None):
         """The lines for the current state at the current window size."""
         width, height = self.term.size()
         return frame(self.wizard, question, width, height, self.g)
 
+    def _draw(self, question):
+        """Draw the current frame unless it is already on screen; returns its lines."""
+        lines = self.current_frame(question)
+        cursor = None
+        if question is not None and question.kind == 'field' and lines != [SMALL]:
+            mark = question.text + '_'
+            for row, line in enumerate(lines, 1):
+                visible = ANSI.sub('', line).rstrip()
+                if visible.endswith(mark):
+                    cursor = (row, len(visible))
+        if (lines, cursor) != self._shown:
+            self.term.draw(lines, cursor=cursor)
+            self._shown = (lines, cursor)
+        return lines
+
     def _confirm_quit(self, question):
-        self.wizard.messages.append('Quit without saving? Y/N')
-        self.term.draw(self.current_frame(question))
-        self.wizard.messages.pop()
-        while (key := self.term.read_key()) is None:
-            pass
-        if key in ('y', 'Y'):
-            raise KeyboardInterrupt
+        ask = (
+            'Quit now? The sheets will not be written. Y/N'
+            if self.saved
+            else 'Quit without saving? Y/N'
+        )
+        while True:
+            self.wizard.messages.append(ask)
+            try:
+                lines = self._draw(question)
+            finally:
+                self.wizard.messages.pop()
+            key = self.term.read_key()
+            if key is None:
+                continue
+            if lines == [SMALL]:
+                if key in ('q', 'Q'):
+                    raise KeyboardInterrupt
+                continue
+            if key in ('y', 'Y'):
+                raise KeyboardInterrupt
+            return
 
     def _run(self, question, validate=None):
         while True:
-            lines = self.current_frame(question)
-            self.term.draw(lines)
+            lines = self._draw(question)
             key = self.term.read_key()
             if lines == [SMALL]:
                 if key in ('q', 'Q'):
@@ -381,7 +413,7 @@ def calculate(prompts, work):
     turn, ahead = 0, []
     while worker.is_alive():
         prompts.wizard.messages = [f'{SPINNER[turn % 4]} Calculating the recipe, pH and tanks']
-        prompts.term.draw(prompts.current_frame())
+        prompts._draw(None)
         turn += 1
         key = prompts.term.read_key()
         if key == 'ESC':
@@ -435,12 +467,16 @@ def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=Non
                 for kind, item, data in pending:
                     store.save(kind, item, data)
                 lines.append(saved_line(store, name))
+            prompts.saved = True
             prompts.wizard.step = len(STEPS)
             summary, ahead = calculate(prompts, lambda: run_batch(options_for(store, session)))
             output = output_folder(output_arg, name)
             files = write_sheets(summary, session, output)
             lines.append(f'Wrote {", ".join(files)} to {output}')
-            show_results(term, g, summary, output, ahead)
+            try:
+                show_results(term, g, summary, output, ahead)
+            except KeyboardInterrupt:
+                pass  # the sheets are written: Ctrl+C here is the same as Q
     except TerminalUnavailable:
         return None, []  # the caller asks line by line instead
     except (KeyboardInterrupt, EOFError):
