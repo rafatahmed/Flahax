@@ -142,6 +142,63 @@ class MixTests(unittest.TestCase):
         self.assertGreater(apart, 5)
         self.assertIn('Ca', warning)
 
+    def test_formula_step_lists_every_formula_on_enter(self):
+        # The owner's first session: fertilizer names typed at the formula step, then Enter, which used to loop.
+        from flahax import load_library
+        names = [f['name'] for f in load_library()['formulas']]
+        pick = str(names.index('Tomato (Howard Resh)') + 1)
+        code, lines, target = self.full(formula=['1', 'MKP', '20-20-20', '', pick])
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertTrue(any("Nothing matches 'mkp'; press Enter to see the whole list." in l for l in lines), lines)
+        self.assertTrue(any(l == f'  {pick}  Tomato (Howard Resh)' for l in lines), lines)
+        self.assertTrue(any('your fertilizers come in step 4' in l for l in lines), lines)
+        self.assertFalse(any('This one is needed' in l for l in lines))
+        summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
+        self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
+
+    def test_do_not_mix_always_says_why(self):
+        # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was empty.
+        code, lines, _ = self.run_mix(SPEC + RO + TOMATO + CATALOGUE + ['2'] + END, '--output',
+                                      str(Path(self.tmp.name) / 'no-acid'))
+        self.assertEqual(code, 3)
+        self.assertTrue(any('do not mix' in l for l in lines))
+        reason = next(l for l in lines if l.startswith('  ! ph_adjustment:'))
+        self.assertIn('needs an acid to reach pH 5.80; none was offered: add an acid', reason)
+        well = water('salty', {'Ca': '40', 'Na': '200', 'Cl': '308', 'Alk': '61'}, limits='Na=69')
+        code, lines, _ = self.run_mix(SPEC + well + TOMATO + CATALOGUE + NITRIC + END, '--output',
+                                      str(Path(self.tmp.name) / 'salty'))
+        self.assertEqual(code, 3)
+        self.assertTrue(any('above the declared maximum 69 mg/L' in l for l in lines[-25:]), lines[-25:])
+        self.assertFalse(any('report.html' in l for l in lines))     # depth 1 writes no report
+
+    def test_small_batches_show_their_volume(self):
+        code, lines, _ = self.run_mix(['20', '20', '20', '', '', '2', '1'] + RO + TOMATO + CATALOGUE + NITRIC + END,
+                                      '--output', str(Path(self.tmp.name) / 'tiny'))
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertIn('  1 L of irrigation; prepare 0.01 L in each container.', lines)
+
+    def test_a_wrong_value_is_corrected_without_retyping_the_analysis(self):
+        wrong = water('typo', {'Ca': '60.12', 'Na': '23', 'NO3': '6.2', 'Cl': '35.45', 'Alk': '100'}, alkalinity='2')[:-2]
+        fix = ['1', str(WATER_IONS.index('NO3') + 1), '62.0049']                     # correct a value: NO3
+        code, lines, _ = self.run_mix(SPEC + wrong + fix + ['', ''] + TOMATO + CATALOGUE + NITRIC + END,
+                                      '--output', str(Path(self.tmp.name) / 'fixed'))
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertTrue(any(l.startswith('Charge balance:') and '0.0 % apart' in l for l in lines), lines)
+        saved = Store(self.home).load('waters', 'typo')
+        self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=3)
+
+    def test_a_report_without_chloride_is_not_blocked(self):
+        # #100, owner 2026-10-23: no chloride -> closed on the alkalinity, noted in the full report only.
+        clean = water('no-cl', {'Ca': '60.12', 'NO3': '62.0049', 'Alk': '100'}, alkalinity='2')
+        target = Path(self.tmp.name) / 'no-cl'
+        code, lines, _ = self.run_mix(SPEC + clean + TOMATO + CATALOGUE + NITRIC + ['', '3', ''], '--output',
+                                      str(target))
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertFalse(any('chloride' in l.lower() for l in lines), lines)
+        report = (target / 'report.html').read_text(encoding='utf-8')
+        self.assertIn('has no chloride, so it is closed on the alkalinity', report)
+        self.assertNotIn('chloride', (target / 'batch-sheet.html').read_text(encoding='utf-8').lower())
+
     def test_blank_is_never_guessed(self):
         values = dict(BALANCED, Fe='', Mn='0', Zn='<0.02')
         code, lines, _ = self.full(water_answers=water('blanks', values, alkalinity='2'))

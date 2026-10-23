@@ -657,7 +657,7 @@ def _recover(library, ready, excluded, targets, short):
                 _supplies(salt, symbol) for salt in library if assay_conflict(salt) is None
             )
             if not supplied:
-                warnings.append(f"No salt in this library supplies {symbol}.")
+                warnings.append(f"None of the available products supplies {symbol}.")
             continue
         already = any(_supplies(item, symbol) for item in ready)
         for salt in holders:

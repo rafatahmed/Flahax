@@ -16,6 +16,11 @@ CARD_STYLE = SHEET_STYLE + """
 """
 
 
+def litres(value):
+    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small batch)."""
+    return number(value, 1 if value >= 10 else 3)
+
+
 def key_reasons(summary, n=3):
     """The warnings a grower must read, blocking ones first (a blocked stage, a hard limit, a stock that won't dissolve)."""
     stopped = tuple(f'{name}:' for name, s in summary['stages'].items() if s['status'] == 'blocked')
@@ -45,8 +50,8 @@ def _grams(product):
 
 def _tank_card(tank, volumes, blocked):
     name = tank['name']
-    head = (f'prepare <b>{number(volumes["prepared_litres"][name], 1)} L</b> in your '
-            f'{number(volumes["capacity_litres"][name], 1)} L tank') if volumes else ''
+    head = (f'prepare <b>{litres(volumes["prepared_litres"][name])} L</b> in your '
+            f'{litres(volumes["capacity_litres"][name])} L tank') if volumes else ''
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
                    for p in tank['products'])
@@ -63,7 +68,7 @@ def _reagent_card(summary, volumes):
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
     container = (f'<p>Acid container: add <b>{number(chosen["volume_ml_per_batch"], 1)} mL</b> to water and make up to '
-                 f'<b>{number(volumes["prepared_litres"]["acid"], 1)} L</b>.</p>') if volumes else ''
+                 f'<b>{litres(volumes["prepared_litres"]["acid"])} L</b>.</p>') if volumes else ''
     return (f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> ({text(chosen["formula"])}): '
             f'{number(per_1000, 1)} mL per 1,000 L of irrigation, on its own injector.</p>{container}'
             '<p class="small"><b>Add acid to water, never water to acid.</b></p></div>')
