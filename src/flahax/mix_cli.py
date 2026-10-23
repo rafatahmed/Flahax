@@ -17,7 +17,7 @@ import math
 from pathlib import Path
 
 from . import __version__
-from .batch_cli import BatchOptions, limit_entry, render, run_batch
+from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, render, run_batch
 from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
@@ -93,7 +93,8 @@ class Prompts:
 
     def new_name(self, store, kind, prompt, default=None):
         while True:
-            name = slug(self.text(prompt, default))
+            self.typed = self.text(prompt, default)
+            name = slug(self.typed)
             if name not in store.list(kind) or self.choose(f'A saved {kind[:-1]} named {name} exists.',
                                                            ['Use another name', 'Replace it']) == 1:
                 return name
@@ -163,17 +164,19 @@ def ask_formula(p, store, pending, library):
                     + ['Type a new one'])
     if pick < 2:
         ref = p.search('Crop formula', list(packaged))
-        targets = dict(packaged[ref])
+        targets, title = dict(packaged[ref]), ref
         if pick == 1:
             changed = {k: p.number(f'{k}, mg/L', v) for k, v in targets.items()}
             if changed != targets:
                 targets, ref = changed, p.new_name(store, 'formulas', 'Save the changed formula as', f'{ref} changed')
+                title = p.typed
                 pending.append(('formulas', ref, targets))
     elif pick < 2 + len(saved):
         ref = saved[pick - 2]
-        targets = store.load('formulas', ref)
+        targets, title = store.load('formulas', ref), ref
     else:
         ref = p.new_name(store, 'formulas', 'Name of the new formula')
+        title = p.typed
         p.say('Targets in mg/L; nitrogen as NO3-N and NH4-N. Enter leaves a nutrient untargeted.')
         targets = {k: v for k in FORMULA_KEYS if (v := p.number(f'{k}, mg/L', blank=True)) is not None}
         pending.append(('formulas', ref, targets))
@@ -184,7 +187,7 @@ def ask_formula(p, store, pending, library):
         p.say(f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} % out of balance, '
               f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and unlisted counter-ions '
               'will make up the difference.')
-    return ref, targets
+    return ref, targets, title
 
 
 def ask_notes(p):
@@ -292,7 +295,9 @@ def ask_acids(p, store, pending):
         if pick < len(offer):
             chosen.append(offer[pick])
         elif pick == len(offer):
-            formula = p.text('Acid formula (HNO3, H3PO4, H2SO4)', 'HNO3')
+            while (formula := ACID_FORMULAS.get(p.text('Acid formula (' + ', '.join(ACID_FORMULAS.values()) + ')',
+                                                       'HNO3').upper())) is None:
+                p.say('  FlahaX plans with these acids only: ' + ', '.join(ACID_FORMULAS.values()) + '.')
             fraction = p.number('Assay on the certificate, % w/w', positive=True, high=100) / 100
             density = p.number('Density on the certificate, kg/L', positive=True)
             while ':' in (name := p.text('Name', f'{formula} {fraction:.0%}')):
@@ -324,7 +329,7 @@ def options_for(store, session):
         limit=list(session['limits'].items()),
         products=None if session['store'] == 'catalogue' else path('stores', session['store']),
         tank_litres=spec['tank_litres'], mode=spec['mode'], irrigation_litres=spec['irrigation_litres'],
-        temperature_c=spec['temperature_c'], depth=session.get('depth', 1))
+        temperature_c=spec['temperature_c'], depth=session.get('depth', 1), title=session.get('formula_title'))
 
 
 def interview(p, store):
@@ -332,7 +337,7 @@ def interview(p, store):
     library, pending = load_library(), []
     spec = ask_spec(p)
     water, share, limits = ask_water(p, store, pending)
-    formula, _ = ask_formula(p, store, pending, library)
+    formula, _, formula_title = ask_formula(p, store, pending, library)
     product_store, _ = ask_products(p, store, pending, library)
     acids = ask_acids(p, store, pending)
     p.say('5/5 pH requirement')
@@ -341,6 +346,7 @@ def interview(p, store):
                                           'Agronomist: adds the nutrient table and the pH path', 'Full report'])
     name = p.new_name(store, 'sessions', 'Save these answers as', f'{formula} {water}')
     session = {'spec': spec, 'water': water, 'water_share': share, 'limits': limits, 'formula': formula,
+               'formula_title': formula_title,
                'store': product_store, 'acids': acids, 'ph': ph, 'depth': depth}
     return name, session, pending + [('sessions', name, session)]
 
