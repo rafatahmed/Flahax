@@ -6,6 +6,7 @@
 
     flahax mix                    ask the five steps, save the answers, write the sheets
     flahax mix sessions/NAME      run a saved session again without questions
+    flahax mix --plain            ask line by line instead of the full-screen wizard
 
 Steps: 1/5 specification (tanks, injection ratio, temperature, how stock is
 prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers and acids, 5/5

@@ -34,6 +34,19 @@ flahax mix                          # first time: answers the five steps
 flahax mix sessions/tomato-ro       # next time: no questions
 ```
 
+In a terminal window (Windows Terminal, the Windows console, or a Linux or macOS
+terminal of at least 80 x 24) `flahax mix` opens full screen. The arrow keys
+move, Enter chooses, typing narrows a long list such as the crop formulas, Space
+ticks the fertilizers you have, and Esc asks before quitting. The steps go
+forward only. In a wide window your answers so far stay on the left. When the
+batch is calculated the result opens on **Tanks** (tank A, tank B and the acid
+container with what to weigh); Tab shows **Nutrients** (the agronomist table and
+the pH path) and **Notes** (every review note once). A blocked batch opens on
+Notes with the reason. The sheets are written before the result appears, the
+same as in the line-by-line mode. `flahax mix --plain` keeps the line-by-line
+questions, which are also used automatically when the output is not a terminal
+(a script, a pipe or an editor's output panel).
+
 At the end choose who the result is for. **Grower**: the batch sheet with tank
 A and tank B (prepared litres and grams to weigh, with tick boxes), the acid
 container and the checks after mixing. **Agronomist**: the same, plus the
