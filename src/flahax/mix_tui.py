@@ -26,7 +26,7 @@ from .mix_cli import (
     saved_line,
     write_sheets,
 )
-from .terminal import Terminal, glyphs
+from .terminal import Terminal, TerminalUnavailable, glyphs
 
 STEPS = ('Spec', 'Water', 'Formula', 'Fertilizers', 'Acid and pH')
 MIN_WIDTH, MIN_HEIGHT, TWO_PANES = 80, 24, 100
@@ -43,9 +43,9 @@ STYLE = {
     None: '',
 }
 HELP = {
-    'choice': '↑↓ Move   Enter Choose   Esc Quit',
-    'filter': '↑↓ Move   Type to filter   Enter Choose   Esc Quit',
-    'ticks': '↑↓ Move   Space Tick   Type to filter   Enter Next   Esc Quit',
+    'choice': '{up}{down} Move   Enter Choose   Esc Quit',
+    'filter': '{up}{down} Move   Type to filter   Enter Choose   Esc Quit',
+    'ticks': '{up}{down} Move   Space Tick   Type to filter   Enter Next   Esc Quit',
     'field': 'Type   Backspace Edit   Enter Next   Esc Quit',
 }
 
@@ -261,7 +261,11 @@ def frame(wizard, question, width, height, g):
     lines = lines[: height - 2]
     lines += [''] * (height - 2 - len(lines))
     lines.append(
-        paint([('  ' + HELP[question.kind] if question else 'Esc Quit', 'dim')], usable, g)
+        paint(
+            [('  ' + HELP[question.kind].format(**g) if question else 'Esc Quit', 'dim')],
+            usable,
+            g,
+        )
     )
     return lines
 
@@ -413,6 +417,8 @@ def show_results(term, g, summary, output, ahead=()):
 def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):
     """``flahax mix`` on the full screen; returns the exit code and the lines to print after it.
 
+    The exit code is None when the console cannot show the full screen: ask line by line.
+
     The answers are saved and the sheets written exactly as in the line mode. The terminal is
     restored before this returns, also after Ctrl+C or an error.
     """
@@ -435,6 +441,8 @@ def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=Non
             files = write_sheets(summary, session, output)
             lines.append(f'Wrote {", ".join(files)} to {output}')
             show_results(term, g, summary, output, ahead)
+    except TerminalUnavailable:
+        return None, []  # the caller asks line by line instead
     except (KeyboardInterrupt, EOFError):
         return 1, lines + ['Stopped.'] if lines else ['Stopped; nothing saved.']
     except (DeliveryError, ValueError, OSError, KeyError) as exc:

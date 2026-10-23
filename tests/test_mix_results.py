@@ -97,6 +97,29 @@ class ResultViewTests(unittest.TestCase):
             first, next(i for i, line in enumerate(notes) if 'Hydroxylapatite' in line)
         )
 
+    def test_long_product_name_keeps_its_weight(self):
+        summary = copy.deepcopy(self.summary)
+        product = summary['tanks']['tanks'][0]['products'][0]
+        product['name'] = (
+            'Compound NPK 20-20-20 plus trace elements, chelated, from data sheet 2025-03'
+        )
+        tanks = screen(summary, 0, 80, 60)
+        row = next(line for line in tanks if 'Compound NPK' in line)
+        self.assertIn(grams(product['gramsPerBatch']), row)
+        self.assertLessEqual(len(row), 79)
+
+    def test_base_reagent_is_not_called_acid(self):
+        summary = copy.deepcopy(self.summary)
+        summary['ph']['selected']['direction'] = 'base'
+        tanks = '\n'.join(screen(summary, 0))
+        self.assertIn('pH reagent', tanks)
+        self.assertNotIn(' Acid ', tanks)
+
+    def test_results_encode_on_a_latin1_console(self):
+        for view in range(3):
+            for line in results_lines(self.summary, view, 100, 40, 0, glyphs('latin-1'), 'out'):
+                line.encode('latin-1')
+
     def test_results_keys(self):
         self.assertEqual(handle_results(2, 0, 'TAB'), (0, 0, False))
         self.assertEqual(handle_results(0, 0, 'SHIFT_TAB'), (2, 0, False))

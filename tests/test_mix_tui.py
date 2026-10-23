@@ -258,6 +258,45 @@ class TuiPromptsTests(unittest.TestCase):
         self.assertTrue(any('This one is needed.' in '\n'.join(f) for f in term.frames))
 
 
+class UnavailableTerm(IdleTerm):
+    def __enter__(self):
+        from flahax.terminal import TerminalUnavailable
+
+        raise TerminalUnavailable('cannot switch on ANSI output in this console')
+
+
+class FallbackTests(unittest.TestCase):
+    def test_run_tui_reports_an_unusable_console(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, lines = run_tui(Store(tmp), None, None, term_factory=lambda: UnavailableTerm([]))
+        self.assertEqual((code, lines), (None, []))
+
+    def test_main_falls_back_to_line_mode(self):
+        lines = []
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch('flahax.mix_cli.use_tui', return_value=True),
+            mock.patch('flahax.mix_tui.run_tui', return_value=(None, [])),
+        ):
+            code = main(
+                [],
+                ask=lambda prompt: (_ for _ in ()).throw(EOFError),
+                say=lines.append,
+                store=Store(tmp),
+            )
+        self.assertEqual(code, 1)
+        self.assertIn('1/5 Specification', lines)
+        self.assertEqual(lines[-1], 'Stopped; nothing saved.')
+
+    def test_frame_encodes_on_a_latin1_console(self):
+        g = glyphs('latin-1')
+        wizard = Wizard(step=2, answers=[('Tanks', 'A 1 L; 25 \u00b0C')])
+        for width in (90, 120):
+            for kind in ('choice', 'filter', 'ticks', 'field'):
+                for line in frame(wizard, Question(kind, 'Q', ['a']), width, 30, g):
+                    line.encode('latin-1')
+
+
 class RunTuiTests(unittest.TestCase):
     """The whole ``flahax mix`` run on the full screen, against the line mode's files."""
 
