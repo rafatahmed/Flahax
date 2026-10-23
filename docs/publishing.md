@@ -102,8 +102,8 @@ Dashboard settings, recorded here because they live outside the repository:
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents (pre-release audit, #149-#151).
 - [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
-- [ ] Observe successful hosted checks on the merged revision (Linux 3.11-3.14, Windows and macOS 3.13).
-- [ ] Date the changelog, the manual's version line and `CITATION.cff`, and merge, before tagging (#71).
+- [x] Observe successful hosted checks on the merged revision (Linux 3.11-3.14, Windows and macOS 3.13).
+- [x] Date the changelog, the manual's version line and `CITATION.cff` (2026-10-24), and merge, before tagging (#71).
 - [ ] Obtain explicit publication authorization.
 - [ ] Publish the `v0.6.0` GitHub Release; review the run; approve the deployment.
 - [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
