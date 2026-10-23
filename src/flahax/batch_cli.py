@@ -71,7 +71,7 @@ def read_json(path, what):
     try:
         return json.loads(text)
     except json.JSONDecodeError as exc:
-        raise DeliveryError('invalid_json', f'{what} file {path} is not valid JSON: {exc.msg.removesuffix(' at')} at line {exc.lineno}, '
+        raise DeliveryError('invalid_json', f'{what} file {path} is not valid JSON: {exc.msg.removesuffix(" at")} at line {exc.lineno}, '
                             f'column {exc.colno}') from None
 
 

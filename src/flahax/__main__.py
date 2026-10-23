@@ -45,7 +45,7 @@ def _main() -> int:
         try:
             payload = interactive(args.command) if args.interactive else json.load(sys.stdin)
         except json.JSONDecodeError as exc:
-            print(f'Invalid planning input: stdin is not valid JSON: {exc.msg.removesuffix(' at')} at line {exc.lineno}, '
+            print(f'Invalid planning input: stdin is not valid JSON: {exc.msg.removesuffix(" at")} at line {exc.lineno}, '
                   f'column {exc.colno}', file=sys.stderr)
             return 1
         except (ValueError, TypeError, KeyError, OSError, EOFError) as exc:
@@ -67,7 +67,7 @@ def _main() -> int:
     try:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError as exc:
-        print(f'Expected a JSON object on stdin: {exc.msg.removesuffix(' at')} at line {exc.lineno}, column {exc.colno}.', file=sys.stderr)
+        print(f'Expected a JSON object on stdin: {exc.msg.removesuffix(" at")} at line {exc.lineno}, column {exc.colno}.', file=sys.stderr)
         return 1
     if not isinstance(payload, dict):
         print("Expected a JSON object on stdin.", file=sys.stderr)
