@@ -10,14 +10,29 @@ console.
 """
 
 from dataclasses import dataclass, field
+import sys
+import threading
 
 from . import __version__
-from .mix_cli import Prompts, number_answer
+from .batch_cli import read_json, run_batch
+from .delivery_contracts import DeliveryError
+from .mix_cli import (
+    Prompts,
+    find_session,
+    interview,
+    number_answer,
+    options_for,
+    output_folder,
+    saved_line,
+    write_sheets,
+)
+from .terminal import Terminal, glyphs
 
 STEPS = ('Spec', 'Water', 'Formula', 'Fertilizers', 'Acid and pH')
 MIN_WIDTH, MIN_HEIGHT, TWO_PANES = 80, 24, 100
 PANE = 30
 SMALL = 'Enlarge the window to at least 80 x 24. Q quits.'
+SPINNER = '|/-\\'
 STYLE = {
     'accent': '\x1b[1;96m',
     'ok': '\x1b[92m',
@@ -245,7 +260,9 @@ def frame(wizard, question, width, height, g):
             lines.append(paint([('  ', None)] + row, usable, g))
     lines = lines[: height - 2]
     lines += [''] * (height - 2 - len(lines))
-    lines.append(paint([('  ' + HELP[question.kind if question else 'choice'], 'dim')], usable, g))
+    lines.append(
+        paint([('  ' + HELP[question.kind] if question else 'Esc Quit', 'dim')], usable, g)
+    )
     return lines
 
 
@@ -343,3 +360,83 @@ class TuiPrompts(Prompts):
     def answered(self, label, value):
         """Add a finished step's short answer to "Your batch"."""
         self.wizard.answers.append((label, value))
+
+
+def calculate(prompts, work):
+    """Run ``work`` on a thread while a spinner shows; Esc asks to quit. Returns its result."""
+    outcome = {}
+
+    def run():
+        try:
+            outcome['value'] = work()
+        except BaseException as exc:  # handed to the screen thread below
+            outcome['error'] = exc
+
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    turn, ahead = 0, []
+    while worker.is_alive():
+        prompts.wizard.messages = [f'{SPINNER[turn % 4]} Calculating the recipe, pH and tanks']
+        prompts.term.draw(prompts.current_frame())
+        turn += 1
+        key = prompts.term.read_key()
+        if key == 'ESC':
+            prompts._confirm_quit(None)
+        elif key is not None:
+            ahead.append(key)  # typed while waiting: for the results screen
+        worker.join(0.05)
+    prompts.wizard.messages = []
+    if 'error' in outcome:
+        raise outcome['error']
+    return outcome['value'], ahead
+
+
+def show_results(term, g, summary, output, ahead=()):
+    """The results screen until Q or Esc; ``ahead`` are keys typed while it was calculated."""
+    from .mix_results import first_view, handle_results, results_lines  # imports this module
+
+    view, scroll, shown, key, ahead = first_view(summary), 0, None, None, list(ahead)
+    while True:
+        width, height = term.size()
+        lines = results_lines(summary, view, width, height, scroll, g, str(output))
+        if lines == shown and key == 'DOWN':
+            scroll -= 1  # already at the end
+        term.draw(lines)
+        shown, key = lines, ahead.pop(0) if ahead else term.read_key()
+        if key is None:
+            continue
+        view, scroll, done = handle_results(view, scroll, key)
+        if done:
+            return
+
+
+def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):
+    """``flahax mix`` on the full screen; returns the exit code and the lines to print after it.
+
+    The answers are saved and the sheets written exactly as in the line mode. The terminal is
+    restored before this returns, also after Ctrl+C or an error.
+    """
+    lines = []
+    try:
+        with term_factory() as term:
+            g = glyphs(encoding or getattr(sys.stdout, 'encoding', None))
+            prompts = TuiPrompts(term, g)
+            if session_name:
+                path = find_session(store, session_name)
+                name, session = path.stem, read_json(path, 'session')
+            else:
+                name, session, pending = interview(prompts, store)
+                for kind, item, data in pending:
+                    store.save(kind, item, data)
+                lines.append(saved_line(store, name))
+            prompts.wizard.step = len(STEPS)
+            summary, ahead = calculate(prompts, lambda: run_batch(options_for(store, session)))
+            output = output_folder(output_arg, name)
+            files = write_sheets(summary, session, output)
+            lines.append(f'Wrote {", ".join(files)} to {output}')
+            show_results(term, g, summary, output, ahead)
+    except (KeyboardInterrupt, EOFError):
+        return 1, lines + ['Stopped.'] if lines else ['Stopped; nothing saved.']
+    except (DeliveryError, ValueError, OSError, KeyError) as exc:
+        return 1, lines + [f'flahax mix: {exc}']
+    return (3 if summary['status'] == 'blocked' else 0), lines

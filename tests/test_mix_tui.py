@@ -4,16 +4,20 @@
 # its results are calculations, not dosing instructions.
 """Tests for flahax.mix_tui: the wizard widgets, the frame and the full-screen prompts."""
 
+import copy
+import json
 import os
 from pathlib import Path
 import re
 import tempfile
+import time
 import unittest
 from unittest import mock
 
-from flahax.mix_cli import Prompts, interview, number_answer
+from flahax.delivery_contracts import DeliveryError
+from flahax.mix_cli import Prompts, interview, main, number_answer
 from flahax.mix_store import Store
-from flahax.mix_tui import Question, TuiPrompts, Wizard, frame, handle, visible
+from flahax.mix_tui import Question, TuiPrompts, Wizard, frame, handle, run_tui, visible
 from tests.test_output_consistency import ANSWERS
 from flahax.terminal import glyphs
 
@@ -81,6 +85,35 @@ class FakeTerm:
 
     def show_cursor(self, on):
         pass
+
+
+class IdleTerm(FakeTerm):
+    """A FakeTerm that waits (returns None) once its keys run out, as an idle keyboard does.
+
+    The key 'CTRL_C' raises KeyboardInterrupt, as the terminal layer does for Ctrl+C.
+    """
+
+    def __init__(self, keys, **kwargs):
+        super().__init__(keys, **kwargs)
+        self.idle, self.exited = 0, False
+
+    def read_key(self, timeout=0.1):
+        if self.keys:
+            key = self.keys.pop(0)
+            if key == 'CTRL_C':
+                raise KeyboardInterrupt
+            return key
+        self.idle += 1
+        if self.idle > 6000:
+            raise AssertionError('waited too long for a screen to finish')
+        time.sleep(0.01)
+        return None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.exited = True
 
 
 class WidgetTests(unittest.TestCase):
@@ -223,6 +256,79 @@ class TuiPromptsTests(unittest.TestCase):
         term = FakeTerm(['ENTER', 'z', 'ENTER'])
         self.assertEqual(TuiPrompts(term, UTF8).text('Name'), 'z')
         self.assertTrue(any('This one is needed.' in '\n'.join(f) for f in term.frames))
+
+
+class RunTuiTests(unittest.TestCase):
+    """The whole ``flahax mix`` run on the full screen, against the line mode's files."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = Path(cls.tmp.name)
+        answers = list(ANSWERS)
+        with mock.patch.dict(os.environ, {'FLAHAX_HOME': str(cls.root / 'plain-home')}):
+            cls.plain_code = main(
+                ['--output', str(cls.root / 'plain-out')],
+                ask=lambda prompt: answers.pop(0),
+                say=lambda *a: None,
+            )
+        cls.summary = json.loads((cls.root / 'plain-out' / 'summary.json').read_text('utf-8'))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def run_tui(self, keys, home, session=None, output='out'):
+        term = IdleTerm(keys)
+        code, lines = run_tui(
+            Store(self.root / home), session, str(self.root / output), term_factory=lambda: term
+        )
+        return term, code, lines
+
+    def test_run_tui_end_to_end(self):
+        term, code, lines = self.run_tui(OWNER_KEYS + ['TAB', 'TAB', 'q'], 'tui-home')
+        self.assertEqual((code, self.plain_code), (0, 0))
+        self.assertTrue(term.exited)
+        for name in ('batch-sheet.html', 'summary.json', 'report.html'):
+            self.assertEqual(
+                (self.root / 'out' / name).read_bytes(),
+                (self.root / 'plain-out' / name).read_bytes(),
+                name,
+            )
+        self.assertTrue(lines[0].startswith('Saved the answers as '), lines)
+        self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html, summary.json'), lines)
+        shown = ['\n'.join(f) for f in term.frames]
+        self.assertTrue(any('Calculating the recipe, pH and tanks' in f for f in shown))
+        self.assertTrue(any('From water' in f for f in shown))
+
+    def test_run_tui_saved_session(self):
+        term, code, _ = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'again')
+        self.assertEqual(code, 0)
+        shown = ['\n'.join(f) for f in term.frames]
+        self.assertFalse(any('Enter Choose' in f or 'Enter Next' in f for f in shown))
+        self.assertIn('Tank A', shown[-1])
+
+    def test_run_tui_restores_on_interrupt(self):
+        term, code, lines = self.run_tui(entry('100') + ['CTRL_C'], 'stopped-home')
+        self.assertTrue(term.exited)
+        self.assertEqual((code, lines), (1, ['Stopped; nothing saved.']))
+        self.assertFalse((self.root / 'stopped-home').exists())
+
+    def test_run_tui_restores_on_error(self):
+        with mock.patch('flahax.mix_tui.run_batch', side_effect=DeliveryError('x', 'boom')):
+            term, code, lines = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'error')
+        self.assertTrue(term.exited)
+        self.assertEqual((code, lines[-1]), (1, 'flahax mix: boom'))
+
+    def test_run_tui_blocked_exit_code(self):
+        blocked = copy.deepcopy(self.summary)
+        blocked['status'] = 'blocked'
+        blocked['stages']['chemistry']['status'] = 'blocked'
+        with mock.patch('flahax.mix_tui.run_batch', return_value=blocked):
+            term, code, _ = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'blocked')
+        self.assertEqual(code, 3)
+        self.assertIn('do not mix', term.frames[-1][2])
+        self.assertTrue(any(line.lstrip().startswith('- ') for line in term.frames[-1]))
 
 
 if __name__ == '__main__':
