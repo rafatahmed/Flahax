@@ -199,6 +199,14 @@ class FrameTests(unittest.TestCase):
         self.assertTrue(all(len(line) <= 79 for line in lines))
         self.assertTrue(any(line.endswith('…') for line in lines))
 
+    def test_no_faint_text(self):
+        # Owner's trial 2026-10-23: faint text (SGR 2) vanished on a translucent grey theme,
+        # hiding the key help, the inactive steps and the "Filter:" label.
+        for width in (90, 120):
+            for kind in ('choice', 'filter', 'ticks', 'field'):
+                lines = frame(self.wizard(), Question(kind, 'Q', ['a', 'b']), width, 30, UTF8)
+                self.assertFalse(any('\x1b[2m' in line for line in lines), (width, kind))
+
     def test_frame_ascii_fallback(self):
         text = '\n'.join(frame(self.wizard(), self.question(), 90, 30, glyphs('cp437')))
         self.assertNotIn('─', text)
@@ -264,6 +272,48 @@ class UnavailableTerm(IdleTerm):
         from flahax.terminal import TerminalUnavailable
 
         raise TerminalUnavailable('cannot switch on ANSI output in this console')
+
+
+class AuditTests(unittest.TestCase):
+    def test_space_types_in_a_filtered_tick_list(self):  # 139
+        options = ['Calcium Chloride', 'Calcium Nitrate', 'Potassium Nitrate']
+        q = press(Question('ticks', 'Have', options), typed('calcium nitrate') + ['TAB', 'ENTER'])
+        self.assertEqual(q.answer, [1])
+        q = press(Question('ticks', 'Have', options), [' ', 'DOWN', 'TAB', 'ENTER'])
+        self.assertEqual(q.answer, [0, 1])
+
+    def test_tick_key_help_follows_the_filter(self):  # 139
+        empty = Question('ticks', 'Have', ['a', 'b'])
+        filtered = press(Question('ticks', 'Have', ['ab', 'b']), ['a'])
+        help_empty = plain(frame(Wizard(), empty, 90, 30, UTF8))[-1]
+        help_filtered = plain(frame(Wizard(), filtered, 90, 30, UTF8))[-1]
+        self.assertIn('Space Tick', help_empty)
+        self.assertIn('Tab Tick', help_filtered)
+        self.assertNotIn('Space Tick', help_filtered)
+
+    def test_progress_line_shows_values_entered(self):  # 144
+        wizard = Wizard(step=2, progress='Entered: Ca 40, NO3 62')
+        for width in (90, 120):
+            text = '\n'.join(plain(frame(wizard, Question('field', 'Mg, mg/L'), width, 30, UTF8)))
+            self.assertIn('Entered: Ca 40, NO3 62', text)
+
+    def test_lab_values_entered_so_far_are_shown(self):  # 144
+        from flahax.mix_water import ask_analysis
+
+        keys = entry('w') + ['ENTER', 'ENTER'] + entry('7') + entry('40')
+        term = FakeTerm(keys)
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(AssertionError):
+            ask_analysis(TuiPrompts(term, UTF8), Store(tmp))
+        self.assertIn('Entered: Ca 40', '\n'.join(term.frames[-1]))
+
+    def test_tanks_answer_on_two_lines(self):  # 145
+        wizard = Wizard(
+            step=2, answers=[('Tanks', 'A 1000 L, B 1000 L' + '\n' + 'acid 100 L, 1:100, 25 °C')]
+        )
+        text = '\n'.join(plain(frame(wizard, Question('field', 'Q'), 120, 30, UTF8)))
+        self.assertIn('A 1000 L, B 1000 L', text)
+        self.assertIn('acid 100 L, 1:100, 25 °C', text)
+        self.assertNotIn('…', text)
 
 
 class IssueTests(unittest.TestCase):
@@ -381,7 +431,7 @@ class RunTuiTests(unittest.TestCase):
         return term, code, lines
 
     def test_run_tui_end_to_end(self):
-        term, code, lines = self.run_tui(OWNER_KEYS + ['TAB', 'TAB', 'q'], 'tui-home')
+        term, code, lines = self.run_tui(OWNER_KEYS + ['TAB', 'TAB', 'q', 'y'], 'tui-home')
         self.assertEqual((code, self.plain_code), (0, 0))
         self.assertTrue(term.exited)
         for name in ('batch-sheet.html', 'summary.json', 'report.html'):
@@ -397,7 +447,7 @@ class RunTuiTests(unittest.TestCase):
         self.assertTrue(any('From water' in f for f in shown))
 
     def test_run_tui_saved_session(self):
-        term, code, _ = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'again')
+        term, code, _ = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'again')
         self.assertEqual(code, 0)
         shown = ['\n'.join(f) for f in term.frames]
         self.assertFalse(any('Enter Choose' in f or 'Enter Next' in f for f in shown))
@@ -411,9 +461,25 @@ class RunTuiTests(unittest.TestCase):
 
     def test_run_tui_restores_on_error(self):
         with mock.patch('flahax.mix_tui.run_batch', side_effect=DeliveryError('x', 'boom')):
-            term, code, lines = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'error')
+            term, code, lines = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'error')
         self.assertTrue(term.exited)
         self.assertEqual((code, lines[-1]), (1, 'flahax mix: boom'))
+
+    def test_leaving_the_results_asks_first(self):  # 138
+        with mock.patch('flahax.mix_tui.calculate', return_value=(self.summary, [])):
+            term, code, _ = self.run_tui(
+                ['q', 'n', 'TAB', 'ESC', 'x', 'q', 'Y'], 'plain-home', 'tomato stage 1', 'ask'
+            )
+        self.assertEqual(code, 0)
+        asked = [
+            i
+            for i, f in enumerate(term.frames)
+            if 'Leave the results? The sheets are saved in' in '\n'.join(f)
+        ]
+        self.assertEqual(len(asked), 3)  # Q, then Esc, then Q again
+        after_no = term.frames[asked[0] + 1]
+        self.assertNotIn('Leave the results?', '\n'.join(after_no))
+        self.assertIn('Tab Next view', '\n'.join(after_no))
 
     def test_ctrl_c_on_results_keeps_the_result(self):  # 128
         # The batch is ready at once, so Ctrl+C arrives on the results screen.
@@ -428,7 +494,7 @@ class RunTuiTests(unittest.TestCase):
         blocked['status'] = 'blocked'
         blocked['stages']['chemistry']['status'] = 'blocked'
         with mock.patch('flahax.mix_tui.run_batch', return_value=blocked):
-            term, code, _ = self.run_tui(['q'], 'plain-home', 'tomato stage 1', 'blocked')
+            term, code, _ = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'blocked')
         self.assertEqual(code, 3)
         self.assertIn('do not mix', term.frames[-1][2])
         self.assertTrue(any(line.lstrip().startswith('- ') for line in term.frames[-1]))

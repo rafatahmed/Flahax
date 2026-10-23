@@ -232,7 +232,7 @@ class MixTests(unittest.TestCase):
         )
         self.assertEqual(code, 3)
         self.assertTrue(any('do not mix' in line for line in lines))
-        reason = next(line for line in lines if line.startswith('  ! ph_adjustment:'))
+        reason = next(line for line in lines if line.startswith('  ! pH adjustment:'))
         self.assertIn('needs an acid to reach pH 5.80; none was offered: add an acid', reason)
         well = water('salty', {'Ca': '40', 'Na': '200', 'Cl': '308', 'Alk': '61'}, limits='Na=69')
         code, lines, _ = self.run_mix(
@@ -390,7 +390,9 @@ class MixTests(unittest.TestCase):
     def test_formula_imbalance_warned_at_entry(self):
         code, lines, _ = self.run_mix(SPEC + RO + changed_tomato(K='600'))
         self.assertEqual(code, 1)
-        warning = next(i for i, line in enumerate(lines) if 'targetIonBalance' in line)
+        warning = next(
+            i for i, line in enumerate(lines) if line.startswith('Warning: the formula is')
+        )
         step4 = next(i for i, line in enumerate(lines) if line.startswith('4/5'))
         self.assertLess(warning, step4)
 
@@ -645,6 +647,27 @@ class UseTuiTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {'FLAHAX_HOME': tempfile.mkdtemp()}):
             self.assertEqual(main(['--plain', 'sessions'], ask=Script([]), say=lines.append), 0)
         self.assertEqual(lines, ['Nothing is saved yet: run flahax mix'])
+
+
+class AuditWordingTests(unittest.TestCase):
+    def test_formula_prompts_use_grower_words(self):  # 142
+        from flahax.engine import load_library
+        from flahax.mix_cli import ask_formula
+
+        script = Script(['2', 'tomato stage.1'] + [''] * 20 + ['changed'])
+        with tempfile.TemporaryDirectory() as tmp:
+            ask_formula(Prompts(script, lambda *a: None), Store(tmp), [], load_library())
+        self.assertIn('NO3-N, mg/L [100]: ', script.prompts)
+        self.assertFalse(any('N_NO3' in prompt for prompt in script.prompts), script.prompts)
+
+    def test_acid_list_says_what_was_added(self):  # 143
+        from flahax.mix_cli import ask_acids
+
+        lines, script = [], Script(NITRIC)
+        with tempfile.TemporaryDirectory() as tmp:
+            ask_acids(Prompts(script, lines.append), Store(tmp), [])
+        self.assertIn('  Added Nitric acid 60% for the pH plan.', lines)
+        self.assertTrue(any(prompt.startswith('Name of this acid') for prompt in script.prompts))
 
 
 class PromptInterfaceTests(unittest.TestCase):

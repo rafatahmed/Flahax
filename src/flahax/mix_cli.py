@@ -29,12 +29,14 @@ from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import number, render_report
 from .grower_sheet import (
+    LABEL,
     STATUS_WORDS,
     grams,
     key_reasons,
     limited_by,
     litres,
     millilitres,
+    readable,
     render_mix_sheet,
 )  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
@@ -175,6 +177,9 @@ class Prompts:
     def answered(self, label, value):
         """A finished step's short answer; the line mode shows nothing."""
 
+    def progress(self, text):
+        """Progress within a step, such as the lab values typed so far; the line mode is silent."""
+
     def new_name(self, store, kind, prompt, default=None):
         """A name for a new saved item; an existing name is used only when the user chooses to
         replace it.
@@ -303,7 +308,7 @@ def ask_formula(p, store, pending, library):
         ref = p.search('Crop formula', list(packaged))
         targets, title = dict(packaged[ref]), ref
         if pick == 1:
-            changed = {k: p.number(f'{k}, mg/L', v) for k, v in targets.items()}
+            changed = {k: p.number(f'{LABEL.get(k, k)}, mg/L', v) for k, v in targets.items()}
             if changed != targets:
                 targets, ref = (
                     changed,
@@ -319,7 +324,9 @@ def ask_formula(p, store, pending, library):
         title = p.typed
         p.say('Targets in mg/L; nitrogen as NO3-N and NH4-N. Enter leaves a nutrient untargeted.')
         targets = {
-            k: v for k in FORMULA_KEYS if (v := p.number(f'{k}, mg/L', blank=True)) is not None
+            k: v
+            for k in FORMULA_KEYS
+            if (v := p.number(f'{LABEL.get(k, k)}, mg/L', blank=True)) is not None
         }
         pending.append(('formulas', ref, targets))
     balance = target_ion_balance(targets)
@@ -330,7 +337,7 @@ def ask_formula(p, store, pending, library):
     )
     if balance['exceedsWarning']:
         p.say(
-            f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} '
+            f'Warning: the formula is {abs(balance["imbalancePercent"]):.1f} '
             f'% out of balance, '
             f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and '
             f'unlisted counter-ions '
@@ -497,7 +504,7 @@ def ask_acids(p, store, pending):
                 )
             fraction = p.number('Assay on the certificate, % w/w', positive=True, high=100) / 100
             density = p.number('Density on the certificate, kg/L', positive=True)
-            while ':' in (name := p.text('Name', f'{formula} {fraction:.0%}')):
+            while ':' in (name := p.text('Name of this acid', f'{formula} {fraction:.0%}')):
                 p.say('  A name cannot contain ":".')
             ref = (
                 p.new_name(store, 'acids', 'Save as', name) if slug(name) in saved else slug(name)
@@ -510,6 +517,7 @@ def ask_acids(p, store, pending):
                 )
             )
             chosen.append(ref)
+            p.say(f'  Added {name} for the pH plan.')
         else:
             return chosen
 
@@ -553,8 +561,8 @@ def interview(p, store):
     tanks = spec['tank_litres']
     p.answered(
         'Tanks',
-        f'A {tanks["A"]:g} L, B {tanks["B"]:g} L, acid {tanks["acid"]:g} L; '
-        f'1:{spec["ratio"]:g}, {spec["temperature_c"]:g} °C',
+        f'A {tanks["A"]:g} L, B {tanks["B"]:g} L\n'
+        f'acid {tanks["acid"]:g} L, 1:{spec["ratio"]:g}, {spec["temperature_c"]:g} °C',
     )
     water, share, limits = ask_water(p, store, pending)
     p.answered('Water', 'RO' if water == 'ro' else f'{water} ({share:g} %)')
@@ -623,7 +631,7 @@ def summarize(summary, say):
     volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
-    for reason in key_reasons(summary):
+    for reason in map(readable, key_reasons(summary)):
         if len(reason) > 160:
             reason = reason[:150].rstrip() + ' ... (full text on the batch sheet)'
         say(f'  ! {reason}')

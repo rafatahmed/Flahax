@@ -15,7 +15,7 @@ import unittest
 from unittest import mock
 
 from flahax.grower_report import grams, millilitres, number
-from flahax.grower_sheet import agronomist_rows, render_mix_sheet
+from flahax.grower_sheet import agronomist_rows, readable, render_mix_sheet
 from flahax.mix_cli import main
 from flahax.mix_results import first_view, handle_results, results_lines
 from flahax.terminal import glyphs
@@ -85,7 +85,8 @@ class ResultViewTests(unittest.TestCase):
     def test_notes_once(self):
         notes = ' '.join(' '.join(line.strip(' -') for line in screen(self.summary, 2)).split())
         for warning in self.summary['warnings']:
-            self.assertEqual(notes.count(' '.join(warning.split())), 1, warning[:60])
+            shown = ' '.join(readable(warning).split())
+            self.assertEqual(notes.count(shown), 1, warning[:60])
 
     def test_blocked_opens_notes(self):
         self.assertEqual(first_view(self.summary), 0)
@@ -136,6 +137,71 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('\x1b[92m', status_line(ready))
         self.assertIn('\x1b[91m', status_line(self.blocked))
         self.assertIn('\x1b[93m', status_line(self.summary))
+
+    def test_no_faint_text(self):
+        # The key help ("Q Quit") and the inactive tab names must stay readable (owner's trial).
+        for view in range(3):
+            lines = results_lines(self.summary, view, 100, 40, 0, UTF8, 'out')
+            self.assertFalse(any('\x1b[2m' in line for line in lines), view)
+
+    def test_results_message_replaces_the_sheets_line(self):  # 138
+        lines = results_lines(self.summary, 0, 100, 40, 0, UTF8, 'out', message='Leave? Y/N')
+        text = [ANSI.sub('', line) for line in lines]
+        self.assertEqual(text[-2].strip(), 'Leave? Y/N')
+        self.assertNotIn('Sheets: out', ' '.join(text))
+
+    def test_rounding_noise_is_zero_and_columns_stay_apart(self):  # 140
+        self.assertEqual(number(7.105e-15, 2), '0')
+        self.assertEqual(number(-3e-12, 2), '0')
+        summary = copy.deepcopy(self.summary)
+        for row in summary['formulation']['rows']:
+            if row['symbol'] == 'K':
+                row['final'] = 0.0
+            if row['symbol'] == 'Ca':
+                row['final'] = row['target'] + 7.105e-15
+        lines = screen(summary, 1, 80, 40)
+        table = lines[next(i for i, row in enumerate(lines) if 'Nutrient' in row) + 1 :]
+        table = table[: next(i for i, row in enumerate(table) if not row.strip())]
+        self.assertFalse(any('e-1' in line for line in table))
+        self.assertFalse(any(re.search(r'[0-9][-+][0-9]', line) for line in table), table)
+        self.assertTrue(any(' -200.00 (-100.0 %)' in line for line in lines))
+
+    def test_tank_cards_keep_their_border_at_80_columns(self):  # 141
+        lines = screen(self.summary, 0, 80, 60)
+        cards = [line for line in lines if line.strip().startswith('│')]
+        self.assertTrue(cards)
+        self.assertTrue(all(line.rstrip().endswith('│') for line in cards), cards)
+        self.assertFalse(any(line.rstrip().endswith('…') for line in lines), lines)
+        joined = ' '.join(' '.join(line.replace('│', ' ') for line in lines).split())
+        self.assertIn('sets the batch', joined)
+
+    def test_notes_use_grower_words(self):  # 142
+        summary = copy.deepcopy(self.summary)
+        summary['warnings'] = [
+            'None of the available products supplies N_NO3.',
+            'ph_adjustment: targets missed: N_NO3 -65.5% (no_source), '
+            'P -44.7% (conflicting_targets)',
+            'formulation: targets missed by more than 1 %: N_NH4 -86.0 %',
+        ]
+        notes = ' '.join(' '.join(screen(summary, 2)).split())
+        self.assertIn('None of the available products supplies NO3-N.', notes)
+        self.assertIn(
+            'pH adjustment: targets missed: NO3-N -65.5% (no product supplies it)', notes
+        )
+        self.assertIn('(conflicts with other targets)', notes)
+        self.assertIn('Formulation: targets missed by more than 1 %: NH4-N -86.0 %', notes)
+        sheet = sheet_text(summary, 2)
+        self.assertIn('None of the available products supplies NO3-N.', sheet)
+        self.assertNotIn('N_NO3', sheet.split('Nutrients')[0] + notes)
+
+    def test_hidden_rows_are_announced(self):  # 146
+        short = screen(self.summary, 0, 80, 24)
+        self.assertTrue(any('more below' in line for line in short), short)
+        self.assertFalse(any('more above' in line for line in short))
+        scrolled = screen(self.summary, 0, 80, 24, scroll=3)
+        self.assertTrue(any('more above' in line for line in scrolled), scrolled)
+        tall = screen(self.summary, 0, 100, 60)
+        self.assertFalse(any('more below' in line or 'more above' in line for line in tall))
 
     def test_results_keys(self):
         self.assertEqual(handle_results(2, 0, 'TAB'), (0, 0, False))
