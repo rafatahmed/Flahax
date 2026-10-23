@@ -274,6 +274,48 @@ class UnavailableTerm(IdleTerm):
         raise TerminalUnavailable('cannot switch on ANSI output in this console')
 
 
+class AuditTests(unittest.TestCase):
+    def test_space_types_in_a_filtered_tick_list(self):  # 139
+        options = ['Calcium Chloride', 'Calcium Nitrate', 'Potassium Nitrate']
+        q = press(Question('ticks', 'Have', options), typed('calcium nitrate') + ['TAB', 'ENTER'])
+        self.assertEqual(q.answer, [1])
+        q = press(Question('ticks', 'Have', options), [' ', 'DOWN', 'TAB', 'ENTER'])
+        self.assertEqual(q.answer, [0, 1])
+
+    def test_tick_key_help_follows_the_filter(self):  # 139
+        empty = Question('ticks', 'Have', ['a', 'b'])
+        filtered = press(Question('ticks', 'Have', ['ab', 'b']), ['a'])
+        help_empty = plain(frame(Wizard(), empty, 90, 30, UTF8))[-1]
+        help_filtered = plain(frame(Wizard(), filtered, 90, 30, UTF8))[-1]
+        self.assertIn('Space Tick', help_empty)
+        self.assertIn('Tab Tick', help_filtered)
+        self.assertNotIn('Space Tick', help_filtered)
+
+    def test_progress_line_shows_values_entered(self):  # 144
+        wizard = Wizard(step=2, progress='Entered: Ca 40, NO3 62')
+        for width in (90, 120):
+            text = '\n'.join(plain(frame(wizard, Question('field', 'Mg, mg/L'), width, 30, UTF8)))
+            self.assertIn('Entered: Ca 40, NO3 62', text)
+
+    def test_lab_values_entered_so_far_are_shown(self):  # 144
+        from flahax.mix_water import ask_analysis
+
+        keys = entry('w') + ['ENTER', 'ENTER'] + entry('7') + entry('40')
+        term = FakeTerm(keys)
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(AssertionError):
+            ask_analysis(TuiPrompts(term, UTF8), Store(tmp))
+        self.assertIn('Entered: Ca 40', '\n'.join(term.frames[-1]))
+
+    def test_tanks_answer_on_two_lines(self):  # 145
+        wizard = Wizard(
+            step=2, answers=[('Tanks', 'A 1000 L, B 1000 L' + '\n' + 'acid 100 L, 1:100, 25 °C')]
+        )
+        text = '\n'.join(plain(frame(wizard, Question('field', 'Q'), 120, 30, UTF8)))
+        self.assertIn('A 1000 L, B 1000 L', text)
+        self.assertIn('acid 100 L, 1:100, 25 °C', text)
+        self.assertNotIn('…', text)
+
+
 class IssueTests(unittest.TestCase):
     def test_two_pane_message_that_fits_is_not_cut(self):  # 125
         message = 'A' * 30 + ' ' + 'B' * 31
