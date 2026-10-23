@@ -10,7 +10,7 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
-## [0.6.0] - not yet released
+## [0.6.0] - 2026-10-24
 
 The grower release: FlahaX becomes a tool a grower or agronomist can run without code
 (`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock
@@ -182,8 +182,8 @@ development history remains in Git; this changelog does not claim it for the 0.2
 
 - The first FlahaX package on PyPI, with its release workflow.
 
-[unreleased]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...HEAD
-[0.6.0]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/rafatahmed/Flahax/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rafatahmed/Flahax/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rafatahmed/Flahax/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/rafatahmed/Flahax/compare/v0.3.0...v0.3.1
