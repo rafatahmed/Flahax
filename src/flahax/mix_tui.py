@@ -40,7 +40,7 @@ STYLE = {
     'ok': '\x1b[92m',
     'warn': '\x1b[93m',
     'error': '\x1b[91m',
-    'dim': '\x1b[2m',
+    'dim': '',  # the terminal's normal colour: faint text vanished on some themes
     'selected': '\x1b[7m',
     None: '',
 }

@@ -137,6 +137,12 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('\x1b[91m', status_line(self.blocked))
         self.assertIn('\x1b[93m', status_line(self.summary))
 
+    def test_no_faint_text(self):
+        # The key help ("Q Quit") and the inactive tab names must stay readable (owner's trial).
+        for view in range(3):
+            lines = results_lines(self.summary, view, 100, 40, 0, UTF8, 'out')
+            self.assertFalse(any('\x1b[2m' in line for line in lines), view)
+
     def test_results_keys(self):
         self.assertEqual(handle_results(2, 0, 'TAB'), (0, 0, False))
         self.assertEqual(handle_results(0, 0, 'SHIFT_TAB'), (2, 0, False))
