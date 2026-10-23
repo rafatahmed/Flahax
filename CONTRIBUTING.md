@@ -24,6 +24,21 @@ Keep code and documentation product-focused. Do not add assistant attribution
 or generated-by branding. Maintain source/license attribution where required.
 Never commit credentials, executables or private/local-only source material.
 
+## Changelog
+
+Every release section of `CHANGELOG.md` (from 0.6.0 on) has the same shape:
+
+- one line saying what the release is;
+- then short bullets, each with its issue numbers, grouped under these headings only:
+  **Added**, **Changed**, **Fixed**, **Deprecated**, **Removed**, **Security**, and
+  **Compatibility and limits** (breaking changes, supported Python, known limits);
+- each bullet at most 400 characters; related changes share one bullet.
+
+New entries go under **Unreleased** with the same headings. The full text of a change (numbers,
+sources, decisions) belongs in `docs/releases/<version>.md`, linked from the section with a full
+GitHub URL, because the docs site includes the changelog. `tests/test_changelog.py` checks the
+shape.
+
 ## Code style
 
 FlahaX follows PEP 8 with a line length of 99 characters (the team allowance PEP 8 gives). The

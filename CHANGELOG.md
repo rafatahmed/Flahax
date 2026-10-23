@@ -6,7 +6,7 @@
 
 The grower release. FlahaX becomes a tool a grower or agronomist can run without code (`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock solubility, and is hardened for release. Development status moves to Beta.
 
-Detailed notes for every change: [docs/releases/0.6.0.md](docs/releases/0.6.0.md).
+Detailed notes for every change: [docs/releases/0.6.0.md](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md).
 
 ### Added
 
