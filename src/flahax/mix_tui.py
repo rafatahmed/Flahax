@@ -25,6 +25,7 @@ from .mix_cli import (
     options_for,
     output_folder,
     saved_line,
+    summarize,
     write_sheets,
 )
 from .terminal import Terminal, TerminalUnavailable, glyphs
@@ -494,6 +495,7 @@ def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=Non
             summary, ahead = calculate(prompts, lambda: run_batch(options_for(store, session)))
             output = output_folder(output_arg, name)
             files = write_sheets(summary, session, output)
+            summarize(summary, lines.append)  # the recipe stays in the terminal after the screen
             lines.append(f'Wrote {", ".join(files)} to {output}')
             try:
                 show_results(term, g, summary, output, ahead)

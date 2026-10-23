@@ -442,6 +442,14 @@ class RunTuiTests(unittest.TestCase):
             )
         self.assertTrue(lines[0].startswith('Saved the answers as '), lines)
         self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html, summary.json'), lines)
+        # 147: the recipe stays in the terminal, as the line mode prints it.
+        from flahax.mix_cli import summarize
+
+        recipe = []
+        summarize(self.summary, recipe.append)
+        self.assertEqual(lines[1:-1], recipe)
+        self.assertTrue(any(line.startswith('Tank A: prepare') for line in recipe))
+        self.assertTrue(any(line.startswith('Acid container:') for line in recipe))
         shown = ['\n'.join(f) for f in term.frames]
         self.assertTrue(any('Calculating the recipe, pH and tanks' in f for f in shown))
         self.assertTrue(any('From water' in f for f in shown))
