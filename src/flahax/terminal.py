@@ -99,14 +99,16 @@ def decode_windows(chars):
     return _control(chars[:1])
 
 
-def read_windows_key(getwch, kbhit):
-    """One key from ``msvcrt``: a prefix code takes the next code only when it is already there.
+def read_windows_key(getwch):
+    """One key from ``msvcrt.getwch``: after a prefix code the next code is always read.
 
-    Windows reports both the arrow-key prefix and the letter a-grave as U+00E0; an extended key
-    delivers its two codes together, a typed letter comes alone.
+    Windows sends arrows and other special keys as two codes, the first being 0x00 or 0xE0.
+    ``kbhit`` cannot tell whether the second code is coming (in Windows Terminal it reports
+    False until it is read), so the letter a-grave, which is also 0xE0, cannot be told apart
+    from the prefix here and is read as a special key.
     """
     chars = getwch()
-    if chars in ('\x00', '\xe0') and kbhit():
+    if chars in ('\x00', '\xe0'):
         chars += getwch()
     return decode_windows(chars)
 
@@ -251,7 +253,7 @@ class Terminal:
                 if time.monotonic() >= deadline:
                     return None
                 time.sleep(0.01)
-            return read_windows_key(msvcrt.getwch, msvcrt.kbhit)
+            return read_windows_key(msvcrt.getwch)
         import select
 
         fd = sys.stdin.fileno()
