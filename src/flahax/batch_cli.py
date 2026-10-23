@@ -41,7 +41,7 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
-from .grower_report import render_batch_sheet, render_report, summarize_batch
+from .grower_report import millilitres, render_batch_sheet, render_report, summarize_batch
 from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents
 from .planning_cli import serializable
@@ -60,13 +60,59 @@ WATER_KEYS = {
 }
 
 
+def read_json(path, what):
+    """A JSON file's content, or a DeliveryError that names the file and the line (#117)."""
+    try:
+        text = Path(path).read_text(encoding='utf-8-sig')
+    except FileNotFoundError:
+        raise DeliveryError('missing_file', f'{what} file {path} was not found') from None
+    except OSError as exc:
+        raise DeliveryError('missing_file', f'{what} file {path} cannot be read: {exc.strerror}') from None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise DeliveryError('invalid_json', f'{what} file {path} is not valid JSON: {exc.msg.removesuffix(' at')} at line {exc.lineno}, '
+                            f'column {exc.colno}') from None
+
+
+def number_in(name, low, high=None, *, above=True):
+    """An argparse type: a finite number above ``low`` (or at least, with ``above=False``) and at most ``high``."""
+    def parse(text):
+        try:
+            value = float(text)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'{name} {text!r} is not a number') from None
+        if not math.isfinite(value) or (value <= low if above else value < low) or (high is not None and value > high):
+            bound = f'above {low:g}' if above else f'at least {low:g}'
+            raise argparse.ArgumentTypeError(f'{name} must be {bound}' + (f' and at most {high:g}' if high else '')
+                                             + f', not {text}')
+        return value
+    return parse
+
+
+def _mg(key, value, what='water value'):
+    """A water concentration in mg/L: a finite, non-negative number."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise DeliveryError('invalid_value', f'{what} {key} = {value!r} is not a number of mg/L')
+    try:
+        number = float(value)
+    except ValueError:
+        raise DeliveryError('invalid_value', f'{what} {key} = {value!r} is not a number of mg/L') from None
+    if not math.isfinite(number) or number < 0:
+        raise DeliveryError('invalid_value', f'{what} {key} = {value!r} must be zero or more mg/L')
+    return number
+
+
 def read_water(spec):
     """(label, nutrient mg/L, equilibrium configuration) from ``ro`` or a JSON file."""
     if spec.lower() == 'ro':
         return 'RO water, no ions', {}, dict(water_totals={}, water_analysis_id='RO')
-    data = json.loads(Path(spec).read_text(encoding='utf-8-sig'))
+    data = read_json(spec, 'water')
     if not isinstance(data, dict) or not isinstance(data.get('mg_per_litre'), dict):
         raise DeliveryError('invalid_type', 'water JSON needs an "mg_per_litre" object')
+    for key, value in data['mg_per_litre'].items():
+        if key in WATER_KEYS:
+            _mg(key, value)
     if 'measured_ph' not in data:
         raise DeliveryError('missing_field', 'water JSON needs "measured_ph" to close the analysis')
     unknown = set(data['mg_per_litre']) - set(WATER_KEYS)
@@ -76,6 +122,8 @@ def read_water(spec):
     below = data.get('below_detection') or {}
     if not isinstance(below, dict) or set(below) - set(WATER_KEYS):
         raise DeliveryError('unknown_field', '"below_detection" maps water keys to detection limits in mg/L')
+    if isinstance(data['measured_ph'], bool) or not isinstance(data['measured_ph'], (int, float)):
+        raise DeliveryError('invalid_value', f'"measured_ph" = {data["measured_ph"]!r} is not a number')
     totals = {}
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
@@ -85,7 +133,8 @@ def read_water(spec):
     analysis_id = str(data.get('id', Path(spec).stem))
     label = f'{analysis_id}: laboratory analysis, measured pH {data["measured_ph"]}'
     config = dict(water_totals=totals, measured_ph=data['measured_ph'], water_analysis_id=analysis_id,
-                  below_detection={WATER_KEYS[k][0]: float(v) / WATER_KEYS[k][1] / 1000 for k, v in below.items()})
+                  below_detection={WATER_KEYS[k][0]: _mg(k, v, 'detection limit') / WATER_KEYS[k][1] / 1000
+                                   for k, v in below.items()})
     if 'balance_ion' in data:
         ions = {'Cl': 'Cl-', 'Na': 'Na+'}
         if data['balance_ion'] not in ions:
@@ -140,7 +189,13 @@ def acid_record(spec):
     parts = spec.split(':')
     if len(parts) not in (3, 4):
         raise DeliveryError('invalid_value', f'--acid {spec}: expected FORMULA:MASS_FRACTION:DENSITY[:NAME]')
-    formula, fraction, density = parts[0].strip(), float(parts[1]), float(parts[2])
+    numbers = []
+    for label, text in (('assay (mass fraction)', parts[1]), ('density (kg/L)', parts[2])):
+        try:
+            numbers.append(float(text))
+        except ValueError:
+            raise DeliveryError('invalid_value', f'--acid {spec}: the {label} {text!r} is not a number') from None
+    formula, (fraction, density) = parts[0].strip(), numbers
     formula = ACID_FORMULAS.get(formula.upper())
     if formula is None:
         raise DeliveryError('invalid_value', f'--acid {spec}: the acid must be one of {", ".join(ACID_FORMULAS.values())}')
@@ -201,10 +256,10 @@ def run_batch(options):
                                  irrigation_litres=options.irrigation_litres)
     volume = options.volume if volumes is None else volumes.irrigation_litres
     library = load_library()
-    products = (json.loads(Path(options.products).read_text(encoding='utf-8-sig')) if options.products
+    products = (read_json(options.products, 'products') if options.products
                 else library['salts'])
     if options.targets:
-        targets = json.loads(Path(options.targets).read_text(encoding='utf-8-sig'))
+        targets = read_json(options.targets, 'targets')
         title = options.title or Path(options.targets).stem
     else:
         title = choose_formula(library, options.formula, options.crop)
@@ -212,7 +267,7 @@ def run_batch(options):
     label, water, chemistry = read_water(options.water)
     if options.water_share is not None:
         label, water, chemistry = blend(label, water, chemistry, options.water_share)
-    rules = json.loads(Path(options.rules).read_text(encoding='utf-8-sig')) if options.rules else ()
+    rules = read_json(options.rules, 'rules') if options.rules else ()
     reagents = [acid_record(a) for a in options.acid] + catalogue_ph_reagents()
     limits = dict(options.limit)
     workflow = plan_fertilizer_workflow(
@@ -256,18 +311,18 @@ def main(argv=None):
     pick.add_argument('--targets', help='JSON file of target mg/L (N_NO3 and N_NH4 as N)')
     parser.add_argument('--list-formulas', action='store_true', help='list the packaged formulas and exit')
     parser.add_argument('--water', help='"ro" or a water analysis JSON file (see above)')
-    parser.add_argument('--water-share', type=float, metavar='PERCENT',
+    parser.add_argument('--water-share', type=number_in('--water-share', 0, 100), metavar='PERCENT',
                         help='use the analysed water as this percentage of the batch water, the rest ion-free '
                              '(desalinated or RO); default 100')
-    parser.add_argument('--volume', type=float, default=1000, help='final batch litres (default 1000)')
-    parser.add_argument('--ph', type=float, default=5.8, help='target feed pH (default 5.8)')
-    parser.add_argument('--ratio', type=float, default=100, help='final litres per litre of concentrate (default 100)')
+    parser.add_argument('--volume', type=number_in('--volume', 0), default=1000, help='final batch litres (default 1000)')
+    parser.add_argument('--ph', type=number_in('--ph', 0, 14, above=False), default=5.8, help='target feed pH (default 5.8)')
+    parser.add_argument('--ratio', type=number_in('--ratio', 0), default=100, help='final litres per litre of concentrate (default 100)')
     parser.add_argument('--acid', action='append', default=[], metavar='FORMULA:FRACTION:DENSITY[:NAME]',
                         help='an acid from your certificate, e.g. HNO3:0.60:1.37; repeat for more')
     parser.add_argument('--limit', action='append', default=[], type=limit_entry, metavar='SYMBOL=MG_PER_L',
                         help='a maximum concentration in the final solution, e.g. Cl=106.35; repeat for more. '
                              'Checked on the laboratory analysis; none is assumed')
-    parser.add_argument('--max-reagent-litres', type=float, help='largest reagent volume per batch (default volume/200)')
+    parser.add_argument('--max-reagent-litres', type=number_in('--max-reagent-litres', 0), help='largest reagent volume per batch (default volume/200)')
     parser.add_argument('--products', help='JSON array of your product records (default: the packaged catalogue)')
     parser.add_argument('--rules', help='JSON array of extra compatibilityRule records separating products')
     parser.add_argument('--output', help='new directory for report.html, batch-sheet.html and summary.json')
@@ -293,6 +348,7 @@ def main(argv=None):
         print(f'  Tank {tank["name"]}: ' + ', '.join(p['name'] for p in tank['products']))
     selected = summary['ph'] and summary['ph']['selected']
     if selected:
-        print(f'  pH: {selected["volume_ml_per_batch"]:.0f} mL {selected["product"]} per {summary["batch_litres"]:g} L')
+        print(f'  pH: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]} per '
+              f'{summary["batch_litres"]:g} L')
     print(f'Wrote {", ".join(files)} to {output}')
     return 3 if summary['status'] == 'blocked' else 0
