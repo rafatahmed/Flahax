@@ -45,8 +45,15 @@ class ReleaseHygieneTests(unittest.TestCase):
         self.assertEqual(len(flahax.__all__), len(set(flahax.__all__)))
         for name in flahax.__all__:
             self.assertTrue(hasattr(flahax, name), name)
+        # Between releases main carries <next>.devN (#99); the citation names the latest release.
+        cited = project['version']
+        if '.dev' in cited:
+            changelog = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
+            cited = re.search(r'(?m)^## (\d+\.\d+\.\d+)\b', changelog).group(1)
+            self.assertLess(tuple(map(int, cited.split('.'))),
+                            tuple(map(int, project['version'].split('.dev')[0].split('.'))))
         citation = (ROOT / 'CITATION.cff').read_text(encoding='utf-8')
-        self.assertRegex(citation, rf'(?m)^version:\s*[\"\']?{re.escape(project["version"])}[\"\']?\s*$')
+        self.assertRegex(citation, rf'(?m)^version:\s*[\"\']?{re.escape(cited)}[\"\']?\s*$')
 
     def test_local_documentation_links_resolve(self):
         documents = list(ROOT.glob('*.md')) + list((ROOT / 'docs').rglob('*.md'))
