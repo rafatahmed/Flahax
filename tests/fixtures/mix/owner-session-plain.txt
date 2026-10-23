@@ -65,7 +65,7 @@ Output depth
   3  Full report
 ? Number [1]: 
 ? Save these answers as [Tomato Stage.1 - 10-14 days (Howard Resh) ro]: 
-Saved the answers as <TMP>\home\sessions\tomato-stage-1.json; next time: flahax mix sessions/tomato-stage-1
+Saved the answers as <TMP>/home/sessions/tomato-stage-1.json; next time: flahax mix sessions/tomato-stage-1
 FlahaX <VERSION>: Tomato Stage.1 - 10-14 days (Howard Resh) - review notes before mixing
   ! Sodium Molybdate (Dihydrate) is included because Mo stayed more than 1% short without it. It also carries Na.
   ! Incidental Na includes formula counterion sodium (chelates D2, CH - micro borax/molybdate): 1.7424 mg/L.
@@ -87,4 +87,4 @@ Tank B: prepare 10 L in your 100 L tank (your 10 L acid container sets the batch
   [ ] Potassium Sulfate: 190.7 g
   [ ] Magnesium Sulfate (Heptahydrate): 131.3 g
 Acid container: 85.7 mL HNO3 65%, added to water and made up to 10 L (acid to water, never water to acid)
-Wrote batch-sheet.html, summary.json, report.html to <TMP>\out
+Wrote batch-sheet.html, summary.json, report.html to <TMP>/out
