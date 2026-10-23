@@ -59,10 +59,13 @@ CHELATES = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 
 
 class Prompts:
+    """The questions of ``flahax mix``; ``ask`` reads an answer and ``say`` prints."""
+
     def __init__(self, ask, say):
         self.ask, self.say = ask, say
 
     def text(self, prompt, default=None):
+        """A non-empty answer, or the default on Enter when there is one."""
         while True:
             shown = '' if default is None else f' [{default or "none"}]'
             answer = self.ask(f'{prompt}{shown}: ').strip()
@@ -73,6 +76,9 @@ class Prompts:
             self.say('  This one is needed.')
 
     def number(self, prompt, default=None, *, blank=False, low=0.0, high=None, positive=False):
+        """A finite number within the limits, asked again until valid; Enter gives the default, or
+        None when ``blank`` allows it.
+        """
         while True:
             shown = (
                 f' [{default:g}]' if default is not None else ' (Enter if blank)' if blank else ''
@@ -129,6 +135,9 @@ class Prompts:
             self.say(f'  Nothing matches {query!r}; press Enter to see the whole list.')
 
     def new_name(self, store, kind, prompt, default=None):
+        """A name for a new saved item; an existing name is used only when the user chooses to
+        replace it.
+        """
         while True:
             self.typed = self.text(prompt, default)
             name = slug(self.typed)
@@ -142,6 +151,7 @@ class Prompts:
                 return name
 
     def document(self, supplier):
+        """The supplier, title and issue date of a data sheet or certificate."""
         while True:
             issued = self.text('Date on the sheet (YYYY-MM-DD)')
             try:
@@ -158,6 +168,9 @@ class Prompts:
 
 
 def ask_spec(p):
+    """Step 1: tank and acid container sizes, injection ratio, stock temperature and how the stock
+    is prepared, as ``prepare_stocks`` options.
+    """
     p.say('1/5 Specification')
     a = p.number('Tank A capacity, L', 1000, positive=True)
     b = p.number('Tank B capacity, L', 1000, positive=True)
@@ -207,6 +220,9 @@ def ask_spec(p):
 
 
 def ask_water(p, store, pending):
+    """Step 2: the water (RO, saved or new), its share and the concentration limits; returns
+    (reference, share, limits).
+    """
     p.say('2/5 Water analysis')
     saved = store.list('waters')
     pick = p.choose('Water', ['RO water (no ions)'] + saved + ['A new analysis'])
@@ -230,6 +246,9 @@ def ask_water(p, store, pending):
 
 
 def ask_formula(p, store, pending, library):
+    """Step 3: the crop formula (packaged, changed, saved or typed); returns (reference, targets,
+    title).
+    """
     p.say('3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
     saved = store.list('formulas')
     packaged = {f['name']: f['targets'] for f in library['formulas']}
@@ -287,6 +306,9 @@ def ask_notes(p):
 
 
 def add_single(p, catalogue):
+    """A single-compound fertilizer from its label, or None when the label does not match the
+    chemical.
+    """
     names = {s['name']: s for s in catalogue}
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
     labels = {f'{i["name"]} ({", ".join(i["products"])})': i for i in identities}
@@ -334,6 +356,9 @@ def add_single(p, catalogue):
 
 
 def add_compound(p):
+    """A compound fertilizer modelled from its data-sheet composition, or None when it cannot be
+    resolved.
+    """
     name = p.text('Product name on the data sheet')
     supplier = p.text('Supplier')
     record = {
@@ -380,6 +405,7 @@ def add_compound(p):
 
 
 def ask_products(p, store, pending, library):
+    """Step 4: the fertilizers available; returns (reference, products)."""
     p.say('4/5 Fertilizers available')
     catalogue, saved = library['salts'], store.list('stores')
     pick = p.choose('Fertilizers', ['The whole catalogue'] + saved + ['Tick what I have'])
@@ -417,6 +443,7 @@ def ask_products(p, store, pending, library):
 
 
 def ask_acids(p, store, pending):
+    """Names of the acids chosen for the pH plan, saved or entered from a certificate."""
     chosen, saved = [], store.list('acids')
     while True:
         offer = [s for s in saved if s not in chosen]
@@ -600,6 +627,9 @@ def summarize(summary, say):
 
 
 def main(argv=None, *, ask=input, say=print, store=None):
+    """The ``flahax mix`` command: interview or saved session, then the sheets; returns the process
+    exit code.
+    """
     parser = argparse.ArgumentParser(
         prog='flahax mix',
         description=__doc__,

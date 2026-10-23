@@ -32,6 +32,10 @@ ACIDS = {
 
 @dataclass(frozen=True)
 class AcidCandidate:
+    """One acid product tried for the pH target: its dose, reagent amount, nutrient contribution
+    and score, or the error code and message why it was not usable.
+    """
+
     product_id: str
     formula: str
     status: str
@@ -50,6 +54,10 @@ class AcidCandidate:
 
 @dataclass(frozen=True)
 class AcidSelection:
+    """Every acid candidate tried and the selected product (None when none fits); the pH must still
+    be measured after mixing.
+    """
+
     candidates: tuple
     selected_product_id: str | None
     selection_policy: str

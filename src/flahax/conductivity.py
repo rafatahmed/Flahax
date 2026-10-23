@@ -94,6 +94,10 @@ def ec_recipe_key(stocks, channel='irrigation', *, reagent_doses_g_per_l=None):
 
 @dataclass(frozen=True)
 class ECPrediction:
+    """An EC estimate in mS/cm from an irrigation profile, with its uncertainty, or the error code
+    and message why none was made.
+    """
+
     status: str
     ec_ms_cm: float | None = None
     profile_id: str | None = None
@@ -105,6 +109,10 @@ class ECPrediction:
 
 @dataclass(frozen=True)
 class ECDeliveryPlan:
+    """Predicted EC, injection volumes and pump commands for an existing recipe, with the audit
+    record and the limits of an empirical EC estimate.
+    """
+
     water_ec_ms_cm: float
     predictions: dict
     injections: dict

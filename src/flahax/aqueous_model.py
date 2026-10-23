@@ -25,11 +25,16 @@ PRESOLVE_SWEEPS = 200
 
 @lru_cache(maxsize=1)
 def chemistry():
+    """The packaged 25 °C thermodynamic data (``data/chemistry_25c.json``), loaded once."""
     return json.loads(files('flahax').joinpath('data/chemistry_25c.json').read_text())
 
 
 @dataclass(frozen=True)
 class AqueousResult:
+    """A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
+    precipitated phases, residuals and charge balance.
+    """
+
     totals: dict
     ph: float
     ionic_strength: float
@@ -371,6 +376,10 @@ def _solve(
 
 @dataclass(frozen=True)
 class AcidResult:
+    """Nitric acid needed to move a solution from its initial pH to the target, with both solved
+    states; the pH must still be measured after mixing.
+    """
+
     initial: AqueousResult
     target: AqueousResult
     nitric_acid_molal: float

@@ -23,6 +23,7 @@ KINDS = ('waters', 'formulas', 'stores', 'acids', 'sessions')
 
 
 def default_root():
+    """Where saved items live: ``$FLAHAX_HOME``, or ``~/.flahax``."""
     return Path(os.environ.get('FLAHAX_HOME') or Path.home() / '.flahax')
 
 
@@ -37,10 +38,13 @@ def slug(name):
 
 
 class Store:
+    """Saved waters, formulas, fertilizer stores, acids and sessions as JSON files."""
+
     def __init__(self, root=None):
         self.root = Path(root) if root is not None else default_root()
 
     def path(self, kind, name):
+        """The JSON file for a saved item; raises DeliveryError for an unknown kind."""
         if kind not in KINDS:
             raise DeliveryError(
                 'invalid_value', f'unknown saved-item kind {kind!r}; use one of {KINDS}'
@@ -48,10 +52,12 @@ class Store:
         return self.root / kind / f'{slug(name)}.json'
 
     def list(self, kind):
+        """The names saved under one kind, sorted."""
         folder = self.path(kind, 'x').parent
         return sorted(p.stem for p in folder.glob('*.json')) if folder.is_dir() else []
 
     def load(self, kind, name):
+        """A saved item; raises DeliveryError when it is missing or damaged."""
         path = self.path(kind, name)
         if not path.is_file():
             raise DeliveryError(
@@ -62,6 +68,7 @@ class Store:
         return read_json(path, f'saved {kind[:-1]}')
 
     def save(self, kind, name, data):
+        """Write a saved item atomically and return its path."""
         path = self.path(kind, name)
         path.parent.mkdir(parents=True, exist_ok=True)
         handle, temp = tempfile.mkstemp(prefix=f'.{path.stem}-', suffix='.tmp', dir=path.parent)

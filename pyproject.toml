@@ -70,3 +70,8 @@ quote-style = "preserve"
 [tool.ruff.lint]
 preview = true
 select = ["E", "W", "F"]
+# Public classes, methods and functions of the package carry a docstring (pydocstyle D101-D103).
+extend-select = ["D101", "D102", "D103"]
+
+[tool.ruff.lint.per-file-ignores]
+"!src/**" = ["D101", "D102", "D103"]

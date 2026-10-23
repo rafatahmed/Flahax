@@ -343,6 +343,9 @@ def nnls(
 
 
 def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
+    """The squared-relative-error loss and one row per nutrient (target, final and percent
+    difference); untargeted nutrients add a small penalty.
+    """
     loss = 0.0
     rows = []
     symbols = list(dict.fromkeys([*targets.keys(), *achieved.keys()]))
@@ -360,6 +363,7 @@ def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
 
 
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
+    """Nutrient concentrations (mg/L) from the water plus each salt's grams per litre."""
     water = water or {}
     achieved = {symbol: float(value) for symbol, value in water.items()}
     for salt, gram in zip(salts, grams):

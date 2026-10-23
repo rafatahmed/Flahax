@@ -45,6 +45,9 @@ plan: inspect feasibility, stage status, residuals and warnings.
 AcidCandidate(product_id: str, formula: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, rows: tuple = (), loss: float | None = None, target: object = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, incidental_assessment: dict | None = None) -> None
 ```
 
+One acid product tried for the pH target: its dose, reagent amount, nutrient contribution
+and score, or the error code and message why it was not usable.
+
 Record fields: `product_id`, `formula`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `rows`, `loss`, `target`, `error_code`, `message`, `product_record`, `incidental_assessment`.
 
 Source module: `flahax.acid_selection`. Import with `from flahax import AcidCandidate`.
@@ -54,6 +57,9 @@ Source module: `flahax.acid_selection`. Import with `from flahax import AcidCand
 ```text
 AcidSelection(candidates: tuple, selected_product_id: str | None, selection_policy: str, post_mix_measurement_required: bool = True) -> None
 ```
+
+Every acid candidate tried and the selected product (None when none fits); the pH must still
+be measured after mixing.
 
 Record fields: `candidates`, `selected_product_id`, `selection_policy`, `post_mix_measurement_required`.
 
@@ -81,6 +87,9 @@ Source module: `flahax.acid_selection`. Import with `from flahax import plan_aci
 AmmoniaSpeciation(total_ammoniacal_nitrogen_molal: 'float', ph: 'float', ionic_strength: 'float', ammonium_molal: 'float', ammonia_molal: 'float', ammonium_activity: 'float') -> None
 ```
 
+Total ammoniacal nitrogen split into ammonium and dissolved ammonia at a pH and ionic
+strength (molal).
+
 Record fields: `total_ammoniacal_nitrogen_molal`, `ph`, `ionic_strength`, `ammonium_molal`, `ammonia_molal`, `ammonium_activity`.
 
 Source module: `flahax.ammonia`. Import with `from flahax import AmmoniaSpeciation`.
@@ -103,6 +112,9 @@ Source module: `flahax.ammonia`. Import with `from flahax import ammonia_speciat
 AcidResult(initial: flahax.aqueous_model.AqueousResult, target: flahax.aqueous_model.AqueousResult, nitric_acid_molal: float, post_mix_measurement_required: bool = True) -> None
 ```
 
+Nitric acid needed to move a solution from its initial pH to the target, with both solved
+states; the pH must still be measured after mixing.
+
 Record fields: `initial`, `target`, `nitric_acid_molal`, `post_mix_measurement_required`.
 
 Source module: `flahax.aqueous_model`. Import with `from flahax import AcidResult`.
@@ -112,6 +124,9 @@ Source module: `flahax.aqueous_model`. Import with `from flahax import AcidResul
 ```text
 AqueousResult(totals: dict, ph: float, ionic_strength: float, species: dict, activities: dict, saturation_indices: dict, precipitated: dict, residuals: dict, iterations: int, charge_balance: float, water_activity: float) -> None
 ```
+
+A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
+precipitated phases, residuals and charge balance.
 
 Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `saturation_indices`, `precipitated`, `residuals`, `iterations`, `charge_balance`, `water_activity`.
 
@@ -193,6 +208,9 @@ Source module: `flahax.catalogue_chemistry`. Import with `from flahax import che
 CalciumSulfateStruviteCompetition(gypsum_si: 'float', struvite_si: 'float') -> None
 ```
 
+Gypsum and struvite saturation indices in a mixed calcium, sulfate, magnesium, ammonium and
+phosphate solution.
+
 Record fields: `gypsum_si`, `struvite_si`.
 
 Source module: `flahax.competition`. Import with `from flahax import CalciumSulfateStruviteCompetition`.
@@ -202,6 +220,9 @@ Source module: `flahax.competition`. Import with `from flahax import CalciumSulf
 ```text
 CarbonateCompetition(calcite_si: 'float', gypsum_si: 'float', struvite_si: 'float') -> None
 ```
+
+Calcite, gypsum and struvite saturation indices when carbonate competes for calcium and
+magnesium.
 
 Record fields: `calcite_si`, `gypsum_si`, `struvite_si`.
 
@@ -243,6 +264,9 @@ Source module: `flahax.composition`. Import with `from flahax import InputError`
 ECDeliveryPlan(water_ec_ms_cm: float, predictions: dict, injections: dict, pump_commands: tuple, audit: dict, warnings: tuple = <factory>, post_mix_measurement_required: bool = True) -> None
 ```
 
+Predicted EC, injection volumes and pump commands for an existing recipe, with the audit
+record and the limits of an empirical EC estimate.
+
 Record fields: `water_ec_ms_cm`, `predictions`, `injections`, `pump_commands`, `audit`, `warnings`, `post_mix_measurement_required`.
 
 Source module: `flahax.conductivity`. Import with `from flahax import ECDeliveryPlan`.
@@ -252,6 +276,9 @@ Source module: `flahax.conductivity`. Import with `from flahax import ECDelivery
 ```text
 ECPrediction(status: str, ec_ms_cm: float | None = None, profile_id: str | None = None, profile_sha256: str | None = None, error_code: str | None = None, message: str | None = None, uncertainty_ms_cm: float | None = None) -> None
 ```
+
+An EC estimate in mS/cm from an irrigation profile, with its uncertainty, or the error code
+and message why none was made.
 
 Record fields: `status`, `ec_ms_cm`, `profile_id`, `profile_sha256`, `error_code`, `message`, `uncertainty_ms_cm`.
 
@@ -337,6 +364,9 @@ Source module: `flahax.delivery_contracts`. Import with `from flahax import vali
 DeliveryPlan(recipe: 'FinalSolutionRecipe', stocks: 'StockPlan', ph_plan: 'PhPlan | EquilibriumPhPlan | None', commands: 'tuple[PumpCommand, ...]', audit_record: 'dict[str, Any]', warnings: 'tuple[str, ...]', state: 'str' = 'draft') -> None
 ```
 
+A recipe, its stock tanks, pH plan and pump commands, with the audit record, warnings and
+its approval state (``draft`` first).
+
 Record fields: `recipe`, `stocks`, `ph_plan`, `commands`, `audit_record`, `warnings`, `state`.
 
 Source module: `flahax.delivery_plan`. Import with `from flahax import DeliveryPlan`.
@@ -347,6 +377,9 @@ Source module: `flahax.delivery_plan`. Import with `from flahax import DeliveryP
 compose_delivery_plan(recipe: 'FinalSolutionRecipe', stocks: 'StockPlan', ph_plan: 'PhPlan | EquilibriumPhPlan | None', commands: 'Iterable[PumpCommand]', audit_record: 'Mapping[str, Any]', warnings: 'Iterable[str]' = ()) -> 'DeliveryPlan'
 ```
 
+A draft DeliveryPlan after checking that every stage plans the same recipe; raises
+DeliveryError when a stage does not match.
+
 Source module: `flahax.delivery_plan`. Import with `from flahax import compose_delivery_plan`.
 
 ### `delivery_report`
@@ -355,6 +388,9 @@ Source module: `flahax.delivery_plan`. Import with `from flahax import compose_d
 delivery_report(plan: 'DeliveryPlan') -> 'str'
 ```
 
+A short plain-text summary of the plan: state, volume, tanks, pump commands, pH target and
+warnings.
+
 Source module: `flahax.delivery_plan`. Import with `from flahax import delivery_report`.
 
 ### `transition_plan`
@@ -362,6 +398,9 @@ Source module: `flahax.delivery_plan`. Import with `from flahax import delivery_
 ```text
 transition_plan(plan: 'DeliveryPlan', target: 'str') -> 'DeliveryPlan'
 ```
+
+The plan moved to ``target`` state; raises DeliveryError when the move is not allowed or a
+validated plan lacks its pH plan, commands or clean equilibrium.
 
 Source module: `flahax.delivery_plan`. Import with `from flahax import transition_plan`.
 
@@ -372,6 +411,8 @@ Source module: `flahax.delivery_plan`. Import with `from flahax import transitio
 ```text
 DurationMinutes(value: 'float') -> None
 ```
+
+A duration in minutes, finite and not negative.
 
 Record fields: `value`.
 
@@ -395,6 +436,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Fin
 FlowLitresPerMinute(value: 'float') -> None
 ```
 
+A flow in litres per minute, finite and above zero.
+
 Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import FlowLitresPerMinute`.
@@ -404,6 +447,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Flo
 ```text
 GramsPerLitre(value: 'float') -> None
 ```
+
+A concentration in grams per litre, finite and not negative.
 
 Record fields: `value`.
 
@@ -427,6 +472,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Inj
 MassGrams(value: 'float') -> None
 ```
 
+A mass in grams, finite and not negative.
+
 Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import MassGrams`.
@@ -436,6 +483,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Mas
 ```text
 MilliEquivalentsPerLitre(value: 'float') -> None
 ```
+
+A concentration in milliequivalents per litre, finite and not negative.
 
 Record fields: `value`.
 
@@ -447,6 +496,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Mil
 MilligramsPerLitre(value: 'float') -> None
 ```
 
+A concentration in milligrams per litre, finite and not negative.
+
 Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import MilligramsPerLitre`.
@@ -457,6 +508,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Mil
 TemperatureCelsius(value: 'float') -> None
 ```
 
+A temperature in degrees Celsius, not below absolute zero.
+
 Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import TemperatureCelsius`.
@@ -466,6 +519,8 @@ Source module: `flahax.delivery_quantities`. Import with `from flahax import Tem
 ```text
 VolumeLitres(value: 'float') -> None
 ```
+
+A volume in litres, finite and above zero.
 
 Record fields: `value`.
 
@@ -692,6 +747,9 @@ Source module: `flahax.equilibrium`. Import with `from flahax import solve_gypsu
 EquilibriumPhPlan(recipe: flahax.delivery_quantities.FinalSolutionRecipe, water_analysis_id: str, water_mass_kg: float, reagent_id: str, reagent_channel_id: str, target_ph: float, equilibrium: flahax.aqueous_model.AcidResult, reagent_mass: flahax.delivery_quantities.MassGrams, reagent_volume_litres: float, nutrient_contribution: dict, loss: float, rows: tuple, audit: dict, warnings: tuple[str, ...], post_mix_measurement_required: bool = True, mode: str = 'catalogue-equilibrium-nitric', incidental_assessment: dict | None = None) -> None
 ```
 
+An acid dose for the target pH, solved by equilibrium for one recipe and water, with the
+reagent amount, nutrient contribution, audit and warnings.
+
 Record fields: `recipe`, `water_analysis_id`, `water_mass_kg`, `reagent_id`, `reagent_channel_id`, `target_ph`, `equilibrium`, `reagent_mass`, `reagent_volume_litres`, `nutrient_contribution`, `loss`, `rows`, `audit`, `warnings`, `post_mix_measurement_required`, `mode`, `incidental_assessment`.
 
 Source module: `flahax.equilibrium_delivery`. Import with `from flahax import EquilibriumPhPlan`.
@@ -783,6 +841,9 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None) -> None
 ```
 
+The recommendation, water, nutrient gap and pH target, with each stage's result; the pH must
+still be measured after mixing.
+
 Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
@@ -792,6 +853,9 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Fer
 ```text
 WorkflowStage(status: str, value: object = None, required_inputs: tuple = (), error_code: str | None = None, message: str | None = None) -> None
 ```
+
+One workflow stage: its status, value, the inputs it still needs, or the error code and
+message that stopped it.
 
 Record fields: `status`, `value`, `required_inputs`, `error_code`, `message`.
 
@@ -1045,6 +1109,9 @@ Source module: `flahax.material_chemistry`. Import with `from flahax import mate
 DocumentReference(supplier: str, title: str, issued: str, entered: str, url: str | None = None, sha256: str | None = None) -> None
 ```
 
+The supplier document a value comes from: title, issue and entry dates, and optionally its
+URL and SHA-256.
+
 Record fields: `supplier`, `title`, `issued`, `entered`, `url`, `sha256`.
 
 Source module: `flahax.materials`. Import with `from flahax import DocumentReference`.
@@ -1054,6 +1121,9 @@ Source module: `flahax.materials`. Import with `from flahax import DocumentRefer
 ```text
 Grade(grade_id: str, identity_id: str | None, supplier: str, product: str, typical: dict, minimum: dict, maximum: dict, impurity_limits: dict, composition: str, components: tuple, oxide_conversions: dict, document: flahax.materials.DocumentReference, flags: tuple = (), form_split: dict = <factory>, charge_residual_percent: float | None = None, chelating_agent: str | None = None, chelating_agent_stated: bool = False) -> None
 ```
+
+A supplier grade: typical, minimum and maximum analysis, impurity limits, composition kind
+and its source document.
 
 Record fields: `grade_id`, `identity_id`, `supplier`, `product`, `typical`, `minimum`, `maximum`, `impurity_limits`, `composition`, `components`, `oxide_conversions`, `document`, `flags`, `form_split`, `charge_residual_percent`, `chelating_agent`, `chelating_agent_stated`.
 
@@ -1065,6 +1135,8 @@ Source module: `flahax.materials`. Import with `from flahax import Grade`.
 Lot(lot_id: str, grade_id: str | None, identity_id: str | None, measured: dict, uncertainty: dict, document: flahax.materials.DocumentReference, oxide_conversions: dict = <factory>) -> None
 ```
 
+A measured lot: its analysis, uncertainty and certificate.
+
 Record fields: `lot_id`, `grade_id`, `identity_id`, `measured`, `uncertainty`, `document`, `oxide_conversions`.
 
 Source module: `flahax.materials`. Import with `from flahax import Lot`.
@@ -1074,6 +1146,9 @@ Source module: `flahax.materials`. Import with `from flahax import Lot`.
 ```text
 ResolvedMaterial(name: str, identity_id: str, record: dict, basis: dict, band_minimum: dict, band_maximum: dict, composition: str, provenance: dict, flags: tuple = (), components: tuple = (), chelating_agent: str | None = None, declared_check: flahax.materials.DeclaredCheck | None = None) -> None
 ```
+
+A material ready for formulation: the record, the analysis basis and band, composition kind,
+provenance and flags.
 
 Record fields: `name`, `identity_id`, `record`, `basis`, `band_minimum`, `band_maximum`, `composition`, `provenance`, `flags`, `components`, `chelating_agent`, `declared_check`.
 
@@ -1219,6 +1294,8 @@ Source module: `flahax.measured_water`. Import with `from flahax import carbonat
 MixedFertilizerEquilibrium(macro: flahax.fertilizer_equilibrium.FertilizerEquilibrium, trace: flahax.trace_equilibrium.TraceEquilibrium | None, ionic_strength: float, iterations: int, aqueous: flahax.aqueous_model.AqueousResult) -> None
 ```
 
+The macro and trace results of one mixed equilibrium, with the full aqueous solution.
+
 Record fields: `macro`, `trace`, `ionic_strength`, `iterations`, `aqueous`.
 
 Source module: `flahax.mixed_equilibrium`. Import with `from flahax import MixedFertilizerEquilibrium`.
@@ -1228,6 +1305,9 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import Mixed
 ```text
 solve_mixed_fertilizer_equilibrium(totals, ph, *, trace_totals=None, allow_precipitation=True)
 ```
+
+The mixed equilibrium of fertilizer and optional Ch micro totals at a pH; raises
+DeliveryError for the wrong types.
 
 Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve_mixed_fertilizer_equilibrium`.
 
@@ -1239,6 +1319,8 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve
 PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True) -> None
 ```
 
+Every pH reagent tried and the selected one; the pH must still be measured after mixing.
+
 Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
@@ -1248,6 +1330,9 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustm
 ```text
 PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None) -> None
 ```
+
+One pH reagent tried in one direction: its dose, reagent amount, nutrient contribution and
+solved solutions, or why it was not usable.
 
 Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`.
 
@@ -1340,6 +1425,8 @@ Source module: `flahax.ph_planning`. Import with `from flahax import plan_ph`.
 ```text
 PhaseAllocation(phase: 'str', initial_moles: 'float', final_moles: 'float', delta_moles: 'float') -> None
 ```
+
+Moles of one solid phase before and after equilibrium.
 
 Record fields: `phase`, `initial_moles`, `final_moles`, `delta_moles`.
 
@@ -1489,6 +1576,8 @@ Source module: `flahax.product_conversion`. Import with `from flahax import conv
 plan_catalogue_nitric_target(doses, initial_ph, target_ph, *, water_totals=None, phases=())
 ```
 
+Nitric acid to bring catalogue doses plus water from the initial pH to the target.
+
 Source module: `flahax.product_conversion`. Import with `from flahax import plan_catalogue_nitric_target`.
 
 ### `solve_catalogue_product_doses`
@@ -1508,6 +1597,8 @@ Source module: `flahax.product_conversion`. Import with `from flahax import solv
 ```text
 PumpCommand(calibration_id: 'str', channel_id: 'str', requested_volume: 'VolumeLitres', runtime: 'DurationMinutes', volume_uncertainty: 'VolumeLitres', requires_operator_verification: 'bool' = True) -> None
 ```
+
+A volume for one calibrated pump channel and its run time; the operator verifies it.
 
 Record fields: `calibration_id`, `channel_id`, `requested_volume`, `runtime`, `volume_uncertainty`, `requires_operator_verification`.
 
@@ -1543,6 +1634,8 @@ Source module: `flahax.stock_planning`. Import with `from flahax import StockPla
 StockSaltDose(salt_id: 'str', name: 'str', concentration: 'GramsPerLitre') -> None
 ```
 
+One fertilizer's concentration in a stock tank.
+
 Record fields: `salt_id`, `name`, `concentration`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockSaltDose`.
@@ -1564,6 +1657,8 @@ Source module: `flahax.stock_planning`. Import with `from flahax import StockTan
 ```text
 StockTankPlan(tank: 'StockTank', stock_volume: 'VolumeLitres', salts: 'tuple[StockSaltDose, ...]') -> None
 ```
+
+One stock tank: its volume and the fertilizers dissolved in it.
 
 Record fields: `tank`, `stock_volume`, `salts`.
 
@@ -1603,6 +1698,9 @@ Source module: `flahax.struvite`. Import with `from flahax import struvite_satur
 ChargeBalancedStruviteMixture(ph: 'float', ionic_strength: 'float', charge_residual: 'float', mixture: 'StruviteMixtureSpeciation', gypsum_si: 'float | None' = None, free_calcium_molal: 'float' = 0.0, free_sulfate_molal: 'float' = 0.0, calcium_sulfate_molal: 'float' = 0.0) -> None
 ```
 
+A struvite mixture solved for charge balance, with the gypsum check when calcium and sulfate
+are present.
+
 Record fields: `ph`, `ionic_strength`, `charge_residual`, `mixture`, `gypsum_si`, `free_calcium_molal`, `free_sulfate_molal`, `calcium_sulfate_molal`.
 
 Source module: `flahax.struvite_mixture`. Import with `from flahax import ChargeBalancedStruviteMixture`.
@@ -1612,6 +1710,9 @@ Source module: `flahax.struvite_mixture`. Import with `from flahax import Charge
 ```text
 StruviteMixtureSpeciation(magnesium_molal: 'float', ammoniacal_nitrogen_molal: 'float', phosphate_molal: 'float', sodium_molal: 'float', ph: 'float', ionic_strength: 'float', free_magnesium_molal: 'float', ammonium_molal: 'float', free_phosphate_molal: 'float', struvite_si: 'float') -> None
 ```
+
+Free magnesium, ammonium and phosphate and the struvite saturation index of a mixture at a
+pH.
 
 Record fields: `magnesium_molal`, `ammoniacal_nitrogen_molal`, `phosphate_molal`, `sodium_molal`, `ph`, `ionic_strength`, `free_magnesium_molal`, `ammonium_molal`, `free_phosphate_molal`, `struvite_si`.
 
@@ -1648,6 +1749,8 @@ Source module: `flahax.struvite_mixture`. Import with `from flahax import struvi
 ConcentrateTank(name: str, products: tuple, acid_allowed: bool, notes: tuple = ()) -> None
 ```
 
+One concentrate tank: its products, whether acid may go in, and notes.
+
 Record fields: `name`, `products`, `acid_allowed`, `notes`.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import ConcentrateTank`.
@@ -1658,6 +1761,9 @@ Source module: `flahax.tank_grouping`. Import with `from flahax import Concentra
 TankGrouping(tanks: tuple, reagent_channel: tuple, separations: tuple, waived: tuple = (), source: str = 'Yara, Fertilizantes para fertirrigación, p. 65 mixing compatibility table and p. 63 mixing rules', solubility_checked: bool = False) -> None
 ```
 
+Products grouped into tanks, the pH reagent channel, the pairs kept apart and the pairs a
+waived rule lets share a tank.
+
 Record fields: `tanks`, `reagent_channel`, `separations`, `waived`, `source`, `solubility_checked`.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import TankGrouping`.
@@ -1667,6 +1773,8 @@ Source module: `flahax.tank_grouping`. Import with `from flahax import TankGroup
 ```text
 TankProduct(product_id: str, name: str, grams_per_litre: float, basis: str) -> None
 ```
+
+A product placed in a tank: its final-solution dose and why it is there.
 
 Record fields: `product_id`, `name`, `grams_per_litre`, `basis`.
 
