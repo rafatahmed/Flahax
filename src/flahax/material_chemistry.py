@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections.abc import Mapping
 from functools import lru_cache
 
@@ -146,6 +147,26 @@ def ions_from_formula(formula) -> dict | None:
     return dict(ions) if ions is not None else None
 
 
+def formula_problem(formula) -> str:
+    """Why a formula cannot define a material, in words a grower can act on."""
+    text = formula.strip() if isinstance(formula, str) else ''
+    if not text:
+        return UNDEFINED
+    if not re.fullmatch(r'[A-Za-z0-9().·]+', text):
+        return f'{text!r} is a name, not a chemical formula: {UNDEFINED}'
+    parsed = parse_formula(text.replace('·', '.'))
+    if parsed is None:
+        return (f'the formula {text!r} cannot be read: check the brackets and the element symbols '
+                '(for example Ca(NO3)2·4H2O)')
+    if not all(float(n).is_integer() for n in parsed['atoms'].values()):
+        return f'the formula {text!r} has fractional atoms; give its ions or its analysis instead'
+    solutions = _decompose({e: int(n) for e, n in parsed['atoms'].items()})
+    if not solutions:
+        return (f'the formula {text!r} does not split into the fertilizer ions FlahaX knows; '
+                'give its ions or its analysis instead')
+    return f'the formula {text!r} splits into ions in more than one way; give its ions instead'
+
+
 def _checked_ions(name: str, ions, agent: str | None = None) -> dict:
     """Known ions with positive counts (metals of ``agent`` chelated) that balance."""
     if not isinstance(ions, Mapping) or not ions:
@@ -245,7 +266,7 @@ def _resolve(key: str) -> ProductChemistry:
     else:
         ions = ions_from_formula(formula)
         if ions is None:
-            raise DeliveryError('material_undefined', f'{name}: {UNDEFINED}')
+            raise DeliveryError('material_undefined', f'{name}: {formula_problem(formula)}')
         ions = _checked_ions(name, ions)
     _check_analysis(name, ions, elements)
     return _profile(name, ions, status)
