@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Tests for flahax.ph_planning."""
+
 import copy
 import unittest
 
@@ -22,16 +28,20 @@ def record(record_id, **fields):
 
 
 def inputs():
-    water = record(
-        "water-wc1", ions={"Ca": 20}, temperatureC=22, pH=7.4, alkalinityMgLAsCaCO3=120
-    )
+    water = record("water-wc1", ions={"Ca": 20}, temperatureC=22, pH=7.4, alkalinityMgLAsCaCO3=120)
     curve = record(
-        "wc1-nitric", waterAnalysisId="water-wc1", reagentId="nitric-acid",
+        "wc1-nitric",
+        waterAnalysisId="water-wc1",
+        reagentId="nitric-acid",
         points=[{"demandMeqPerL": 0, "pH": 7.4}, {"demandMeqPerL": 1.2, "pH": 6.0}],
     )
     reagent = record(
-        "nitric-acid", name="Nitric acid", kind="acid", elements={"N_NO3": 13.8},
-        densityKgPerL=1.4, normalityMeqPerL=10000,
+        "nitric-acid",
+        name="Nitric acid",
+        kind="acid",
+        elements={"N_NO3": 13.8},
+        densityKgPerL=1.4,
+        normalityMeqPerL=10000,
     )
     return water, curve, reagent
 
@@ -40,7 +50,14 @@ class PhPlanning(unittest.TestCase):
     def test_interpolates_measured_curve_and_rescores_nutrient_addition(self):
         water, curve, reagent = inputs()
         plan = plan_ph(
-            water, curve, reagent, 6.7, VolumeLitres(100), VolumeLitres(1), {"N_NO3": 100}, {"N_NO3": 111.592}
+            water,
+            curve,
+            reagent,
+            6.7,
+            VolumeLitres(100),
+            VolumeLitres(1),
+            {"N_NO3": 100},
+            {"N_NO3": 111.592},
         )
         self.assertEqual(plan.direction, "acid")
         self.assertAlmostEqual(plan.demand.value, 0.6)

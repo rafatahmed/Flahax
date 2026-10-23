@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Stock volumes for the two interactive-mix fill modes.
 
 ``fill``: the irrigation is set by the smallest container (tank A, tank B or the acid
@@ -5,6 +9,7 @@ container), and every container is prepared to that same irrigation divided by t
 injection ratio; a larger tank is only part-filled. ``once``: the grower gives the
 irrigation volume and each container gets its share, which must fit the tank.
 """
+
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -23,16 +28,26 @@ class StockVolumes:
 
 
 def _positive(value, label):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
-        raise DeliveryError('invalid_value', f'{label} must be a positive finite number, got {value!r}')
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        raise DeliveryError(
+            'invalid_value', f'{label} must be a positive finite number, got {value!r}'
+        )
     return float(value)
 
 
-def prepare_stocks(*, tank_litres: Mapping, ratio: float, mode: str,
-                   irrigation_litres: float | None = None) -> StockVolumes:
+def prepare_stocks(
+    *, tank_litres: Mapping, ratio: float, mode: str, irrigation_litres: float | None = None
+) -> StockVolumes:
     if set(tank_litres) != set(CONTAINERS):
-        raise DeliveryError('invalid_value', f'tank_litres must have exactly the keys {CONTAINERS}, '
-                            f'got {tuple(tank_litres)}')
+        raise DeliveryError(
+            'invalid_value',
+            f'tank_litres must have exactly the keys {CONTAINERS}, ' f'got {tuple(tank_litres)}',
+        )
     capacity = {name: _positive(tank_litres[name], f'{name} capacity') for name in CONTAINERS}
     ratio = _positive(ratio, 'injection ratio')
     if mode not in MODES:
@@ -50,8 +65,13 @@ def prepare_stocks(*, tank_litres: Mapping, ratio: float, mode: str,
         prepared_each = irrigation / ratio
         too_small = [name for name in CONTAINERS if prepared_each > capacity[name]]
         if too_small:
-            raise DeliveryError('tank_too_small', f'{", ".join(too_small)} cannot hold {prepared_each:g} L each '
-                                f'for {irrigation:g} L of irrigation at 1:{ratio:g}; use a smaller irrigation '
-                                'or larger containers')
+            raise DeliveryError(
+                'tank_too_small',
+                f'{", ".join(too_small)} cannot hold {prepared_each:g} L each '
+                f'for {irrigation:g} L of irrigation at 1:{ratio:g}; use a smaller irrigation '
+                'or larger containers',
+            )
     prepared = {name: prepared_each for name in CONTAINERS}
-    return StockVolumes(irrigation_litres=irrigation, prepared_litres=prepared, capacity_litres=capacity)
+    return StockVolumes(
+        irrigation_litres=irrigation, prepared_litres=prepared, capacity_litres=capacity
+    )

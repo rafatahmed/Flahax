@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Verify that published downloads and headline counts match the evidence."""
+
 import csv
 import hashlib
 import io
@@ -29,13 +34,18 @@ class PublishedEvidenceTests(unittest.TestCase):
                 self.assertEqual(covered, set(bundle.namelist()) - {"CHECKSUMS.sha256"})
                 for download in path.parent.iterdir():
                     if download.name != "evidence.zip":
-                        self.assertEqual(download.read_bytes(), bundle.read(download.name),
-                                         download.name)
+                        self.assertEqual(
+                            download.read_bytes(), bundle.read(download.name), download.name
+                        )
                 for name in bundle.namelist():
                     if name.endswith((".json", ".log", ".txt")):
-                        self.assertIsNone(re.search(
-                            rb"[A-Za-z]:[\\/]+Users[\\/]+|[A-Za-z]__Users_|/home/[a-z]",
-                            bundle.read(name)), name)
+                        self.assertIsNone(
+                            re.search(
+                                rb"[A-Za-z]:[\\/]+Users[\\/]+|[A-Za-z]__Users_|/home/[a-z]",
+                                bundle.read(name),
+                            ),
+                            name,
+                        )
 
     def test_current_page_counts_and_download_digest_match(self):
         page = (ROOT / "docs/site/evidence/benchmark-results.md").read_text(encoding="utf-8")
@@ -67,25 +77,35 @@ class PublishedEvidenceTests(unittest.TestCase):
                 self.assertNotRegex(page, r"(?m)^\| cmb[a-z0-9]+:")
 
 
-
 class ScorecardNoticeTests(unittest.TestCase):
     """#66: the page head warns only when a gate actually failed."""
+
     MANUAL = {"url": "https://example.invalid/run", "conclusion": "success"}
 
     def test_all_gates_passing_gives_a_note(self):
-        text = scorecard_notice(7, 7, {"passed": 21, "attempted": 21}, "0 timing workloads have no "
-                                "completed measurement.", 0, self.MANUAL)
+        text = scorecard_notice(
+            7,
+            7,
+            {"passed": 21, "attempted": 21},
+            "0 timing workloads have no " "completed measurement.",
+            0,
+            self.MANUAL,
+        )
         self.assertTrue(text.startswith("```{note}"))
         self.assertNotIn("not fully passing", text)
 
     def test_any_failed_gate_gives_a_warning(self):
-        failing = [(6, 7, {"passed": 21, "attempted": 21}, 0, self.MANUAL),
-                   (7, 7, {"passed": 20, "attempted": 21}, 0, self.MANUAL),
-                   (7, 7, {"passed": 21, "attempted": 21}, 1, self.MANUAL),
-                   (7, 7, {"passed": 21, "attempted": 21}, 0, dict(self.MANUAL, conclusion="failure"))]
+        failing = [
+            (6, 7, {"passed": 21, "attempted": 21}, 0, self.MANUAL),
+            (7, 7, {"passed": 20, "attempted": 21}, 0, self.MANUAL),
+            (7, 7, {"passed": 21, "attempted": 21}, 1, self.MANUAL),
+            (7, 7, {"passed": 21, "attempted": 21}, 0, dict(self.MANUAL, conclusion="failure")),
+        ]
         for kernel_pass, total, chemistry, missing, manual in failing:
             with self.subTest(kernel_pass=kernel_pass, chemistry=chemistry, missing=missing):
-                text = scorecard_notice(kernel_pass, total, chemistry, "missing text", missing, manual)
+                text = scorecard_notice(
+                    kernel_pass, total, chemistry, "missing text", missing, manual
+                )
                 self.assertTrue(text.startswith("```{warning}"))
                 self.assertIn("not fully passing", text)
 

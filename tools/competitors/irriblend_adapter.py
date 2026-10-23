@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Drive the authors' Irriblend-DSW optimiser (MIT, pinned) with the FlahaX catalogue.
 
 Irriblend-DSW: Gallego-Elvira, B., Reca, J., Martin-Gorriz, B., Maestre-Valero, J. F. and
@@ -27,6 +31,7 @@ limit: every product costs 1 EUR/kg (cost = total grams), the EC cap is non-bind
 the residual HCO3- target is 0 (the benchmark waters carry no bicarbonate). A result is
 kept only if it passes the authors' own filter (final NO3- not below the ideal).
 """
+
 import hashlib
 import os
 from pathlib import Path
@@ -35,19 +40,40 @@ import tempfile
 
 from flahax.product_conversion import MOLAR_MASS
 
-PIN = {"repository": "https://github.com/irriblend-dsw/irriblend-dsw-v1",
-       "commit": "a046d5c", "code_commit": "197d650", "licence": "MIT",
-       "copyright": "Copyright (c) 2026 irriblend-dsw",
-       "module": "code/irriblend_dsw_funs.py",
-       "module_sha256": "2a3c06f8a511e50b1dd13e796eaa32ba46db27e9493edd009aeb7d7fd414732e",
-       "citation": "Gallego-Elvira et al. (2021) Agric. Water Manag. 255, 107012, doi:10.1016/j.agwat.2021.107012"}
+PIN = {
+    "repository": "https://github.com/irriblend-dsw/irriblend-dsw-v1",
+    "commit": "a046d5c",
+    "code_commit": "197d650",
+    "licence": "MIT",
+    "copyright": "Copyright (c) 2026 irriblend-dsw",
+    "module": "code/irriblend_dsw_funs.py",
+    "module_sha256": "2a3c06f8a511e50b1dd13e796eaa32ba46db27e9493edd009aeb7d7fd414732e",
+    "citation": "Gallego-Elvira et al. (2021) Agric. Water Manag. 255, 107012, doi:10.1016/j.agwat.2021.107012",
+}
 # Irriblend column order, and the FlahaX element each column counts.
 COLUMNS = ("NO3-", "NH4+", "H2PO4-", "K+", "Ca++", "Mg++", "SO4-2", "Cl-", "Na+", "H+")
-ELEMENT = {"NO3-": "N_NO3", "NH4+": "N_NH4", "H2PO4-": "P", "K+": "K", "Ca++": "Ca", "Mg++": "Mg",
-           "SO4-2": "S", "Cl-": "Cl", "Na+": "Na"}
-MASS = {"N_NO3": MOLAR_MASS["N"], "N_NH4": MOLAR_MASS["N"], "P": MOLAR_MASS["P"], "K": MOLAR_MASS["K"],
-        "Ca": MOLAR_MASS["Ca"], "Mg": MOLAR_MASS["Mg"], "S": MOLAR_MASS["S"], "Cl": MOLAR_MASS["Cl"],
-        "Na": MOLAR_MASS["Na"]}
+ELEMENT = {
+    "NO3-": "N_NO3",
+    "NH4+": "N_NH4",
+    "H2PO4-": "P",
+    "K+": "K",
+    "Ca++": "Ca",
+    "Mg++": "Mg",
+    "SO4-2": "S",
+    "Cl-": "Cl",
+    "Na+": "Na",
+}
+MASS = {
+    "N_NO3": MOLAR_MASS["N"],
+    "N_NH4": MOLAR_MASS["N"],
+    "P": MOLAR_MASS["P"],
+    "K": MOLAR_MASS["K"],
+    "Ca": MOLAR_MASS["Ca"],
+    "Mg": MOLAR_MASS["Mg"],
+    "S": MOLAR_MASS["S"],
+    "Cl": MOLAR_MASS["Cl"],
+    "Na": MOLAR_MASS["Na"],
+}
 H_PER_P = {"H3PO4": -1.0, "K2HPO4": 1.0, "(NH4)2HPO4": 1.0}
 UNREPRESENTED_ANIONS = {"C6H5K3O7": "citrate has no Irriblend column"}
 MAX_EC_NON_BINDING = 1e6
@@ -61,7 +87,7 @@ def load(code_dir=None):
     digest = hashlib.sha256(module.read_bytes()).hexdigest()
     if digest != PIN["module_sha256"]:
         raise RuntimeError(f"{module} does not match the pinned Irriblend-DSW module ({digest})")
-    os.environ.setdefault("MPLBACKEND", "Agg")      # the module imports pyplot; no window is opened
+    os.environ.setdefault("MPLBACKEND", "Agg")  # the module imports pyplot; no window is opened
     sys.path.insert(0, str(code_dir))
     try:
         import irriblend_dsw_funs
@@ -82,7 +108,10 @@ def translate(products):
         if product.get("formula") in UNREPRESENTED_ANIONS:
             excluded[product["name"]] = UNREPRESENTED_ANIONS[product["formula"]]
             continue
-        row = {column: elements.get(ELEMENT[column], 0.0) * 10.0 / MASS[ELEMENT[column]] for column in COLUMNS[:-1]}
+        row = {
+            column: elements.get(ELEMENT[column], 0.0) * 10.0 / MASS[ELEMENT[column]]
+            for column in COLUMNS[:-1]
+        }
         row["H+"] = H_PER_P.get(product.get("formula"), 0.0) * row["H2PO4-"]
         rows[product["name"]] = row
     return rows, excluded
@@ -106,8 +135,12 @@ def validate_translation(products, rows):
 def write_ferts(rows, path):
     """The authors' 'ferts' layout: name, ten ion columns (mmol/g), price (EUR/kg), density."""
     import pandas as pd
-    frame = pd.DataFrame([[row[c] for c in COLUMNS] + [1.0, 1.0] for row in rows.values()],
-                         index=list(rows), columns=[*COLUMNS, "price (euro/kg)", "d (g/cm3)"])
+
+    frame = pd.DataFrame(
+        [[row[c] for c in COLUMNS] + [1.0, 1.0] for row in rows.values()],
+        index=list(rows),
+        columns=[*COLUMNS, "price (euro/kg)", "d (g/cm3)"],
+    )
     with pd.ExcelWriter(path) as writer:
         frame.to_excel(writer, sheet_name="ferts")
     return path
@@ -115,7 +148,9 @@ def write_ferts(rows, path):
 
 def mmol_per_litre(mg_per_litre):
     """FlahaX elemental mg/L -> the Irriblend ion vector, mmol/L, HCO3- last."""
-    return [float(mg_per_litre.get(ELEMENT[c], 0.0)) / MASS[ELEMENT[c]] for c in COLUMNS[:-1]] + [0.0]
+    return [float(mg_per_litre.get(ELEMENT[c], 0.0)) / MASS[ELEMENT[c]] for c in COLUMNS[:-1]] + [
+        0.0
+    ]
 
 
 class Irriblend:
@@ -132,11 +167,16 @@ class Irriblend:
     def solve(self, targets, water):
         """{'salts': [...]} as the optimiser returns it, or None when its own filter rejects it."""
         ideal = mmol_per_litre(targets)
-        _, names, grams, final = self.module.ferti_eco_min(str(self.ferts), ideal, mmol_per_litre(water), 0.0,
-                                                           MAX_EC_NON_BINDING)
-        if final[0] < ideal[0]:          # the authors' filter in read_input_and_run_simulation
+        _, names, grams, final = self.module.ferti_eco_min(
+            str(self.ferts), ideal, mmol_per_litre(water), 0.0, MAX_EC_NON_BINDING
+        )
+        if final[0] < ideal[0]:  # the authors' filter in read_input_and_run_simulation
             return None
-        return {"salts": [{"id": self.ids[name], "gramsPerLitre": float(g)} for name, g in zip(names, grams)]}
+        return {
+            "salts": [
+                {"id": self.ids[name], "gramsPerLitre": float(g)} for name, g in zip(names, grams)
+            ]
+        }
 
     def close(self):
         self._dir.cleanup()

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Drive Horticalc (pinned v0.6.7, commit db4e68c) with the FlahaX catalogue.
 
 Horticalc stores composition as forms: N as elemental N per form (NO3, NH4,
@@ -5,12 +9,17 @@ UREA), P/K/Ca/Mg/Na as oxides, S as SO4, Si as SiO2, traces as elements. The
 translation inverts Horticalc's own conversion rules with its own molar masses,
 so the round trip is exact; `validate_translation` proves it before any solve.
 """
+
 from horticalc import chemistry
 from horticalc.data_io import Fertilizer, load_molar_masses
 from horticalc.solver import solve_recipe_data
 
-PIN = {"repository": "https://github.com/onethree7/Horticalc", "tag": "v0.6.7",
-       "commit": "db4e68c76639df2920f43be06c77dd4c16498863", "licence": "GPL-3.0-or-later"}
+PIN = {
+    "repository": "https://github.com/onethree7/Horticalc",
+    "tag": "v0.6.7",
+    "commit": "db4e68c76639df2920f43be06c77dd4c16498863",
+    "licence": "GPL-3.0-or-later",
+}
 N_FORMS = {"N_NO3": "NO3", "N_NH4": "NH4", "N_UREA": "UREA"}
 CONFIGS = {
     # Shipped defaults: total-N objective only; S, Na and Cl report-only.
@@ -43,13 +52,16 @@ def translate(salts, mm=None):
                 continue
             form, mult = _form_for(key)
             comp[form] = comp.get(form, 0.0) + fraction * mm[form] / (mult * mm[key])
-        out[salt["name"]] = Fertilizer(name=salt["name"], liquid=False, weight_factor=1.0, comp=comp)
+        out[salt["name"]] = Fertilizer(
+            name=salt["name"], liquid=False, weight_factor=1.0, comp=comp
+        )
     return out
 
 
 def validate_translation(salts, ferts, mm=None):
     """Largest relative difference over all element contributions at 1 g/L."""
     from horticalc.solver import _fertilizer_element_contrib_per_g
+
     mm = mm or load_molar_masses()
     worst = 0.0
     for salt in salts:
@@ -62,9 +74,18 @@ def validate_translation(salts, ferts, mm=None):
 
 def solve(ferts, targets, water, config, mm=None):
     """Return {name: g/L} for one formula and water under a Horticalc configuration."""
-    recipe = {"liters": 1.0, "osmosis_percent": 0, "urea_as_nh4": False,
-              "fertilizers_allowed": list(ferts), "targets": dict(targets),
-              "solver_config": dict(CONFIGS[config])}
-    result = solve_recipe_data(recipe, ferts=ferts, mm=mm or load_molar_masses(),
-                               water_profile_data={"mg_per_l": dict(water), "osmosis_percent": 0})
+    recipe = {
+        "liters": 1.0,
+        "osmosis_percent": 0,
+        "urea_as_nh4": False,
+        "fertilizers_allowed": list(ferts),
+        "targets": dict(targets),
+        "solver_config": dict(CONFIGS[config]),
+    }
+    result = solve_recipe_data(
+        recipe,
+        ferts=ferts,
+        mm=mm or load_molar_masses(),
+        water_profile_data={"mg_per_l": dict(water), "osmosis_percent": 0},
+    )
     return result

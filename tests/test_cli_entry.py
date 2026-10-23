@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """The bare ``flahax`` command: start screen, --version, program name, Ctrl+C (field test 2026-10-23)."""
+
 import contextlib
 import io
 import unittest
@@ -15,8 +20,12 @@ class Terminal(io.StringIO):
 
 def run(*argv, stdin=None):
     out, err = io.StringIO(), io.StringIO()
-    with mock.patch('sys.argv', ['flahax', *argv]), mock.patch('sys.stdin', stdin or Terminal()), \
-            contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+    with (
+        mock.patch('sys.argv', ['flahax', *argv]),
+        mock.patch('sys.stdin', stdin or Terminal()),
+        contextlib.redirect_stdout(out),
+        contextlib.redirect_stderr(err),
+    ):
         try:
             code = main()
         except SystemExit as exc:
@@ -43,8 +52,12 @@ class EntryTests(unittest.TestCase):
         self.assertEqual((code, err.strip()), (130, 'Stopped.'))
 
     def test_piped_json_still_gives_a_recommendation(self):
-        request = io.StringIO('{"targets": {"K": 100}, "salts": %s}' % __import__('json').dumps(
-            [s for s in flahax.load_library()['salts'] if s['name'] == 'Potassium Sulfate']))
+        request = io.StringIO(
+            '{"targets": {"K": 100}, "salts": %s}'
+            % __import__('json').dumps(
+                [s for s in flahax.load_library()['salts'] if s['name'] == 'Potassium Sulfate']
+            )
+        )
         code, out, _ = run(stdin=request)
         self.assertEqual(code, 0)
         self.assertIn('Potassium Sulfate', out)

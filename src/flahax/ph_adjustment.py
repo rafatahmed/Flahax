@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """pH adjustment planned together with the recipe (#74, #75, #76, #77).
 
 A reagent that corrects pH also supplies nutrients: nitric acid adds nitrate-N,
@@ -11,6 +15,7 @@ given a pH plan (#77). The dose itself is the same equilibrium solve for acids a
 bases: the reagent's anion (acid) or cation (base) is added at the target pH until
 the solution is electrically neutral again.
 """
+
 from dataclasses import dataclass
 import math
 from collections.abc import Callable, Mapping, Sequence
@@ -72,12 +77,14 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
     def gap(dose):
         return sign * (at(dose).charge_balance - initial.charge_balance)
 
-    target = at(0.)
+    target = at(0.0)
     g_low = sign * (target.charge_balance - initial.charge_balance)
     if g_low < -1e-12:
-        raise DeliveryError('wrong_reagent_direction', f'target requires the opposite reagent to {formula} '
-                                                       'under this phase policy')
-    low, high = 0., 1e-6
+        raise DeliveryError(
+            'wrong_reagent_direction',
+            f'target requires the opposite reagent to {formula} ' 'under this phase policy',
+        )
+    low, high = 0.0, 1e-6
     for _ in range(32):
         g_high = gap(high)
         if g_high <= 0:
@@ -87,7 +94,7 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
     else:
         raise DeliveryError('nonconvergent', 'reagent demand could not be bracketed')
     # Same final width as 40 bisection steps from [0, high].
-    low, high = shrink_bracket(gap, low, g_low, high, g_high, width=high * 2. ** -40)
+    low, high = shrink_bracket(gap, low, g_low, high, g_high, width=high * 2.0**-40)
     dose = (low + high) / 2
     return dose, at(dose)
 
@@ -130,7 +137,12 @@ class PhAdjustmentPlan:
 
 
 def _positive(value, name):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
         raise DeliveryError('invalid_value', f'{name} must be finite and positive')
     return float(value)
 
@@ -155,12 +167,28 @@ def _check_product(product):
 def nutrient_salts(salts):
     """Products the coupled plan offers to the nutrient fit: no pH reagents and no acids (#76)."""
     acids = {formula for formula, (direction, *_rest) in REAGENTS.items() if direction == 'acid'}
-    return [s for s in salts if s.get('role') != PH_REAGENT and str(s.get('formula') or '') not in acids]
+    return [
+        s
+        for s in salts
+        if s.get('role') != PH_REAGENT and str(s.get('formula') or '') not in acids
+    ]
 
 
-def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable[[dict], AqueousResult],
-                    water_mass_kg, final_volume_litres, maximum_reagent_volume_litres,
-                    preferred_product_id=None, phases=(), maximum_concentrations=None):
+def plan_coupled_ph(
+    salts,
+    targets,
+    water,
+    target_ph,
+    *,
+    products,
+    mix: Callable[[dict], AqueousResult],
+    water_mass_kg,
+    final_volume_litres,
+    maximum_reagent_volume_litres,
+    preferred_product_id=None,
+    phases=(),
+    maximum_concentrations=None,
+):
     """Fit the recipe and its pH reagent together; one candidate per offered product.
 
     mix(recommendation) returns the mixed state (water and products, before any
@@ -174,10 +202,14 @@ def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable
     if not isinstance(products, (list, tuple)) or not products:
         raise DeliveryError('missing_field', 'sourced pH reagent product records are required')
     identifiers = [p.get('id') if isinstance(p, Mapping) else None for p in products]
-    if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(set(identifiers)) != len(identifiers):
+    if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(
+        set(identifiers)
+    ) != len(identifiers):
         raise DeliveryError('invalid_value', 'reagent product IDs must be unique nonempty strings')
     if preferred_product_id is not None and preferred_product_id not in identifiers:
-        raise DeliveryError('unknown_product', 'requested reagent product is not in the supplied list')
+        raise DeliveryError(
+            'unknown_product', 'requested reagent product is not in the supplied list'
+        )
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
         raise DeliveryError('invalid_type', 'phases must be an explicit sequence')
     phases = tuple(phases)
@@ -196,61 +228,163 @@ def plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: Callable
             reagent_direction, _, molar_mass, nutrients = REAGENTS[formula]
             if direction == 'none':
                 # No reagent, but the same final acceptance as every dosed candidate (#84).
-                status, code, message, saturation = _judge(unadjusted, base_state, maximum_concentrations,
-                                                           accepted='not_needed')
-                candidates.append(PhCandidate(identity, formula, reagent_direction, status, 0.0, 0.0,
-                                              0.0 if density else None, {}, unadjusted, base_state, base_state,
-                                              loss=_loss(unadjusted), error_code=code, message=message,
-                                              product_record=dict(product), saturation=saturation))
+                status, code, message, saturation = _judge(
+                    unadjusted, base_state, maximum_concentrations, accepted='not_needed'
+                )
+                candidates.append(
+                    PhCandidate(
+                        identity,
+                        formula,
+                        reagent_direction,
+                        status,
+                        0.0,
+                        0.0,
+                        0.0 if density else None,
+                        {},
+                        unadjusted,
+                        base_state,
+                        base_state,
+                        loss=_loss(unadjusted),
+                        error_code=code,
+                        message=message,
+                        product_record=dict(product),
+                        saturation=saturation,
+                    )
+                )
                 continue
             if reagent_direction != direction:
-                candidates.append(PhCandidate(identity, formula, reagent_direction, 'not_applicable',
-                                              error_code='wrong_reagent_direction',
-                                              message=f'the feed mixes at pH {base_state.ph:.2f} and must be '
-                                                      f'{"raised" if direction == "base" else "lowered"} to {target_ph:g}',
-                                              product_record=dict(product)))
+                candidates.append(
+                    PhCandidate(
+                        identity,
+                        formula,
+                        reagent_direction,
+                        'not_applicable',
+                        error_code='wrong_reagent_direction',
+                        message=f'the feed mixes at pH {base_state.ph:.2f} and must be '
+                        f'{"raised" if direction == "base" else "lowered"} to {target_ph:g}',
+                        product_record=dict(product),
+                    )
+                )
                 continue
-            candidates.append(_couple(pool, targets, water, target_ph, product, fraction, density, molar_mass,
-                                      nutrients, mix, mass, volume, cap, phases, maximum_concentrations))
+            candidates.append(
+                _couple(
+                    pool,
+                    targets,
+                    water,
+                    target_ph,
+                    product,
+                    fraction,
+                    density,
+                    molar_mass,
+                    nutrients,
+                    mix,
+                    mass,
+                    volume,
+                    cap,
+                    phases,
+                    maximum_concentrations,
+                )
+            )
         except DeliveryError as exc:
-            candidates.append(PhCandidate(identity, formula, REAGENTS.get(formula, ('unknown',))[0], 'rejected',
-                                          error_code=exc.code, message=str(exc),
-                                          product_record=dict(product) if isinstance(product, Mapping) else None))
+            candidates.append(
+                PhCandidate(
+                    identity,
+                    formula,
+                    REAGENTS.get(formula, ('unknown',))[0],
+                    'rejected',
+                    error_code=exc.code,
+                    message=str(exc),
+                    product_record=dict(product) if isinstance(product, Mapping) else None,
+                )
+            )
     # Accepted plans first; a plan with review-only findings (#78) is usable after review.
-    usable = [c for c in candidates if c.status in ('accepted', 'not_needed', 'requires_review')
-              and (preferred_product_id is None or c.product_id == preferred_product_id)]
-    selected = min(usable, key=lambda c: (c.status == 'requires_review', c.loss,
-                                          identifiers.index(c.product_id))).product_id if usable else None
-    policy = ('explicit user choice; no fallback' if preferred_product_id is not None
-              else 'lowest final nutrient loss; input order breaks ties')
-    return PhAdjustmentPlan(float(target_ph), base_state.ph, direction, tuple(candidates), selected, policy,
-                            unadjusted)
+    usable = [
+        c
+        for c in candidates
+        if c.status in ('accepted', 'not_needed', 'requires_review')
+        and (preferred_product_id is None or c.product_id == preferred_product_id)
+    ]
+    selected = (
+        min(
+            usable,
+            key=lambda c: (c.status == 'requires_review', c.loss, identifiers.index(c.product_id)),
+        ).product_id
+        if usable
+        else None
+    )
+    policy = (
+        'explicit user choice; no fallback'
+        if preferred_product_id is not None
+        else 'lowest final nutrient loss; input order breaks ties'
+    )
+    return PhAdjustmentPlan(
+        float(target_ph), base_state.ph, direction, tuple(candidates), selected, policy, unadjusted
+    )
 
 
 def _loss(recommendation):
-    return sum((row['deltaPct'] / 100) ** 2 for row in recommendation['rows'] if row['deltaPct'] is not None)
+    return sum(
+        (row['deltaPct'] / 100) ** 2
+        for row in recommendation['rows']
+        if row['deltaPct'] is not None
+    )
 
 
 def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
     """Final acceptance of one candidate: dose, hard limits, then saturation; review never outranks a rejection."""
-    incidental = assess_incidental(recommendation['rows'], assessed_limits(maximum_concentrations, recommendation))
+    incidental = assess_incidental(
+        recommendation['rows'], assessed_limits(maximum_concentrations, recommendation)
+    )
     saturation = assess_saturation(target)
     if over_dose:
-        return 'rejected', 'dose_limit_exceeded', 'dose exceeds the reagent volume limit or solvent inventory', saturation
+        return (
+            'rejected',
+            'dose_limit_exceeded',
+            'dose exceeds the reagent volume limit or solvent inventory',
+            saturation,
+        )
     if incidental['limitViolations']:
-        return 'rejected', 'nutrient_limit_exceeded', 'the plan exceeds an explicit nutrient maximum', saturation
+        return (
+            'rejected',
+            'nutrient_limit_exceeded',
+            'the plan exceeds an explicit nutrient maximum',
+            saturation,
+        )
     if saturation['blocks']:
-        return ('rejected', 'precipitation_risk',
-                'precipitation risk at the target pH: ' + '; '.join(describe(saturation)), saturation)
+        return (
+            'rejected',
+            'precipitation_risk',
+            'precipitation risk at the target pH: ' + '; '.join(describe(saturation)),
+            saturation,
+        )
     if incidental['requiresReview'] or saturation['review'] or saturation['advisories']:
         findings = describe(saturation) + saturation['advisories']
-        return ('requires_review', None,
-                '; '.join(findings) if findings else 'incidental nutrient contributions need review', saturation)
+        return (
+            'requires_review',
+            None,
+            '; '.join(findings) if findings else 'incidental nutrient contributions need review',
+            saturation,
+        )
     return accepted, None, None, saturation
 
 
-def _couple(pool, targets, water, target_ph, product, fraction, density, molar_mass, nutrients, mix,
-            mass, volume, cap, phases, maximum_concentrations):
+def _couple(
+    pool,
+    targets,
+    water,
+    target_ph,
+    product,
+    fraction,
+    density,
+    molar_mass,
+    nutrients,
+    mix,
+    mass,
+    volume,
+    cap,
+    phases,
+    maximum_concentrations,
+):
     """Find the reagent dose the recipe fitted for that dose's nutrients actually needs.
 
     F(d) is the dose required by the recipe fitted with supply water + reagent(d).
@@ -270,9 +404,13 @@ def _couple(pool, targets, water, target_ph, product, fraction, density, molar_m
             supply = dict(water)
             for ion, mg in contribution(assumed).items():
                 supply[ion] = supply.get(ion, 0.0) + mg
-            recommendation = recommend(pool, targets, supply, maximum_concentrations=maximum_concentrations)
+            recommendation = recommend(
+                pool, targets, supply, maximum_concentrations=maximum_concentrations
+            )
             mixed = mix(recommendation)
-            dose, target = reagent_dose(mixed.totals, mixed.ph, target_ph, formula, phases=phases, initial=mixed)
+            dose, target = reagent_dose(
+                mixed.totals, mixed.ph, target_ph, formula, phases=phases, initial=mixed
+            )
             cache[assumed] = (dose, recommendation, mixed, target)
         return cache[assumed]
 
@@ -297,10 +435,20 @@ def _couple(pool, targets, water, target_ph, product, fraction, density, molar_m
                 break
             high *= 2
         else:
-            raise DeliveryError('nonconvergent', f'{formula} dose could not be bracketed against the recipe')
+            raise DeliveryError(
+                'nonconvergent', f'{formula} dose could not be bracketed against the recipe'
+            )
         low = max([x for x in below if x < high], default=0.0)
-        shrink_bracket(gap, low, gap(low), high, gap(high), relative=DOSE_TOLERANCE,
-                       accept=lambda x, g_x, lo, hi: settled(x), max_steps=60)
+        shrink_bracket(
+            gap,
+            low,
+            gap(low),
+            high,
+            gap(high),
+            relative=DOSE_TOLERANCE,
+            accept=lambda x, g_x, lo, hi: settled(x),
+            max_steps=60,
+        )
         assumed = min(cache, key=lambda x: abs(gap(x)) / max(evaluate(x)[0], 1e-12))
     dose, recommendation, mixed, target = evaluate(assumed)
     if not settled(assumed):
@@ -309,16 +457,42 @@ def _couple(pool, targets, water, target_ph, product, fraction, density, molar_m
         for ion, mg in contribution(dose).items():
             achieved[ion] = achieved.get(ion, 0.0) + mg - contribution(assumed).get(ion, 0.0)
         loss, rows = score(achieved, targets)
-        recommendation = dict(recommendation, rows=rows, loss=loss, feasible=all(
-            abs(r['deltaPct']) <= TOLERANCE_PCT for r in rows if r['deltaPct'] is not None)
-            and not recommendation.get('limitViolations'))
+        recommendation = dict(
+            recommendation,
+            rows=rows,
+            loss=loss,
+            feasible=all(
+                abs(r['deltaPct']) <= TOLERANCE_PCT for r in rows if r['deltaPct'] is not None
+            )
+            and not recommendation.get('limitViolations'),
+        )
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
-    over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (1 - fraction) > mass * 1000
-    status, code, message, saturation = _judge(recommendation, target, maximum_concentrations, over_dose)
-    return PhCandidate(identity, formula, REAGENTS[formula][0], status, dose, grams, litres, contribution(dose),
-                       recommendation, mixed, target, len(cache), _loss(recommendation), code, message, dict(product),
-                       saturation)
+    over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (
+        1 - fraction
+    ) > mass * 1000
+    status, code, message, saturation = _judge(
+        recommendation, target, maximum_concentrations, over_dose
+    )
+    return PhCandidate(
+        identity,
+        formula,
+        REAGENTS[formula][0],
+        status,
+        dose,
+        grams,
+        litres,
+        contribution(dose),
+        recommendation,
+        mixed,
+        target,
+        len(cache),
+        _loss(recommendation),
+        code,
+        message,
+        dict(product),
+        saturation,
+    )
 
 
 def catalogue_ph_reagents():
@@ -332,8 +506,16 @@ def catalogue_ph_reagents():
         if salt.get('role') != PH_REAGENT:
             continue
         source = salt.get('source') or {}
-        records.append({'id': salt['id'], 'name': salt['name'], 'chemicalFormula': salt['formula'],
-                        'massFraction': salt.get('massFraction', 1.0), 'densityKgPerL': salt.get('densityKgPerL'),
-                        'source': source.get('title') or 'FlahaX catalogue', 'revision': salt['analysisBasis'],
-                        'recordedAt': source.get('entered') or 'catalogue'})
+        records.append(
+            {
+                'id': salt['id'],
+                'name': salt['name'],
+                'chemicalFormula': salt['formula'],
+                'massFraction': salt.get('massFraction', 1.0),
+                'densityKgPerL': salt.get('densityKgPerL'),
+                'source': source.get('title') or 'FlahaX catalogue',
+                'revision': salt['analysisBasis'],
+                'recordedAt': source.get('entered') or 'catalogue',
+            }
+        )
     return records

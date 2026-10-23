@@ -20,6 +20,24 @@ Keep code and documentation product-focused. Do not add assistant attribution
 or generated-by branding. Maintain source/license attribution where required.
 Never commit credentials, executables or private/local-only source material.
 
+## Code style
+
+FlahaX follows PEP 8 with a line length of 99 characters (the team allowance PEP 8 gives). The
+settings are in `pyproject.toml`; `ruff` is a development tool only, never a runtime dependency.
+
+```bash
+python -m pip install ruff==0.8.4
+ruff format .
+ruff check .
+```
+
+Every Python file starts, in this order, with: a shebang (`#!/usr/bin/env python3`) only for
+runnable tools and examples; the header comments (SPDX copyright and license, and the
+disclaimer); the module docstring; `from __future__` imports; module dunders such as `__all__`
+and `__version__`; then the imports. No encoding line is needed. Code must also run on
+Python 3.11: inside an f-string, use the other quote type in replacement fields.
+`tests/test_file_headers.py` and the CI `style` job check all of this.
+
 ## Required validation
 
 ```powershell

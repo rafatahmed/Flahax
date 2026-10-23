@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""Tests for flahax.stock_planning."""
+
 import unittest
 
 from flahax import (
@@ -83,24 +89,59 @@ class StockPlanning(unittest.TestCase):
 
     def test_infeasible_recipe_and_missing_temperature_limit_are_rejected(self):
         with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(recipe(False), InjectionRatio(100), [StockTank("A", VolumeLitres(2))], [], limits(), TemperatureCelsius(20))
+            plan_stocks(
+                recipe(False),
+                InjectionRatio(100),
+                [StockTank("A", VolumeLitres(2))],
+                [],
+                limits(),
+                TemperatureCelsius(20),
+            )
         self.assertEqual(caught.exception.code, "infeasible_recipe")
 
         with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(recipe(), InjectionRatio(100), [StockTank("A", VolumeLitres(2))], [], limits(), TemperatureCelsius(40))
+            plan_stocks(
+                recipe(),
+                InjectionRatio(100),
+                [StockTank("A", VolumeLitres(2))],
+                [],
+                limits(),
+                TemperatureCelsius(40),
+            )
         self.assertEqual(caught.exception.code, "missing_solubility_limit")
 
     def test_limit_capacity_and_assignment_fail_closed(self):
         with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(recipe(), InjectionRatio(100), [StockTank("A", VolumeLitres(2))], [], limits(calcium_limit=49), TemperatureCelsius(20))
+            plan_stocks(
+                recipe(),
+                InjectionRatio(100),
+                [StockTank("A", VolumeLitres(2))],
+                [],
+                limits(calcium_limit=49),
+                TemperatureCelsius(20),
+            )
         self.assertEqual(caught.exception.code, "solubility_exceeded")
 
         with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(recipe(), InjectionRatio(100), [StockTank("A", VolumeLitres(0.5))], [], limits(), TemperatureCelsius(20))
+            plan_stocks(
+                recipe(),
+                InjectionRatio(100),
+                [StockTank("A", VolumeLitres(0.5))],
+                [],
+                limits(),
+                TemperatureCelsius(20),
+            )
         self.assertEqual(caught.exception.code, "capacity_exceeded")
 
         with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(recipe(), InjectionRatio(100), [StockTank("A", VolumeLitres(2))], [rule()], limits(), TemperatureCelsius(20))
+            plan_stocks(
+                recipe(),
+                InjectionRatio(100),
+                [StockTank("A", VolumeLitres(2))],
+                [rule()],
+                limits(),
+                TemperatureCelsius(20),
+            )
         self.assertEqual(caught.exception.code, "no_stock_assignment")
 
 

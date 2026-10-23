@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Every missed target is explained (#39): no source, a binding limit, or named conflicts."""
+
 import unittest
 
 from flahax import load_library, recommend
@@ -28,7 +33,9 @@ class UnmetTargetTests(unittest.TestCase):
         self.assertAlmostEqual(si["deltaPct"], -100.0)
 
     def test_calcium_nitrate_conflict_names_partner_and_chloride_route(self):
-        result = recommend(SALTS, formula("Tomatoes - till First Cluster (U of Florida)")["targets"], {})
+        result = recommend(
+            SALTS, formula("Tomatoes - till First Cluster (U of Florida)")["targets"], {}
+        )
         ca = unmet(result)["Ca"]
         self.assertEqual(ca["reason"], "conflicting_targets")
         self.assertIn("N_NO3", ca["conflictsWith"])
@@ -48,8 +55,11 @@ class UnmetTargetTests(unittest.TestCase):
             for water in ({}, {"Ca": 20}):
                 with self.subTest(formula=f["name"], water=water):
                     result = recommend(SALTS, f["targets"], water)
-                    missed = {row["symbol"] for row in result["rows"]
-                              if row["deltaPct"] is not None and abs(row["deltaPct"]) > 1.0}
+                    missed = {
+                        row["symbol"]
+                        for row in result["rows"]
+                        if row["deltaPct"] is not None and abs(row["deltaPct"]) > 1.0
+                    }
                     self.assertEqual(missed, set(unmet(result)))
                     for item in result["unmetTargets"]:
                         self.assertIn(item["reason"], reasons)

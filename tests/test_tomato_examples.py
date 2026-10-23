@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Tomato examples: the statements their report and batch sheets make must hold."""
+
 import re
 import unittest
 
@@ -13,7 +18,9 @@ PRODUCTS = {p['name']: p for p in load_library()['salts']}
 
 def compatible(tank):
     classes = [product_classes(PRODUCTS[p['name']]) for p in tank['products']]
-    return all(_class_conflict(a, b) is None for i, a in enumerate(classes) for b in classes[i + 1:])
+    return all(
+        _class_conflict(a, b) is None for i, a in enumerate(classes) for b in classes[i + 1 :]
+    )
 
 
 class SimpleTomatoTests(unittest.TestCase):
@@ -26,7 +33,9 @@ class SimpleTomatoTests(unittest.TestCase):
         for row in self.r['nutrients']:
             self.assertLessEqual(abs(row['deltaPct']), 1.0, row['symbol'])
         for item in self.r['recipe']:
-            self.assertAlmostEqual(item['grams_in_batch'], item['grams_per_litre'] * self.r['batch_litres'], places=6)
+            self.assertAlmostEqual(
+                item['grams_in_batch'], item['grams_per_litre'] * self.r['batch_litres'], places=6
+            )
             self.assertTrue(item['identity'])
 
     def test_balance_and_ec_are_reported(self):
@@ -53,26 +62,40 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertAlmostEqual(chosen['Cl'], 102.4, places=1)
         self.assertGreater(blends[9]['Cl'], limits['Cl'])
         self.assertLess(blends[9]['Cl_model'], limits['Cl'])
-        one_more = tomato_advanced.water_mg_l({k: v * .09 for k, v in _balanced().analytical_totals.items()})
+        one_more = tomato_advanced.water_mg_l(
+            {k: v * 0.09 for k, v in _balanced().analytical_totals.items()}
+        )
         self.assertGreater(one_more['Cl'], limits['Cl'])
-        self.assertAlmostEqual(self.r['chloride_boundary_percent'], 100 * limits['Cl'] / 1280.4, places=9)
+        self.assertAlmostEqual(
+            self.r['chloride_boundary_percent'], 100 * limits['Cl'] / 1280.4, places=9
+        )
 
     def test_phosphoric_acid_is_withdrawn_because_it_overacidifies(self):
         check = self.r['phosphoric_check']
         self.assertGreater(check['phosphoric_g_per_litre'], 0)
         self.assertLess(check['mixed_ph'], self.r['target_ph'])
-        self.assertNotIn(tomato_advanced.PHOSPHORIC, [s['name'] for s in self.r['recipe']['salts']])
+        self.assertNotIn(
+            tomato_advanced.PHOSPHORIC, [s['name'] for s in self.r['recipe']['salts']]
+        )
         self.assertGreater(self.r['chemistry']['mixed_ph'], self.r['target_ph'])
 
     def test_acids_are_evaluated_and_the_nitric_dose_closes_the_nitrate_gap(self):
         acid = self.r['acid']
-        self.assertEqual({c['product'] for c in acid['candidates']}, {'HNO3-example', 'H3PO4-example'})
-        self.assertIsNone(acid['selected'])   # nitric needs review (#78); phosphoric misses P
-        self.assertEqual({c['product']: c['status'] for c in acid['candidates']}['HNO3-example'], 'requires_review')
+        self.assertEqual(
+            {c['product'] for c in acid['candidates']}, {'HNO3-example', 'H3PO4-example'}
+        )
+        self.assertIsNone(acid['selected'])  # nitric needs review (#78); phosphoric misses P
+        self.assertEqual(
+            {c['product']: c['status'] for c in acid['candidates']}['HNO3-example'],
+            'requires_review',
+        )
         self.assertTrue(acid['supersaturated_after_acid'])
         self.assertGreater(acid['nitric_ml_per_batch'], 0)
-        miss = abs(acid['nitrate_after_mg_l'] - acid['nitrate_target_mg_l']) / acid['nitrate_target_mg_l']
-        self.assertLess(miss, .01)
+        miss = (
+            abs(acid['nitrate_after_mg_l'] - acid['nitrate_target_mg_l'])
+            / acid['nitrate_target_mg_l']
+        )
+        self.assertLess(miss, 0.01)
         self.assertLess(abs(self.r['ec']['acidified']['ph'] - self.r['target_ph']), 1e-6)
 
     def test_tanks_follow_the_cited_table_and_stages_are_separate_batches(self):
@@ -85,7 +108,10 @@ class AdvancedTomatoTests(unittest.TestCase):
 class TomatoReportTests(unittest.TestCase):
     def test_report_and_sheets_are_complete_and_offline(self):
         files = build()
-        self.assertEqual(set(files), {'tomato-report.html', 'batch-sheet-simple.html', 'batch-sheet-advanced.html'})
+        self.assertEqual(
+            set(files),
+            {'tomato-report.html', 'batch-sheet-simple.html', 'batch-sheet-advanced.html'},
+        )
         for name, html in files.items():
             self.assertTrue(html.startswith('<!doctype html>'), name)
             self.assertNotIn('<script', html)
@@ -104,7 +130,11 @@ class TomatoReportTests(unittest.TestCase):
 
 def _balanced():
     from flahax import balance_water_analysis
-    well = {i: mg / tomato_advanced.GRAMS_PER_MOL[i] / 1000 for i, mg in tomato_advanced.WELL_MG_L.items()}
+
+    well = {
+        i: mg / tomato_advanced.GRAMS_PER_MOL[i] / 1000
+        for i, mg in tomato_advanced.WELL_MG_L.items()
+    }
     return balance_water_analysis(well, measured_ph=tomato_advanced.WELL_PH)
 
 

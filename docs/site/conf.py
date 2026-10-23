@@ -1,4 +1,5 @@
 """Sphinx configuration for the FlahaX documentation site."""
+
 import os
 
 from flahax import __version__

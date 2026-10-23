@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Source-versioned CH-micro EDTA, borax, and molybdate equilibrium model.
 
 The model deliberately represents the declared product components rather than
@@ -13,8 +17,6 @@ import math
 from typing import Mapping
 
 from .delivery_contracts import DeliveryError
-from .equilibrium import davies_gamma
-from .catalogue_chemistry import LIGAND_PROFILES
 
 
 # molar masses, g mol-1; used only to convert the declared elemental assay.
@@ -80,12 +82,12 @@ class ChMicroProductDose:
         _nonnegative(calcium=calcium, magnesium=magnesium)
         grams = self.product_g_per_kg_water
         values = {
-            "iron": grams * .0700 / MOLAR_MASS["Fe"],
-            "manganese": grams * .0200 / MOLAR_MASS["Mn"],
-            "zinc": grams * .0040 / MOLAR_MASS["Zn"],
-            "copper": grams * .0011 / MOLAR_MASS["Cu"],
-            "boron": grams * .0130 / MOLAR_MASS["B"],
-            "molybdate": grams * .0005 / MOLAR_MASS["Mo"],
+            "iron": grams * 0.0700 / MOLAR_MASS["Fe"],
+            "manganese": grams * 0.0200 / MOLAR_MASS["Mn"],
+            "zinc": grams * 0.0040 / MOLAR_MASS["Zn"],
+            "copper": grams * 0.0011 / MOLAR_MASS["Cu"],
+            "boron": grams * 0.0130 / MOLAR_MASS["B"],
+            "molybdate": grams * 0.0005 / MOLAR_MASS["Mo"],
         }
         values["edta"] = values["iron"] + values["manganese"] + values["zinc"] + values["copper"]
         values["calcium"] = calcium
@@ -107,16 +109,25 @@ class TraceEquilibrium:
 def _valid_ph_and_i(ph: float, ionic_strength: float) -> None:
     if not math.isfinite(ph) or not 0 <= ph <= 14:
         raise DeliveryError("out_of_range", "pH must be finite and in [0, 14]")
-    if not math.isfinite(ionic_strength) or not 0 <= ionic_strength <= .1:
-        raise DeliveryError("activity_model_out_of_range", "trace model requires 0 <= I <= 0.1 mol/kgw")
+    if not math.isfinite(ionic_strength) or not 0 <= ionic_strength <= 0.1:
+        raise DeliveryError(
+            "activity_model_out_of_range", "trace model requires 0 <= I <= 0.1 mol/kgw"
+        )
 
 
-def solve_ch_micro_equilibrium(totals: ChMicroTotals, ph: float, ionic_strength: float) -> TraceEquilibrium:
+def solve_ch_micro_equilibrium(
+    totals: ChMicroTotals, ph: float, ionic_strength: float
+) -> TraceEquilibrium:
     """Fixed-I view of the same simultaneous aqueous mass-action model."""
     if not isinstance(totals, ChMicroTotals):
         raise DeliveryError("invalid_type", "totals must be ChMicroTotals")
     _valid_ph_and_i(ph, ionic_strength)
     from .aqueous_model import solve
     from .mixed_equilibrium import TRACE_BASIS, view
-    result=solve({b:getattr(totals,n) for n,b in TRACE_BASIS.items()},ph,ionic_strength=ionic_strength)
-    return TraceEquilibrium(totals,ph,ionic_strength,view(result.species),view(result.activities))
+
+    result = solve(
+        {b: getattr(totals, n) for n, b in TRACE_BASIS.items()}, ph, ionic_strength=ionic_strength
+    )
+    return TraceEquilibrium(
+        totals, ph, ionic_strength, view(result.species), view(result.activities)
+    )
