@@ -1,5 +1,8 @@
 # Development and release conventions
 
+Everyone who takes part in FlahaX follows the [code of conduct](CODE_OF_CONDUCT.md)
+(Contributor Covenant 2.1).
+
 ## Branch names
 
 Name branches after the phase, issue, stage or release being delivered.
