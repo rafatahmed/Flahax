@@ -10,6 +10,10 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+### Added
+
+- The Zenodo DOI in `CITATION.cff` and the README: concept DOI 10.5281/zenodo.23605678, version 0.6.0 10.5281/zenodo.23605679.
+
 ## [0.6.0] - 2026-10-24
 
 The grower release: FlahaX becomes a tool a grower or agronomist can run without code

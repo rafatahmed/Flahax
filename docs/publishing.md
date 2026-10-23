@@ -104,12 +104,12 @@ Dashboard settings, recorded here because they live outside the repository:
 - [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
 - [x] Observe successful hosted checks on the merged revision (Linux 3.11-3.14, Windows and macOS 3.13).
 - [x] Date the changelog, the manual's version line and `CITATION.cff` (2026-10-24), and merge, before tagging (#71).
-- [ ] Obtain explicit publication authorization.
-- [ ] Publish the `v0.6.0` GitHub Release; review the run; approve the deployment.
-- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
-- [ ] Confirm the Read the Docs `stable` version builds `v0.6.0`.
-- [ ] Zenodo: confirm the archived version and its DOI; add the concept DOI to `CITATION.cff` and the README.
-- [ ] Open 0.6.1.dev0 on `main` (step 7; closes #134 with the README reinstall note).
+- [x] Obtain explicit publication authorization.
+- [x] Publish the `v0.6.0` GitHub Release; review the run; approve the deployment.
+- [x] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+- [x] Confirm the Read the Docs `stable` version builds `v0.6.0`.
+- [x] Zenodo: confirm the archived version and its DOI; add the concept DOI to `CITATION.cff` and the README.
+- [x] Open 0.6.1.dev0 on `main` (step 7; closes #134 with the README reinstall note).
 
 ## Checklist (0.5.0)
 
@@ -163,6 +163,10 @@ package was uploaded.
 
 ## Release history
 
+- **0.6.0**, 2026-10-24: published through the hardened workflow (run `40032809873`) from
+  `03e03ef`, after the finalize step (#156); the deployment was approved by the owner, verified by
+  a fresh installation from PyPI, and archived on Zenodo (10.5281/zenodo.23605679). See the
+  [0.6.0 publication evidence](site/evidence/release-evidence.md).
 - **0.5.0**, 2026-10-20: published through the hardened workflow (run
   `39517327774`) from `692108b`; the deployment was approved at the owner's
   instruction after artifact review, and verified by a fresh installation from

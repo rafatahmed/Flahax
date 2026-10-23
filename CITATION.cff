@@ -30,6 +30,14 @@ contact:
     affiliation: Flaha Agri Tech
 version: 0.6.0
 date-released: "2026-10-24"
+doi: 10.5281/zenodo.23605678
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23605678
+    description: Concept DOI, all versions (Zenodo)
+  - type: doi
+    value: 10.5281/zenodo.23605679
+    description: Version 0.6.0 (Zenodo)
 url: https://flahax.readthedocs.io/
 repository-code: https://github.com/rafatahmed/Flahax
 repository-artifact: https://pypi.org/project/flahax/
@@ -59,6 +67,7 @@ preferred-citation:
       orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
   version: 0.6.0
+  doi: 10.5281/zenodo.23605679
   url: https://pypi.org/project/flahax/
   repository-code: https://github.com/rafatahmed/Flahax
   license: Apache-2.0
