@@ -11,7 +11,7 @@ pushing a tag.
 |---|---|---|
 | Release tag is exactly `v<version in pyproject.toml>` | `guard` | A mismatch fails the run; nothing is built |
 | Version is not already on PyPI | `guard` | An existing version is skipped with a notice, never re-uploaded |
-| Full test suite and clean wheel/sdist installs on Python 3.11, 3.12 and 3.13 | `test` | Runs on the tagged commit |
+| Full test suite and clean wheel/sdist installs on Python 3.11, 3.12, 3.13 and 3.14 | `test` | Runs on the tagged commit |
 | Pinned live PHREEQC replay | `phreeqc-live` | Hash-pinned PHREEQC 3.8.6 on Windows |
 | One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Artifact SHA-256 values appear in the run summary |
 | Owner approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
@@ -36,6 +36,14 @@ pushing a tag.
    deployment restricted to tags matching `v*`.
 3. **Branch protection on `main`**: changes arrive by pull request, and the
    `Test` workflow's checks must pass before merging.
+4. **Zenodo DOI** (owner, on zenodo.org; approved 2026-10-23). Sign in to
+   [Zenodo](https://zenodo.org/) with GitHub, open
+   [GitHub settings](https://zenodo.org/account/settings/github/) and switch
+   on `rafatahmed/Flahax`. From then on every published GitHub Release is
+   archived and gets a version DOI, with the metadata read from
+   `CITATION.cff`. After the first archived release, add the concept DOI
+   (the one that always resolves to the latest version) to `CITATION.cff`
+   as `doi:` and to the README, by pull request.
 
 ## Releasing a version
 
