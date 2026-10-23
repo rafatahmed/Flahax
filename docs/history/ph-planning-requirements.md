@@ -3,7 +3,7 @@
 Archived from the measured-curve guide during documentation reorganization.
 The following text is a historical design requirement, not the current API
 status or evidence that every proposed boundary is implemented. The current
-[water-to-delivery guide](../site/guide/water-to-delivery.md) describes the
+[water-to-delivery guide](../site/developer/water-to-delivery.md) describes the
 implemented equilibrium workflow and its limits. Original wording follows.
 
 ## Required mathematical model

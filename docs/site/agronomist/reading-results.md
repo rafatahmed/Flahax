@@ -16,7 +16,7 @@ agronomist (adds the nutrient table, limits and pH path) or developer and
 manager (adds `report.html`). `summary.json` is always written. In Python,
 `grower_sheet.render_mix_sheet(summary, depth)` and
 `grower_sheet.agronomist_rows(summary)` give the same from any
-`batch_cli.run_batch` summary. See the [growers page](../growers.md).
+`batch_cli.run_batch` summary. See the [growers page](../grower/index.md).
 
 ## From the command line
 
@@ -74,7 +74,7 @@ is refused. An analysis without chloride (not measured, zero or below
 detection) is closed on its alkalinity instead and the report notes it; no
 other ion is adjusted automatically. The report shows
 laboratory and modelled water side by side (see
-[measured-pH water balancing](water-to-delivery.md#measured-ph-water-balancing)).
+[measured-pH water balancing](../developer/water-to-delivery.md#measured-ph-water-balancing)).
 
 ## What the files say
 
@@ -83,7 +83,7 @@ The plan status is one of:
 | Status | Meaning |
 |---|---|
 | `ready` | Every target is met and the pH plan is accepted. |
-| `requires_review` | Usable after review: a target is missed with its reason, or a review-class phase is supersaturated (see [saturation indices](water-to-delivery.md#saturation-indices-and-acceptance)). |
+| `requires_review` | Usable after review: a target is missed with its reason, or a review-class phase is supersaturated (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
 | `blocked` | Not usable as planned: a declared maximum is exceeded on the laboratory analysis, a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. A review never downgrades a block. |
 
 When a pH reagent is selected, the recipe to weigh is the refitted one that

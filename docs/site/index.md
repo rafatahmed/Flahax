@@ -2,89 +2,65 @@
 
 ```{raw} html
 <div class="flahax-brand-banner">
-  <img class="only-light" src="_static/brand/v2/flahax-banner-color.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="2172" height="724">
-  <img class="only-dark" src="_static/brand/v2/flahax-banner-white.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources." width="2172" height="724">
+  <img class="only-light" src="_static/brand/v2/flahax-banner-color.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources.">
+  <img class="only-dark" src="_static/brand/v2/flahax-banner-white.png" alt="FlahaX — water and nutrients become chemistry calculations and traceable plans, with units, model identifiers and sources.">
 </div>
 ```
 
 ```{rst-class} flahax-hero
 ```
 
-**Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous
-equilibrium chemistry and auditable delivery planning.**
+**Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous equilibrium
+chemistry and auditable delivery planning.**
 
-FlahaX turns a crop's nutrient formula and the grower's actual water into a
-fertilizer recipe, then checks what that recipe does in solution: which ions
-pair up, whether anything precipitates, what the pH will be, how much acid
-reaches a target pH, and how the recipe splits into stock tanks and injector
-flows. Every plan carries its units, model identifiers and source hashes, so
-a result can be reviewed and reproduced.
+FlahaX turns a crop's nutrient formula and your actual water into a fertilizer recipe, then
+checks what that recipe does in solution: what the pH will be, how much acid reaches your target,
+whether anything precipitates, and how the recipe splits into concentrate tanks. Every result
+carries its units and sources, so it can be reviewed and reproduced.
 
-```{raw} html
-<div class="flahax-badges"><span>Python 3.11+</span><span>No runtime dependencies</span><span>Checked against PHREEQC 3.8.6</span><span>Computational evidence only</span></div>
+```{mermaid}
+---
+caption: From your water to your tanks
+---
+flowchart LR
+    W[Water analysis] --> R[Recipe<br/>grams of each fertilizer]
+    F[Crop formula] --> R
+    P[Fertilizers you have] --> R
+    R --> H[pH plan<br/>acid or base to the target]
+    T[Target pH] --> H
+    H --> K[Tank A, tank B<br/>and the acid container]
+    K --> S[Batch sheet<br/>and report]
 ```
 
-## Start here
+## Choose your path
 
-::::{grid} 1 2 2 2
+::::{grid} 1 1 3 3
 :gutter: 3
 
-:::{grid-item-card} Get started
-:link: guide/usage
+:::{grid-item-card} Grower
+:link: grower/index
 :link-type: doc
 
-Install FlahaX and run a first recipe from Python or the command line.
+Answer five questions with `flahax mix` and get what to weigh into tank A and tank B and how much
+acid to use. No code, no chemistry needed.
 :::
 
-:::{grid-item-card} Growers and agronomists
-:link: growers
+:::{grid-item-card} Agronomist
+:link: agronomist/index
 :link-type: doc
 
-What FlahaX gives you and how to read a plan, in plain words.
+Enter lab analyses, build formulas, define products from labels and data sheets, plan pH, and
+read the nutrient table and review notes.
 :::
 
-:::{grid-item-card} User manual
-:link: guide/manual
+:::{grid-item-card} Developer and researcher
+:link: developer/index
 :link-type: doc
 
-The full workflow from water analysis to stock tanks, pH and EC.
-:::
-
-:::{grid-item-card} API reference
-:link: api/reference
-:link-type: doc
-
-Every public function, its inputs, outputs and contract.
-:::
-
-:::{grid-item-card} Models and chemistry
-:link: models/method
-:link-type: doc
-
-The equilibrium model, its coverage and the PHREEQC reference fixtures.
-:::
-
-:::{grid-item-card} Evidence and audits
-:link: evidence/release-evidence
-:link-type: doc
-
-Release evidence, the owner's computational assessment, and audit reports
-with their scope and review status.
+Use the Python API, the equilibrium chemistry and the planning contracts; reproduce the evidence
+and contribute.
 :::
 ::::
-
-## What sets it apart
-
-- **Verified against PHREEQC.** Every catalogue product, phase and acid case
-  is replayed live against pinned PHREEQC 3.8.6 (USGS).
-- **Traceable materials.** Material identity, grade, lot and nutrient band
-  are carried through the calculation.
-- **Every result with its source and stated limit.** Explicit units, model
-  identifiers, source hashes and `needs_input` instead of guessed values.
-  Plans are reviewable records, not operating authorizations.
-
-FlahaX has no third-party runtime dependencies. The evidence is
-computational: it has not been validated in the laboratory or in the field.
 
 ## Install
 
@@ -92,56 +68,81 @@ computational: it has not been validated in the laboratory or in the field.
 python -m pip install flahax
 ```
 
-## Quick start
+Python 3.11 or newer, with no third-party runtime dependencies. See [Install](start/install.md) for
+upgrading and checking your version.
 
-Select salts for a crop formula, with 20 mg/L of calcium already in the water:
+## Status and limits
 
-```python
-from flahax import load_library, recommend
-
-result = recommend(
-    load_library()["salts"],
-    targets={"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54},
-    water={"Ca": 20},
-)
-
-for salt in result["salts"]:
-    print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
-```
+FlahaX is in Beta. Its chemistry is checked against PHREEQC 3.8.6 (USGS), but it has not been
+validated in the laboratory or in the field: results are calculations for planning, not dosing
+instructions. Measure pH and EC after mixing. See [Scope and limits](explanation/scope-and-limits.md).
 
 ```{toctree}
 :caption: Get started
 :hidden:
 
-Install and first steps <guide/usage>
+Install <start/install>
+Your first batch <start/first-batch>
+Your first recipe in Python <start/first-recipe>
 ```
 
 ```{toctree}
-:caption: Growers and agronomists
+:caption: Grower guide
 :hidden:
 
-For growers and agronomists <growers>
-Batch report, sheet and tanks <guide/grower-outputs>
+Overview <grower/index>
+What you need <grower/inputs>
+Run a batch <grower/run-a-batch>
+Read the batch sheet <grower/batch-sheet>
+Mix safely <grower/mix-safely>
 ```
 
 ```{toctree}
-:caption: User manual
+:caption: Agronomist guide
 :hidden:
 
-User manual <guide/manual>
+Overview <agronomist/index>
+A batch from files <agronomist/batch-command>
+Formulas and products <agronomist/formula-and-products>
+pH, acids and bases <agronomist/ph-and-acids>
+Tanks and solubility <agronomist/tanks-and-solubility>
+Reading the results <agronomist/reading-results>
 ```
 
 ```{toctree}
-:caption: API reference
+:caption: Developer and researcher guide
 :hidden:
 
-Public API <api/reference>
+Overview <developer/index>
+Python API in practice <developer/python-api>
+Water, targets and acids <developer/water-to-delivery>
+Site planning <developer/site-planning>
+Conductivity <developer/conductivity>
+Delivery contracts <developer/delivery-contracts>
+Delivery quantities <developer/delivery-quantities>
+Verification <developer/verification>
+Contributing <developer/contributing>
 ```
 
 ```{toctree}
-:caption: Models and chemistry
+:caption: Reference
 :hidden:
 
+Command line <reference/cli>
+Python API <reference/api>
+Input files <reference/file-formats>
+Error codes <reference/errors>
+Reading plans and results <reference/reading-plans>
+User manual (offline) <reference/manual>
+```
+
+```{toctree}
+:caption: Explanation
+:hidden:
+
+How a recipe is calculated <explanation/how-a-recipe-is-calculated>
+Why FlahaX needs your water's pH <explanation/water-and-ph>
+Scope and limits <explanation/scope-and-limits>
 Method <models/method>
 Fertilizer equilibrium model <models/fertilizer-equilibrium-model>
 Equilibrium kernel <models/equilibrium-kernel>
@@ -152,7 +153,7 @@ Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>
 ```
 
 ```{toctree}
-:caption: Evidence and audits
+:caption: Evidence
 :hidden:
 
 Release evidence <evidence/release-evidence>
@@ -161,9 +162,8 @@ Benchmark results and downloads <evidence/benchmark-results>
 Competitor comparison <evidence/competitor-comparison>
 Computational assessment <evidence/computational-review>
 Physical validation protocol (draft) <evidence/physical-validation-protocol>
-Package verification <api/package-verification>
 Planning validation history <evidence/planning-validation-history>
-Fertilizer source review <guide/source-sheet-review>
+Fertilizer source review <evidence/source-sheet-review>
 Audits <evidence/audit/README>
 FlahaX vs Horticalc audit <evidence/audit/2026-10-17-flahax-vs-horticalc/report>
 Horticalc audit review <evidence/audit/2026-10-17-flahax-vs-horticalc/review>
@@ -171,8 +171,14 @@ Materials identity audit review <evidence/audit/2026-10-18-materials-identity/re
 ```
 
 ```{toctree}
-:caption: Changelog
+:caption: Project
 :hidden:
 
 Changelog <changelog>
+Release notes <project/releases>
+Citation <project/citation>
+License and credits <project/license>
+Security <project/security>
+Code of conduct <project/code-of-conduct>
+Roadmap <project/roadmap>
 ```

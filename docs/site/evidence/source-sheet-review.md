@@ -111,7 +111,7 @@ No new site measurements are required to use this screening path. The older
 measured-profile API remains available as an optional separate method; its
 synthetic example values are not field evidence. A predictive concentrated
 electrolyte conductivity model is still unimplemented, not replaced by a
-linear extrapolation. See [site planning](site-planning.md).
+linear extrapolation. See [site planning](../developer/site-planning.md).
 
 ## Equipment source boundary
 

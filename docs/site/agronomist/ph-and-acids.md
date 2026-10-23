@@ -1,7 +1,7 @@
 (titration-bounded-ph-planning-p3)=
 # pH planning with measured titration curves
 
-`plan_ph` calculates an initial acid or base dose from a known titration curve. It is a planning function, not a controller: it neither changes pH nor operates pumps. This is an optional measured-curve method. For the separate equilibrium-based calculation and acid-selection workflow, including its complete-analysis requirements and model limits, see [water, targets and acid](water-to-delivery.md).
+`plan_ph` calculates an initial acid or base dose from a known titration curve. It is a planning function, not a controller: it neither changes pH nor operates pumps. This is an optional measured-curve method. For the separate equilibrium-based calculation and acid-selection workflow, including its complete-analysis requirements and model limits, see [water, targets and acid](../developer/water-to-delivery.md).
 
 ## Required records
 
@@ -76,7 +76,7 @@ Before an operator uses a plan:
 ## Choosing a method
 
 Use this method when a matching measured titration curve is available. The
-[equilibrium workflow](water-to-delivery.md) instead requires complete analytical
+[equilibrium workflow](../developer/water-to-delivery.md) instead requires complete analytical
 inputs and enforces its stated temperature, carbon, and ionic-strength limits.
 The two methods have different input requirements and evidence; their results
 are not interchangeable.
