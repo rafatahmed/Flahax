@@ -32,6 +32,7 @@ KHCO3, K2CO3) are always evaluated.
 import argparse
 from dataclasses import asdict, dataclass, field
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -45,6 +46,7 @@ from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents
 from .planning_cli import serializable
 from .product_conversion import MOLAR_MASS
+from .ph_adjustment import REAGENTS
 from .stock_volumes import prepare_stocks
 
 # Water analysis key -> (basis, grams per mole of the reported quantity).
@@ -130,12 +132,20 @@ def limit_entry(spec):
         raise argparse.ArgumentTypeError(f'--limit {spec}: {value!r} is not a number') from None
 
 
+ACID_FORMULAS = {f.upper(): f for f, (direction, *_) in REAGENTS.items() if direction == 'acid'}
+
+
 def acid_record(spec):
     """``FORMULA:MASS_FRACTION:DENSITY_KG_PER_L[:NAME]`` from your supplier certificate."""
     parts = spec.split(':')
     if len(parts) not in (3, 4):
         raise DeliveryError('invalid_value', f'--acid {spec}: expected FORMULA:MASS_FRACTION:DENSITY[:NAME]')
     formula, fraction, density = parts[0].strip(), float(parts[1]), float(parts[2])
+    formula = ACID_FORMULAS.get(formula.upper())
+    if formula is None:
+        raise DeliveryError('invalid_value', f'--acid {spec}: the acid must be one of {", ".join(ACID_FORMULAS.values())}')
+    if not (0 < fraction <= 1 and math.isfinite(density) and density > 0):
+        raise DeliveryError('invalid_value', f'--acid {spec}: the assay is a fraction in (0, 1] and the density in kg/L')
     name = parts[3].strip() if len(parts) == 4 else f'{formula} {fraction:.0%}'
     return dict(id=f'{formula}-{fraction:g}-{density:g}', name=name, source='user certificate (flahax batch --acid)',
                 revision='1', recordedAt='2026-01-01T00:00:00Z', chemicalFormula=formula, massFraction=fraction,
@@ -180,6 +190,7 @@ class BatchOptions:
     irrigation_litres: float | None = None
     temperature_c: float = 25
     depth: int = 3
+    title: str | None = None
 
 
 def run_batch(options):
@@ -193,7 +204,8 @@ def run_batch(options):
     products = (json.loads(Path(options.products).read_text(encoding='utf-8-sig')) if options.products
                 else library['salts'])
     if options.targets:
-        targets, title = json.loads(Path(options.targets).read_text(encoding='utf-8-sig')), Path(options.targets).stem
+        targets = json.loads(Path(options.targets).read_text(encoding='utf-8-sig'))
+        title = options.title or Path(options.targets).stem
     else:
         title = choose_formula(library, options.formula, options.crop)
         targets = next(f['targets'] for f in library['formulas'] if f['name'] == title)

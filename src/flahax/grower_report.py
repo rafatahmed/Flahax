@@ -242,8 +242,11 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
         if stage['status'] in ('blocked', 'requires_review') and message:
             warnings.append(f'{name}: {message}')
     if chemistry:
-        warnings += [f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}' for r in chemistry['review']]
-        warnings += chemistry['advisories']
+        def said(text):
+            return any(text in w for w in warnings)
+        warnings += [f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}' for r in chemistry['review']
+                     if not said(r['reason'])]
+        warnings += [a for a in chemistry['advisories'] if not said(a)]
     warnings = list(dict.fromkeys(warnings))
     if ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
         status = 'blocked' if workflow.stages['formulation'].status == 'blocked' else 'requires_review'
