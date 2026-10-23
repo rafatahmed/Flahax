@@ -244,6 +244,25 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 
 Python callers should handle `InputError` for formulation and `DeliveryError` (with its stable `code`) for planning. Retain input provenance and rejection reasons.
 
+### Installing and upgrading
+
+| Symptom | Cause | What to do |
+|---|---|---|
+| After installing from GitHub, a new feature is missing (for example `flahax mix --plain` is unknown) | Between releases every commit on `main` has the same development version, so `pip install --upgrade` keeps the files already installed (#134) | Reinstall: `python -m pip install --force-reinstall --no-deps "git+https://github.com/rafatahmed/Flahax.git@main"`. Released versions from PyPI upgrade normally with `python -m pip install --upgrade flahax`. |
+| `flahax` is not recognised as a command after installing | pip said "Defaulting to user installation" and put the `flahax` program in a folder that is not on your PATH; pip's warning names that folder | Run `python -m flahax` (it works everywhere), or add the folder pip names to your PATH. |
+| `flahax --version` shows an older version than you installed | The command and pip belong to different Python installations | Use the same Python for both: `python -m pip install ...` and `python -m flahax`. `python -c "import flahax, sys; print(flahax.__version__, flahax.__file__, sys.executable)"` shows which copy runs. |
+
+### The full-screen `flahax mix`
+
+| Symptom | Cause | What to do |
+|---|---|---|
+| The questions come line by line instead of full screen | The output is not a terminal (an editor's output panel, a pipe, a script), or the console cannot be put in full-screen mode (for example Git Bash) | Run `flahax mix` in Windows Terminal, PowerShell, `cmd`, or a Linux or macOS terminal. `flahax mix --plain` always asks line by line. |
+| The screen says "Enlarge the window to at least 80 x 24" | The window is too small | Make the window larger; the answer you were typing is kept. Q quits. |
+| Arrow keys type letters (`àH`, `àP`) or the help line is invisible | A copy older than 0.6.0 | Upgrade (see above) and check `flahax --version`. |
+| Typing "à" swallows the next key (Windows) | Windows reports "à" with the same code as the arrow keys (#127) | Type the name without the accent, or use `flahax mix --plain`. |
+| Some symbols show as `?` or as plain `+ - |` lines | The console's character set cannot show them | Use Windows Terminal; the results are unchanged. |
+| Esc or Q asks "Y/N" | Leaving asks first, so a stray key does not close the screen | Press Y to leave, any other key to stay. The sheets are already written once the results show. |
+
 ### Error code reference
 
 Every `DeliveryError` carries one of these codes; its message names the value or file at fault. Codes above are not repeated. A test keeps this list complete.

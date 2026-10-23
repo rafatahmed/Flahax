@@ -26,18 +26,21 @@ Never commit credentials, executables or private/local-only source material.
 
 ## Changelog
 
-Every release section of `CHANGELOG.md` (from 0.6.0 on) has the same shape:
+`CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) for every
+release:
 
-- one line saying what the release is;
-- then short bullets, each with its issue numbers, grouped under these headings only:
-  **Added**, **Changed**, **Fixed**, **Deprecated**, **Removed**, **Security**, and
-  **Compatibility and limits** (breaking changes, supported Python, known limits);
-- each bullet at most 400 characters; related changes share one bullet.
+- `## [Unreleased]` comes first; at release its entries move to `## [X.Y.Z] - YYYY-MM-DD`
+  (a yanked release adds `[YANKED]` and keeps its section);
+- each release opens with a short paragraph: what it is, any breaking change, the supported
+  Python and known limits;
+- bullets are grouped under the six change types only: **Added**, **Changed**, **Deprecated**,
+  **Removed**, **Fixed**, **Security**; each bullet names its issues and is at most 400
+  characters, and related changes share one bullet;
+- the bottom of the file has a comparison link for every version and for `unreleased`.
 
-New entries go under **Unreleased** with the same headings. The full text of a change (numbers,
-sources, decisions) belongs in `docs/releases/<version>.md`, linked from the section with a full
-GitHub URL, because the docs site includes the changelog. `tests/test_changelog.py` checks the
-shape.
+The full text of a change (numbers, sources, decisions) belongs in `docs/releases/<version>.md`,
+linked with a full GitHub URL, because the docs site includes the changelog. `tests/test_changelog.py`
+checks all of this.
 
 ## Code style
 
