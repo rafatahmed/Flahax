@@ -15,7 +15,7 @@ import unittest
 from unittest import mock
 
 from flahax.batch_cli import main as batch
-from flahax.mix_cli import WATER_IONS, Prompts, main, number_answer
+from flahax.mix_cli import WATER_IONS, Prompts, main, number_answer, use_tui
 from flahax import __version__
 from flahax.mix_store import Store
 from tests.test_output_consistency import ANSWERS
@@ -619,6 +619,29 @@ class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_unchanged(self):
         expected = (FIXTURES / 'owner-session-plain.txt').read_text(encoding='utf-8')
         self.assertEqual(owner_transcript().splitlines(), expected.splitlines())
+
+
+class TtyStream(io.StringIO):
+    def isatty(self):
+        return True
+
+
+class UseTuiTests(unittest.TestCase):
+    def test_use_tui_rules(self):
+        tty = TtyStream()
+        with mock.patch('flahax.mix_cli.supported', return_value=True):
+            self.assertTrue(use_tui(False, input, print, tty, tty))
+            self.assertFalse(use_tui(True, input, print, tty, tty))
+            self.assertFalse(use_tui(False, Script([]), print, tty, tty))
+            self.assertFalse(use_tui(False, input, lambda *a: None, tty, tty))
+        with mock.patch('flahax.mix_cli.supported', return_value=False):
+            self.assertFalse(use_tui(False, input, print, tty, tty))
+
+    def test_plain_flag_is_accepted(self):
+        lines = []
+        with mock.patch.dict(os.environ, {'FLAHAX_HOME': tempfile.mkdtemp()}):
+            self.assertEqual(main(['--plain', 'sessions'], ask=Script([]), say=lines.append), 0)
+        self.assertEqual(lines, ['Nothing is saved yet: run flahax mix'])
 
 
 class PromptInterfaceTests(unittest.TestCase):

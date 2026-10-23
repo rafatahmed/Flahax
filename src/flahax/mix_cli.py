@@ -19,6 +19,7 @@ from dataclasses import asdict
 from datetime import date
 import math
 from pathlib import Path
+import sys
 
 from . import __version__
 from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, render, run_batch
@@ -39,6 +40,7 @@ from .materials import declared_ions_check, load_identities, make_grade, resolve
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
 from .stock_volumes import prepare_stocks
+from .terminal import supported
 
 FORMULA_KEYS = ('N_NO3', 'N_NH4', 'P', 'K', 'Ca', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
 COMPOUND_KEYS = (
@@ -666,6 +668,46 @@ def summarize(summary, say):
         )
 
 
+def output_folder(output, name):
+    """The folder for the sheets: ``output`` or ./flahax-mix-<name>, numbered if it exists."""
+    folder = Path(output) if output else Path.cwd() / f'flahax-mix-{name}'
+    stem, n = folder, 1
+    while folder.exists():
+        n += 1
+        folder = stem.with_name(f'{stem.name}-{n}')
+    return folder
+
+
+def write_sheets(summary, session, output):
+    """Write the batch sheet, the summary and (full depth) the report; returns the file names."""
+    depth = session.get('depth', 1)
+    files = {
+        'batch-sheet.html': render_mix_sheet(summary, depth),
+        'summary.json': render(summary)['summary.json'],
+    }
+    if depth >= 3:
+        files['report.html'] = render_report(summary)
+    output.mkdir(parents=True)
+    for file, content in files.items():
+        (output / file).write_bytes(content.encode('utf-8'))
+    return list(files)
+
+
+def saved_line(store, name):
+    """The line that says where the answers were saved and how to run them again."""
+    return (
+        f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix '
+        f'sessions/{name}'
+    )
+
+
+def use_tui(plain, ask, say, stdin=None, stdout=None):
+    """True when ``flahax mix`` should open the full-screen wizard instead of the line mode."""
+    if plain or ask is not input or say is not print:
+        return False
+    return supported(stdin or sys.stdin, stdout or sys.stdout)
+
+
 def main(argv=None, *, ask=input, say=print, store=None):
     """The ``flahax mix`` command: interview or saved session, then the sheets; returns the process
     exit code.
@@ -683,6 +725,11 @@ def main(argv=None, *, ask=input, say=print, store=None):
     parser.add_argument(
         '--output', help='new directory for the sheets (default: ./flahax-mix-<session>)'
     )
+    parser.add_argument(
+        '--plain',
+        action='store_true',
+        help='line-by-line questions instead of the full-screen wizard',
+    )
     args = parser.parse_args(argv)
     if args.output and Path(args.output).exists():
         say(f'flahax mix: {args.output} already exists; choose a new directory')
@@ -698,6 +745,13 @@ def main(argv=None, *, ask=input, say=print, store=None):
             else 'Nothing is saved yet: run flahax mix'
         )
         return 0
+    if use_tui(args.plain, ask, say):
+        from .mix_tui import run_tui  # mix_tui imports this module
+
+        code, lines = run_tui(store, args.session or None, args.output)
+        for line in lines:
+            say(line)
+        return code
     try:
         if args.session:
             path = find_session(store, args.session)
@@ -710,36 +764,20 @@ def main(argv=None, *, ask=input, say=print, store=None):
             name, session, pending = interview(p, store)
             for kind, item, data in pending:
                 store.save(kind, item, data)
-            say(
-                f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix '
-                f'sessions/{name}'
-            )
+            say(saved_line(store, name))
     except (KeyboardInterrupt, EOFError):
         say('Stopped; nothing saved.')
         return 1
     except (DeliveryError, ValueError, OSError) as exc:
         say(f'flahax mix: {exc}')
         return 1
-    output = Path(args.output) if args.output else Path.cwd() / f'flahax-mix-{name}'
-    stem, n = output, 1
-    while output.exists():
-        n += 1
-        output = stem.with_name(f'{stem.name}-{n}')
+    output = output_folder(args.output, name)
     try:
         summary = run_batch(options_for(store, session))
     except (DeliveryError, ValueError, OSError, KeyError) as exc:
         say(f'flahax mix: {exc}')
         return 1
-    depth = session.get('depth', 1)
-    files = {
-        'batch-sheet.html': render_mix_sheet(summary, depth),
-        'summary.json': render(summary)['summary.json'],
-    }
-    if depth >= 3:
-        files['report.html'] = render_report(summary)
-    output.mkdir(parents=True)
-    for file, content in files.items():
-        (output / file).write_bytes(content.encode('utf-8'))
+    files = write_sheets(summary, session, output)
     summarize(summary, say)
     say(f'Wrote {", ".join(files)} to {output}')
     return 3 if summary['status'] == 'blocked' else 0
