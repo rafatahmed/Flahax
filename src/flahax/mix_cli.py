@@ -22,7 +22,7 @@ from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import number, render_report
-from .grower_sheet import STATUS_WORDS, grams, key_reasons, limited_by, litres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
+from .grower_sheet import STATUS_WORDS, grams, key_reasons, limited_by, litres, millilitres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
@@ -384,7 +384,7 @@ def summarize(summary, say):
             say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {grams(product["gramsPerBatch"])}')
     selected = summary['ph'] and summary['ph']['selected']
     if selected and not blocked:
-        say(f'Acid container: {number(selected["volume_ml_per_batch"], 0)} mL {selected["product"]}, added to water '
+        say(f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]}, added to water '
             f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, never water to acid)')
     elif not blocked:
         say('pH reagent: none planned' + (f'. {summary["ph"]["message"]}' if summary['ph'] and
