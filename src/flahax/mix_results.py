@@ -11,10 +11,10 @@ the sheet's rounding, so the screen and the sheet always agree.
 from . import __version__
 from .grower_report import _reagent_line, grams, litres, millilitres, number
 from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by
-from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, paint, wrap
+from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, cut, paint, wrap
 
 VIEWS = ('Tanks', 'Nutrients', 'Notes')
-KEYS = 'Tab Next view   ↑↓ Scroll   Q Quit'
+KEYS = 'Tab Next view   {up}{down} Scroll   Q Quit'
 COLUMNS = (('Nutrient', 9), ('Target', 9), ('From water', 11), ('Required', 9))
 COLUMNS += (('Achieved', 9), ('Final', 9), ('Diff', 18))
 
@@ -65,7 +65,9 @@ def _tank_rows(summary, width, g):
         body = [[(head, 'error' if blocked else None)]]
         for product in tank['products']:
             weight = grams(product['gramsPerBatch'])
-            label = f'{"-" if blocked else "[ ]"} {product["name"]}'
+            label = cut(
+                f'{"-" if blocked else "[ ]"} {product["name"]}', inner - len(weight) - 1, g
+            )
             gap = max(1, inner - len(label) - len(weight))
             body.append([(label + ' ' * gap, None), (weight, 'accent')])
         if not tank['acid_allowed']:
@@ -89,7 +91,7 @@ def _tank_rows(summary, width, g):
                 )
             ],
         ]
-        rows += _card('Acid', body, width, g)
+        rows += _card('Acid' if selected['direction'] == 'acid' else 'pH reagent', body, width, g)
     elif not blocked:
         rows += _card('pH reagent', [[(_reagent_line(summary), 'warn')]], width, g)
     checks = summary['solubility'] or []
@@ -105,9 +107,9 @@ def _tank_rows(summary, width, g):
     rows.append(
         [
             (
-                f'1:{ratio:g} injection · {mode}'
-                + (f' · {temperature:g} °C' if temperature is not None else '')
-                + f' · {dissolves}',
+                f'1:{ratio:g} injection {g["dot"]} {mode}'
+                + (f' {g["dot"]} {temperature:g} {g["deg"]}C' if temperature is not None else '')
+                + f' {g["dot"]} {dissolves}',
                 'dim',
             )
         ]
@@ -198,5 +200,5 @@ def results_lines(summary, view, width, height, scroll, g, output):
         lines.append(paint([('  ', None)] + row, usable, g))
     lines += [''] * (height - 3 - len(lines))
     lines.append(paint([(f'  Sheets: {output}', 'dim')], usable, g))
-    lines.append(paint([(f'  {KEYS}', 'dim')], usable, g))
+    lines.append(paint([('  ' + KEYS.format(**g), 'dim')], usable, g))
     return lines

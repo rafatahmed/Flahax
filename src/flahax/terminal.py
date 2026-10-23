@@ -27,6 +27,10 @@ UNICODE = {
     'tick': '✓',
     'here': '▸',
     'ellipsis': '…',
+    'up': '↑',
+    'down': '↓',
+    'dot': '·',
+    'deg': '°',
 }
 ASCII = {
     'h': '-',
@@ -38,6 +42,10 @@ ASCII = {
     'tick': '+',
     'here': '>',
     'ellipsis': '...',
+    'up': '^',
+    'down': 'v',
+    'dot': '-',
+    'deg': '',
 }
 WINDOWS_PREFIXED = {
     'H': 'UP',
@@ -72,6 +80,10 @@ POSIX_SEQUENCES = {
     b'\x1bOF': 'END',
     b'\x1b[Z': 'SHIFT_TAB',
 }
+
+
+class TerminalUnavailable(OSError):
+    """The console cannot be put in the full-screen mode; use the line-by-line questions."""
 
 
 def _control(char):
@@ -160,8 +172,13 @@ class Terminal:
 
     def __enter__(self):
         self._restore = self._console_on()
-        self.stream.write(ENTER_SCREEN)
-        self.stream.flush()
+        try:
+            self.stream.write(ENTER_SCREEN)
+            self.stream.flush()
+        except BaseException:
+            self._restore()
+            self._restore = None
+            raise
         return self
 
     def __exit__(self, *_):
@@ -184,10 +201,10 @@ class Terminal:
             handle = kernel.GetStdHandle(-11)
             mode = wintypes.DWORD()
             if not kernel.GetConsoleMode(handle, ctypes.byref(mode)):
-                raise OSError('not a console')
+                raise TerminalUnavailable('not a console')
             old = mode.value
             if not kernel.SetConsoleMode(handle, old | 0x0004):
-                raise OSError('cannot switch on ANSI output in this console')
+                raise TerminalUnavailable('cannot switch on ANSI output in this console')
             return lambda: kernel.SetConsoleMode(handle, old)
         import termios
         import tty
@@ -230,7 +247,11 @@ class Terminal:
 
     def draw(self, lines):
         """Replace the screen with these lines in one write."""
-        self.stream.write('\x1b[H' + ''.join(f'\x1b[2K{line}\r\n' for line in lines) + '\x1b[J')
+        text = '\x1b[H' + ''.join(f'\x1b[2K{line}\r\n' for line in lines) + '\x1b[J'
+        encoding = getattr(self.stream, 'encoding', None)
+        if encoding:
+            text = text.encode(encoding, 'replace').decode(encoding)
+        self.stream.write(text)
         self.stream.flush()
 
     def show_cursor(self, on):

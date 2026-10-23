@@ -750,9 +750,10 @@ def main(argv=None, *, ask=input, say=print, store=None):
         from .mix_tui import run_tui  # mix_tui imports this module
 
         code, lines = run_tui(store, args.session or None, args.output)
-        for line in lines:
-            say(line)
-        return code
+        if code is not None:
+            for line in lines:
+                say(line)
+            return code
     try:
         if args.session:
             path = find_session(store, args.session)

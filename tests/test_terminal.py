@@ -7,7 +7,14 @@
 import io
 import unittest
 
-from flahax.terminal import Terminal, decode_posix, decode_windows, glyphs, supported
+from flahax.terminal import (
+    Terminal,
+    TerminalUnavailable,
+    decode_posix,
+    decode_windows,
+    glyphs,
+    supported,
+)
 
 
 class NotATerminal(io.StringIO):
@@ -87,6 +94,45 @@ class TerminalTests(unittest.TestCase):
         term = RecordingTerminal()
         term.draw(['a', 'b'])
         self.assertEqual(term.stream.getvalue(), '\x1b[H\x1b[2Ka\r\n\x1b[2Kb\r\n\x1b[J')
+
+
+class Latin1Stream(io.StringIO):
+    encoding = 'latin-1'
+
+
+class FailingConsole(RecordingTerminal):
+    def _console_on(self):
+        raise TerminalUnavailable('cannot switch on ANSI output in this console')
+
+
+class EncodingAndFallbackTests(unittest.TestCase):
+    def test_draw_replaces_what_the_console_cannot_print(self):
+        term = Terminal(stream=Latin1Stream())
+        term.draw(['\u2191 \u0645 \u00b0'])
+        self.assertIn('? ? \u00b0', term.stream.getvalue())
+
+    def test_new_glyphs_fall_back(self):
+        utf8, latin = glyphs('utf-8'), glyphs('latin-1')
+        self.assertEqual((utf8['up'], utf8['down'], utf8['dot']), ('\u2191', '\u2193', '\u00b7'))
+        self.assertEqual((latin['up'], latin['down'], latin['dot']), ('^', 'v', '-'))
+
+    def test_console_failure_is_terminal_unavailable(self):
+        term = FailingConsole()
+        with self.assertRaises(TerminalUnavailable):
+            with term:
+                pass
+        self.assertEqual(term.stream.getvalue(), '')
+
+    def test_enter_restores_mode_when_the_first_write_fails(self):
+        class BrokenStream(io.StringIO):
+            def write(self, text):
+                raise OSError('closed')
+
+        term = RecordingTerminal()
+        term.stream = BrokenStream()
+        with self.assertRaises(OSError):
+            term.__enter__()
+        self.assertEqual(term.modes, ['on', 'off'])
 
 
 class SupportedTests(unittest.TestCase):
