@@ -44,6 +44,14 @@ def _main() -> int:
         from .planning_cli import execute, interactive, serializable
         try:
             payload = interactive(args.command) if args.interactive else json.load(sys.stdin)
+        except json.JSONDecodeError as exc:
+            print(f'Invalid planning input: stdin is not valid JSON: {exc.msg.removesuffix(" at")} at line {exc.lineno}, '
+                  f'column {exc.colno}', file=sys.stderr)
+            return 1
+        except (ValueError, TypeError, KeyError, OSError, EOFError) as exc:
+            print(f'Invalid planning input: {exc}', file=sys.stderr)
+            return 1
+        try:
             result = execute(args.command, payload)
             json.dump(serializable(result), sys.stdout, allow_nan=False)
             sys.stdout.write('\n')
@@ -58,8 +66,8 @@ def _main() -> int:
               'Growers: use flahax mix.', file=sys.stderr)
     try:
         payload = json.load(sys.stdin)
-    except json.JSONDecodeError:
-        print("Expected a JSON object on stdin.", file=sys.stderr)
+    except json.JSONDecodeError as exc:
+        print(f'Expected a JSON object on stdin: {exc.msg.removesuffix(" at")} at line {exc.lineno}, column {exc.colno}.', file=sys.stderr)
         return 1
     if not isinstance(payload, dict):
         print("Expected a JSON object on stdin.", file=sys.stderr)
