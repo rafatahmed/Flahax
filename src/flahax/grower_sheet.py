@@ -5,20 +5,15 @@ Depth 2 (agronomist) adds the nutrient table (target, water, required, achieved,
 the limits and the pH path. Depth 3 (developer, manager) writes the full report beside it.
 Every number comes from ``summarize_batch``, i.e. from the recipe that is weighed.
 """
-from .grower_report import SHEET_STYLE, _limit_rows, _page, _reagent_line, number, text
+from .grower_report import (SHEET_STYLE, STATUS_WORDS, _limit_rows, _page, _reagent_line, grams,  # noqa: F401
+                            litres, millilitres, number, text)
 
-STATUS_WORDS = {'ready': 'ready', 'requires_review': 'review notes before mixing', 'blocked': 'do not mix'}
 LABEL = {'N_NO3': 'NO3-N', 'N_NH4': 'NH4-N', 'N_UREA': 'Urea-N'}
 CARD_STYLE = SHEET_STYLE + """
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{border:1.5px solid #103f49;border-radius:6px;padding:7px 10px}
 .card h2{margin:0 0 4px}.ok{border-color:#116c73;background:#eef7f7}.hi{color:#b3261e;font-weight:600}
 .muted{color:#6b7f88}@media(max-width:640px){main{padding:12px}.cards{grid-template-columns:1fr}}
 """
-
-
-def litres(value):
-    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small batch)."""
-    return number(value, 1 if value >= 10 else 3)
 
 
 def key_reasons(summary, n=3):
@@ -42,13 +37,6 @@ def agronomist_rows(summary):
                          diff_pct=None if not target else 100.0 * (final - target) / target,
                          source=r.get('source', [])))
     return sorted(rows, key=lambda r: r['target'] is None)
-
-
-def grams(value):
-    """A weight a grower can read on a scale: never '0 g' for a product that is in the recipe."""
-    digits = 1 if value >= 10 else 2 if value >= .1 else 3
-    shown = number(value, digits)
-    return f'{shown} g' if float(shown.replace(',', '')) > 0 else 'less than 0.001 g'
 
 
 def limited_by(volumes):
@@ -86,10 +74,10 @@ def _reagent_card(summary, volumes):
         return f'<div class="card warn"><h2>pH reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
-    container = (f'<p>Acid container: add <b>{number(chosen["volume_ml_per_batch"], 1)} mL</b> to water and make up to '
+    container = (f'<p>Acid container: add <b>{millilitres(chosen["volume_ml_per_batch"])} mL</b> to water and make up to '
                  f'<b>{litres(volumes["prepared_litres"]["acid"])} L</b>.</p>') if volumes else ''
     return (f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> ({text(chosen["formula"])}): '
-            f'{number(per_1000, 1)} mL per 1,000 L of irrigation, on its own injector.</p>{container}'
+            f'{millilitres(per_1000)} mL per 1,000 L of irrigation, on its own injector.</p>{container}'
             '<p class="small"><b>Add acid to water, never water to acid.</b></p></div>')
 
 
@@ -127,8 +115,8 @@ def _agronomist_section(summary):
     path = []
     if chem:
         path.append(f'water {number(chem["water_ph"], 2)}')
-    if ph and ph.get('unadjusted_ph') is not None:
-        path.append(f'after fertilizers {number(ph["unadjusted_ph"], 2)}')
+    if ph and ph.get('mixed_ph') is not None:
+        path.append(f'after fertilizers {number(ph["mixed_ph"], 2)}')
     if ph and ph['selected']:
         path.append(f'after {ph["selected"]["direction"]} {number(ph["target_ph"], 2)}')
         adds = ', '.join(f'{LABEL.get(k, k)} {number(v, 2)} mg/L'
