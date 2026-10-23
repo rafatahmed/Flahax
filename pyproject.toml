@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flahax"
-version = "0.6.0.dev0"
+version = "0.6.0"
 description = "Fertilizer recipe, pH and acid plan and A/B stock tanks from a water analysis and a crop formula: an interactive command for growers and agronomists on a pure-Python nutrient-chemistry engine checked against PHREEQC."
 readme = "README.md"
 requires-python = ">=3.11"
