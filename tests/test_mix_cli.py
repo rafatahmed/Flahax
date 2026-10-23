@@ -222,6 +222,23 @@ class MixTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("Saved: tomato-stage-1", missing[-1])
 
+    def test_sweep_findings_acid_title_repeats(self):
+        # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113 repeated notes.
+        bad = ['1', '1', 'hno3', '60', '1.37', '', '']                     # '1' refused, 'hno3' accepted as HNO3
+        changed = ['2', 'lettuce general', '180'] + [''] * 12 + ['']        # default name 'Lettuce General ... changed'
+        code, lines, target = self.run_mix(SPEC + RO + changed + CATALOGUE + bad + END, '--output',
+                                           str(Path(self.tmp.name) / 'sweep'))
+        self.assertEqual(code, 0, chr(10).join(lines))
+        self.assertIn('  FlahaX plans with these acids only: HNO3, H3PO4, H2SO4, C6H8O7.', lines)
+        self.assertTrue(any(l.startswith('FlahaX ') and 'Lettuce General (Howard Resh) changed - ' in l for l in lines))
+        self.assertTrue(any('HNO3 60%' in l and 'mL' in l for l in lines), lines)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(err):
+            code = batch(['--formula', 'Tomato (Howard Resh)', '--water', 'ro', '--acid', '1:0.6:1.37',
+                          '--output', str(Path(self.tmp.name) / 'bad-acid')])
+        self.assertEqual(code, 1)
+        self.assertIn('the acid must be one of HNO3, H3PO4, H2SO4, C6H8O7', err.getvalue())
+
     def test_blank_is_never_guessed(self):
         values = dict(BALANCED, Fe='', Mn='0', Zn='<0.02')
         code, lines, _ = self.full(water_answers=water('blanks', values, alkalinity='2'))
