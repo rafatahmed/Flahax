@@ -428,10 +428,11 @@ def calculate(prompts, work):
 
 
 def show_results(term, g, summary, output, ahead=()):
-    """The results screen until Q or Esc; ``ahead`` are keys typed while it was calculated."""
+    """The results screen until Q or Esc, then Y; ``ahead``: keys typed during the calculation."""
     from .mix_results import first_view, handle_results, results_lines  # imports this module
 
     view, scroll, shown, key, ahead = first_view(summary), 0, None, None, list(ahead)
+    leave = f'Leave the results? The sheets are saved in {output}. Y/N'
     while True:
         width, height = term.size()
         lines = results_lines(summary, view, width, height, scroll, g, str(output))
@@ -442,8 +443,14 @@ def show_results(term, g, summary, output, ahead=()):
         if key is None:
             continue
         view, scroll, done = handle_results(view, scroll, key)
-        if done:
-            return
+        while done:  # a stray Q or Esc must not close the screen: ask first
+            width, height = term.size()
+            term.draw(results_lines(summary, view, width, height, scroll, g, str(output), leave))
+            answer = ahead.pop(0) if ahead else term.read_key()
+            if answer in ('y', 'Y'):
+                return
+            done = answer is None
+        shown = None
 
 
 def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):

@@ -143,6 +143,12 @@ class ResultViewTests(unittest.TestCase):
             lines = results_lines(self.summary, view, 100, 40, 0, UTF8, 'out')
             self.assertFalse(any('\x1b[2m' in line for line in lines), view)
 
+    def test_results_message_replaces_the_sheets_line(self):  # 138
+        lines = results_lines(self.summary, 0, 100, 40, 0, UTF8, 'out', message='Leave? Y/N')
+        text = [ANSI.sub('', line) for line in lines]
+        self.assertEqual(text[-2].strip(), 'Leave? Y/N')
+        self.assertNotIn('Sheets: out', ' '.join(text))
+
     def test_results_keys(self):
         self.assertEqual(handle_results(2, 0, 'TAB'), (0, 0, False))
         self.assertEqual(handle_results(0, 0, 'SHIFT_TAB'), (2, 0, False))
