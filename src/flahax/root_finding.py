@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Bracketed root finding shared by the acid-dose and alkalinity searches.
 
 Each search previously bisected a fixed number of times, solving the full
@@ -8,7 +12,7 @@ it, fall back to bisection, so the worst case stays within twice bisection's.
 """
 
 
-def shrink_bracket(g, lo, g_lo, hi, g_hi, *, width=0., relative=0., accept=None, max_steps=200):
+def shrink_bracket(g, lo, g_lo, hi, g_hi, *, width=0.0, relative=0.0, accept=None, max_steps=200):
     """Narrow [lo, hi], where g changes sign, until hi - lo <= width + relative * hi.
 
     ``g_lo`` and ``g_hi`` are g(lo) and g(hi) with opposite signs (either may be

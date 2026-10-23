@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Release metadata and documentation must agree with the package checkout."""
+
 from pathlib import Path
 import re
 import contextlib
@@ -19,20 +24,27 @@ class ReleaseHygieneTests(unittest.TestCase):
         self.assertTrue(examples)
         for index, example in enumerate(examples):
             with self.subTest(example=index), contextlib.redirect_stdout(io.StringIO()):
-                exec(compile(example, f'README example {index}', 'exec'), {'__name__': '__readme__'})
+                exec(
+                    compile(example, f'README example {index}', 'exec'), {'__name__': '__readme__'}
+                )
 
     def test_shipped_manual_examples(self):
         from importlib.resources import files
+
         manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
         self.assertIn(f'FlahaX {flahax.__version__}', manual)
         examples = re.findall(r'```python\n(.*?)```', manual, re.S)
         self.assertEqual(len(examples), 9)
         for index, example in enumerate(examples):
             with self.subTest(example=index + 1), contextlib.redirect_stdout(io.StringIO()):
-                exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
+                exec(
+                    compile(example, f'USER_GUIDE example {index + 1}', 'exec'),
+                    {'__name__': '__manual__'},
+                )
 
     def test_public_api_reference_is_current(self):
         from tools.generate_api_reference import DESTINATION, render
+
         reference = DESTINATION.read_text(encoding='utf-8')
         self.assertEqual(reference, render())
         names = re.findall(r'^### `([^`]+)`$', reference, re.M)
@@ -50,8 +62,10 @@ class ReleaseHygieneTests(unittest.TestCase):
         if '.dev' in cited:
             changelog = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
             cited = re.search(r'(?m)^## (\d+\.\d+\.\d+)\b', changelog).group(1)
-            self.assertLess(tuple(map(int, cited.split('.'))),
-                            tuple(map(int, project['version'].split('.dev')[0].split('.'))))
+            self.assertLess(
+                tuple(map(int, cited.split('.'))),
+                tuple(map(int, project['version'].split('.dev')[0].split('.'))),
+            )
         citation = (ROOT / 'CITATION.cff').read_text(encoding='utf-8')
         self.assertRegex(citation, rf'(?m)^version:\s*[\"\']?{re.escape(cited)}[\"\']?\s*$')
 

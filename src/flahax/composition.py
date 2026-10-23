@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Ion schema, formula stoichiometry, and the checks that follow from them.
 
 A salt is usable when its assay is made of known ions and, if the formula
@@ -12,10 +16,27 @@ import re
 
 # Ions the mass balance knows. Total "N" is absent on purpose: nitrate and
 # ammonium are different rows, and a single N figure cannot be split safely.
-IONS = frozenset({
-    "N_NO3", "N_NH4", "N_UREA", "P", "K", "Ca", "Mg", "S",
-    "Fe", "Mn", "Zn", "B", "Cu", "Mo", "Na", "Cl", "Si",
-})
+IONS = frozenset(
+    {
+        "N_NO3",
+        "N_NH4",
+        "N_UREA",
+        "P",
+        "K",
+        "Ca",
+        "Mg",
+        "S",
+        "Fe",
+        "Mn",
+        "Zn",
+        "B",
+        "Cu",
+        "Mo",
+        "Na",
+        "Cl",
+        "Si",
+    }
+)
 
 # Ions a default recipe must not introduce unless the formula asks for them
 # or the caller allows them. Admitted later only when no other salt supplies
@@ -53,8 +74,15 @@ _TOKEN = re.compile(r"[A-Z][a-z]?|\(|\)|\d+")
 # convention: P as H2PO4-, S as SO4 2-). Urea and Si are neutral; micronutrients are
 # excluded as negligible at mg/L levels.
 BALANCE_IONS = {
-    "N_NO3": ("N", -1), "N_NH4": ("N", 1), "P": ("P", -1), "S": ("S", -2), "Cl": ("Cl", -1),
-    "K": ("K", 1), "Ca": ("Ca", 2), "Mg": ("Mg", 2), "Na": ("Na", 1),
+    "N_NO3": ("N", -1),
+    "N_NH4": ("N", 1),
+    "P": ("P", -1),
+    "S": ("S", -2),
+    "Cl": ("Cl", -1),
+    "K": ("K", 1),
+    "Ca": ("Ca", 2),
+    "Mg": ("Mg", 2),
+    "Na": ("Na", 1),
 }
 # Warn when the formula's cation and anion sums differ by more than this share of the
 # larger sum (about the +/-10% window used by Steiner-type software, Martinez-Corral 2009).
@@ -81,9 +109,13 @@ def target_ion_balance(targets: dict) -> dict:
             anions += meq
     larger = max(cations, anions)
     imbalance = 100.0 * (cations - anions) / larger if larger > 0 else 0.0
-    return {"cationsMeqPerL": cations, "anionsMeqPerL": anions, "imbalancePercent": imbalance,
-            "exceedsWarning": abs(imbalance) > ION_BALANCE_WARNING_PCT,
-            "assumptions": "P as H2PO4-, S as SO4 2-; urea, Si and micronutrients excluded"}
+    return {
+        "cationsMeqPerL": cations,
+        "anionsMeqPerL": anions,
+        "imbalancePercent": imbalance,
+        "exceedsWarning": abs(imbalance) > ION_BALANCE_WARNING_PCT,
+        "assumptions": "P as H2PO4-, S as SO4 2-; urea, Si and micronutrients excluded",
+    }
 
 
 class InputError(ValueError):

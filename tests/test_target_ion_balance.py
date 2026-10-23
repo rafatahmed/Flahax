@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """A formula's own cation/anion balance is checked before fitting (research report, Steiner 1961)."""
+
 import unittest
 
 from flahax import load_library, recommend
@@ -21,7 +26,9 @@ class TargetIonBalanceTests(unittest.TestCase):
         self.assertFalse(balance["exceedsWarning"])
 
     def test_balanced_classic_formula(self):
-        self.assertLess(abs(target_ion_balance(formula("Hoagland solution"))["imbalancePercent"]), 1.0)
+        self.assertLess(
+            abs(target_ion_balance(formula("Hoagland solution"))["imbalancePercent"]), 1.0
+        )
 
     def test_unbalanced_formulas_are_flagged(self):
         pepper = target_ion_balance(formula("Pepper (Howard Resh)"))

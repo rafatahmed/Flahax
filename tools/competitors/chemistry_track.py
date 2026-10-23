@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """#40 chemistry track: FlahaX equilibrium vs live PHREEQC through PhreeqPython.
 
 PhreeqPython (pinned 1.6.2) embeds IPhreeqc, so the PHREEQC reference runs on any
@@ -9,6 +14,7 @@ captures). The live rows are first replayed against the stored PHREEQC 3.8.6 row
 FlahaX is solved at the live prescribed pH and scored with Benchmark v1's
 evaluate_chemistry and the fixture tolerances.
 """
+
 import argparse
 import json
 import math
@@ -69,13 +75,21 @@ def phreeqpython_rows(pp, text):
         finally:
             os.chdir(cwd)
     # IPhreeqc appends units ("(mol/kgw)", "(eq)") that PHREEQC's selected-output file omits.
-    headings = [str(h).strip().removesuffix("(mol/kgw)").removesuffix("(eq)")
-                .replace("AmmH4", "NH4").replace("AmmH3", "NH3") for h in table[0]]
+    headings = [
+        str(h)
+        .strip()
+        .removesuffix("(mol/kgw)")
+        .removesuffix("(eq)")
+        .replace("AmmH4", "NH4")
+        .replace("AmmH3", "NH3")
+        for h in table[0]
+    ]
     return [dict(zip(headings, map(float, row))) for row in table[1:]]
 
 
 def run(base):
     from phreeqpython import PhreeqPython
+
     if sha(base) != PINNED_BASE_SHA256:
         raise ValueError("minteq.v4.dat does not match the pinned SHA-256")
     out = {"base_sha256": PINNED_BASE_SHA256, "cases": []}
@@ -104,31 +118,46 @@ def run(base):
                 result, acid = solve_fixture(live)
                 best_fx = min(best_fx, time.perf_counter() - start)
             if len(rows) != len(data["selected_rows"]):
-                raise ValueError(f"{name}: {len(rows)} live rows vs {len(data['selected_rows'])} stored")
-            replay = max(replay_difference(s, l) for s, l in zip(data["selected_rows"], rows))
+                raise ValueError(
+                    f"{name}: {len(rows)} live rows vs {len(data['selected_rows'])} stored"
+                )
+            replay = max(
+                replay_difference(s, line) for s, line in zip(data["selected_rows"], rows)
+            )
             checks = evaluate_chemistry(live, result, acid)
-            out["cases"].append({
-                "fixture": name, "replay_max_difference": replay,
-                "flahax_passes": checks["passes"],
-                "failed": [c["quantity"] for c in checks["checks"] if not c["passes"]],
-                "checks": len(checks["checks"]),
-                "phreeqpython_ms": 1000 * best_pp, "flahax_ms": 1000 * best_fx})
+            out["cases"].append(
+                {
+                    "fixture": name,
+                    "replay_max_difference": replay,
+                    "flahax_passes": checks["passes"],
+                    "failed": [c["quantity"] for c in checks["checks"] if not c["passes"]],
+                    "checks": len(checks["checks"]),
+                    "phreeqpython_ms": 1000 * best_pp,
+                    "flahax_ms": 1000 * best_fx,
+                }
+            )
     return out
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", type=Path, required=True, help="minteq.v4.dat at the pinned SHA-256")
+    parser.add_argument(
+        "--database", type=Path, required=True, help="minteq.v4.dat at the pinned SHA-256"
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     report = run(args.database)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, default=lambda v: v.item()), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(report, indent=2, default=lambda v: v.item()), encoding="utf-8"
+    )
     print(f"merged database {report['merged_sha256'][:16]}")
     for case in report["cases"]:
-        print(f"{case['fixture']:36s} replay {case['replay_max_difference']:.1e}  "
-              f"FlahaX {'pass' if case['flahax_passes'] else 'FAIL'} {case['checks']:4d} checks  "
-              f"PHREEQC {case['phreeqpython_ms']:8.2f} ms  FlahaX {case['flahax_ms']:9.2f} ms  {case['failed'][:3]}")
+        print(
+            f"{case['fixture']:36s} replay {case['replay_max_difference']:.1e}  "
+            f"FlahaX {'pass' if case['flahax_passes'] else 'FAIL'} {case['checks']:4d} checks  "
+            f"PHREEQC {case['phreeqpython_ms']:8.2f} ms  FlahaX {case['flahax_ms']:9.2f} ms  {case['failed'][:3]}"
+        )
 
 
 if __name__ == "__main__":

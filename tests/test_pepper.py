@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""The pepper case study: water gap and phosphorus and potassium targets."""
+
 import unittest
 
 from flahax import gap_for, load_library, recommend
@@ -36,7 +42,12 @@ class PepperProof(unittest.TestCase):
     def test_zinc_copper_and_molybdenum_stay_in_the_combination(self):
         targets = {
             **TARGETS,
-            "Fe": 5, "Mn": 0.8, "Zn": 0.1, "B": 0.3, "Cu": 0.07, "Mo": 0.03,
+            "Fe": 5,
+            "Mn": 0.8,
+            "Zn": 0.1,
+            "B": 0.3,
+            "Cu": 0.07,
+            "Mo": 0.03,
         }
         result = recommend(SALTS, targets, WATER)
         covered = set()
@@ -49,16 +60,20 @@ class PepperProof(unittest.TestCase):
 
     def test_forced_map_and_mkp_is_the_pepper_miss(self):
         """The published run stacked both phosphorus salts. That is not the optimum."""
+
         def named(fragment):
             return next(salt for salt in SALTS if fragment.lower() in salt["name"].lower())
 
-        salts = [named(name) for name in (
-            "Calcium Nitrate",
-            "Potassium Nitrate",
-            "Potassium Monobasic",
-            "Ammonium Monobasic",
-            "Magnesium Sulfate",
-        )]
+        salts = [
+            named(name)
+            for name in (
+                "Calcium Nitrate",
+                "Potassium Nitrate",
+                "Potassium Monobasic",
+                "Ammonium Monobasic",
+                "Magnesium Sulfate",
+            )
+        ]
         # Grams reconstructed from the published balance, not from the solver.
         grams = [0.605, 0.587, 0.549, 0.213, 0.406]
         achieved = forward(salts, grams, WATER)

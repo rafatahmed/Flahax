@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """#68: binding ceilings are met as constraints, and NNLS optimality is tested per column."""
+
 import unittest
 
 from flahax import load_library, recommend
@@ -35,8 +40,11 @@ class CeilingConstraintTests(unittest.TestCase):
         result = recommend(SALTS, GROW["targets"], {})
         limit = result["ammoniumLimit"]["mgPerL"]
         self.assertTrue(any(miss["bindingLimits"] == ["N_NH4"] for miss in result["unmetTargets"]))
-        self.assertAlmostEqual(final(result, "N_NH4"), limit * (1 - CEILING_MARGIN),
-                               delta=2 * CEILING_TOLERANCE * limit)
+        self.assertAlmostEqual(
+            final(result, "N_NH4"),
+            limit * (1 - CEILING_MARGIN),
+            delta=2 * CEILING_TOLERANCE * limit,
+        )
         self.assertLessEqual(final(result, "N_NH4"), limit)
 
     def test_result_does_not_depend_on_the_starting_point(self):
@@ -44,8 +52,14 @@ class CeilingConstraintTests(unittest.TestCase):
         # starts disagreed; the constrained optimum is unique (ridge > 0).
         limit = recommend(SALTS, GROW["targets"], {})["ammoniumLimit"]["mgPerL"]
         cold = _fit_within(SALTS, GROW["targets"], {}, 0.02, {"N_NH4": limit})
-        warm = _fit_within(SALTS, GROW["targets"], {}, 0.02, {"N_NH4": limit},
-                           x0=[g * 1.5 + 0.01 for g in cold["grams"]])
+        warm = _fit_within(
+            SALTS,
+            GROW["targets"],
+            {},
+            0.02,
+            {"N_NH4": limit},
+            x0=[g * 1.5 + 0.01 for g in cold["grams"]],
+        )
         self.assertLess(max(abs(a - b) for a, b in zip(cold["grams"], warm["grams"])), 1e-7)
 
 

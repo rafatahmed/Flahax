@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
+"""The shipped examples run and keep their documented results."""
+
 import json
 import unittest
 
@@ -11,7 +17,7 @@ import re
 class CapabilityExamplesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.results = {name:serializable(run()) for name, run in SCENARIOS.items()}
+        cls.results = {name: serializable(run()) for name, run in SCENARIOS.items()}
 
     def test_pepper_preserves_water_and_incidental_boundary(self):
         workflow = self.results['pepper']['workflow']
@@ -24,12 +30,12 @@ class CapabilityExamplesTests(unittest.TestCase):
         pepper = self.results['pepper']
         review = pepper['stock_allocation_review']
         self.assertEqual(review['status'], 'not_ready_for_mixing')
-        rows = {r['product']:r for r in review['rows']}
+        rows = {r['product']: r for r in review['rows']}
         recipe = pepper['workflow']['recommendation']['salts']
         self.assertEqual(len(rows), len(recipe))
         for salt in recipe:
             row = rows[salt['name']]
-            self.assertAlmostEqual(row['recipe_mass_g'], salt['gramsPerLitre']*1000)
+            self.assertAlmostEqual(row['recipe_mass_g'], salt['gramsPerLitre'] * 1000)
             self.assertIsNone(row['stock_concentration_g_per_litre'])
         self.assertEqual(rows['Calcium Nitrate (ag grade)']['proposed_channel'], 'A')
         self.assertEqual(rows['Mg Nitrate']['proposed_channel'], 'A')
@@ -37,15 +43,23 @@ class CapabilityExamplesTests(unittest.TestCase):
         self.assertEqual(rows['Potassium Monobasic Phosphate']['proposed_channel'], 'B')
         self.assertEqual(rows['Potassium Sulfate']['proposed_channel'], 'B')
         self.assertEqual(rows['Phosphoric Acid (75%)']['proposed_channel'], 'Acid')
-        for name in ('Iron II Sulfate (Hepahydrate)', 'Copper Sulfate (pentahydrate)',
-                     'Zinc Sulfate (Monohydrate)', 'Boric Acid', 'Sodium Molybdate (Dihydrate)'):
+        for name in (
+            'Iron II Sulfate (Hepahydrate)',
+            'Copper Sulfate (pentahydrate)',
+            'Zinc Sulfate (Monohydrate)',
+            'Boric Acid',
+            'Sodium Molybdate (Dihydrate)',
+        ):
             self.assertEqual(rows[name]['proposed_channel'], 'Unassigned')
         self.assertIn('Do not add that mass again', review['acid_accounting'])
         self.assertIn('not a requirement stated by the PDF', review['acid_policy'])
 
     def test_tank_review_does_not_assign_unknown_materials(self):
         from examples.pepper_stock_review import review
-        result = review({'salts':[{'id':'x', 'name':'Unknown grade', 'gramsPerLitre':.2}]}, 200)
+
+        result = review(
+            {'salts': [{'id': 'x', 'name': 'Unknown grade', 'gramsPerLitre': 0.2}]}, 200
+        )
         self.assertEqual(result['rows'][0]['proposed_channel'], 'Unassigned')
         self.assertEqual(result['rows'][0]['recipe_mass_g'], 40)
 
@@ -56,9 +70,11 @@ class CapabilityExamplesTests(unittest.TestCase):
         self.assertGreater(result['mixed']['species']['FeEdd-'], 0)
         self.assertTrue(any(v > 0 for v in result['precipitation']['precipitated'].values()))
         for state in (result['mixed'], result['precipitation']):
-            self.assertLess(state['ionic_strength'], .1)
+            self.assertLess(state['ionic_strength'], 0.1)
             self.assertLess(max(map(abs, state['residuals'].values())), 1e-10)
-        self.assertEqual(result['expected_davies_rejection']['error_code'], 'activity_model_out_of_range')
+        self.assertEqual(
+            result['expected_davies_rejection']['error_code'], 'activity_model_out_of_range'
+        )
 
     def test_delivery_is_calculated_not_operator_approved(self):
         result = self.results['delivery']

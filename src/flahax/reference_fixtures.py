@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Dependency-free loader and comparator for checked-in PHREEQC golden fixtures.
 
 Fixtures are test evidence, not a PHREEQC runtime integration. Each carries the
@@ -25,28 +29,51 @@ def load_reference_fixture(path: str | Path) -> dict:
     try:
         source = json.loads(fixture_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise DeliveryError("invalid_fixture", f"cannot read reference fixture {fixture_path}") from exc
+        raise DeliveryError(
+            "invalid_fixture", f"cannot read reference fixture {fixture_path}"
+        ) from exc
     if not isinstance(source, dict) or source.get("schemaVersion") != FIXTURE_SCHEMA_VERSION:
-        raise DeliveryError("invalid_fixture", "reference fixture has an unsupported schema version")
+        raise DeliveryError(
+            "invalid_fixture", "reference fixture has an unsupported schema version"
+        )
     reference = source.get("reference")
     expected = source.get("expected")
     input_text = source.get("phreeqcInput")
-    if not isinstance(reference, dict) or not isinstance(expected, dict) or not isinstance(input_text, str):
-        raise DeliveryError("invalid_fixture", "reference fixture needs reference, expected, and phreeqcInput")
+    if (
+        not isinstance(reference, dict)
+        or not isinstance(expected, dict)
+        or not isinstance(input_text, str)
+    ):
+        raise DeliveryError(
+            "invalid_fixture", "reference fixture needs reference, expected, and phreeqcInput"
+        )
     for field in ("sourceUrl", "software", "database", "activityModel"):
         if not isinstance(reference.get(field), str) or not reference[field]:
             raise DeliveryError("invalid_fixture", f"reference.{field} is required")
     digest = hashlib.sha256(input_text.encode("utf-8")).hexdigest()
     if source.get("inputSha256") != digest:
-        raise DeliveryError("invalid_fixture", "reference fixture inputSha256 does not match phreeqcInput")
+        raise DeliveryError(
+            "invalid_fixture", "reference fixture inputSha256 does not match phreeqcInput"
+        )
     tolerance = expected.get("absoluteTolerance")
-    if isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)) or not math.isfinite(tolerance) or tolerance < 0:
-        raise DeliveryError("invalid_fixture", "expected.absoluteTolerance must be a non-negative finite number")
+    if (
+        isinstance(tolerance, bool)
+        or not isinstance(tolerance, (int, float))
+        or not math.isfinite(tolerance)
+        or tolerance < 0
+    ):
+        raise DeliveryError(
+            "invalid_fixture", "expected.absoluteTolerance must be a non-negative finite number"
+        )
     values = expected.get("values")
     if not isinstance(values, dict) or not values:
         raise DeliveryError("invalid_fixture", "expected.values must be a non-empty object")
     for key, value in values.items():
-        if not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, (int, float)):
+        if (
+            not isinstance(key, str)
+            or isinstance(value, bool)
+            or not isinstance(value, (int, float))
+        ):
             raise DeliveryError("invalid_fixture", "expected.values must map names to numbers")
     return source
 

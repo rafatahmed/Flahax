@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """#61: ionic-strength convergence and warm starts change the iteration path, not the state."""
+
 import json
 import unittest
 from pathlib import Path
@@ -18,9 +23,13 @@ class WarmStartTests(unittest.TestCase):
         for name, amount in a.species.items():
             if amount > 1e-20:
                 self.assertLess(abs(b.species[name] - amount), relative * amount, name)
-        self.assertAlmostEqual(a.ionic_strength, b.ionic_strength, delta=1e-11)  # both stop at |dI| < 1e-12
-        self.assertEqual({p for p, v in a.precipitated.items() if v > 0},
-                         {p for p, v in b.precipitated.items() if v > 0})
+        self.assertAlmostEqual(
+            a.ionic_strength, b.ionic_strength, delta=1e-11
+        )  # both stop at |dI| < 1e-12
+        self.assertEqual(
+            {p for p, v in a.precipitated.items() if v > 0},
+            {p for p, v in b.precipitated.items() if v > 0},
+        )
 
     def test_warm_start_from_a_neighbouring_ph_reaches_the_cold_state(self):
         for name in ('products/mixed_products', 'phases/mixed_product_phases', 'phases/gypsum'):
@@ -28,7 +37,7 @@ class WarmStartTests(unittest.TestCase):
                 data = fixture(name)
                 ph = data['selected_rows'][-1]['pH']
                 phases = data.get('phases', ())
-                neighbour = solve(data['runtime_totals'], ph + .3, phases=phases)
+                neighbour = solve(data['runtime_totals'], ph + 0.3, phases=phases)
                 cold = solve(data['runtime_totals'], ph, phases=phases)
                 warm = solve(data['runtime_totals'], ph, phases=phases, start=neighbour)
                 self.assert_same_state(cold, warm)
@@ -44,10 +53,16 @@ class WarmStartTests(unittest.TestCase):
 
     def test_nitric_target_dose_is_unchanged(self):
         data = fixture('products/mixed_target_ph_nitric')
-        plan = nitric_target(data['runtime_totals'], data['initial_ph'], data['selected_rows'][-1]['pH'])
+        plan = nitric_target(
+            data['runtime_totals'], data['initial_ph'], data['selected_rows'][-1]['pH']
+        )
         tolerance = data['tolerances']
-        self.assertAlmostEqual(plan.nitric_acid_molal, data['nitric_acid_molal'],
-                               delta=tolerance['acid_absolute'] + tolerance['acid_relative'] * data['nitric_acid_molal'])
+        self.assertAlmostEqual(
+            plan.nitric_acid_molal,
+            data['nitric_acid_molal'],
+            delta=tolerance['acid_absolute']
+            + tolerance['acid_relative'] * data['nitric_acid_molal'],
+        )
 
 
 class IonicStrengthConvergenceTests(unittest.TestCase):
@@ -55,7 +70,9 @@ class IonicStrengthConvergenceTests(unittest.TestCase):
         # Gypsum-saturated solution near I = 0.055: the averaged update needed ~47 outer
         # passes (102 Newton iterations); the secant step needs a fraction of that.
         data = fixture('phases/gypsum')
-        result = solve(data['runtime_totals'], data['selected_rows'][-1]['pH'], phases=data['phases'])
+        result = solve(
+            data['runtime_totals'], data['selected_rows'][-1]['pH'], phases=data['phases']
+        )
         self.assertLess(result.iterations, 60)
 
 

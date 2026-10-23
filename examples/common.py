@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Example records are fictional, never manufacturer or laboratory evidence."""
+
 from dataclasses import asdict, is_dataclass
 import json
 import math
@@ -11,8 +16,14 @@ def catalogue():
 
 
 def record(identity, **fields):
-    return dict(schemaVersion='0.1', id=identity, source='SYNTHETIC EXAMPLE ONLY',
-                revision='1', recordedAt='2026-09-28T00:00:00Z', **fields)
+    return dict(
+        schemaVersion='0.1',
+        id=identity,
+        source='SYNTHETIC EXAMPLE ONLY',
+        revision='1',
+        recordedAt='2026-09-28T00:00:00Z',
+        **fields,
+    )
 
 
 def rejection(action):

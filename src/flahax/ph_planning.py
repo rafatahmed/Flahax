@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Titration-bounded pH planning for a prepared final nutrient solution.
 
 This module calculates an initial acid/base dose from a measured curve. It
@@ -112,22 +116,28 @@ def plan_ph(
     product = validate_product_assay(reagent)
     p_h = _target_ph(target_ph)
     if "pH" not in water or "alkalinityMgLAsCaCO3" not in water:
-        raise DeliveryError("missing_measurement", "water analysis needs measured pH and alkalinity")
+        raise DeliveryError(
+            "missing_measurement", "water analysis needs measured pH and alkalinity"
+        )
     alkalinity = alkalinity_meq_per_litre(MilligramsPerLitre(water["alkalinityMgLAsCaCO3"]))
     if curve["waterAnalysisId"] != water["id"]:
-        raise DeliveryError("mismatched_record", "titration curve does not belong to this water analysis")
+        raise DeliveryError(
+            "mismatched_record", "titration curve does not belong to this water analysis"
+        )
     if curve["reagentId"] != product["id"]:
         raise DeliveryError("mismatched_record", "titration curve does not belong to this reagent")
     if product["kind"] not in {"acid", "base"}:
         raise DeliveryError("invalid_value", "pH reagent must be an acid or base product")
     if "densityKgPerL" not in product or "normalityMeqPerL" not in product:
         raise DeliveryError(
-            "missing_measurement", "pH reagent needs densityKgPerL and normalityMeqPerL",
+            "missing_measurement",
+            "pH reagent needs densityKgPerL and normalityMeqPerL",
         )
     demand_value, direction = _interpolate_demand(curve["points"], p_h)
     if product["kind"] != direction:
         raise DeliveryError(
-            "mismatched_record", f"titration curve describes a {direction} dose, not {product['kind']}",
+            "mismatched_record",
+            f"titration curve describes a {direction} dose, not {product['kind']}",
         )
     demand = MilliEquivalentsPerLitre(demand_value)
     total_meq = demand.value * final_volume.value

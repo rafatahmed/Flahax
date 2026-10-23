@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Fit 25 C H2PO4- and HPO4-2 conductivity coefficients to Pethybridge et al. (2006) Table III.
 
 Decision O1 (design spec section 13). Each Table III point is speciated with FlahaX at
@@ -10,6 +15,7 @@ Prints the supplementary JSON block on stdout; --write stores it in the shipped 
 file; --residuals prints the per-point residual table instead.
 Run with PYTHONPATH="src;." (PowerShell: $env:PYTHONPATH="src;.").
 """
+
 import argparse
 import json
 import math
@@ -27,20 +33,31 @@ WATER_DENSITY_KG_DM3 = 0.997047
 B_FIXED = 1.5
 FITTED = ('H2PO4-', 'HPO4-2')
 CROSS_CHECKS = {
-    'CRC': {'H2PO4-': 36.0, 'HPO4-2': 114.0,
-            'reference': 'CRC Handbook 85th ed., Vanysek, Ionic Conductivity and Diffusion at '
-                         'Infinite Dilution (57 for 1/2 HPO4-2, 114 molar)'},
-    'Pethybridge_Lee_Wheaton': {'H2PO4-': 33.33, 'HPO4-2': 115.14,
-                                'reference': 'Pethybridge et al. (2006) Table IV, K salts '
-                                             '(57.57 for 1/2 HPO4-2, 115.14 molar)'},
-    'phreeqc_dat': {'H2PO4-': 31.8, 'HPO4-2': 103.6,
-                    'reference': 'phreeqc.dat diffusion coefficients, z^2 F^2 D / RT'},
+    'CRC': {
+        'H2PO4-': 36.0,
+        'HPO4-2': 114.0,
+        'reference': 'CRC Handbook 85th ed., Vanysek, Ionic Conductivity and Diffusion at '
+        'Infinite Dilution (57 for 1/2 HPO4-2, 114 molar)',
+    },
+    'Pethybridge_Lee_Wheaton': {
+        'H2PO4-': 33.33,
+        'HPO4-2': 115.14,
+        'reference': 'Pethybridge et al. (2006) Table IV, K salts '
+        '(57.57 for 1/2 HPO4-2, 115.14 molar)',
+    },
+    'phreeqc_dat': {
+        'H2PO4-': 31.8,
+        'HPO4-2': 103.6,
+        'reference': 'phreeqc.dat diffusion coefficients, z^2 F^2 D / RT',
+    },
 }
 GAP_LIMIT_PERCENT = 15.0
-KHPO4_NOTE = ('KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, '
-              'so when FlahaX bounds KHPO4- as uncovered in a mixture the upper end of the range '
-              'counts that current twice - small (<= 1.7 % of kappa at the most concentrated fit '
-              'point) and conservative.')
+KHPO4_NOTE = (
+    'KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, '
+    'so when FlahaX bounds KHPO4- as uncovered in a mixture the upper end of the range '
+    'counts that current twice - small (<= 1.7 % of kappa at the most concentrated fit '
+    'point) and conservative.'
+)
 
 
 def points(fixture):
@@ -55,12 +72,15 @@ def points(fixture):
 
 
 def _speciate(totals):
-    return calculate_equilibrium_ph(totals, complete_analysis=True, carbon_boundary='closed', phases=[])
+    return calculate_equilibrium_ph(
+        totals, complete_analysis=True, carbon_boundary='closed', phases=[]
+    )
 
 
 def _row(state):
     """Known (covered, non-fitted) kappa, design-row terms, uncovered bound and I for one state."""
     from flahax.irrigation_ec import load_conductivity_coefficients
+
     species_map = load_conductivity_coefficients()['species_map']
     charges = _charges()
     strength = state.ionic_strength
@@ -89,8 +109,18 @@ def fit(fixture_path=FIXTURE):
     rows = []
     for salt, c, molar, totals, kappa in points(fixture):
         known, design, bound, strength = _row(_speciate(totals))
-        rows.append({'salt': salt, 'c_mmol_dm3': c, 'Lambda': molar, 'kappa_obs_ms_cm': kappa,
-                     'known': known, 'design': design, 'bound': bound, 'ionic_strength': strength})
+        rows.append(
+            {
+                'salt': salt,
+                'c_mmol_dm3': c,
+                'Lambda': molar,
+                'kappa_obs_ms_cm': kappa,
+                'known': known,
+                'design': design,
+                'bound': bound,
+                'ionic_strength': strength,
+            }
+        )
     # Weighted normal equations, weight 1/kappa^2: minimise sum((model - obs)/obs)^2.
     normal = [[0.0] * 4 for _ in range(4)]
     rhs = [0.0] * 4
@@ -105,13 +135,22 @@ def fit(fixture_path=FIXTURE):
     residuals = []
     for r in rows:
         model = r['known'] + sum(d * v for d, v in zip(r['design'], x))
-        residuals.append({'salt': r['salt'], 'c_mmol_dm3': r['c_mmol_dm3'], 'Lambda': r['Lambda'],
-                          'kappa_obs_ms_cm': r['kappa_obs_ms_cm'], 'kappa_model_ms_cm': model,
-                          'residual_percent': 100 * (model - r['kappa_obs_ms_cm']) / r['kappa_obs_ms_cm'],
-                          'ionic_strength': r['ionic_strength'],
-                          'uncovered_bound_percent': 100 * r['bound'] / r['kappa_obs_ms_cm']})
-    fitted = {ion: {'lambda0_25c': x[2 * k], 'A_25c': x[2 * k + 1], 'B': B_FIXED}
-              for k, ion in enumerate(FITTED)}
+        residuals.append(
+            {
+                'salt': r['salt'],
+                'c_mmol_dm3': r['c_mmol_dm3'],
+                'Lambda': r['Lambda'],
+                'kappa_obs_ms_cm': r['kappa_obs_ms_cm'],
+                'kappa_model_ms_cm': model,
+                'residual_percent': 100 * (model - r['kappa_obs_ms_cm']) / r['kappa_obs_ms_cm'],
+                'ionic_strength': r['ionic_strength'],
+                'uncovered_bound_percent': 100 * r['bound'] / r['kappa_obs_ms_cm'],
+            }
+        )
+    fitted = {
+        ion: {'lambda0_25c': x[2 * k], 'A_25c': x[2 * k + 1], 'B': B_FIXED}
+        for k, ion in enumerate(FITTED)
+    }
     checks = {}
     for name, ref in CROSS_CHECKS.items():
         entry = {'reference': ref['reference']}
@@ -126,16 +165,22 @@ def fit(fixture_path=FIXTURE):
         **fitted,
         'units': 'mS kg cm-1 mol-1 (as McCleskey Table 1); 25 C only',
         'equation': 'lambda = lambda0_25c - A_25c * sqrt(I) / (1 + B * sqrt(I))',
-        'source': {'citation': fixture['source']['citation'],
-                   'doi': fixture['source']['doi'], 'table': 'III'},
-        'fit': {'method': 'weighted linear least squares, weight 1/kappa^2, B fixed; FlahaX '
-                          'speciation at calculated pH; uncovered minor species excluded',
-                'rms_percent': rms, 'points': len(residuals),
-                'max_abs_residual_percent': max(abs(p['residual_percent']) for p in residuals),
-                'max_ionic_strength': max(p['ionic_strength'] for p in residuals),
-                'max_uncovered_bound_percent': max(p['uncovered_bound_percent'] for p in residuals),
-                'density_kg_dm3': WATER_DENSITY_KG_DM3,
-                'note': KHPO4_NOTE},
+        'source': {
+            'citation': fixture['source']['citation'],
+            'doi': fixture['source']['doi'],
+            'table': 'III',
+        },
+        'fit': {
+            'method': 'weighted linear least squares, weight 1/kappa^2, B fixed; FlahaX '
+            'speciation at calculated pH; uncovered minor species excluded',
+            'rms_percent': rms,
+            'points': len(residuals),
+            'max_abs_residual_percent': max(abs(p['residual_percent']) for p in residuals),
+            'max_ionic_strength': max(p['ionic_strength'] for p in residuals),
+            'max_uncovered_bound_percent': max(p['uncovered_bound_percent'] for p in residuals),
+            'density_kg_dm3': WATER_DENSITY_KG_DM3,
+            'note': KHPO4_NOTE,
+        },
         'cross_checks': checks,
     }
     return block, residuals
@@ -144,8 +189,9 @@ def fit(fixture_path=FIXTURE):
 def write(block, destination=DESTINATION):
     data = json.loads(destination.read_text(encoding='utf-8'))
     data['supplementary'] = block
-    destination.write_text(json.dumps(data, indent=1, ensure_ascii=False) + '\n',
-                           encoding='utf-8', newline='\n')
+    destination.write_text(
+        json.dumps(data, indent=1, ensure_ascii=False) + '\n', encoding='utf-8', newline='\n'
+    )
 
 
 def main():
@@ -157,10 +203,12 @@ def main():
     if args.residuals:
         print('salt         c(mmol/dm3)  Lambda   kappa_obs  kappa_fit  resid%   I         bound%')
         for p in residuals:
-            print(f"{p['salt']:<12} {p['c_mmol_dm3']:>10.4f}  {p['Lambda']:>7.2f}  "
-                  f"{p['kappa_obs_ms_cm']:>9.6f}  {p['kappa_model_ms_cm']:>9.6f}  "
-                  f"{p['residual_percent']:>+7.3f}  {p['ionic_strength']:.6f}  "
-                  f"{p['uncovered_bound_percent']:.4f}")
+            print(
+                f"{p['salt']:<12} {p['c_mmol_dm3']:>10.4f}  {p['Lambda']:>7.2f}  "
+                f"{p['kappa_obs_ms_cm']:>9.6f}  {p['kappa_model_ms_cm']:>9.6f}  "
+                f"{p['residual_percent']:>+7.3f}  {p['ionic_strength']:.6f}  "
+                f"{p['uncovered_bound_percent']:.4f}"
+            )
         return
     print(json.dumps(block, indent=1, ensure_ascii=False))
     if args.write:
