@@ -44,14 +44,33 @@ def agronomist_rows(summary):
     return sorted(rows, key=lambda r: r['target'] is None)
 
 
+def grams(value):
+    """A weight a grower can read on a scale: never '0 g' for a product that is in the recipe."""
+    digits = 1 if value >= 10 else 2 if value >= .1 else 3
+    shown = number(value, digits)
+    return f'{shown} g' if float(shown.replace(',', '')) > 0 else 'less than 0.001 g'
+
+
+def limited_by(volumes):
+    """In fill mode, the container that sets the batch when another one could hold more."""
+    if not volumes or volumes.get('mode') != 'fill':
+        return ''
+    capacity = volumes['capacity_litres']
+    smallest = min(capacity, key=capacity.get)
+    if all(c == capacity[smallest] for c in capacity.values()):
+        return ''
+    name = 'acid container' if smallest == 'acid' else f'tank {smallest}'
+    return f' (your {litres(capacity[smallest])} L {name} sets the batch)'
+
+
 def _grams(product):
-    return f'{number(product["gramsPerBatch"], 1)} g'
+    return grams(product['gramsPerBatch'])
 
 
 def _tank_card(tank, volumes, blocked):
     name = tank['name']
     head = (f'prepare <b>{litres(volumes["prepared_litres"][name])} L</b> in your '
-            f'{litres(volumes["capacity_litres"][name])} L tank') if volumes else ''
+            f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}') if volumes else ''
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
                    for p in tank['products'])

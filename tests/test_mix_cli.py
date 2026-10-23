@@ -80,7 +80,8 @@ class MixTests(unittest.TestCase):
         self.assertIn('2,000 L of irrigation', sheet)
         self.assertEqual(summary['volumes'], {'irrigation_litres': 2000.0, 'prepared_litres':
                                               {'A': 20.0, 'B': 20.0, 'acid': 20.0},
-                                              'capacity_litres': {'A': 20.0, 'B': 20.0, 'acid': 20.0}})
+                                              'capacity_litres': {'A': 20.0, 'B': 20.0, 'acid': 20.0},
+                                              'mode': 'fill'})
         self.assertEqual(summary['tanks']['temperature_c'], 25)
         self.assertTrue(any(line.startswith('Tank A') for line in lines), lines)
         word = {'ready': 'ready', 'requires_review': 'review notes before mixing'}[summary['status']]
@@ -198,6 +199,28 @@ class MixTests(unittest.TestCase):
         report = (target / 'report.html').read_text(encoding='utf-8')
         self.assertIn('has no chloride, so it is closed on the alkalinity', report)
         self.assertNotIn('chloride', (target / 'batch-sheet.html').read_text(encoding='utf-8').lower())
+
+    def test_owners_second_session_by_name_and_readable_grams(self):
+        # Field test 2026-10-23: 100 L tanks with a 10 L acid container, saved as 'tomato stage 1'.
+        spec = ['100', '100', '10', '', '', '1']
+        stage1 = ['1', 'tomato stage.1']
+        code, lines, _ = self.run_mix(spec + RO + stage1 + CATALOGUE + NITRIC + ['6', '1', 'tomato stage 1'],
+                                      '--output', str(Path(self.tmp.name) / 'first'))
+        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertIn('  1,000 L of irrigation; prepare 10 L in each container (your 10 L acid container sets the batch).',
+                      lines)
+        self.assertTrue(any(l.startswith('Tank A: prepare 10 L in your 100 L tank (your 10 L acid container') for l in lines))
+        weights = [l for l in lines if l.startswith('  [ ] ')]
+        self.assertFalse([l for l in weights if l.endswith(': 0 g')], weights)
+        for typed in (['Tomato', 'Stage.1'], ['tomato', 'stage', '1'], ['sessions/Tomato', 'Stage', '1']):
+            with self.subTest(typed=typed):
+                code, again, _ = self.run_mix([], *typed, '--output', str(Path(self.tmp.name) / '-'.join(typed)))
+                self.assertEqual(code, 0, '\n'.join(again))
+        code, listed, _ = self.run_mix([], 'sessions')
+        self.assertEqual((code, listed), (0, ['Saved sessions: tomato-stage-1']))
+        code, missing, _ = self.run_mix([], 'sessions/x')
+        self.assertEqual(code, 1)
+        self.assertIn("Saved: tomato-stage-1", missing[-1])
 
     def test_blank_is_never_guessed(self):
         values = dict(BALANCED, Fe='', Mn='0', Zn='<0.02')
