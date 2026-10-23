@@ -16,6 +16,7 @@ from functools import lru_cache
 from .catalogue_chemistry import PHREEQC_MINTEQ_V4, ProductChemistry
 from .composition import parse_formula
 from .delivery_contracts import DeliveryError
+from .materials import _CHARGE_RESIDUAL_LIMIT_PERCENT
 
 UNDEFINED = 'give its formula, its ions, or its analysis by nutrient form'
 
@@ -63,7 +64,6 @@ _AGENT_SOURCE = {'DTPA': 'Martell/Smith stability profile; Fe(III)-DTPA log beta
                  'o,o-EDDHA': 'Yunta et al. 2003 o,o-EDDHA profile; Fe(III) log beta 35.1 at 25 C'}
 _UREA_SOURCE = 'analytical urea; hydrolysis is kinetic and excluded from 25 C instantaneous equilibrium'
 _BALANCE_TOLERANCE = 1e-6
-_CHARGE_RESIDUAL_LIMIT_PERCENT = 0.1  # materials._CHARGE_RESIDUAL_LIMIT_PERCENT; #93 is the owner's
 
 
 def _charge(ion: str) -> float:
