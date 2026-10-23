@@ -81,7 +81,7 @@ class AttributionTests(unittest.TestCase):
     def test_package_metadata_names_author_and_ships_notice(self):
         project = tomllib.loads((ROOT / 'pyproject.toml').read_text(encoding='utf-8'))['project']
         self.assertEqual(project['authors'][0]['name'], 'Rafat A. Al Khashan')
-        self.assertIn({'name': 'Flaha'}, project['maintainers'])
+        self.assertIn({'name': 'Flaha Agri Tech'}, project['maintainers'])
         self.assertIn('NOTICE', project['license-files'])
         self.assertIn('Rafat A. Al Khashan', NOTICE)
 
