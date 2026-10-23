@@ -1,8 +1,8 @@
-# FlahaX 0.6.0.dev0 — User Manual
+# FlahaX 0.6.0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.5.0, released 2026-10-20. The release workflow ran the Python 3.11–3.13 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
+**Version:** 0.6.0, release candidate prepared 2026-10-23; not yet published. See the repository's release evidence.
 
 ## Contents
 
@@ -42,7 +42,7 @@ Install the published package in a virtual environment. From a source checkout, 
 python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # POSIX shell: source .venv/bin/activate
-python -m pip install flahax==0.5.0
+python -m pip install flahax==0.6.0
 python -c "import flahax; print(flahax.__version__)"
 ```
 
@@ -253,6 +253,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | Code | Meaning | What to do |
 |---|---|---|
 | `invalid_value` | A number or text is out of its allowed range or form (for example a negative volume, a pH outside 0-14, a duplicate ID). | Correct the named value. |
+| `invalid_session` | A saved `flahax mix` session file is damaged or was edited by hand: it is not a JSON object, or a field is missing or of the wrong type. | Fix the named field, or run `flahax mix` again to make a new session. |
 | `invalid_type` | A value has the wrong kind (a list where a mapping is needed, text where a number is needed). | Supply the kind the message names. |
 | `missing_field` | A required input is absent (targets, reagent records, a document field). | Add the named field. |
 | `unknown_field` | A key is not recognised, for example an unsupported water key. | Use the keys the message lists. |
@@ -353,7 +354,7 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.5.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.6.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 

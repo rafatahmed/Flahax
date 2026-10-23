@@ -25,11 +25,19 @@ jobs:
         run: ruff format --check .
 
   test:
-    runs-on: ubuntu-latest
+    # Linux keeps the check names "test (3.11)" ... that branch protection requires.
+    name: ${{ matrix.os == 'ubuntu-latest' && format('test ({0})', matrix.python-version) || format('test ({0}, {1})', matrix.os, matrix.python-version) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: windows-latest
+            python-version: "3.13"
+          - os: macos-latest
+            python-version: "3.13"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -38,10 +46,10 @@ jobs:
       - name: Install
         run: python -m pip install -e . build
       - name: Unit tests
-        if: matrix.python-version != '3.13'
+        if: matrix.python-version != '3.13' || runner.os != 'Linux'
         run: python -m unittest discover -s tests -t .
       - name: Unit tests with coverage (coverage is a CI tool only, not a dependency)
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.13' && runner.os == 'Linux'
         env:
           COVERAGE_FILE: build/.coverage
         run: |
@@ -51,7 +59,7 @@ jobs:
           python -m coverage xml -o build/coverage.xml
           python -m coverage report
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.13' && runner.os == 'Linux'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/coverage.xml
@@ -62,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: distribution-evidence-${{ matrix.python-version }}
+          name: distribution-evidence-${{ matrix.os }}-${{ matrix.python-version }}
           path: build/distribution-verification.json
 
   phreeqc-live:

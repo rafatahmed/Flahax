@@ -97,7 +97,21 @@ Dashboard settings, recorded here because they live outside the repository:
 - The default version is `latest` until that release, then `stable`.
 - Never put a Read the Docs token in the repository.
 
-## Checklist (last run: 0.5.0)
+## Checklist (0.6.0)
+
+- [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
+- [x] Review compatibility, scientific provenance and distribution contents (pre-release audit, #149-#151).
+- [x] Pass local tests with live PHREEQC and isolated wheel/sdist verification.
+- [ ] Observe successful hosted checks on the merged revision (Linux 3.11-3.14, Windows and macOS 3.13).
+- [ ] Date the changelog, the manual's version line and `CITATION.cff`, and merge, before tagging (#71).
+- [ ] Obtain explicit publication authorization.
+- [ ] Publish the `v0.6.0` GitHub Release; review the run; approve the deployment.
+- [ ] Verify PyPI metadata and a fresh installed-package check; record the date, run and hashes.
+- [ ] Confirm the Read the Docs `stable` version builds `v0.6.0`.
+- [ ] Zenodo: confirm the archived version and its DOI; add the concept DOI to `CITATION.cff` and the README.
+- [ ] Open 0.6.1.dev0 on `main` (step 7; closes #134 with the README reinstall note).
+
+## Checklist (0.5.0)
 
 - [x] Choose the version and align metadata, runtime version, citation, manual and changelog.
 - [x] Review compatibility, scientific provenance and distribution contents.
