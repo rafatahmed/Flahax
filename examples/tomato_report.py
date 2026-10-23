@@ -43,7 +43,7 @@ svg text{font:16px Segoe UI,Arial,sans-serif;fill:#20353f}ul{line-height:1.6}
 @media(max-width:700px){main{padding:12px}section,header{padding:16px}.cards{grid-template-columns:1fr 1fr}}
 @media print{body{background:white}main{max-width:none;padding:0}section{break-inside:avoid;box-shadow:none}
 header{background:white;color:#103f49;border-bottom:3px solid #103f49}}
-"""
+"""  # noqa: E501
 
 SHEET_STYLE = """
 @page{size:A4;margin:12mm}:root{font-family:Segoe UI,Arial,sans-serif;color:#1d2f37;font-size:12.5px}
@@ -55,7 +55,7 @@ th,td{border:1px solid #b9c7cd;padding:4px 6px;text-align:left}th{background:#ee
 td.num,th.num{text-align:right}.tick{width:16px;height:16px;border:1.5px solid #1d2f37;display:inline-block}
 .fill{border-bottom:1px solid #1d2f37;display:inline-block;min-width:34mm}.small{font-size:11px;color:#40555e}
 @media print{main{padding:0}}
-"""
+"""  # noqa: E501
 
 
 def page(title, body, style=STYLE):
@@ -67,7 +67,10 @@ def page(title, body, style=STYLE):
 
 
 def card(label, value, note):
-    return f'<div class="card"><span>{text(label)}</span><strong>{text(value)}</strong><span>{text(note)}</span></div>'
+    return (
+        f'<div '
+        f'class="card"><span>{text(label)}</span><strong>{text(value)}</strong><span>{text(note)}</span></div>'
+    )
 
 
 def nutrient_charts(rows, title):
@@ -102,12 +105,14 @@ def simple_section(s):
     ph_note = (
         '<p class="ok">Mixed pH is inside the 5.3-5.8 feed range.</p>'
         if 5.3 <= ec['ph'] <= 5.8
-        else f'<p class="warn">Mixed pH {number(ec["ph"], 2)} is outside the 5.3-5.8 feed range: an acid dose '
+        else f'<p class="warn">Mixed pH {number(ec["ph"], 2)} is outside the 5.3-5.8 feed '
+        f'range: an acid dose '
         'is needed. The advanced example plans it on real water.</p>'
     )
     return (
         f'<section id="simple"><h2>1. Simple: {text(s["formula"])} in RO water</h2>'
-        '<p>One formula, water with no nutrients, one batch. FlahaX chooses the products, fits every '
+        '<p>One formula, water with no nutrients, one batch. FlahaX chooses the products, fits '
+        'every '
         'target, scales the batch and estimates EC.</p>'
         '<div class="cards">'
         + card('Targets met', 'Yes' if s['feasible'] else 'No', 'every target within 1%')
@@ -220,7 +225,8 @@ def advanced_section(a):
         for s in a['stages']
     ]
     return (
-        '<section id="advanced"><h2>2. Advanced: a published brackish well, from analysis to batch</h2>'
+        '<section id="advanced"><h2>2. Advanced: a published brackish well, from analysis to '
+        'batch</h2>'
         '<div class="cards">'
         + card(
             'Well analysis',
@@ -240,16 +246,23 @@ def advanced_section(a):
         )
         + '</div>'
         '<h3>Step 1. Balance the laboratory analysis</h3>'
-        f'<p>The well (Shomar et al. 2024, station 104) is {number(w["imbalance_percent"], 2)}% out of charge '
-        f'balance at its measured pH {w["measured_ph"]}. For the chemistry FlahaX keeps the measured pH and '
-        f'closes the gap on chloride ({w["chloride_adjustment_percent"]:+.1f}%), instead of turning it into a pH '
-        'error. That balanced chloride is a modelling assumption, not a corrected measurement: every limit and '
+        f'<p>The well (Shomar et al. 2024, station 104) is {number(w["imbalance_percent"], 2)}% '
+        f'out of charge '
+        f'balance at its measured pH {w["measured_ph"]}. For the chemistry FlahaX keeps the '
+        f'measured pH and '
+        f'closes the gap on chloride ({w["chloride_adjustment_percent"]:+.1f}%), instead of '
+        f'turning it into a pH '
+        'error. That balanced chloride is a modelling assumption, not a corrected measurement: '
+        'every limit and '
         'target below uses the laboratory values.</p>'
         '<h3>Step 2. Choose the blend with desalinated water</h3>'
-        f'<p>The blend is chosen on the laboratory analysis. {a["blend_percent"]}% is the largest whole-percent '
-        f'share within both limits; {a["blend_percent"] + 1}% exceeds the chloride limit on the laboratory value '
+        f'<p>The blend is chosen on the laboratory analysis. {a["blend_percent"]}% is the '
+        f'largest whole-percent '
+        f'share within both limits; {a["blend_percent"] + 1}% exceeds the chloride limit on the '
+        f'laboratory value '
         'even though the balanced model would pass it. The continuous chloride boundary is about '
-        f'{number(a["chloride_boundary_percent"], 1)}% (ion-free dilution water assumed), not a safety margin.</p>'
+        f'{number(a["chloride_boundary_percent"], 1)}% (ion-free dilution water assumed), not a '
+        f'safety margin.</p>'
         + table(
             [
                 'Well share',
@@ -271,8 +284,10 @@ def advanced_section(a):
         )
         + '<h3>Step 3. Formulate on that water</h3>'
         f'<p class="warn">With the whole catalogue the fit takes P from phosphoric acid '
-        f'({number(pc["phosphoric_g_per_litre"] * tomato_advanced.BATCH_LITRES, 0)} g per batch) and the feed '
-        f'mixes to pH {number(pc["mixed_ph"], 2)}, below the {a["target_ph"]} target. It is withdrawn as a P source; '
+        f'({number(pc["phosphoric_g_per_litre"] * tomato_advanced.BATCH_LITRES, 0)} g per '
+        f'batch) and the feed '
+        f'mixes to pH {number(pc["mixed_ph"], 2)}, below the {a["target_ph"]} target. It is '
+        f'withdrawn as a P source; '
         'potassium phosphate supplies P instead.</p>'
         + table(
             ['Product', 'g/L', f'g per {tomato_advanced.BATCH_LITRES} L', 'Chemical identity'],
@@ -291,18 +306,24 @@ def advanced_section(a):
             else ''
         )
         + '<h3>Step 4. Chemistry of the mixed feed</h3>'
-        f'<p>Blend water pH {number(c["water_ph"], 2)}; mixed feed pH {number(c["mixed_ph"], 2)}; ionic strength '
+        f'<p>Blend water pH {number(c["water_ph"], 2)}; mixed feed pH '
+        f'{number(c["mixed_ph"], 2)}; ionic strength '
         f'{number(c["ionic_strength"], 4)} mol/kg.</p>'
         + table(['Phase', 'Saturation index', 'Reading'], si_rows, 'Saturation indices above -1')
         + '<h3>Step 5. Acid to the target pH</h3>'
         + table(['Acid', 'Status', 'Reason'], acid_rows, 'Acid plans evaluated by FlahaX')
-        + f'<p class="warn">Nitric demand: about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of '
-        f'{text(acid["nitric_grade"])} per {tomato_advanced.BATCH_LITRES} L to reach pH {a["target_ph"]}, adding '
-        f'{number(acid["added_nitrate_n_mg_l"], 1)} mg/L nitrate-N (nitrate-N {number(acid["nitrate_before_mg_l"], 1)} '
-        f'&rarr; {number(acid["nitrate_after_mg_l"], 1)}, target {number(acid["nitrate_target_mg_l"], 1)}). FlahaX asks '
+        + f'<p class="warn">Nitric demand: about <b>{number(acid["nitric_ml_per_batch"], 0)} '
+        f'mL</b> of '
+        f'{text(acid["nitric_grade"])} per {tomato_advanced.BATCH_LITRES} L to reach pH '
+        f'{a["target_ph"]}, adding '
+        f'{number(acid["added_nitrate_n_mg_l"], 1)} mg/L nitrate-N (nitrate-N '
+        f'{number(acid["nitrate_before_mg_l"], 1)} '
+        f'&rarr; {number(acid["nitrate_after_mg_l"], 1)}, target '
+        f'{number(acid["nitrate_target_mg_l"], 1)}). FlahaX asks '
         'for review before accepting it, because these phases are supersaturated: '
         + text(', '.join(f'{p} {si:.2f}' for p, si in acid['supersaturated_after_acid']) or 'none')
-        + '. They are review-class phases (cited reasons in flahax.saturation_policy), not a predicted '
+        + '. They are review-class phases (cited reasons in flahax.saturation_policy), not a '
+        'predicted '
         'precipitate: add the acid in steps and measure.</p>'
         + table(
             ['State', 'EC25 mS/cm', 'pH', 'Status'],
@@ -330,7 +351,8 @@ def advanced_section(a):
         + table(
             ['Channel', 'Stock needed (L)', 'Injection flow (L/h)'],
             size_rows,
-            f"Injection for {number(sizing['final_volume_litres'], 0)} L in {number(sizing['duration_hours'], 1)} h "
+            f"Injection for {number(sizing['final_volume_litres'], 0)} L in "
+            f"{number(sizing['duration_hours'], 1)} h "
             f"(illustrative {a['site']['active_area_m2']} m2, {a['site']['gross_depth_mm']} mm)",
         )
         + '<h3>Step 7. Growth stages, each as its own batch</h3>'
@@ -360,7 +382,8 @@ def render_report(simple, advanced):
             + text(flahax.__version__)
             + ' &middot; capability report</div>'
             '<h1>Tomato nutrient solutions, simple and advanced</h1>'
-            '<p>Every number below is computed by FlahaX from the stated inputs. This is a planning calculation, '
+            '<p>Every number below is computed by FlahaX from the stated inputs. This is a '
+            'planning calculation, '
             'not a dosing instruction: measure EC and pH after mixing.</p></header>'
             + simple_section(simple)
             + advanced_section(advanced)
@@ -374,7 +397,8 @@ def render_sheet(title, water, products, tanks, acid_note, checks, ratio=100, ba
     rows = ''.join(
         f'<tr><td>{text(by_tank[p["name"]])}</td><td>{text(p["name"])}</td>'
         f'<td class="num">{number(p["gramsPerLitre"] * batch, 1)}</td>'
-        f'<td class="num">{number(p["gramsPerLitre"] * ratio, 2)}</td><td><span class="tick"></span></td></tr>'
+        f'<td class="num">{number(p["gramsPerLitre"] * ratio, 2)}</td><td><span '
+        f'class="tick"></span></td></tr>'
         for p in sorted(products, key=lambda p: (by_tank[p['name']], -p['gramsPerLitre']))
     )
     check_rows = ''.join(
@@ -382,21 +406,28 @@ def render_sheet(title, water, products, tanks, acid_note, checks, ratio=100, ba
         for k, v in checks
     )
     body = (
-        f'<h1>{text(title)}</h1><div class="meta">Batch sheet &middot; FlahaX {text(flahax.__version__)} &middot; '
+        f'<h1>{text(title)}</h1><div class="meta">Batch sheet &middot; FlahaX '
+        f'{text(flahax.__version__)} &middot; '
         f'{batch} L final solution</div>'
         f'<div class="box"><b>Water:</b> {text(water)}</div>'
         '<h2>Weigh and dissolve</h2><table><thead><tr><th>Tank</th><th>Product</th>'
-        f'<th class="num">g per {batch} L batch</th><th class="num">Concentrate g/L at 1:{ratio}</th><th>Done</th>'
+        f'<th class="num">g per {batch} L batch</th><th class="num">Concentrate g/L at '
+        f'1:{ratio}</th><th>Done</th>'
         f'</tr></thead><tbody>{rows}</tbody></table>'
-        f'<p class="small">Direct batch: dissolve everything in {batch} L. Concentrates: keep tanks apart as listed '
-        f'({text(tanks["source"])}). Micronutrients and chelates are in tank A with calcium: never acidify '
+        f'<p class="small">Direct batch: dissolve everything in {batch} L. Concentrates: keep '
+        f'tanks apart as listed '
+        f'({text(tanks["source"])}). Micronutrients and chelates are in tank A with calcium: '
+        f'never acidify '
         'tank A. Stock solubility is not verified: check each concentrate.</p>'
         f'<h2>pH</h2><div class="box warn">{acid_note}</div>'
-        '<h2>Measure after mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
+        '<h2>Measure after '
+        'mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
         f'<tbody>{check_rows}</tbody></table>'
-        '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span class="fill"></span> &nbsp; '
+        '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span '
+        'class="fill"></span> &nbsp; '
         'Signature <span class="fill"></span></p>'
-        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. EC is an experimental '
+        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. EC is an '
+        'experimental '
         'estimate. Confirm products, assays and acid grade against your supplier certificates.</p>'
     )
     return page(title, body, SHEET_STYLE)
@@ -413,7 +444,8 @@ def sheets(simple, advanced):
         'RO water, no nutrients',
         simple_salts,
         tomato_advanced.tank_table(simple_salts, flahax.load_library()['salts']),
-        f'Mixed pH is estimated at {number(ec["ph"], 2)}, outside the 5.3-5.8 feed range. Acid is needed but '
+        f'Mixed pH is estimated at {number(ec["ph"], 2)}, outside the 5.3-5.8 feed range. Acid '
+        f'is needed but '
         'not calculated in the simple example; plan it on your water (see the advanced sheet).',
         [
             ('EC25 (mS/cm)', f'about {number(ec["ec25_ms_cm"], 2)} (experimental)'),
@@ -423,13 +455,17 @@ def sheets(simple, advanced):
     a, acid = advanced, advanced['acid']
     advanced_sheet = render_sheet(
         'Tomato (De Kreij open system) - well blend',
-        f"{a['blend_percent']} L well water (Shomar et al. 2024, station 104) + {100 - a['blend_percent']} L desalinated "
-        f"water per 100 L. Na {number(a['blends'][-1]['Na'], 1)} and Cl {number(a['blends'][-1]['Cl'], 1)} mg/L, "
+        f"{a['blend_percent']} L well water (Shomar et al. 2024, station 104) + "
+        f"{100 - a['blend_percent']} L desalinated "
+        f"water per 100 L. Na {number(a['blends'][-1]['Na'], 1)} and Cl "
+        f"{number(a['blends'][-1]['Cl'], 1)} mg/L, "
         'within 3 mmol/L.',
         a['recipe']['salts'],
         a['tanks'],
-        f'Add about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of {text(acid["nitric_grade"])} per 1000 L to go '
-        f'from pH {number(a["chemistry"]["mixed_ph"], 2)} to {a["target_ph"]}. Add in steps and measure: FlahaX asks for '
+        f'Add about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of '
+        f'{text(acid["nitric_grade"])} per 1000 L to go '
+        f'from pH {number(a["chemistry"]["mixed_ph"], 2)} to {a["target_ph"]}. Add in steps and '
+        f'measure: FlahaX asks for '
         'review first ('
         + text(', '.join(p for p, _ in acid['supersaturated_after_acid']))
         + ' supersaturated, '

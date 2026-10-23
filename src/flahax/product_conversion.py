@@ -106,7 +106,8 @@ def convert_product_dose(
 def convert_catalogue_product_dose(
     product: Mapping[str, object], dose_g_per_kg_water: float
 ) -> ProductAnalyticalTotals:
-    """Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material: ``convert_material_dose``."""
+    """Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material:
+    ``convert_material_dose``."""
     return convert_product_dose(
         product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water
     )
@@ -334,7 +335,8 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, 
         else:
             parts = [(material.record, dose, material.identity_id)]
         for product, amount, identity_id in parts:
-            # A resolved grade or lot takes its identity's ions; its analysis was checked when graded.
+            # A resolved grade or lot takes its identity's ions; its analysis was checked when
+            # graded.
             chemistry = (
                 material_chemistry({**product, 'identityId': identity_id}, check=False)
                 if identity_id
@@ -372,7 +374,8 @@ def counterion_sodium_mg_per_l(salts_with_doses) -> float:
             continue
         grade = product.get('grade')
         if isinstance(grade, Mapping) and grade.get('composition') == 'declared_ions':
-            # A data-sheet compound: its D2 chelate sodium, as its chemistry counts it; stated Na is elemental.
+            # A data-sheet compound: its D2 chelate sodium, as its chemistry counts it; stated Na
+            # is elemental.
             if 'Na' not in product['elements']:
                 moles += declared_ion_totals(
                     product['elements'], grade.get('chelating_agent'), dose

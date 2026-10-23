@@ -89,7 +89,8 @@ LIGAND_PROFILES = _ligand_profiles()
 
 
 class _CatalogueChemistry(Mapping):
-    """The catalogue's records through ``material_chemistry``, keyed by name; built on first use."""
+    """The catalogue's records through ``material_chemistry``, keyed by name; built on first
+    use."""
 
     _data: dict | None = None
 

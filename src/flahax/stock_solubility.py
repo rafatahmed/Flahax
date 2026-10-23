@@ -2,17 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Does each concentrate dissolve? Stock strength against sourced solubility at the entered temperature.
+"""Does each concentrate dissolve? Stock strength against sourced solubility at the entered
+temperature.
 
-Stock strength is the product's grams per litre of final solution times the injection ratio. The limit is grams of
-product (as sold, hydrate water included) per litre of stock, interpolated linearly between the nearest sourced
-temperature points; outside them, or for a product without a record, the row is ``not_checked``, never passed.
+Stock strength is the product's grams per litre of final solution times the injection ratio. The
+limit is grams of
+product (as sold, hydrate water included) per litre of stock, interpolated linearly between the
+nearest sourced
+temperature points; outside them, or for a product without a record, the row is ``not_checked``,
+never passed.
 
 Records (``data/solubility.json``, sourced values approved by the owner on 2026-10-23) are
-``{"product": catalogue name, "points": [[degC, g/L], ...], "source": citation, "notes": ...}``. Without that file
+``{"product": catalogue name, "points": [[degC, g/L], ...], "source": citation, "notes": ...}``.
+Without that file
 every product is ``not_checked``.
 
-Limitation: each product is checked alone, as a single salt in pure water. Products sharing a tank (common ions such
+Limitation: each product is checked alone, as a single salt in pure water. Products sharing a tank
+(common ions such
 as K+ or SO4--) dissolve less together.
 """
 
@@ -59,7 +65,8 @@ def limit_at(points, temperature_c):
 
 
 def check_stock_solubility(tanks, ratio, temperature_c, *, table=None):
-    """One row per product in ``tanks`` (``ConcentrateTank``) at 1:``ratio`` and ``temperature_c``."""
+    """One row per product in ``tanks`` (``ConcentrateTank``) at 1:``ratio`` and
+    ``temperature_c``."""
     records = {r['product']: r for r in (load_solubility_table() if table is None else table)}
     found = []
     for tank in tanks:

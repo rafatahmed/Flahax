@@ -112,10 +112,13 @@ class ECDeliveryPlan:
     audit: dict
     warnings: tuple = field(
         default_factory=lambda: (
-            'Empirical interpolation only; verify stock and final EC with suitable calibrated meters.',
+            'Empirical interpolation only; verify stock and final EC with suitable calibrated '
+            'meters.',
             'EC does not establish nutrient balance, solubility, pH or safety.',
-            'Injection volumes preserve the existing recipe; no autonomous EC correction or dosing.',
-            'Separate acid/reagent additions are excluded unless explicitly included in the matched irrigation profile.',
+            'Injection volumes preserve the existing recipe; no autonomous EC correction or '
+            'dosing.',
+            'Separate acid/reagent additions are excluded unless explicitly included in the '
+            'matched irrigation profile.',
         )
     )
     post_mix_measurement_required: bool = True

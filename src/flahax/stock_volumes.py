@@ -54,7 +54,8 @@ def prepare_stocks(
         raise DeliveryError('invalid_value', f'mode must be one of {MODES}, got {mode!r}')
 
     if mode == 'fill':
-        # Assumption: irrigation_litres is ignored in fill mode. Each container is prepared to the smallest
+        # Assumption: irrigation_litres is ignored in fill mode. Each container is prepared to the
+        # smallest
         # capacity directly: (x * ratio) / ratio can round 1 ulp above x.
         prepared_each = min(capacity.values())
         irrigation = prepared_each * ratio

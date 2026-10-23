@@ -134,7 +134,8 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
     if target == "operator-approved" and any(
         c.requires_operator_verification for c in plan.commands
     ):
-        # The explicit transition is the approval; commands remain verification-required at execution.
+        # The explicit transition is the approval; commands remain verification-required at
+        # execution.
         pass
     return replace(plan, state=target)
 

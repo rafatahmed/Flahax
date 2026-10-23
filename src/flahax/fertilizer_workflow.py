@@ -39,7 +39,8 @@ from .nutrient_acceptance import (
 # about pH 5.3-5.8 (Van der Lugt et al.; Savvas); 5.0-7.0 is the acceptable outer band.
 RECOMMENDED_FEED_PH = (5.3, 5.8)
 ACCEPTABLE_FEED_PH = (5.0, 7.0)
-# Chemistry a later stage may build on: calculated, or calculated on an assumed charge closure (review).
+# Chemistry a later stage may build on: calculated, or calculated on an assumed charge closure
+# (review).
 USABLE = ('calculated', 'requires_review')
 ASSUMED_CLOSURE = (
     'the water analysis was closed on {ion} without a stated measurement uncertainty '
@@ -135,7 +136,8 @@ def _graded(supplied, library):
 
 
 def _dose_totals(doses, materials, products):
-    """Dose totals of the supplied records; graded products convert through their resolved material."""
+    """Dose totals of the supplied records; graded products convert through their resolved
+    material."""
     return catalogue_dose_totals(
         doses, materials={n: m for n, m in materials.items() if n in doses}, products=products
     )
@@ -170,9 +172,11 @@ def unreviewed_reason(recommendation):
 
 
 def limit_message(recommendation):
-    """Why a recipe is not feasible, in plain words: a declared maximum it breaks, else the targets it misses by >1 %."""
+    """Why a recipe is not feasible, in plain words: a declared maximum it breaks, else the
+    targets it misses by >1 %."""
     broken = [
-        f'{v["symbol"]} would be {v["ppm"]:.3g} mg/L, above the declared maximum {v["maximumPpm"]:.3g} mg/L'
+        f'{v["symbol"]} would be {v["ppm"]:.3g} mg/L, above the declared maximum '
+        f'{v["maximumPpm"]:.3g} mg/L'
         for v in recommendation['limitViolations']
     ]
     if broken:
@@ -190,7 +194,8 @@ def limit_message(recommendation):
 
 
 def no_reagent_message(plan):
-    """Why no pH reagent was selected: none offered in the needed direction, or the reasons each one failed."""
+    """Why no pH reagent was selected: none offered in the needed direction, or the reasons each
+    one failed."""
     need = 'an acid' if plan.direction == 'acid' else 'a base'
     tried = [
         c
@@ -199,11 +204,13 @@ def no_reagent_message(plan):
     ]
     if not tried:
         return (
-            f'the feed mixes at pH {plan.unadjusted_ph:.2f} and needs {need} to reach pH {plan.target_ph:.2f}; '
+            f'the feed mixes at pH {plan.unadjusted_ph:.2f} and needs {need} to reach pH '
+            f'{plan.target_ph:.2f}; '
             f'none was offered: add {need}'
         )
     return f'no {plan.direction} reaches pH {plan.target_ph:.2f} acceptably: ' + '; '.join(
-        f'{(c.product_record or {}).get("name") or c.product_id}: {c.message or c.error_code or c.status}'
+        f'{(c.product_record or {}).get("name") or c.product_id}: '
+        f'{c.message or c.error_code or c.status}'
         for c in tried
     )
 
@@ -270,12 +277,14 @@ def plan_fertilizer_workflow(
         recommendation['feasible'] = False
     if not ACCEPTABLE_FEED_PH[0] <= target_ph <= ACCEPTABLE_FEED_PH[1]:
         recommendation['warnings'].append(
-            f'Target pH {target_ph:g} is outside {ACCEPTABLE_FEED_PH[0]:g}-{ACCEPTABLE_FEED_PH[1]:g}, the range '
+            f'Target pH {target_ph:g} is outside '
+            f'{ACCEPTABLE_FEED_PH[0]:g}-{ACCEPTABLE_FEED_PH[1]:g}, the range '
             'acceptable for most soilless crops.'
         )
     elif not RECOMMENDED_FEED_PH[0] <= target_ph <= RECOMMENDED_FEED_PH[1]:
         recommendation['warnings'].append(
-            f'Target pH {target_ph:g} is outside the {RECOMMENDED_FEED_PH[0]:g}-{RECOMMENDED_FEED_PH[1]:g} feed range of '
+            f'Target pH {target_ph:g} is outside the '
+            f'{RECOMMENDED_FEED_PH[0]:g}-{RECOMMENDED_FEED_PH[1]:g} feed range of '
             'Dutch soilless practice (root zone about 5.5-6.0).'
         )
     output = FertilizerWorkflow(recommendation, water, gap_for(targets, water), float(target_ph))
@@ -346,8 +355,10 @@ def plan_fertilizer_workflow(
                     for key in ('complete_analysis', 'carbon_boundary', 'temperature_c', 'phases')
                 }
                 balance = config.get('water_balance')
-                # Two inventories (#84): ``analytical`` is the laboratory analysis and decides targets
-                # and limits; ``water_totals`` is what the chemistry uses (balanced when it was closed).
+                # Two inventories (#84): ``analytical`` is the laboratory analysis and decides
+                # targets
+                # and limits; ``water_totals`` is what the chemistry uses (balanced when it was
+                # closed).
                 if balance is not None:
                     if not isinstance(balance, BalancedWaterAnalysis):
                         raise DeliveryError(
@@ -414,7 +425,8 @@ def plan_fertilizer_workflow(
                     )
                     water_state = balance.state
                     water_totals = dict(balance.totals)
-                # The formulation's water mg/L must be the laboratory analysis, never the balanced model.
+                # The formulation's water mg/L must be the laboratory analysis, never the balanced
+                # model.
                 expected = _water_ppm(analytical, mass, final_volume.value)
                 for ion in set(expected) | set(water):
                     if not math.isclose(
@@ -603,7 +615,8 @@ def plan_fertilizer_workflow(
             stages['acid_selection'] = WorkflowStage(
                 'blocked',
                 error_code='unsupported_standard_acid',
-                message='Standard fertigation workflow accepts only nitric (HNO3) and phosphoric (H3PO4) products.',
+                message='Standard fertigation workflow accepts only nitric (HNO3) and '
+                'phosphoric (H3PO4) products.',
             )
         elif stages['chemistry'].status not in USABLE:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='chemistry_required')
@@ -699,7 +712,8 @@ def plan_fertilizer_workflow(
                     chosen.recommendation['rows'],
                     assessed_limits(maximum_concentrations, chosen.recommendation),
                 )['limitViolations']:
-                    # Final acceptance on the laboratory basis: a hard limit is never downgraded to review.
+                    # Final acceptance on the laboratory basis: a hard limit is never downgraded to
+                    # review.
                     stages['ph_adjustment'] = WorkflowStage(
                         'blocked',
                         value=plan,
@@ -741,7 +755,8 @@ def plan_fertilizer_workflow(
     output.maximum_concentrations = dict(maximum_concentrations or {})
     chemistry_stage = stages.get('chemistry')
     if chemistry_stage is not None and chemistry_stage.status == 'requires_review':
-        # A plan built on an assumed charge closure is usable only after review; a block stays a block.
+        # A plan built on an assumed charge closure is usable only after review; a block stays a
+        # block.
         for name in ('nitric', 'acid_selection', 'ph_adjustment'):
             if name in stages and stages[name].status == 'calculated':
                 stages[name].status = 'requires_review'
@@ -760,7 +775,8 @@ def plan_fertilizer_workflow(
 
 
 def _review_water_basis(output, mass, volume, maximum_concentrations):
-    """Record laboratory and balanced water side by side; flag limits the balancing alone would flip (#84)."""
+    """Record laboratory and balanced water side by side; flag limits the balancing alone would
+    flip (#84)."""
     stages, chemistry = output.stages, output.stages['chemistry'].value
     balance = chemistry['water_balance']
     analytical = _water_ppm(chemistry['analytical_water_totals'], mass, volume)

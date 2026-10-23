@@ -60,7 +60,8 @@ LIGANDS = {
     'DTPA': ({'C': 14, 'H': 18, 'N': 3, 'O': 10}, -5),
     'o,o-EDDHA': ({'C': 18, 'H': 16, 'N': 2, 'O': 6}, -4),
 }
-# Chelate complexes: agent, chelated metal, charge. D2: DTPA and o,o-EDDHA are defined for iron only.
+# Chelate complexes: agent, chelated metal, charge. D2: DTPA and o,o-EDDHA are defined for iron
+# only.
 COMPLEXES = {
     'Fe(III)-EDTA': ('EDTA', 'Fe', -1),
     'Mn-EDTA': ('EDTA', 'Mn', -2),
@@ -95,7 +96,8 @@ _TOTALS_KEY = {
 # Ions without a nutrient of their own, when the analysis leaves them to the charge balance.
 _UNSTATED_KEY = {'Na+': 'sodium', 'CO3-2': 'carbonate', 'HCO3-': 'carbonate', 'citrate': 'citrate'}
 _LIGAND_IONS = frozenset({'citrate'})
-# Hydroxide is the proton deficit the charge balance closes, as the implicit protons of acids are (#75).
+# Hydroxide is the proton deficit the charge balance closes, as the implicit protons of acids are
+# (#75).
 _IMPLICIT = frozenset({'OH-'})
 _MICRO_CATIONS = frozenset({'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'})
 _CHELATE_FAMILY = {'EDTA': 'edta_chelate', 'DTPA': 'dtpa_chelate', 'o,o-EDDHA': 'eddha_chelate'}

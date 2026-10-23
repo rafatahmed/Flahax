@@ -21,37 +21,52 @@ SI_THRESHOLD = 1e-7
 
 REVIEW = {
     'Hydroxylapatite': (
-        'Hydroxylapatite does not form directly from feed-like solutions: calcium phosphate precipitates through '
-        'amorphous, octacalcium-phosphate and brushite precursors, and magnesium slows the transformation. Brushite '
+        'Hydroxylapatite does not form directly from feed-like solutions: calcium phosphate '
+        'precipitates through '
+        'amorphous, octacalcium-phosphate and brushite precursors, and magnesium slows the '
+        'transformation. Brushite '
         '(CaHPO4:2H2O), the precursor that does form, stays a hard gate.',
         'Nancollas, Tomazic & Tomson (1976) Croat. Chem. Acta 48(4), 431-438.',
     ),
     'Goethite': (
-        'Crystalline goethite forms slowly from ferrihydrite (months to years at 24 C); ferrihydrite, the Fe(III) '
+        'Crystalline goethite forms slowly from ferrihydrite (months to years at 24 C); '
+        'ferrihydrite, the Fe(III) '
         'phase that precipitates quickly, stays a hard gate.',
-        'Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284, doi:10.1346/CCMN.1983.0310405.',
+        'Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284, '
+        'doi:10.1346/CCMN.1983.0310405.',
     ),
     'MnHPO4': (
-        'The database constant for anhydrous MnHPO4 (log K -25.4) traces only to the 1976 WATEQF program data, with '
-        'no measurement behind it; the anhydrous phase is not reported to form in water at 25 C, and no Mn phosphate '
-        'precipitation is reported in dilute nutrient feeds. Keep micronutrients and phosphate in separate '
+        'The database constant for anhydrous MnHPO4 (log K -25.4) traces only to the 1976 '
+        'WATEQF program data, with '
+        'no measurement behind it; the anhydrous phase is not reported to form in water at 25 '
+        'C, and no Mn phosphate '
+        'precipitation is reported in dilute nutrient feeds. Keep micronutrients and phosphate '
+        'in separate '
         'concentrate tanks, where the real risk is.',
-        'Ball & Nordstrom (1991) USGS OFR 91-183, Table 2 (after Plummer, Jones & Truesdell 1976, USGS WRI 76-13); '
+        'Ball & Nordstrom (1991) USGS OFR 91-183, Table 2 (after Plummer, Jones & Truesdell '
+        '1976, USGS WRI 76-13); '
         'Pedas et al. (2011) Front. Plant Sci. 2:37, doi:10.3389/fpls.2011.00037.',
     ),
     'Vivianite': (
-        'Vivianite is an Fe(II) phosphate of reducing environments; the model holds Fe(II) at a fixed oxidation '
-        'state, but in an aerated feed Fe(II) oxidizes and vivianite itself oxidizes in oxic water. See the iron(II) '
+        'Vivianite is an Fe(II) phosphate of reducing environments; the model holds Fe(II) at a '
+        'fixed oxidation '
+        'state, but in an aerated feed Fe(II) oxidizes and vivianite itself oxidizes in oxic '
+        'water. See the iron(II) '
         'advisory for what does precipitate.',
-        'Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe, Kleeberg & Hupfer (2016) Earth-Sci. Rev. 158, 51.',
+        'Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe, Kleeberg & Hupfer (2016) '
+        'Earth-Sci. Rev. 158, 51.',
     ),
 }
 
 FERROUS_IRON_ADVISORY = (
-    'Iron supplied as iron(II) oxidizes in an aerated feed (half-life about hours at pH 6, days at pH 5.5, faster '
-    'with phosphate) and precipitates as amorphous Fe(III) phosphate, taking some phosphate with it. Prefer a '
-    'chelated iron source, or re-dose iron. Sources: Stumm & Lee (1961) Ind. Eng. Chem. 53, 143; Voegelin et al. '
-    '(2010) Geochim. Cosmochim. Acta 74, 164; Hoagland & Arnon (1950) Calif. Agric. Exp. Stn. Circ. 347; '
+    'Iron supplied as iron(II) oxidizes in an aerated feed (half-life about hours at pH 6, days '
+    'at pH 5.5, faster '
+    'with phosphate) and precipitates as amorphous Fe(III) phosphate, taking some phosphate '
+    'with it. Prefer a '
+    'chelated iron source, or re-dose iron. Sources: Stumm & Lee (1961) Ind. Eng. Chem. 53, '
+    '143; Voegelin et al. '
+    '(2010) Geochim. Cosmochim. Acta 74, 164; Hoagland & Arnon (1950) Calif. Agric. Exp. Stn. '
+    'Circ. 347; '
     'Jacobson (1951) Plant Physiol. 26, 411.'
 )
 

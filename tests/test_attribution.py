@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Every data source FlahaX ships is credited in NOTICE, and the USGS notice travels with PHREEQC data.
+"""Every data source FlahaX ships is credited in NOTICE, and the USGS notice travels with PHREEQC
+data.
 
-Adding data with a source NOTICE does not name fails here: credit it in NOTICE (and CITATION.cff) first.
+Adding data with a source NOTICE does not name fails here: credit it in NOTICE (and CITATION.cff)
+first.
 """
 
 import json
@@ -40,7 +42,8 @@ CREDITS = {
 
 
 def sources():
-    """(file, source text) for every source, citation or reference field and every supplier in the data."""
+    """(file, source text) for every source, citation or reference field and every supplier in the
+    data."""
     found = []
 
     def walk(name, value):

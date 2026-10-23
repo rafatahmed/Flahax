@@ -84,7 +84,8 @@ def run():
     return dict(
         assumptions=[
             'EC25 in mS/cm; TDS 250 ppm on factor 0.5 equals water EC 0.5 mS/cm.',
-            'All EC grids, pump records and stock data are fictional demonstrations, NOT field predictions.',
+            'All EC grids, pump records and stock data are fictional demonstrations, NOT field '
+            'predictions.',
             'Independent A/B and combined-mixture profiles; no linear EC concentration scaling.',
             'No separate acid addition is included in this EC recipe.',
             '100 L final batch; 1 L from each 100x tank. Injection ratio is per tank.',

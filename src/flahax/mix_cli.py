@@ -264,20 +264,24 @@ def ask_formula(p, store, pending, library):
         pending.append(('formulas', ref, targets))
     balance = target_ion_balance(targets)
     p.say(
-        f'Formula balance: cations {balance["cationsMeqPerL"]:.2f} meq/L, anions {balance["anionsMeqPerL"]:.2f} '
+        f'Formula balance: cations {balance["cationsMeqPerL"]:.2f} meq/L, anions '
+        f'{balance["anionsMeqPerL"]:.2f} '
         f'meq/L ({balance["imbalancePercent"]:+.1f} %).'
     )
     if balance['exceedsWarning']:
         p.say(
-            f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} % out of balance, '
-            f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and unlisted counter-ions '
+            f'Warning (targetIonBalance): the formula is {abs(balance["imbalancePercent"]):.1f} '
+            f'% out of balance, '
+            f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and '
+            f'unlisted counter-ions '
             'will make up the difference.'
         )
     return ref, targets, title
 
 
 def ask_notes(p):
-    """Data-sheet compatibility notes, kept with the grade for the full report; ';' separates several."""
+    """Data-sheet compatibility notes, kept with the grade for the full report; ';' separates
+    several."""
     answer = p.text("Notes from the data sheet, e.g. 'tank pH above 4' (Enter = none)", '')
     return [note.strip() for note in answer.split(';') if note.strip()]
 
@@ -318,7 +322,8 @@ def add_single(p, catalogue):
         return None
     if 'identity_inconsistent' in material.flags:
         p.say(
-            f'Not added (identity_inconsistent): the label of {brand} does not match {identity["name"]}. '
+            f'Not added (identity_inconsistent): the label of {brand} does not match '
+            f'{identity["name"]}. '
             'Check the label values, or use the catalogue grade.'
         )
         return None
@@ -362,7 +367,8 @@ def add_compound(p):
     p.say(
         'Full chemistry: the label balances.'
         if check.modellable
-        else f'Not modellable: {check.reason}. It can be formulated, but no pH reagent will be planned with it.'
+        else f'Not modellable: {check.reason}. It can be formulated, but no pH reagent will be '
+        f'planned with it.'
     )
     return {
         'id': material.record['id'],
@@ -517,7 +523,8 @@ def interview(p, store):
 
 
 def find_session(store, spec):
-    """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds tomato-stage-1)."""
+    """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds
+    tomato-stage-1)."""
     for candidate in (
         Path(spec),
         Path(spec + '.json'),
@@ -547,12 +554,13 @@ def summarize(summary, say):
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
     for reason in key_reasons(summary):
-        say(
-            f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (full text on the batch sheet)"}'
-        )
+        if len(reason) > 160:
+            reason = reason[:150].rstrip() + ' ... (full text on the batch sheet)'
+        say(f'  ! {reason}')
     if len(summary['warnings']) > 3:
         say(
-            f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them all'
+            f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them '
+            f'all'
         )
     say(f'Irrigation supplied: {number(volumes["irrigation_litres"], 0)} L at 1:{ratio:g}')
     for tank in summary['tanks']['tanks']:
@@ -569,13 +577,16 @@ def summarize(summary, say):
         )
         for product in tank['products']:
             say(
-                f'  {"-" if blocked else "[ ]"} {product["name"]}: {grams(product["gramsPerBatch"])}'
+                f'  {"-" if blocked else "[ ]"} {product["name"]}: '
+                f'{grams(product["gramsPerBatch"])}'
             )
     selected = summary['ph'] and summary['ph']['selected']
     if selected and not blocked:
         say(
-            f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]}, added to water '
-            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, never water to acid)'
+            f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL '
+            f'{selected["product"]}, added to water '
+            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, '
+            f'never water to acid)'
         )
     elif not blocked:
         say(
@@ -623,13 +634,15 @@ def main(argv=None, *, ask=input, say=print, store=None):
             name, session = path.stem, read_json(path, 'session')
         else:
             say(
-                f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; Ctrl+C stops.'
+                f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; '
+                f'Ctrl+C stops.'
             )
             name, session, pending = interview(p, store)
             for kind, item, data in pending:
                 store.save(kind, item, data)
             say(
-                f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix sessions/{name}'
+                f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix '
+                f'sessions/{name}'
             )
     except (KeyboardInterrupt, EOFError):
         say('Stopped; nothing saved.')

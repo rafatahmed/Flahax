@@ -5,7 +5,8 @@
 # its results are calculations, not dosing instructions.
 """Advanced tomato example: a published brackish well, from laboratory analysis to batch plan.
 
-Steps: balance the well analysis at its measured pH (for chemistry only); choose the largest blend with
+Steps: balance the well analysis at its measured pH (for chemistry only); choose the largest blend
+with
 desalinated water that keeps Na and Cl within open-system limits; formulate Dutch
 tomato targets on that water; speciate the mix (pH, saturation indices); evaluate
 nitric and phosphoric acid; estimate EC; group concentrates into compatible tanks
@@ -361,16 +362,24 @@ def run():
         sizing=sizing,
         stages=stages,
         assumptions=[
-            'Well: Shomar et al. (2024) station 104, measured pH 7.80; desalinated water taken as ion-free.',
-            'Na and Cl limits: 3 mmol/L each, De Kreij, Voogt and Baas (2003), open systems; checked on the '
-            'laboratory analysis. The charge-balanced water (Cl closed) is used only for pH, saturation and EC.',
-            'Targets: De Kreij, Voogt and Baas (1999) tomato, open system; target pH 5.5 from the same table.',
-            'Phosphoric acid is withdrawn as a P source because, on this water, it drives the feed below the target pH.',
-            'Acid grades are EXAMPLES (60% HNO3 1.37 kg/L; 75% H3PO4 1.58 kg/L); use your certificate.',
-            'Tank grouping is the packaged default (flahax.group_tanks): Yara page 63/65 rules, micronutrients and '
+            'Well: Shomar et al. (2024) station 104, measured pH 7.80; desalinated water taken '
+            'as ion-free.',
+            'Na and Cl limits: 3 mmol/L each, De Kreij, Voogt and Baas (2003), open systems; '
+            'checked on the '
+            'laboratory analysis. The charge-balanced water (Cl closed) is used only for pH, '
+            'saturation and EC.',
+            'Targets: De Kreij, Voogt and Baas (1999) tomato, open system; target pH 5.5 from '
+            'the same table.',
+            'Phosphoric acid is withdrawn as a P source because, on this water, it drives the '
+            'feed below the target pH.',
+            'Acid grades are EXAMPLES (60% HNO3 1.37 kg/L; 75% H3PO4 1.58 kg/L); use your '
+            'certificate.',
+            'Tank grouping is the packaged default (flahax.group_tanks): Yara page 63/65 rules, '
+            'micronutrients and '
             'chelates in tank A, which is never acidified. Stock solubility is not verified.',
             'Site figures for injection sizing are illustrative.',
-            'Positive saturation indices mean a precipitation risk, not a predicted rate; measure after mixing.',
+            'Positive saturation indices mean a precipitation risk, not a predicted rate; '
+            'measure after mixing.',
         ],
     )
 
@@ -385,15 +394,19 @@ def main():
     print('Blend check (mg/L):  well %   Na     Cl     Ca     S')
     for b in r['blends']:
         print(
-            f"                      {b['well_percent']:>4}  {b['Na']:6.1f} {b['Cl']:6.1f} {b['Ca']:6.1f} {b['S']:6.1f}"
+            f"                      {b['well_percent']:>4}  {b['Na']:6.1f} {b['Cl']:6.1f} "
+            f"{b['Ca']:6.1f} {b['S']:6.1f}"
         )
     print(
-        f"-> use {r['blend_percent']}% well water (Na <= {r['limits_mg_l']['Na']:.1f}, Cl <= {r['limits_mg_l']['Cl']:.1f})"
+        f"-> use {r['blend_percent']}% well water (Na <= {r['limits_mg_l']['Na']:.1f}, Cl <= "
+        f"{r['limits_mg_l']['Cl']:.1f})"
     )
     pc = r['phosphoric_check']
     print(
-        f"\nWhole catalogue: {pc['phosphoric_g_per_litre'] * BATCH_LITRES:.0f} g phosphoric acid per batch -> "
-        f"feed pH {pc['mixed_ph']:.2f}, below the {r['target_ph']} target. Phosphoric acid is removed below."
+        f"\nWhole catalogue: {pc['phosphoric_g_per_litre'] * BATCH_LITRES:.0f} g phosphoric "
+        f"acid per batch -> "
+        f"feed pH {pc['mixed_ph']:.2f}, below the {r['target_ph']} target. Phosphoric acid is "
+        f"removed below."
     )
     rec = r['recipe']
     print(
@@ -404,18 +417,21 @@ def main():
         print(f"  {s['name']:<38} {s['gramsPerLitre'] * BATCH_LITRES:8.1f} g per {BATCH_LITRES} L")
     c = r['chemistry']
     print(
-        f"\npH: blend water {c['water_ph']:.2f}, mixed feed {c['mixed_ph']:.2f}; target {r['target_ph']}"
+        f"\npH: blend water {c['water_ph']:.2f}, mixed feed {c['mixed_ph']:.2f}; target "
+        f"{r['target_ph']}"
     )
     print('Saturation indices > -1:', ', '.join(f'{p} {s:.2f}' for p, s in c['saturation']))
     a = r['acid']
     for c in a['candidates']:
         print(f"Acid {c['product']}: {c['status']} - {c['message']}")
     print(
-        f"Nitric demand to pH {r['target_ph']}: {a['nitric_ml_per_batch']:.0f} mL of {a['nitric_grade']} "
+        f"Nitric demand to pH {r['target_ph']}: {a['nitric_ml_per_batch']:.0f} mL of "
+        f"{a['nitric_grade']} "
         f"per {BATCH_LITRES} L, +{a['added_nitrate_n_mg_l']:.1f} mg/L nitrate-N"
     )
     print(
-        f"Nitrate-N: {a['nitrate_before_mg_l']:.1f} -> {a['nitrate_after_mg_l']:.1f} mg/L with the acid "
+        f"Nitrate-N: {a['nitrate_before_mg_l']:.1f} -> {a['nitrate_after_mg_l']:.1f} mg/L with "
+        f"the acid "
         f"(target {a['nitrate_target_mg_l']:.1f})"
     )
     print(
@@ -430,7 +446,8 @@ def main():
     print('\nStages on the same water:')
     for s in r['stages']:
         print(
-            f"  {s['stage']:<50} {'met' if s['feasible'] else 'missed'}; worst {s['worst_miss_percent']:.1f}%"
+            f"  {s['stage']:<50} {'met' if s['feasible'] else 'missed'}; worst "
+            f"{s['worst_miss_percent']:.1f}%"
         )
 
 

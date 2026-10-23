@@ -44,7 +44,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
 <header><div class="eyebrow">FlahaX / capability report / unreleased development</div>
 <h1>From crop targets to delivery planning</h1>
 <p>Readable results, visible limits and traceable evidence. Pepper formulation and synthetic demonstrations are kept separate.</p></header>
-<nav><a href="#nutrients">Nutrients</a><a href="#doses">Fertilizers</a><a href="#tank-allocation">Tank A / B / acid</a><a href="#chemistry">Chemistry</a><a href="#acids">Acids</a><a href="#ec">EC &amp; injection</a><a href="#readiness">Readiness</a></nav>''',
+<nav><a href="#nutrients">Nutrients</a><a href="#doses">Fertilizers</a><a href="#tank-allocation">Tank A / B / acid</a><a href="#chemistry">Chemistry</a><a href="#acids">Acids</a><a href="#ec">EC &amp; injection</a><a href="#readiness">Readiness</a></nav>''',  # noqa: E501
         '<div class="notice">' + text(report['notice']) + ' No dosing approval is implied.</div>',
         '<div class="cards"><div class="card">Crop calcium target<strong>'
         + number(s['pepper']['targets_mg_per_l'].get('Ca'))
@@ -56,7 +56,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         + number(pepper['nutrient_gap']['Ca'])
         + ' mg/L</strong><span>Crop target minus water contribution</span></div></div>',
         '<section id="nutrients"><h2>01 / Pepper nutrient balance</h2>'
-        '<p>Water is included in the calculated final concentration. Macro and trace nutrients have separate scales so small targets remain visible.</p>',
+        '<p>Water is included in the calculated final concentration. Macro and trace nutrients '
+        'have separate scales so small targets remain visible.</p>',
     ]
     for title, ions in [
         ('Macronutrients', ('N_NO3', 'N_NH4', 'P', 'K', 'Ca', 'Mg', 'S')),
@@ -97,14 +98,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         )
     )
     parts.append(
-        '<div class="notice">A zero NH4 or Na target is not an automatic prohibition. Incidental additions need separate assessment; no safe threshold is inferred.</div></section>'
+        '<div class="notice">A zero NH4 or Na target is not an automatic prohibition. '
+        'Incidental additions need separate assessment; no safe threshold is '
+        'inferred.</div></section>'
     )
     salts = recipe['salts']
     batch_l = pepper['stages']['batch']['value']['final_volume']['value']
     parts.append(
         '<section id="doses"><h2>02 / Fertilizer quantities</h2><p>Illustrative '
         + number(batch_l)
-        + ' L final batch. Confirm commercial assays before physical use, particularly the catalogue’s Phosphoric Acid (75%) entry.</p>'
+        + ' L final batch. Confirm commercial assays before physical use, particularly the '
+        'catalogue’s Phosphoric Acid (75%) entry.</p>'
     )
     parts.append(
         bars(
@@ -126,10 +130,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
     )
     allocation = s['pepper']['stock_allocation_review']
     parts.append(
-        '</section><section id="tank-allocation"><span class="tag">YOUR PEPPER RECIPE - ALLOCATION REVIEW, NOT MIXING APPROVAL</span><h2>What goes in Tank A, Tank B and the acid channel?</h2><p>Source: Yara 04_Fertilizer.pdf, pages 63, 65 and 66. The macro separation is clear, but the source does not approve every trace product or stock concentration. A/B are labels for separate concentrates, not ingredients to premix together.</p>'
+        '</section><section id="tank-allocation"><span class="tag">YOUR PEPPER RECIPE - '
+        'ALLOCATION REVIEW, NOT MIXING APPROVAL</span><h2>What goes in Tank A, Tank B and the '
+        'acid channel?</h2><p>Source: Yara 04_Fertilizer.pdf, pages 63, 65 and 66. The macro '
+        'separation is clear, but the source does not approve every trace product or stock '
+        'concentration. A/B are labels for separate concentrates, not ingredients to premix '
+        'together.</p>'
     )
     parts.append(
-        '<div class="notice"><strong>Not ready for mixing.</strong> The groups below are proposed destinations, not a calculated StockPlan. Unassigned products have not been omitted from the nutrient recipe. Their stock location remains unresolved.</div>'
+        '<div class="notice"><strong>Not ready for mixing.</strong> The groups below are '
+        'proposed destinations, not a calculated StockPlan. Unassigned products have not been '
+        'omitted from the nutrient recipe. Their stock location remains unresolved.</div>'
     )
     for channel, title in [
         ('A', 'Tank A - calcium / nitrate / chelate candidates'),
@@ -160,7 +171,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
     parts.append(
         '<p>'
         + text(allocation['acid_policy'])
-        + ' Do not acidify the chelate-containing A tank. A two-tank-only system is not yet demonstrated for all twelve products.</p>'
+        + ' Do not acidify the chelate-containing A tank. A two-tank-only system is not yet '
+        'demonstrated for all twelve products.</p>'
     )
     parts.append(
         table(
@@ -170,7 +182,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         )
     )
     parts.append(
-        '</section><section id="chemistry"><span class="tag">SEPARATE SYNTHETIC DEMONSTRATION</span><h2>03 / Mixed chemistry and phases</h2><p>This is not the pepper solution. SI above zero indicates supersaturation; allocated solids are a separate result. Molal values are per kg of water.</p>'
+        '</section><section id="chemistry"><span class="tag">SEPARATE SYNTHETIC '
+        'DEMONSTRATION</span><h2>03 / Mixed chemistry and phases</h2><p>This is not the pepper '
+        'solution. SI above zero indicates supersaturation; allocated solids are a separate '
+        'result. Molal values are per kg of water.</p>'
     )
     chemical = s['chemistry']['mixed']
     parts.append(
@@ -184,7 +199,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
                     chemical['iterations'],
                 ]
             ],
-            'Aqueous-only mixed demonstration; imposed pH is not a calculated neutral-charge condition',
+            'Aqueous-only mixed demonstration; imposed pH is not a calculated neutral-charge '
+            'condition',
         )
     )
     si = sorted(
@@ -211,7 +227,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
                 ]
                 for k, v in si
             ],
-            'All finite saturation indices (highest first); unavailable/absent-component indices remain in JSON',
+            'All finite saturation indices (highest first); unavailable/absent-component '
+            'indices remain in JSON',
         )
     )
     species = sorted(chemical['species'].items(), key=lambda p: p[1], reverse=True)
@@ -233,7 +250,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         )
     )
     parts.append(
-        '</section><section id="acids"><span class="tag">SEPARATE SYNTHETIC DEMONSTRATION</span><h2>04 / pH and acid options</h2>'
+        '</section><section id="acids"><span class="tag">SEPARATE SYNTHETIC '
+        'DEMONSTRATION</span><h2>04 / pH and acid options</h2>'
     )
     stages = s['delivery']['workflow']['stages']
     parts.append(
@@ -265,11 +283,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
                 ]
                 for p in candidates
             ],
-            'Candidate assays differ from the separate HNO3 delivery record; do not compare volumes without their assays',
+            'Candidate assays differ from the separate HNO3 delivery record; do not compare '
+            'volumes without their assays',
         )
     )
     parts.append(
-        '</section><section id="ec"><span class="tag">FICTIONAL CALIBRATION DATA — NOT FIELD PREDICTIONS</span><h2>05 / EC, tanks and injection</h2><p>These values demonstrate the calibrated EC algorithm. Stock A/B and combined irrigation EC are independently estimated—not added or multiplied by the injection ratio.</p>'
+        '</section><section id="ec"><span class="tag">FICTIONAL CALIBRATION DATA — NOT FIELD '
+        'PREDICTIONS</span><h2>05 / EC, tanks and injection</h2><p>These values demonstrate the '
+        'calibrated EC algorithm. Stock A/B and combined irrigation EC are independently '
+        'estimated—not added or multiplied by the injection ratio.</p>'
     )
     ec = s['ec_injection']['ec_and_injection']
     demo_stocks = s['ec_injection']['stock_plan']
@@ -293,11 +315,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
                 for tank in demo_stocks['tanks']
                 for salt in tank['salts']
             ],
-            'Actual assignment in this two-product SYNTHETIC example only - NOT the pepper tank plan',
+            'Actual assignment in this two-product SYNTHETIC example only - NOT the pepper tank '
+            'plan',
         )
     )
     parts.append(
-        '<p><strong>Acid location in this EC demonstration: none.</strong> No acid dose is included. The separate pH example uses its own acid channel; it must not be read as part of these A/B tanks.</p>'
+        '<p><strong>Acid location in this EC demonstration: none.</strong> No acid dose is '
+        'included. The separate pH example uses its own acid channel; it must not be read as '
+        'part of these A/B tanks.</p>'
     )
     predictions = list(ec['predictions'].items())
     parts.append(
@@ -346,12 +371,18 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         )
     )
     parts.append(
-        '<div class="notice">Missing measured EC profiles produce “needs_input”, not zero EC. Pump values preserve the recipe; they do not authorize automatic EC correction or device operation.</div></section>'
+        '<div class="notice">Missing measured EC profiles produce “needs_input”, not zero EC. '
+        'Pump values preserve the recipe; they do not authorize automatic EC correction or '
+        'device operation.</div></section>'
     )
     if 'calculated_site' in s:
         site = s['calculated_site']
         parts.append(
-            '<section><span class="tag">NO NEW MEASUREMENTS - SCREENING ONLY</span><h2>Calculated EC and equipment requirements</h2><p>Separate SQM brochure-based example, not the pepper recipe. Linear/additive pre-acid estimate with unknown accuracy. No measured calibration profile is needed for this screening calculation.</p>'
+            '<section><span class="tag">NO NEW MEASUREMENTS - SCREENING '
+            'ONLY</span><h2>Calculated EC and equipment requirements</h2><p>Separate SQM '
+            'brochure-based example, not the pepper recipe. Linear/additive pre-acid estimate '
+            'with unknown accuracy. No measured calibration profile is needed for this '
+            'screening calculation.</p>'
         )
         parts.append(
             bars(
@@ -403,7 +434,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
                     ]
                     for name, row in sizing['channels'].items()
                 ],
-                '10,000 L final irrigation over 2 hours; equipment model awaits manufacturer operating-point checks',
+                '10,000 L final irrigation over 2 hours; equipment model awaits manufacturer '
+                'operating-point checks',
             )
         )
         parts.append('</section>')
@@ -425,7 +457,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
         )
     )
     parts.append(
-        '<p><a href="report.json">Complete machine-readable inputs and outputs</a> · <a href="report.md">Markdown report</a></p><details><summary>Assumptions by scenario</summary>'
+        '<p><a href="report.json">Complete machine-readable inputs and outputs</a> · <a '
+        'href="report.md">Markdown report</a></p><details><summary>Assumptions by '
+        'scenario</summary>'
     )
     for name, scenario in s.items():
         parts.append(
@@ -436,6 +470,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f5;padding:16px}
             + '</ul>'
         )
     parts.append(
-        '</details></section><p class="muted">Generated from FlahaX example results. No external resources, tracking or JavaScript. Print from your browser for a paper/PDF copy.</p></main></body></html>'
+        '</details></section><p class="muted">Generated from FlahaX example results. No '
+        'external resources, tracking or JavaScript. Print from your browser for a paper/PDF '
+        'copy.</p></main></body></html>'
     )
     return ''.join(parts)

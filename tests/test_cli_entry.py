@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The bare ``flahax`` command: start screen, --version, program name, Ctrl+C (field test 2026-10-23)."""
+"""The bare ``flahax`` command: start screen, --version, program name, Ctrl+C (field test
+2026-10-23)."""
 
 import contextlib
 import io

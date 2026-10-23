@@ -90,13 +90,15 @@ def read_json(path, what):
     except json.JSONDecodeError as exc:
         raise DeliveryError(
             'invalid_json',
-            f'{what} file {path} is not valid JSON: {exc.msg.removesuffix(" at")} at line {exc.lineno}, '
+            f'{what} file {path} is not valid JSON: {exc.msg.removesuffix(" at")} at line '
+            f'{exc.lineno}, '
             f'column {exc.colno}',
         ) from None
 
 
 def number_in(name, low, high=None, *, above=True):
-    """An argparse type: a finite number above ``low`` (or at least, with ``above=False``) and at most ``high``."""
+    """An argparse type: a finite number above ``low`` (or at least, with ``above=False``) and at
+    most ``high``."""
 
     def parse(text):
         try:
@@ -309,7 +311,8 @@ def choose_formula(library, formula, crop):
 
 @dataclass
 class BatchOptions:
-    """The ``flahax batch`` flags, plus the interactive mix's tanks, fill mode, temperature and depth.
+    """The ``flahax batch`` flags, plus the interactive mix's tanks, fill mode, temperature and
+    depth.
 
     With ``tank_litres`` (keys A, B and acid) the batch volume is the irrigation the
     stocks supply (``stock_volumes.prepare_stocks``) and ``volume`` is not used.
@@ -337,7 +340,8 @@ class BatchOptions:
 
 
 def run_batch(options):
-    """The batch summary (``summarize_batch``); with tanks, ``summary['volumes']`` gives the stock volumes."""
+    """The batch summary (``summarize_batch``); with tanks, ``summary['volumes']`` gives the stock
+    volumes."""
     volumes = None
     if options.tank_litres is not None:
         volumes = prepare_stocks(
