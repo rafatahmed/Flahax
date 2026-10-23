@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A formula's own cation/anion balance is checked before fitting (research report, Steiner 1961)."""
+"""A formula's own cation/anion balance is checked before fitting (research report, Steiner
+1961)."""
 
 import unittest
 

@@ -156,7 +156,8 @@ def main():
         print(
             f"{case['fixture']:36s} replay {case['replay_max_difference']:.1e}  "
             f"FlahaX {'pass' if case['flahax_passes'] else 'FAIL'} {case['checks']:4d} checks  "
-            f"PHREEQC {case['phreeqpython_ms']:8.2f} ms  FlahaX {case['flahax_ms']:9.2f} ms  {case['failed'][:3]}"
+            f"PHREEQC {case['phreeqpython_ms']:8.2f} ms  FlahaX {case['flahax_ms']:9.2f} ms  "
+            f"{case['failed'][:3]}"
         )
 
 

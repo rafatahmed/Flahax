@@ -90,8 +90,10 @@ def run():
         assumptions=[
             'Curve points, stock limits and separation rules are fictional, not measurements.',
             'Stock recipe is prescribed to illustrate assignment, not optimized for pepper.',
-            'The supplied curve applies to its matching water/reagent, not a proven final fertilizer pH.',
-            'Measure after mixing; actual stocks require sourced compatibility/solubility records.',
+            'The supplied curve applies to its matching water/reagent, not a proven final '
+            'fertilizer pH.',
+            'Measure after mixing; actual stocks require sourced compatibility/solubility '
+            'records.',
         ],
         water=water,
         reagent=reagent,

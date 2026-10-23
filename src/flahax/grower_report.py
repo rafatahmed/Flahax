@@ -31,7 +31,8 @@ MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
 
 
 def litres(value):
-    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small batch)."""
+    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small
+    batch)."""
     return number(value, 1 if value >= 10 else 3)
 
 
@@ -91,16 +92,19 @@ def bars(title, labels, series, unit):
     height = 94 + group * len(labels)
     left, width = 265, 545
     svg = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 {height}" role="img" aria-label="{text(title)}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 {height}" role="img" '
+        f'aria-label="{text(title)}">',
         '<title>' + text(title) + '</title>',
-        '<desc>Zero-based horizontal bars. Exact values and units also appear in the accompanying table. '
+        '<desc>Zero-based horizontal bars. Exact values and units also appear in the '
+        'accompanying table. '
         'Missing values are not plotted.</desc>',
     ]
     for i in range(5):
         x = left + width * i / 4
         svg.append(f'<path d="M{x} 38 V{height - 38}" stroke="#dbe4e8"/>')
         svg.append(
-            f'<text x="{x}" y="{height - 16}" text-anchor="middle">{number(maximum * i / 4, 2)}</text>'
+            f'<text x="{x}" y="{height - 16}" '
+            f'text-anchor="middle">{number(maximum * i / 4, 2)}</text>'
         )
     for index, (name, _) in enumerate(series):
         x = left + index * 170
@@ -126,7 +130,8 @@ def bars(title, labels, series, unit):
             size = width * value / maximum
             by = y + j * 21
             svg.append(
-                f'<rect x="{left}" y="{by}" width="{size}" height="14" rx="3" fill="{colors[j % 3]}"/>'
+                f'<rect x="{left}" y="{by}" width="{size}" height="14" rx="3" '
+                f'fill="{colors[j % 3]}"/>'
             )
             svg.append(f'<text x="{left + size + 7}" y="{by + 12}">{number(value, 3)}</text>')
     svg.append('</svg>')
@@ -151,7 +156,8 @@ def _stage(stage):
 
 
 def _water_and_limits(workflow, recipe):
-    """Laboratory and modelled water side by side, and every declared limit decided on the laboratory basis."""
+    """Laboratory and modelled water side by side, and every declared limit decided on the
+    laboratory basis."""
     basis = getattr(workflow, 'water_basis', None)
     water = dict(
         decision_basis='laboratory analysis',
@@ -187,8 +193,10 @@ def _water_and_limits(workflow, recipe):
                 basis='laboratory analysis',
                 balancingChangesDecision=flips,
                 note=(
-                    f'{ion}: {lab:.4g} mg/L on the laboratory analysis is {"above" if exceeds else "within"} the '
-                    f'{limit:g} mg/L maximum; the charge-balanced model gives {model:.4g} mg/L. The decision uses the '
+                    f'{ion}: {lab:.4g} mg/L on the laboratory analysis is '
+                    f'{"above" if exceeds else "within"} the '
+                    f'{limit:g} mg/L maximum; the charge-balanced model gives {model:.4g} mg/L. '
+                    f'The decision uses the '
                     'laboratory value; check the analysis.'
                 )
                 if flips
@@ -218,7 +226,8 @@ def summarize_batch(
     ph_stage = workflow.stages.get('ph_adjustment')
     plan = ph_stage.value if ph_stage is not None else None
     chosen = plan.selected if plan is not None else None
-    # Without a selected reagent, report the pH plan's own recipe (acids are not nutrient sources there)
+    # Without a selected reagent, report the pH plan's own recipe (acids are not nutrient sources
+    # there)
     # and the rejected state of its first computed candidate, so the blocking phases are shown.
     rejected = None
     if plan is not None and chosen is None:
@@ -232,7 +241,8 @@ def summarize_batch(
         recipe = plan.unadjusted_recommendation
     else:
         recipe = workflow.recommendation
-    # The incidental-nutrient review is judged on the recipe that is weighed, not the first fit. A block or any
+    # The incidental-nutrient review is judged on the recipe that is weighed, not the first fit. A
+    # block or any
     # other reason is left alone: review never downgrades a block (#84).
     form, reason = stages['formulation'], unreviewed_reason(recipe)
     if form['status'] == 'calculated' or (
@@ -262,7 +272,8 @@ def summarize_batch(
                 message=c.message,
             )
 
-        # mixed_ph: the weighed recipe without its reagent (the refit when a reagent is chosen, #107).
+        # mixed_ph: the weighed recipe without its reagent (the refit when a reagent is chosen,
+        # #107).
         weighed = (
             chosen.mixed.ph
             if chosen is not None and chosen.mixed is not None
@@ -278,7 +289,8 @@ def summarize_batch(
             candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'],
         )
     elif ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
-        # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet names it.
+        # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet
+        # names it.
         ph = dict(
             status=ph_stage.status,
             direction=None,
@@ -400,7 +412,8 @@ def summarize_batch(
             'blocked' if workflow.stages['formulation'].status == 'blocked' else 'requires_review'
         )
         warnings.append(
-            f'{ph_stage.message}. pH was not planned: measure it after mixing and adjust before use.'
+            f'{ph_stage.message}. pH was not planned: measure it after mixing and adjust before '
+            f'use.'
         )
     elif ph_stage is not None:
         # The pH plan carries its own refitted recipe: its stage decides.
@@ -420,8 +433,10 @@ def summarize_batch(
     if form['status'] == 'requires_review' and status == 'ready':
         status = 'requires_review'
     water, limits = _water_and_limits(workflow, recipe)
-    # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always blocks,
-    # and a decision the charge balancing alone would change asks for review; review never downgrades a block.
+    # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always
+    # blocks,
+    # and a decision the charge balancing alone would change asks for review; review never
+    # downgrades a block.
     if any(row['decision'] == 'exceeds_limit' for row in limits):
         status = 'blocked'
     elif status == 'ready' and (
@@ -437,7 +452,8 @@ def summarize_batch(
             )
         if row['balancingChangesDecision'] and not any(row['note'] in w for w in warnings):
             warnings.append(row['note'])
-    # A stock that does not dissolve at the entered temperature blocks; nothing here lowers a block (#84).
+    # A stock that does not dissolve at the entered temperature blocks; nothing here lowers a block
+    # (#84).
     for row in solubility:
         if row.status == 'exceeds':
             status = 'blocked'
@@ -502,7 +518,8 @@ def summarize_batch(
             'Tanks follow '
             + grouping.source
             + '; micronutrients and chelates go to tank A (FlahaX rule). '
-            f'Stock solubility is checked per product at {temperature_c:g} °C against sourced single-salt data only; '
+            f'Stock solubility is checked per product at {temperature_c:g} °C against sourced '
+            f'single-salt data only; '
             'products without data are listed as not checked: confirm those with your supplier.',
             'A positive saturation index is a precipitation risk, not a predicted rate.',
         ],
@@ -528,7 +545,7 @@ svg text{font:16px Segoe UI,Arial,sans-serif;fill:#20353f}ul{line-height:1.6}
 @media(max-width:700px){main{padding:12px}section,header{padding:16px}.cards{grid-template-columns:1fr 1fr}}
 @media print{body{background:white}main{max-width:none;padding:0}section{break-inside:avoid;box-shadow:none}
 header{background:white;color:#103f49;border-bottom:3px solid #103f49}}
-"""
+"""  # noqa: E501
 
 SHEET_STYLE = """
 @page{size:A4;margin:12mm}:root{font-family:Segoe UI,Arial,sans-serif;color:#1d2f37;font-size:12.5px}
@@ -541,7 +558,7 @@ th,td{border:1px solid #b9c7cd;padding:4px 6px;text-align:left}th{background:#ee
 td.num,th.num{text-align:right}.tick{width:16px;height:16px;border:1.5px solid #1d2f37;display:inline-block}
 .fill{border-bottom:1px solid #1d2f37;display:inline-block;min-width:34mm}.small{font-size:11px;color:#40555e}
 @media print{main{padding:0}}
-"""
+"""  # noqa: E501
 
 STATUS_WORDS = {
     'ready': 'ready',
@@ -564,7 +581,10 @@ def _page(title, body, style):
 
 
 def _card(label, value, note):
-    return f'<div class="card"><span>{text(label)}</span><strong>{text(value)}</strong><span>{text(note)}</span></div>'
+    return (
+        f'<div '
+        f'class="card"><span>{text(label)}</span><strong>{text(value)}</strong><span>{text(note)}</span></div>'
+    )
 
 
 def _reagent_line(summary):
@@ -573,15 +593,21 @@ def _reagent_line(summary):
         return 'pH was not planned: supply complete water chemistry and pH reagents to plan it.'
     chosen = ph['selected']
     if chosen is None and ph['unadjusted_ph'] is None:
-        return f'No pH reagent was planned. {ph["message"]}. Measure the pH after mixing and adjust before use.'
+        return (
+            f'No pH reagent was planned. {ph["message"]}. Measure the pH after mixing and '
+            f'adjust before use.'
+        )
     if chosen is None:
         return (
-            f'No acceptable pH reagent: the feed mixes at pH {number(ph["unadjusted_ph"], 2)} and needs '
-            f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. '
+            f'No acceptable pH reagent: the feed mixes at pH {number(ph["unadjusted_ph"], 2)} '
+            f'and needs '
+            f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach '
+            f'{number(ph["target_ph"], 2)}. '
             'See the candidates and their reasons.'
         )
     return (
-        f'Add {millilitres(chosen["volume_ml_per_batch"])} mL of {chosen["product"]} ({chosen["formula"]}) per '
+        f'Add {millilitres(chosen["volume_ml_per_batch"])} mL of {chosen["product"]} '
+        f'({chosen["formula"]}) per '
         f'{number(summary["batch_litres"], 0)} L to go from pH {number(ph["mixed_ph"], 2)} to '
         f'{number(ph["target_ph"], 2)}. Add it in steps and measure.'
     )
@@ -597,7 +623,8 @@ def render_report(summary):
         '<header><div class="eyebrow">FlahaX '
         + text(s['flahax_version'])
         + ' &middot; batch report</div>'
-        f'<h1>{text(s["title"])}</h1><p>Water: {text(s["water_label"])}. Batch {number(s["batch_litres"], 0)} L, '
+        f'<h1>{text(s["title"])}</h1><p>Water: {text(s["water_label"])}. Batch '
+        f'{number(s["batch_litres"], 0)} L, '
         f'target pH {number(s["target_ph"], 2)}.</p>'
         '<div class="cards">'
         + _card('Plan', s['status'].replace('_', ' '), STATUS_WORDS[s['status']])
@@ -662,7 +689,8 @@ def render_report(summary):
             (
                 '<p>Missed targets:</p><ul>'
                 + ''.join(
-                    f'<li><b>{text(u["symbol"])}</b> {u["deltaPct"]:+.2f}% - {text(u["reason"])}</li>'
+                    f'<li><b>{text(u["symbol"])}</b> {u["deltaPct"]:+.2f}% - '
+                    f'{text(u["reason"])}</li>'
                     for u in f['unmet']
                 )
                 + '</ul>'
@@ -676,8 +704,10 @@ def render_report(summary):
         body += (
             '<section><h2>pH adjustment</h2>'
             f'<p>The first recipe mixes at pH {number(ph["unadjusted_ph"], 2)}; it needs '
-            f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. Each '
-            'candidate is dosed to the target and the recipe is refitted with its nutrients counted'
+            f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach '
+            f'{number(ph["target_ph"], 2)}. Each '
+            'candidate is dosed to the target and the recipe is refitted with its nutrients '
+            'counted'
             + (
                 f'; the weighed recipe mixes at pH {number(ph["mixed_ph"], 2)} before the reagent'
                 if ph['selected'] and ph['mixed_ph'] is not None
@@ -706,8 +736,10 @@ def render_report(summary):
         }
         body += (
             '<section><h2>Chemistry of the final feed</h2>'
-            f'<p>Water pH {number(chem["water_ph"], 2)}; mixed {number(chem["mixed_ph"], 2)}; final '
-            f'{number(chem["final_ph"], 2)}; ionic strength {number(chem["ionic_strength"], 4)} mol/kg.</p>'
+            f'<p>Water pH {number(chem["water_ph"], 2)}; mixed {number(chem["mixed_ph"], 2)}; '
+            f'final '
+            f'{number(chem["final_ph"], 2)}; ionic strength {number(chem["ionic_strength"], 4)} '
+            f'mol/kg.</p>'
             + table(
                 ['Phase', 'Saturation index', 'Reading'],
                 [
@@ -736,7 +768,8 @@ def render_report(summary):
                 f'<li>{text(name)}: {text("; ".join(notes))}</li>'
                 for name, notes in s['product_notes'].items()
             )
-            + '</ul><p class="small">As entered from the product data sheets; FlahaX does not check them.</p></section>'
+            + '</ul><p class="small">As entered from the product data sheets; FlahaX does not '
+            'check them.</p></section>'
         )
     body += (
         '<section><h2>Stages</h2>'
@@ -777,7 +810,8 @@ def _limits_text(s):
     if not s['limits']:
         return 'No maximum concentrations were declared, so none were checked.'
     return (
-        'Limits are decided on the laboratory analysis plus everything added, at the final volume. '
+        'Limits are decided on the laboratory analysis plus everything added, at the final '
+        'volume. '
         'The charge-balanced value is shown for comparison only.'
     )
 
@@ -804,32 +838,43 @@ def _water_section(s):
         note = ''
     elif state == 'unchanged':
         note = (
-            f'<p>The analysis closes its charge at its measured pH {number(w["measured_ph"], 2)}: no adjustment '
+            f'<p>The analysis closes its charge at its measured pH '
+            f'{number(w["measured_ph"], 2)}: no adjustment '
             'was needed, and the chemistry uses it as measured.</p>'
         )
     elif state == 'closed_on_alkalinity':
         note = (
-            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out of charge balance '
-            f'at its measured pH {number(w["measured_ph"], 2)}) has no chloride, so it is closed on the alkalinity '
-            '(the carbonate the measured pH depends on). That is a modelling step, not a corrected measurement: '
+            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out '
+            f'of charge balance '
+            f'at its measured pH {number(w["measured_ph"], 2)}) has no chloride, so it is '
+            f'closed on the alkalinity '
+            '(the carbonate the measured pH depends on). That is a modelling step, not a '
+            'corrected measurement: '
             'targets and limits use the laboratory values.</p>'
         )
     else:
         how = (
-            f'within its stated ±{number(w["balance_ion_uncertainty_percent"], 2)}% measurement uncertainty'
+            f'within its stated ±{number(w["balance_ion_uncertainty_percent"], 2)}% measurement '
+            f'uncertainty'
             if state == 'reconciled'
             else 'without a stated measurement uncertainty, so the chemistry needs review'
         )
         note = (
-            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out of charge balance '
-            f'at its measured pH {number(w["measured_ph"], 2)}) is closed on {text(w["balance_ion"])}, {how}. That is '
-            'a modelling step, not a corrected measurement: targets and limits use the laboratory values.</p>'
+            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out '
+            f'of charge balance '
+            f'at its measured pH {number(w["measured_ph"], 2)}) is closed on '
+            f'{text(w["balance_ion"])}, {how}. That is '
+            'a modelling step, not a corrected measurement: targets and limits use the '
+            'laboratory values.</p>'
         )
     if state is not None:
         note += (
-            '<p class="small">Why: a laboratory report never adds up exactly, because every value carries a '
-            'small measurement error. To calculate the pH of the mix, and so the acid, the water\'s positive and '
-            'negative charges must balance at the pH the lab measured, so FlahaX closes the small gap: on '
+            '<p class="small">Why: a laboratory report never adds up exactly, because every '
+            'value carries a '
+            'small measurement error. To calculate the pH of the mix, and so the acid, the '
+            'water\'s positive and '
+            'negative charges must balance at the pH the lab measured, so FlahaX closes the '
+            'small gap: on '
             'chloride, or on the alkalinity when there is no chloride.</p>'
         )
     if w['below_detection']:
@@ -965,8 +1010,10 @@ def render_batch_sheet(summary):
     css, line = STATUS_TEXT[s['status']]
     litres, ratio = s['batch_litres'], tanks['injection_ratio']
     rows = ''.join(
-        f'<tr><td>{text(t["name"])}</td><td>{text(p["name"])}</td><td class="num">{number(p["gramsPerBatch"], 1)}</td>'
-        f'<td class="num">{number(p["stockGramsPerLitre"], 2)}</td><td><span class="tick"></span></td></tr>'
+        f'<tr><td>{text(t["name"])}</td><td>{text(p["name"])}</td><td '
+        f'class="num">{number(p["gramsPerBatch"], 1)}</td>'
+        f'<td class="num">{number(p["stockGramsPerLitre"], 2)}</td><td><span '
+        f'class="tick"></span></td></tr>'
         for t in tanks['tanks']
         for p in t['products']
     )
@@ -989,18 +1036,25 @@ def render_batch_sheet(summary):
     )
     warnings = ''.join(f'<li>{text(w)}</li>' for w in s['warnings'])
     body = (
-        f'<h1>{text(s["title"])}</h1><div class="meta">Batch sheet &middot; FlahaX {text(s["flahax_version"])} '
+        f'<h1>{text(s["title"])}</h1><div class="meta">Batch sheet &middot; FlahaX '
+        f'{text(s["flahax_version"])} '
         f'&middot; {number(litres, 0)} L final solution</div>'
-        f'<div class="box {css}"><b>{text(s["status"].replace("_", " ").capitalize())}.</b> {text(line)}</div>'
+        f'<div class="box {css}"><b>{text(s["status"].replace("_", " ").capitalize())}.</b> '
+        f'{text(line)}</div>'
         f'<div class="box"><b>Water:</b> {text(s["water_label"])}</div>'
         '<h2>Weigh and dissolve</h2><table><thead><tr><th>Tank</th><th>Product</th>'
-        f'<th class="num">g per {number(litres, 0)} L batch</th><th class="num">Concentrate g/L at 1:{ratio}</th>'
+        f'<th class="num">g per {number(litres, 0)} L batch</th><th class="num">Concentrate g/L '
+        f'at 1:{ratio}</th>'
         f'<th>Done</th></tr></thead><tbody>{rows}</tbody></table>'
-        f'<p class="small">Direct batch: dissolve everything in {number(litres, 0)} L. Concentrates: '
-        f'{number(litres / ratio, 1)} L of each tank per batch at 1:{ratio}; keep the tanks apart as listed.</p>'
+        f'<p class="small">Direct batch: dissolve everything in {number(litres, 0)} L. '
+        f'Concentrates: '
+        f'{number(litres / ratio, 1)} L of each tank per batch at 1:{ratio}; keep the tanks '
+        f'apart as listed.</p>'
         + (f'<ul class="small">{tank_notes}</ul>' if tank_notes else '')
-        + f'<h2>Solubility at {number(tanks["temperature_c"], 1)} &deg;C</h2><table><thead><tr><th>Tank</th>'
-        '<th>Product</th><th class="num">Concentrate g/L</th><th class="num">Dissolves up to g/L</th><th>Result</th>'
+        + f'<h2>Solubility at {number(tanks["temperature_c"], 1)} '
+        f'&deg;C</h2><table><thead><tr><th>Tank</th>'
+        '<th>Product</th><th class="num">Concentrate g/L</th><th class="num">Dissolves up to '
+        'g/L</th><th>Result</th>'
         '</tr></thead><tbody>'
         + ''.join(
             f'<tr><td>{text(r[0])}</td><td>{text(r[1])}</td><td class="num">{r[2]}</td>'
@@ -1016,10 +1070,12 @@ def render_batch_sheet(summary):
         + '</p>'
         + (
             (
-                '<table><thead><tr><th>Nutrient</th><th class="num">Maximum mg/L</th><th class="num">Final mg/L '
+                '<table><thead><tr><th>Nutrient</th><th class="num">Maximum mg/L</th><th '
+                'class="num">Final mg/L '
                 '(laboratory basis)</th><th>Decision</th></tr></thead><tbody>'
                 + ''.join(
-                    f'<tr><td>{text(r[0])}</td><td class="num">{r[1]}</td><td class="num">{r[2]}</td>'
+                    f'<tr><td>{text(r[0])}</td><td class="num">{r[1]}</td><td '
+                    f'class="num">{r[2]}</td>'
                     f'<td>{text(r[4])}</td></tr>'
                     for r in _limit_rows(s)
                 )
@@ -1029,12 +1085,16 @@ def render_batch_sheet(summary):
             else ''
         )
         + (f'<h2>Read before mixing</h2><ul class="small">{warnings}</ul>' if warnings else '')
-        + '<h2>Measure after mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
+        + '<h2>Measure after '
+        'mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
         f'<tbody>{check_rows}</tbody></table>'
-        '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span class="fill"></span> &nbsp; '
+        '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span '
+        'class="fill"></span> &nbsp; '
         'Signature <span class="fill"></span></p>'
-        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock solubility is checked '
-        'only where sourced data exist. Confirm products, assays and reagent grades against your supplier '
+        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock '
+        'solubility is checked '
+        'only where sourced data exist. Confirm products, assays and reagent grades against '
+        'your supplier '
         'certificates.</p>'
     )
     return _page(s['title'] + ' - batch sheet', body, SHEET_STYLE)

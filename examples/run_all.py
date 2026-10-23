@@ -42,7 +42,8 @@ def markdown(report):
         '# FlahaX capability examples',
         report['notice'],
         '## Pepper nutrient balance',
-        'Catalogue-assay calculation only. Acid-grade confirmation and incidental review are outstanding.',
+        'Catalogue-assay calculation only. Acid-grade confirmation and incidental review are '
+        'outstanding.',
         '| Nutrient | Crop target mg/L | Water mg/L | Final mg/L | Deviation % |',
         '|---|---:|---:|---:|---:|',
     ]
@@ -50,7 +51,8 @@ def markdown(report):
         target = row['target'] if row['target'] is not None else 'not requested'
         delta = f"{row['deltaPct']:.4f}" if row['deltaPct'] is not None else 'not defined'
         lines.append(
-            f"| {row['symbol']} | {target} | {pepper['water'].get(row['symbol'], 0)} | {row['final']:.6f} | {delta} |"
+            f"| {row['symbol']} | {target} | {pepper['water'].get(row['symbol'], 0)} | "
+            f"{row['final']:.6f} | {delta} |"
         )
     lines.extend(
         [
@@ -68,14 +70,16 @@ def markdown(report):
         [
             '',
             '## Pepper Tank A / B / acid allocation review',
-            'NOT READY FOR MIXING. Source: 04_Fertilizer.pdf pp.63,65,66. Candidate destinations only.',
+            'NOT READY FOR MIXING. Source: 04_Fertilizer.pdf pp.63,65,66. Candidate '
+            'destinations only.',
             '| Proposed destination | Product | Recipe mass g | Reason / pending check |',
             '|---|---|---:|---|',
         ]
     )
     for row in allocation['rows']:
         lines.append(
-            f"| {row['proposed_channel']} | {row['product']} | {row['recipe_mass_g']:.6f} | {row['reason']} |"
+            f"| {row['proposed_channel']} | {row['product']} | {row['recipe_mass_g']:.6f} | "
+            f"{row['reason']} |"
         )
     lines.extend(
         ['', allocation['acid_policy'], allocation['acid_accounting'], *allocation['missing']]
@@ -88,12 +92,15 @@ def markdown(report):
         [
             '',
             '## Separate synthetic equilibrium demonstration',
-            f"Calculated mixed pH: {delivery['chemistry']['value']['mixed']['ph']:.6f}; target: 6.5.",
-            f"HNO3 commercial reagent volume: {delivery['nitric']['value']['reagent_volume_litres']:.9g} L.",
+            f"Calculated mixed pH: {delivery['chemistry']['value']['mixed']['ph']:.6f}; target: "
+            f"6.5.",
+            f"HNO3 commercial reagent volume: "
+            f"{delivery['nitric']['value']['reagent_volume_litres']:.9g} L.",
             scenarios['delivery']['human_report'],
             '## Complete inputs and outputs',
             'Species/totals: mol/kg-water; activities: dimensionless; SI: log10 saturation ratio. '
-            'Nonfinite SI for absent components is represented as text. Typed quantities retain their named fields.',
+            'Nonfinite SI for absent components is represented as text. Typed quantities retain '
+            'their named fields.',
         ]
     )
     for name, result in scenarios.items():
@@ -116,7 +123,8 @@ def main():
     if args.output is not None and args.output.exists():
         parser.error('output already exists; choose a new directory')
     report = {
-        'notice': 'Educational examples; synthetic inputs are NOT field evidence or dosing instructions.',
+        'notice': 'Educational examples; synthetic inputs are NOT field evidence or dosing '
+        'instructions.',
         'scenarios': {name: serializable(run()) for name, run in SCENARIOS.items()},
     }
     text = json.dumps(report, indent=2, allow_nan=False)

@@ -677,7 +677,8 @@ def _eligible(
                 {
                     "id": salt.get("id"),
                     "name": salt.get("name"),
-                    "reason": f"{salt.get('name')} contains carbonate, which is not dissolved in a default recipe",
+                    "reason": f"{salt.get('name')} contains carbonate, which is not dissolved "
+                    f"in a default recipe",
                 }
             )
             continue
@@ -985,7 +986,8 @@ def recommend(
     if balance["exceedsWarning"]:
         side = "cations" if balance["imbalancePercent"] > 0 else "anions"
         warnings.append(
-            f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} vs "
+            f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} "
+            f"vs "
             f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
             f"No salt combination meets every target exactly; the excess {side} need counter-ions "
             "the formula does not list."

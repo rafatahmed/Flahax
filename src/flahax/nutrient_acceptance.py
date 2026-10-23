@@ -50,7 +50,8 @@ def assessed_limits(maximum_concentrations, recommendation):
 
 
 def name_sources(assessment, dosed, library, water=None):
-    """Add ``source`` to each incidental row: the dosed products (and the water) that supply that nutrient.
+    """Add ``source`` to each incidental row: the dosed products (and the water) that supply that
+    nutrient.
 
     ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre}); ``library`` the product records.
     Formula counterion sodium (chelates, #84) names the product that carries it.
@@ -103,8 +104,10 @@ def assess_water_basis(rows, maximum_concentrations, analytical_ppm, modelled_pp
                     'decision': 'exceeds_limit' if exceeds else 'within_limit',
                     'message': (
                         f'{ion}: {measured:.4g} mg/L on the laboratory analysis is '
-                        f'{"above" if exceeds else "within"} the {limit:g} mg/L maximum; the charge-balanced '
-                        f'model gives {modelled:.4g} mg/L. The decision uses the laboratory value; '
+                        f'{"above" if exceeds else "within"} the {limit:g} mg/L maximum; the '
+                        f'charge-balanced '
+                        f'model gives {modelled:.4g} mg/L. The decision uses the laboratory '
+                        f'value; '
                         'check the analysis.'
                     ),
                 }

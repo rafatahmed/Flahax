@@ -4,12 +4,17 @@
 # its results are calculations, not dosing instructions.
 """Stock solubility at the entered temperature and injection ratio (interactive mix, Task 6).
 
-The fixture holds values from the sourced draft table awaiting owner approval; nothing is packaged. Each value is g of
+The fixture holds values from the sourced draft table awaiting owner approval; nothing is
+packaged. Each value is g of
 product per L of stock:
-- CRC Handbook of Chemistry and Physics (ed. Lide), "Aqueous Solubility of Inorganic Compounds at Various
-  Temperatures", pp. 8-112 to 8-117, mass percent of anhydrous solute, converted with the Laliberte (2009, J. Chem. Eng.
-  Data 54, 1725) solution density where the point is inside its fit, otherwise with rho = 1 g/cm3 (a lower bound);
-- Calcium Nitrate (ag grade): Yara, YaraTera CALCINIT product sheet, 1200 g/L water at 20 C (lower bound 545.9 g/L).
+- CRC Handbook of Chemistry and Physics (ed. Lide), "Aqueous Solubility of Inorganic Compounds at
+Various
+  Temperatures", pp. 8-112 to 8-117, mass percent of anhydrous solute, converted with the
+  Laliberte (2009, J. Chem. Eng.
+  Data 54, 1725) solution density where the point is inside its fit, otherwise with rho = 1 g/cm3
+  (a lower bound);
+- Calcium Nitrate (ag grade): Yara, YaraTera CALCINIT product sheet, 1200 g/L water at 20 C (lower
+bound 545.9 g/L).
 """
 
 import unittest
@@ -120,7 +125,8 @@ class StockSolubilityTests(unittest.TestCase):
         self.assertGreater(row['stock_g_per_l'], 90.6)
         self.assertEqual(summary['status'], 'blocked')
         self.assertIn(
-            f'Potassium Sulfate does not dissolve in tank B: {row["stock_g_per_l"]:.4g} g/L needed, '
+            f'Potassium Sulfate does not dissolve in tank B: {row["stock_g_per_l"]:.4g} g/L '
+            f'needed, '
             '90.6 g/L at 10 °C',
             summary['warnings'],
         )
@@ -182,7 +188,8 @@ class StockSolubilityTests(unittest.TestCase):
 
 
 class PackagedTableTests(unittest.TestCase):
-    """The owner-approved table (2026-10-23): density-1 lower bounds, sourced, rising with temperature."""
+    """The owner-approved table (2026-10-23): density-1 lower bounds, sourced, rising with
+    temperature."""
 
     def setUp(self):
         self.table = load_solubility_table()

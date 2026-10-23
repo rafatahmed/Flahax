@@ -78,7 +78,8 @@ class IncidentalMaximumTests(unittest.TestCase):
 
     def test_a_ceiling_the_water_already_breaks_is_reported_not_a_solver_failure(self):
         # #86: 9% of Shomar et al. (2024) station 104 brings 115.2 mg/L Cl, over a 106.35 mg/L
-        # (3 mmol/L) ceiling, while the Na ceiling binds. This raised "NNLS did not reach optimality".
+        # (3 mmol/L) ceiling, while the Na ceiling binds. This raised "NNLS did not reach
+        # optimality".
         well = {
             'Ca': 244,
             'Mg': 100.8,

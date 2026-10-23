@@ -30,7 +30,8 @@ from .saturation_policy import assess_saturation, describe
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
 
-# formula -> (direction, basis moles added per mole of reagent, g/mol, nutrient g per mole of reagent)
+# formula -> (direction, basis moles added per mole of reagent, g/mol, nutrient g per mole of
+# reagent)
 REAGENTS = {
     'HNO3': ('acid', {'NO3-': 1}, 63.01284, {'N_NO3': 14.0067}),
     'H3PO4': ('acid', {'PO4-3': 1}, 97.995182, {'P': 30.973762}),
@@ -331,7 +332,8 @@ def _loss(recommendation):
 
 
 def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
-    """Final acceptance of one candidate: dose, hard limits, then saturation; review never outranks a rejection."""
+    """Final acceptance of one candidate: dose, hard limits, then saturation; review never
+    outranks a rejection."""
     incidental = assess_incidental(
         recommendation['rows'], assessed_limits(maximum_concentrations, recommendation)
     )

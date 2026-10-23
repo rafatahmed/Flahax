@@ -38,11 +38,13 @@ api_reference = files('flahax').joinpath('data/API_REFERENCE.md').read_text(enco
 assert sorted(re.findall(r'^### `([^`]+)`$', api_reference, re.M)) == sorted(flahax.__all__)
 for index, example in enumerate(examples):
     with contextlib.redirect_stdout(io.StringIO()):
-        exec(compile(example, f'USER_GUIDE example {index + 1}', 'exec'), {'__name__': '__manual__'})
+        code = compile(example, f'USER_GUIDE example {index + 1}', 'exec')
+        exec(code, {'__name__': '__manual__'})
 library = load_library()
 result = solve_catalogue_product_doses({'Iron DTPA': .01}, 6., allow_precipitation=False)
 assert result.aqueous.species['FeDtp-2'] > 0
-plan = plan_catalogue_nitric_target({'Potassium Carbonate': .01},7.4,6.,water_totals={'Na+':.002,'Cl-':.002})
+plan = plan_catalogue_nitric_target({'Potassium Carbonate': .01},7.4,6.,
+ water_totals={'Na+':.002,'Cl-':.002})
 assert plan.nitric_acid_molal > 0 and plan.post_mix_measurement_required
 assert hasattr(flahax, 'plan_equilibrium_delivery')
 products={p['name']:p for p in library['salts']}
@@ -64,14 +66,17 @@ assert json.loads(run.stdout)['salts']
 console=subprocess.run([sys.argv[1]],input=payload,text=True,capture_output=True,check=True)
 assert json.loads(console.stdout)==json.loads(run.stdout)
 ec_payload = json.dumps({'doses_g_per_litre':{'Ultrasol K Plus':.5},'water_ec_ms_cm':.5})
-ec_run = subprocess.run([sys.argv[1], 'ec'], input=ec_payload, text=True, capture_output=True, check=True)
+ec_run = subprocess.run([sys.argv[1], 'ec'], input=ec_payload, text=True, capture_output=True,
+ check=True)
 assert math.isclose(json.loads(ec_run.stdout)['ec_ms_cm'], 1.15)
 size = flahax.size_injection_requirements(duration_hours=2, equipment_type='venturi',
- final_volume_litres=10000, channels={'A':{'final_litres_per_stock_litre':100,'available_stock_litres':100}})
+ final_volume_litres=10000,
+ channels={'A':{'final_litres_per_stock_litre':100,'available_stock_litres':100}})
 assert size['channels']['A']['required_flow_litres_per_hour']==50
 workflow = flahax.plan_fertilizer_workflow([salt], {'K':10}, {}, 6.5)
 assert workflow.stages['chemistry'].status=='needs_input'
-print(json.dumps({'version':flahax.__version__, 'python':sys.version, 'catalogue_count':len(library['salts']),
+print(json.dumps({'version':flahax.__version__, 'python':sys.version,
+ 'catalogue_count':len(library['salts']),
  'manual_examples':len(examples),
  'api_reference_sha256':hashlib.sha256(files('flahax').joinpath('data/API_REFERENCE.md').read_bytes()).hexdigest(),
  'planning_cli_ec_ms_cm':json.loads(ec_run.stdout)['ec_ms_cm'],
@@ -200,7 +205,8 @@ def verify(report, interpreter, artifacts_dir=None):
             + '\n'
         )
         print(
-            'PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry points'
+            'PASS: isolated wheel and sdist installs, resources, public APIs and both CLI entry '
+            'points'
         )
 
 

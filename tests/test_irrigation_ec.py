@@ -515,9 +515,12 @@ PURE = DeclaredPureWater('ro-test')
 
 
 class CatalogueTests(unittest.TestCase):
-    # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate is now
-    # Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these totals
-    # for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests below keep it.
+    # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate is
+    # now
+    # Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these
+    # totals
+    # for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests below
+    # keep it.
     OLD_MG_NITRATE_1G = {'Mg+2': 0.003970376465747789, 'NO3-': 0.007853384451726673}
     OLD_MG_NITRATE_1G_RESIDUAL = {
         'eq_per_kgw': 8.736847976890429e-05,
@@ -553,7 +556,8 @@ class CatalogueTests(unittest.TestCase):
     def test_gate_uses_declared_form_percent(self):
         # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the mix below
         # (0.40 old Mg Nitrate + 1.0 MgSO4.7H2O + 0.5 K2SO4) had a declared residual of 0.0914 %;
-        # its totals and residual are now passed explicitly to keep the declared-percent gate covered.
+        # its totals and residual are now passed explicitly to keep the declared-percent gate
+        # covered.
         totals = {
             'Mg+2': 0.005644929026949188,
             'SO4-2': 0.0069279475982532744,
@@ -909,7 +913,8 @@ class BandChemistryTests(unittest.TestCase):
 
     @staticmethod
     def _material(name, identity_id, product, nutrients):
-        # Each nutrient moves by the same fraction at its band ends, so both ends stay charge balanced.
+        # Each nutrient moves by the same fraction at its band ends, so both ends stay charge
+        # balanced.
         analysis = {
             key: {'minimum': v * 0.98, 'typical': v, 'maximum': v * 1.02}
             for key, v in nutrients.items()
@@ -1012,7 +1017,8 @@ class BandChemistryTests(unittest.TestCase):
         self.assertLess(ranges['minimum'][0], ranges['maximum'][0])
 
     def test_band_end_outside_domain(self):
-        # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are inside the I < 0.1 domain, maximum is not.
+        # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are inside the I < 0.1 domain,
+        # maximum is not.
         doses = {'Potassium Nitrate': 4.4, 'Potassium Sulfate': 3.6}
         result = calculate_irrigation_ec_band(doses, materials=self._materials(), **self.PURE)
         self.assertEqual(result['nominal'].status, 'estimated')

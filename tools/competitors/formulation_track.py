@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#40 formulation track: FlahaX vs Horticalc vs Irriblend-DSW (the authors' optimiser) and an LP after its method.
+"""#40 formulation track: FlahaX vs Horticalc vs Irriblend-DSW (the authors' optimiser) and an LP
+after its method.
 
-Every engine receives the same FlahaX nutrient catalogue (pH reagents excluded), 26 shipped formulas
+Every engine receives the same FlahaX nutrient catalogue (pH reagents excluded), 26 shipped
+formulas
 and two waters. Each returned recipe is re-scored by the Benchmark v1 evaluator
 (catalogue assays, max(0.01 mg/L, 1%) tolerance), so no reporting convention of
 any engine enters the scores. Timings are the best of `REPEATS` calls on the same
@@ -53,7 +55,8 @@ def timed(call):
 
 
 def irriblend_method(products, targets, water):
-    """Independent LP after Gallego-Elvira et al. (2021), kept beside the authors' code (#40): exact NO3-N, NH4-N, P, K and
+    """Independent LP after Gallego-Elvira et al. (2021), kept beside the authors' code (#40):
+    exact NO3-N, NH4-N, P, K and
     micronutrients; Ca, Mg and S at or above target; minimise total grams (the catalogue
     has no prices, so equal cost per gram). Not the authors' code. Returns None when
     infeasible, as the published method does."""

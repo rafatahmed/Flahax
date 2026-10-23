@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax`` command. Growers start with ``flahax mix``; with JSON piped in, it writes a recommendation."""
+"""The ``flahax`` command. Growers start with ``flahax mix``; with JSON piped in, it writes a
+recommendation."""
 
 import json
 import sys
@@ -16,7 +17,7 @@ WELCOME = f"""FlahaX {__version__}: fertilizer recipe, pH and A/B stock tanks fr
   flahax mix sessions/X   repeat a saved batch without questions
   flahax batch --help     the same in one command, for scripts
   flahax --help           every command; developers can also pipe JSON into flahax
-"""
+"""  # noqa: E501
 
 
 def main() -> int:
@@ -50,7 +51,8 @@ def _main() -> int:
         nargs='?',
         default='recommend',
         choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix'),
-        help='batch: report and batch sheet (flahax batch --help); mix: interactive five-step entry',
+        help='batch: report and batch sheet (flahax batch --help); mix: interactive five-step '
+        'entry',
     )
     parser.add_argument(
         '--interactive', action='store_true', help='Request site inputs (workflow, ec or size)'
@@ -63,7 +65,8 @@ def _main() -> int:
             payload = interactive(args.command) if args.interactive else json.load(sys.stdin)
         except json.JSONDecodeError as exc:
             print(
-                f'Invalid planning input: stdin is not valid JSON: {exc.msg.removesuffix(" at")} at line {exc.lineno}, '
+                f'Invalid planning input: stdin is not valid JSON: '
+                f'{exc.msg.removesuffix(" at")} at line {exc.lineno}, '
                 f'column {exc.colno}',
                 file=sys.stderr,
             )
@@ -83,7 +86,8 @@ def _main() -> int:
         parser.error('Use workflow --interactive to request site-specific inputs')
     if sys.stdin.isatty():
         print(
-            'Reading a JSON request from the keyboard; end it with Ctrl+Z then Enter (Windows) or Ctrl+D. '
+            'Reading a JSON request from the keyboard; end it with Ctrl+Z then Enter (Windows) '
+            'or Ctrl+D. '
             'Growers: use flahax mix.',
             file=sys.stderr,
         )
@@ -91,7 +95,8 @@ def _main() -> int:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError as exc:
         print(
-            f'Expected a JSON object on stdin: {exc.msg.removesuffix(" at")} at line {exc.lineno}, column {exc.colno}.',
+            f'Expected a JSON object on stdin: {exc.msg.removesuffix(" at")} at line '
+            f'{exc.lineno}, column {exc.colno}.',
             file=sys.stderr,
         )
         return 1
@@ -110,7 +115,8 @@ def _main() -> int:
     salts = payload.get("salts")
     if not isinstance(salts, list) or not salts:
         print(
-            "salts are required. Pass the saved fertilizer rows. The packaged library is only an example.",
+            "salts are required. Pass the saved fertilizer rows. The packaged library is only "
+            "an example.",
             file=sys.stderr,
         )
         return 1

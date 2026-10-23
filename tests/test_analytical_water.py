@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#84: targets and limits use the laboratory analysis; the charge-balanced water is chemistry only."""
+"""#84: targets and limits use the laboratory analysis; the charge-balanced water is chemistry
+only."""
 
 import contextlib
 import copy
@@ -113,7 +114,8 @@ class BalanceBeforeAdjustingTests(unittest.TestCase):
         self.assertEqual(b.carbon_source, 'none')
 
     def test_fixed_zero_chloride_is_never_adjusted_and_closes_on_the_alkalinity(self):
-        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100, owner 2026-10-23).
+        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100, owner
+        # 2026-10-23).
         water = {'K+': 0.00505, 'NO3-': 0.005, 'CO3-2': 0.0002, 'Cl-': 0.0}
         closed = balance_water_analysis(water, measured_ph=7)
         self.assertEqual(

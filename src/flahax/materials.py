@@ -162,7 +162,8 @@ COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed', 'declared_ions'}
 CHELATING_AGENTS = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
-# Printed labels are rounded and commercial grades are not the pure salt (Yara Calcinit: -0.56 %); a one-point
+# Printed labels are rounded and commercial grades are not the pure salt (Yara Calcinit: -0.56 %);
+# a one-point
 # typing error moves the balance by about 2 % (#93, owner decision 2026-10-23).
 _CHARGE_RESIDUAL_LIMIT_PERCENT = 1.0
 # Theory is the pure compound, not the commercial solution or the chelate product as sold,
@@ -549,7 +550,8 @@ def make_grade(record: Mapping) -> Grade:
     flags, residual = (), None
     if composition == 'single':
         identity = load_identities()[identity_id]
-        # Declared forms only: typical, else minimum; forms split from total N are inferred, not declared.
+        # Declared forms only: typical, else minimum; forms split from total N are inferred, not
+        # declared.
         inferred = set(split.get('N', ()))
         declared = {
             key: value
@@ -765,7 +767,8 @@ def _unique(items) -> tuple:
 
 
 def _blend_implied(grade: Grade) -> tuple[dict, bool]:
-    """Component-implied % of each declared nutrient, and whether any disagrees with the declaration.
+    """Component-implied % of each declared nutrient, and whether any disagrees with the
+    declaration.
 
     Implied = sum(mass fraction x component's shipped catalogue assay). A difference above
     max(5 % of declared, 0.05 % points) is unreconciled; it is reported, never rejected.

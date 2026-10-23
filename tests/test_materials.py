@@ -452,7 +452,8 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
-        # 0.553 % is within the 1 % label limit (#93, owner 2026-10-23); a one-point Mg error is not.
+        # 0.553 % is within the 1 % label limit (#93, owner 2026-10-23); a one-point Mg error is
+        # not.
         old = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
             analysis={'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}},
@@ -783,7 +784,8 @@ class CatalogueMigrationTests(unittest.TestCase):
     def test_phosphoric_regression(self):
         from flahax.product_conversion import catalogue_dose_totals
 
-        before = 0.010205411922516871  # PO4-3 mol/kg water for 1 g/kg, captured before the 75 % correction
+        # PO4-3 mol/kg water for 1 g/kg, captured before the 75 % correction
+        before = 0.010205411922516871
         after = catalogue_dose_totals({'Phosphoric Acid (75%)': 1.0})['PO4-3']
         # The old row stored P 31.61 (rounded); the new one is 0.75 x the exact 31.608046,
         # so the ratio is 23.706035 / 31.61 = 0.749954, i.e. 0.75 to 1e-4 relative.
@@ -1612,7 +1614,8 @@ class WorkflowGradeTests(unittest.TestCase):
 
 
 class DeclaredCompoundTests(unittest.TestCase):
-    """Interactive mix Task 4: a compound entered from its data sheet is modelled from its declared ions."""
+    """Interactive mix Task 4: a compound entered from its data sheet is modelled from its
+    declared ions."""
 
     NAME = 'WS NPK 20-20-20 + TE'
     VAN_IPEREN = {
@@ -1853,7 +1856,8 @@ class DeclaredCompoundTests(unittest.TestCase):
 
 
 class LabelToleranceTests(unittest.TestCase):
-    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (owner, 2026-10-23)."""
+    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (owner,
+    2026-10-23)."""
 
     def calcinit(self, cao):
         return grade(

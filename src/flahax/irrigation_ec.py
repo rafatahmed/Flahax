@@ -44,7 +44,8 @@ def _load():
 
 
 def load_conductivity_coefficients() -> dict:
-    """Return the cached McCleskey 2012 Table 1 data and supplementary block (treat as read-only)."""
+    """Return the cached McCleskey 2012 Table 1 data and supplementary block (treat as
+    read-only)."""
     return _load()
 
 
@@ -348,7 +349,8 @@ def _ec_from_state(
     The caller has validated the mode inputs (see _validate_request). Status
     order: O5 assay gate, then (supplied only) unrecorded counterions; when both
     pass, uncovered charged species give a bounded estimate (decision O2,
-    bound = sum |z| * LAMBDA_MAX_PER_CHARGE * m over them, in mS/cm). The O5 gate uses assay_residual_percent (the
+    bound = sum |z| * LAMBDA_MAX_PER_CHARGE * m over them, in mS/cm). The O5 gate uses
+    assay_residual_percent (the
     declared-form percent) when given, else the residual over the speciated
     absolute equivalents. A not_supported result carries no contributions.
     Supersaturation warnings (dissolved policy) are reported whatever the status.
@@ -746,7 +748,8 @@ BAND_END_NOTE = (
 
 
 def _end_material(material, end: str):
-    """Copy of a resolved material whose record elements are its band end, or None if any end is open."""
+    """Copy of a resolved material whose record elements are its band end, or None if any end is
+    open."""
     edge = material.band_minimum if end == 'minimum' else material.band_maximum
     elements = {}
     for key in material.record['elements']:
@@ -888,7 +891,8 @@ def compare_measured_ec(
     measured_ec25_ms_cm: float,
     meter_reference_temperature_c: float,
 ) -> dict:
-    """EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or tolerance.
+    """EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or
+    tolerance.
 
     ``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
     measurement lies inside it (both ends inclusive), False when outside, and None when the

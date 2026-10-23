@@ -1008,7 +1008,8 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 compare_measured_ec(prediction: flahax.irrigation_ec.IrrigationECResult, *, measured_ec25_ms_cm: float, meter_reference_temperature_c: float) -> dict
 ```
 
-EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or tolerance.
+EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or
+tolerance.
 
 ``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
 measurement lies inside it (both ends inclusive), False when outside, and None when the
@@ -1462,7 +1463,8 @@ Source module: `flahax.product_conversion`. Import with `from flahax import cata
 convert_catalogue_product_dose(product: 'Mapping[str, object]', dose_g_per_kg_water: 'float') -> 'ProductAnalyticalTotals'
 ```
 
-Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material: ``convert_material_dose``.
+Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material:
+``convert_material_dose``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_catalogue_product_dose`.
 
