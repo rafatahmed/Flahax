@@ -253,6 +253,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | Code | Meaning | What to do |
 |---|---|---|
 | `invalid_value` | A number or text is out of its allowed range or form (for example a negative volume, a pH outside 0-14, a duplicate ID). | Correct the named value. |
+| `invalid_session` | A saved `flahax mix` session file is damaged or was edited by hand: it is not a JSON object, or a field is missing or of the wrong type. | Fix the named field, or run `flahax mix` again to make a new session. |
 | `invalid_type` | A value has the wrong kind (a list where a mapping is needed, text where a number is needed). | Supply the kind the message names. |
 | `missing_field` | A required input is absent (targets, reagent records, a document field). | Add the named field. |
 | `unknown_field` | A key is not recognised, for example an unsupported water key. | Use the keys the message lists. |
