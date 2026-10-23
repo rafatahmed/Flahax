@@ -141,7 +141,7 @@ __all__ = [
     "load_identities",
     "identity_for_product",
 ]
-__version__ = "0.6.0"
+__version__ = "0.6.1.dev0"
 
 from .composition import InputError
 from .competition import (

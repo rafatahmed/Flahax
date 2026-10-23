@@ -14,6 +14,7 @@ equilibrium chemistry and auditable delivery planning.**
 [![Tests](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml)
 [![Documentation](https://readthedocs.org/projects/flahax/badge/?version=latest)](https://flahax.readthedocs.io/en/latest/)
 [![codecov](https://codecov.io/gh/rafatahmed/Flahax/branch/main/graph/badge.svg)](https://codecov.io/gh/rafatahmed/Flahax)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23605678.svg)](https://doi.org/10.5281/zenodo.23605678)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
 FlahaX turns a crop's nutrient formula and the grower's actual water into a fertilizer recipe,
@@ -216,8 +217,8 @@ Live PHREEQC replay and distribution verification are described in
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.6.0) [Computer software].
-https://pypi.org/project/flahax/
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.6.0) [Computer software]. Zenodo.
+https://doi.org/10.5281/zenodo.23605679
 
 ```bibtex
 @software{alkhashan2026flahax,
@@ -225,12 +226,14 @@ https://pypi.org/project/flahax/
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
   version = {0.6.0},
+  doi     = {10.5281/zenodo.23605679},
   url     = {https://pypi.org/project/flahax/},
   license = {Apache-2.0}
 }
 ```
 
-GitHub's "Cite this repository" button reads
+To cite whichever version you used, the concept DOI [10.5281/zenodo.23605678](https://doi.org/10.5281/zenodo.23605678) always
+resolves to the latest release. GitHub's "Cite this repository" button reads
 [`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff).
 
 ## Author and credits
