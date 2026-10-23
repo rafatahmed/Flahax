@@ -11,6 +11,9 @@ equilibrium chemistry and auditable delivery planning.**
 [![PyPI](https://img.shields.io/pypi/v/flahax)](https://pypi.org/project/flahax/)
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
+[![Tests](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml)
+[![Documentation](https://readthedocs.org/projects/flahax/badge/?version=latest)](https://flahax.readthedocs.io/en/latest/)
+[![codecov](https://codecov.io/gh/rafatahmed/Flahax/branch/main/graph/badge.svg)](https://codecov.io/gh/rafatahmed/Flahax)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
 FlahaX turns a crop's nutrient formula and the grower's actual water into a
