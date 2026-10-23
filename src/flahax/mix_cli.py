@@ -10,6 +10,7 @@ under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and
 once every step is answered: Ctrl+C or end of input saves nothing.
 """
 import argparse
+from dataclasses import asdict
 from datetime import date
 import json
 import math
@@ -21,7 +22,7 @@ from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import number, render_report
-from .grower_sheet import STATUS_WORDS, key_reasons, litres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
+from .grower_sheet import STATUS_WORDS, grams, key_reasons, limited_by, litres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
@@ -127,7 +128,8 @@ def ask_spec(p):
         except DeliveryError as exc:
             p.say(f'  {exc}')
     p.say(f'  {number(volumes.irrigation_litres, 0)} L of irrigation; prepare '
-          f'{litres(volumes.prepared_litres["A"])} L in each container.')
+          f'{litres(volumes.prepared_litres["A"])} L in each container'
+          f'{limited_by(dict(asdict(volumes), mode="once" if once else "fill"))}.')
     return dict(tank_litres=tanks, ratio=ratio, temperature_c=temperature, mode='once' if once else 'fill',
                 irrigation_litres=irrigation)
 
@@ -344,10 +346,20 @@ def interview(p, store):
 
 
 def find_session(store, spec):
+    """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds tomato-stage-1)."""
     for candidate in (Path(spec), Path(spec + '.json'), store.root / spec, store.root / (spec + '.json')):
         if candidate.is_file():
             return candidate
-    raise DeliveryError('unknown_item', f'no session file {spec!r} (looked here and in {store.root / "sessions"})')
+    name = spec.replace('\\', '/').split('sessions/', 1)[-1]
+    try:
+        candidate = store.path('sessions', slug(name))
+    except DeliveryError:
+        candidate = None
+    if candidate is not None and candidate.is_file():
+        return candidate
+    saved = store.list('sessions')
+    raise DeliveryError('unknown_item', f'no saved session {spec!r}. '
+                        + ('Saved: ' + ', '.join(saved) if saved else 'Nothing is saved yet: run flahax mix'))
 
 
 
@@ -366,9 +378,10 @@ def summarize(summary, say):
         name = tank['name']
         say(f'Tank {name}: ' + ('not to be prepared (do not mix)' if blocked else
             f'prepare {litres(volumes["prepared_litres"][name])} L in your '
-            f'{litres(volumes["capacity_litres"][name])} L tank' + ('' if tank['acid_allowed'] else '; no acid')))
+            f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
+            + ('' if tank['acid_allowed'] else '; no acid')))
         for product in tank['products']:
-            say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {number(product["gramsPerBatch"], 1)} g')
+            say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {grams(product["gramsPerBatch"])}')
     selected = summary['ph'] and summary['ph']['selected']
     if selected and not blocked:
         say(f'Acid container: {number(selected["volume_ml_per_batch"], 0)} mL {selected["product"]}, added to water '
@@ -381,7 +394,7 @@ def summarize(summary, say):
 def main(argv=None, *, ask=input, say=print, store=None):
     parser = argparse.ArgumentParser(prog='flahax mix', description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('session', nargs='?', help='a saved session file, e.g. sessions/tomato-ro')
+    parser.add_argument('session', nargs='*', help='a saved session, e.g. tomato-ro (flahax mix sessions lists them)')
     parser.add_argument('--output', help='new directory for the sheets (default: ./flahax-mix-<session>)')
     args = parser.parse_args(argv)
     if args.output and Path(args.output).exists():
@@ -389,6 +402,11 @@ def main(argv=None, *, ask=input, say=print, store=None):
         return 1
     store = store or Store()
     p = Prompts(ask, say)
+    args.session = ' '.join(args.session)
+    if args.session.strip('/\\') == 'sessions':
+        saved = store.list('sessions')
+        say('Saved sessions: ' + ', '.join(saved) if saved else 'Nothing is saved yet: run flahax mix')
+        return 0
     try:
         if args.session:
             path = find_session(store, args.session)
