@@ -170,8 +170,11 @@ def _note_rows(summary, width):
     return rows or [[('No notes.', 'dim')]]
 
 
-def results_lines(summary, view, width, height, scroll, g, output):
-    """The lines to draw for one results view, scrolled by ``scroll`` rows."""
+def results_lines(summary, view, width, height, scroll, g, output, message=None):
+    """The lines to draw for one results view, scrolled by ``scroll`` rows.
+
+    ``message`` (a question such as the leave confirmation) replaces the "Sheets:" line.
+    """
     if width < MIN_WIDTH or height < MIN_HEIGHT:
         return [SMALL]
     usable = width - 1
@@ -202,6 +205,7 @@ def results_lines(summary, view, width, height, scroll, g, output):
     for row in body[scroll : scroll + room]:
         lines.append(paint([('  ', None)] + row, usable, g))
     lines += [''] * (height - 3 - len(lines))
-    lines.append(paint([(f'  Sheets: {output}', 'dim')], usable, g))
+    footer = [(f'  {message}', 'warn')] if message else [(f'  Sheets: {output}', 'dim')]
+    lines.append(paint(footer, usable, g))
     lines.append(paint([('  ' + KEYS.format(**g), 'dim')], usable, g))
     return lines
