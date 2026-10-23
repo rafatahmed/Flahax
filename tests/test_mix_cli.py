@@ -612,7 +612,10 @@ def owner_transcript():
                 ask=ask,
                 say=lambda *a: lines.append(' '.join(map(str, a))),
             )
-    return '\n'.join(lines).replace(tmp, '<TMP>').replace(__version__, '<VERSION>') + '\n'
+    # Paths under the temporary folder use "/" so the transcript is the same on every system.
+    masked = [line.replace(tmp, '<TMP>').replace(__version__, '<VERSION>') for line in lines]
+    masked = [line.replace('\\', '/') if '<TMP>' in line else line for line in masked]
+    return '\n'.join(masked) + '\n'
 
 
 class LineModeTranscriptTests(unittest.TestCase):
