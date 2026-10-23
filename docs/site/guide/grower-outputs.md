@@ -121,9 +121,14 @@ dissolves at its strength and temperature; `plan_stocks` does this with your
 sourced solubility limits, and `default_compatibility_rules(products)` gives it
 the same rules as records. `summarize_batch(..., temperature_c=25)` also lists
 each concentrate against sourced single-salt solubility at that temperature
-(`summary['solubility']`); a stock that does not dissolve blocks the batch. No
-solubility data are packaged yet, so every product shows "not checked" until a
-sourced table is approved. Your own `compatibilityRule` records (`--rules`, or
+(`summary['solubility']`); a stock that does not dissolve blocks the batch. The
+packaged table (`data/solubility.json`) covers 20 products at 0-40 °C: 18 from
+the CRC Handbook aqueous solubility table, calcium nitrate (ag grade) from
+Yara's CALCINIT sheet (its 20 °C value used as a floor from 20 to 40 °C) and
+urea from the U.S. Coast Guard CHRIS compilation. Mass percent is converted to
+grams per litre at a density of 1 g/cm3, which understates solubility, so a
+stock that would not dissolve is never passed. The chelates, CH - micro and
+potassium citrate have no sourced data and show "not checked". Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient
 rule.
 
