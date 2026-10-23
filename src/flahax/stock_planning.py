@@ -46,6 +46,8 @@ class StockTank:
 
 @dataclass(frozen=True, slots=True)
 class StockSaltDose:
+    """One fertilizer's concentration in a stock tank."""
+
     salt_id: str
     name: str
     concentration: GramsPerLitre
@@ -53,6 +55,8 @@ class StockSaltDose:
 
 @dataclass(frozen=True, slots=True)
 class StockTankPlan:
+    """One stock tank: its volume and the fertilizers dissolved in it."""
+
     tank: StockTank
     stock_volume: VolumeLitres
     salts: tuple[StockSaltDose, ...]

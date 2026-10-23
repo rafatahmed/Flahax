@@ -19,6 +19,7 @@ from .injector_sizing import size_injection_requirements
 
 
 def serializable(value):
+    """The value as plain JSON types; non-finite floats become strings."""
     if is_dataclass(value):
         return serializable(asdict(value))
     if isinstance(value, dict):
@@ -31,6 +32,9 @@ def serializable(value):
 
 
 def execute(command, payload):
+    """Run one planning command (``workflow``, ``ec`` or ``size``) on a JSON payload; raises
+    DeliveryError for an unknown command or field.
+    """
     if not isinstance(payload, dict):
         raise DeliveryError('invalid_type', 'expected a JSON object')
     if command == 'ec':

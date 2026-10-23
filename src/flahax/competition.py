@@ -13,12 +13,20 @@ from .struvite import struvite_saturation_index
 
 @dataclass(frozen=True, slots=True)
 class CalciumSulfateStruviteCompetition:
+    """Gypsum and struvite saturation indices in a mixed calcium, sulfate, magnesium, ammonium and
+    phosphate solution.
+    """
+
     gypsum_si: float
     struvite_si: float
 
 
 @dataclass(frozen=True, slots=True)
 class CarbonateCompetition:
+    """Calcite, gypsum and struvite saturation indices when carbonate competes for calcium and
+    magnesium.
+    """
+
     calcite_si: float
     gypsum_si: float
     struvite_si: float

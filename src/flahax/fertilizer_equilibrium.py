@@ -78,6 +78,7 @@ class FertilizerEquilibrium:
 
     @property
     def precipitation_moles(self) -> Mapping[str, float]:
+        """Moles precipitated of each phase."""
         return {item.phase: item.precipitated_moles for item in self.phase_allocations}
 
 

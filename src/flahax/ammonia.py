@@ -15,6 +15,10 @@ LOG_K_NH4_TO_NH3_25C = -9.252
 
 @dataclass(frozen=True, slots=True)
 class AmmoniaSpeciation:
+    """Total ammoniacal nitrogen split into ammonium and dissolved ammonia at a pH and ionic
+    strength (molal).
+    """
+
     total_ammoniacal_nitrogen_molal: float
     ph: float
     ionic_strength: float

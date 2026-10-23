@@ -12,6 +12,8 @@ from .delivery_contracts import DeliveryError
 
 @dataclass(frozen=True, slots=True)
 class PhaseAllocation:
+    """Moles of one solid phase before and after equilibrium."""
+
     phase: str
     initial_moles: float
     final_moles: float
@@ -19,10 +21,12 @@ class PhaseAllocation:
 
     @property
     def dissolved_moles(self) -> float:
+        """Moles of the phase that dissolved."""
         return max(0.0, self.delta_moles)
 
     @property
     def precipitated_moles(self) -> float:
+        """Moles of the phase that precipitated."""
         return max(0.0, -self.delta_moles)
 
 

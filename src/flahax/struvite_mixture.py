@@ -24,6 +24,10 @@ from .phosphate import orthophosphate_speciation
 
 @dataclass(frozen=True, slots=True)
 class StruviteMixtureSpeciation:
+    """Free magnesium, ammonium and phosphate and the struvite saturation index of a mixture at a
+    pH.
+    """
+
     magnesium_molal: float
     ammoniacal_nitrogen_molal: float
     phosphate_molal: float
@@ -38,6 +42,10 @@ class StruviteMixtureSpeciation:
 
 @dataclass(frozen=True, slots=True)
 class ChargeBalancedStruviteMixture:
+    """A struvite mixture solved for charge balance, with the gypsum check when calcium and sulfate
+    are present.
+    """
+
     ph: float
     ionic_strength: float
     charge_residual: float

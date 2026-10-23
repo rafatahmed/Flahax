@@ -8,6 +8,9 @@ from .composition import validate_profile
 
 
 def assess_incidental(rows, maximum_concentrations=None):
+    """Untargeted nutrients present in the solution and the limits exceeded; an incidental nutrient
+    without a limit requires review.
+    """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
     )

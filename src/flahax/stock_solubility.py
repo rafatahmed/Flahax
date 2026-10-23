@@ -35,6 +35,10 @@ SINGLE_SALT = (
 
 @dataclass(frozen=True)
 class SolubilityRow:
+    """One product in one tank: the stock strength needed, the solubility limit and its source, and
+    whether it dissolves.
+    """
+
     tank: str
     product: str
     stock_g_per_l: float
@@ -89,6 +93,7 @@ def check_stock_solubility(tanks, ratio, temperature_c, *, table=None):
 
 
 def exceeds_message(row, temperature_c):
+    """The message for a product that does not dissolve in its tank."""
     return (
         f'{row.product} does not dissolve in tank {row.tank}: {row.stock_g_per_l:.4g} g/L needed, '
         f'{row.limit_g_per_l:.4g} g/L at {temperature_c:g} °C'

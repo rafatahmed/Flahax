@@ -22,6 +22,10 @@ MODES = ('fill', 'once')
 
 @dataclass(frozen=True)
 class StockVolumes:
+    """The irrigation the stocks supply and the litres prepared in each container, with each
+    container's capacity.
+    """
+
     irrigation_litres: float
     prepared_litres: dict
     capacity_litres: dict
@@ -43,6 +47,9 @@ def _positive(value, label):
 def prepare_stocks(
     *, tank_litres: Mapping, ratio: float, mode: str, irrigation_litres: float | None = None
 ) -> StockVolumes:
+    """Litres to prepare in tanks A and B and the acid container, filling them (``fill``) or for
+    one irrigation (``once``).
+    """
     if set(tank_litres) != set(CONTAINERS):
         raise DeliveryError(
             'invalid_value',
@@ -55,8 +62,7 @@ def prepare_stocks(
 
     if mode == 'fill':
         # Assumption: irrigation_litres is ignored in fill mode. Each container is prepared to the
-        # smallest
-        # capacity directly: (x * ratio) / ratio can round 1 ulp above x.
+        # smallest capacity directly: (x * ratio) / ratio can round 1 ulp above x.
         prepared_each = min(capacity.values())
         irrigation = prepared_each * ratio
     else:
