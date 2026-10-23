@@ -46,7 +46,8 @@ class Store:
         path = self.path(kind, name)
         if not path.is_file():
             raise DeliveryError('unknown_item', f'no saved {kind[:-1]} named {name!r} in {path.parent}')
-        return json.loads(path.read_text(encoding='utf-8-sig'))
+        from .batch_cli import read_json      # names the file and the line if it is damaged
+        return read_json(path, f'saved {kind[:-1]}')
 
     def save(self, kind, name, data):
         path = self.path(kind, name)

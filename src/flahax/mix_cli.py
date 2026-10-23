@@ -17,7 +17,7 @@ import math
 from pathlib import Path
 
 from . import __version__
-from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, render, run_batch
+from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, render, run_batch
 from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
@@ -416,7 +416,7 @@ def main(argv=None, *, ask=input, say=print, store=None):
     try:
         if args.session:
             path = find_session(store, args.session)
-            name, session = path.stem, json.loads(path.read_text(encoding='utf-8-sig'))
+            name, session = path.stem, read_json(path, 'session')
         else:
             say(f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; Ctrl+C stops.')
             name, session, pending = interview(p, store)
