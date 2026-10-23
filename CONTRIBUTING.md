@@ -1,7 +1,8 @@
 # Development and release conventions
 
 Everyone who takes part in FlahaX follows the [code of conduct](CODE_OF_CONDUCT.md)
-(Contributor Covenant 2.1).
+(Contributor Covenant 2.1). Report security problems privately, as
+[SECURITY.md](SECURITY.md) explains, not in a public issue.
 
 ## Branch names
 
