@@ -440,12 +440,22 @@ def _water_section(s):
     elif state == 'unchanged':
         note = (f'<p>The analysis closes its charge at its measured pH {number(w["measured_ph"], 2)}: no adjustment '
                 'was needed, and the chemistry uses it as measured.</p>')
+    elif state == 'closed_on_alkalinity':
+        note = (f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out of charge balance '
+                f'at its measured pH {number(w["measured_ph"], 2)}) has no chloride, so it is closed on the alkalinity '
+                '(the carbonate the measured pH depends on). That is a modelling step, not a corrected measurement: '
+                'targets and limits use the laboratory values.</p>')
     else:
         how = (f'within its stated ±{number(w["balance_ion_uncertainty_percent"], 2)}% measurement uncertainty'
                if state == 'reconciled' else 'without a stated measurement uncertainty, so the chemistry needs review')
         note = (f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out of charge balance '
                 f'at its measured pH {number(w["measured_ph"], 2)}) is closed on {text(w["balance_ion"])}, {how}. That is '
                 'a modelling step, not a corrected measurement: targets and limits use the laboratory values.</p>')
+    if state is not None:
+        note += ('<p class="small">Why: a laboratory report never adds up exactly, because every value carries a '
+                 'small measurement error. To calculate the pH of the mix, and so the acid, the water\'s positive and '
+                 'negative charges must balance at the pH the lab measured, so FlahaX closes the small gap: on '
+                 'chloride, or on the alkalinity when there is no chloride.</p>')
     if w['below_detection']:
         note += ('<p>Reported below detection (taken as zero, not confirmed zero): '
                  + text(', '.join(w['below_detection'])) + '.</p>')
