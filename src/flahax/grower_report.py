@@ -20,6 +20,27 @@ from .tank_grouping import group_tanks
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
 
 
+def litres(value):
+    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small batch)."""
+    return number(value, 1 if value >= 10 else 3)
+
+
+
+
+def grams(value):
+    """A weight a grower can read on a scale: never '0 g' for a product that is in the recipe."""
+    digits = 1 if value >= 10 else 2 if value >= .1 else 3
+    shown = number(value, digits)
+    return f'{shown} g' if float(shown.replace(',', '')) > 0 else 'less than 0.001 g'
+
+
+
+
+def millilitres(value):
+    """A reagent volume, one decimal, the same on every output."""
+    return number(value, 1)
+
+
 def text(value):
     return escape(str(value), quote=True)
 
@@ -168,12 +189,14 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
                         status=c.status, volume_ml_per_batch=None if c.reagent_volume_litres is None
                         else 1000 * c.reagent_volume_litres, mass_g_per_batch=c.reagent_mass_g,
                         nutrient_contribution=c.nutrient_contribution, message=c.message)
-        ph = dict(status=ph_stage.status, direction=plan.direction, unadjusted_ph=plan.unadjusted_ph,
+        # mixed_ph: the weighed recipe without its reagent (the refit when a reagent is chosen, #107).
+        weighed = chosen.mixed.ph if chosen is not None and chosen.mixed is not None else plan.unadjusted_ph
+        ph = dict(status=ph_stage.status, direction=plan.direction, unadjusted_ph=plan.unadjusted_ph, mixed_ph=weighed,
                   target_ph=plan.target_ph, selected=candidate(chosen) if chosen is not None else None,
                   candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'])
     elif ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
         # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet names it.
-        ph = dict(status=ph_stage.status, direction=None, unadjusted_ph=None, target_ph=workflow.target_ph,
+        ph = dict(status=ph_stage.status, direction=None, unadjusted_ph=None, mixed_ph=None, target_ph=workflow.target_ph,
                   selected=None, candidates=[], message=ph_stage.message)
 
     chemistry = ec = None
@@ -213,11 +236,15 @@ def summarize_batch(workflow, products, *, title, water_label, injection_ratio=1
 
     warnings = list(recipe['warnings'])
     for name, stage in stages.items():
-        if stage['status'] in ('blocked', 'requires_review') and stage['message']:
-            warnings.append(f'{name}: {stage["message"]}')
+        message = stage['message']
+        if name == 'ph_adjustment' and chemistry and chosen is not None and chosen.message                 and message and message.startswith(chosen.message):
+            message = message[len(chosen.message):].lstrip('; ')     # listed below as review rows and advisories
+        if stage['status'] in ('blocked', 'requires_review') and message:
+            warnings.append(f'{name}: {message}')
     if chemistry:
         warnings += [f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}' for r in chemistry['review']]
         warnings += chemistry['advisories']
+    warnings = list(dict.fromkeys(warnings))
     if ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
         status = 'blocked' if workflow.stages['formulation'].status == 'blocked' else 'requires_review'
         warnings.append(f'{ph_stage.message}. pH was not planned: measure it after mixing and adjust before use.')
@@ -309,6 +336,7 @@ td.num,th.num{text-align:right}.tick{width:16px;height:16px;border:1.5px solid #
 @media print{main{padding:0}}
 """
 
+STATUS_WORDS = {'ready': 'ready', 'requires_review': 'review notes before mixing', 'blocked': 'do not mix'}
 STATUS_TEXT = {
     'ready': ('ok', 'Every target is met and the pH plan is accepted.'),
     'requires_review': ('warn', 'Usable after review: read the warnings before mixing.'),
@@ -337,8 +365,8 @@ def _reagent_line(summary):
         return (f'No acceptable pH reagent: the feed mixes at pH {number(ph["unadjusted_ph"], 2)} and needs '
                 f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. '
                 'See the candidates and their reasons.')
-    return (f'Add {number(chosen["volume_ml_per_batch"], 0)} mL of {chosen["product"]} ({chosen["formula"]}) per '
-            f'{number(summary["batch_litres"], 0)} L to go from pH {number(ph["unadjusted_ph"], 2)} to '
+    return (f'Add {millilitres(chosen["volume_ml_per_batch"])} mL of {chosen["product"]} ({chosen["formula"]}) per '
+            f'{number(summary["batch_litres"], 0)} L to go from pH {number(ph["mixed_ph"], 2)} to '
             f'{number(ph["target_ph"], 2)}. Add it in steps and measure.')
 
 
@@ -352,7 +380,7 @@ def render_report(summary):
             f'<h1>{text(s["title"])}</h1><p>Water: {text(s["water_label"])}. Batch {number(s["batch_litres"], 0)} L, '
             f'target pH {number(s["target_ph"], 2)}.</p>'
             '<div class="cards">'
-            + _card('Plan', s['status'].replace('_', ' '), 'ready / requires review / blocked')
+            + _card('Plan', s['status'].replace('_', ' '), STATUS_WORDS[s['status']])
             + _card('Targets met', 'Yes' if f['feasible'] else 'No', f'{len(f["unmet"])} missed')
             + _card('Feed pH', number(chem['final_ph'], 2) if chem else 'not planned',
                     f'mixed {number(chem["mixed_ph"], 2)}' if chem else 'needs complete water chemistry')
@@ -364,7 +392,7 @@ def render_report(summary):
             + '</section>'
             '<section><h2>Recipe</h2>'
             + table(['Product', 'g/L', f'g per {number(s["batch_litres"], 0)} L'],
-                    [(x['name'], number(x['gramsPerLitre'], 4), number(x['gramsPerBatch'], 1)) for x in f['salts']],
+                    [(x['name'], number(x['gramsPerLitre'], 4), grams(x['gramsPerBatch'])) for x in f['salts']],
                     'Products to weigh')
             + ''.join(bars(f'{label.capitalize()}: target and delivered', [r['symbol'] for r in group],
                            [('Target', [r['target'] for r in group]), ('Delivered', [r['final'] for r in group])], 'mg/L')
@@ -380,11 +408,13 @@ def render_report(summary):
             + '</section>')
     if ph is not None and ph['unadjusted_ph'] is not None:
         body += ('<section><h2>pH adjustment</h2>'
-                 f'<p>The recipe mixes at pH {number(ph["unadjusted_ph"], 2)}; it needs '
+                 f'<p>The first recipe mixes at pH {number(ph["unadjusted_ph"], 2)}; it needs '
                  f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach {number(ph["target_ph"], 2)}. Each '
-                 'candidate is dosed to the target and the recipe is refitted with its nutrients counted.</p>'
+                 'candidate is dosed to the target and the recipe is refitted with its nutrients counted'
+                 + (f'; the weighed recipe mixes at pH {number(ph["mixed_ph"], 2)} before the reagent'
+                    if ph['selected'] and ph['mixed_ph'] is not None else '') + '.</p>'
                  + table(['Reagent', 'Formula', 'mL per batch', 'Status', 'Reason'],
-                         [(c['product'], c['formula'], number(c['volume_ml_per_batch'], 0), c['status'], c['message'] or '')
+                         [(c['product'], c['formula'], millilitres(c['volume_ml_per_batch']), c['status'], c['message'] or '')
                           for c in ph['candidates']], 'Reagents evaluated')
                  + '</section>')
     if chem is not None:
@@ -470,13 +500,13 @@ def _water_section(s):
 
 
 def _tank_section(s, tanks):
-    rows = [(f'Tank {t["name"]}', p['name'], number(p['gramsPerBatch'], 1), number(p['stockGramsPerLitre'], 2), p['basis'])
+    rows = [(f'Tank {t["name"]}', p['name'], grams(p['gramsPerBatch']), number(p['stockGramsPerLitre'], 2), p['basis'])
             for t in tanks['tanks'] for p in t['products']]
     notes = ''.join(f'<li>Tank {text(t["name"])}: {text(n)}</li>' for t in tanks['tanks'] for n in t['notes'])
     separated = ''.join(f'<li>{text(a)} / {text(b)}: {text(why)}</li>' for a, b, why in tanks['separations'])
     waived = ''.join(f'<li>{text(a)} / {text(b)}: {text(why)}</li>' for a, b, why in tanks['waived'])
     return ('<section><h2>Concentrate tanks</h2>'
-            + table(['Tank', 'Product', f'g per {number(s["batch_litres"], 0)} L', f'Stock g/L at 1:{tanks["injection_ratio"]}',
+            + table(['Tank', 'Product', f'g per {number(s["batch_litres"], 0)} L', f'Stock g/L at 1:{tanks["injection_ratio"]:g}',
                      'Why here'], rows, 'Tanks from the default compatibility table')
             + table(['Tank', 'Product', 'Stock g/L', f'Dissolves up to g/L at {number(tanks["temperature_c"], 1)} °C',
                      'Solubility', 'Source'], _solubility_rows(s), 'Does each concentrate dissolve?')
