@@ -112,7 +112,12 @@ below_detection=None)` speciates a laboratory analysis at its measured pH.
   `maximum_imbalance_percent` is rejected (`charge_imbalance_exceeded`). The
   rest is closed on `balance_ion` (`Cl-` or `Na+`), as PHREEQC's `charge`
   option does, only if that ion is measured, positive and not fixed
-  (`fixed_balance_ion`, `missing_balance_ion`); no other ion is tried. With
+  (`fixed_balance_ion`, `missing_balance_ion`). When the default `Cl-` is not
+  measured, zero or below detection and the analysis has carbonate, the rest is
+  closed on the carbonate instead (`closed_on_alkalinity`, `balance_ion` `CO3-2`;
+  owner decision 2026-10-23, #100): alkalinity is the value the measured pH
+  depends on and usually the least precise. It is noted in the report and does
+  not put the plan in review. No other ion is tried. With
   `balance_ion_uncertainty_percent` the adjustment must lie within that stated
   measurement uncertainty (`reconciled`, else `reconciliation_out_of_bounds`).
   Without it the closure is an assumption (`assumed`): the workflow's chemistry
