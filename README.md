@@ -16,34 +16,25 @@ equilibrium chemistry and auditable delivery planning.**
 [![codecov](https://codecov.io/gh/rafatahmed/Flahax/branch/main/graph/badge.svg)](https://codecov.io/gh/rafatahmed/Flahax)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
-FlahaX turns a crop's nutrient formula and the grower's actual water into a
-fertilizer recipe, then checks what that recipe does in solution: which ions
-pair up, whether anything precipitates, what the pH will be, how much acid
-reaches a target pH, and how the recipe splits into stock tanks and injector
-flows. Every plan carries its units, model identifiers and source hashes, so
-a result can be reviewed and reproduced.
+FlahaX turns a crop's nutrient formula and the grower's actual water into a fertilizer recipe,
+then checks what that recipe does in solution: which ions pair up, whether anything
+precipitates, what the pH will be, how much acid reaches a target pH, and how the recipe splits
+into stock tanks and injector flows. Every plan carries its units, model identifiers and source
+hashes, so a result can be reviewed and reproduced.
 
-To our knowledge, FlahaX is the first Python package to unite fertilizer
-formulation, fertilizer-specific aqueous equilibrium chemistry and auditable
-delivery planning in one dependency-free library, verified against PHREEQC.
+To our knowledge, FlahaX is the first Python package to unite fertilizer formulation,
+fertilizer-specific aqueous equilibrium chemistry and auditable delivery planning in one
+dependency-free library, verified against PHREEQC.
 
 **Who it is for**
 
-- **Researchers** who need reproducible nutrient-solution chemistry with
-  stated validity limits.
-- **Agronomists and consultants** who design recipes against real water
-  analyses and real commercial products.
-- **Growers** with technical support, through the interactive command line.
-- **Developers** building nutrition and fertigation software on a tested,
-  dependency-free engine.
+- **Growers and agronomists**: `flahax mix` asks five questions and gives tank A, tank B and the
+  acid, with no code.
+- **Consultants and researchers**: reproducible nutrient-solution chemistry with stated validity
+  limits, against real water analyses and real commercial products.
+- **Developers**: a tested, dependency-free engine for nutrition and fertigation software.
 
-**FlahaX and FlahaFAST.** FlahaX is developed as the chemistry engine for
-the FlahaFAST application, where it is planned to provide formulation, pH
-and conductivity planning. That integration is not yet in place: FlahaFAST
-does not currently import FlahaX, and FlahaX stays a standalone package
-with its own releases.
-
-## Install
+## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
 
@@ -51,49 +42,57 @@ Python 3.11 or newer. There are no third-party runtime dependencies.
 python -m pip install flahax==0.6.0
 ```
 
-Pin the version for reproducible work. `python -m pip install flahax`
-installs the latest release.
-
-Already have FlahaX? Upgrade in place; one version lives in each Python
-environment, so there is nothing to install beside it:
+Pin the version for reproducible work; `python -m pip install flahax` installs the latest
+release. To upgrade, and to check what is installed:
 
 ```bash
 python -m pip install --upgrade flahax
-python -c "import flahax; print(flahax.__version__)"
+flahax --version
 ```
 
-To keep an older version for comparison, install it in its own virtual
-environment.
+One version lives in each Python environment; to keep an older one for comparison, install it in
+its own virtual environment.
 
-## For growers: `flahax mix`
-
-`flahax mix` asks five things in order (tank sizes and injection ratio, the
-water analysis as printed by the lab, the crop formula, the fertilizers you
-have, the target pH) and prints what to weigh into tank A and tank B and how
-much acid to put in the acid container. It saves the answers, so the next
-batch is one command:
-
-```bash
-flahax mix                          # first time: answer the five steps
-flahax mix sessions/my-tomato       # next time: no questions
-```
-
-In a terminal it opens full screen: arrow keys and Enter choose, typing filters a
-long list, Space ticks your fertilizers, and the result has three views (Tanks,
-Nutrients, Notes) switched with Tab. `flahax mix --plain` asks line by line
-instead, and scripts and pipes get the line-by-line mode automatically.
-
-See [For growers and agronomists](https://flahax.readthedocs.io/en/latest/growers.html).
-
-To try the latest unreleased changes from GitHub, reinstall rather than upgrade: between
-releases every commit on `main` carries the same development version, so a plain
-`--upgrade` can keep the files you already have (#134):
+To try unreleased changes from GitHub, reinstall rather than upgrade: between releases every
+commit on `main` has the same development version, so `--upgrade` can keep the files you already
+have (#134):
 
 ```bash
 python -m pip install --force-reinstall --no-deps "git+https://github.com/rafatahmed/Flahax.git@main"
 ```
 
 ## Quick start
+
+### Growers and agronomists: `flahax mix`
+
+`flahax mix` asks five things in order: tank sizes and injection ratio, the water analysis as
+printed by the lab, the crop formula, the fertilizers you have, and the target pH. It shows what
+to weigh into tank A and tank B and how much acid goes in the acid container, writes a batch
+sheet, and saves the answers so the next batch is one command:
+
+```bash
+flahax mix                          # first time: answer the five steps
+flahax mix sessions/my-tomato       # next time: no questions
+```
+
+In a terminal it opens full screen: arrow keys and Enter choose, typing filters a long list,
+Space ticks your fertilizers, and the result has three views (Tanks, Nutrients, Notes) switched
+with Tab. `flahax mix --plain` asks line by line instead, and scripts and pipes get the
+line-by-line mode automatically. See
+[For growers and agronomists](https://flahax.readthedocs.io/en/latest/growers.html).
+
+### One command: `flahax batch`
+
+The same from files, for scripts:
+
+```bash
+flahax batch --formula "Tomato (Howard Resh)" --water ro --ph 5.8 --acid HNO3:0.60:1.37 --output tomato
+```
+
+It writes `batch-sheet.html`, `report.html` and `summary.json`. `flahax batch --help` lists every
+option, including a measured water analysis and `--water-share` for blending it with RO water.
+
+### Python
 
 Select salts for a crop formula, with 20 mg/L of calcium already in the water:
 
@@ -110,24 +109,24 @@ for salt in result["salts"]:
     print(f"{salt['name']}: {salt['gramsPerLitre']} g/L")
 ```
 
-`result["salts"]` lists each chosen salt with grams per litre of the
-solution the plant receives. `result["rows"]` gives each element's target,
-final concentration (mg/L) and percentage difference. Element keys are
-`N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`
-and `Mo`.
+`result["salts"]` lists each chosen salt with grams per litre of the solution the plant receives.
+`result["rows"]` gives each element's target, final concentration (mg/L) and percentage
+difference. Element keys are `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`,
+`Cu` and `Mo`.
 
-## Command line
+## Commands
 
-```bash
-flahax --help
-flahax workflow --interactive   # water + crop targets -> recipe, pH and acid plan
-flahax ec --interactive         # approximate EC screening for supported products
-flahax size --interactive       # stock-channel volume and injector flow sizing
-```
+| Command | What it does |
+|---|---|
+| `flahax mix` | Five questions to tank A, tank B and the acid, with a batch sheet (growers, agronomists) |
+| `flahax batch` | The same from files in one command, for scripts |
+| `flahax` (or `flahax recommend`) | Reads a JSON request (`salts`, `targets`, `water`) on stdin and writes a recipe |
+| `flahax workflow` | Plans a full workflow from a JSON request, or with `--interactive` |
+| `flahax ec` | Screens the EC of supported products before acid |
+| `flahax size` | Sizes injector channel volumes and flows |
 
-With no subcommand, `flahax` reads one JSON object (`salts`, `targets`,
-`water`) on standard input and writes the recommendation as JSON. Commands
-plan; they never operate pumps, valves or other hardware.
+`flahax --help` shows every command with examples. Commands plan; they never operate pumps,
+valves or other hardware.
 
 ## What it does
 
@@ -140,65 +139,80 @@ plan; they never operate pumps, valves or other hardware.
 | Conductivity | Approximate EC screening for supported products; EC from a measured calibration profile | Dilute, pre-acid screening with unknown accuracy; no validated concentrated-stock model yet |
 | Audit trail | Explicit units (g/L of final solution versus g/kg water), model identifiers, source hashes, `needs_input` instead of guessed values | Plans are reviewable records, not operating authorizations |
 
-## Verification
-
-The [Benchmark v1 protocol](https://flahax.readthedocs.io/en/latest/evidence/benchmark-v1.html) separates
-formulation fit, numerical chemistry, runtime/memory measurements, and physical
-validation. Its reproducible reports include input hashes and failed cases;
-timings are informational, and physical validation remains separate.
-See the [measured results and downloadable evidence](https://flahax.readthedocs.io/en/latest/evidence/benchmark-results.html)
-for tables, charts, provenance, and retained limitations.
-
-- 153 automated tests, including live replay of every catalogue product,
-  phase and acid case against pinned PHREEQC 3.8.6 (USGS).
-- Hosted checks on Python 3.11, 3.12, 3.13 and 3.14, plus clean wheel and source
-  installation checks.
-- Evidence is versioned per release in the
-  [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
-
-This is computational evidence. FlahaX has not been validated in the
-laboratory or in the field, and its owner's
-[computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
-is not an independent review. No recipe, pH or EC value is an authorization
-to operate equipment.
-
-## Roadmap
-
-Next work, in order: broader numerical and input-boundary testing, stable
-consumer contracts, and a validated
-[conductivity model](https://github.com/rafatahmed/Flahax/blob/main/docs/stock-conductivity-service-design.md)
-covering irrigation-strength solutions first and concentrated stock tanks
-second. See the
-[development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md)
-and [current status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md).
-
 ## Documentation
 
 | Document | For |
 |---|---|
-| [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) | Installation, eight tested examples, units, chemistry, pH and delivery planning; also ships inside the package |
+| [Documentation site](https://flahax.readthedocs.io/) | Guides for growers, agronomists and developers |
+| [User manual](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md) | Installation, tested examples, units, chemistry, pH, delivery planning and troubleshooting |
 | [API reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/API_REFERENCE.md) | Every public function and result record, with signatures |
-| [Site planning and CLI](https://github.com/rafatahmed/Flahax/blob/main/docs/site-planning.md) | Water, acid, EC and injection inputs |
 | [Chemistry model](https://github.com/rafatahmed/Flahax/blob/main/docs/fertilizer-equilibrium-model.md) | Equilibrium model, PHREEQC evidence and boundaries |
 | [Formulation method](https://github.com/rafatahmed/Flahax/blob/main/docs/method.md) | The ppm equation, solver and worked pepper example |
-| [Documentation index](https://github.com/rafatahmed/Flahax/blob/main/docs/index.md) | All user, scientific and contributor documents |
 | [Changelog](https://github.com/rafatahmed/Flahax/blob/main/CHANGELOG.md) | Changes by release |
 
-The manual can be read offline from an installed package through
-`importlib.resources` (`flahax/data/USER_GUIDE.md`).
+The manual can also be read offline from an installed package through `importlib.resources`
+(`flahax/data/USER_GUIDE.md`).
 
-## Development
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| A feature is missing after installing from GitHub | Reinstall with `--force-reinstall --no-deps` (see Installation above) and check `flahax --version`. |
+| `flahax` is not recognised as a command | Run `python -m flahax`, or add the folder pip names in its "user installation" warning to your PATH. |
+| `flahax mix` asks line by line instead of full screen | Run it in Windows Terminal, PowerShell, `cmd` or a Linux or macOS terminal; an editor's output panel or Git Bash is not a full-screen console. |
+| An error code such as `invalid_json` or `charge_imbalance_exceeded` | Every code is explained in the manual's [error reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md#error-code-reference). |
+
+More in the manual's
+[troubleshooting section](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md#8-errors-and-troubleshooting).
+If something still looks wrong, [open an issue](https://github.com/rafatahmed/Flahax/issues) with
+`flahax --version` and the command you ran.
+
+## Verification and limits
+
+The [Benchmark v1 protocol](https://flahax.readthedocs.io/en/latest/evidence/benchmark-v1.html)
+separates formulation fit, numerical chemistry, runtime and memory, and physical validation; the
+[measured results](https://flahax.readthedocs.io/en/latest/evidence/benchmark-results.html) come
+with tables, charts, provenance and their limitations.
+
+- The automated test suite includes live replay of every catalogue product, phase and acid case
+  against pinned PHREEQC 3.8.6 (USGS).
+- Hosted checks run on Python 3.11, 3.12, 3.13 and 3.14 on Linux, and on Windows and macOS,
+  with clean wheel and source installations.
+- Evidence is recorded per release in the
+  [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
+
+This is computational evidence. FlahaX has not been validated in the laboratory or in the field
+(a [validation protocol](https://github.com/rafatahmed/Flahax/issues/41) is in draft), and its
+owner's [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
+is not an independent review. Results are calculations for planning, not dosing instructions:
+measure pH and EC after mixing. No recipe, pH or EC value is an authorization to operate
+equipment.
+
+**Roadmap.** Broader numerical and input-boundary testing, stable consumer contracts, physical
+validation, and a validated
+[conductivity model](https://github.com/rafatahmed/Flahax/blob/main/docs/stock-conductivity-service-design.md)
+for irrigation-strength solutions first and concentrated stock tanks second. See the
+[development roadmap](https://github.com/rafatahmed/Flahax/blob/main/docs/development-roadmap.md).
+FlahaX is developed as the chemistry engine for the FlahaFAST application; that integration is
+not yet in place, and FlahaX stays a standalone package with its own releases.
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING](https://github.com/rafatahmed/Flahax/blob/main/CONTRIBUTING.md)
+for branch names, code style, the changelog format and the validation each change needs, and the
+[code of conduct](https://github.com/rafatahmed/Flahax/blob/main/CODE_OF_CONDUCT.md). Report
+security problems privately, as [SECURITY.md](https://github.com/rafatahmed/Flahax/blob/main/SECURITY.md)
+explains.
 
 From a source checkout:
 
 ```bash
 python -m pip install -e .
-PYTHONPATH=src python -m unittest discover -s tests -t .
+python -m unittest discover -s tests -t .
 ```
 
-Live PHREEQC replay, distribution verification and branch conventions are in
-[package verification](https://github.com/rafatahmed/Flahax/blob/main/docs/package-verification.md)
-and [CONTRIBUTING](https://github.com/rafatahmed/Flahax/blob/main/CONTRIBUTING.md).
+Live PHREEQC replay and distribution verification are described in
+[package verification](https://github.com/rafatahmed/Flahax/blob/main/docs/package-verification.md).
 
 ## Citation
 

@@ -47,6 +47,21 @@ class EntryTests(unittest.TestCase):
         _, out, _ = run('--help')
         self.assertTrue(out.startswith('usage: flahax '), out[:80])
 
+    def test_help_describes_every_command_with_examples_and_links(self):
+        # Command Line Interface Guidelines (clig.dev): every command described, examples,
+        # where to read more and where to report a problem (owner request 2026-10-23).
+        _, out, _ = run('--help')
+        for command in ('mix', 'batch', 'recommend', 'workflow', 'ec', 'size'):
+            with self.subTest(command=command):
+                self.assertRegex(out, rf'(?m)^  {command} +\S')
+        self.assertIn('Examples:', out)
+        self.assertIn('flahax mix --plain', out)
+        self.assertIn('https://flahax.readthedocs.io/', out)
+        self.assertIn('https://github.com/rafatahmed/Flahax/issues', out)
+        self.assertNotIn('Request site inputs', out)
+        _, start, _ = run()
+        self.assertIn('https://flahax.readthedocs.io/', start)
+
     def test_ctrl_c_stops_without_a_traceback(self):
         with mock.patch('flahax.__main__._main', side_effect=KeyboardInterrupt):
             code, _, err = run('recommend')

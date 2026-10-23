@@ -1,148 +1,191 @@
 # Changelog
 
-## Unreleased
+All notable changes to FlahaX are documented in this file.
 
-## 0.6.0 — release candidate, not yet published
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
+[PEP 440](https://peps.python.org/pep-0440/); while FlahaX is below 1.0, a minor release may change
+behaviour, and every such change is listed under **Changed** or **Removed**. The full notes of
+each release, with numbers, sources and decisions, are in
+[docs/releases](https://github.com/rafatahmed/Flahax/tree/main/docs/releases).
 
-The grower release. FlahaX becomes a tool a grower or agronomist can run without code (`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock solubility, and is hardened for release. Development status moves to Beta.
+## [Unreleased]
 
-Detailed notes for every change: [docs/releases/0.6.0.md](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md).
+## [0.6.0] - not yet released
+
+The grower release: FlahaX becomes a tool a grower or agronomist can run without code
+(`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock
+solubility, and moves to Beta. No breaking API change (14 names added, none removed); Python 3.11
+or newer, still with no runtime dependencies. Known limits: the full-screen `flahax mix` is alpha
+(`--plain` always works; typing "à" on Windows swallows the next key, #127), solubility checks are
+single-salt lower bounds, and there is no physical validation yet (#41).
+[Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md).
 
 ### Added
 
-- `flahax mix`: five steps (specification, water analysis, crop formula, fertilizers available, target pH) that save waters, formulas, product stores, acids and sessions under `$FLAHAX_HOME` (default `~/.flahax`) and write a batch sheet for the grower, the agronomist or the full report. `flahax mix sessions/NAME` repeats a batch without questions.
-- Full-screen `flahax mix` in a terminal, using the standard library only (#124, alpha): arrow keys, type-to-filter lists, tick lists, and a results screen with Tanks, Nutrients and Notes views. `--plain`, scripts and pipes keep the line-by-line questions with unchanged output.
-- `flahax batch`: one formula and one water to `batch-sheet.html`, `report.html` and `summary.json`, with the pH plan (#79). `--water-share` blends a measured water with RO water (#84).
+- Troubleshooting for installing, upgrading and the full-screen `flahax mix` in the user guide and the README.
+- `flahax mix`: five steps (specification, water analysis, crop formula, fertilizers available, target pH) that save waters, formulas, product stores, acids and sessions under `$FLAHAX_HOME` (default `~/.flahax`) and write a batch sheet for the grower, the agronomist or the full report; `flahax mix sessions/NAME` repeats a batch.
+- Full-screen `flahax mix` in a terminal, standard library only (#124): arrow keys, type-to-filter lists, tick lists, and Tanks, Nutrients and Notes views. `--plain`, scripts and pipes keep the line-by-line questions.
+- `flahax batch`: one formula and one water to `batch-sheet.html`, `report.html` and `summary.json`, with the pH plan (#79); `--water-share` blends a measured water with RO water (#84).
 - Recipe and pH reagent planned together (`plan_coupled_ph`), with pH-up reagents (#74-#77).
-- Sourced stock solubility for 20 products (CRC Handbook, Yara, U.S. Coast Guard CHRIS) checked at the stock temperature; products without sourced data are listed as not checked.
+- Sourced stock solubility for 20 products (CRC Handbook, Yara, U.S. Coast Guard CHRIS), checked at the stock temperature.
 - Materials defined by what they put in the water (`material_chemistry`): a chemical formula, its ions, or a supplier analysis.
-- Public API: `plan_coupled_ph`, `reagent_dose`, `catalogue_ph_reagents`, `PhAdjustmentPlan`, `PhCandidate`, `material_chemistry`, `group_tanks`, `default_compatibility_rules`, `TankGrouping`, `ConcentrateTank`, `TankProduct`, `summarize_batch`, `render_report`, `render_batch_sheet` (14 new names; none removed).
+- Public API: `plan_coupled_ph`, `reagent_dose`, `catalogue_ph_reagents`, `PhAdjustmentPlan`, `PhCandidate`, `material_chemistry`, `group_tanks`, `default_compatibility_rules`, `TankGrouping`, `ConcentrateTank`, `TankProduct`, `summarize_batch`, `render_report`, `render_batch_sheet`.
 - An error-code reference in the user guide covering all 91 codes, checked by a test.
-- Project policies and tooling: `SECURITY.md`, a code of conduct (Contributor Covenant 2.1), Codecov coverage, README status badges, and CI on Windows and macOS (#150).
+- `SECURITY.md`, a code of conduct (Contributor Covenant 2.1), Codecov coverage, README status badges, and CI on Windows and macOS (#150).
 - A draft physical-validation protocol (#41) and the Irriblend-DSW optimiser in the competitor benchmark (#40).
 
 ### Changed
 
+- `flahax --help` describes every command, with examples and links to the documentation and the issue tracker; the README follows the order a reader needs (installation, quick start, commands, troubleshooting); the changelog follows Keep a Changelog 1.1.0 for every release.
 - Supplier labels may differ from their chemical's charge balance by up to 1 % (was 0.1 %) (#93).
 - A water report without chloride closes its charge balance on alkalinity instead of being blocked (#100).
 - Concentration limits and targets use the laboratory water analysis; the charge-balanced water is for chemistry only (#84).
 - Untargeted nutrients are assessed once, with the products that supply them; ammonium keeps the 10 % allowance, shown with its source (#92).
-- Positive saturation indices of phases that do not form at feed conditions (hydroxylapatite, goethite, MnHPO4, vivianite) make a plan `requires_review` with the reason, instead of rejecting it (#78).
+- Phases that do not form at feed conditions (hydroxylapatite, goethite, MnHPO4, vivianite) make a plan `requires_review` with the reason, instead of rejecting it (#78).
 - The growers page is a task path with a worked example that a test re-runs (#80).
-- Package identity: Beta status, Python 3.14 supported, maintainers and affiliation, a full NOTICE of data sources, and verified references in `CITATION.cff`.
+- Development status Beta; Python 3.14 supported; maintainers, affiliation, a full NOTICE of data sources and verified references in `CITATION.cff`.
 - Code style: PEP 8 at 99 columns enforced in CI, file headers, and docstrings on every public definition (#120-#122).
 
 ### Fixed
 
 - `recommend()` raised "NNLS did not reach optimality" when the water alone exceeded one declared maximum while another was binding (#86).
 - Bad input at any entry point, or a damaged session file, gives a plain message instead of a traceback (#117, #149).
-- Findings from the first field tests of `flahax mix`: the formula list (#98), the start screen and `--version` (#102), finding saved sessions and small weights (#105), unknown acid formulas (#112), repeated notes (#113) and titles (#114).
+- First field tests of `flahax mix`: the formula list (#98), the start screen and `--version` (#102), saved sessions and small weights (#105), unknown acid formulas (#112), repeated notes (#113) and titles (#114).
 - Every output of one batch agrees: pH path, weights, acid volume and notes on the terminal, sheet and report (#107-#110).
-- Fixes from the owner's trial of the full-screen mode: Windows arrow keys (#135), readable key help (#137), confirm before leaving the results (#138), filter and tick keys (#139), number display (#140), wrapping (#141), grower words instead of internal codes (#142), and more (#125-#132, #143-#147).
-- The 0.5.0 manual and changelog kept the release-candidate wording; the publishing procedure now has a finalize step before tagging (#71).
+- The owner's trial of the full-screen mode: Windows arrow keys (#135), readable key help (#137), confirm before leaving (#138), filter and tick keys (#139), number display (#140), wrapping (#141), grower words (#142), and #125-#132, #143-#147.
+- The 0.5.0 manual and changelog kept the release-candidate wording; publishing now has a finalize step before tagging (#71).
 
-### Compatibility and limits
+## [0.5.0] - 2026-10-20
 
-- No breaking change to the public API: 14 names added, none removed. Python 3.11 or newer; still no third-party runtime dependencies.
-- The full-screen `flahax mix` is alpha; `flahax mix --plain` is always available. Typing "à" in it swallows the next key on Windows (#127).
-- Solubility checks are single-salt values in pure water: a lower bound, with no mixed-salt data.
-- No physical validation yet: the protocol (#41) is a draft, and results remain calculations to check by measuring pH and EC after mixing.
-- Between releases, install from GitHub with `--force-reinstall` (#134).
+Faster and more reliable formulation and equilibrium, chloride products, material traceability
+and irrigation EC, with the first fully passing Benchmark v1. Recommended doses change for 20 of
+the 26 shipped formulas (catalogue corrections below).
+[Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.5.0.md).
 
-## 0.5.0 — 2026-10-20
+### Added
 
-- Publish Benchmark v1 snapshot 2026-10-20-linux-df0d30b (hosted run 39515183621 on `main`, after #62, #65 and #69), the first with every correctness gate passing: 7/7 controlled NNLS cases, 21/21 stored chemistry comparisons, 17/17 timing workloads; complete recipes 34/52 (was 29/52). The results page no longer calls a fully passing scorecard 'not fully passing' (#66).
-- Fix `recommend()` slowness and start-dependent recipes under incidental-ion ceilings (#68). Two root causes, both measured against SciPy on every fit: the NNLS optimality test used one tolerance scaled by the whole matrix (max |A| times |b|), so a heavily weighted row hid real descent directions in the other columns and NNLS stopped early (doses off by up to 4.2e-3 g/L); it now bounds each column's dual weight by the rounding error of its own terms. And a binding ceiling was enforced by a 1024-weight penalty, which left the problem so flat in double precision that doses were fixed only to ~2e-3 g/L and depended on the solver's starting point. A binding ceiling is now a constraint: a weight-8 row whose aim is shifted by the Lagrange multiplier, found by a bracketed secant search, with one Gram cache per search. Every ceiling fit now matches SciPy to 1.4e-10 g/L, warm and cold starts agree to 7e-9 g/L, and binding ions land on their aim. Over the 52 benchmark recipes `recommend()` is 34% faster with the default ammonium limit (4.20 -> 2.78 s) and unchanged with a 3 mmol/L Cl ceiling (3.77 -> 3.87 s); the Benchmark v1 formulation workload falls from about 30 to 16 ms. Pass counts are unchanged by default (34/52 recipes, 571/636 targets) and rise with the Cl ceiling (41 -> 42 recipes, 598 -> 599 targets), with no limit violations; the 10 recipes that change have equal or better target fit.
-- Fix Benchmark v1 measuring no timings after #63 (#64). ASV imports every module under `benchmarks/` with only that package importable, and the competitor harness there imported `tools`, so discovery aborted. The harness moves to `tools/competitors/`, and a test now discovers the suite the way ASV does.
-- Speed up equilibrium solves 3-5x and their pH and dose searches 10-25x in pure Python (#61), found by the #40 comparison with PHREEQC. Each solve averaged its ionic-strength update and needed about 35 outer passes to reach |dI| < 1e-12; ionic strength now takes a safeguarded secant step (the average remains the fallback) and water activity plain substitution. `solve(..., start=result)` warm-starts from a nearby state (free-ion activities, ionic strength, water, precipitated phases) and falls back to the unchanged cold start if it fails; the nitric-target, calculated-pH, acid-selection and measured-water searches warm-start from their previous solve. Converged states are unchanged within solver tolerance (species within 7e-10 relative on every PHREEQC fixture; calculated pH within its 1e-7 bisection width). The mixed-product nitric target drops from about 1080 to 73 ms (PHREEQC: 4.5 ms), calculated-pH irrigation EC from 0.9-2.6 s to 74-244 ms per recipe, the test suite from 133 to 40 s. The shipped phosphate conductivity coefficients are unchanged; refitting them now reproduces them to 7.4e-9 relative instead of bit-exactly, so the reproduction test bounds coefficients at 1e-7 relative and percentages at 1e-5 points (owner decision).
-- `recommend()` is 2.8-4.0x faster in pure Python with identical recipes (#59). NNLS was 97% of its time: about 44 solves per call, each rebuilding a Householder factorisation over every row. Simplification trials now warm-start NNLS from the current solution, passive-set least squares use Cholesky on a lazily cached Gram matrix (Householder fallback and refinement when ill-conditioned), dual weights come from the cached Gram entries, and the miss diagnosis computes each drop-one fit once. Over the 52 benchmark cases (best of three, same machine): 248 -> 89 ms with the default ammonium limit, 297 -> 95 ms with a Cl ceiling, 146 -> 36 ms without ceilings. Every recipe is unchanged (largest final concentration change 3e-11 mg/L, identical product sets). Zero runtime dependencies are kept.
-- Fix the equilibrium solver failing to converge between pH 4.2 and 5.05 for chelate-rich mixed solutions (#52). From the cold start (every free activity at total/1000), Newton crawled toward strongly complexed free ions (EDTA, DTPA and EDDHA with Fe and Cu) until its iteration limit; an acid target of pH 5.0 for the mixed-product fixture failed. A failed solve now restarts from a continued-fraction mass-balance estimate (Wigley 1977). A pH 4-9 scan of the three mixed fixtures (1,503 solves) goes from 215 failures to none; converging solves are unchanged because the restart runs only after a failure.
-- The NNLS solver raises `InputError` when it is still not optimal at its iteration cap, instead of silently returning a non-optimal fit (#55). No benchmark fit reaches the cap.
-- `recommend()` reports `targetIonBalance`, the cation and anion meq/L implied by the formula (P as H2PO4-, S as SO4 2-), and warns when the sums differ by more than 10%. Eight shipped formulas exceed it, which explains most recipe misses (#39); for example Pepper (Howard Resh) is -39.5% and the U of Florida tomato clusters are +19% to +30%.
-- `recommend()` reports `unmetTargets`: each positive target missed by more than 1% with a reason (`no_source`, `limited_by_ceiling`, `incidental_tradeoff`, `conflicting_targets` with the conflicting targets, and whether chloride products would reach it) (#39). The 1% tolerance is documented as a FlahaX assumption.
-- Incidental-ion ceilings reach their limit in one refit instead of up to 13 (#56): mean `recommend()` time on the benchmark falls from 482 to 211 ms with the ammonium default.
-- `plan_fertilizer_workflow` notes a target pH outside the 5.3-5.8 feed range of Dutch soilless practice, or outside 5.0-7.0. The equilibrium acid plan reports the residual bicarbonate at the target pH and warns below the 0.5 mmol/L buffer Dutch practice leaves.
-- `recommend()` now allows incidental NH4-N up to the smaller of 10% of the formula's total target N and 1.5 mmol/L (21.01 mg/L N) when the targets omit N_NH4 (#54). Calcium nitrate (ag grade) always carries ammonium, so the penalty-only fit under-dosed calcium even where a recipe meeting every target existed (7 benchmark cases; 5 now pass, and Generic Grow needs more ammonium than the limit allows). Values are owner decisions based on Dutch soilless practice: NH4 at 5-15% of total N, at most 1-1.5 mmol/L (De Kreij, Voogt et al.; Voogt 'max 90:10'). `result["ammoniumLimit"]` reports the limit; `max_ammonium_fraction` raises it and `None` restores the previous fit; an explicit N_NH4 target, including 0, is unchanged. Whole-recipe passes rise from 29 to 34 of 52 benchmark cases (targets 563 -> 571 of 636), with no limit violations.
-- Speed up the equilibrium solver and its searches (#37) with numerically equivalent results (largest change across all PHREEQC fixtures: 6e-12 relative in species, 4e-13 in the nitric dose). The Jacobian and component sums now use each species' non-zero stoichiometry instead of every component (94% of runtime). The nitric-target, acid-option and alkalinity-to-carbon searches share one bracketed Illinois root finder with the same stopping rules as before, in place of fixed bisections. The calculated-pH search keeps its bisection, so the shipped phosphate conductivity fit (#37) reproduces exactly. The mixed-product nitric target fell from 44 solves and about 70 s to 12 solves and under 2 s (median 1.6 s) on the recording laptop. Benchmark v1 adds `track_search_solves`, which reports the solves per call.
-- Fix the equilibrium solver raising 'line search stalled' at some valid states: after a cold start a near-singular Jacobian (seen with Fe-EDDHA in the mixed-product solution at pH 7.396) gave an unusable Newton step. A damped least-squares (Levenberg-Marquardt) step now recovers. It runs only where the solver previously failed, so converging solves are unchanged.
-- Add Potassium Chloride (KCl) and Calcium Chloride (Dihydrate) (CaCl2.2H2O) to the catalogue (30 products), with identity-theoretical assays (K 52.4469 / Cl 47.5531 %; Ca 27.2626 / Cl 48.2289 %) sourced to Sigma-Aldrich P3911 and 223506. Calcium chloride is the first calcium source without nitrate (#39). Chloride needs consent: neither product is used unless the caller targets Cl, allows it (`allow_ions`) or sets a Cl maximum, so no default recipe changes.
-- Record the ChemicalBook technical data sheets (revision 2026-04-16, SHA-256 recorded) as sources for Ammonium Sulfate and Urea; they confirm identity and purity (laboratory grade). Assays are unchanged.
-- `recommend(..., maximum_concentrations={...})` and `plan_fertilizer_workflow` now use incidental-ion ceilings in the fit: an ion with a positive ceiling (for example `{"Cl": 70}`) is admitted, is not penalised up to the ceiling, and is pulled back when the fit exceeds it. Any remaining excess is reported in `limitViolations` with `feasible` false. Without ceilings the result is unchanged.
-- Fix chloride handling in catalogue chemistry conversion: chloride assays were dropped from analytical totals, and a calcium salt was assumed to carry nitrate. Chlorine now uses 35.45 g/mol everywhere (previously 35.453 in water-ion conversions); the manual's Shomar et al. station 104 example now closes chloride by -9.53 % (was -9.52 %).
-- Fix early stopping in the NNLS solver (#36). Its optimality test used a fixed 1e-10 threshold, so near-dependent or very small-scale problems stopped before the optimum (Benchmark v1 `near_dependent`: objective 1.5e-12 instead of ~0; a problem scaled by 1e-8 returned all zeros). The optimality test is now at round-off level and scaled by the problem, rank checks are relative to column size, and a column rejected as dependent no longer blocks the others. All 1,266 NNLS problems solved for the 52 benchmark recipes match SciPy as before, and no recipe dose changes.
-- Add experimental irrigation EC25 from speciation (McCleskey 2012 Eq. 8) with explicit partial results, envelope checks and provenance; no accuracy claim.
-- Irrigation EC (M2a): species without a McCleskey coefficient now give a bounded `estimated` result (`bounded`, `ec25_range_ms_cm`, midpoint `ec25_ms_cm`, `uncertainty_ms_cm`, audit `uncovered_bound_ms_cm`; upper limit from 80 S cm2/mol per charge) instead of `partial`; `MODEL_VERSION` is now m2a and `compare_measured_ec` reports `ec25_range_ms_cm` and `within_range`.
-- Irrigation EC (M2b): H2PO4- and HPO4-2 now contribute through 25 C coefficients fitted to Pethybridge, Talbot and House (2006) Table III (`tools/fit_phosphate_conductivity.py`, `supplementary` block of the coefficient file, data to I = 0.014); the audit records `supplementaryCoefficients` and `phosphate_fit_max_ionic_strength`, and `MODEL_VERSION` is now m2b. Minor phosphate pairs and PO4-3 stay under the bound.
-- Add the material traceability API (`docs/site/guide/materials.md`): shipped identity records (`load_identities`, `identity_for_product`), user grades and lots (`make_grade`, `make_lot`), `resolve_material` (per-nutrient basis, band ends, flags, provenance) and `nutrient_band`; `catalogue_dose_totals` and `calculate_irrigation_ec` take `materials=`, undisclosed blends raise or report `composition_undisclosed` in chemistry, and EC and equilibrium-delivery audits carry material provenance.
-- Link every catalogue product in `library.json` to its chemical identity (`identityId`) and record its `analysisBasis` (`declared_catalogue`, `identity_theoretical` or `grade_typical`) and `source` document reference. Product `id` and `name` values are unchanged.
-- Correct Mg Nitrate to Mg(NO3)2·6H2O theory (owner decision D1): formula `Mg(NO3)2` → `Mg(NO3)2.6H2O`; N_NO3 11 → 10.92564 %, Mg 9.65 → 9.47931 %; basis `identity_theoretical`. Its declared-form charge residual at 1 g/kg water goes from +0.5532 % to ~0 %, so it no longer trips the EC O5 gate on its own.
-- Correct Phosphoric Acid (75%) to the 75 % w/w solution: P 31.61 → 23.706035 % (0.75 × 31.608046, product-mass dosing); PO4 delivered per gram falls to 0.74995 × the old value. Its stored assay is now reported as drifting from the H3PO4 formula, as intended for a solution.
-- Calcium Nitrate (ag grade) keeps N_NO3 14.4 / N_NH4 1.1 / Ca 19 % and now cites the Haifa Cal NG technical data sheet (October 2018) with basis `grade_typical`. Metadata: Urea formula `Urea` → `CO(NH2)2` (the formula check now reads urea's amide N as N_UREA, so Urea stays eligible); display names "Iron(II) Sulfate (Heptahydrate)" and "Potassium Citrate (anhydrous)".
-- Recommended doses (g/L, `recommend` with all eligible products and the formula's water) change for 20 of the 26 shipped formulas: Chilli, DEFAULT, Generic Bloom, Generic Dry Season, Generic Grow, Generic Wet Season, Generic for Berries, Hoagland, Lettuce 2, Lettuce General, Melons, Pepper (Howard Resh), Rice, Strawberry Drip Irrigation, Strawberry Fruiting, Tomato (Howard Resh), Tomatoes Fourth/Third Cluster and to termination, Tropical Lettuce. Pepper regression recipe (Test01, Ca 20 ppm water): Mg Nitrate 0.414486 → 0.421953, Phosphoric Acid (75%) 0.117392 → 0.151738; pepper water workflow: Mg Nitrate 0.414483 → 0.421949, Phosphoric Acid (75%) 0.098687 → 0.126809, incidental N_NH4 4.845114 → 4.845193 ppm.
-- Chelates now carry their sodium counterions in chemistry totals (D2); recipes with chelates show incidental Na in equilibrium and EC results. Per formula unit: Fe-EDTA 1, Mn/Zn/Cu-EDTA 2, Fe-DTPA 2, Fe-o,o-EDDHA 1 Na, also added to CH - micro's borax and molybdate sodium; product `elements` are unchanged, so formulation is unaffected. Na+ at 1 g/kg water: Iron EDTA 0 → 53.52 mg, Zn EDTA 0 → 98.46 mg, Mn EDTA 0 → 108.80 mg, Copper EDTA 0 → 101.30 mg, Iron DTPA 0 → 90.57 mg, Iron EDDHA 0 → 24.70 mg, CH - micro 14.06 → 63.23 mg. Declared-form charge residuals fall to ~0 % (Iron EDTA −14.29 %, Zn/Mn/Cu EDTA −33.33 %, Iron DTPA −25.00 %, Iron EDDHA −14.29 %, CH - micro −12.76 %), so chelate recipes no longer trip the EC O5 gate. Borax declares its ion forms (`Na+`, `B(OH)4-`, `B(OH)3`; −0.5 charge per B in the residual): residual +100 % → +0.006 %; its equilibrium totals are unchanged (boron stays the H3BO3 basis).
-- `recommend` results (and the workflow recommendation) now carry per-salt `provenance` (recordId, identityId, analysisBasis, documents, flags; `unattributed` when the record has none) and `identitiesSha256`; `solve_weights` and `forward` are unchanged.
-- Formulation rows now report formula counterion sodium not already assayed as elemental Na (chelate sodium, D2, and CH - micro's borax and molybdate sodium), added to the `Na` row and incidental review after the fit, with an `Na` target's `deltaPct` recomputed (pepper workflow incidental Na 0.048 -> 1.722 ppm; Tomatoes U of Florida clusters 2.1923 -> 2.7548, Lettuce General 2.2258 -> 2.5774, Generic Wet Season 2.5403 -> 2.7161 mg/L with CH - micro's borax/molybdate share); a tight Na maximum can make such recipes require review or be infeasible.
-- Add `calculate_irrigation_ec_band`: irrigation EC25 chemistry (pH, precipitation, EC) at nominal and nutrient band minimum and maximum ends; an end with an open band returns `not_supported` / `band_end_open`.
-- Documentation is published at https://flahax.readthedocs.io/ (Sphinx + MyST, versioned from the next release); internal specs and plans are no longer in the repository.
+- `recommend()` reports `targetIonBalance` (warning beyond 10 %) and `unmetTargets`, each missed target with its reason (#39).
+- Incidental-ion ceilings in the fit (`maximum_concentrations`); any excess is reported in `limitViolations`.
+- Potassium chloride and calcium chloride (dihydrate) in the catalogue (30 products), used only when chloride is targeted or allowed.
+- Material traceability: identities, grades and lots, `resolve_material` and `nutrient_band`; every catalogue product names its identity, analysis basis and source.
+- Experimental irrigation EC25 from speciation (McCleskey 2012), with bounded estimates for uncovered species, phosphate coefficients fitted to Pethybridge et al. (2006), and `calculate_irrigation_ec_band`.
+- Per-salt provenance and `identitiesSha256` in `recommend()` results.
+- Feed-pH notes against Dutch soilless practice and a residual-bicarbonate warning in the acid plan.
+- Documentation site at https://flahax.readthedocs.io/.
+- Benchmark v1 snapshot 2026-10-20-linux-df0d30b, the first with every correctness gate passing (#66).
 
-## 0.4.0 — 2026-10-17
+### Changed
 
-- Relicense FlahaX under the Apache License 2.0 and add a `NOTICE` file. Releases up to and including 0.3.1 remain under the Flaha Free Use License 1.0.
-- Add `balance_water_analysis`: speciate a laboratory water analysis at its measured pH, take inorganic carbon from the analysis or from titrated alkalinity, and close the remaining charge on Cl- or Na+ with the imbalance and adjustment recorded. Imbalances above 5% (configurable) are rejected. The workflow's `equilibrium` record accepts `measured_ph` and reports `water_balance`. Charge balance alone turned a 3.5% analytical imbalance on a published Qatar well into a 4-unit pH error.
-- Add publication drafts under `docs/publication/` (JOSS paper, field-trial article, story piece in English and Arabic, worked example); they are excluded from the source distribution.
-- Add the author's ORCID to `CITATION.cff`.
-- Harden the release workflow: a GitHub Release uploads only when its tag matches the package version and that version is new on PyPI, after the full test matrix, clean installs and the live PHREEQC replay pass, and after reviewer approval, via PyPI Trusted Publishing.
-- Bring the documentation up to date with 0.3.1 and 0.4.0, and remove two unreferenced 0.2.0 images from `docs/` (and so from the sdist).
+- `recommend()` is 2.8-4.0x faster (#59); equilibrium solves are 3-5x and their searches 10-25x faster (#37, #61), with numerically equivalent results.
+- Incidental NH4-N is allowed up to the smaller of 10 % of total N and 1.5 mmol/L when the formula has no N_NH4 (#54).
+- Incidental-ion ceilings reach their limit in one refit (#56).
+- Catalogue: Mg Nitrate is Mg(NO3)2·6H2O; Phosphoric Acid (75%) is a 75 % solution; Calcium Nitrate cites the Haifa sheet; ammonium sulfate and urea cite ChemicalBook sheets.
+- Chelates carry their sodium counterions in chemistry, and formulation reports that sodium as incidental Na.
+- Chlorine uses 35.45 g/mol everywhere.
+- NNLS raises `InputError` at its iteration cap instead of returning a non-optimal fit (#55).
 
-## 0.3.1 — 2026-10-17
+### Fixed
 
-- Reframe the README, package summary and citation around FlahaX as a plant-nutrient chemistry engine (planned for FlahaFAST, not yet integrated); harden `.gitignore`, `.gitattributes` and the distribution PDF leak check.
-- Exclude the user-supplied YaraVita micronutrient guide from Git tracking and the source distribution, matching the other manufacturer PDFs; its SHA-256 is recorded in the source review. The published 0.3.0 sdist still contains it.
-- Ship a complete generated public API inventory, expand the manual to seven executable examples, and check documentation drift in source and installed-package tests. Clarify product-dose mapping after recommendation filtering, stage statuses and unpublished-version installation.
+- NNLS stopped early on near-dependent or small-scale problems (#36) and gave start-dependent recipes under ceilings (#68).
+- The equilibrium solver failed between pH 4.2 and 5.05 for chelate-rich solutions (#52) and stalled at some near-singular states.
+- Catalogue chemistry dropped chloride and assumed a calcium salt carried nitrate.
+- Benchmark v1 measured no timings (#64).
 
-- Clarify every pepper product's candidate Tank A/B/acid destination or unresolved status; display actual contents of synthetic stock examples, preserve recipe mass and prevent interpreting recipe acid as an additional pH dose.
-- Document current capability limits and next steps; preserve supplied manufacturer PDFs locally while excluding them from versioned/package artifacts and retaining reviewed source hashes.
+### Removed
 
-- Add interactive/JSON workflow, EC-screening and injector-sizing CLI commands; retain the legacy stdin contract. Require explicit source water and restrict standard workflow acids to nitric/phosphoric, preserving lower-level scientific references.
-- Review four supplied fertilizer PDFs; add exact-SQM-brand pre-acid EC screening with unknown accuracy and unsupported-stock boundaries, plus channel volume/flow requirements for pump, venturi and Dosatron sizing. No fabricated equipment model selection.
+- Internal specifications and plans from the repository.
 
-- Add an offline HTML capability report with accessible SVG charts, explicit units and nutrient/chemistry/acid/EC/injection tables; keep synthetic evidence and missing-input statuses visible.
+## [0.4.0] - 2026-10-17
 
-- Add recipe-calibrated EC25 estimation for separate concentrated stock tanks and combined irrigation solution, explicit meter-TDS conversion, and recipe-preserving injection/pump planning. Missing calibration never yields a fabricated EC value; no real calibration dataset or universal concentrated-stock predictor is claimed.
+The first release under the Apache License 2.0, with water analyses speciated at their measured
+pH. [Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.4.0.md).
 
-- Add runnable `examples/` capability scenarios and a combined JSON/Markdown report, with explicit synthetic-data boundaries and regression coverage; include examples in source distributions.
+### Added
 
-- Separate zero-target incidental nutrients from positive-target fit and explicit maximum concentrations; preserve real catalogue materials.
-- Add explicit source-water-to-formulation orchestration, complete-analysis calculated pH, measured-curve/stock delegation and single-acid candidate planning for nitric, phosphoric, sulfuric and citric acids.
-- Add four charge-balanced PHREEQC acid references with hashes, conservation/equivalence tests and live replay. These development APIs are not in the published 0.3.0 artifacts; see `docs/water-to-delivery.md` for assumptions and input requirements.
+- `balance_water_analysis`: a laboratory water analysis speciated at its measured pH, carbon from the analysis or titrated alkalinity, and the remaining charge closed on Cl- or Na+ (imbalances above 5 % rejected). The workflow accepts `measured_ph` and reports `water_balance`.
+- Publication drafts under `docs/publication/`, excluded from the source distribution.
+- The author's ORCID in `CITATION.cff`.
 
-## 0.3.0 — 2026-09-27 (yanked 2026-10-17)
+### Changed
 
-Yanked on PyPI after 0.3.1 was published: its source distribution contained a third-party PDF. Use 0.3.1.
+- Licence: Apache License 2.0 with a `NOTICE` file. Releases up to and including 0.3.1 remain under the Flaha Free Use License 1.0.
+- The release workflow uploads only a tag that matches a new package version, after the full tests, clean installs, the live PHREEQC replay and reviewer approval, via PyPI Trusted Publishing.
+- The documentation covers 0.3.1 and 0.4.0.
+
+### Removed
+
+- Two unreferenced 0.2.0 images from `docs/` and the source distribution.
+
+## [0.3.1] - 2026-10-17
+
+Replaces the yanked 0.3.0, whose source distribution contained a third-party PDF, and adds the
+planning commands and reports. [Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.3.1.md).
+
+### Added
+
+- Command-line workflow, EC screening and injector sizing (interactive or JSON); the original stdin contract is unchanged.
+- Pre-acid EC screening for the exact SQM brands (unknown accuracy) and channel volume and flow sizing for pump, venturi and Dosatron injectors.
+- Recipe-calibrated EC25 for stock tanks and the irrigation solution, meter TDS conversion, and recipe-preserving injection and pump planning.
+- Source-water-to-formulation orchestration, calculated pH, and single-acid planning for nitric, phosphoric, sulfuric and citric acids, with four PHREEQC acid references.
+- An offline HTML capability report with accessible charts, runnable `examples/`, a complete public API inventory and seven manual examples.
+
+### Changed
+
+- FlahaX is described as a plant-nutrient chemistry engine (planned for FlahaFAST, not yet integrated).
+- The standard workflow offers nitric and phosphoric acids; zero-target incidental nutrients are separated from the positive-target fit.
+
+### Removed
+
+- The supplied YaraVita guide and other manufacturer PDFs from Git tracking and the source distribution; their SHA-256 hashes are recorded.
+
+## [0.3.0] - 2026-09-27 [YANKED]
+
+Yanked on PyPI on 2026-10-17, after 0.3.1 was published: its source distribution contained a
+third-party PDF. Use 0.3.1. Core `recommend` and CLI input contracts are unchanged, with no
+third-party runtime dependencies; the chemistry boundary is 25 °C, Davies I ≤ 0.1 mol/kg water,
+fixed product oxidation states and closed analytical inorganic carbon. Hosted checks were blocked
+by account billing; the owner approved publication on verified local evidence.
+[Release record](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.3.0.md).
 
 ### Added
 
 - One bounded mixed aqueous model for all 28 catalogue product conversions, with preserved PHREEQC product, phase and nitric-acid reference evidence.
 - Assay-qualified equilibrium-to-delivery planning: explicit water mass, reagent density, nitrate contribution, nutrient rescoring and source hashes.
-- Dedicated acid-channel checks and rejection of target supersaturation/formed solids during delivery validation.
-- Isolated wheel/sdist verification, hash-pinned external PHREEQC provisioning and a required live-reference CI job.
-- A self-contained user manual shipped inside both wheel and source distribution, with tested Python examples.
+- Dedicated acid-channel checks and rejection of target supersaturation or formed solids during delivery validation.
+- Isolated wheel and sdist verification, hash-pinned external PHREEQC provisioning and a required live-reference CI job.
+- A self-contained user manual shipped in the wheel and source distribution, with tested Python examples.
 
-### Fixed and clarified
+### Changed
 
-- Identical initial/target pH returns exactly zero nitric acid.
+- Public nitric-target functions return `AcidResult`; use `EquilibriumPhPlan` for reagent-volume planning. Earlier reduced-model fixtures keep explicitly named legacy solvers.
+- Delivery record schema `0.1` and chemistry model identifiers are versioned independently of the package.
+
+### Fixed
+
+- Identical initial and target pH return exactly zero nitric acid.
 - CLI examples supply the required salts array; historical chemistry notes are archived separately.
-- Test calibration dates are deterministic; real runtime calibration expiry remains enforced.
-- FlahaFAST integration belongs to the separate FlahaFAST project.
+- Test calibration dates are deterministic; runtime calibration expiry remains enforced.
 
-### Compatibility and limits
+## [0.2.0] - 2026-09-25
 
-- Core `recommend` and CLI input contracts remain unchanged; no required third-party runtime dependencies.
-- Public nitric-target functions return `AcidResult`; use `EquilibriumPhPlan` for reagent-volume planning. Earlier reduced-model fixtures retain explicitly named legacy solvers.
-- The chemistry boundary is 25 °C, Davies I <= 0.1 mol/kg water, fixed product oxidation states and closed analytical inorganic carbon. No universal solubility, laboratory validation or equipment-control claim.
-- Delivery record schema version `0.1` and chemistry model identifiers are independent of package version `0.3.0` and are not automatically renumbered.
-- Hosted checks are blocked by account billing. The owner explicitly approved publication based on verified local evidence; the exception does not mark hosted checks as passed. PyPI confirms wheel and source-distribution publication on 2026-09-27; hosted verification remains outstanding.
+The package baseline for fertilizer formulation, published with a PyPI trusted publisher. Earlier
+development history remains in Git; this changelog does not claim it for the 0.2.0 artifact.
 
-## 0.2.0
+### Changed
 
-Existing package baseline for fertilizer formulation. Earlier chemistry and planning development history remains in Git and the archived documentation; this changelog does not retroactively claim those developments were in the published 0.2.0 artifact.
+- Releases are published to PyPI with a trusted publisher.
+
+## [0.1.0] - 2026-09-25
+
+### Added
+
+- The first FlahaX package on PyPI, with its release workflow.
+
+[unreleased]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...HEAD
+[0.6.0]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/rafatahmed/Flahax/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/rafatahmed/Flahax/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/rafatahmed/Flahax/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/rafatahmed/Flahax/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/rafatahmed/Flahax/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/rafatahmed/Flahax/releases/tag/v0.1.0
