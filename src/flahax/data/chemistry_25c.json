@@ -3,6 +3,7 @@
   "temperature_c": 25,
   "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
   "source_url": "https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat",
+  "notice": "Modified data, not the original USGS files. Equilibrium constants at 25 C converted to JSON by Rafat A. Al Khashan for FlahaX (first committed 2026-09-27) from PHREEQC 3.8.6 minteq.v4.dat (U.S. Geological Survey; SHA-256 in database_sha256, original at source_url), keeping only the species and phases FlahaX uses, with kieserite and sylvite from PHREEQC 3.8.6 pitzer.dat and FlahaX extensions marked by their own source field. The USGS User Rights Notice for PHREEQC applies: see NOTICE. Cite Parkhurst and Appelo (2013), USGS Techniques and Methods 6-A43.",
   "bases": [
     "Ca+2",
     "Mg+2",

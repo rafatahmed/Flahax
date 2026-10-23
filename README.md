@@ -137,7 +137,7 @@ for tables, charts, provenance, and retained limitations.
 
 - 153 automated tests, including live replay of every catalogue product,
   phase and acid case against pinned PHREEQC 3.8.6 (USGS).
-- Hosted checks on Python 3.11, 3.12 and 3.13, plus clean wheel and source
+- Hosted checks on Python 3.11, 3.12, 3.13 and 3.14, plus clean wheel and source
   installation checks.
 - Evidence is versioned per release in the
   [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
@@ -204,6 +204,24 @@ https://pypi.org/project/flahax/
 
 GitHub's "Cite this repository" button reads
 [`CITATION.cff`](https://github.com/rafatahmed/Flahax/blob/main/CITATION.cff).
+
+## Author and credits
+
+FlahaX is written and maintained by Rafat A. Al Khashan
+([ORCID 0009-0009-4692-4552](https://orcid.org/0009-0009-4692-4552),
+rafat.khashan82@gmail.com) at Flaha.
+
+It builds on published data, each value cited where it is used:
+thermodynamic constants from USGS PHREEQC 3.8.6 (Parkhurst and Appelo 2013,
+[doi:10.3133/tm6A43](https://doi.org/10.3133/tm6A43)), converted and extended
+for FlahaX; conductivity from McCleskey et al. (2012) and Pethybridge et al.
+(2006); stock solubility from the CRC Handbook of Chemistry and Physics, Yara
+and the U.S. Coast Guard CHRIS database; supplier assays from Haifa,
+Sigma-Aldrich and ChemicalBook; concentrate-tank rules from Yara; and crop
+formulas from the authors named in the library. The full list, the
+modifications and the USGS User Rights Notice are in
+[`NOTICE`](https://github.com/rafatahmed/Flahax/blob/main/NOTICE); the
+references are also in `CITATION.cff`.
 
 ## License
 

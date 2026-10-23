@@ -1,40 +1,217 @@
 cff-version: 1.2.0
-message: "If you use FlahaX, please cite it as below."
+message: "If you use FlahaX, please cite it as below, and credit the data sources listed under references."
 title: "FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning"
 abstract: >-
-  FlahaX is a Python package for plant nutrition. It chooses fertilizer salts
-  and grams so that a fixed crop formula, after subtraction of the source
-  water, is met; models the resulting solution with fertilizer-specific
-  aqueous equilibrium chemistry (speciation, precipitation and pH); plans the
-  acid dose to a target pH; and plans stock tanks and injection with
-  auditable units, model identifiers and source hashes. Chemistry results are
-  verified against PHREEQC.
+  FlahaX turns a water analysis, a crop formula and the fertilizers at hand
+  into a batch: the fertilizer recipe, the calculated pH, the acid-adjusted
+  recipe and the A/B stock tanks to prepare. Growers and agronomists use the
+  interactive `flahax mix` command; developers use the Python API. Underneath,
+  it chooses fertilizer grams by non-negative least squares so the crop
+  formula is met after the water's contribution; models the solution with
+  fertilizer-specific aqueous equilibrium chemistry (speciation, saturation
+  and pH) at the water's measured pH; plans the acid or base dose to a
+  target pH with the reagent's nutrients counted; groups products into two
+  concentrate tanks and checks their solubility; and records units, sources
+  and hashes for audit. Materials are defined by formula, ions or label
+  analysis. Chemistry is checked against PHREEQC 3.8.6. Pure Python, no
+  runtime dependencies.
 type: software
 authors:
   - family-names: Al Khashan
     given-names: Rafat A.
+    email: rafat.khashan82@gmail.com
+    affiliation: Flaha
     orcid: https://orcid.org/0009-0009-4692-4552
+  - name: Flaha
+contact:
+  - family-names: Al Khashan
+    given-names: Rafat A.
+    email: rafat.khashan82@gmail.com
+    affiliation: Flaha
 version: 0.5.0
-url: https://pypi.org/project/flahax/
+date-released: "2026-10-20"
+url: https://flahax.readthedocs.io/
 repository-code: https://github.com/rafatahmed/Flahax
+repository-artifact: https://pypi.org/project/flahax/
 license: Apache-2.0
 keywords:
   - fertilizer
+  - fertigation
   - hydroponics
   - nutrient solution
-  - formulation
-  - non-negative least squares
-  - fertigation
-  - aqueous equilibrium
   - plant nutrition
+  - agronomy
+  - stock solution
+  - pH
+  - acid dosing
+  - water analysis
+  - aqueous equilibrium
+  - speciation
+  - non-negative least squares
+  - PHREEQC
 preferred-citation:
   type: software
   title: "FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning"
   authors:
     - family-names: Al Khashan
       given-names: Rafat A.
+      affiliation: Flaha
       orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
   version: 0.5.0
   url: https://pypi.org/project/flahax/
+  repository-code: https://github.com/rafatahmed/Flahax
   license: Apache-2.0
+references:
+  - type: report
+    title: >-
+      Description of input and examples for PHREEQC version 3: A computer
+      program for speciation, batch-reaction, one-dimensional transport, and
+      inverse geochemical calculations
+    authors:
+      - family-names: Parkhurst
+        given-names: David L.
+      - family-names: Appelo
+        given-names: C. A. J.
+    year: 2013
+    institution:
+      name: U.S. Geological Survey
+    collection-title: Techniques and Methods 6-A43
+    doi: 10.3133/tm6A43
+    notes: >-
+      Thermodynamic constants from the PHREEQC 3.8.6 databases minteq.v4.dat
+      and pitzer.dat (U.S. Geological Survey), converted and modified for
+      FlahaX; the USGS User Rights Notice is reproduced in NOTICE.
+  - type: database
+    title: "MINTEQA2 version 4 thermodynamic database (minteq.v4.dat)"
+    authors:
+      - name: U.S. Environmental Protection Agency
+    notes: Origin of the minteq.v4.dat constants distributed with PHREEQC.
+  - type: article
+    title: "A new method of calculating electrical conductivity with applications to natural waters"
+    authors:
+      - family-names: McCleskey
+        given-names: R. Blaine
+      - family-names: Nordstrom
+        given-names: D. Kirk
+      - family-names: Ryan
+        given-names: Joseph N.
+      - family-names: Ball
+        given-names: James W.
+    year: 2012
+    journal: Geochimica et Cosmochimica Acta
+    volume: 77
+    start: 369
+    end: 382
+    doi: 10.1016/j.gca.2011.10.031
+    notes: Conductivity coefficients (Table 1) in conductivity_mccleskey2012.json.
+  - type: article
+    title: "Precise Conductance Measurements on Dilute Aqueous Solutions of Sodium and Potassium Hydrogenphosphate and Dihydrogenphosphate"
+    authors:
+      - family-names: Pethybridge
+        given-names: A. D.
+      - family-names: Talbot
+        given-names: J. D. R.
+      - family-names: House
+        given-names: W. A.
+    year: 2006
+    journal: Journal of Solution Chemistry
+    volume: 35
+    start: 381
+    end: 393
+    doi: 10.1007/s10953-005-9003-z
+    notes: Phosphate conductance, Table IV.
+  - type: article
+    title: "Struvite precipitation thermodynamics in source-separated urine"
+    authors:
+      - family-names: Ronteltap
+        given-names: Mariska
+      - family-names: Maurer
+        given-names: Max
+      - family-names: Gujer
+        given-names: Willi
+    year: 2007
+    journal: Water Research
+    volume: 41
+    start: 977
+    end: 984
+    doi: 10.1016/j.watres.2006.11.046
+    notes: Struvite solubility product used by FlahaX.
+  - type: article
+    title: >-
+      Chelating Agents Related to Ethylenediamine Bis(2-hydroxyphenyl)acetic
+      Acid (EDDHA): Synthesis, Characterization, and Equilibrium Studies of the
+      Free Ligands and Their Mg2+, Ca2+, Cu2+, and Fe3+ Chelates
+    authors:
+      - family-names: Yunta
+        given-names: Felipe
+      - family-names: García-Marco
+        given-names: Sonia
+      - family-names: Lucena
+        given-names: Juan J.
+      - family-names: Gómez-Gallego
+        given-names: Mar
+      - family-names: Alcázar
+        given-names: Roberto
+      - family-names: Sierra
+        given-names: Miguel A.
+    year: 2003
+    journal: Inorganic Chemistry
+    volume: 42
+    start: 5412
+    end: 5421
+    doi: 10.1021/ic034333j
+    notes: o,o-EDDHA profile; see docs/site/models/flahax-chelate-thermodynamic-profile.md.
+  - type: database
+    title: "NIST Critically Selected Stability Constants of Metal Complexes (SRD 46)"
+    authors:
+      - name: National Institute of Standards and Technology
+      - family-names: Smith
+        given-names: R. M.
+      - family-names: Martell
+        given-names: A. E.
+    notes: DTPA stability-data family.
+  - type: book
+    title: "CRC Handbook of Chemistry and Physics"
+    authors:
+      - name: CRC Press
+    editors:
+      - family-names: Lide
+        given-names: David R.
+    notes: >-
+      Aqueous solubility of inorganic compounds at various temperatures
+      (pp. 8-112 to 8-117; 18 products in solubility.json) and ionic
+      conductivity at infinite dilution (85th ed.).
+  - type: generic
+    title: "YaraTera CALCINIT product sheet; Fertilizantes para fertirrigacion (pp. 63, 65)"
+    authors:
+      - name: Yara
+    notes: Calcium nitrate solubility; concentrate-tank compatibility rules.
+  - type: database
+    title: "CHRIS / CAMEO Chemicals: Urea (URE)"
+    authors:
+      - name: U.S. Coast Guard
+      - name: NOAA
+    notes: Urea solubility (item 9.24).
+  - type: generic
+    title: "Supplier technical data sheets for catalogue product assays"
+    authors:
+      - name: Haifa Group
+      - name: Sigma-Aldrich
+      - name: ChemicalBook
+      - name: SQM
+    notes: Product assays (library.json) and Ultrasol EC anchors (calculated_ec.py).
+  - type: generic
+    title: "Published crop nutrient formulas in the FlahaX formula library"
+    authors:
+      - name: Howard Resh
+      - name: Douglas Peckenpaugh
+      - name: University of Florida
+      - name: maximumyield
+      - name: Growing Edge
+      - name: schundler.com
+      - family-names: Hoagland
+        given-names: D. R.
+      - family-names: Arnon
+        given-names: D. I.
+    notes: Formula names in library.json record their source.
