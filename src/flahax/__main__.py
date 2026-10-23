@@ -11,12 +11,36 @@ import argparse
 
 from flahax import InputError, __version__, recommend
 
+DOCS = 'https://flahax.readthedocs.io/'
+ISSUES = 'https://github.com/rafatahmed/Flahax/issues'
 WELCOME = f"""FlahaX {__version__}: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
 
   flahax mix              answer five questions and get the batch sheet (growers and agronomists)
   flahax mix sessions/X   repeat a saved batch without questions
   flahax batch --help     the same in one command, for scripts
   flahax --help           every command; developers can also pipe JSON into flahax
+
+Documentation: {DOCS}
+"""  # noqa: E501
+DESCRIPTION = """FlahaX: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
+
+commands:
+  mix        answer five questions and get tank A, tank B and the acid (growers, agronomists)
+  batch      the same from files in one command, for scripts (flahax batch --help)
+  recommend  read a JSON request on stdin and write a fertilizer recipe (the default)
+  workflow   plan a full workflow from a JSON request on stdin, or with --interactive
+  ec         screen the EC of supported products before acid (JSON on stdin or --interactive)
+  size       size injector channel volumes and flows (JSON on stdin or --interactive)
+"""  # noqa: E501
+EPILOG = f"""Examples:
+  flahax mix                        start a new batch, full screen in a terminal
+  flahax mix sessions/tomato-ro     repeat a saved batch without questions
+  flahax mix --plain                ask the questions line by line
+  flahax batch --formula "Tomato (Howard Resh)" --water ro --ph 5.8 --acid HNO3:0.60:1.37 --output out
+  flahax < request.json             write a recipe from a JSON request
+
+Documentation: {DOCS}
+Report a problem: {ISSUES}
 """  # noqa: E501
 
 
@@ -43,8 +67,9 @@ def _main() -> int:
         return mix(sys.argv[2:])
     parser = argparse.ArgumentParser(
         prog='flahax',
-        description='FlahaX nutrient recommendation and site planning. '
-        'Growers: flahax mix. Without a command, a JSON request is read from stdin.',
+        description=DESCRIPTION,
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument('--version', action='version', version=f'FlahaX {__version__}')
     parser.add_argument(
@@ -52,11 +77,13 @@ def _main() -> int:
         nargs='?',
         default='recommend',
         choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix'),
-        help='batch: report and batch sheet (flahax batch --help); mix: interactive five-step '
-        'entry',
+        metavar='COMMAND',
+        help='one of the commands above (default: recommend)',
     )
     parser.add_argument(
-        '--interactive', action='store_true', help='Request site inputs (workflow, ec or size)'
+        '--interactive',
+        action='store_true',
+        help='ask for the inputs of workflow, ec or size instead of reading JSON',
     )
     args = parser.parse_args()
     if args.command != 'recommend':

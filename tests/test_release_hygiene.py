@@ -61,7 +61,7 @@ class ReleaseHygieneTests(unittest.TestCase):
         cited = project['version']
         if '.dev' in cited:
             changelog = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
-            cited = re.search(r'(?m)^## (\d+\.\d+\.\d+)\b', changelog).group(1)
+            cited = re.search(r'(?m)^## \[(\d+\.\d+\.\d+)\] - \d{4}-', changelog).group(1)
             self.assertLess(
                 tuple(map(int, cited.split('.'))),
                 tuple(map(int, project['version'].split('.dev')[0].split('.'))),
