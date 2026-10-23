@@ -38,6 +38,10 @@ NUTRIENT_BASES = {'Ca+2': 'Ca', 'Mg+2': 'Mg', 'K+': 'K', 'Na+': 'Na', 'Cl-': 'Cl
                   'H3BO3': 'B', 'MoO4-2': 'Mo', 'Ure': 'N_UREA'}
 
 
+ASK_LAB = ('Ask your lab for chloride and sodium: FlahaX closes the analysis at its measured pH on chloride, '
+           'so chloride must be measured and above zero.')
+
+
 def nutrient_mg_per_litre(totals, water_mass_kg=1., final_volume_litres=1.):
     """Elemental mg/L in the final volume from water totals in mol/kg water."""
     ppm = {}
@@ -284,16 +288,16 @@ def balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, ba
         raise DeliveryError('fixed_balance_ion',
                             f'the analysis is {imbalance:.2f}% out of balance and {balance_ion} is held fixed '
                             '(measured zero, below detection or named fixed); chemistry needs review or a further '
-                            'analysis. No other ion is adjusted automatically.')
+                            f'analysis. No other ion is adjusted automatically. {ASK_LAB}')
     if analysed <= 0:
-        raise DeliveryError('missing_balance_ion', f'{balance_ion} must be present in the analysis to balance on it')
+        raise DeliveryError('missing_balance_ion', f'{balance_ion} must be present in the analysis to balance on it. {ASK_LAB}')
     charge = BALANCE_IONS[balance_ion]
     for _ in range(100):
         if abs(state.charge_balance) <= 1e-12:
             break
         working[balance_ion] -= state.charge_balance / charge
         if working[balance_ion] <= 0:
-            raise DeliveryError('balance_ion_exhausted', f'{balance_ion} cannot absorb the charge imbalance')
+            raise DeliveryError('balance_ion_exhausted', f'{balance_ion} cannot absorb the charge imbalance. {ASK_LAB}')
         if carbon_source == 'alkalinity':
             working['CO3-2'] = _carbon_for_alkalinity(working, measured_ph, alkalinity_eq_per_kg, phases)
         state = solve(working, measured_ph, phases=phases, start=state)

@@ -118,6 +118,28 @@ def unreviewed_reason(recommendation):
             + '; check them, or declare maximum concentrations') if found else None
 
 
+def limit_message(recommendation):
+    """Why a recipe is not feasible, in plain words: a declared maximum it breaks, else the targets it misses by >1 %."""
+    broken = [f'{v["symbol"]} would be {v["ppm"]:.3g} mg/L, above the declared maximum {v["maximumPpm"]:.3g} mg/L'
+              for v in recommendation['limitViolations']]
+    if broken:
+        return '; '.join(broken)
+    missed = [f'{r["symbol"]} {r["deltaPct"]:+.1f} %' for r in recommendation['rows']
+              if r['target'] and r['deltaPct'] is not None and abs(r['deltaPct']) > 1]
+    return ('targets missed by more than 1 %: ' + ', '.join(missed)) if missed else 'no recipe meets the targets'
+
+
+def no_reagent_message(plan):
+    """Why no pH reagent was selected: none offered in the needed direction, or the reasons each one failed."""
+    need = 'an acid' if plan.direction == 'acid' else 'a base'
+    tried = [c for c in plan.candidates if c.direction == plan.direction and c.status != 'not_applicable']
+    if not tried:
+        return (f'the feed mixes at pH {plan.unadjusted_ph:.2f} and needs {need} to reach pH {plan.target_ph:.2f}; '
+                f'none was offered: add {need}')
+    return f'no {plan.direction} reaches pH {plan.target_ph:.2f} acceptably: ' + '; '.join(
+        f'{(c.product_record or {}).get("name") or c.product_id}: {c.message or c.error_code or c.status}' for c in tried)
+
+
 def _water_ppm(totals, mass, volume):
     return nutrient_mg_per_litre(totals, mass, volume)
 
@@ -180,7 +202,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
         return bool(absent)
 
     stages['formulation'] = WorkflowStage('calculated' if recommendation['feasible'] else 'blocked',
-                                        value=recommendation, error_code=None if recommendation['feasible'] else 'infeasible_recipe')
+                                        value=recommendation, error_code=None if recommendation['feasible'] else 'infeasible_recipe',
+                                        message=None if recommendation['feasible'] else limit_message(recommendation))
     if recommendation['feasible'] and recommendation['requiresReview']:
         stages['formulation'].status = 'requires_review'
         stages['formulation'].message = unreviewed_reason(recommendation)
@@ -316,7 +339,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
         if recipe is None:
             stages['titration'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
         elif not recommendation['feasible']:
-            stages['titration'] = WorkflowStage('blocked', error_code='infeasible_recipe')
+            stages['titration'] = WorkflowStage('blocked', error_code='infeasible_recipe',
+                                                message=limit_message(recommendation))
         else:
             def titration_plan():
                 if not isinstance(titration['water_analysis'], Mapping):
@@ -346,7 +370,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
         elif stages['chemistry'].status not in USABLE:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='chemistry_required')
         elif not recommendation['feasible']:
-            stages['acid_selection'] = WorkflowStage('blocked', error_code='infeasible_recipe')
+            stages['acid_selection'] = WorkflowStage('blocked', error_code='infeasible_recipe',
+                                                     message=limit_message(recommendation))
         else:
             state = stages['chemistry'].value['mixed']
             selection = run('acid_selection', lambda: plan_acid_options(
@@ -392,7 +417,8 @@ def plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=N
             if plan is not None:
                 chosen = plan.selected
                 if chosen is None:
-                    stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent')
+                    stages['ph_adjustment'] = WorkflowStage('blocked', value=plan, error_code='no_acceptable_reagent',
+                                                            message=no_reagent_message(plan))
                 elif assess_incidental(chosen.recommendation['rows'],
                                          assessed_limits(maximum_concentrations, chosen.recommendation))['limitViolations']:
                     # Final acceptance on the laboratory basis: a hard limit is never downgraded to review.

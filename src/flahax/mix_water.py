@@ -91,10 +91,21 @@ def ask_analysis(p, store):
             micro = ('mg', 'umol')[p.choose('Micronutrients on your report in', ['mg/L', 'µmol/L'])]
         ph = p.number('Measured pH', high=14, positive=True)
         values, below = {}, {}
-        for ion in WATER_IONS:
+
+        def label_of(ion):
             unit = UNIT_TEXT[micro if ion in MICROS else units]
             label = f'Alkalinity as {alkalinity}' if ion == 'Alk' else ion
-            label += ', meq/L as H2PO4-' if ion == 'PO4' and units == 'meq' else f', {unit}'
+            return label + (', meq/L as H2PO4-' if ion == 'PO4' and units == 'meq' else f', {unit}')
+
+        def keep(ion, value, limit):
+            values.pop(ion, None), below.pop(ion, None)
+            if value is not None:
+                values[ion] = value
+            if limit is not None:
+                below[ion] = limit
+
+        for ion in WATER_IONS:
+            label = label_of(ion)
             value, limit = ask_ion(p, label)
             if ion == 'Alk' and value is None and limit is None:
                 p.say('  Without alkalinity the pH plan will be blocked: FlahaX needs the carbonate in the water.')
@@ -103,20 +114,29 @@ def ask_analysis(p, store):
                         value, limit = ask_ion(p, label)
                 else:
                     value = 0.0
-            if value is not None:
-                values[ion] = value
-            if limit is not None:
-                below[ion] = limit
-        mg = to_elements(values, units, alkalinity, micro)
-        cations, anions, apart, parts = water_balance(mg)
-        p.say(f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, {apart:.1f} % apart.')
-        if apart > WATER_SCREEN_PERCENT:
+            keep(ion, value, limit)
+        while True:
+            mg = to_elements(values, units, alkalinity, micro)
+            cations, anions, apart, parts = water_balance(mg)
+            p.say(f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, {apart:.1f} % apart.')
+            if not values.get('Cl'):
+                p.say('  Note: chloride is not measured (or zero). FlahaX closes the analysis at its pH on chloride; '
+                      'if it does not close exactly, the pH plan is blocked. Ask your lab for chloride and sodium.')
+            if apart <= WATER_SCREEN_PERCENT:
+                break
             big = sorted(parts, key=lambda ion: -abs(parts[ion]))[:3]
             p.say(f'Warning: cations and anions are {apart:.1f} % apart (screen {WATER_SCREEN_PERCENT:g} %). '
                   'Largest: ' + ', '.join(f'{ion} {abs(parts[ion]):.2f} meq/L' for ion in big)
                   + '. Check the units, and that NO3, SO4 and PO4 are the ion, not N, S or P.')
-            if p.choose('', ['Re-enter the analysis', 'Continue with it']) == 0:
-                continue
+            pick = p.choose('', ['Correct a value', 'Continue with it', 'Start this analysis again'])
+            if pick != 0:
+                break
+            shown = [f'{ion}: ' + (f'<{below[ion]:g}' if ion in below else 'not measured' if ion not in values
+                                   else f'{values[ion]:g}') for ion in WATER_IONS]
+            ion = WATER_IONS[p.choose('Which value?', shown)]
+            keep(ion, *ask_ion(p, label_of(ion)))
+        if apart > WATER_SCREEN_PERCENT and pick == 2:
+            continue
         data = {'id': name, 'measured_ph': ph, 'mg_per_litre': mg}
         if below:
             data['below_detection'] = to_elements(below, units, alkalinity, micro)

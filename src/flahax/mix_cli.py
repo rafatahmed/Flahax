@@ -21,7 +21,7 @@ from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import number, render_report
-from .grower_sheet import STATUS_WORDS, key_reasons, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
+from .grower_sheet import STATUS_WORDS, key_reasons, litres, render_mix_sheet  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
@@ -79,15 +79,16 @@ class Prompts:
             self.say(f'  Choose 1 to {len(options)}.')
 
     def search(self, prompt, names):
+        """Part of a name narrows the list; Enter shows every name to choose from by number."""
         while True:
-            query = self.text(prompt).lower()
+            query = self.ask(f'{prompt} (part of the name; Enter lists all {len(names)}): ').strip().lower()
             matches = [n for n in names if query in n.lower()]
             if len(matches) == 1:
                 self.say(f'  {matches[0]}')
                 return matches[0]
             if matches:
                 return matches[self.choose(f'{len(matches)} match:', matches)]
-            self.say('  Nothing matches; try part of the name.')
+            self.say(f'  Nothing matches {query!r}; press Enter to see the whole list.')
 
     def new_name(self, store, kind, prompt, default=None):
         while True:
@@ -126,7 +127,7 @@ def ask_spec(p):
         except DeliveryError as exc:
             p.say(f'  {exc}')
     p.say(f'  {number(volumes.irrigation_litres, 0)} L of irrigation; prepare '
-          f'{number(volumes.prepared_litres["A"], 1)} L in each container.')
+          f'{litres(volumes.prepared_litres["A"])} L in each container.')
     return dict(tank_litres=tanks, ratio=ratio, temperature_c=temperature, mode='once' if once else 'fill',
                 irrigation_litres=irrigation)
 
@@ -153,13 +154,13 @@ def ask_water(p, store, pending):
 
 
 def ask_formula(p, store, pending, library):
-    p.say('3/5 Crop formula')
+    p.say('3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
     saved = store.list('formulas')
     packaged = {f['name']: f['targets'] for f in library['formulas']}
     pick = p.choose('Formula', ['A packaged formula', 'Start from a packaged formula and change it'] + saved
                     + ['Type a new one'])
     if pick < 2:
-        ref = p.search('Search the packaged formulas (part of the name)', list(packaged))
+        ref = p.search('Crop formula', list(packaged))
         targets = dict(packaged[ref])
         if pick == 1:
             changed = {k: p.number(f'{k}, mg/L', v) for k, v in targets.items()}
@@ -194,7 +195,7 @@ def add_single(p, catalogue):
     names = {s['name']: s for s in catalogue}
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
     labels = {f'{i["name"]} ({", ".join(i["products"])})': i for i in identities}
-    identity = labels[p.search('Search the chemical (e.g. calcium nitrate)', list(labels))]
+    identity = labels[p.search('Chemical, e.g. calcium nitrate', list(labels))]
     product = identity['products'][0] if len(identity['products']) == 1 else \
         identity['products'][p.choose('Catalogue product', identity['products'])]
     shipped = names[product]
@@ -357,21 +358,21 @@ def summarize(summary, say):
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
     for reason in key_reasons(summary):
-        say(f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (report.html)"}')
+        say(f'  ! {reason if len(reason) <= 160 else reason[:150].rstrip() + " ... (full text on the batch sheet)"}')
     if len(summary['warnings']) > 3:
-        say(f'  ... {len(summary["warnings"]) - 3} more in report.html')
+        say(f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them all')
     say(f'Irrigation supplied: {number(volumes["irrigation_litres"], 0)} L at 1:{ratio:g}')
     for tank in summary['tanks']['tanks']:
         name = tank['name']
         say(f'Tank {name}: ' + ('not to be prepared (do not mix)' if blocked else
-            f'prepare {number(volumes["prepared_litres"][name], 1)} L in your '
-            f'{number(volumes["capacity_litres"][name], 1)} L tank' + ('' if tank['acid_allowed'] else '; no acid')))
+            f'prepare {litres(volumes["prepared_litres"][name])} L in your '
+            f'{litres(volumes["capacity_litres"][name])} L tank' + ('' if tank['acid_allowed'] else '; no acid')))
         for product in tank['products']:
             say(f'  {"-" if blocked else "[ ]"} {product["name"]}: {number(product["gramsPerBatch"], 1)} g')
     selected = summary['ph'] and summary['ph']['selected']
     if selected and not blocked:
         say(f'Acid container: {number(selected["volume_ml_per_batch"], 0)} mL {selected["product"]}, added to water '
-            f'and made up to {number(volumes["prepared_litres"]["acid"], 1)} L (acid to water, never water to acid)')
+            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, never water to acid)')
     elif not blocked:
         say('pH reagent: none planned' + (f'. {summary["ph"]["message"]}' if summary['ph'] and
                                           summary['ph'].get('message') else '; measure pH after mixing.'))

@@ -57,6 +57,14 @@ pushing a tag.
 6. After upload: check PyPI metadata, install `flahax==<version>` in a fresh
    environment, run the manual's examples and both CLI entry points, and
    record the date, run URL and hashes in [release evidence](site/evidence/release-evidence.md).
+7. **Open the next development version** (#99): on a short branch, set
+   `pyproject.toml`, `flahax.__version__`, the manual's title and the API
+   reference to `<next>.dev0` (for example 0.6.0.dev0 after 0.5.0), and leave
+   `CITATION.cff` at the released version. A development version sorts after
+   the release and before the next one, so
+   `pip install --upgrade "git+https://github.com/rafatahmed/Flahax.git@main"`
+   replaces an installed release; with the released number on `main`, pip
+   keeps the old package.
 
 **Old tags run old workflows.** For a Release event, GitHub runs
 `publish.yml` as it exists at the tagged commit. Tags before `v0.4.0` carry the
