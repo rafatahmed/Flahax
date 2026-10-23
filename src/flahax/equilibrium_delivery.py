@@ -218,12 +218,14 @@ def plan_equilibrium_delivery(
     warnings = ['Initial dose only; measure pH after mixing before any correction.']
     if assessment['requiresReview']:
         warnings.append(
-            'Incidental nutrient additions require review or explicit maximum-concentration limits.'
+            'Incidental nutrient additions require review or explicit maximum-concentration '
+            'limits.'
         )
     saturation = assess_saturation(result.target)
     if saturation['blocks']:
         warnings.append(
-            'Precipitation risk: target has formed solids or positive saturation indices; not valid for delivery approval.'
+            'Precipitation risk: target has formed solids or positive saturation indices; not '
+            'valid for delivery approval.'
         )
     warnings += [
         f'Review: {p} SI {si:.2f}. {reason} Sources: {sources}'
@@ -238,8 +240,10 @@ def plan_equilibrium_delivery(
         and residual_bicarbonate < RESIDUAL_BICARBONATE_BUFFER
     ):
         warnings.append(
-            f'Residual bicarbonate at pH {target_ph:g} is {residual_bicarbonate:.2f} mmol/kg water, below the '
-            f'{RESIDUAL_BICARBONATE_BUFFER:g} mmol/L Dutch practice leaves as a pH buffer; a higher target pH keeps more.'
+            f'Residual bicarbonate at pH {target_ph:g} is {residual_bicarbonate:.2f} mmol/kg '
+            f'water, below the '
+            f'{RESIDUAL_BICARBONATE_BUFFER:g} mmol/L Dutch practice leaves as a pH buffer; a '
+            f'higher target pH keeps more.'
         )
     audit = {
         'modelVersion': 'minteq-flahax-25c-v1',

@@ -28,7 +28,8 @@ END = ['', '1', '']  # pH 5.8; depth 1; session name
 
 
 def water(name, values, *, units='1', alkalinity='1', micro='1', ph='7.5', share='', limits=''):
-    """A new analysis: ``values`` maps lab ion names to one answer or a list of answers (Enter = not measured)."""
+    """A new analysis: ``values`` maps lab ion names to one answer or a list of answers (Enter =
+    not measured)."""
     answers = ['2', name, units, alkalinity] + ([micro] if units != '1' else []) + [ph]
     for ion in WATER_IONS:
         entry = values.get(ion, '')
@@ -196,7 +197,8 @@ class MixTests(unittest.TestCase):
         self.assertIn('Ca', warning)
 
     def test_formula_step_lists_every_formula_on_enter(self):
-        # The owner's first session: fertilizer names typed at the formula step, then Enter, which used to loop.
+        # The owner's first session: fertilizer names typed at the formula step, then Enter, which
+        # used to loop.
         from flahax import load_library
 
         names = [f['name'] for f in load_library()['formulas']]
@@ -217,7 +219,8 @@ class MixTests(unittest.TestCase):
         self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
 
     def test_do_not_mix_always_says_why(self):
-        # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was empty.
+        # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
+        # empty.
         code, lines, _ = self.run_mix(
             SPEC + RO + TOMATO + CATALOGUE + ['2'] + END,
             '--output',
@@ -269,7 +272,8 @@ class MixTests(unittest.TestCase):
         self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=3)
 
     def test_a_report_without_chloride_is_not_blocked(self):
-        # #100, owner 2026-10-23: no chloride -> closed on the alkalinity, noted in the full report only.
+        # #100, owner 2026-10-23: no chloride -> closed on the alkalinity, noted in the full report
+        # only.
         clean = water('no-cl', {'Ca': '60.12', 'NO3': '62.0049', 'Alk': '100'}, alkalinity='2')
         target = Path(self.tmp.name) / 'no-cl'
         code, lines, _ = self.run_mix(
@@ -294,7 +298,8 @@ class MixTests(unittest.TestCase):
         )
         self.assertEqual(code, 0, '\n'.join(lines))
         self.assertIn(
-            '  1,000 L of irrigation; prepare 10 L in each container (your 10 L acid container sets the batch).',
+            '  1,000 L of irrigation; prepare 10 L in each container (your 10 L acid container '
+            'sets the batch).',
             lines,
         )
         self.assertTrue(
@@ -324,7 +329,8 @@ class MixTests(unittest.TestCase):
         self.assertIn("Saved: tomato-stage-1", missing[-1])
 
     def test_sweep_findings_acid_title_repeats(self):
-        # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113 repeated notes.
+        # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113
+        # repeated notes.
         bad = ['1', '1', 'hno3', '60', '1.37', '', '']  # '1' refused, 'hno3' accepted as HNO3
         changed = (
             ['2', 'lettuce general', '180'] + [''] * 12 + ['']
@@ -464,7 +470,8 @@ class MixTests(unittest.TestCase):
         self.assertAlmostEqual(
             to_elements({'B': 10}, 'meq', 'HCO3', 'umol')['B'], 0.1081, places=6
         )
-        # mmol/L report, micronutrients in umol/L: nine major ions not measured, alkalinity 1, then Fe.
+        # mmol/L report, micronutrients in umol/L: nine major ions not measured, alkalinity 1, then
+        # Fe.
         code, lines, script = self.run_mix(
             SPEC + ['2', 'w', '3', '1', '2', '7.5'] + [''] * 9 + ['1']
         )

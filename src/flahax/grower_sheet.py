@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax mix`` batch sheet: tank cards for the grower, the nutrient table for the agronomist.
+"""The ``flahax mix`` batch sheet: tank cards for the grower, the nutrient table for the
+agronomist.
 
 Depth 1 (grower) is the tank cards, the acid container, the checks and at most three notes.
 Depth 2 (agronomist) adds the nutrient table (target, water, required, achieved, final, diff),
@@ -30,12 +31,13 @@ CARD_STYLE = (
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}.card{border:1.5px solid #103f49;border-radius:6px;padding:7px 10px}
 .card h2{margin:0 0 4px}.ok{border-color:#116c73;background:#eef7f7}.hi{color:#b3261e;font-weight:600}
 .muted{color:#6b7f88}@media(max-width:640px){main{padding:12px}.cards{grid-template-columns:1fr}}
-"""
+"""  # noqa: E501
 )
 
 
 def key_reasons(summary, n=3):
-    """The warnings a grower must read, blocking ones first (a blocked stage, a hard limit, a stock that won't dissolve)."""
+    """The warnings a grower must read, blocking ones first (a blocked stage, a hard limit, a
+    stock that won't dissolve)."""
     stopped = tuple(
         f'{name}:' for name, s in summary['stages'].items() if s['status'] == 'blocked'
     )
@@ -50,7 +52,8 @@ def key_reasons(summary, n=3):
 
 
 def agronomist_rows(summary):
-    """Per nutrient: target, water, required (target - water), achieved (final - water), final, diff (final - target)."""
+    """Per nutrient: target, water, required (target - water), achieved (final - water), final,
+    diff (final - target)."""
     water = summary['water']['analysis_mg_per_litre']
     rows = []
     for r in summary['formulation']['rows']:
@@ -106,7 +109,8 @@ def _tank_card(tank, volumes, blocked):
     )
     rule = '' if tank['acid_allowed'] else '<p class="small"><b>Never add acid to tank A.</b></p>'
     return (
-        f'<div class="card"><h2>Tank {text(name)}</h2><p>{head}</p><table><tbody>{rows}</tbody></table>'
+        f'<div class="card"><h2>Tank '
+        f'{text(name)}</h2><p>{head}</p><table><tbody>{rows}</tbody></table>'
         f'{rule}</div>'
     )
 
@@ -115,20 +119,26 @@ def _reagent_card(summary, volumes):
     ph = summary['ph']
     chosen = ph and ph['selected']
     if not chosen:
-        return f'<div class="card warn"><h2>pH reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
+        return (
+            f'<div class="card warn"><h2>pH '
+            f'reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
+        )
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
     container = (
         (
-            f'<p>Acid container: add <b>{millilitres(chosen["volume_ml_per_batch"])} mL</b> to water and make up to '
+            f'<p>Acid container: add <b>{millilitres(chosen["volume_ml_per_batch"])} mL</b> to '
+            f'water and make up to '
             f'<b>{litres(volumes["prepared_litres"]["acid"])} L</b>.</p>'
         )
         if volumes
         else ''
     )
     return (
-        f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> ({text(chosen["formula"])}): '
-        f'{millilitres(per_1000)} mL per 1,000 L of irrigation, on its own injector.</p>{container}'
+        f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> '
+        f'({text(chosen["formula"])}): '
+        f'{millilitres(per_1000)} mL per 1,000 L of irrigation, on its own '
+        f'injector.</p>{container}'
         '<p class="small"><b>Add acid to water, never water to acid.</b></p></div>'
     )
 
@@ -140,8 +150,10 @@ def _check_card(summary):
     )
     return (
         '<div class="card"><h2>Check after mixing</h2><table><tbody>'
-        f'<tr><td>pH</td><td>expect {number(summary["target_ph"], 2)}</td><td><span class="fill"></span></td></tr>'
-        f'<tr><td>EC</td><td>{text(expected)}</td><td><span class="fill"></span></td></tr></tbody></table></div>'
+        f'<tr><td>pH</td><td>expect {number(summary["target_ph"], 2)}</td><td><span '
+        f'class="fill"></span></td></tr>'
+        f'<tr><td>EC</td><td>{text(expected)}</td><td><span '
+        f'class="fill"></span></td></tr></tbody></table></div>'
     )
 
 
@@ -155,22 +167,30 @@ def _agronomist_section(summary):
         if r['target'] is None:
             source = ', '.join(r['source']) or 'water'
             body += (
-                f'<tr class="muted"><td>{text(name)}<br><span class="small">from {text(source)}, not in formula'
+                f'<tr class="muted"><td>{text(name)}<br><span class="small">from '
+                f'{text(source)}, not in formula'
                 f'</span></td><td></td><td class="num">{cell(r["water"])}</td><td></td>'
-                f'<td class="num">{cell(r["achieved"])}</td><td class="num">{cell(r["final"])}</td><td></td></tr>'
+                f'<td class="num">{cell(r["achieved"])}</td><td '
+                f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
         hi = ' class="num hi"' if abs(r['diff_pct']) > 1 else ' class="num"'
         body += (
-            f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td class="num">{cell(r["water"])}</td>'
+            f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
+            f'class="num">{cell(r["water"])}</td>'
             f'<td class="num">{cell(r["required"])}</td><td class="num">{cell(r["achieved"])}</td>'
-            f'<td class="num">{cell(r["final"])}</td><td{hi}>{r["diff_mg_l"]:+.2f} ({r["diff_pct"]:+.1f} %)</td></tr>'
+            f'<td class="num">{cell(r["final"])}</td><td{hi}>{r["diff_mg_l"]:+.2f} '
+            f'({r["diff_pct"]:+.1f} %)</td></tr>'
         )
     table = (
-        '<h2>Nutrients, mg/L in the irrigation solution</h2><div class="table-scroll"><table><thead><tr>'
-        '<th>Nutrient</th><th class="num">Target</th><th class="num">From water</th><th class="num">Required</th>'
-        '<th class="num">Achieved</th><th class="num">Final</th><th class="num">Diff</th></tr></thead>'
-        f'<tbody>{body}</tbody></table></div><p class="small">Required = target - water; achieved = fertilizers '
+        '<h2>Nutrients, mg/L in the irrigation solution</h2><div '
+        'class="table-scroll"><table><thead><tr>'
+        '<th>Nutrient</th><th class="num">Target</th><th class="num">From water</th><th '
+        'class="num">Required</th>'
+        '<th class="num">Achieved</th><th class="num">Final</th><th '
+        'class="num">Diff</th></tr></thead>'
+        f'<tbody>{body}</tbody></table></div><p class="small">Required = target - water; '
+        f'achieved = fertilizers '
         '+ pH reagent; final = water + achieved; diff = final - target (beyond 1 % in red).</p>'
     )
     limits = ''.join(
@@ -211,15 +231,18 @@ def _agronomist_section(summary):
 
 
 def render_mix_sheet(summary, depth=1):
-    """Printable sheet: depth 1 tank cards; depth 2 and 3 add the nutrient table, limits and pH path."""
+    """Printable sheet: depth 1 tank cards; depth 2 and 3 add the nutrient table, limits and pH
+    path."""
     s, volumes = summary, summary.get('volumes')
     blocked = s['status'] == 'blocked'
     css = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'stop'}[s['status']]
     supplied = volumes['irrigation_litres'] if volumes else s['batch_litres']
     notes = ''.join(f'<li>{text(w)}</li>' for w in key_reasons(s))
     head = (
-        f'<h1>{text(s["title"])}</h1><div class="meta">FlahaX {text(s["flahax_version"])} &middot; '
-        f'{number(supplied, 0)} L of irrigation at 1:{s["tanks"]["injection_ratio"]:g} &middot; pH '
+        f'<h1>{text(s["title"])}</h1><div class="meta">FlahaX {text(s["flahax_version"])} '
+        f'&middot; '
+        f'{number(supplied, 0)} L of irrigation at 1:{s["tanks"]["injection_ratio"]:g} &middot; '
+        f'pH '
         f'{number(s["target_ph"], 2)} &middot; {text(s["water_label"])}</div>'
         f'<div class="box {css}"><b>{text(STATUS_WORDS[s["status"]].capitalize())}.</b>'
         + (f'<ul class="small">{notes}</ul>' if notes else '')
@@ -232,7 +255,8 @@ def render_mix_sheet(summary, depth=1):
         head + f'<div class="cards">{cards}</div>' + (_agronomist_section(s) if depth >= 2 else '')
     )
     body += (
-        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Confirm products and '
+        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Confirm '
+        'products and '
         'assays against your supplier certificates.</p>'
     )
     return _page(s['title'] + ' - batch sheet', body, CARD_STYLE)

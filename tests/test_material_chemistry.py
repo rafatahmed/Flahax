@@ -234,7 +234,8 @@ class MaterialChemistryTests(unittest.TestCase):
             if name == 'Urea':
                 self.assertEqual(chemistry.components, ('CO(NH2)2',))
             elif name == 'Calcium Nitrate (ag grade)':
-                # Same ions; the order is now the identity's ion_forms (data), not a hand-typed tuple.
+                # Same ions; the order is now the identity's ion_forms (data), not a hand-typed
+                # tuple.
                 self.assertEqual(sorted(chemistry.components), sorted(components))
             else:
                 self.assertEqual(chemistry.components, components, name)

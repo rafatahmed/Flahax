@@ -14,10 +14,12 @@ def run():
     return dict(
         assumptions=[
             'Separate illustrative SQM product mixture, NOT the pepper catalogue recipe.',
-            'Manufacturer single-salt EC anchors, linear/additive pre-acid approximation; error unknown.',
+            'Manufacturer single-salt EC anchors, linear/additive pre-acid approximation; error '
+            'unknown.',
             'Water EC25 0.5 mS/cm is an example user input, not standard water.',
             'No new EC measurements or fitted calibration profiles used.',
-            'Injector flow requirement only; no model selection or physical stock compatibility approval.',
+            'Injector flow requirement only; no model selection or physical stock compatibility '
+            'approval.',
         ],
         irrigation=estimate_manufacturer_ec(doses, water_ec_ms_cm=0.5),
         stock_a=estimate_manufacturer_ec(

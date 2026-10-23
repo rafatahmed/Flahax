@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""One batch, every output: terminal, batch sheet (each depth), full report and summary must agree (#107-#110).
+"""One batch, every output: terminal, batch sheet (each depth), full report and summary must agree
+(#107-#110).
 
-The owner's session of 2026-10-23: RO water, Tomato Stage.1, 100 L tanks with a 10 L acid container,
+The owner's session of 2026-10-23: RO water, Tomato Stage.1, 100 L tanks with a 10 L acid
+container,
 nitric 65 % (1.3 kg/L), pH 6, answered once and written at the full depth.
 """
 

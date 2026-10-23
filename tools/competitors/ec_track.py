@@ -15,7 +15,8 @@ Two parts:
    ion-free water. There is no measured EC for these solutions, so this part shows how
    far the tools disagree, not which one is right. Every tool receives the same
    macronutrient totals; micronutrients and chelates are left out because not every
-   tool has them (their share of FlahaX's full-recipe EC is reported per recipe). Phosphate is given as H2PO4- to the
+   tool has them (their share of FlahaX's full-recipe EC is reported per recipe). Phosphate is
+   given as H2PO4- to the
    tools that do not speciate (the catalogue P sources are dihydrogen phosphates);
    FlahaX and PHREEQC speciate P from its total at the charge-balance pH.
 

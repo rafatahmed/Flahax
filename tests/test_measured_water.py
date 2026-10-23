@@ -105,7 +105,8 @@ class MeasuredWaterTests(unittest.TestCase):
                 dict(totals=STATION_104, measured_ph=7.8, balance_ion='SO4-2'),
                 'unsupported_balance_ion',
             ),
-            # A named balance ion that is absent still stops (no chloride closes on alkalinity by default, #100).
+            # A named balance ion that is absent still stops (no chloride closes on alkalinity by
+            # default, #100).
             (
                 dict(
                     totals={k: v for k, v in STATION_104.items() if k != 'Na+'},
@@ -165,7 +166,8 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
             products(), targets, ppm, 6.0, final_volume=VolumeLitres(100), equilibrium=equilibrium
         )
         chemistry = result.stages['chemistry']
-        # Closed on chloride without a stated uncertainty: usable, but the chemistry asks for review (#84).
+        # Closed on chloride without a stated uncertainty: usable, but the chemistry asks for
+        # review (#84).
         self.assertEqual(chemistry.status, 'requires_review', chemistry.message)
         self.assertIn('without a stated measurement uncertainty', chemistry.message)
         balance = chemistry.value['water_balance']

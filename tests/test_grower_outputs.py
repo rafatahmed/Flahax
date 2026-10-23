@@ -389,7 +389,8 @@ class ReportTests(unittest.TestCase):
 
 
 class IncidentalAssessmentTests(unittest.TestCase):
-    """One assessment of untargeted nutrients: recommend's ammonium allowance, with each source named (#92)."""
+    """One assessment of untargeted nutrients: recommend's ammonium allowance, with each source
+    named (#92)."""
 
     TOMATO = 'Tomato (Howard Resh)'
     NITRIC = dict(products=[ACIDS[0]], maximum_reagent_volume_litres=5)

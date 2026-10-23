@@ -7,7 +7,8 @@
 Irriblend-DSW: Gallego-Elvira, B., Reca, J., Martin-Gorriz, B., Maestre-Valero, J. F. and
 Martinez-Alvarez, V. (2021) Irriblend-DSW: a decision support tool for the optimal blending
 of desalinated and conventional irrigation waters in dry regions. Agricultural Water
-Management 255, 107012, doi:10.1016/j.agwat.2021.107012. Code: https://github.com/irriblend-dsw/irriblend-dsw-v1, MIT licence
+Management 255, 107012, doi:10.1016/j.agwat.2021.107012. Code:
+https://github.com/irriblend-dsw/irriblend-dsw-v1, MIT licence
 (Copyright (c) 2026 irriblend-dsw), added at commit a046d5c on top of the 2021 code
 commit 197d650. The module is used unmodified; its SHA-256 is checked before import.
 
@@ -48,7 +49,8 @@ PIN = {
     "copyright": "Copyright (c) 2026 irriblend-dsw",
     "module": "code/irriblend_dsw_funs.py",
     "module_sha256": "2a3c06f8a511e50b1dd13e796eaa32ba46db27e9493edd009aeb7d7fd414732e",
-    "citation": "Gallego-Elvira et al. (2021) Agric. Water Manag. 255, 107012, doi:10.1016/j.agwat.2021.107012",
+    "citation": "Gallego-Elvira et al. (2021) Agric. Water Manag. 255, 107012, "
+    "doi:10.1016/j.agwat.2021.107012",
 }
 # Irriblend column order, and the FlahaX element each column counts.
 COLUMNS = ("NO3-", "NH4+", "H2PO4-", "K+", "Ca++", "Mg++", "SO4-2", "Cl-", "Na+", "H+")

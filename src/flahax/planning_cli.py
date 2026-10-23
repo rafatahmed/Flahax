@@ -120,12 +120,15 @@ def interactive(command):
             'Optional hard nutrient maxima mg/L', optional=True
         )
         payload['equilibrium'] = _json(
-            'Complete water chemistry: water_totals mol/kg-water, water_mass_kg, water_analysis_id, '
-            'complete_analysis, carbon_boundary, temperature_c, phases (see docs/site-planning.md)',
+            'Complete water chemistry: water_totals mol/kg-water, water_mass_kg, '
+            'water_analysis_id, '
+            'complete_analysis, carbon_boundary, temperature_c, phases (see '
+            'docs/site-planning.md)',
             optional=True,
         )
         payload['acids'] = _json(
-            'Acid selection: HNO3/H3PO4 products with assay/density/provenance and dose/nutrient limits '
+            'Acid selection: HNO3/H3PO4 products with assay/density/provenance and '
+            'dose/nutrient limits '
             '(see docs/site-planning.md)',
             optional=True,
         )

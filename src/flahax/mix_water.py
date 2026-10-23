@@ -71,7 +71,8 @@ def water_balance(mg):
 
 
 def lab_entry(answer):
-    """``''`` -> (None, None); ``'0.4'`` -> (0.4, None); ``'<0.02'`` -> (None, 0.02). ValueError otherwise."""
+    """``''`` -> (None, None); ``'0.4'`` -> (0.4, None); ``'<0.02'`` -> (None, 0.02). ValueError
+    otherwise."""
     answer = answer.strip().replace(' ', '')
     if not answer:
         return None, None
@@ -85,7 +86,8 @@ def lab_entry(answer):
 def ask_ion(p, label):
     while True:
         answer = p.ask(
-            f'{label} (Enter = not measured, 0 = measured zero, <DL = below detection, e.g. <0.02): '
+            f'{label} (Enter = not measured, 0 = measured zero, <DL = below detection, e.g. '
+            f'<0.02): '
         )
         try:
             return lab_entry(answer)
@@ -94,7 +96,8 @@ def ask_ion(p, label):
 
 
 def ask_analysis(p, store):
-    """(saved name, ``read_water`` data) for a new analysis; asks again on a large imbalance if wished."""
+    """(saved name, ``read_water`` data) for a new analysis; asks again on a large imbalance if
+    wished."""
     while True:
         name = p.new_name(store, 'waters', 'Name of this analysis (e.g. well 104)')
         units = UNITS[
@@ -131,7 +134,8 @@ def ask_analysis(p, store):
             value, limit = ask_ion(p, label)
             if ion == 'Alk' and value is None and limit is None:
                 p.say(
-                    '  Without alkalinity the pH plan will be blocked: FlahaX needs the carbonate in the water.'
+                    '  Without alkalinity the pH plan will be blocked: FlahaX needs the '
+                    'carbonate in the water.'
                 )
                 if p.choose('Alkalinity', ['Enter it', 'Record it as measured zero'], None) == 0:
                     while value is None and limit is None:
@@ -143,13 +147,15 @@ def ask_analysis(p, store):
             mg = to_elements(values, units, alkalinity, micro)
             cations, anions, apart, parts = water_balance(mg)
             p.say(
-                f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, {apart:.1f} % apart.'
+                f'Charge balance: cations {cations:.2f} meq/L, anions {anions:.2f} meq/L, '
+                f'{apart:.1f} % apart.'
             )
             if apart <= WATER_SCREEN_PERCENT:
                 break
             big = sorted(parts, key=lambda ion: -abs(parts[ion]))[:3]
             p.say(
-                f'Warning: cations and anions are {apart:.1f} % apart (screen {WATER_SCREEN_PERCENT:g} %). '
+                f'Warning: cations and anions are {apart:.1f} % apart (screen '
+                f'{WATER_SCREEN_PERCENT:g} %). '
                 'Largest: '
                 + ', '.join(f'{ion} {abs(parts[ion]):.2f} meq/L' for ion in big)
                 + '. Check the units, and that NO3, SO4 and PO4 are the ion, not N, S or P.'

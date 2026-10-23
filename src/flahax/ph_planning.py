@@ -145,7 +145,8 @@ def plan_ph(
     if reagent_volume > maximum_reagent_volume.value:
         raise DeliveryError(
             "dose_limit_exceeded",
-            f"calculated reagent volume {reagent_volume:g} L exceeds the {maximum_reagent_volume.value:g} L limit",
+            f"calculated reagent volume {reagent_volume:g} L exceeds the "
+            f"{maximum_reagent_volume.value:g} L limit",
         )
     reagent_mass = MassGrams(reagent_volume * product["densityKgPerL"] * 1000.0)
     fractions = {symbol: percent / 100.0 for symbol, percent in product["elements"].items()}
