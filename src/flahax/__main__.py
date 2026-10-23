@@ -21,6 +21,7 @@ WELCOME = f"""FlahaX {__version__}: fertilizer recipe, pH and A/B stock tanks fr
 
 
 def main() -> int:
+    """The ``flahax`` console entry point; Ctrl+C prints "Stopped." and exits with 130."""
     try:
         return _main()
     except KeyboardInterrupt:

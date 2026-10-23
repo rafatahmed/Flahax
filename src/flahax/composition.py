@@ -406,5 +406,6 @@ def assay_drift(salt: dict) -> str | None:
 
 
 def is_carbonate(salt: dict) -> bool:
+    """True when the salt's chemical formula contains carbonate."""
     parsed = parse_formula(str(salt.get("formula") or ""))
     return bool(parsed and parsed["carbonate"] > 0)

@@ -57,6 +57,7 @@ ALIASES = {
 
 
 def view(values):
+    """Species values with the alias names filled in and every basis species present."""
     result = dict(values)
     result.update({alias: values.get(native, 0.0) for alias, native in ALIASES.items()})
     for name in chemistry()['bases'] + [
@@ -75,6 +76,8 @@ def view(values):
 
 @dataclass(frozen=True)
 class MixedFertilizerEquilibrium:
+    """The macro and trace results of one mixed equilibrium, with the full aqueous solution."""
+
     macro: FertilizerEquilibrium
     trace: TraceEquilibrium | None
     ionic_strength: float
@@ -83,10 +86,12 @@ class MixedFertilizerEquilibrium:
 
     @property
     def species(self) -> Mapping[str, float]:
+        """Species molalities, with alias names."""
         return view(self.aqueous.species)
 
 
 def analytical_basis(totals, trace_totals=None):
+    """Basis totals from macro fertilizer totals plus any trace micronutrient totals."""
     result = {b: getattr(totals, n) for n, b in MACRO_BASIS.items()}
     if trace_totals:
         for n, b in TRACE_BASIS.items():
@@ -95,6 +100,7 @@ def analytical_basis(totals, trace_totals=None):
 
 
 def from_basis(totals, ph, *, allow_precipitation=True):
+    """Solve the basis totals at a pH and report them as a mixed equilibrium."""
     phases = [r['name'] for r in chemistry()['phases']] if allow_precipitation else ()
     result = solve(totals, ph, phases=phases)
     species, activities = view(result.species), view(result.activities)
@@ -129,6 +135,9 @@ def from_basis(totals, ph, *, allow_precipitation=True):
 
 
 def solve_mixed_fertilizer_equilibrium(totals, ph, *, trace_totals=None, allow_precipitation=True):
+    """The mixed equilibrium of fertilizer and optional Ch micro totals at a pH; raises
+    DeliveryError for the wrong types.
+    """
     if not isinstance(totals, FertilizerTotals) or (
         trace_totals is not None and not isinstance(trace_totals, ChMicroTotals)
     ):

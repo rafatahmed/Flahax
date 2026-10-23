@@ -15,6 +15,8 @@ from .delivery_quantities import DurationMinutes, FlowLitresPerMinute, VolumeLit
 
 @dataclass(frozen=True, slots=True)
 class PumpCommand:
+    """A volume for one calibrated pump channel and its run time; the operator verifies it."""
+
     calibration_id: str
     channel_id: str
     requested_volume: VolumeLitres
