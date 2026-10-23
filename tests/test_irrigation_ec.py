@@ -516,11 +516,9 @@ PURE = DeclaredPureWater('ro-test')
 
 class CatalogueTests(unittest.TestCase):
     # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate is
-    # now
-    # Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these
-    # totals
-    # for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests below
-    # keep it.
+    # now Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these
+    # totals for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests
+    # below keep it.
     OLD_MG_NITRATE_1G = {'Mg+2': 0.003970376465747789, 'NO3-': 0.007853384451726673}
     OLD_MG_NITRATE_1G_RESIDUAL = {
         'eq_per_kgw': 8.736847976890429e-05,

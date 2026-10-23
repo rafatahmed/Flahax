@@ -79,6 +79,9 @@ class ChMicroProductDose:
         _nonnegative(product_g_per_kg_water=self.product_g_per_kg_water)
 
     def totals(self, *, calcium: float = 0.0, magnesium: float = 0.0) -> ChMicroTotals:
+        """Molal micronutrient and EDTA totals from the Ch micro dose, with the calcium and
+        magnesium given.
+        """
         _nonnegative(calcium=calcium, magnesium=magnesium)
         grams = self.product_g_per_kg_water
         values = {

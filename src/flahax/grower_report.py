@@ -49,10 +49,14 @@ def millilitres(value):
 
 
 def text(value):
+    """The value as HTML-escaped text."""
     return escape(str(value), quote=True)
 
 
 def number(value, digits=4):
+    """A readable number: "Not available" for None, scientific notation below 0.0001, otherwise
+    grouped with trailing zeros removed.
+    """
     if value is None:
         return 'Not available'
     if not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -63,6 +67,7 @@ def number(value, digits=4):
 
 
 def table(headers, rows, caption):
+    """An HTML table with a caption, header row and escaped cells, in a scrolling wrapper."""
     return (
         '<div class="table-scroll"><table><caption>'
         + text(caption)
@@ -227,8 +232,8 @@ def summarize_batch(
     plan = ph_stage.value if ph_stage is not None else None
     chosen = plan.selected if plan is not None else None
     # Without a selected reagent, report the pH plan's own recipe (acids are not nutrient sources
-    # there)
-    # and the rejected state of its first computed candidate, so the blocking phases are shown.
+    # there) and the rejected state of its first computed candidate, so the blocking phases are
+    # shown.
     rejected = None
     if plan is not None and chosen is None:
         rejected = next(
@@ -434,8 +439,7 @@ def summarize_batch(
         status = 'requires_review'
     water, limits = _water_and_limits(workflow, recipe)
     # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always
-    # blocks,
-    # and a decision the charge balancing alone would change asks for review; review never
+    # blocks, and a decision the charge balancing alone would change asks for review; review never
     # downgrades a block.
     if any(row['decision'] == 'exceeds_limit' for row in limits):
         status = 'blocked'

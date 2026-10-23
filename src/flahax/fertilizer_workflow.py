@@ -51,6 +51,10 @@ ASSUMED_CLOSURE = (
 
 @dataclass
 class WorkflowStage:
+    """One workflow stage: its status, value, the inputs it still needs, or the error code and
+    message that stopped it.
+    """
+
     status: str
     value: object = None
     required_inputs: tuple = ()
@@ -60,6 +64,10 @@ class WorkflowStage:
 
 @dataclass
 class FertilizerWorkflow:
+    """The recommendation, water, nutrient gap and pH target, with each stage's result; the pH must
+    still be measured after mixing.
+    """
+
     recommendation: dict
     water: dict
     nutrient_gap: dict
@@ -356,9 +364,8 @@ def plan_fertilizer_workflow(
                 }
                 balance = config.get('water_balance')
                 # Two inventories (#84): ``analytical`` is the laboratory analysis and decides
-                # targets
-                # and limits; ``water_totals`` is what the chemistry uses (balanced when it was
-                # closed).
+                # targets and limits; ``water_totals`` is what the chemistry uses (balanced when it
+                # was closed).
                 if balance is not None:
                     if not isinstance(balance, BalancedWaterAnalysis):
                         raise DeliveryError(

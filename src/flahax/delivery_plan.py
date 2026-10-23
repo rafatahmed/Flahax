@@ -31,6 +31,10 @@ _TRANSITIONS = {
 
 @dataclass(frozen=True, slots=True)
 class DeliveryPlan:
+    """A recipe, its stock tanks, pH plan and pump commands, with the audit record, warnings and
+    its approval state (``draft`` first).
+    """
+
     recipe: FinalSolutionRecipe
     stocks: StockPlan
     ph_plan: PhPlan | EquilibriumPhPlan | None
@@ -48,6 +52,9 @@ def compose_delivery_plan(
     audit_record: Mapping[str, Any],
     warnings: Iterable[str] = (),
 ) -> DeliveryPlan:
+    """A draft DeliveryPlan after checking that every stage plans the same recipe; raises
+    DeliveryError when a stage does not match.
+    """
     if not isinstance(recipe, FinalSolutionRecipe) or not isinstance(stocks, StockPlan):
         raise DeliveryError("invalid_type", "recipe and stocks must be planning values")
     if stocks.recipe != recipe:
@@ -107,6 +114,9 @@ def compose_delivery_plan(
 
 
 def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
+    """The plan moved to ``target`` state; raises DeliveryError when the move is not allowed or a
+    validated plan lacks its pH plan, commands or clean equilibrium.
+    """
     if not isinstance(plan, DeliveryPlan):
         raise DeliveryError("invalid_type", "plan must be a DeliveryPlan")
     if target not in PLAN_STATES or target not in _TRANSITIONS[plan.state]:
@@ -141,6 +151,9 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
 
 
 def delivery_report(plan: DeliveryPlan) -> str:
+    """A short plain-text summary of the plan: state, volume, tanks, pump commands, pH target and
+    warnings.
+    """
     if not isinstance(plan, DeliveryPlan):
         raise DeliveryError("invalid_type", "plan must be a DeliveryPlan")
     lines = [

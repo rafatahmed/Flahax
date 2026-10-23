@@ -46,6 +46,10 @@ RESIDUAL_BICARBONATE_BUFFER = 0.5
 
 @dataclass(frozen=True)
 class EquilibriumPhPlan:
+    """An acid dose for the target pH, solved by equilibrium for one recipe and water, with the
+    reagent amount, nutrient contribution, audit and warnings.
+    """
+
     recipe: FinalSolutionRecipe
     water_analysis_id: str
     water_mass_kg: float

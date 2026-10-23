@@ -32,10 +32,8 @@ from .root_finding import shrink_bracket
 BALANCE_IONS = {'Cl-': -1, 'Na+': 1}
 DEFAULT_MAXIMUM_IMBALANCE_PERCENT = 5.0
 # Numerical closure, not an analytical screen: a composition whose charge residual at the measured
-# pH
-# is within this fraction of its total ionic charge (0.0001 %) is already balanced and left
-# unchanged.
-# Passing the 5 % screen above does not make an analysis balanced.
+# pH is within this fraction of its total ionic charge (0.0001 %) is already balanced and left
+# unchanged. Passing the 5 % screen above does not make an analysis balanced.
 CLOSURE_TOLERANCE = 1e-6
 UNITS = 'mol/kg water'
 # Analytical basis -> nutrient symbol (mg/L of the element; N as N).
@@ -470,8 +468,8 @@ def balance_water_analysis(
         and carbon_source != 'none'
     ):
         # No chloride to adjust: close the small gap on the carbonate, the value the measured pH
-        # already
-        # depends on and usually the least precise on a report (owner decision 2026-10-23, #100).
+        # already depends on and usually the least precise on a report (owner decision 2026-10-23,
+        # #100).
         return _close_on_carbonate(
             working, state, measured_ph, phases, imbalance, carbon_source, record
         )

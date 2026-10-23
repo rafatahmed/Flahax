@@ -37,6 +37,8 @@ def _value(raw: Any, label: str, *, minimum: float | None = None, strict: bool =
 
 @dataclass(frozen=True, slots=True)
 class MassGrams:
+    """A mass in grams, finite and not negative."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -45,6 +47,8 @@ class MassGrams:
 
 @dataclass(frozen=True, slots=True)
 class VolumeLitres:
+    """A volume in litres, finite and above zero."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -55,6 +59,8 @@ class VolumeLitres:
 
 @dataclass(frozen=True, slots=True)
 class GramsPerLitre:
+    """A concentration in grams per litre, finite and not negative."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -63,6 +69,8 @@ class GramsPerLitre:
 
 @dataclass(frozen=True, slots=True)
 class MilligramsPerLitre:
+    """A concentration in milligrams per litre, finite and not negative."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -71,6 +79,8 @@ class MilligramsPerLitre:
 
 @dataclass(frozen=True, slots=True)
 class MilliEquivalentsPerLitre:
+    """A concentration in milliequivalents per litre, finite and not negative."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -81,6 +91,8 @@ class MilliEquivalentsPerLitre:
 
 @dataclass(frozen=True, slots=True)
 class TemperatureCelsius:
+    """A temperature in degrees Celsius, not below absolute zero."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -91,6 +103,8 @@ class TemperatureCelsius:
 
 @dataclass(frozen=True, slots=True)
 class FlowLitresPerMinute:
+    """A flow in litres per minute, finite and above zero."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -101,6 +115,8 @@ class FlowLitresPerMinute:
 
 @dataclass(frozen=True, slots=True)
 class DurationMinutes:
+    """A duration in minutes, finite and not negative."""
+
     value: float
 
     def __post_init__(self) -> None:
@@ -121,6 +137,10 @@ class InjectionRatio:
 
 @dataclass(frozen=True, slots=True)
 class SaltDose:
+    """One fertilizer in the recipe: its dose in the final solution and the mass for the whole
+    volume.
+    """
+
     salt_id: str
     name: str
     dose: GramsPerLitre
@@ -137,6 +157,7 @@ class FinalSolutionRecipe:
 
     @property
     def total_mass(self) -> MassGrams:
+        """The mass of all fertilizers in the recipe."""
         return MassGrams(sum(item.mass.value for item in self.salts))
 
 

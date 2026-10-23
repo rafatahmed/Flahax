@@ -39,6 +39,8 @@ Python 3.11: inside an f-string, use the other quote type in replacement fields.
 A long message is split into adjacent string literals inside brackets; only text that FlahaX
 writes out unchanged (report CSS, Markdown tables) keeps its long lines, with `# noqa: E501` on
 the closing line of that string.
+Every public class, method and function in `src/flahax` has a docstring that says what it
+returns or represents; `tests/test_public_docstrings.py` and ruff (D101-D103) check it.
 `tests/test_file_headers.py` and the CI `style` job check all of this.
 
 ## Required validation

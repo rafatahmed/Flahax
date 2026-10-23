@@ -205,6 +205,10 @@ _ION_NUTRIENT_CHARGE = {
 
 @dataclass(frozen=True)
 class DocumentReference:
+    """The supplier document a value comes from: title, issue and entry dates, and optionally its
+    URL and SHA-256.
+    """
+
     supplier: str
     title: str
     issued: str
@@ -215,6 +219,10 @@ class DocumentReference:
 
 @dataclass(frozen=True)
 class Grade:
+    """A supplier grade: typical, minimum and maximum analysis, impurity limits, composition kind
+    and its source document.
+    """
+
     grade_id: str
     identity_id: str | None
     supplier: str
@@ -236,6 +244,10 @@ class Grade:
 
 @dataclass(frozen=True)
 class DeclaredCheck:
+    """Whether a label-declared compound balances well enough to model its chemistry, and why not
+    when it does not.
+    """
+
     modellable: bool
     protons_per_phosphate: float | None
     residual_percent: float | None
@@ -244,6 +256,8 @@ class DeclaredCheck:
 
 @dataclass(frozen=True)
 class Lot:
+    """A measured lot: its analysis, uncertainty and certificate."""
+
     lot_id: str
     grade_id: str | None
     identity_id: str | None
@@ -255,6 +269,10 @@ class Lot:
 
 @dataclass(frozen=True)
 class ResolvedMaterial:
+    """A material ready for formulation: the record, the analysis basis and band, composition kind,
+    provenance and flags.
+    """
+
     name: str
     identity_id: str
     record: dict

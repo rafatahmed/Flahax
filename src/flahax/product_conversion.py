@@ -423,6 +423,7 @@ def solve_catalogue_product_doses(
 
 
 def plan_catalogue_nitric_target(doses, initial_ph, target_ph, *, water_totals=None, phases=()):
+    """Nitric acid to bring catalogue doses plus water from the initial pH to the target."""
     from .aqueous_model import nitric_target
 
     totals = dict(water_totals or {})

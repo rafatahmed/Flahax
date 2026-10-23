@@ -84,6 +84,9 @@ def lab_entry(answer):
 
 
 def ask_ion(p, label):
+    """One laboratory value, asked again until it is a number, 0, ``<limit`` or blank (not
+    measured).
+    """
     while True:
         answer = p.ask(
             f'{label} (Enter = not measured, 0 = measured zero, <DL = below detection, e.g. '

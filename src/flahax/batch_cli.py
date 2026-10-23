@@ -292,6 +292,9 @@ def acid_record(spec):
 
 
 def choose_formula(library, formula, crop):
+    """The packaged formula name chosen by ``--formula`` (exact) or ``--crop`` (must match one
+    name); raises DeliveryError otherwise.
+    """
     names = [f['name'] for f in library['formulas']]
     if formula:
         if formula not in names:
@@ -420,6 +423,9 @@ def render(summary):
 
 
 def build(args):
+    """Run the batch for parsed ``flahax batch`` arguments; returns the rendered terminal text and
+    the summary.
+    """
     summary = run_batch(
         BatchOptions(
             water=args.water,
@@ -441,6 +447,7 @@ def build(args):
 
 
 def main(argv=None):
+    """The ``flahax batch`` command; returns the process exit code."""
     parser = argparse.ArgumentParser(
         prog='flahax batch',
         description=__doc__,

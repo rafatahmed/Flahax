@@ -107,6 +107,8 @@ TANK_A_RULE = (
 
 @dataclass(frozen=True)
 class TankProduct:
+    """A product placed in a tank: its final-solution dose and why it is there."""
+
     product_id: str
     name: str
     grams_per_litre: float  # in the final solution
@@ -115,6 +117,8 @@ class TankProduct:
 
 @dataclass(frozen=True)
 class ConcentrateTank:
+    """One concentrate tank: its products, whether acid may go in, and notes."""
+
     name: str
     products: tuple
     acid_allowed: bool
@@ -127,6 +131,10 @@ class ConcentrateTank:
 
 @dataclass(frozen=True)
 class TankGrouping:
+    """Products grouped into tanks, the pH reagent channel, the pairs kept apart and the pairs a
+    waived rule lets share a tank.
+    """
+
     tanks: tuple
     reagent_channel: tuple  # pH reagents: dosed on their own channel
     separations: tuple  # (product, product, reason) pairs kept apart
@@ -135,6 +143,7 @@ class TankGrouping:
     solubility_checked: bool = False
 
     def tank_of(self, name):
+        """The name of the tank that holds a product, or None."""
         return next((t.name for t in self.tanks for p in t.products if p.name == name), None)
 
 
@@ -160,8 +169,7 @@ def product_classes(record):
 def _class_conflict(a, b, rules=CLASS_RULES):
     if 'micronutrient' in a | b:
         # FlahaX rule: the page 63/65 rules are waived for micronutrients (small doses), but they
-        # stay
-        # out of phosphate concentrates (manganese and iron phosphates, #78).
+        # stay out of phosphate concentrates (manganese and iron phosphates, #78).
         return MICRO_PHOSPHATE if 'phosphate' in a | b else None
     for x, y, reason, *_ in rules:
         if (x in a and y in b) or (y in a and x in b):

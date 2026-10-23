@@ -102,6 +102,10 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
 
 @dataclass(frozen=True)
 class PhCandidate:
+    """One pH reagent tried in one direction: its dose, reagent amount, nutrient contribution and
+    solved solutions, or why it was not usable.
+    """
+
     product_id: str
     formula: str
     direction: str
@@ -123,6 +127,8 @@ class PhCandidate:
 
 @dataclass(frozen=True)
 class PhAdjustmentPlan:
+    """Every pH reagent tried and the selected one; the pH must still be measured after mixing."""
+
     target_ph: float
     unadjusted_ph: float
     direction: str
@@ -134,6 +140,7 @@ class PhAdjustmentPlan:
 
     @property
     def selected(self):
+        """The selected candidate, or None."""
         return next((c for c in self.candidates if c.product_id == self.selected_product_id), None)
 
 
