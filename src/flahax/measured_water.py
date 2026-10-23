@@ -38,6 +38,10 @@ NUTRIENT_BASES = {'Ca+2': 'Ca', 'Mg+2': 'Mg', 'K+': 'K', 'Na+': 'Na', 'Cl-': 'Cl
                   'H3BO3': 'B', 'MoO4-2': 'Mo', 'Ure': 'N_UREA'}
 
 
+ASK_LAB = ('Ask your lab for chloride and alkalinity: FlahaX closes the small gap every analysis has on chloride, '
+           'or on the alkalinity when there is no chloride.')
+
+
 def nutrient_mg_per_litre(totals, water_mass_kg=1., final_volume_litres=1.):
     """Elemental mg/L in the final volume from water totals in mol/kg water."""
     ppm = {}
@@ -76,7 +80,8 @@ class BalancedWaterAnalysis:
     phases: tuple = ()
     units: str = UNITS
     # 'unchanged' (closed within CLOSURE_TOLERANCE), 'reconciled' (within the stated uncertainty of
-    # balance_ion) or 'assumed' (closed on balance_ion without a stated uncertainty: review).
+    # balance_ion), 'assumed' (closed on balance_ion without a stated uncertainty: review) or
+    # 'closed_on_alkalinity' (no chloride: closed on the carbonate, balance_ion 'CO3-2'; #100).
     reconciliation: str = 'assumed'
     fixed: tuple = ()
     below_detection: dict = None        # component -> detection limit, mol/kg water
@@ -184,6 +189,32 @@ def _carbon_for_alkalinity(totals, ph, alkalinity, phases):
     return (low + high) / 2
 
 
+def _close_on_carbonate(working, state, measured_ph, phases, imbalance, carbon_source, record):
+    """Adjust total inorganic carbon until the charge closes at the measured pH (secant on CO3-2)."""
+    analysed = working['CO3-2']
+    lo, f_lo = analysed, state.charge_balance
+    hi = analysed * 1.01 + 1e-9
+    f_hi = solve(dict(working, **{'CO3-2': hi}), measured_ph, phases=phases, start=state).charge_balance
+    for _ in range(100):
+        if f_hi == f_lo:
+            break
+        carbon = hi - f_hi * (hi - lo) / (f_hi - f_lo)
+        if carbon <= 0:
+            raise DeliveryError('alkalinity_exhausted',
+                                f'the analysis is {imbalance:.2f}% out of balance and has no chloride; closing it on '
+                                f'the alkalinity would need negative carbonate. {ASK_LAB}')
+        lo, f_lo = hi, f_hi
+        state = solve(dict(working, **{'CO3-2': carbon}), measured_ph, phases=phases, start=state)
+        hi, f_hi = carbon, state.charge_balance
+        if abs(f_hi) <= 1e-12:
+            break
+    else:
+        raise DeliveryError('nonconvergent', 'measured-pH charge balance did not close on the alkalinity')
+    working = dict(working, **{'CO3-2': hi})
+    return BalancedWaterAnalysis(working, float(measured_ph), state, 'CO3-2', analysed, hi - analysed, imbalance,
+                                 hi, carbon_source, reconciliation='closed_on_alkalinity', **record)
+
+
 def balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, balance_ion='Cl-',
                            maximum_imbalance_percent=DEFAULT_MAXIMUM_IMBALANCE_PERCENT,
                            phases=(), temperature_c=25., analysis_id=None, balance_ion_uncertainty_percent=None,
@@ -280,20 +311,24 @@ def balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, ba
     if balance_ion not in BALANCE_IONS:
         raise DeliveryError('unsupported_balance_ion', f'balance_ion must be one of {sorted(BALANCE_IONS)}')
     analysed = totals.get(balance_ion, 0.)
+    if balance_ion == 'Cl-' and (balance_ion in fixed or analysed <= 0) and carbon_source != 'none':
+        # No chloride to adjust: close the small gap on the carbonate, the value the measured pH already
+        # depends on and usually the least precise on a report (owner decision 2026-10-23, #100).
+        return _close_on_carbonate(working, state, measured_ph, phases, imbalance, carbon_source, record)
     if balance_ion in fixed:
         raise DeliveryError('fixed_balance_ion',
                             f'the analysis is {imbalance:.2f}% out of balance and {balance_ion} is held fixed '
                             '(measured zero, below detection or named fixed); chemistry needs review or a further '
-                            'analysis. No other ion is adjusted automatically.')
+                            f'analysis. No other ion is adjusted automatically. {ASK_LAB}')
     if analysed <= 0:
-        raise DeliveryError('missing_balance_ion', f'{balance_ion} must be present in the analysis to balance on it')
+        raise DeliveryError('missing_balance_ion', f'{balance_ion} must be present in the analysis to balance on it. {ASK_LAB}')
     charge = BALANCE_IONS[balance_ion]
     for _ in range(100):
         if abs(state.charge_balance) <= 1e-12:
             break
         working[balance_ion] -= state.charge_balance / charge
         if working[balance_ion] <= 0:
-            raise DeliveryError('balance_ion_exhausted', f'{balance_ion} cannot absorb the charge imbalance')
+            raise DeliveryError('balance_ion_exhausted', f'{balance_ion} cannot absorb the charge imbalance. {ASK_LAB}')
         if carbon_source == 'alkalinity':
             working['CO3-2'] = _carbon_for_alkalinity(working, measured_ph, alkalinity_eq_per_kg, phases)
         state = solve(working, measured_ph, phases=phases, start=state)
