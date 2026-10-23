@@ -6,7 +6,7 @@ published baseline is [0.4.0](https://pypi.org/project/flahax/0.4.0/)
 The [implementation ledger](implementation-roadmap.md) retains P0–P7
 acceptance and historical audits.
 
-Site planning ([site planning](site/guide/site-planning.md), [source review](site/guide/source-sheet-review.md)),
+Site planning ([site planning](site/developer/site-planning.md), [source review](site/evidence/source-sheet-review.md)),
 the water-to-delivery workflow and the EC/injection planner shipped in 0.3.1.
 General concentrated A/B EC, acid-adjusted full-recipe conductivity and
 manufacturer-qualified equipment model selection remain open; brochure anchors
@@ -22,12 +22,12 @@ Hosted acceptance P6.6/P6.7 is closed: Python 3.11–3.13 jobs and the pinned li
 
 ## Milestones and acceptance
 
-The [water-to-delivery](site/guide/water-to-delivery.md) workflow (0.3.1) does not
+The [water-to-delivery](site/developer/water-to-delivery.md) workflow (0.3.1) does not
 authorize a commercial dose from an incomplete water analysis. 0.4.0 anchors
 source water at its measured pH; a field evaluation against measured pH, acid
 demand and laboratory nutrient analyses is planned
 ([publication drafts](publication/README.md)). The
-[EC/injection planner](site/guide/conductivity.md) still lacks real calibration packs and
+[EC/injection planner](site/developer/conductivity.md) still lacks real calibration packs and
 hold-out validation; synthetic interpolation tests are not physical accuracy
 evidence. Automatic EC-setpoint dosing and a universal concentrated-stock
 conductivity model are not claimed.

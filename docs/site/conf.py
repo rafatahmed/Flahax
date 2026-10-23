@@ -8,7 +8,13 @@ project = "FlahaX"
 release = __version__
 version = __version__
 
-extensions = ["myst_parser", "sphinx_design", "sphinx_copybutton"]
+extensions = [
+    "myst_parser",
+    "sphinx_design",
+    "sphinx_copybutton",
+    "sphinxcontrib.mermaid",
+    "sphinx_reredirects",
+]
 source_suffix = {".md": "markdown"}
 
 html_theme = "furo"
@@ -54,6 +60,25 @@ myst_heading_anchors = 3
 
 exclude_patterns = ["_build"]
 
+# Pages moved in the 0.6.0 restructure keep working at their old addresses (README, PyPI).
+redirects = {
+    "guide/usage": "../developer/python-api.html",
+    "guide/grower-outputs": "../agronomist/reading-results.html",
+    "guide/materials": "../agronomist/formula-and-products.html",
+    "guide/ph-planning": "../agronomist/ph-and-acids.html",
+    "guide/stock-planning": "../agronomist/tanks-and-solubility.html",
+    "guide/water-to-delivery": "../developer/water-to-delivery.html",
+    "guide/site-planning": "../developer/site-planning.html",
+    "guide/conductivity": "../developer/conductivity.html",
+    "guide/delivery-contracts": "../developer/delivery-contracts.html",
+    "guide/delivery-quantities": "../developer/delivery-quantities.html",
+    "guide/source-sheet-review": "../evidence/source-sheet-review.html",
+    "guide/manual": "../reference/manual.html",
+    "api/reference": "../reference/api.html",
+    "api/package-verification": "../developer/verification.html",
+    "growers": "grower/index.html",
+}
+
 
 def _rewrite_included_links(app, relative_path, parent_docname, content):
     """Point the package's own cross-links at the pages that include them.
@@ -63,9 +88,19 @@ def _rewrite_included_links(app, relative_path, parent_docname, content):
     reference pages, so the links are rewritten in memory at include time.
     """
     if relative_path.name == "USER_GUIDE.md":
-        content[0] = content[0].replace("](API_REFERENCE.md)", "](../api/reference.md)")
+        content[0] = content[0].replace("](API_REFERENCE.md)", "](api.md)")
     elif relative_path.name == "API_REFERENCE.md":
-        content[0] = content[0].replace("](USER_GUIDE.md)", "](../guide/manual.md)")
+        content[0] = content[0].replace("](USER_GUIDE.md)", "](manual.md)")
+    elif relative_path.name == "CONTRIBUTING.md":
+        for local, page in (
+            ("](CODE_OF_CONDUCT.md)", "](../project/code-of-conduct.md)"),
+            ("](SECURITY.md)", "](../project/security.md)"),
+            (
+                "](docs/publishing.md)",
+                "](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md)",
+            ),
+        ):
+            content[0] = content[0].replace(local, page)
 
 
 def setup(app):

@@ -8,7 +8,7 @@ FlahaX should be the single source of conductivity predictions for fertilizer st
 
 > For these salts made up to this volume at this temperature, what EC should a meter read on the solution as made and on a 1:N dilution of it, how uncertain is that, and is it inside the range where the model has been validated?
 
-It is a prediction and verification aid. It does not set equipment, choose injection ratios or replace the nutrient balance (see [conductivity](site/guide/conductivity.md), which keeps the same line).
+It is a prediction and verification aid. It does not set equipment, choose injection ratios or replace the nutrient balance (see [conductivity](site/developer/conductivity.md), which keeps the same line).
 
 ## 2. Why now: the gap this closes
 

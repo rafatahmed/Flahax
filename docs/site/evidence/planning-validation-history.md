@@ -8,7 +8,7 @@ validation. For version-specific evidence, see [release evidence](release-eviden
 
 ## Water-to-delivery validation
 
-Original guide: [water-to-delivery](../guide/water-to-delivery.md).
+Original guide: [water-to-delivery](../developer/water-to-delivery.md).
 
 ### Local validation, 2026-09-28
 
@@ -31,7 +31,7 @@ results do not waive the normal supported-version/hosted verification gates.
 
 ## Site planning validation
 
-Original guide: [site-planning](../guide/site-planning.md).
+Original guide: [site-planning](../developer/site-planning.md).
 
 ### Local verification, 2026-09-30
 
@@ -57,7 +57,7 @@ validate a concentrated-stock conductivity model, or approve equipment.
 
 ## Conductivity validation
 
-Original guide: [conductivity](../guide/conductivity.md).
+Original guide: [conductivity](../developer/conductivity.md).
 
 Local verification on Windows/Python 3.14.0, 2026-09-28: the full suite with
 `PYTHONPATH=src` and `FLAHAX_REQUIRE_PHREEQC=1` passed 137 tests in 167.484 s,

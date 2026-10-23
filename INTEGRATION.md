@@ -4,7 +4,7 @@ FlahaFAST integration is owned by the separate **FlahaFAST project**, by project
 
 ## Supported package interfaces
 
-- Python: `recommend`, explicit catalogue-equilibrium functions and delivery-planning types; see [usage](docs/site/guide/usage.md) and [equilibrium delivery](docs/site/api/package-verification.md).
+- Python: `recommend`, explicit catalogue-equilibrium functions and delivery-planning types; see [usage](docs/site/developer/python-api.md) and [equilibrium delivery](docs/site/developer/verification.md).
 - CLI: `python -m flahax` or `flahax` consumes one JSON object on standard input and returns a JSON recommendation. A nonempty `salts` array is required; the CLI does not silently choose the packaged catalogue. Check process exit status and the result's `feasible` value; an error is not an empty successful recommendation.
 - Nutrient targets/water use elemental ppm; recipe doses use g/L final solution. Equilibrium inputs use explicitly converted g/kg water and molal totals. Do not pass arbitrary application product rows into catalogue-only equilibrium APIs.
 
