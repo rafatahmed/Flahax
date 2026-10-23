@@ -56,7 +56,7 @@ scripts and for checking a plan by hand.
 | A crop formula | One of the packaged formulas, or your own targets in mg/L |
 | Your acid's strength and density, if the feed needs acid | The acid supplier's certificate of analysis |
 | Any maximum concentrations you must respect (for example Na and Cl) | Your crop guidelines or advisor. FlahaX never assumes one. |
-| FlahaX installed | `python -m pip install flahax` (see [install](guide/usage.md)) |
+| FlahaX installed | `python -m pip install flahax`, or `python -m pip install --upgrade flahax` if you have an older version (see [install](guide/usage.md)) |
 
 ## Step 1. Enter your water analysis
 
