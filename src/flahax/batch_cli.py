@@ -213,7 +213,7 @@ def run_batch(options):
     summary = summarize_batch(workflow, products, title=title, water_label=label, injection_ratio=options.ratio,
                               rules=rules, temperature_c=options.temperature_c)
     if volumes is not None:
-        summary['volumes'] = asdict(volumes)
+        summary['volumes'] = dict(asdict(volumes), mode=options.mode)
     weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
     summary['product_notes'] = {r['name']: list(r.get('compatibility_notes') or (r.get('grade') or {}).get('compatibility_notes') or [])
                                 for r in products if r.get('name') in weighed}
