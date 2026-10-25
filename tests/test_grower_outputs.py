@@ -260,7 +260,11 @@ class TankGroupingTests(unittest.TestCase):
         self.assertNotEqual(grouping.tank_of('Iron EDTA'), 'A')
 
     def test_default_rules_feed_the_stock_planner(self):
-        fit = recommend(PRODUCTS, {'Ca': 150, 'N_NO3': 150, 'P': 40, 'K': 200, 'S': 50})
+        fit = recommend(
+            PRODUCTS,
+            {'Ca': 150, 'N_NO3': 150, 'P': 40, 'K': 200, 'S': 50},
+            max_ammonium_fraction=0.10,
+        )
         recipe = final_solution_recipe(fit, VolumeLitres(1000))
         used = [BY_NAME[s.name] for s in recipe.salts]
         rules = default_compatibility_rules(used)
@@ -413,17 +417,18 @@ class IncidentalAssessmentTests(unittest.TestCase):
             self.row(flow.recommendation),
             self.row(flow.stages['ph_adjustment'].value.selected.recommendation),
         )
-        self.assertEqual(first['assessment'], 'within_limit')
+        self.assertEqual(first['assessment'], 'requires_review')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
-        self.assertEqual(refit['assessment'], 'within_limit')
+        self.assertIsNone(first['maximumPpm'])
+        self.assertEqual(refit['assessment'], 'requires_review')
         self.assertEqual(
             [
                 r['symbol']
                 for r in flow.recommendation['incidentalContributions']
                 if r['assessment'] == 'requires_review'
             ],
-            ['Na'],
-        )  # no Na maximum was declared
+            ['N_NH4', 'Na'],
+        )  # neither maximum was declared
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
         self.assertNotIn('N_NH4', summary['stages']['formulation'].get('message') or '')
 
@@ -443,8 +448,8 @@ class IncidentalAssessmentTests(unittest.TestCase):
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
-    def test_ph_stage_and_candidates_do_not_review_ammonium(self):
-        limits = {'Na': 50}
+    def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
+        limits = {'Na': 50, 'N_NH4': 14}
         flow = plan_fertilizer_workflow(
             PRODUCTS,
             FORMULAS[self.TOMATO],
@@ -552,6 +557,8 @@ class BatchCommandTests(unittest.TestCase):
                 '5.8',
                 '--volume',
                 '1000',
+                '--limit',
+                'N_NH4=14',
                 '--acid',
                 'HNO3:0.60:1.37:Nitric acid 60%',
                 '--output',

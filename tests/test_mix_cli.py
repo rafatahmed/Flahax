@@ -621,8 +621,11 @@ def owner_transcript():
 
 
 class LineModeTranscriptTests(unittest.TestCase):
-    def test_plain_transcript_unchanged(self):
-        expected = (FIXTURES / 'owner-session-plain.txt').read_text(encoding='utf-8')
+    def test_plain_transcript_with_explicit_only_ammonium_policy(self):
+        # The pre-migration owner-session-plain.txt is retained as historical evidence.
+        expected = (FIXTURES / 'owner-session-no-implicit-ammonium.txt').read_text(
+            encoding='utf-8'
+        )
         self.assertEqual(owner_transcript().splitlines(), expected.splitlines())
 
 

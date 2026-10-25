@@ -47,6 +47,12 @@ RESTRICTED_IONS = frozenset({"Na", "Cl"})
 # allow or set a maximum for them. Chloride salts change no default recipe.
 CONSENT_IONS = frozenset({"Cl"})
 
+# Versioned compatibility convention, not a claim of exact lot-specific atomic weights.
+# Keep these numbers stable for historical assays; reference comparison and limitations:
+# docs/site/models/material-mass-convention.md.
+ATOMIC_CONVENTION = 'flahax-atomic-legacy-1'
+ATOMIC_SOURCE_STATUS = 'versioned_compatibility_values_not_lot_measurements'
+ATOMIC_REFERENCE = 'https://ciaaw.org/atomic-weights.htm'
 ATOMIC = {
     "H": 1.00784,
     "B": 10.81,

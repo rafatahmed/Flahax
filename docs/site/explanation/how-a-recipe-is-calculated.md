@@ -28,7 +28,8 @@ of each available product so that the final solution comes as close to every tar
 products allow, with no negative amounts (non-negative least squares). A target missed by more
 than 1 % is reported with its reason, for example no product supplies it, or the targets conflict
 because the formula itself is not electrically balanced. Ions you did not target are kept within
-any maximum you declare; ammonium has a stated allowance when the formula has none.
+the maximum constraints supplied to the solver. An ammonium allowance is added only
+when explicitly requested; omitting a maximum does not select a crop-practice limit.
 
 ## 2. Plan the pH reagent with the recipe
 

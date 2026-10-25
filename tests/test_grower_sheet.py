@@ -20,7 +20,13 @@ TANKS = {'A': 20, 'B': 20, 'acid': 20}
 
 def tomato_ro():
     return run_batch(
-        BatchOptions(water='ro', formula='Tomato (Howard Resh)', acid=NITRIC, tank_litres=TANKS)
+        BatchOptions(
+            water='ro',
+            formula='Tomato (Howard Resh)',
+            acid=NITRIC,
+            tank_litres=TANKS,
+            limit=[('N_NH4', 14)],
+        )
     )
 
 
@@ -37,7 +43,7 @@ class SheetTests(unittest.TestCase):
                 formula='Tomato (Howard Resh)',
                 water_share=8,
                 acid=NITRIC,
-                limit=[('Na', 68.97), ('Cl', 106.35)],
+                limit=[('Na', 68.97), ('Cl', 106.35), ('N_NH4', 14)],
                 volume=1000,
             )
         )

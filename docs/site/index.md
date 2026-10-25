@@ -147,6 +147,7 @@ Method <models/method>
 Fertilizer equilibrium model <models/fertilizer-equilibrium-model>
 Equilibrium kernel <models/equilibrium-kernel>
 Full fertilizer chemistry <models/full-fertilizer-chemistry>
+Material masses and evidence status <models/material-mass-convention>
 Chemistry coverage matrix <models/chemistry-coverage-matrix>
 PHREEQC reference fixtures <models/reference-fixtures>
 Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>

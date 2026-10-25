@@ -114,7 +114,8 @@ class ResultViewTests(unittest.TestCase):
         summary['ph']['selected']['direction'] = 'base'
         tanks = '\n'.join(screen(summary, 0))
         self.assertIn('pH reagent', tanks)
-        self.assertNotIn(' Acid ', tanks)
+        # Product names such as Boric Acid are legitimate; check the reagent heading.
+        self.assertNotRegex(tanks, r'\u250c[^\n]* Acid ')
 
     def test_results_encode_on_a_latin1_console(self):
         for view in range(3):

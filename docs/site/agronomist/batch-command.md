@@ -67,8 +67,13 @@ write them in mg/L (N_NO3 and N_NH4 as N) and pass the file with `--targets`:
 
 ## Step 3. Run the command
 
+This worked example explicitly chooses an NH4-N maximum of 14 mg/L, including
+the RO comparisons below. It is an illustrative caller constraint, not a crop
+recommendation. Supply limits appropriate to your own requirements; FlahaX no
+longer supplies an ammonium allowance automatically.
+
 ```bash
-flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 --acid "HNO3:0.60:1.37:Nitric acid 60%" --limit Na=68.97 --limit Cl=106.35 --output tomato-batch
+flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 --acid "HNO3:0.60:1.37:Nitric acid 60%" --limit Na=68.97 --limit Cl=106.35 --limit N_NH4=14 --output tomato-batch
 ```
 
 - `--acid` takes the formula, mass fraction and density (kg/L) from your

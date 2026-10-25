@@ -11,7 +11,7 @@ from flahax.engine import CEILING_MARGIN, CEILING_TOLERANCE, _fit_within, nnls
 
 LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
-# Generic Grow needs more ammonium than the default limit allows, so the limit binds.
+# Generic Grow needs more ammonium than this explicitly requested fraction permits.
 GROW = next(f for f in LIBRARY["formulas"] if f["name"] == "Generic Grow (maximumyield)")
 
 
@@ -37,7 +37,7 @@ class NnlsOptimalityTests(unittest.TestCase):
 
 class CeilingConstraintTests(unittest.TestCase):
     def test_binding_ammonium_limit_lands_on_its_aim(self):
-        result = recommend(SALTS, GROW["targets"], {})
+        result = recommend(SALTS, GROW["targets"], {}, max_ammonium_fraction=0.10)
         limit = result["ammoniumLimit"]["mgPerL"]
         self.assertTrue(any(miss["bindingLimits"] == ["N_NH4"] for miss in result["unmetTargets"]))
         self.assertAlmostEqual(
@@ -50,7 +50,9 @@ class CeilingConstraintTests(unittest.TestCase):
     def test_result_does_not_depend_on_the_starting_point(self):
         # The old 1024-weight penalty fixed doses only to ~4e-3 g/L, so warm and cold
         # starts disagreed; the constrained optimum is unique (ridge > 0).
-        limit = recommend(SALTS, GROW["targets"], {})["ammoniumLimit"]["mgPerL"]
+        limit = recommend(SALTS, GROW["targets"], {}, max_ammonium_fraction=0.10)["ammoniumLimit"][
+            "mgPerL"
+        ]
         cold = _fit_within(SALTS, GROW["targets"], {}, 0.02, {"N_NH4": limit})
         warm = _fit_within(
             SALTS,
