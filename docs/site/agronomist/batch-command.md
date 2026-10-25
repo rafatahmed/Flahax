@@ -207,3 +207,16 @@ Water JSON can declare final solvent mass/volume or final solution density and
 complete nonwater mass. See [concentration and solvent mass](../models/concentration-basis.md)
 for input examples, carrier/hydrate accounting and blend assumptions. Legacy
 inputs retain a reported 1 kg solvent/L assumption with unquantified uncertainty.
+
+## Titrated total alkalinity
+
+Use `alkalinity_meq_per_litre` in water JSON for a signed total-alkalinity
+measurement, separately from `mg_per_litre`. Do not combine it with `HCO3`,
+including zero. Interactive entry now stores titrations in equivalents, not
+as carbon. Legacy HCO3 carbon assumptions remain explicitly reported.
+
+The supported proton reference includes carbonate, phosphate, borate, ammonia,
+sulfate and major-ion complexes. Unqualified organic/trace-metal alkalinity is
+rejected. Measured zeros and fixed carbon stay fixed; no chloride does not
+authorize altering the titration. The original laboratory inventory continues
+to determine nutrient limits.

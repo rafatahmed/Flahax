@@ -175,7 +175,7 @@ class MixTests(unittest.TestCase):
         self.assertIn(code, (0, 3), lines)
         saved = Store(self.home).load('waters', 'well')
         self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=6)
-        self.assertAlmostEqual(saved['mg_per_litre']['HCO3'], 121.93, places=2)
+        self.assertAlmostEqual(saved['alkalinity_meq_per_litre'] * 61.0168, 121.93, places=2)
         self.assertEqual(saved['measured_ph'], 7.5)
         self.assertTrue(any('0.0 % apart' in line for line in lines), lines)
 
@@ -275,21 +275,23 @@ class MixTests(unittest.TestCase):
         saved = Store(self.home).load('waters', 'typo')
         self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=3)
 
-    def test_a_report_without_chloride_is_not_blocked(self):
-        # #100, owner 2026-10-23: no chloride -> closed on the alkalinity, noted in the full report
-        # only.
+    def test_missing_chloride_does_not_force_a_different_titration(self):
         clean = water('no-cl', {'Ca': '60.12', 'NO3': '62.0049', 'Alk': '100'}, alkalinity='2')
         target = Path(self.tmp.name) / 'no-cl'
         code, lines, _ = self.run_mix(
             SPEC + clean + TOMATO + CATALOGUE + NITRIC + ['', '3', ''], '--output', str(target)
         )
-        self.assertEqual(code, 0, '\n'.join(lines))
-        self.assertFalse(any('chloride' in line.lower() for line in lines), lines)
+        self.assertIn(code, (0, 3), '\n'.join(lines))
         report = (target / 'report.html').read_text(encoding='utf-8')
-        self.assertIn('has no chloride, so it is closed on the alkalinity', report)
-        self.assertNotIn(
-            'chloride', (target / 'batch-sheet.html').read_text(encoding='utf-8').lower()
+        summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
+        self.assertIn(
+            summary['stages']['chemistry']['error_code'],
+            ('missing_balance_ion', 'fixed_balance_ion'),
         )
+        self.assertNotIn('has no chloride, so it is closed on the alkalinity', report)
+        saved = Store(self.home).load('waters', 'no-cl')
+        self.assertAlmostEqual(saved['alkalinity_meq_per_litre'], 100 / 50.0435)
+        self.assertNotIn('HCO3', saved['mg_per_litre'])
 
     def test_owners_second_session_by_name_and_readable_grams(self):
         # Field test 2026-10-23: 100 L tanks with a 10 L acid container, saved as 'tomato stage 1'.
@@ -461,11 +463,15 @@ class MixTests(unittest.TestCase):
         code, lines, _ = self.full(water_answers=water('zero-alk', values))
         self.assertIn(code, (0, 3), lines)
         self.assertTrue(any('pH plan will be blocked' in line for line in lines), lines)
-        self.assertEqual(Store(self.home).load('waters', 'zero-alk')['mg_per_litre']['HCO3'], 0)
+        self.assertEqual(
+            Store(self.home).load('waters', 'zero-alk')['alkalinity_meq_per_litre'], 0
+        )
         shutil.rmtree(self.home)
         values = dict(BALANCED, Alk=['', '1', '122'])
         self.full(water_answers=water('typed-alk', values), out='typed')
-        self.assertEqual(Store(self.home).load('waters', 'typed-alk')['mg_per_litre']['HCO3'], 122)
+        self.assertEqual(
+            Store(self.home).load('waters', 'typed-alk')['alkalinity_meq_per_litre'], 122 / 61.0168
+        )
 
     def test_micronutrients_in_umol_are_converted(self):
         from flahax.mix_cli import to_elements

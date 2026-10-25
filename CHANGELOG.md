@@ -19,6 +19,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Account for supported noncarbonate alkalinity before inferring missing carbon.
+  Preserve measured zero/fixed carbon and titrated alkalinity; keep interactive
+  titration input separate from the legacy HCO3 carbon approximation. Reject
+  unqualified proton references rather than inventing carbonate
+  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
+
 - Respect explicit final solvent mass or density/nonwater mass when converting
   water mg/L to molality; scale detection limits and blends on the same basis.
   Report concentration assumptions and provide a water/carrier/hydrate ledger

@@ -1278,7 +1278,9 @@ measured zero and stays zero; an omitted component is not measured.
 detection limit (mol/kg); they enter the chemistry as 0, are recorded, and are
 never adjusted. Supply inorganic carbon either as ``totals['CO3-2']`` (0 for
 explicitly carbon-free water) or as ``alkalinity_eq_per_kg`` (titrated total
-alkalinity treated as carbonate alkalinity), never both.
+alkalinity on the supported inorganic proton reference), never both, including
+an explicitly zero carbon inventory. Organic/trace-metal alkalinity without
+a qualified proton reference is rejected rather than attributed to carbonate.
 
 The composition is first speciated at the measured pH. If its charge closes
 within ``CLOSURE_TOLERANCE`` it is returned unchanged (``reconciliation`` is
@@ -1305,6 +1307,21 @@ Each carbon species counts 2 x carbon - H+ relative to H2CO3; OH- and H+
 count +1 and -1. Phosphate, borate and organic bases are not included.
 
 Source module: `flahax.measured_water`. Import with `from flahax import carbonate_alkalinity`.
+
+### `total_alkalinity`
+
+```text
+total_alkalinity(state)
+```
+
+Supported inorganic proton balance in eq/kg solvent water.
+
+Includes carbonate, phosphate relative to H2PO4-, borate, ammonia, sulfate
+protonation, water and complexes of supported major ions. Active species
+with an unqualified proton reference (including organic ligands and trace
+metals) are rejected. No seawater constants or salinity assumptions are used.
+
+Source module: `flahax.measured_water`. Import with `from flahax import total_alkalinity`.
 
 ## flahax.mixed_equilibrium
 
