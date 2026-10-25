@@ -401,6 +401,8 @@ def summarize_batch(
             + concentration_basis['uncertainty']
             + '.'
         )
+    if chemistry_stage is not None and isinstance(chemistry_stage.value, dict):
+        warnings.extend(chemistry_stage.value.get('water_input_notes', []))
     for name, stage in stages.items():
         message = stage['message']
         if (
@@ -868,8 +870,8 @@ def _water_section(s):
             f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out '
             f'of charge balance '
             f'at its measured pH {number(w["measured_ph"], 2)}) has no chloride, so it is '
-            f'closed on the alkalinity '
-            '(the carbonate the measured pH depends on). That is a modelling step, not a '
+            f'closed on positive, nonfixed directly supplied carbon '
+            '(not a titration). That is a modelling step, not a '
             'corrected measurement: '
             'targets and limits use the laboratory values.</p>'
         )
@@ -890,13 +892,9 @@ def _water_section(s):
         )
     if state is not None:
         note += (
-            '<p class="small">Why: a laboratory report never adds up exactly, because every '
-            'value carries a '
-            'small measurement error. To calculate the pH of the mix, and so the acid, the '
-            'water\'s positive and '
-            'negative charges must balance at the pH the lab measured, so FlahaX closes the '
-            'small gap: on '
-            'chloride, or on the alkalinity when there is no chloride.</p>'
+            '<p class="small">Measured pH and charge balance constrain the chemistry model. '
+            'Reconciliation changes only the model inventory, never laboratory nutrient limits. '
+            'Measured zeros, fixed carbon and titrated alkalinity are preserved.</p>'
         )
     if w['below_detection']:
         note += (

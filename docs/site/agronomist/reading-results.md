@@ -70,9 +70,9 @@ only (pH, saturation, EC, reagent dose) the analysis is speciated at its
 measured pH: used unchanged if it already balances; otherwise closed on the
 balance ion within its stated uncertainty, or, without one, as an assumption
 that puts the plan in review. An analysis more than 5 % out of charge balance
-is refused. An analysis without chloride (not measured, zero or below
-detection) is closed on its alkalinity instead and the report notes it; no
-other ion is adjusted automatically. The report shows
+is refused. Missing chloride does not authorize changing a measured titration.
+Positive, nonfixed directly supplied carbon may undergo the disclosed legacy model
+reconciliation; measured zeros and fixed carbon remain unchanged. The report shows
 laboratory and modelled water side by side (see
 [measured-pH water balancing](../developer/water-to-delivery.md#measured-ph-water-balancing)).
 

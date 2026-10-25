@@ -493,6 +493,7 @@ def plan_fertilizer_workflow(
                     'water_totals': water_totals,
                     'analytical_water_totals': analytical,
                     'water_balance': balance,
+                    'water_input_notes': config.get('water_input_notes', []),
                     'concentration_basis': config.get(
                         'concentration_basis',
                         {

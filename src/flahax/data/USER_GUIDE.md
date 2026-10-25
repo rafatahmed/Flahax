@@ -490,8 +490,9 @@ and maximum concentrations always use it, and the balanced `totals` only feed
 the chemistry (#84). An imbalance above `maximum_imbalance_percent` (default
 5%) is rejected with `charge_imbalance_exceeded`: correct the analysis rather
 than forcing it. Supply inorganic carbon as `CO3-2`, or titrated total
-alkalinity as `alkalinity_eq_per_kg` (treated as carbonate alkalinity;
-phosphate, borate and organic contributions are neglected), never both.
+alkalinity as `alkalinity_eq_per_kg` on the supported inorganic proton reference.
+Phosphate, borate, ammonia and sulfate protonation are included. Unqualified
+organic/trace-metal systems are rejected. Never supply both, even for zero carbon.
 
 In `plan_fertilizer_workflow`, add `measured_ph` to the `equilibrium` record
 (with optional `alkalinity_eq_per_kg`, `balance_ion` and
@@ -577,3 +578,21 @@ Water JSON accepts `final_volume_litres` with `water_mass_kg`, or with both
 `density_kg_per_litre` and `nonwater_mass_kg`. The fixed final ratio scales to the
 batch volume. Legacy inputs report the 1 kg solvent/L assumption and unquantified
 uncertainty. Explicit inputs do not establish measurement uncertainty.
+
+## Titrated total alkalinity
+
+| Error | Meaning | Action |
+|---|---|---|
+| `unsupported_alkalinity` | An active species has no qualified proton reference, or alkalinity is only a detection interval. | Supply a supported complete analysis; do not infer carbonate from unsupported contributors. |
+| `invalid_alkalinity` | A species amount is non-finite, negative or not numeric. | Correct the molal species inventory before calculating alkalinity. |
+
+Use `alkalinity_meq_per_litre` in water JSON for a signed total-alkalinity
+measurement, separately from `mg_per_litre`. Do not combine it with `HCO3`,
+including zero. Interactive entry now stores titrations in equivalents, not
+as carbon. Legacy HCO3 carbon assumptions remain explicitly reported.
+
+The supported proton reference includes carbonate, phosphate, borate, ammonia,
+sulfate and major-ion complexes. Unqualified organic/trace-metal alkalinity is
+rejected. Measured zeros and fixed carbon stay fixed; no chloride does not
+authorize altering the titration. The original laboratory inventory continues
+to determine nutrient limits.

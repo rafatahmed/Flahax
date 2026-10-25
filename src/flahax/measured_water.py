@@ -60,9 +60,8 @@ NUTRIENT_BASES = {
 
 
 ASK_LAB = (
-    'Ask your lab for chloride and alkalinity: FlahaX closes the small gap every analysis has '
-    'on chloride, '
-    'or on the alkalinity when there is no chloride.'
+    'Ask your lab for a complete carbon/alkalinity and balance-ion analysis. '
+    'Measured zeros, fixed carbon and titrated alkalinity are not changed to force closure.'
 )
 
 
@@ -189,6 +188,58 @@ def carbonate_alkalinity(state):
     return total
 
 
+# Proton zero levels: H2CO3, H2PO4-, H3BO3, NH4+, SO4-2 and unhydrolysed
+# major ions. See NOAA/OCADS co2rprt.html (Dickson total-alkalinity definition).
+# This is a supported subset, not an assumption that omitted acid/base systems vanish.
+ALKALINITY_PROTON_REFERENCE = {
+    'CO3-2': 2,
+    'PO4-3': 2,
+    'H3BO3': 0,
+    'NH4+': 0,
+    'SO4-2': 0,
+    'Ca+2': 0,
+    'Mg+2': 0,
+    'K+': 0,
+    'Na+': 0,
+    'Cl-': 0,
+    'NO3-': 0,
+    'H+': -1,
+    'H2O': 0,
+}
+
+
+def total_alkalinity(state):
+    """Supported inorganic proton balance in eq/kg solvent water.
+
+    Includes carbonate, phosphate relative to H2PO4-, borate, ammonia, sulfate
+    protonation, water and complexes of supported major ions. Active species
+    with an unqualified proton reference (including organic ligands and trace
+    metals) are rejected. No seawater constants or salinity assumptions are used.
+    """
+    records = {r['name']: r for r in chemistry()['aqueous']}
+    total = 0.0
+    for name, amount in state.species.items():
+        if (
+            isinstance(amount, bool)
+            or not isinstance(amount, (int, float))
+            or not math.isfinite(amount)
+            or amount < 0
+        ):
+            raise DeliveryError(
+                'invalid_alkalinity', 'species amounts must be finite nonnegative molalities'
+            )
+        if amount == 0:
+            continue
+        record = records.get(name)
+        if record is None or set(record['powers']) - ALKALINITY_PROTON_REFERENCE.keys():
+            raise DeliveryError(
+                'unsupported_alkalinity', f'no qualified alkalinity proton reference for {name}'
+            )
+        equivalents = sum(ALKALINITY_PROTON_REFERENCE[b] * n for b, n in record['powers'].items())
+        total += amount * equivalents
+    return total
+
+
 def _total_charge(state):
     charges = {r['name']: r['charge'] for r in chemistry()['aqueous']}
     return sum(abs(charges.get(name, 0)) * amount for name, amount in state.species.items())
@@ -208,20 +259,29 @@ def _imbalance_percent(state):
 
 
 def _carbon_for_alkalinity(totals, ph, alkalinity, phases):
-    """Total inorganic carbon whose speciation at pH gives the alkalinity."""
+    """Infer missing inorganic carbon from supported total alkalinity at stated pH."""
+    if 'CO3-2' in totals:
+        raise DeliveryError(
+            'ambiguous_carbon',
+            'carbon is already reported, including zero; do not infer it from alkalinity',
+        )
     last = [solve({k: v for k, v in totals.items() if k != 'CO3-2'}, ph, phases=phases)]
 
     def alk(carbon):
         last[0] = solve(
             totals | {'CO3-2': carbon}, ph, phases=phases, start=last[0]
         )  # warm start, #61
-        return carbonate_alkalinity(last[0])
+        return total_alkalinity(last[0])
 
-    base = carbonate_alkalinity(last[0])
-    if alkalinity <= base:
+    base = total_alkalinity(last[0])
+    # Same eq/kg numerical closure scale used below for charge balance. This is
+    # a solver equality check, not laboratory measurement uncertainty.
+    if abs(alkalinity - base) <= 1e-12:
+        return 0.0
+    if alkalinity < base:
         raise DeliveryError(
             'alkalinity_out_of_range',
-            'measured alkalinity is not above the carbon-free alkalinity at the measured pH',
+            'measured alkalinity is below the supported carbon-free alkalinity at the measured pH',
         )
     low, g_low, high = 0.0, base - alkalinity, 1e-6
     while (g_high := alk(high) - alkalinity) < 0:
@@ -305,7 +365,9 @@ def balance_water_analysis(
     detection limit (mol/kg); they enter the chemistry as 0, are recorded, and are
     never adjusted. Supply inorganic carbon either as ``totals['CO3-2']`` (0 for
     explicitly carbon-free water) or as ``alkalinity_eq_per_kg`` (titrated total
-    alkalinity treated as carbonate alkalinity), never both.
+    alkalinity on the supported inorganic proton reference), never both, including
+    an explicitly zero carbon inventory. Organic/trace-metal alkalinity without
+    a qualified proton reference is rejected rather than attributed to carbonate.
 
     The composition is first speciated at the measured pH. If its charge closes
     within ``CLOSURE_TOLERANCE`` it is returned unchanged (``reconciliation`` is
@@ -388,7 +450,7 @@ def balance_water_analysis(
     )
     carbon_given = totals.get('CO3-2', 0) > 0
     if alkalinity_eq_per_kg is not None:
-        if carbon_given:
+        if 'CO3-2' in totals:
             raise DeliveryError(
                 'ambiguous_carbon', 'supply inorganic carbon or alkalinity, not both'
             )
@@ -396,10 +458,9 @@ def balance_water_analysis(
             isinstance(alkalinity_eq_per_kg, bool)
             or not isinstance(alkalinity_eq_per_kg, (int, float))
             or not math.isfinite(alkalinity_eq_per_kg)
-            or alkalinity_eq_per_kg <= 0
         ):
             raise DeliveryError(
-                'invalid_value', 'alkalinity_eq_per_kg must be finite and positive'
+                'invalid_value', 'alkalinity_eq_per_kg must be finite (signed eq/kg water)'
             )
         carbon_source = 'alkalinity'
     elif carbon_given:
@@ -468,10 +529,11 @@ def balance_water_analysis(
         balance_ion == 'Cl-'
         and (balance_ion in fixed or analysed <= 0)
         and carbon_source != 'none'
+        and 'CO3-2' not in fixed
+        and carbon_source != 'alkalinity'
     ):
-        # No chloride to adjust: close the small gap on the carbonate, the value the measured pH
-        # already depends on and usually the least precise on a report (owner decision 2026-10-23,
-        # #100).
+        # Legacy model reconciliation of explicitly positive, nonfixed carbon only.
+        # A measured titration is held fixed; changing inferred carbon would change it.
         return _close_on_carbonate(
             working, state, measured_ph, phases, imbalance, carbon_source, record
         )
@@ -499,7 +561,10 @@ def balance_water_analysis(
             )
         if carbon_source == 'alkalinity':
             working['CO3-2'] = _carbon_for_alkalinity(
-                working, measured_ph, alkalinity_eq_per_kg, phases
+                {k: v for k, v in working.items() if k != 'CO3-2'},
+                measured_ph,
+                alkalinity_eq_per_kg,
+                phases,
             )
         state = solve(working, measured_ph, phases=phases, start=state)
     else:

@@ -11,7 +11,9 @@ Water is ``ro`` (no ions) or a JSON file::
                       "S": 241.4, "N_NO3": 3.47, "HCO3": 197}}
 
 Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
-bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in aerated water.
+the legacy equivalent-carbon input in mg/L as HCO3, not titrated alkalinity.
+For a titration use signed ``alkalinity_meq_per_litre`` instead of HCO3.
+Iron is taken as Fe(III), the form in aerated water.
 Explicit final solvent mass/volume or solution density/nonwater mass define the
 concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
 
@@ -212,6 +214,26 @@ def read_water(spec):
             'invalid_value', f'"measured_ph" = {data["measured_ph"]!r} is not a number'
         )
     solvent, basis_audit = water_basis(data)
+    alkalinity = data.get('alkalinity_meq_per_litre')
+    if 'alkalinity_below_detection_meq_per_litre' in data:
+        raise DeliveryError(
+            'unsupported_alkalinity',
+            'below-detection alkalinity is an interval, not measured zero; '
+            'supply a resolved analysis',
+        )
+    if 'alkalinity_meq_per_litre' in data:
+        if 'HCO3' in data['mg_per_litre'] or 'HCO3' in below:
+            raise DeliveryError(
+                'ambiguous_carbon', 'supply HCO3 carbon or total alkalinity, not both'
+            )
+        if (
+            isinstance(alkalinity, bool)
+            or not isinstance(alkalinity, (int, float))
+            or not math.isfinite(alkalinity)
+        ):
+            raise DeliveryError(
+                'invalid_value', 'alkalinity_meq_per_litre must be a finite signed number'
+            )
     totals = {}
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
@@ -232,6 +254,14 @@ def read_water(spec):
             for k, v in below.items()
         },
     )
+    if alkalinity is not None:
+        config['alkalinity_eq_per_kg'] = alkalinity / 1000 / basis_audit['water_kg_per_litre']
+    if 'HCO3' in data['mg_per_litre']:
+        config['water_input_notes'] = [
+            'Legacy HCO3 is treated as equivalent total inorganic carbon. '
+            'This is not a bicarbonate speciation measurement or a titration; '
+            'use alkalinity_meq_per_litre for measured total alkalinity.'
+        ]
     if 'balance_ion' in data:
         ions = {'Cl': 'Cl-', 'Na': 'Na+'}
         if data['balance_ion'] not in ions:
@@ -271,7 +301,12 @@ def blend(label, water, chemistry, percent):
         )
     options = {
         key: chemistry[key]
-        for key in ('balance_ion', 'balance_ion_uncertainty_percent', 'below_detection')
+        for key in (
+            'balance_ion',
+            'balance_ion_uncertainty_percent',
+            'below_detection',
+            'alkalinity_eq_per_kg',
+        )
         if key in chemistry
     }
     label = f'{percent:g}% {label}, {100 - percent:g}% ion-free water'
@@ -292,6 +327,7 @@ def blend(label, water, chemistry, percent):
             water_balance=balanced.diluted(molal_fraction),
             water_analysis_id=f'{chemistry["water_analysis_id"]}-{percent:g}pct',
             concentration_basis=basis_audit,
+            water_input_notes=chemistry.get('water_input_notes', []),
         ),
     )
 
@@ -461,6 +497,9 @@ def run_batch(options):
         temperature_c=options.temperature_c,
     )
     if chemistry is not None:
+        for note in chemistry.get('water_input_notes', []):
+            if note not in summary['warnings']:
+                summary['warnings'].append(note)
         summary['concentration_basis'] = dict(
             chemistry['concentration_basis'],
             final_volume_litres=volume,

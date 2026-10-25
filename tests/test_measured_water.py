@@ -12,6 +12,7 @@ from flahax import (
     balance_water_analysis,
     calculate_equilibrium_ph,
     carbonate_alkalinity,
+    total_alkalinity,
     plan_fertilizer_workflow,
 )
 from flahax.product_conversion import MOLAR_MASS
@@ -66,8 +67,8 @@ class MeasuredWaterTests(unittest.TestCase):
         self.assertAlmostEqual(state.ph, 7.8, places=6)
 
     def test_alkalinity_gives_the_same_carbon(self):
-        alkalinity = carbonate_alkalinity(self.balanced.state)
-        self.assertAlmostEqual(alkalinity * 1000, 3.1955, places=3)
+        self.assertAlmostEqual(carbonate_alkalinity(self.balanced.state) * 1000, 3.1955, places=3)
+        alkalinity = total_alkalinity(self.balanced.state)
         from_alkalinity = balance_water_analysis(
             WITHOUT_CARBON, measured_ph=7.8, alkalinity_eq_per_kg=alkalinity
         )
@@ -128,7 +129,7 @@ class MeasuredWaterTests(unittest.TestCase):
             ),
             (
                 dict(totals=WITHOUT_CARBON, measured_ph=7.8, alkalinity_eq_per_kg=-1),
-                'invalid_value',
+                'alkalinity_out_of_range',
             ),
         ]
         for kwargs, code in cases:
@@ -198,7 +199,7 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
 
 
 class NoChlorideTests(unittest.TestCase):
-    """#100 (owner 2026-10-23): a report without chloride closes on the alkalinity, not a block."""
+    """Measured titration stays fixed; missing chloride cannot be replaced by invented carbon."""
 
     def analysis(self, **extra):
         totals = {'Ca+2': 1.6e-3, 'NO3-': 1e-3, **extra}
@@ -206,21 +207,14 @@ class NoChlorideTests(unittest.TestCase):
             totals, measured_ph=7.5, alkalinity_eq_per_kg=2e-3, phases=[]
         )
 
-    def test_no_chloride_closes_on_the_alkalinity(self):
-        for extra in ({}, {'Cl-': 0.0}):  # not measured, and measured zero
-            with self.subTest(extra=extra):
-                water = self.analysis(**extra)
-                self.assertEqual(water.reconciliation, 'closed_on_alkalinity')
-                self.assertEqual(water.balance_ion, 'CO3-2')
-                self.assertLess(abs(water.state.charge_balance), 1e-12)
-                self.assertEqual(water.analytical_totals, {'Ca+2': 1.6e-3, 'NO3-': 1e-3, **extra})
-                self.assertGreater(
-                    water.balance_adjustment_molal, 0
-                )  # more carbonate closes excess calcium
-                self.assertEqual(water.totals.get('Cl-', 0.0), 0.0)
+    def test_no_chloride_cannot_change_the_measured_titration(self):
+        for extra in ({}, {'Cl-': 0.0}):
+            with self.subTest(extra=extra), self.assertRaises(DeliveryError) as caught:
+                self.analysis(**extra)
+            self.assertIn(caught.exception.code, ('missing_balance_ion', 'fixed_balance_ion'))
 
     def test_chloride_present_still_closes_on_chloride(self):
-        water = self.analysis(**{'Cl-': 2e-4})
+        water = self.analysis(**{'Cl-': 1.9e-4})
         self.assertEqual((water.balance_ion, water.reconciliation), ('Cl-', 'assumed'))
 
 

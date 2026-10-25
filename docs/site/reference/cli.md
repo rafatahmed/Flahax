@@ -89,7 +89,9 @@ Water is ``ro`` (no ions) or a JSON file::
                       "S": 241.4, "N_NO3": 3.47, "HCO3": 197}}
 
 Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
-bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in aerated water.
+the legacy equivalent-carbon input in mg/L as HCO3, not titrated alkalinity.
+For a titration use signed ``alkalinity_meq_per_litre`` instead of HCO3.
+Iron is taken as Fe(III), the form in aerated water.
 Explicit final solvent mass/volume or solution density/nonwater mass define the
 concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
 
