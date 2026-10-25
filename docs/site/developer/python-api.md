@@ -157,16 +157,15 @@ targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
-**Ammonium default.** When the targets omit `N_NH4` and no `N_NH4` ceiling is
-given, incidental NH4-N may reach the smaller of 10% of the formula's total
-target N (`N_NO3 + N_NH4 + N_UREA`) and 1.5 mmol/L NH4 (21.01 mg/L N). Calcium
-nitrate (ag grade) always carries some ammonium, so without this allowance the
-fit under-doses calcium to avoid it. `result["ammoniumLimit"]` reports the limit
-applied. Raise the share with `max_ammonium_fraction` (for example `0.15`), or
-pass `None` for the previous penalty-only fit. An explicit `N_NH4` target,
-including `0` ("none wanted"), keeps its own fit and is never relaxed.
+**Explicit ammonium policy.** `max_ammonium_fraction` defaults to `None`: no
+ammonium maximum is invented. When explicitly supplied and the targets omit
+`N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
+without an additional absolute cap. `result["ammoniumLimit"]` records it.
+An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
+The existing incidental-ion penalty remains; this change does not qualify
+the solver objective or claim that exact-zero enforcement is repaired.
 
-The values are the project owner's decisions (2026-10-20), grounded in Dutch
+The historical defaults were project-owner decisions (2026-10-20), grounded in Dutch
 soilless practice. Recommended NH4 is 5-15% of total N, with at most about
 1-1.5 mmol/L (Van der Lugt et al., following De Kreij, Voogt et al.). Voogt's
 WUR lecture gives "heavy fruit bearing - max 90:10" NO3:NH4. The Dutch standard

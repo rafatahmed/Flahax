@@ -589,7 +589,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -612,9 +612,9 @@ Args:
         feasible False. Omitted keeps the default.
     max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
         none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-        the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
-        NH4 (21.01 mg/L N). Default 0.10 (Dutch soilless practice; users may
-        raise it, e.g. to 0.15); None keeps the penalty-only fit.
+        the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
+        caller policy, with no additional absolute cap. Default None adds
+        no ammonium maximum and keeps the existing incidental-ion objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1221,6 +1221,10 @@ With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grad
 ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
 stays the product name. A ``declared_ions`` grade (a compound entered from its data
 sheet) names the product itself; its record id is the grade id.
+
+Provenance separates sourceStatus (document supplied or unattributed),
+assumptionStatus and atomicMassConvention. Documentation is not independent
+verification of a composition, grade or lot.
 
 Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 

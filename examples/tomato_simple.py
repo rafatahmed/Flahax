@@ -26,7 +26,8 @@ def run():
     targets = next(f['targets'] for f in library['formulas'] if f['name'] == FORMULA)
 
     # 1. Choose products and doses for the targets; RO water brings no nutrients.
-    result = recommend(library['salts'], targets, water={})
+    # Explicit illustrative allowance, not a default agronomic recommendation.
+    result = recommend(library['salts'], targets, water={}, max_ammonium_fraction=0.10)
 
     # 2. Scale the recipe to a batch.
     batch = final_solution_recipe(result, VolumeLitres(BATCH_LITRES))

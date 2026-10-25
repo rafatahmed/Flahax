@@ -389,7 +389,16 @@ class BatchCommandTests(unittest.TestCase):
                     ),
                 ),
             )
-            limits = ('--limit', 'Na=68.97', '--limit', 'Cl=106.35', '--acid', 'HNO3:0.60:1.37')
+            limits = (
+                '--limit',
+                'Na=68.97',
+                '--limit',
+                'Cl=106.35',
+                '--limit',
+                'N_NH4=14',
+                '--acid',
+                'HNO3:0.60:1.37',
+            )
             runs = {}
             for share in ('8', '9'):
                 out = Path(tmp) / share

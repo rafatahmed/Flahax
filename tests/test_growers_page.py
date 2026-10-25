@@ -28,7 +28,17 @@ ACID = 'HNO3:0.60:1.37:Nitric acid 60%'
 def run(tmp, *argv):
     out = Path(tmp) / str(abs(hash(argv)))
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        code = batch(['--formula', 'Tomato (Howard Resh)', *argv, '--output', str(out)])
+        code = batch(
+            [
+                '--formula',
+                'Tomato (Howard Resh)',
+                '--limit',
+                'N_NH4=14',
+                *argv,
+                '--output',
+                str(out),
+            ]
+        )
     return code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
 
 
@@ -72,7 +82,7 @@ class GrowersPageTests(unittest.TestCase):
         self.assertEqual(round(s['ph']['selected']['volume_ml_per_batch'], 1), 1.5)
         self.assertEqual(round(s['chemistry']['mixed_ph'], 2), 5.84)
         limits = {row['symbol']: round(row['analyticalPpm'], 1) for row in s['limits']}
-        self.assertEqual(limits, {'Cl': 102.4, 'Na': 55.1})
+        self.assertEqual(limits, {'Cl': 102.4, 'Na': 55.1, 'N_NH4': 9.2})
         self.assertEqual(round(s['ec']['ec25_ms_cm'], 1), 2.6)
         nh4 = next(r['final'] for r in s['formulation']['rows'] if r['symbol'] == 'N_NH4')
         self.assertEqual(round(nh4, 1), 9.2)

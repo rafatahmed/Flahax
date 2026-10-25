@@ -1,7 +1,9 @@
 # Traceable materials: identity, grade and lot
 
-Every number FlahaX calculates with can be traced to a **chemical identity**
-and a **source document**. Evidence:
+FlahaX separates **chemical identity**, supplier grade and measured lot. Some
+catalogue analyses have no source document; provenance records that absence rather
+than implying verification. See [mass conventions and evidence status](../models/material-mass-convention.md).
+Historical evidence:
 [materials identity audit](../evidence/audit/2026-10-18-materials-identity/review.md).
 
 Catalogue size does not measure chemical

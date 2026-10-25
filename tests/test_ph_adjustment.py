@@ -46,12 +46,13 @@ RO = dict(
 CLOSED = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
 
 
-def coupled(formula, target_ph=5.8):
+def coupled(formula, target_ph=5.8, maxima=None):
     return plan_fertilizer_workflow(
         LIBRARY['salts'],
         FORMULAS[formula],
         {},
         target_ph,
+        maximum_concentrations=maxima,
         final_volume=VolumeLitres(1000),
         equilibrium=RO,
         ph_adjustment=dict(
@@ -120,7 +121,8 @@ class CatalogueTests(unittest.TestCase):
 class CoupledWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.alkaline = coupled('Tomato (Howard Resh)')  # mixes near pH 6.9 in RO water
+        # Preserve this reaction-accounting fixture's historical, now explicit allowance.
+        cls.alkaline = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
         cls.acidic = coupled(
             'Chilli (maximumyield)'
         )  # mixed at pH 3 when phosphoric acid was a P source

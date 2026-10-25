@@ -42,7 +42,12 @@ class UnmetTargetTests(unittest.TestCase):
         self.assertTrue(ca["reachableWithChloride"])
 
     def test_binding_ceiling_is_named(self):
-        result = recommend(SALTS, formula("Generic Grow (maximumyield)")["targets"], {})
+        result = recommend(
+            SALTS,
+            formula("Generic Grow (maximumyield)")["targets"],
+            {},
+            max_ammonium_fraction=0.10,
+        )
         items = result["unmetTargets"]
         self.assertTrue(items)
         for item in items:

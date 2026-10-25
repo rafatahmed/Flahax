@@ -10,6 +10,19 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+### Changed
+
+- Ammonium limits are now explicit caller inputs: no default fraction or hidden
+  absolute cap. Material provenance identifies source/assumption status and the
+  versioned atomic-mass convention; retained atomic values are unchanged
+  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
+
+### Fixed
+
+- Reject non-finite/non-positive identity masses and boolean ion stoichiometry,
+  while retaining explicitly unavailable masses as null
+  ([#163](https://github.com/rafatahmed/Flahax/issues/163)).
+
 ### Added
 
 - Offline requirement/ledger validators, numeric-decision inventory and review gates, and source-bound
