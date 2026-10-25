@@ -76,3 +76,12 @@ print(plan.reagent_volume_litres, plan.nutrient_contribution, plan.warnings)
 ```
 
 This example is exercised in both installed distributions. `tests/test_equilibrium_delivery.py` also tests the real mixed-product PHREEQC target, complete reviewed-plan composition, mismatched identities/commands, missing records, out-of-domain water, wrong acid direction, zero dose, inconsistent assays, and supersaturation rejection.
+
+## Check reaction provenance without rebuilding databases
+
+Run `python tools/qualify_chemistry_model.py --database PATH/minteq.v4.dat --report audit.json`
+against the pinned external database. This read-only check covers all selected
+reactions and records source/model hashes. Run `python -m unittest tests.test_model_qualification`
+for independent conservation, transform, domain and sensitivity checks. See the
+[qualification scope](../models/reaction-qualification.md); a successful check
+is not experimental calibration of inherited constants.

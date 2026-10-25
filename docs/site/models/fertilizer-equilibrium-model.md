@@ -2,6 +2,9 @@
 
 ## Current unified model contract
 
+Results carry [model-domain and omitted-competition qualifications](reaction-qualification.md).
+Numerical convergence alone does not qualify an incomplete reaction family.
+
 The [shared material inventory](material-inventory.md) supplies pre-fit nutrients
 and chemistry components, with explicit incomplete/composition-disagreement fields.
 

@@ -12,6 +12,11 @@ each release, with numbers, sources and decisions, are in
 
 ### Changed
 
+- Aqueous results now identify omitted ligand/metal competition and selected
+  chelate-profile limitations, with explicit model-domain metadata. Added read-only
+  qualification of every pinned reaction's source, balances and basis transform;
+  reference constants and database bytes are unchanged.
+
 - Nutrient fitting now includes supported material counterions before selecting doses,
   including sodium carried by chelates. A shared inventory traces nutrient percentages
   and conserved chemistry components, with explicit incomplete and blend-disagreement

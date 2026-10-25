@@ -10,7 +10,7 @@ nonnegative solid amounts and nonpositive SI for every allowed absent phase.
 Redox valences are separate conserved inputs, as in PHREEQC SOLUTION speciation.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib.resources import files
 import json
@@ -33,6 +33,10 @@ def chemistry():
 class AqueousResult:
     """A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
     precipitated phases, residuals and charge balance.
+
+    model_limitations identifies omitted positive ligand/metal competition and
+    selected profile assumptions. model_domain states the numerical/chemical
+    conventions; a converged result does not establish physical applicability.
     """
 
     totals: dict
@@ -46,6 +50,61 @@ class AqueousResult:
     iterations: int
     charge_balance: float
     water_activity: float
+    model_limitations: tuple = ()
+    model_domain: dict = field(default_factory=dict)
+
+
+def model_qualification(totals):
+    """Scope of the pinned equations, not a claim of experimentally verified accuracy.
+
+    Positive ligand/metal pairs without a complex in the selected reaction set
+    are explicit limitations. A zero input does not activate competition. The
+    list concerns these selected chelators and metals, not every possible omitted
+    reaction. Numerical convergence cannot remove a model-coverage limitation.
+    """
+    data = chemistry()
+    limitations = []
+    for ligand in ('Edta-4', 'Citrate-3', 'Dtp-5', 'Edd-4'):
+        if totals.get(ligand, 0) <= 0:
+            continue
+        for metal in ('Ca+2', 'Mg+2', 'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'):
+            if totals.get(metal, 0) > 0 and not any(
+                r['powers'].get(ligand, 0) > 0 and r['powers'].get(metal, 0) > 0
+                for r in data['aqueous']
+            ):
+                limitations.append(
+                    dict(
+                        code='omitted_competition',
+                        components=(ligand, metal),
+                        reason='No complex for this positive ligand/metal pair exists in the '
+                        'selected reaction set; calculated partitioning is conditional '
+                        'on its omission.',
+                    )
+                )
+    if any(totals.get(ligand, 0) > 0 for ligand in ('Dtp-5', 'Edd-4')):
+        limitations.append(
+            dict(
+                code='selected_chelate_profile',
+                components=tuple(k for k in ('Dtp-5', 'Edd-4') if totals.get(k, 0) > 0),
+                reason='Selected project-profile constants; electrolyte/isomer and '
+                'concentration-to-activity transfer are not independently requalified.',
+            )
+        )
+    domain = dict(
+        temperature_c=data['temperature_c'],
+        ionic_strength_max_mol_per_kg_water=0.1,
+        numerical_ph_interval=(0, 14),
+        concentration_basis='mol/kg water',
+        standard_state='dimensionless molal activities; unit activity of pure solids',
+        activity_model='Davies charged species; neutral log10(gamma)=0.1 I',
+        water_activity='max(0.9, 1 - sum(aqueous molalities)/55.5084)',
+        valence_policy='fixed analytical oxidation states; no electron/redox equilibration',
+        carbon_boundary='closed analytical carbon; no imposed gas reservoir',
+        database_sha256=data['database_sha256'],
+        qualification='equations of the selected model only; numerical bounds are not '
+        'experimental applicability or a physical-validation claim',
+    )
+    return tuple(limitations), domain
 
 
 def linear(a, b):
@@ -344,6 +403,7 @@ def _solve(
                 - totals[b]
                 for j, b in enumerate(bases)
             }
+            limitations, domain = model_qualification(totals)
             return AqueousResult(
                 totals,
                 ph,
@@ -356,6 +416,8 @@ def _solve(
                 count,
                 sum(a * r['charge'] for a, r in zip(amounts, records)),
                 water,
+                limitations,
+                domain,
             )
         if ionic_strength is None:
             # Secant step on g(I) = I(speciation at I) - I, which converges superlinearly
