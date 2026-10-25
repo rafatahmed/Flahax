@@ -12,6 +12,11 @@ each release, with numbers, sources and decisions, are in
 
 ### Changed
 
+- Nutrient fitting now includes supported material counterions before selecting doses,
+  including sodium carried by chelates. A shared inventory traces nutrient percentages
+  and conserved chemistry components, with explicit incomplete and blend-disagreement
+  fields. Water and acid/base nutrient supply use the same component projection.
+
 - Ammonium limits are now explicit caller inputs: no default fraction or hidden
   absolute cap. Material provenance identifies source/assumption status and the
   versioned atomic-mass convention; retained atomic values are unchanged

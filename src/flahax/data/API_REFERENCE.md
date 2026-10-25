@@ -638,8 +638,9 @@ Returns:
     Each salt carries provenance (recordId, identityId, analysisBasis,
     documents, flags) taken from the record that produced it, or
     analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
-    Chelate counterion sodium (D2) is added to the Na row and incidental
-    review after the fit; it never affects eligibility, the fit or grams.
+    Supported counterions are included in the fitting and forward nutrient
+    inventory. materialInventory exposes conserved components and limitations;
+    eligibility policy still uses the declared assay and explicit permissions.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
     product-to-dose mapping. Feasible is positive-target fit within 1%,
@@ -1581,6 +1582,20 @@ materials the catalogue does not hold; see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 
+### `component_nutrient_masses`
+
+```text
+component_nutrient_masses(totals)
+```
+
+Nutrient grams from analytical component moles, retaining the input denominator.
+
+Thus mol/kg water produces g/kg water, and mol/g product produces g/g
+product. Organic ligand N and carbon remain in their analytical components;
+they are not relabelled as available nitrogen or carbonate.
+
+Source module: `flahax.product_conversion`. Import with `from flahax import component_nutrient_masses`.
+
 ### `convert_catalogue_product_dose`
 
 ```text
@@ -1606,6 +1621,22 @@ D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
 is retained as inert carrier.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_product_dose`.
+
+### `material_inventory`
+
+```text
+material_inventory(product, *, material=None)
+```
+
+One gram of material: assayed/derived nutrients and conserved chemistry components.
+
+Nutrients are mass percent; analytical components are mol/g product. Ligand
+nitrogen is retained in its ligand, never relabelled as plant-available N.
+Unknown chemistry retains an explicitly incomplete assay-only inventory;
+callers requiring equilibrium must reject that status. Source records are
+not modified, and supplied assays take precedence over inferred counterions.
+
+Source module: `flahax.product_conversion`. Import with `from flahax import material_inventory`.
 
 ### `plan_catalogue_nitric_target`
 

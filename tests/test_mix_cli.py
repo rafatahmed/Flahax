@@ -438,7 +438,14 @@ class MixTests(unittest.TestCase):
         self.assertIn(code, (0, 3), out.getvalue())
 
     def test_blocked_result_says_do_not_mix_with_the_reason(self):
-        code, lines, _ = self.full(water_answers=['1', 'Na=1e-9'])
+        # Source-water Na cannot be removed by selecting sodium-free products.
+        code, lines, _ = self.full(
+            water_answers=water(
+                'sodium-over-limit',
+                dict(BALANCED, Na='22.989769', Cl='35.45'),
+                limits='Na=1e-9',
+            )
+        )
         self.assertEqual(code, 3, lines)
         head = next(
             i for i, line in enumerate(lines) if line.startswith('FlahaX') and ' - ' in line
@@ -629,7 +636,7 @@ def owner_transcript():
 class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_with_explicit_only_ammonium_policy(self):
         # The pre-migration owner-session-plain.txt is retained as historical evidence.
-        expected = (FIXTURES / 'owner-session-explicit-concentration-basis.txt').read_text(
+        expected = (FIXTURES / 'owner-session-prefit-material-inventory.txt').read_text(
             encoding='utf-8'
         )
         self.assertEqual(owner_transcript().splitlines(), expected.splitlines())

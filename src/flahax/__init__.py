@@ -32,6 +32,8 @@ __all__ = [
     "PhPlan",
     "ProductChemistry",
     "ProductAnalyticalTotals",
+    "material_inventory",
+    "component_nutrient_masses",
     "NitricAcidTargetPlan",
     "PumpCommand",
     "PhaseAllocation",
@@ -215,6 +217,8 @@ from .trace_equilibrium import (
 from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
 from .product_conversion import (
     ProductAnalyticalTotals,
+    material_inventory,
+    component_nutrient_masses,
     convert_catalogue_product_dose,
     convert_product_dose,
     solve_catalogue_product_doses,

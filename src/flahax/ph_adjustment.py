@@ -26,6 +26,7 @@ from .delivery_contracts import DeliveryError
 from .engine import PH_REAGENT, TOLERANCE_PCT, load_library, recommend, score
 from .nutrient_acceptance import assess_incidental, assessed_limits
 from .root_finding import shrink_bracket
+from .product_conversion import component_nutrient_masses
 from .saturation_policy import assess_saturation, describe
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
@@ -233,7 +234,8 @@ def plan_coupled_ph(
         identity, formula = product.get('id'), product.get('chemicalFormula')
         try:
             fraction, density = _check_product(product)
-            reagent_direction, _, molar_mass, nutrients = REAGENTS[formula]
+            reagent_direction, components, molar_mass, _ = REAGENTS[formula]
+            nutrients = component_nutrient_masses(components)
             if direction == 'none':
                 # No reagent, but the same final acceptance as every dosed candidate (#84).
                 status, code, message, saturation = _judge(

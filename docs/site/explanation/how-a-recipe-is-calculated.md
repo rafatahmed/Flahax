@@ -31,6 +31,10 @@ because the formula itself is not electrically balanced. Ions you did not target
 the maximum constraints supplied to the solver. An ammonium allowance is added only
 when explicitly requested; omitting a maximum does not select a crop-practice limit.
 
+Supported formula counterions enter the fit before dose selection. The
+[material inventory](../models/material-inventory.md) records the same analytical
+components used by chemistry, including ligands that are not nutrient targets.
+
 ## 2. Plan the pH reagent with the recipe
 
 The recipe is first fitted without acids as nutrient sources. The equilibrium model then

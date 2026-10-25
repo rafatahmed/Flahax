@@ -31,7 +31,7 @@ from .composition import (
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
-from .product_conversion import counterion_sodium_mg_per_l
+from .product_conversion import counterion_sodium_mg_per_l, material_inventory
 
 # Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
@@ -348,6 +348,21 @@ def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
     return loss, rows
 
 
+class _InventoriedProduct(dict):
+    """Internal per-fit cache; source assay remains untouched."""
+
+    def __init__(self, product):
+        super().__init__(product)
+        self.inventory = material_inventory(product)
+
+
+def _nutrients(product):
+    inventory = getattr(product, 'inventory', None)
+    return (inventory if inventory is not None else material_inventory(product))[
+        'nutrient_percent'
+    ]
+
+
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
     """Nutrient concentrations (mg/L) from the water plus each salt's grams per litre."""
     water = water or {}
@@ -355,7 +370,7 @@ def forward(salts: list[dict], grams: list[float], water: dict | None = None) ->
     for salt, gram in zip(salts, grams):
         if gram <= 0:
             continue
-        for symbol, percent in salt["elements"].items():
+        for symbol, percent in _nutrients(salt).items():
             achieved[symbol] = achieved.get(symbol, 0.0) + gram * ppm_per_gram(percent)
     return achieved
 
@@ -383,7 +398,7 @@ def _fit(
         dict.fromkeys(
             [
                 *targets.keys(),
-                *(symbol for salt in salts for symbol in salt["elements"]),
+                *(symbol for salt in salts for symbol in _nutrients(salt)),
             ]
         )
     )
@@ -391,7 +406,7 @@ def _fit(
     rhs = []
     for symbol in symbols:
         target = targets.get(symbol)
-        rates = [ppm_per_gram(salt["elements"].get(symbol, 0.0)) for salt in salts]
+        rates = [ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) for salt in salts]
         background = float(water.get(symbol) or 0.0)
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
@@ -459,7 +474,7 @@ def _fit_within(
         keep = [
             i
             for i, salt in enumerate(salts)
-            if not any(salt["elements"].get(s, 0.0) for s in unreachable)
+            if not any(_nutrients(salt).get(s, 0.0) for s in unreachable)
         ]
         solved = _fit_within(
             [salts[i] for i in keep],
@@ -686,7 +701,7 @@ def _eligible(
                 }
             )
             continue
-        ready.append(salt)
+        ready.append(_InventoriedProduct(salt))
     return ready, excluded
 
 
@@ -741,7 +756,7 @@ def _recover(library, ready, excluded, targets, short):
                 warnings.append(
                     f"{salt['name']} is included because it is the only source of {symbol}.{extra}"
                 )
-            ready.append(salt)
+            ready.append(_InventoriedProduct(salt))
             ready_ids.add(salt.get("id"))
             excluded = [item for item in excluded if item["id"] != salt["id"]]
     return ready, excluded, warnings
@@ -754,7 +769,7 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         return set(kept)
     matrix, rhs = [], []
     for symbol, target in kept.items():
-        matrix.append([ppm_per_gram(salt["elements"].get(symbol, 0.0)) / target for salt in salts])
+        matrix.append([ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) / target for salt in salts])
         rhs.append((target - float(water.get(symbol) or 0.0)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
     return {
@@ -941,8 +956,9 @@ def recommend(
         Each salt carries provenance (recordId, identityId, analysisBasis,
         documents, flags) taken from the record that produced it, or
         analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
-        Chelate counterion sodium (D2) is added to the Na row and incidental
-        review after the fit; it never affects eligibility, the fit or grams.
+        Supported counterions are included in the fitting and forward nutrient
+        inventory. materialInventory exposes conserved components and limitations;
+        eligibility policy still uses the declared assay and explicit permissions.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
         product-to-dose mapping. Feasible is positive-target fit within 1%,
@@ -1028,21 +1044,26 @@ def recommend(
         IDENTITIES_SHA256,
     )  # local: keeps engine importable without the catalogue at load
 
+    solved['materialInventory'] = [
+        dict(
+            recordId=item['id'],
+            name=item['name'],
+            gramsPerLitre=item['gramsPerLitre'],
+            **(
+                getattr(by_id[item['id']], 'inventory', None)
+                or material_inventory(by_id[item['id']])
+            ),
+        )
+        for item in solved['salts']
+    ]
     solved["identitiesSha256"] = IDENTITIES_SHA256
     solved["excluded"] = excluded
     counterion_na = counterion_sodium_mg_per_l(
         [(by_id[item["id"]], item["gramsPerLitre"]) for item in solved["salts"]]
     )
     if counterion_na > 0:
-        na_row = next((row for row in solved["rows"] if row["symbol"] == "Na"), None)
-        if na_row is None:
-            na_row = {"symbol": "Na", "target": None, "final": 0.0, "deltaPct": None}
-            solved["rows"].append(na_row)
-        na_row["final"] += counterion_na
-        if na_row["target"] is not None and na_row["target"] > 0:
-            na_row["deltaPct"] = 100.0 * (na_row["final"] - na_row["target"]) / na_row["target"]
         warnings.append(
-            "Incidental Na includes formula counterion sodium (chelates D2, "
+            "Fit includes formula counterion sodium (chelates D2, "
             f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L."
         )
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
