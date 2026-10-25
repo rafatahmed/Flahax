@@ -564,3 +564,16 @@ the checkout first or set `PYTHONPATH=src`. Reports must distinguish final
 irrigation from A/B stock concentrations, recipe acid from additional acid,
 candidate tank assignments from approved stock plans, and unavailable values
 from zero. Never use synthetic example records as site measurements.
+
+## Explicit solvent basis
+
+`SolventBasis(final_volume_litres, water_mass_kg)` converts mg/L and mol/kg water
+without equating litres with kilograms. Its `from_solution_mass` constructor
+requires density and complete nonwater mass. Its `from_water_ledger` constructor
+sums disjoint source, reagent-carrier and dissolved-hydrate water. Final solvent
+includes these contributions already; do not count them twice.
+
+Water JSON accepts `final_volume_litres` with `water_mass_kg`, or with both
+`density_kg_per_litre` and `nonwater_mass_kg`. The fixed final ratio scales to the
+batch volume. Legacy inputs report the 1 kg solvent/L assumption and unquantified
+uncertainty. Explicit inputs do not establish measurement uncertainty.

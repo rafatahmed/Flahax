@@ -502,6 +502,22 @@ Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import MilligramsPerLitre`.
 
+### `SolventBasis`
+
+```text
+SolventBasis(final_volume_litres: 'float', water_mass_kg: 'float') -> None
+```
+
+Final solution volume and final solvent-water mass, including carrier/hydrate water.
+
+Neither density nor volume alone determines solvent mass. A stated final inventory
+already includes water supplied by reagents and dissolved hydrates; never add it twice.
+These are accounting inputs, not independently verified measurements.
+
+Record fields: `final_volume_litres`, `water_mass_kg`.
+
+Source module: `flahax.delivery_quantities`. Import with `from flahax import SolventBasis`.
+
 ### `TemperatureCelsius`
 
 ```text

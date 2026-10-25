@@ -26,6 +26,7 @@ from collections.abc import Mapping, Sequence
 from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .delivery_contracts import DeliveryError
+from .delivery_quantities import SolventBasis
 from .product_conversion import MOLAR_MASS
 from .root_finding import shrink_bracket
 
@@ -66,13 +67,14 @@ ASK_LAB = (
 
 
 def nutrient_mg_per_litre(totals, water_mass_kg=1.0, final_volume_litres=1.0):
-    """Elemental mg/L in the final volume from water totals in mol/kg water."""
+    """Elemental mg/L from mol/kg water; defaults explicitly represent a 1 kg/1 L basis."""
+    solvent = SolventBasis(final_volume_litres, water_mass_kg)
     ppm = {}
     for basis, ion in NUTRIENT_BASES.items():
         amount = totals.get(basis)
         if amount is None:
             continue
-        value = amount * MOLAR_MASS[ion.split('_')[0]] * water_mass_kg * 1000 / final_volume_litres
+        value = solvent.molality_to_mg_per_litre(amount, MOLAR_MASS[ion.split('_')[0]])
         ppm[ion] = ppm.get(ion, 0) + value * (2 if basis == 'Ure' else 1)
     return ppm
 

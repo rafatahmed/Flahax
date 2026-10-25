@@ -359,7 +359,9 @@ _NA_MG_PER_MOL = 22.98977 * 1000.0
 def counterion_sodium_mg_per_l(salts_with_doses) -> float:
     """Formula counterion sodium in mg/L for ``[(product record, g/L), ...]``.
 
-    Doses in g/L are treated as g/kg water. Sums the counterion sodium that
+    Linear assay conversion is evaluated per litre here: its intermediate mole
+    amounts are mol/L, not mol/kg water. No solvent-density assumption enters
+    this nutrient-only calculation. Sums the counterion sodium that
     ``convert_catalogue_product_dose`` reports for every dosed product: the chelate
     sodium (D2) of the EDTA, DTPA and EDDHA products and all of CH - micro's
     sodium (chelate share plus its borax and molybdate), and the chelate sodium of a

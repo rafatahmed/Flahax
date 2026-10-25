@@ -387,6 +387,20 @@ def summarize_batch(
     )
 
     warnings = list(recipe['warnings'])
+    chemistry_stage = workflow.stages.get('chemistry')
+    concentration_basis = (
+        chemistry_stage.value.get('concentration_basis')
+        if chemistry_stage is not None and isinstance(chemistry_stage.value, dict)
+        else None
+    )
+    if concentration_basis:
+        warnings.append(
+            'Concentration basis: '
+            + concentration_basis['note']
+            + ' Uncertainty: '
+            + concentration_basis['uncertainty']
+            + '.'
+        )
     for name, stage in stages.items():
         message = stage['message']
         if (
@@ -505,6 +519,7 @@ def summarize_batch(
         tanks=tanks,
         stages=stages,
         warnings=warnings,
+        concentration_basis=concentration_basis,
         solubility=[
             dict(
                 tank=r.tank,

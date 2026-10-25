@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from .calculated_ph import calculate_equilibrium_ph
 from .composition import validate_profile
 from .delivery_contracts import DeliveryError
-from .delivery_quantities import VolumeLitres, final_solution_recipe
+from .delivery_quantities import SolventBasis, VolumeLitres, final_solution_recipe
 from .engine import recommend, gap_for, load_library
 from .measured_water import (
     DEFAULT_MAXIMUM_IMBALANCE_PERCENT,
@@ -353,6 +353,7 @@ def plan_fertilizer_workflow(
                 materials, records = {}, {}
                 config = equilibrium
                 mass = _positive(config['water_mass_kg'], 'water_mass_kg')
+                solvent = SolventBasis(final_volume.value, mass)
                 if (
                     not isinstance(config['water_analysis_id'], str)
                     or not config['water_analysis_id'].strip()
@@ -474,7 +475,9 @@ def plan_fertilizer_workflow(
                             'product_chemistry_mismatch',
                             'chemistry requires the supplied product records',
                         )
-                    doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
+                    doses[salt.name] = doses.get(
+                        salt.name, 0
+                    ) + solvent.grams_per_litre_to_grams_per_kg_water(salt.dose.value)
                 totals = dict(water_totals)
                 for basis, amount in _dose_totals(doses, materials, records).items():
                     totals[basis] = totals.get(basis, 0) + amount
@@ -490,6 +493,16 @@ def plan_fertilizer_workflow(
                     'water_totals': water_totals,
                     'analytical_water_totals': analytical,
                     'water_balance': balance,
+                    'concentration_basis': config.get(
+                        'concentration_basis',
+                        {
+                            'status': 'declared',
+                            'water_kg_per_litre': mass / final_volume.value,
+                            'uncertainty': 'not supplied',
+                            'note': 'Final solvent inventory includes carrier and '
+                            'dissolved hydrate water.',
+                        },
+                    ),
                 }
 
             value = run('chemistry', chemical_states)
