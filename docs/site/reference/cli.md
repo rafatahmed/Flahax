@@ -90,7 +90,8 @@ Water is ``ro`` (no ions) or a JSON file::
 
 Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
 bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in aerated water.
-One litre of water is taken as one kilogram.
+Explicit final solvent mass/volume or solution density/nonwater mass define the
+concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
 
 A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
 water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and

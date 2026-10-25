@@ -200,3 +200,10 @@ acid per 1000 L: RO water has no bicarbonate, and the mix sits at pH 6.9.
 Without an `--acid` the sheet is blocked: no base can lower the pH. A full,
 scripted version of the brackish-well example, with charts, is in the
 repository (`python -m examples.tomato_report --output tomato-report`).
+
+## Concentration basis
+
+Water JSON can declare final solvent mass/volume or final solution density and
+complete nonwater mass. See [concentration and solvent mass](../models/concentration-basis.md)
+for input examples, carrier/hydrate accounting and blend assumptions. Legacy
+inputs retain a reported 1 kg solvent/L assumption with unquantified uncertainty.

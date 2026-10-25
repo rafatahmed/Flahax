@@ -44,6 +44,7 @@ __all__ = [
     "TemperatureCelsius",
     "TraceEquilibrium",
     "VolumeLitres",
+    "SolventBasis",
     "alkalinity_meq_per_litre",
     "assert_catalogue_coverage",
     "ammonia_speciation",
@@ -161,6 +162,7 @@ from .fertilizer_equilibrium import (
 )
 from .delivery_plan import DeliveryPlan, compose_delivery_plan, delivery_report, transition_plan
 from .delivery_quantities import (
+    SolventBasis,
     DurationMinutes,
     FinalSolutionRecipe,
     FlowLitresPerMinute,
