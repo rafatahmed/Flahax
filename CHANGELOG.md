@@ -12,6 +12,13 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Offline requirement/ledger validators, numeric-decision inventory and review gates, and source-bound
+  statement/branch coverage collection and gates, with preserved failing audit controls
+  ([#159](https://github.com/rafatahmed/Flahax/issues/159),
+  [#160](https://github.com/rafatahmed/Flahax/issues/160),
+  [#161](https://github.com/rafatahmed/Flahax/issues/161),
+  [#162](https://github.com/rafatahmed/Flahax/issues/162)). No runtime correction is claimed.
+
 - The Zenodo DOI in `CITATION.cff` and the README: concept DOI 10.5281/zenodo.23605678, version 0.6.0 10.5281/zenodo.23605679.
 
 ## [0.6.0] - 2026-10-24

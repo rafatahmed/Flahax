@@ -75,3 +75,16 @@ extend-select = ["D101", "D102", "D103"]
 
 [tool.ruff.lint.per-file-ignores]
 "!src/**" = ["D101", "D102", "D103"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/flahax", "tools", "examples", "benchmarks", "docs/site"]
+relative_files = true
+parallel = true
+patch = ["subprocess"]
+
+[tool.coverage.report]
+precision = 4
+show_missing = true
+exclude_lines = []
+partial_branches = []
