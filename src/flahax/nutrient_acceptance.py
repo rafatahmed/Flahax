@@ -59,7 +59,7 @@ def name_sources(assessment, dosed, library, water=None):
     ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre}); ``library`` the product records.
     Formula counterion sodium (chelates, #84) names the product that carries it.
     """
-    from .product_conversion import counterion_sodium_mg_per_l
+    from .product_conversion import material_inventory
 
     records = {record.get('id'): record for record in library}
     for row in assessment['incidentalContributions']:
@@ -68,10 +68,7 @@ def name_sources(assessment, dosed, library, water=None):
             record = records.get(item['id'])
             if record is None:
                 continue
-            if row['symbol'] in record.get('elements', {}) or (
-                row['symbol'] == 'Na'
-                and counterion_sodium_mg_per_l([(record, item['gramsPerLitre'])]) > 0
-            ):
+            if material_inventory(record)['nutrient_percent'].get(row['symbol'], 0) > 0:
                 names.append(item['name'])
         if (water or {}).get(row['symbol'], 0) > 0:
             names.append('water')

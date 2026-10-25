@@ -2,6 +2,9 @@
 
 ## Current unified model contract
 
+The [shared material inventory](material-inventory.md) supplies pre-fit nutrients
+and chemistry components, with explicit incomplete/composition-disagreement fields.
+
 `catalogue_dose_totals(doses)` converts `library.json` products in **g/kg water**, not g/L, into analytical molal totals. `solve_catalogue_product_doses(doses, ph, water_totals=..., allow_precipitation=True)` sums them into `aqueous_model.solve`. Macro and trace wrappers use that same solver. `plan_catalogue_nitric_target(doses, initial_ph, target_ph, water_totals=..., phases=...)` adds nitrate and repeatedly calls the identical model. Volume-based recipe callers must supply water mass; density is not guessed.
 
 The generated `data/chemistry_25c.json` stores the exact master-basis expansion of 197 aqueous entries and 28 phases from pinned MINTEQ plus two extensions. [Every reaction](chemistry-coverage-matrix.md) has its original equation, log K and source line. `LIGAND_PROFILES` is derived from that file, not an independently rounded table.

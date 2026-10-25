@@ -27,7 +27,8 @@ from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis
-from .product_conversion import MOLAR_MASS
+from .product_conversion import NUTRIENT_BASES as NUTRIENT_BASES
+from .product_conversion import component_nutrient_masses
 from .root_finding import shrink_bracket
 
 BALANCE_IONS = {'Cl-': -1, 'Na+': 1}
@@ -37,26 +38,6 @@ DEFAULT_MAXIMUM_IMBALANCE_PERCENT = 5.0
 # unchanged. Passing the 5 % screen above does not make an analysis balanced.
 CLOSURE_TOLERANCE = 1e-6
 UNITS = 'mol/kg water'
-# Analytical basis -> nutrient symbol (mg/L of the element; N as N).
-NUTRIENT_BASES = {
-    'Ca+2': 'Ca',
-    'Mg+2': 'Mg',
-    'K+': 'K',
-    'Na+': 'Na',
-    'Cl-': 'Cl',
-    'NO3-': 'N_NO3',
-    'NH4+': 'N_NH4',
-    'PO4-3': 'P',
-    'SO4-2': 'S',
-    'Fe+3': 'Fe',
-    'Fe+2': 'Fe',
-    'Mn+2': 'Mn',
-    'Zn+2': 'Zn',
-    'Cu+2': 'Cu',
-    'H3BO3': 'B',
-    'MoO4-2': 'Mo',
-    'Ure': 'N_UREA',
-}
 
 
 ASK_LAB = (
@@ -69,12 +50,14 @@ def nutrient_mg_per_litre(totals, water_mass_kg=1.0, final_volume_litres=1.0):
     """Elemental mg/L from mol/kg water; defaults explicitly represent a 1 kg/1 L basis."""
     solvent = SolventBasis(final_volume_litres, water_mass_kg)
     ppm = {}
-    for basis, ion in NUTRIENT_BASES.items():
-        amount = totals.get(basis)
-        if amount is None:
+    for basis in NUTRIENT_BASES:
+        if totals.get(basis) is None:
             continue
-        value = solvent.molality_to_mg_per_litre(amount, MOLAR_MASS[ion.split('_')[0]])
-        ppm[ion] = ppm.get(ion, 0) + value * (2 if basis == 'Ure' else 1)
+        # Validate each input before combining Fe(II)/Fe(III), so a negative
+        # component cannot be hidden by a positive component of the same nutrient.
+        amount = solvent.molality_to_mg_per_litre(totals[basis], 1.0)
+        for nutrient, value in component_nutrient_masses({basis: amount}).items():
+            ppm[nutrient] = ppm.get(nutrient, 0.0) + value
     return ppm
 
 
