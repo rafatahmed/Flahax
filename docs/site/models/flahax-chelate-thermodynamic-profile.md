@@ -17,8 +17,10 @@ the 1:1 Fe(III)-DTPA reaction and five protonation constants are included.
 (C18H20N2O6, 360.36 g/mol); four protonation constants and the selected Fe
 stability value define the project's 25 C o,o-EDDHA profile.
 Only its 1:1 Fe(III) complex is included. Ca, Mg, Mn, Zn, and Cu DTPA/EDDHA
-complexes are deliberately excluded because no corresponding product is in the
-FlahaX library.
+complexes are absent from the selected profile. Absence of a corresponding
+product does not establish absence of ligand competition after mixing. Positive
+omitted pairs are identified in `AqueousResult.model_limitations`; see the
+[qualification contract](reaction-qualification.md).
 
 `Dtp` and `Edd` are isolated custom PHREEQC components with master aqueous
 species `Dtp-5` and `Edd-4`. They do not alter or override native carbon or

@@ -151,6 +151,7 @@ Material masses and evidence status <models/material-mass-convention>
 Material inventory before fitting <models/material-inventory>
 Concentration and solvent mass <models/concentration-basis>
 Total alkalinity and carbon inference <models/total-alkalinity>
+Reaction qualification and domains <models/reaction-qualification>
 Chemistry coverage matrix <models/chemistry-coverage-matrix>
 PHREEQC reference fixtures <models/reference-fixtures>
 Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>
