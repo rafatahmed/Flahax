@@ -67,6 +67,11 @@ returns or represents; `tests/test_public_docstrings.py` and ruff (D101-D103) ch
 
 ## Required validation
 
+For implementation evidence, use the [traceability validator](https://github.com/rafatahmed/Flahax/blob/main/docs/traceability-validation.md).
+It checks issue-first dependencies and distinguishes reproduced defects from passing fixes.
+Keep personal execution ledgers outside versioned sources; validate them before starting a
+dependent task or recording completion.
+
 ```powershell
 $env:PYTHONPATH = 'src'
 $env:FLAHAX_REQUIRE_PHREEQC = '1'
