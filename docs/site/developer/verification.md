@@ -1,5 +1,60 @@
 # Package verification and equilibrium delivery
 
+## Independent numerical oracles
+
+Run `python -m unittest tests.test_numerical_oracles -v` from the checkout with
+`PYTHONPATH=src`. The offline harness in `tools/numerical_verification.py` imports
+only the Python standard library. Its reference calculations do not import the
+runtime solver, chemistry model, or PHREEQC input generator.
+
+- `box_least_squares(A, b, lower, upper)` enumerates every face of a finite box
+  for up to six variables. Rational elimination gives an exact minimum of
+  `sum((A*x-b)**2)` and its gradient. Singular faces can be skipped because a
+  minimum on a compact box has a representative on a face with independent free
+  columns. Tests check hand-solved optima, KKT signs, boundary optima and rank
+  deficiency. Compare objective and feasibility when optima are nonunique.
+  General linear inequalities, integer and nonlinear problems are outside this
+  oracle's scope; do not use it to certify them.
+- `acid_bracket(C, Ka, Kw, digits=80)` returns decimal-grid bounds for the ideal
+  monoprotic-acid equation `H - Kw/H - Ka*C/(Ka+H) = 0`. Exact rational signs and
+  strict monotonicity establish a unique enclosed root. The width is at most
+  `10**(-digits)` in the supplied concentration basis. The 16–200 digit range is
+  a resource limit. Tests independently check the denominator-cleared cubic,
+  exact rational roots, water-only behavior and nested precision intervals.
+  This is an ideal analytical model, not a full electrolyte or activity model.
+- `error_account` reports absolute error, relative error (undefined at zero),
+  and the separate absolute/relative contributions to the inclusive allowance
+  `atol + rtol*abs(reference)`. Decimal input text is interpreted exactly; binary
+  float inputs use their round-trip decimal spelling. Nonfinite values and
+  negative allowances fail. Callers own and justify tolerances.
+
+`compare_reference` requires matching declared temperature, concentration units,
+final analytical totals, pH, carbon boundary, oxidation-state convention, phases
+and charge-balancing boundary. Missing quantities or budgets fail. It retains
+both methods, provenance hashes, per-quantity errors and any shared hashes.
+It validates hash syntax; the capture/replay runner must verify actual bytes.
+These declarations are not inferred from numerical outputs or authenticated by
+the comparison function.
+
+The integration control checks the existing Fe-EDTA PHREEQC capture and every
+associated file hash, then compares runtime molalities at the **final sodium-balanced
+inventory**. The original PHREEQC input balances sodium; comparing against its
+unadjusted initial sodium would be a different problem. Existing capture
+tolerances are reused unchanged. FlahaX's Davies/water-activity approximations
+and the pinned reference method remain explicit. A deliberately doubled sodium
+output must fail. Other controls reject wrong feasible optimization results,
+wrong acid roots, mismatched conditions and malformed evidence.
+
+Retain source revision/dirty-file hashes, exact inputs, command and interpreter,
+reference executable/database/input hashes, comparison budgets and their origin,
+per-quantity errors, and failed controls in the evidence record. Run the mandatory
+live replay below to validate the installed reference; offline comparisons do
+not substitute for it. Shared thermodynamic constants and generated reference
+inputs can hide common errors. Even disjoint hashes do not prove independent
+parameter provenance. Neither harness coverage nor reference agreement establishes
+physical accuracy. Numerical tolerance selection and broader golden-reference
+qualification remain separate work; physical validation is a later stage.
+
 ## User manual and retained release artifacts
 
 The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a package resource in both distributions; all nine Python examples are executed during source regression and isolated wheel/sdist verification. The verification report records the exact manual hash and example count. The bundled `API_REFERENCE.md` covers every top-level public export; source tests reject signature drift and clean installs check export coverage and record its hash. `docs/index.md` is the documentation navigation page; historical material is separate.

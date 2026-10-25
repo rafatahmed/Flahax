@@ -10,6 +10,14 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+### Added
+
+- Independent rational bounded-fit and high-precision acid-equilibrium oracles,
+  matched-reference error accounting, and adversarial verification controls.
+  Reports identify shared provenance and the limits of reference agreement;
+  runtime tolerances and reference data remain unchanged
+  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
+
 ### Changed
 
 - Aqueous results now identify omitted ligand/metal competition and selected
