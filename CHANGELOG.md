@@ -10,6 +10,11 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Conserve calcium/sulfate in retained pairing calculations and reject exhausted
+  legacy equilibrium iterations; add kernel conservation, domain, phase and
+  failure-path controls with explicit current/legacy model distinctions.
+
+
 ### Added
 
 - Independent rational bounded-fit and high-precision acid-equilibrium oracles,

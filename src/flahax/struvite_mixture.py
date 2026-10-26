@@ -61,14 +61,15 @@ def _calcium_sulfate_free_totals(
 ) -> tuple[float, float, float]:
     """Conserve Ca/SO4 totals with neutral CaSO4(aq) at fixed I."""
     gamma = davies_gamma(2, ionic_strength)
-    calcium, sulfate = calcium_total, sulfate_total
-    for _ in range(100):
-        pair = 10.0**LOG_BETA_CASO4_25C * (gamma * calcium) * (gamma * sulfate)
-        updated_ca, updated_so4 = max(0.0, calcium_total - pair), max(0.0, sulfate_total - pair)
-        if max(abs(updated_ca - calcium), abs(updated_so4 - sulfate)) < 1e-14:
-            return updated_ca, updated_so4, pair
-        calcium, sulfate = (calcium + updated_ca) / 2, (sulfate + updated_so4) / 2
-    return calcium, sulfate, 10.0**LOG_BETA_CASO4_25C * (gamma * calcium) * (gamma * sulfate)
+    # Solve for the free amount of the limiting component. Rationalizing the
+    # positive quadratic root avoids subtracting nearly equal numbers. Unlike
+    # the former fixed-point iteration, this cannot silently return a cycle.
+    limiting, excess = min(calcium_total, sulfate_total), abs(calcium_total - sulfate_total)
+    constant = 10.0**LOG_BETA_CASO4_25C * gamma**2
+    linear = 1 + constant * excess
+    free = 2 * limiting / (linear + math.sqrt(linear**2 + 4 * constant * limiting))
+    pair = limiting - free
+    return calcium_total - pair, sulfate_total - pair, pair
 
 
 def struvite_mixture_speciation(
@@ -235,6 +236,8 @@ def solve_charge_balanced_struvite_mixture(
         if abs(updated - ionic_strength) < 1e-10:
             break
         ionic_strength = (ionic_strength + updated) / 2
+    else:
+        raise DeliveryError("nonconvergent", "legacy struvite ionic-strength iteration limit")
     gypsum_si = None
     if calcium_molal and sulfate_molal:
         gamma2 = davies_gamma(2, ionic_strength)

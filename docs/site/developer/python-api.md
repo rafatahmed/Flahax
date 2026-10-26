@@ -251,3 +251,17 @@ python -m unittest discover -s tests -t .
 ```
 
 `test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the example export has 28 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
+
+### Chemistry failure and compatibility contract
+
+`solve_fertilizer_equilibrium`, `solve_mixed_fertilizer_equilibrium` and
+`solve_ch_micro_equilibrium` expose views of the current simultaneous model.
+The explicitly named legacy macro/acid functions and isolated reference kernels
+retain narrower reaction sets. Use the [model scope](../models/fertilizer-equilibrium-model.md)
+to distinguish them; the historical nitric helper uses a reduced alkalinity
+expression, while the current nitric target conserves added nitrate.
+
+Callers must handle `DeliveryError` with code `nonconvergent` from retained
+iterative kernels as well as the current solver. A failed iteration budget is
+not a usable last-iterate result. Fixed-pH solutions do not automatically imply
+charge neutrality, and equilibrium phase amounts do not predict kinetics.
