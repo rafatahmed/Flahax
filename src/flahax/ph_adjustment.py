@@ -438,6 +438,15 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     ]
     if result['requirementConflicts']:
         result['feasible'] = False
+    if 'substitutionSearch' in result:
+        result['substitutionSearch'] = dict(
+            result['substitutionSearch'],
+            status='candidate_found' if result['feasible'] else 'search_incomplete',
+            method='convex blend of searched endpoint recipes; no global search certificate',
+            attemptedProductIds=[
+                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
+            ],
+        )
     return result
 
 

@@ -801,6 +801,40 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
+def _automatic_fit(library, salts, excluded, targets, water, ridge, maxima):
+    """Grow the permitted supplied pool until no deficient nutrient adds a source.
+
+    Every successful recovery adds an ID from the finite caller inventory. Each
+    fit considers mixtures of the whole current pool; no target or limit changes.
+    """
+    warnings, attempts = [], []
+    while True:
+        attempts.append([salt['id'] for salt in salts])
+        if salts:
+            solved = _simplify(
+                salts,
+                targets,
+                water,
+                _fit_within(salts, targets, water, ridge, maxima),
+                ridge,
+                maxima,
+            )
+        else:
+            loss, rows = score(forward([], [], water), targets)
+            solved = dict(grams=[], rows=rows, loss=loss)
+        short = _short(solved['rows'], targets)
+        if not short:
+            break
+        previous_ids = {salt['id'] for salt in salts}
+        salts, excluded, notes = _recover(library, salts, excluded, targets, short)
+        warnings.extend(note for note in notes if note not in warnings)
+        if {salt['id'] for salt in salts} == previous_ids:
+            break
+    if not salts:
+        raise InputError("no salt remains after the assay and ion checks")
+    return salts, excluded, solved, warnings, attempts
+
+
 def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset()) -> set[str]:
     """Positive targets still missed by a least-squares fit on target rows alone."""
     kept = {symbol: ppm for symbol, ppm in targets.items() if ppm > 0 and symbol not in drop}
@@ -1065,6 +1099,9 @@ def recommend(
         product-to-dose mapping. Feasible requires positive-target fit within 1%,
         satisfied zero requirements and maxima, and no requirement conflicts.
         requirementConflicts identifies targets above maxima and water above limits.
+        substitutionSearch records supplied and attempted product IDs and whether
+        a nutrient-feasible candidate was found. Recovery never expands the supplied
+        inventory; exhausted search is not a global infeasibility certificate.
         This is not chemical, stock or operational approval.
 
     Raises:
@@ -1101,8 +1138,6 @@ def recommend(
                 "basis": "explicit caller fraction of total target N; no additional cap",
             }
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
-    if not salts:
-        raise InputError("no salt remains after the assay and ion checks")
     warnings: list[str] = []
     balance = target_ion_balance(targets)
     if balance["exceedsWarning"]:
@@ -1114,22 +1149,10 @@ def recommend(
             "Untargeted counterions and other species may balance the subset; "
             "this check does not prove nutrient infeasibility."
         )
-    solved = _simplify(
-        salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima
+    salts, excluded, solved, recovered, attempts = _automatic_fit(
+        library, salts, excluded, targets, water, ridge, maxima
     )
-    short = _short(solved["rows"], targets)
-    if short:
-        salts, excluded, recovered = _recover(library, salts, excluded, targets, short)
-        warnings.extend(recovered)
-        if recovered:
-            solved = _simplify(
-                salts,
-                targets,
-                water,
-                _fit_within(salts, targets, water, ridge, maxima),
-                ridge,
-                maxima,
-            )
+    warnings.extend(recovered)
     solved["salts"] = _chosen(salts, solved["grams"])
     chosen_names = {item["name"] for item in solved["salts"]}
     warnings = [
@@ -1199,4 +1222,13 @@ def recommend(
     solved["unmetTargets"] = _diagnose(
         library, targets, water, solved["rows"], maxima, allowed, allow_carbonates
     )
+    solved['substitutionSearch'] = {
+        'status': 'candidate_found' if solved['feasible'] else 'search_incomplete',
+        'availableProductIds': [salt.get('id') for salt in library],
+        'attemptedProductIds': attempts,
+        'method': 'whole-pool nonnegative fitting with monotone permitted-source recovery',
+        'scope': 'Caller-supplied inventory only; unchanged targets, water and hard limits. '
+        'Input order breaks numerical ties. Exhaustion is not global infeasibility; '
+        'structural proofs are recorded separately in unmetTargets.',
+    }
     return solved
