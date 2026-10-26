@@ -49,20 +49,24 @@ class CeilingConstraintTests(unittest.TestCase):
 
     def test_result_does_not_depend_on_the_starting_point(self):
         # The old 1024-weight penalty fixed doses only to ~4e-3 g/L, so warm and cold
-        # starts disagreed; the constrained optimum is unique (ridge > 0).
+        # starts disagreed. Compare nutrient fit: equivalent allocations are allowed.
         limit = recommend(SALTS, GROW["targets"], {}, max_ammonium_fraction=0.10)["ammoniumLimit"][
             "mgPerL"
         ]
-        cold = _fit_within(SALTS, GROW["targets"], {}, 0.02, {"N_NH4": limit})
+        cold = _fit_within(SALTS, GROW["targets"], {}, 0.0, {"N_NH4": limit})
         warm = _fit_within(
             SALTS,
             GROW["targets"],
             {},
-            0.02,
+            0.0,
             {"N_NH4": limit},
             x0=[g * 1.5 + 0.01 for g in cold["grams"]],
         )
-        self.assertLess(max(abs(a - b) for a, b in zip(cold["grams"], warm["grams"])), 1e-7)
+        self.assertAlmostEqual(cold["loss"], warm["loss"], places=10)
+        for row in cold["rows"]:
+            if row["target"] is not None and row["target"] > 0:
+                self.assertAlmostEqual(row["final"], final(warm, row["symbol"]), places=6)
+        self.assertLessEqual(final(warm, "N_NH4"), limit)
 
 
 if __name__ == "__main__":

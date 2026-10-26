@@ -59,12 +59,12 @@ from flahax import gap_for, load_library, recommend, solve_weights
 
 load_library() -> dict
 gap_for(targets, water) -> dict
-recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.02,
+recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
           maximum_concentrations=None, max_ammonium_fraction=0.10) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
-`solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then calls the fit with `ridge=0.02`. `ridge` shrinks grams. It is not a count of salts.
+`solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then fits positive targets by squared relative error. Both APIs retain `ridge` for compatibility but require zero; nonzero or invalid values raise `InputError`. Remove an old explicit `ridge=0.02` argument to migrate. Dose magnitude and untargeted nutrient concentrations do not enter the primary objective. Equivalent best-fit allocations need not use identical products.
 
 `forward(salts, grams, water=None)` and `score(achieved, targets)` live in `flahax.engine`. `forward` applies the ppm equation. `score` returns the loss and the percentage-error rows.
 
@@ -142,7 +142,7 @@ reason:
 | `no_source` | No catalogue product supplies the element (for example Si). |
 | `prohibited_by_zero_requirement` | Every available source of the deficient nutrient carries a prohibited zero-limit nutrient; `zeroRequirements` and `blockedProducts` identify the catalogue-specific certificate. |
 | `limited_by_ceiling` | The targets are reachable, but a nutrient ceiling binds; `bindingLimits` names it. |
-| `incidental_tradeoff` | The targets are reachable, but the incidental-ion penalty chose otherwise. |
+| `fit_degradation` | Target-only fitting finds a better result, but no binding ceiling is identified; this is a diagnostic, not an infeasibility proof. |
 | `conflicting_targets` | Dropping one of the `conflictsWith` targets makes the rest reachable; `reachableWithChloride` says whether chloride products (which need a Cl ceiling) would reach it. |
 
 The diagnosis is a least-squares check on the target rows alone. It names a
@@ -151,8 +151,8 @@ likely cause; it does not prove infeasibility.
 ## Incidental ions and ceilings
 
 An incidental ion is one the products add but the formula does not ask for.
-Without a ceiling, each mg/L of it is penalized in the fit. With a ceiling in
-`maximum_concentrations` (mg/L), the ion is free up to that value. If the fit
+Without a ceiling, it is reported for review and does not affect fitting loss.
+With a ceiling in `maximum_concentrations` (mg/L), it is allowed up to that value. If the fit
 would exceed it, the ceiling is applied as a constraint: the best fit to the
 targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
@@ -163,8 +163,17 @@ ammonium maximum is invented. When explicitly supplied and the targets omit
 `N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
 without an additional absolute cap. `result["ammoniumLimit"]` records it.
 An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
-The existing incidental-ion penalty remains; this change does not qualify
-the solver objective. Explicit zeros and targeted ceilings are enforced independently.
+Explicit zeros and targeted ceilings are enforced independently of the objective.
+`score` retains all nutrient rows but sums only positive-target squared relative errors.
+Binding-limit diagnostics use the same numerical aim and convergence tolerance as
+the ceiling search; hard-limit acceptance still compares directly with the stated limit.
+The existing secondary simplification can still degrade the primary optimum; its
+separate regression remains open. Published dose rounding is also separately tracked.
+The coupled pH search treats an opposite-direction trial as a bound, never as an
+accepted dose. At a product switch it can blend the two bracketing product recipes,
+solve charge balance on the mixture, and rebuild nutrient and limit assessments at
+the verified reagent dose. Initial wrong-direction products remain not applicable.
+This bounded repair does not certify global joint optimality; issue #158 remains open.
 
 The historical defaults were project-owner decisions (2026-10-20), grounded in Dutch
 soilless practice. Recommended NH4 is 5-15% of total N, with at most about

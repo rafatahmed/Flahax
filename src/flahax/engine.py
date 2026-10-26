@@ -361,7 +361,7 @@ def nnls(
 
 def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
     """The squared-relative-error loss and one row per nutrient (target, final and percent
-    difference); untargeted nutrients add a small penalty.
+    difference). Only strictly positive targets contribute to the loss.
     """
     loss = 0.0
     rows = []
@@ -373,8 +373,6 @@ def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
         if target is not None and target > 0:
             delta = ((final - target) / target) * 100.0
             loss += (delta / 100.0) ** 2
-        elif final > 0:
-            loss += (final / 100.0) ** 2
         rows.append({"symbol": symbol, "target": target, "final": final, "deltaPct": delta})
     return loss, rows
 
@@ -416,13 +414,14 @@ def _fit(
     x0: list[float] | None = None,
     grams_cache: dict | None = None,
 ) -> dict:
-    """Non-negative grams. ridge is an L2 penalty on grams, not a salt count.
+    """Minimize positive-target squared relative errors with nonnegative doses.
 
-    An incidental ion with a stated positive maximum is not penalized; an ion in
+    No dose or incidental-nutrient penalty enters the objective. An ion in
     ceilings, as (weight, aim mg/L), is pulled toward that aim. The matrix depends only
     on which ions have ceiling rows (aims change rhs alone), so grams_cache, when given,
     shares one Gram cache per set of ceiling ions.
     """
+    _validate_ridge(ridge)
     maxima = maxima or {}
     ceilings = ceilings or {}
     symbols = list(
@@ -447,26 +446,13 @@ def _fit(
             limit = maxima[symbol]
             matrix.append([weight * rate / limit for rate in rates])
             rhs.append(weight * (aim - background) / limit)
-        elif target is not None and target > 0:
-            continue
-        elif maxima.get(symbol, 0.0) > 0:
-            continue
-        else:
-            matrix.append([rate / 100.0 for rate in rates])
-            rhs.append(-background / 100.0)
-    if ridge > 0 and salts:
-        for index in range(len(salts)):
-            row = [0.0] * len(salts)
-            row[index] = ridge
-            matrix.append(row)
-            rhs.append(0.0)
     gram = None
     if grams_cache is not None and matrix:
         key = tuple(sorted(ceilings))
         gram = grams_cache.get(key)
         if gram is None:
             gram = grams_cache[key] = _LazyGram([list(column) for column in zip(*matrix)])
-    grams = nnls(matrix, rhs, x0, gram)
+    grams = nnls(matrix, rhs, x0, gram) if matrix else [0.0] * len(salts)
     achieved = forward(salts, grams, water)
     loss, rows = score(achieved, targets)
     return {"grams": grams, "loss": loss, "rows": rows}
@@ -594,10 +580,19 @@ def _fit_within(
     return solved
 
 
+def _validate_ridge(ridge: float) -> None:
+    """Reject retired regularization rather than silently changing the objective."""
+    if isinstance(ridge, bool) or not isinstance(ridge, (int, float)) or ridge != 0:
+        raise InputError(
+            "ridge must be 0; dose regularization conflicts with accuracy-first fitting"
+        )
+
+
 def solve_weights(
     salts: list[dict], targets: dict, water: dict | None = None, ridge: float = 0.0
 ) -> dict:
-    """Non-negative grams per litre minimizing squared Δ%."""
+    """Fit nonnegative g/L by positive-target squared relative error. ridge must be zero."""
+    _validate_ridge(ridge)
     targets = validate_profile(targets, "targets")
     water = validate_profile(water or {}, "water")
     for salt in salts:
@@ -835,7 +830,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     binding = sorted(
         ion
         for ion, limit in maxima.items()
-        if limit > 0 and final.get(ion, 0.0) >= limit * (1 - 1e-6)
+        if limit > 0 and final.get(ion, 0.0) >= limit * (1 - CEILING_MARGIN - CEILING_TOLERANCE)
     )
     base = _target_misses(engine_pool, targets, water)
     with_chloride = None
@@ -870,7 +865,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
             )
             item["blockedProducts"] = [salt.get("id") for salt in sources]
         elif not base:
-            item["reason"] = "limited_by_ceiling" if binding else "incidental_tradeoff"
+            item["reason"] = "limited_by_ceiling" if binding else "fit_degradation"
             item["bindingLimits"] = binding
         else:
             others = [t for t, ppm in targets.items() if ppm > 0 and t != symbol]
@@ -969,7 +964,7 @@ def recommend(
     *,
     allow_ions: frozenset[str] | set[str] | None = None,
     allow_carbonates: bool = False,
-    ridge: float = 0.02,
+    ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
     max_ammonium_fraction: float | None = None,
 ) -> dict:
@@ -985,7 +980,8 @@ def recommend(
         allow_ions: Explicit exceptions to the default restricted-ion filter.
         allow_carbonates: Permit carbonate products in nutrient fitting only;
             this does not establish dissolution or stock compatibility.
-        ridge: L2 dose penalty, not a limit on the number of products.
+        ridge: Retained compatibility argument; must be zero. Nonzero dose
+            regularization raises InputError because it degrades target accuracy.
         maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
             example {"Cl": 70}. An ion with a positive ceiling is admitted like
             allow_ions. Untargeted nutrients are not penalized up to their ceiling;
@@ -997,7 +993,7 @@ def recommend(
             none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
             the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
             caller policy, with no additional absolute cap. Default None adds
-            no ammonium maximum and keeps the existing incidental-ion objective.
+            no ammonium maximum. Untargeted nutrients do not enter the objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1019,6 +1015,7 @@ def recommend(
         InputError: Invalid targets/water or no eligible products. Inspect
             exclusions and warnings for skipped or recovered candidates.
     """
+    _validate_ridge(ridge)
     targets = validate_profile(targets, "targets")
     if not targets:
         raise InputError("targets are required")

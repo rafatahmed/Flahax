@@ -72,11 +72,12 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertIsNone(result["ammoniumLimit"])
         self.assertLessEqual(final(result, "N_NH4"), 12 + 1e-12)
 
-    def test_none_restores_the_penalty_only_fit(self):
+    def test_none_keeps_accuracy_first_fit_without_an_implicit_limit(self):
         targets = formula("Chilli (maximumyield)")["targets"]
         result = recommend(SALTS, targets, {}, max_ammonium_fraction=None)
         self.assertIsNone(result["ammoniumLimit"])
-        self.assertFalse(result["feasible"])  # the documented #54 miss without a limit
+        self.assertTrue(result["feasible"])
+        self.assertEqual(result["limitViolations"], [])
 
     def test_invalid_fraction_is_rejected(self):
         targets = formula("Chilli (maximumyield)")["targets"]

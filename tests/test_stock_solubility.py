@@ -91,7 +91,11 @@ class StockSolubilityTests(unittest.TestCase):
         )
         for row in found:
             self.assertIsInstance(row, SolubilityRow)
-            self.assertEqual(row.status, 'not_checked' if row.product in UNSOURCED else 'ok', row)
+            self.assertEqual(
+                row.status,
+                'ok' if row.product in {r['product'] for r in TABLE} else 'not_checked',
+                row,
+            )
             self.assertEqual(row.tank, grouping.tank_of(row.product))
         k2so4 = next(r for r in found if r.product == 'Potassium Sulfate')
         self.assertAlmostEqual(
@@ -111,7 +115,9 @@ class StockSolubilityTests(unittest.TestCase):
         self.assertEqual({r['product'] for r in summary['solubility']}, weighed)
         for row in summary['solubility']:
             self.assertEqual(
-                row['status'], 'not_checked' if row['product'] in UNSOURCED else 'ok', row
+                row['status'],
+                'ok' if row['product'] in {r['product'] for r in TABLE} else 'not_checked',
+                row,
             )
         self.assertTrue(all(r['note'] == SINGLE_SALT for r in summary['solubility']))
         self.assertFalse(any('does not dissolve' in w for w in summary['warnings']))
@@ -182,7 +188,9 @@ class StockSolubilityTests(unittest.TestCase):
         _, summary = tomato(100, 20)
         sheet = render_batch_sheet(summary)
         self.assertIn('Solubility not checked', sheet)
-        for name in UNSOURCED:
+        missing = {r['product'] for r in summary['solubility'] if r['status'] == 'not_checked'}
+        self.assertTrue(missing)
+        for name in missing:
             self.assertIn(name, sheet.split('Solubility not checked', 1)[1])
         self.assertFalse(summary['tanks']['solubility_checked'])
 
@@ -235,7 +243,9 @@ class PackagedTableTests(unittest.TestCase):
 
         summary = packaged(100, 25)
         status = {r['product']: r['status'] for r in summary['solubility']}
-        self.assertEqual({p for p, s in status.items() if s == 'not_checked'}, set(UNSOURCED))
+        self.assertEqual(
+            {p for p, s in status.items() if s == 'not_checked'}, set(UNSOURCED) & set(status)
+        )
         self.assertTrue(all(s == 'ok' for p, s in status.items() if p not in UNSOURCED), status)
         cold = packaged(200, 10)
         row = next(r for r in cold['solubility'] if r['product'] == 'Potassium Sulfate')

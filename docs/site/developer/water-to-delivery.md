@@ -216,12 +216,21 @@ its targets and the plan is rejected. `ph_adjustment` plans them together:
    nitric acid, P from phosphoric acid, K from the bases) are counted as supply,
    like the water's, and the recipe is fitted again. This repeats until the
    recipe and the dose agree; if the recipe switches products between nearby
-   doses, the nearer side is taken and its nutrients are rescored at the dose
-   that recipe needs.
+   doses, the two bracketing product recipes are blended. Charge balance is solved
+   on each actual mixture; pH values are never interpolated. A trial that crosses
+   to the opposite reagent direction bounds the search but cannot be returned as
+   a plan. The final dose is independently recalculated, and nutrient rows, limits,
+   source attribution and unmet-target diagnostics are rebuilt from that recipe.
+   A missing charge bracket or dose disagreement reports nonconvergence.
 4. Every candidate reports its dose (mol/kg water, product grams and, with a
    density, litres), nutrient contribution, recipe and target-pH state, even
    when it is rejected. A plan is selected only from accepted candidates, by
    lowest final nutrient loss.
+
+This search is not a global joint-optimization certificate. Recipe selection can
+change when the nutrient objective changes; an acid-only inventory may become
+inapplicable if the new unadjusted recipe needs a base. Existing targets and
+maximum concentrations remain unchanged.
 
 A recipe that misses a target still gets a pH plan: the miss stays in the
 recipe's `unmetTargets`. Bases are added as K+ with implicit hydroxide (KOH),
@@ -236,8 +245,8 @@ review make it `requires_review` (next section).
 ## Saturation indices and acceptance
 
 A positive saturation index says a solid is thermodynamically possible, not
-that it forms. FlahaX and live PHREEQC 3.8.6 agree on every sign at the coupled
-target states (#78), so the question is which phases form at feed conditions.
+that it forms. FlahaX and live PHREEQC 3.8.6 agreed on every sign at the retained
+matched target states (#78); this does not establish agreement for every new recipe, so the question is which phases form at feed conditions.
 Four phases, supersaturated in most phosphate feeds, make a plan
 `requires_review` instead of rejecting it, each with its reason and sources:
 

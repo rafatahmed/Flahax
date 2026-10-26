@@ -609,7 +609,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -624,7 +624,8 @@ Args:
     allow_ions: Explicit exceptions to the default restricted-ion filter.
     allow_carbonates: Permit carbonate products in nutrient fitting only;
         this does not establish dissolution or stock compatibility.
-    ridge: L2 dose penalty, not a limit on the number of products.
+    ridge: Retained compatibility argument; must be zero. Nonzero dose
+        regularization raises InputError because it degrades target accuracy.
     maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
         example {"Cl": 70}. An ion with a positive ceiling is admitted like
         allow_ions. Untargeted nutrients are not penalized up to their ceiling;
@@ -636,7 +637,7 @@ Args:
         none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
         the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
         caller policy, with no additional absolute cap. Default None adds
-        no ammonium maximum and keeps the existing incidental-ion objective.
+        no ammonium maximum. Untargeted nutrients do not enter the objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -666,7 +667,7 @@ Source module: `flahax.engine`. Import with `from flahax import recommend`.
 solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0) -> 'dict'
 ```
 
-Non-negative grams per litre minimizing squared Δ%.
+Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 
