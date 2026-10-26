@@ -98,9 +98,9 @@ ION_BALANCE_WARNING_PCT = 10.0
 def target_ion_balance(targets: dict) -> dict:
     """Cation and anion meq/L implied by a formula's targets, and their imbalance.
 
-    A real solution is electrically neutral (Steiner 1961). When a formula is not,
-    no combination of salts meets every target exactly: counter-ions the formula does
-    not list must carry the difference.
+    This is a conventional nutrient-subset calculation, not full solution charge.
+    Untargeted counterions, ligands and pH-dependent species may carry charge;
+    imbalance cannot establish nutrient infeasibility or chemical incompleteness.
     """
     cations = anions = 0.0
     for symbol, ppm in targets.items():
@@ -121,6 +121,11 @@ def target_ion_balance(targets: dict) -> dict:
         "imbalancePercent": imbalance,
         "exceedsWarning": abs(imbalance) > ION_BALANCE_WARNING_PCT,
         "assumptions": "P as H2PO4-, S as SO4 2-; urea, Si and micronutrients excluded",
+        "scope": "nutrient_subset_convention",
+        "provesInfeasibility": False,
+        "unrepresentedNutrients": sorted(
+            symbol for symbol, ppm in targets.items() if ppm > 0 and symbol not in BALANCE_IONS
+        ),
     }
 
 

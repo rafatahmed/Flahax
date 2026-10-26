@@ -125,28 +125,40 @@ assumption: no published standard gives a per-ion tolerance for preparing a feed
 solution. Dutch practice corrects only when root-zone analyses deviate by 25% or
 more (De Kreij et al. 2003).
 
-A real nutrient solution is electrically neutral (Steiner 1961). `recommend`
-reports `targetIonBalance`: the cation and anion meq/L implied by the formula
-itself, counting P as H2PO4- and S as SO4 2- and excluding urea, Si and
-micronutrients. When the two sums differ by more than 10% of the larger, a
-warning explains that no salt combination can meet every target exactly. The
-10% follows the window used by Steiner-type software (Martinez-Corral et al.
-2009). Several shipped formulas exceed it, including Pepper (Howard Resh) at
--39.5% and the U of Florida tomato clusters at +19% to +30%.
+`targetIonBalance` is a conventional charge check on requested nutrient entries,
+not the whole solution. `recipeIonBalance` applies the same convention to all
+emitted nutrient concentrations, including supported counterions and source water.
+Both expose `scope="nutrient_subset_convention"`, `provesInfeasibility=False`
+and `unrepresentedNutrients`. The existing 10% warning is informational: it
+cannot rule out an exact nutrient fit. P is represented as H2PO4- and S as SO4 2-;
+this convention does not perform speciation.
 
-Every positive target missed by more than 1% appears in `unmetTargets` with a
-reason:
+`chargeAssessment.status="partial_charge_inventory"` explicitly records the
+boundary. `assayOnlyProducts` identifies emitted products without supported
+analytical components. `materialInventory` records available components, including
+ligands; even supported components do not establish full water chemistry or the
+pH-dependent species charge. A balanced nutrient subtotal is not proof of a
+chemically complete solution.
+
+Every positive target missed by more than 1%, and every violated zero target,
+appears in `unmetTargets`. Relative error remains null for zero targets.
 
 | Reason | Meaning |
 |---|---|
-| `no_source` | No catalogue product supplies the element (for example Si). |
-| `prohibited_by_zero_requirement` | Every available source of the deficient nutrient carries a prohibited zero-limit nutrient; `zeroRequirements` and `blockedProducts` identify the catalogue-specific certificate. |
-| `limited_by_ceiling` | The targets are reachable, but a nutrient ceiling binds; `bindingLimits` names it. |
-| `fit_degradation` | Target-only fitting finds a better result, but no binding ceiling is identified; this is a diagnostic, not an infeasibility proof. |
-| `conflicting_targets` | Dropping one of the `conflictsWith` targets makes the rest reachable; `reachableWithChloride` says whether chloride products (which need a Cl ceiling) would reach it. |
+| `water_exceeds_target` | Source water already exceeds the missed target; nonnegative product additions cannot subtract it. |
+| `target_above_maximum` | The requested target contradicts its explicit hard maximum. |
+| `no_source` | No admitted nutrient product supplies the deficient nutrient. |
+| `prohibited_by_zero_requirement` | Every source of the deficient nutrient carries a prohibited nutrient; `zeroRequirements` and `blockedProducts` identify the witness. |
+| `limited_by_ceiling` | A relaxed target-only fit succeeds and a limit is observed binding; this is a possible cause, not proof the ceiling forces this miss. |
+| `fit_degradation` | Relaxed fitting succeeds but no binding ceiling is identified. |
+| `conflicting_targets` | The relaxed search still misses targets; `conflictsWith` lists successful drop-one searches and `reachableWithChloride` reports a relaxed chloride search. Neither establishes feasibility under the original constraints. |
 
-The diagnosis is a least-squares check on the target rows alone. It names a
-likely cause; it does not prove infeasibility.
+The first four reasons carry `status="proven_infeasible"` and an explicit
+`proofScope`: the declared nonnegative nutrient inventory and caller constraints.
+The remaining reasons carry `status="search_incomplete"` and null `proofScope`.
+`searchScope` discloses the relaxed zero/maximum constraints. No failed numerical
+search or partial charge sum is promoted to an impossibility proof. Feasibility
+and hard-limit assessment of the actual emitted recipe remain separate.
 
 ## Incidental ions and ceilings
 

@@ -45,6 +45,26 @@ class TargetIonBalanceTests(unittest.TestCase):
         balanced = recommend(LIBRARY["salts"], formula("Hoagland solution"), {})
         self.assertFalse(any("not electrically balanced" in w for w in balanced["warnings"]))
 
+    def test_permitted_counterion_completes_target_subset(self):
+        result = recommend(
+            [dict(id='kcl', name='kcl', elements={'K': 39.0983, 'Cl': 35.45})],
+            {'K': 39.0983},
+            maximum_concentrations={'Cl': 40},
+        )
+        self.assertTrue(result['feasible'])
+        self.assertAlmostEqual(result['targetIonBalance']['imbalancePercent'], 100)
+        self.assertAlmostEqual(result['recipeIonBalance']['imbalancePercent'], 0, places=12)
+        self.assertFalse(result['recipeIonBalance']['provesInfeasibility'])
+        self.assertEqual(result['chargeAssessment']['status'], 'partial_charge_inventory')
+        self.assertEqual(result['chargeAssessment']['assayOnlyProducts'], ['kcl'])
+        self.assertFalse(any('No salt combination' in w for w in result['warnings']))
+
+    def test_partial_charge_convention_discloses_unrepresented_nutrients(self):
+        balance = target_ion_balance({'Mo': 0.1, 'N_UREA': 2, 'K': 0})
+        self.assertEqual(balance['unrepresentedNutrients'], ['Mo', 'N_UREA'])
+        self.assertEqual(balance['scope'], 'nutrient_subset_convention')
+        self.assertFalse(balance['provesInfeasibility'])
+
 
 if __name__ == "__main__":
     unittest.main()

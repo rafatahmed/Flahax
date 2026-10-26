@@ -24,8 +24,9 @@ FlahaX plans a batch; it does not dose anything, and its results are calculation
   precipitation note or the chemistry assumption.
 - Your water analysis is refused (more than 5 % out of balance), or your water
   breaks a limit even at a small share.
-- Targets are missed with the reason `conflicting_targets`: the formula
-  itself does not balance, and a different formula may be needed.
+- Targets are missed with the reason `conflicting_targets`: the search
+  has not found a satisfactory fit. Review available products and constraints; this
+  diagnosis does not prove that the formula is impossible.
 - The measured pH or EC after mixing differs a lot from the sheet and you
   cannot find a weighing or product error.
 - Plants show deficiency or toxicity symptoms, or the drainage EC or pH drifts

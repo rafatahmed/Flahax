@@ -819,10 +819,13 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
 
 
 def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
-    """Explain each missed positive target (#39). A least-squares diagnosis on the
-    target rows alone: it names a cause, it does not prove infeasibility."""
+    """Explain missed positive/zero targets with scoped structural proofs or
+    non-certifying relaxed-search observations; never infer proof from a miss."""
     missed = [
-        row for row in rows if row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT
+        row
+        for row in rows
+        if (row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT)
+        or (row["target"] == 0 and row["final"] > 0)
     ]
     if not missed:
         return []
@@ -858,6 +861,10 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
             "target": row["target"],
             "final": row["final"],
             "deltaPct": row["deltaPct"],
+            "status": "search_incomplete",
+            "proofScope": None,
+            "searchScope": "Target-only relaxed least-squares searches omit zero and maximum "
+            "constraints; failed searches and observed binding limits are not proofs.",
         }
         sources = [salt for salt in usable if _supplies(salt, symbol)]
         zero_limits = {s for s, v in (maxima | targets).items() if v == 0}
@@ -865,7 +872,13 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
         blocked_sources = [
             salt for salt in sources if any(_nutrients(salt).get(s, 0.0) > 0 for s in zero_limits)
         ]
-        if not sources:
+        if water.get(symbol, 0.0) > targets[symbol]:
+            item["reason"] = "water_exceeds_target"
+            item["waterPpm"] = water[symbol]
+        elif symbol in maxima and targets[symbol] > maxima[symbol]:
+            item["reason"] = "target_above_maximum"
+            item["maximumPpm"] = maxima[symbol]
+        elif not sources:
             item["reason"] = "no_source"
         elif len(blocked_sources) == len(sources) and water.get(symbol, 0.0) < targets[symbol]:
             item["reason"] = "prohibited_by_zero_requirement"
@@ -884,8 +897,42 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
                 if with_chloride is None:
                     with_chloride = not _target_misses(usable, targets, water)
                 item["reachableWithChloride"] = with_chloride
+        if item["reason"] in {
+            "water_exceeds_target",
+            "target_above_maximum",
+            "no_source",
+            "prohibited_by_zero_requirement",
+        }:
+            item["status"] = "proven_infeasible"
+            item["proofScope"] = (
+                "Declared nonnegative nutrient inventory, source water, zero requirements "
+                "and maxima; no subtraction or excluded carbonate/pH-reagent source allowed. "
+                "This is a nutrient constraint proof, not a physical or global chemistry claim."
+            )
         out.append(item)
     return out
+
+
+def _charge_report(result):
+    """Refresh partial charge diagnostics from the final emitted nutrient inventory."""
+    result["targetIonBalance"] = target_ion_balance(
+        {row["symbol"]: row["target"] for row in result["rows"] if row["target"] is not None}
+    )
+    result["recipeIonBalance"] = target_ion_balance(
+        {row["symbol"]: row["final"] for row in result["rows"]}
+    )
+    result["chargeAssessment"] = {
+        "status": "partial_charge_inventory",
+        "assayOnlyProducts": [
+            item['recordId']
+            for item in result['materialInventory']
+            if item['status'] == 'assay_only'
+        ],
+        "limitation": "recipeIonBalance includes emitted nutrient counterions and water under "
+        "the same convention as targetIonBalance. Full analytical components are recorded in "
+        "materialInventory, but pH speciation, ligand charge and complete water chemistry "
+        "are not established by these nutrient profiles. Neither balance proves infeasibility.",
+    }
 
 
 def _documents(value) -> list[dict]:
@@ -1059,13 +1106,13 @@ def recommend(
     warnings: list[str] = []
     balance = target_ion_balance(targets)
     if balance["exceedsWarning"]:
-        side = "cations" if balance["imbalancePercent"] > 0 else "anions"
         warnings.append(
-            f"The formula is not electrically balanced: cations {balance['cationsMeqPerL']:.2f} "
+            f"The requested nutrient subset is not electrically balanced under the stated "
+            f"ion convention: cations {balance['cationsMeqPerL']:.2f} "
             f"vs "
             f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
-            f"No salt combination meets every target exactly; the excess {side} need counter-ions "
-            "the formula does not list."
+            "Untargeted counterions and other species may balance the subset; "
+            "this check does not prove nutrient infeasibility."
         )
     solved = _simplify(
         salts, targets, water, _fit_within(salts, targets, water, ridge, maxima), ridge, maxima
@@ -1127,6 +1174,7 @@ def recommend(
     name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
     solved["targetIonBalance"] = balance
+    _charge_report(solved)
     solved["requirementConflicts"] = [
         {
             "symbol": symbol,
