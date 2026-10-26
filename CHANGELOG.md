@@ -10,6 +10,11 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Add immutable joint fertilizer/reagent problem records and fixed-candidate
+  evaluation with explicit nutrient/component units, charge residuals, zero-dose
+  boundaries and hard constraints. Add a supplied-inventory compiler; optimizer
+  integration and joint acceptance remain separate.
+
 - Recover permitted available nutrient sources from an empty initial pool and
   repeat substitution when a new deficit appears. Record searched inventory and
   incomplete-search outcomes without changing targets or expanding available stock.

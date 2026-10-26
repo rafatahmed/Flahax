@@ -1125,6 +1125,40 @@ prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
 
+## flahax.joint_problem
+
+### `JointProblem`
+
+```text
+JointProblem(fertilizers: tuple[flahax.joint_problem.JointSource, ...], reagent: flahax.joint_problem.JointSource, targets: collections.abc.Mapping, water: collections.abc.Mapping, water_components: collections.abc.Mapping | None, final_volume_litres: float, solvent_mass_kg: float, target_ph: float, reference_charge_mol_per_kg: float, maximum_reagent_mass_g: float, maximum_concentrations: collections.abc.Mapping = <factory>, maximum_reagent_volume_litres: float | None = None, phases: tuple[str, ...] = ()) -> None
+```
+
+One fixed-target problem with one explicitly offered reagent per candidate.
+
+reference_charge_mol_per_kg is the declared charge/proton closure on the same
+final-solvent basis; it must not be inferred from a nutrient subtotal. Analytical
+nutrient totals and dissolved/precipitated chemistry remain distinct outputs.
+
+Record fields: `fertilizers`, `reagent`, `targets`, `water`, `water_components`, `final_volume_litres`, `solvent_mass_kg`, `target_ph`, `reference_charge_mol_per_kg`, `maximum_reagent_mass_g`, `maximum_concentrations`, `maximum_reagent_volume_litres`, `phases`.
+
+Source module: `flahax.joint_problem`. Import with `from flahax import JointProblem`.
+
+### `JointSource`
+
+```text
+JointSource(product_id: str, nutrients: collections.abc.Mapping, components: collections.abc.Mapping | None, solvent_fraction: float = 0.0, density_kg_per_litre: float | None = None) -> None
+```
+
+One permitted product with explicit coefficients and solvent/density data.
+
+None components means missing chemistry; an empty map explicitly declares no
+conserved components. Solvent fraction is declared, never inferred from assay
+remainder. The caller is responsible for coefficient provenance and product roles.
+
+Record fields: `product_id`, `nutrients`, `components`, `solvent_fraction`, `density_kg_per_litre`.
+
+Source module: `flahax.joint_problem`. Import with `from flahax import JointSource`.
+
 ## flahax.material_chemistry
 
 ### `material_chemistry`
@@ -1415,6 +1449,22 @@ Acids are not in the catalogue as reagent grades: supply your own nitric or
 phosphoric acid record (assay and density from the supplier certificate).
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import catalogue_ph_reagents`.
+
+### `make_joint_problem`
+
+```text
+make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fraction, **conditions)
+```
+
+Compile a fixed-target contract from supplied nutrient and reagent records.
+
+conditions supplies the explicit water components, final solvent mass/volume,
+target pH, reference charge and reagent mass cap required by JointProblem.
+Reagent solvent fraction is declared separately; assay remainder is not water.
+This compiler does not run the sequential or joint optimizer. Fertilizer carrier
+or hydrate solvent is not inferred; use explicit JointSource records when needed.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import make_joint_problem`.
 
 ### `plan_coupled_ph`
 
