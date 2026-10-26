@@ -5,21 +5,22 @@
 # its results are calculations, not dosing instructions.
 """Capture additional single-acid references without changing existing evidence.
 
-Run: python tools/acid_selection_evidence.py
+Run: python tools/acid_selection_evidence.py --output NEW_DIRECTORY
 Uses the existing external pinned installation and temporary database merge.
 """
 
 import json
+import argparse
 import tempfile
 from pathlib import Path
 
-from phreeqc_evidence import INSTALL, ROOT, execute, merge, sha
+from phreeqc_evidence import INSTALL, execute, merge, sha, new_capture_root
 
 
-def generate():
+def generate(destination):
+    destination = new_capture_root(destination)
     exe = INSTALL / 'bin/Release/phreeqc.exe'
     base = INSTALL / 'database/minteq.v4.dat'
-    destination = ROOT / 'tests/fixtures/phreeqc/acid_selection'
     with tempfile.TemporaryDirectory(prefix='flahax-acids-') as temporary:
         database = Path(temporary) / 'merged.dat'
         merge(base, database)
@@ -73,14 +74,16 @@ END
                 merged_database_sha256=sha(database),
                 executable_sha256=sha(exe),
                 version='3.8.6-17100',
-                regeneration='python tools/acid_selection_evidence.py',
+                regeneration='python tools/acid_selection_evidence.py --output NEW_DIRECTORY',
                 notes='Synthetic NaCl background; no agronomic acceptance implied. '
                 'H3Citrate preserves the organic citrate component, not inorganic carbon.',
                 hashes={p.name: sha(p) for p in folder.glob('reference.*')},
             )
-            (folder / 'expected.json').write_text(json.dumps(data, indent=2) + '\n')
+            (folder / 'expected.json').write_bytes((json.dumps(data, indent=2) + '\n').encode())
             print(formula, data['acid_molal'])
 
 
 if __name__ == '__main__':
-    generate()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, required=True, help='new capture directory')
+    generate(parser.parse_args().output)

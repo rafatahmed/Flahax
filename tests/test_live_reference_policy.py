@@ -8,10 +8,20 @@ import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
-from tests import test_product_phreeqc
+from tests import test_product_phreeqc, test_acid_reference
 
 
 class LiveReferencePolicyTests(unittest.TestCase):
+    def test_missing_acid_reference_fails_when_required(self):
+        case = test_acid_reference.AcidReferenceTests('test_live_replay')
+        with patch('tests.test_acid_reference.INSTALL', Path('not-an-installation')):
+            with patch.dict(os.environ, {'FLAHAX_REQUIRE_PHREEQC': '1'}):
+                with self.assertRaises(AssertionError):
+                    case.test_live_replay()
+            with patch.dict(os.environ, {'FLAHAX_REQUIRE_PHREEQC': '0'}):
+                with self.assertRaises(unittest.SkipTest):
+                    case.test_live_replay()
+
     def test_missing_reference_is_not_skippable_in_release_mode(self):
         case = test_product_phreeqc.LiveProductPhreeqcTests('test_replay_every_product_input')
         with patch(

@@ -1,15 +1,16 @@
 # PHREEQC Reference Fixtures
 
-FlahaX uses checked-in PHREEQC golden fixtures as its dependency-free scientific verification baseline. PHREEQC is **not** a runtime dependency of the package.
+FlahaX uses checked-in PHREEQC golden fixtures for dependency-free implementation comparisons. Shared thermodynamic data limit their independence: agreement is not experimental parameter or physical validation. PHREEQC is **not** a runtime dependency of the package.
 
 ## Current golden suite
 
-The authoritative mixed-model evidence uses installed **PHREEQC 3.8.6-17100**, unmodified `minteq.v4.dat`, and the temporary FlahaX merge. The earlier reduced `phreeqc.dat` references below remain historical regressions, not the full mixed-model acceptance suite.
+The current mixed-model comparisons use installed **PHREEQC 3.8.6-17100**, unmodified `minteq.v4.dat`, and the temporary FlahaX merge. The earlier reduced `phreeqc.dat` references below remain historical regressions, not the full mixed-model acceptance suite.
 
 | Directory below `tests/fixtures/phreeqc/` | Cases |
 |---|---|
 | `products/` | fe_edta, mn_edta, zn_edta, cu_edta, fe_dtpa, fe_eddha, ch_micro, citrate, mixed_products, mixed_target_ph_nitric |
 | `phases/` | calcite, calcium_phosphate, gypsum, trace_hydroxides, trace_phosphates, trace_carbonates, magnesium_salts, zero_stock, struvite, ferrous_phases, mixed_product_phases |
+| `acid_selection/` | HNO3, H3PO4, H2SO4, C6H8O7 |
 | `failures/` | Full target-pH reduction ladder, failed initial-charge phase input, and zero-inventory-phase warning input |
 
 Every golden case contains `.pqi`, complete `.out`, `.screen`, high-precision `.sel`, and `expected.json`. The JSON retains numeric selected output, exact analytical totals, numerical tolerances and SHA-256 of all artifacts and the reference database. Product JSON also records actual catalogue g/kg-water doses, executable hash and extension hashes. The target case includes initial, nitrate-titration and corrected Fix_H+ inputs/outputs. The original six individually converged root chelate captures remain intact, protected by `preserved-evidence.json` and regression tests.
@@ -26,7 +27,7 @@ full captures and hashes. These extend, rather than replace, the product and
 phase evidence. They verify the new candidate-acid calculation in a bounded
 reference solution, not arbitrary commercial water or acid blends. See
 [the workflow guide](../developer/water-to-delivery.md) for tolerances and limitations.
-Regenerate with `python tools/acid_selection_evidence.py` and verify with
+Generate candidates with `python tools/acid_selection_evidence.py --output NEW_DIRECTORY` and verify retained references with
 `PYTHONPATH=src python -m unittest tests.test_acid_reference -v` (set
 `FLAHAX_REQUIRE_PHREEQC=1` to require live replay).
 
@@ -37,16 +38,29 @@ $root = Join-Path $env:TEMP 'flahax-phreeqc\installed\phreeqc-3.8.6-17100-x64'
 $exe = Join-Path $root 'bin\Release\phreeqc.exe'
 $database = Join-Path $root 'database\minteq.v4.dat'
 $env:PYTHONPATH = 'src'
-python tools/build_chemistry_model.py $database
-python tools/phreeqc_evidence.py --exe $exe --database $database
-python tools/phreeqc_phase_evidence.py
-python tools/debug_nitric_phreeqc.py
-python tools/archive_evidence_manifest.py
-python -m unittest discover -s tests -t .
-python -m compileall -q src
+$env:FLAHAX_PHREEQC_ROOT = $root
+$env:FLAHAX_REQUIRE_PHREEQC = '1'
+python -m unittest tests.test_product_phreeqc tests.test_acid_reference tests.test_reference_integrity tests.test_preserved_chemistry_evidence tests.test_live_reference_policy -v
+python tools/qualify_chemistry_model.py --database $database --report reaction-audit.json
 git diff --check
 git status
 ```
+
+This verifies retained evidence without rebuilding the model or regenerating
+golden files. The independent inventory in `tests/reference_inventory.json` pins
+all 197 historical reference files, including expected JSON and tolerances.
+Current live replay checks the executable and both database hashes for every
+product, phase and acid family. This does not invent missing historical binary
+provenance for older captures.
+
+For explicitly requested new research captures, use
+`python tools/phreeqc_evidence.py --exe $exe --database $database --output NEW_DIRECTORY`
+or `python tools/phreeqc_phase_evidence.py --output NEW_DIRECTORY`.
+Each destination must be new and outside the historical fixture tree. Capture
+tools refuse overwrites; unsuccessful outputs remain available for diagnosis.
+Review candidate conditions, hashes and discrepancies separately before proposing
+any new reference. Do not repair databases or rewrite earlier results to pass a test.
+See the [integrity and qualification protocol](../developer/verification.md).
 
 The merger removes only the terminal END from a temporary copy, appends `database/flahax-chelates-25c.dat` and `database/flahax-phases-25c.dat`, then writes END. It verifies the base hash is unchanged. `Dtp` and `Edd` are independent custom components; neither carbon valence nor native database entries are repurposed. Failures are retained with full text, not deleted because a later case fails. Successful output paths are excluded from text normalization so recorded hashes survive checkout.
 
