@@ -5,6 +5,9 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 __all__ = [
+    "JointSource",
+    "JointProblem",
+    "make_joint_problem",
     "DeliveryError",
     "DeliveryPlan",
     "FertilizerEquilibrium",
@@ -280,3 +283,6 @@ from .materials import (
     load_identities,
     identity_for_product,
 )
+
+from .joint_problem import JointSource, JointProblem
+from .ph_adjustment import make_joint_problem

@@ -640,3 +640,41 @@ def catalogue_ph_reagents():
             }
         )
     return records
+
+
+def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fraction, **conditions):
+    """Compile a fixed-target contract from supplied nutrient and reagent records.
+
+    conditions supplies the explicit water components, final solvent mass/volume,
+    target pH, reference charge and reagent mass cap required by JointProblem.
+    Reagent solvent fraction is declared separately; assay remainder is not water.
+    This compiler does not run the sequential or joint optimizer. Fertilizer carrier
+    or hydrate solvent is not inferred; use explicit JointSource records when needed.
+    """
+    from .joint_problem import JointSource, JointProblem, _number
+
+    reagent_solvent_fraction = _number(reagent_solvent_fraction, "reagent solvent fraction")
+    if len(nutrient_salts(salts)) != len(salts):
+        raise DeliveryError('invalid_role', 'pH reagents cannot also be fertilizer variables')
+    fraction, density = _check_product(reagent)
+    _, components, molar_mass, nutrients = REAGENTS[reagent['chemicalFormula']]
+    if reagent_solvent_fraction + fraction > 1:
+        raise DeliveryError('inconsistent_assay', 'active and solvent fractions exceed one')
+    sources = []
+    for salt in salts:
+        inventory = material_inventory(salt)
+        sources.append(
+            JointSource(
+                salt['id'],
+                {k: v / 100 for k, v in inventory['nutrient_percent'].items()},
+                inventory['components_moles_per_gram'],
+            )
+        )
+    active = JointSource(
+        reagent['id'],
+        {k: fraction * g / molar_mass for k, g in nutrients.items()},
+        {k: fraction * n / molar_mass for k, n in components.items()},
+        solvent_fraction=reagent_solvent_fraction,
+        density_kg_per_litre=density,
+    )
+    return JointProblem(tuple(sources), active, targets, water, **conditions)

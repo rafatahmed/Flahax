@@ -120,6 +120,7 @@ Site planning <developer/site-planning>
 Conductivity <developer/conductivity>
 Delivery contracts <developer/delivery-contracts>
 Delivery quantities <developer/delivery-quantities>
+Joint fertilizer/reagent problem <developer/joint-problem>
 Verification <developer/verification>
 Contributing <developer/contributing>
 ```

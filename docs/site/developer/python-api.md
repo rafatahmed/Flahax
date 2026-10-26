@@ -339,3 +339,9 @@ and pH-reagent restrictions still apply. No absent catalogue product is loaded.
 If no admissible source remains after recovery, the existing `InputError` contract
 is preserved. An available-stock failure is not permission to use a catalogue-only
 alternative or change the pH target. Chemical/stock suitability is assessed later.
+
+## Joint fertilizer/reagent contract
+
+See [the joint problem contract](joint-problem.md) for `JointSource`, `JointProblem`
+and `make_joint_problem`, including residuals, units, zero-dose boundaries and
+the distinction between evaluating a candidate and finding an accepted solution.
