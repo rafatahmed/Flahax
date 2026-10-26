@@ -10,6 +10,11 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Add a joint fertilizer/reagent numerical search with feasible steps, checked
+  sensitivities, rank-aware fallback and fresh final residual verification.
+  Explicit caller controls and incomplete-search diagnostics keep numerical
+  candidates separate from production acceptance.
+
 - Add immutable joint fertilizer/reagent problem records and fixed-candidate
   evaluation with explicit nutrient/component units, charge residuals, zero-dose
   boundaries and hard constraints. Add a supplied-inventory compiler; optimizer

@@ -103,6 +103,48 @@ replaced with a successful undosed recipe. The inputs are snapshotted and immuta
   silently substitute for complete analytical water or an equilibrium proton equation;
   it remains a separate measured constraint until an explicit adapter is qualified.
 
-Combined reagent variables, the joint optimization algorithm, convergence and
-acceptance qualification follow in later work. No new chemical constants, phase
+Production integration and acceptance qualification follow in later work. No new chemical constants, phase
 policy, empirical tolerance or physical validation claim is introduced here.
+
+
+## Safeguarded joint numerical search
+
+`solve_joint_problem` searches fertilizer doses and the selected reagent dose together.
+It takes a `JointProblem`, an initial fertilizer dose mapping and reagent dose in
+g/L, and requires every numerical control explicitly:
+
+- `dose_steps`: positive g/L scales for every supplied product ID;
+- `charge_scale`: positive mol/kg scale for the charge term in the search merit;
+- `charge_tolerance`: positive mol/kg final charge residual bound;
+- `loss_tolerance`: nonnegative bound on the original nutrient loss L;
+- `sensitivity_tolerance`: positive relative agreement criterion for derivatives
+  evaluated at h and h/2;
+- `trust_radius`: positive infinity-norm step bound in dose-scaled coordinates;
+- `max_iterations` and `max_backtracks`: positive integer search budgets.
+
+These inputs are numerical controls, not newly qualified production acceptance
+thresholds. Test settings are verification settings for their stated witnesses.
+The search merit is L + (R_charge / charge_scale)^2. A merit decrease alone never
+qualifies a result: both final residual bounds must pass independently.
+
+Nonnegativity, explicit zero targets, nutrient maxima, reagent mass/volume and
+solvent inventory define linear feasible steps. Trial roundoff violations are
+rejected. Finite differences are checked for agreement before rank-aware NNLS
+proposes a local step. Backtracking and coordinate/cap-tangent exchanges provide
+fallbacks when a local step is unusable. Product exchanges always reevaluate the
+full immutable problem; they do not reuse a previous recipe's chemistry.
+
+`numerical_candidate` means a fresh final evaluation satisfies the supplied
+numerical criteria and hard constraints. It always includes `accepted=False`:
+model applicability, dissolved versus analytical nutrients, phase policy and
+production acceptance are separate obligations. `search_incomplete` means the
+initial evaluation failed, final verification failed, or the search budget ended
+without meeting the criteria. It is not proof of infeasibility. Diagnostics expose
+rejected trials, failed sensitivities, linear-solver records and evaluation counts.
+Invalid input controls raise `DeliveryError`; scaling overflow is an explicit
+numerical error. Missing chemistry and failed trial solves cannot produce success.
+
+This local search does not certify global optimality or enumerate additional
+reagents. It does not yet replace the sequential planner. Use only the permitted
+inventory supplied in the problem; permission and production integration remain
+with the calling workflow.
