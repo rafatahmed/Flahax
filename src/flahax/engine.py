@@ -442,11 +442,13 @@ def _fit(
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
-        elif symbol in ceilings:
+        if symbol in ceilings:
             weight, aim = ceilings[symbol]
             limit = maxima[symbol]
             matrix.append([weight * rate / limit for rate in rates])
             rhs.append(weight * (aim - background) / limit)
+        elif target is not None and target > 0:
+            continue
         elif maxima.get(symbol, 0.0) > 0:
             continue
         else:
@@ -478,7 +480,7 @@ def _fit_within(
     maxima: dict,
     x0: list[float] | None = None,
 ) -> dict:
-    """Fit, then hold any incidental ion that passed its stated maximum on that maximum.
+    """Fit with structural zero requirements and every stated nutrient maximum.
 
     The fit is convex, so a binding ceiling's optimum lies on the limit (#68). Each
     ceiling ion gets a row of moderate weight aimed at aim - shift, where aim is the
@@ -489,17 +491,19 @@ def _fit_within(
     the last doses. A remainder after CEILING_STEPS is reported by _report as a limit
     violation.
 
-    A ceiling the water alone already reaches cannot be met: any product carrying that
-    ion only adds to the violation, which is the infinite-multiplier limit of the
-    search. Those products are left out of the fit directly (#86); searching instead
+    At a ceiling already reached by water, products carrying that ion cannot be added;
+    Water above the ceiling remains an explicit violation. This is the
+    infinite-multiplier limit of the search. Those products are left out directly (#86);
+    searching instead
     grew the shift without bound, and with a second binding ceiling NNLS failed.
     """
+    # Nonnegative product contributions cannot cancel an explicit zero.
+    maxima = dict(maxima)
+    maxima.update({symbol: 0.0 for symbol, target in targets.items() if target == 0})
     unreachable = {
         symbol
         for symbol, limit in maxima.items()
-        if limit > 0
-        and symbol not in targets
-        and float(water.get(symbol) or 0.0) >= limit * (1 - CEILING_MARGIN)
+        if limit == 0 or float(water.get(symbol) or 0.0) >= limit
     }
     if unreachable:
         keep = [
@@ -509,7 +513,7 @@ def _fit_within(
         ]
         solved = _fit_within(
             [salts[i] for i in keep],
-            targets,
+            {s: v for s, v in targets.items() if s not in unreachable or v > 0},
             water,
             ridge,
             {s: v for s, v in maxima.items() if s not in unreachable},
@@ -529,11 +533,11 @@ def _fit_within(
         final = {row["symbol"]: float(row["final"] or 0.0) for row in solved["rows"]}
         converged = True
         for symbol, limit in maxima.items():
-            if limit <= 0 or symbol in targets:
+            if limit <= 0:
                 continue
             value = final.get(symbol, 0.0)
             if symbol not in search:
-                if value <= limit + 1e-12:
+                if value <= limit:
                     continue
                 search[symbol] = [0.0, None, None, 0]
                 converged = False
@@ -600,7 +604,7 @@ def solve_weights(
         conflict = assay_conflict(salt)
         if conflict is not None:
             raise InputError(conflict)
-    solved = _fit(salts, targets, water, ridge)
+    solved = _fit_within(salts, targets, water, ridge, {})
     chosen = _chosen(salts, solved["grams"])
     solved.update(_report(solved["rows"], solved["grams"], []))
     solved["salts"] = chosen
@@ -831,7 +835,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     binding = sorted(
         ion
         for ion, limit in maxima.items()
-        if limit > 0 and ion not in targets and final.get(ion, 0.0) >= limit * (1 - 1e-6)
+        if limit > 0 and final.get(ion, 0.0) >= limit * (1 - 1e-6)
     )
     base = _target_misses(engine_pool, targets, water)
     with_chloride = None
@@ -851,8 +855,20 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
             "final": row["final"],
             "deltaPct": row["deltaPct"],
         }
-        if not any(_supplies(salt, symbol) for salt in usable):
+        sources = [salt for salt in usable if _supplies(salt, symbol)]
+        zero_limits = {s for s, v in (maxima | targets).items() if v == 0}
+        zero_limits.update(s for s, v in maxima.items() if v == 0)
+        blocked_sources = [
+            salt for salt in sources if any(_nutrients(salt).get(s, 0.0) > 0 for s in zero_limits)
+        ]
+        if not sources:
             item["reason"] = "no_source"
+        elif len(blocked_sources) == len(sources) and water.get(symbol, 0.0) < targets[symbol]:
+            item["reason"] = "prohibited_by_zero_requirement"
+            item["zeroRequirements"] = sorted(
+                s for s in zero_limits if any(_nutrients(salt).get(s, 0.0) > 0 for salt in sources)
+            )
+            item["blockedProducts"] = [salt.get("id") for salt in sources]
         elif not base:
             item["reason"] = "limited_by_ceiling" if binding else "incidental_tradeoff"
             item["bindingLimits"] = binding
@@ -935,8 +951,8 @@ def _report(
     ]
     incidental = assess_incidental(rows, maxima)
     return {
-        "feasible": bool(deltas)
-        and max(deltas) <= TOLERANCE_PCT
+        "feasible": any(row["target"] is not None for row in rows)
+        and (not deltas or max(deltas) <= TOLERANCE_PCT)
         and not incidental["limitViolations"],
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
@@ -964,15 +980,17 @@ def recommend(
             percentages in elements. Use load_library()['salts'] deliberately.
         targets: Required nonempty elemental mg/L map; nitrogen forms are
             separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
+            An explicit zero prohibits positive contribution, unlike a missing key.
         water: Source-water elemental mg/L; omitted entries default to zero.
         allow_ions: Explicit exceptions to the default restricted-ion filter.
         allow_carbonates: Permit carbonate products in nutrient fitting only;
             this does not establish dissolution or stock compatibility.
         ridge: L2 dose penalty, not a limit on the number of products.
-        maximum_concentrations: Optional mg/L ceilings for incidental ions, for
+        maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
             example {"Cl": 70}. An ion with a positive ceiling is admitted like
-            allow_ions and is not penalized up to the ceiling; a fit above it is
-            solved again with the ion held on the ceiling as a constraint, and any
+            allow_ions. Untargeted nutrients are not penalized up to their ceiling;
+            a fit above it is solved again with the ion held on the ceiling as a
+            constraint, and any
             excess that cannot be removed is reported in limitViolations with
             feasible False. Omitted keeps the default.
         max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
@@ -992,8 +1010,10 @@ def recommend(
         eligibility policy still uses the declared assay and explicit permissions.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
-        product-to-dose mapping. Feasible is positive-target fit within 1%,
-        not chemical, stock or operational approval.
+        product-to-dose mapping. Feasible requires positive-target fit within 1%,
+        satisfied zero requirements and maxima, and no requirement conflicts.
+        requirementConflicts identifies targets above maxima and water above limits.
+        This is not chemical, stock or operational approval.
 
     Raises:
         InputError: Invalid targets/water or no eligible products. Inspect
@@ -1101,6 +1121,27 @@ def recommend(
     name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
     solved["targetIonBalance"] = balance
+    solved["requirementConflicts"] = [
+        {
+            "symbol": symbol,
+            "reason": "target_above_maximum",
+            "targetPpm": target,
+            "maximumPpm": maxima[symbol],
+        }
+        for symbol, target in targets.items()
+        if symbol in maxima and target > maxima[symbol]
+    ] + [
+        {
+            "symbol": symbol,
+            "reason": "water_above_maximum",
+            "waterPpm": water[symbol],
+            "maximumPpm": limit,
+        }
+        for symbol, limit in (maxima | {s: 0.0 for s, t in targets.items() if t == 0}).items()
+        if water.get(symbol, 0.0) > limit
+    ]
+    if solved["requirementConflicts"]:
+        solved["feasible"] = False
     solved["unmetTargets"] = _diagnose(
         library, targets, water, solved["rows"], maxima, allowed, allow_carbonates
     )
