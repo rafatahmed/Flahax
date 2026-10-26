@@ -314,3 +314,28 @@ that nutrient; water above it cannot be corrected by adding fertilizer. Review
 `limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
 empty recipe when water complies. The positive-target feasibility tolerance and trace-dose reporting remain
 separately tracked solver work.
+
+## Automatic search within available products
+
+Pass only available product records to `recommend` or `plan_fertilizer_workflow`.
+The engine fits nonnegative mixtures of the eligible pool, then automatically
+reconsiders supplied sodium-bearing sources for deficient nutrients under the
+existing recovery policy. Recovery also works when the initial pool is empty.
+After each substitution it checks for new deficits and repeats until no new
+permitted source is found. Every successful pass adds a supplied product ID, so
+the recovery process terminates on a finite inventory. Product input order breaks
+numerical ties; no manual solver mode is needed.
+
+`substitutionSearch` records `availableProductIds`, `attemptedProductIds`, method
+and scope. `candidate_found` means the resulting nutrient recipe passes the
+existing nutrient acceptance checks. `search_incomplete` means no acceptable
+candidate was found by this search, not that every possible mixture is impossible.
+Scoped structural proofs remain in `unmetTargets`. Coupled blends disclose their
+endpoint product sets and reassess the status for their actual final recipe.
+
+Targets, nitrogen forms, water and hard limits are never changed. Chloride still
+requires explicit permission (target, positive ceiling or `allow_ions`); carbonate
+and pH-reagent restrictions still apply. No absent catalogue product is loaded.
+If no admissible source remains after recovery, the existing `InputError` contract
+is preserved. An available-stock failure is not permission to use a catalogue-only
+alternative or change the pH target. Chemical/stock suitability is assessed later.

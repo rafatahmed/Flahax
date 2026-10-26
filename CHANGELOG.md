@@ -10,6 +10,10 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Recover permitted available nutrient sources from an empty initial pool and
+  repeat substitution when a new deficit appears. Record searched inventory and
+  incomplete-search outcomes without changing targets or expanding available stock.
+
 - Distinguish target-subset charge from emitted nutrient inventory without claiming
   impossibility from partial charge sums. Label unmet-target structural proofs and
   relaxed search observations explicitly, including source-water and zero misses.

@@ -668,6 +668,9 @@ Returns:
     product-to-dose mapping. Feasible requires positive-target fit within 1%,
     satisfied zero requirements and maxima, and no requirement conflicts.
     requirementConflicts identifies targets above maxima and water above limits.
+    substitutionSearch records supplied and attempted product IDs and whether
+    a nutrient-feasible candidate was found. Recovery never expands the supplied
+    inventory; exhausted search is not a global infeasibility certificate.
     This is not chemical, stock or operational approval.
 
 Raises:
