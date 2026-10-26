@@ -43,3 +43,32 @@ Historical `phreeqc.dat` tests explicitly call `solve_legacy_phreeqc_macro` and 
 ## Historical reference
 
 Earlier reduced-model development notes are [archived separately](https://github.com/rafatahmed/Flahax/blob/main/docs/history/reduced-equilibrium-model.md). Legacy kernels and fixtures remain available for compatibility and regression evidence; they are not the current mixed-system planning contract.
+
+### Retained compatibility kernels and numerical checks
+
+The public macro and trace wrappers use the simultaneous model above. The
+explicit `solve_legacy_phreeqc_macro` and `plan_legacy_phreeqc_nitric` functions,
+calcite/gypsum reference solvers, isolated phosphate speciation and reduced
+struvite mixture retain their original reaction subsets for compatibility and
+historical fixture interpretation. They do not inherit the current model's
+ligand coverage, phase competition or full charge accounting.
+
+Both current and retained iterative kernels report `nonconvergent` when their
+convergence budgets are exhausted. The retained macro calcium-sulfate iteration
+now allows 100 sweeps instead of 20: the historical target-pH fixture did not
+meet its existing 1e-14 update criterion in 20 sweeps. The criterion and fixture
+tolerances are unchanged. Retained phase allocation also checks for remaining
+supersaturation with available component inventory before returning.
+
+The reduced struvite mixture's isolated calcium-sulfate pair uses a rationalized
+positive quadratic root. Free calcium plus neutral pair equals total calcium;
+free sulfate plus pair equals total sulfate. This replaces a fixed-point cycle
+that could previously violate those balances. It does not add reactions or
+qualify the reduced model for general mixtures.
+
+Kernel tests distinguish independently accumulated component balances,
+activity-based saturation indices and a 60-digit Decimal pairing oracle from
+fault-injected iteration/fallback checks. Reaction-table balance checks share
+the model's stoichiometry; they are independent bookkeeping, not independent
+thermodynamic data. Passing branch coverage and numerical tests establishes
+neither parameter accuracy nor physical validation.
