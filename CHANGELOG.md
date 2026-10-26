@@ -10,6 +10,11 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Prevent recipe simplification from degrading the original nutrient fit or
+  accumulating drift across product removals. Recheck zeros and maxima on each
+  trial and retain all positive internal doses; product count cannot increase
+  primary loss or use the feasibility band as an accuracy allowance.
+
 - Fix coupled pH trial direction crossings and discontinuous product switches by
   bracketing and verifying a blend of the endpoint recipes. Rebuild final nutrient
   assessments without changing targets, ceilings or chemistry constants. Initial

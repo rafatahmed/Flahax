@@ -626,11 +626,10 @@ def _delta_map(rows: list[dict]) -> dict[str, float]:
 
 def _still_within(new_rows: list[dict], old_rows: list[dict]) -> bool:
     previous = _delta_map(old_rows)
-    for symbol, delta in _delta_map(new_rows).items():
-        limit = max(previous.get(symbol, 0.0), TOLERANCE_PCT)
-        if delta > limit + 1e-6:
-            return False
-    return True
+    current = _delta_map(new_rows)
+    return current.keys() == previous.keys() and all(
+        current[symbol] <= delta for symbol, delta in previous.items()
+    )
 
 
 def _supplies(salt: dict, symbol: str) -> bool:
@@ -645,10 +644,16 @@ def _simplify(
     ridge: float,
     maxima: dict | None = None,
 ) -> dict:
-    """Drop a salt when the refit still meets every requested ion."""
+    """Reduce product count only without degrading the original fit or hard limits.
+
+    Binary64 comparisons are conservative: no extra accuracy allowance is granted
+    for a preference. Numerically unequal but equivalent optima may retain more
+    products. This is not a globally minimum-product-count search.
+    """
+    original_rows = solved["rows"]
     grams = solved["grams"][:]
     rows = solved["rows"]
-    active = [index for index, gram in enumerate(grams) if gram > KEEP_GRAMS]
+    active = [index for index, gram in enumerate(grams) if gram > 0]
     changed = True
     while changed:
         changed = False
@@ -673,13 +678,17 @@ def _simplify(
                 maxima or {},
                 x0=[grams[item] for item in others],
             )
-            if not _still_within(trial["rows"], rows):
+            if (
+                not _still_within(trial["rows"], original_rows)
+                or trial["loss"] > solved["loss"]
+                or assess_incidental(trial["rows"], maxima)["limitViolations"]
+            ):
                 continue
             grams = [0.0] * len(salts)
             for item, gram in zip(others, trial["grams"]):
                 grams[item] = gram
             rows = trial["rows"]
-            active = [item for item in others if grams[item] > KEEP_GRAMS]
+            active = [item for item in others if grams[item] > 0]
             solved = {**trial, "grams": grams, "rows": rows}
             changed = True
             break

@@ -49,8 +49,17 @@ fallback for poorly conditioned blocks. Equivalent best-fit allocations are allo
 Remove old explicit nonzero arguments. Incidental review and maximum policies remain
 explicit caller decisions; a lower numerical loss is not agronomic approval.
 
-The existing secondary simplification still permits accuracy drift and remains a
-separate tracked defect. After the primary fit, a salt is removed when a refit still keeps every requested ion inside the tolerance already achieved, and inside 1% when the first fit was already inside 1%. Grams above 0.000001 g/L are the recipe.
+After the primary fit, a product can be removed only when every positive-target
+absolute percentage error is no worse than in that original fit, primary loss does
+not increase from the best accepted result, and all zero requirements and maxima
+remain satisfied. Every attempt uses the same original accuracy reference, even
+after several removals. The 1% feasibility band is not permission to degrade a fit.
+
+These are conservative binary64 comparisons with no added error allowance.
+Numerically unequal representations of equivalent optima may retain more products;
+this greedy pass does not promise a globally minimal product count. All positive
+internal doses participate; published dose precision remains separately tracked.
+
 
 `recommend` does not dose every row in the file. A salt whose formula cannot contain an assayed element is left out. Carbonate formulas are left out of a default recipe. Sodium and chloride are left out unless the formula asks for them, the caller allows them, or a requested ion stays outside 1% without the salt that carries them. The result then says whether the recipe is feasible, the largest absolute Δ%, the unrequested ions added, the total grams per litre, and any warnings.
 

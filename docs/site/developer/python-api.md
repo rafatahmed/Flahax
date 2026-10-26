@@ -167,8 +167,11 @@ Explicit zeros and targeted ceilings are enforced independently of the objective
 `score` retains all nutrient rows but sums only positive-target squared relative errors.
 Binding-limit diagnostics use the same numerical aim and convergence tolerance as
 the ceiling search; hard-limit acceptance still compares directly with the stated limit.
-The existing secondary simplification can still degrade the primary optimum; its
-separate regression remains open. Published dose rounding is also separately tracked.
+Secondary product removal uses the original error reference throughout:
+no positive-target error may increase from that fit, primary loss may not increase
+from the best accepted trial, and zeros/maxima are rechecked. No additional
+numerical allowance is granted; equal fits may retain extra products because of
+floating-point differences. Published dose rounding remains separately tracked.
 The coupled pH search treats an opposite-direction trial as a bound, never as an
 accepted dose. At a product switch it can blend the two bracketing product recipes,
 solve charge balance on the mixture, and rebuild nutrient and limit assessments at
@@ -297,5 +300,5 @@ reported concentration and maximum directly, without an absolute slack.
 are not feasible. Water already at a maximum permits no further addition of
 that nutrient; water above it cannot be corrected by adding fertilizer. Review
 `limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
-empty recipe when water complies. The positive-target tolerance, secondary
-selection and trace-dose reporting remain separately tracked solver work.
+empty recipe when water complies. The positive-target feasibility tolerance and trace-dose reporting remain
+separately tracked solver work.
