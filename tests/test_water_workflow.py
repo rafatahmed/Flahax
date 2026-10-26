@@ -83,13 +83,12 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(result.nutrient_gap['Ca'], 84)
         self.assertEqual(result.target_ph, 6.5)
         self.assertEqual(result.water['Ca'], 20)
-        self.assertTrue(result.recommendation['feasible'])
-        self.assertEqual(result.stages['formulation'].status, 'requires_review')
-        violations = {
-            r['symbol']: r['ppm'] for r in result.recommendation['incidentalContributions']
-        }
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 4.84511367294
-        self.assertAlmostEqual(violations['N_NH4'], 4.84519260402, places=8)
+        self.assertFalse(result.recommendation['feasible'])
+        self.assertEqual(result.stages['formulation'].status, 'blocked')
+        self.assertEqual(result.recommendation['incidentalContributions'], [])
+        finals = {r['symbol']: r['final'] for r in result.recommendation['rows']}
+        self.assertEqual(finals['N_NH4'], 0)
+        self.assertEqual(finals['Na'], 0)
         # Independent Na inventory: assayed sodium plus two Na per Mn-EDTA.
         # Fit changes may change doses; a historical recipe's Na is not an oracle.
         sodium_rates = {
@@ -106,7 +105,7 @@ class WaterWorkflowTests(unittest.TestCase):
         )
         # Published doses have six decimals; continuous fitted rows remain F04's scope.
         rounding_bound = sum(sodium_rates.values()) * 0.5e-6
-        self.assertAlmostEqual(violations['Na'], expected_na, delta=rounding_bound + 1e-12)
+        self.assertAlmostEqual(finals['Na'], expected_na, delta=rounding_bound + 1e-12)
         self.assertEqual(result.stages['chemistry'].status, 'needs_input')
         self.assertIsNone(result.stages['chemistry'].value)
         self.assertIn('water_totals', result.stages['chemistry'].required_inputs)
@@ -117,22 +116,31 @@ class WaterWorkflowTests(unittest.TestCase):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
         for function in (recommend, solve_weights):
             result = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19, 'N_NH4': 0}, {})
-            self.assertTrue(result['feasible'])
-            self.assertTrue(result['incidentalContributions'])
-            self.assertTrue(result['requiresReview'])
+            self.assertFalse(result['feasible'])
+            self.assertEqual(result['grams'], [0])
+            self.assertEqual(result['incidentalContributions'], [])
+            unspecified = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19}, {})
+            self.assertTrue(unspecified['incidentalContributions'])
+            self.assertTrue(unspecified['requiresReview'])
         result = recommend([products()[5]], {'K': 10, 'N_NH4': 0}, {})
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})
         result = plan_fertilizer_workflow(
             products(), TARGETS, {'Ca': 20}, 6.5, maximum_concentrations={'N_NH4': 6, 'Na': 2}
-        )  # F2 chelate sodium reported (D2): Na limit was .1
-        self.assertTrue(result.recommendation['feasible'])
+        )  # A positive allowance cannot override explicit zero targets.
+        self.assertFalse(result.recommendation['feasible'])
         self.assertFalse(result.recommendation['requiresReview'])
         blocked = plan_fertilizer_workflow(
             products(), TARGETS, {'Ca': 20}, 6.5, maximum_concentrations={'N_NH4': 0}
         )
         self.assertFalse(blocked.recommendation['feasible'])
-        self.assertEqual(blocked.recommendation['limitViolations'][0]['symbol'], 'N_NH4')
+        self.assertEqual(blocked.recommendation['limitViolations'], [])
+        self.assertTrue(
+            any(
+                r['reason'] == 'prohibited_by_zero_requirement'
+                for r in blocked.recommendation['unmetTargets']
+            )
+        )
 
     def test_calculated_ph_requires_explicit_boundary_and_conserves_components(self):
         totals = {'Na+': 0.002, 'Cl-': 0.002}

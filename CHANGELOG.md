@@ -10,6 +10,10 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Enforce explicit zero nutrient requirements and targeted hard maxima; report
+  contradictory targets and source-water excess without relaxing the inputs.
+
+
 - Conserve calcium/sulfate in retained pairing calculations and reject exhausted
   legacy equilibrium iterations; add kernel conservation, domain, phase and
   failure-path controls with explicit current/legacy model distinctions.

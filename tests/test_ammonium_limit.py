@@ -57,9 +57,10 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertIsNone(default["ammoniumLimit"])
         self.assertEqual(default["salts"], without["salts"])
 
-    def test_explicit_zero_ammonium_target_keeps_its_penalty(self):
+    def test_explicit_zero_ammonium_target_prohibits_addition(self):
         targets = dict(formula("Chilli (maximumyield)")["targets"], N_NH4=0)
         result = recommend(SALTS, targets, {})
+        self.assertEqual(final(result, "N_NH4"), 0)
         self.assertIsNone(result["ammoniumLimit"])
         self.assertEqual(
             result["salts"], recommend(SALTS, targets, {}, max_ammonium_fraction=None)["salts"]

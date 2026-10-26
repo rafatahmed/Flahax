@@ -112,8 +112,8 @@ has no target for that symbol or its target is zero.
 
 In the water-to-delivery workflow, `feasible` measures positive-target
 fit; it is not an assertion that every incidental addition is acceptable.
-`incidentalContributions` and `requiresReview` report zero/omitted-target
-nutrients separately. Explicit `maximum_concentrations` in the workflow or
+`incidentalContributions` and `requiresReview` report omitted-target
+nutrients separately. Explicit zero targets are hard zero limits. Explicit `maximum_concentrations` in the workflow or
 acid adapters enforce absolute nutrient limits, including a true zero limit.
 See [water-to-delivery](water-to-delivery.md).
 
@@ -140,7 +140,8 @@ reason:
 | Reason | Meaning |
 |---|---|
 | `no_source` | No catalogue product supplies the element (for example Si). |
-| `limited_by_ceiling` | The targets are reachable, but an incidental ceiling binds; `bindingLimits` names it. |
+| `prohibited_by_zero_requirement` | Every available source of the deficient nutrient carries a prohibited zero-limit nutrient; `zeroRequirements` and `blockedProducts` identify the catalogue-specific certificate. |
+| `limited_by_ceiling` | The targets are reachable, but a nutrient ceiling binds; `bindingLimits` names it. |
 | `incidental_tradeoff` | The targets are reachable, but the incidental-ion penalty chose otherwise. |
 | `conflicting_targets` | Dropping one of the `conflictsWith` targets makes the rest reachable; `reachableWithChloride` says whether chloride products (which need a Cl ceiling) would reach it. |
 
@@ -163,7 +164,7 @@ ammonium maximum is invented. When explicitly supplied and the targets omit
 without an additional absolute cap. `result["ammoniumLimit"]` records it.
 An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
 The existing incidental-ion penalty remains; this change does not qualify
-the solver objective or claim that exact-zero enforcement is repaired.
+the solver objective. Explicit zeros and targeted ceilings are enforced independently.
 
 The historical defaults were project-owner decisions (2026-10-20), grounded in Dutch
 soilless practice. Recommended NH4 is 5-15% of total N, with at most about
@@ -265,3 +266,27 @@ Callers must handle `DeliveryError` with code `nonconvergent` from retained
 iterative kernels as well as the current solver. A failed iteration budget is
 not a usable last-iterate result. Fixed-pH solutions do not automatically imply
 charge neutrality, and equilibrium phase amounts do not predict kinetics.
+
+
+## Zero requirements and hard maxima
+
+A missing target leaves a nutrient unspecified. A target of `0` prohibits its
+positive contribution. Because product contributions are nonnegative, fitting
+excludes every product carrying that nutrient, including formula counterions and
+arbitrarily small positive assays. This also applies to `solve_weights`.
+A positive maximum or `allow_ions` permission cannot override an explicit zero.
+
+`maximum_concentrations` applies whether the nutrient has a target or is
+incidental. Positive target rows remain in the objective when a ceiling binds;
+the ceiling is an additional constraint. The existing solver uses an interior
+numerical aim one millionth below a binding positive limit. This does not change
+the requested maximum or authorize exceeding it. Classification uses the actual
+reported concentration and maximum directly, without an absolute slack.
+
+`requirementConflicts` records `target_above_maximum` and
+`water_above_maximum`, with the nutrient and original mg/L values. Such results
+are not feasible. Water already at a maximum permits no further addition of
+that nutrient; water above it cannot be corrected by adding fertilizer. Review
+`limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
+empty recipe when water complies. The positive-target tolerance, secondary
+selection and trace-dose reporting remain separately tracked solver work.

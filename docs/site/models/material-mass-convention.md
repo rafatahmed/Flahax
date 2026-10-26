@@ -51,5 +51,6 @@ absolute maximum retains precedence over the fraction.
 
 This changes recipes that previously relied on the implicit allowance. It does
 not change targets or prove the remaining incidental-ion objective is optimal.
-Exact-zero and targeted-ceiling enforcement have their own unresolved regression
-controls; removing an invented default does not claim those fixes are complete.
+Exact-zero targets now exclude contributing products, and absolute maxima also
+constrain targeted nutrients. These constraints do not qualify the remaining
+objective, secondary-selection or trace-reporting behavior.

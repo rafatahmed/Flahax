@@ -619,15 +619,17 @@ Args:
         percentages in elements. Use load_library()['salts'] deliberately.
     targets: Required nonempty elemental mg/L map; nitrogen forms are
         separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
+        An explicit zero prohibits positive contribution, unlike a missing key.
     water: Source-water elemental mg/L; omitted entries default to zero.
     allow_ions: Explicit exceptions to the default restricted-ion filter.
     allow_carbonates: Permit carbonate products in nutrient fitting only;
         this does not establish dissolution or stock compatibility.
     ridge: L2 dose penalty, not a limit on the number of products.
-    maximum_concentrations: Optional mg/L ceilings for incidental ions, for
+    maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
         example {"Cl": 70}. An ion with a positive ceiling is admitted like
-        allow_ions and is not penalized up to the ceiling; a fit above it is
-        solved again with the ion held on the ceiling as a constraint, and any
+        allow_ions. Untargeted nutrients are not penalized up to their ceiling;
+        a fit above it is solved again with the ion held on the ceiling as a
+        constraint, and any
         excess that cannot be removed is reported in limitViolations with
         feasible False. Omitted keeps the default.
     max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
@@ -647,8 +649,10 @@ Returns:
     eligibility policy still uses the declared assay and explicit permissions.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
-    product-to-dose mapping. Feasible is positive-target fit within 1%,
-    not chemical, stock or operational approval.
+    product-to-dose mapping. Feasible requires positive-target fit within 1%,
+    satisfied zero requirements and maxima, and no requirement conflicts.
+    requirementConflicts identifies targets above maxima and water above limits.
+    This is not chemical, stock or operational approval.
 
 Raises:
     InputError: Invalid targets/water or no eligible products. Inspect
