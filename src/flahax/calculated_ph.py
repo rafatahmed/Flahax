@@ -74,7 +74,7 @@ def calculate_equilibrium_ph(
     # Start near neutral to avoid unnecessarily evaluating extreme acidic/basic
     # states outside the Davies range. No out-of-domain solve is extrapolated.
     middle = at(7.0)
-    if abs(middle.charge_balance) <= 1e-12:
+    if middle.charge_balance == 0:
         return middle
     direction = 1 if middle.charge_balance > 0 else -1
     previous = middle
@@ -82,9 +82,9 @@ def calculate_equilibrium_ph(
     for index in range(1, 15):
         ph = 7.0 + direction * 0.5 * index
         current = at(ph)
-        if abs(current.charge_balance) <= 1e-12:
+        if current.charge_balance == 0:
             return current
-        if previous.charge_balance * current.charge_balance < 0:
+        if (previous.charge_balance > 0) != (current.charge_balance > 0):
             bracket = sorted((previous, current), key=lambda result: result.ph)
             break
         previous = current
@@ -97,7 +97,7 @@ def calculate_equilibrium_ph(
         current = at((low.ph + high.ph) / 2)
         if abs(current.charge_balance) <= 1e-12 and high.ph - low.ph <= 1e-7:
             return current
-        if current.charge_balance * low.charge_balance > 0:
+        if (current.charge_balance > 0) == (low.charge_balance > 0):
             low = current
         else:
             high = current

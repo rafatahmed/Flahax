@@ -52,6 +52,7 @@ class AqueousResult:
     water_activity: float
     model_limitations: tuple = ()
     model_domain: dict = field(default_factory=dict)
+    numerical_diagnostics: dict = field(default_factory=dict)
 
 
 def model_qualification(totals):
@@ -108,13 +109,24 @@ def model_qualification(totals):
 
 
 def linear(a, b):
-    """Pivoted elimination; no optional numerical dependency at runtime."""
-    a = [list(row) + [v] for row, v in zip(a, b)]
+    """Row-equilibrated elimination; zero pivots fail without an absolute floor.
+
+    Row scaling preserves the system while avoiding a unit-dependent singularity
+    decision. A small backward residual is checked separately by the nonlinear
+    iteration; this solve alone does not certify forward accuracy or conditioning.
+    """
+    rows = []
+    for row, value in zip(a, b):
+        scale = max(map(abs, row), default=0.0)
+        if scale == 0 or not math.isfinite(scale):
+            raise DeliveryError('nonconvergent', 'singular or nonfinite equilibrium Jacobian')
+        rows.append([v / scale for v in row] + [value / scale])
+    a = rows
     n = len(b)
     for k in range(n):
         p = max(range(k, n), key=lambda i: abs(a[i][k]))
         a[k], a[p] = a[p], a[k]
-        if abs(a[k][k]) < 1e-25:
+        if a[k][k] == 0:
             raise DeliveryError('nonconvergent', 'singular equilibrium Jacobian')
         for i in range(k + 1, n):
             f = a[i][k] / a[k][k]
@@ -123,6 +135,8 @@ def linear(a, b):
     x = [0.0] * n
     for i in range(n - 1, -1, -1):
         x[i] = (a[i][n] - sum(a[i][j] * x[j] for j in range(i + 1, n))) / a[i][i]
+    if not all(map(math.isfinite, x)):
+        raise DeliveryError('nonconvergent', 'nonfinite equilibrium linear solution')
     return x
 
 
@@ -418,6 +432,19 @@ def _solve(
                 water,
                 limitations,
                 domain,
+                dict(
+                    mass_action_log_residual=norm,
+                    maximum_relative_balance=max(
+                        (abs(v) / totals[b] for b, v in residuals.items()), default=0.0
+                    ),
+                    ionic_strength_update=abs(updated - strength),
+                    fixed_ionic_strength=ionic_strength is not None,
+                    water_activity_update=abs(next_water - water),
+                    log_residual_limit=2e-10,
+                    ionic_strength_update_limit=1e-12,
+                    water_activity_update_limit=1e-12,
+                    qualification='iteration residuals; forward/physical accuracy not certified',
+                ),
             )
         if ionic_strength is None:
             # Secant step on g(I) = I(speciation at I) - I, which converges superlinearly

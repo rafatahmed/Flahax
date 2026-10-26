@@ -122,7 +122,7 @@ Source module: `flahax.aqueous_model`. Import with `from flahax import AcidResul
 ### `AqueousResult`
 
 ```text
-AqueousResult(totals: dict, ph: float, ionic_strength: float, species: dict, activities: dict, saturation_indices: dict, precipitated: dict, residuals: dict, iterations: int, charge_balance: float, water_activity: float, model_limitations: tuple = (), model_domain: dict = <factory>) -> None
+AqueousResult(totals: dict, ph: float, ionic_strength: float, species: dict, activities: dict, saturation_indices: dict, precipitated: dict, residuals: dict, iterations: int, charge_balance: float, water_activity: float, model_limitations: tuple = (), model_domain: dict = <factory>, numerical_diagnostics: dict = <factory>) -> None
 ```
 
 A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
@@ -132,7 +132,7 @@ model_limitations identifies omitted positive ligand/metal competition and
 selected profile assumptions. model_domain states the numerical/chemical
 conventions; a converged result does not establish physical applicability.
 
-Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `saturation_indices`, `precipitated`, `residuals`, `iterations`, `charge_balance`, `water_activity`, `model_limitations`, `model_domain`.
+Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `saturation_indices`, `precipitated`, `residuals`, `iterations`, `charge_balance`, `water_activity`, `model_limitations`, `model_domain`, `numerical_diagnostics`.
 
 Source module: `flahax.aqueous_model`. Import with `from flahax import AqueousResult`.
 
