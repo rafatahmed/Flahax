@@ -5,6 +5,7 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 __all__ = [
+    "solve_joint_problem",
     "JointSource",
     "JointProblem",
     "make_joint_problem",
@@ -286,3 +287,5 @@ from .materials import (
 
 from .joint_problem import JointSource, JointProblem
 from .ph_adjustment import make_joint_problem
+
+from .joint_solver import solve_joint_problem

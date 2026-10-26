@@ -1159,6 +1159,29 @@ Record fields: `product_id`, `nutrients`, `components`, `solvent_fraction`, `den
 
 Source module: `flahax.joint_problem`. Import with `from flahax import JointSource`.
 
+## flahax.joint_solver
+
+### `solve_joint_problem`
+
+```text
+solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks)
+```
+
+Search one immutable JointProblem from an explicitly supplied start.
+
+dose_steps maps every fertilizer/reagent ID to a positive g/L finite-difference
+scale. trust_radius bounds the infinity norm of steps in those scaled variables.
+Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
+squared relative nutrient errors. sensitivity_tolerance is relative agreement
+of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+
+Returns numerical_candidate only after fresh final residual/constraint checks;
+accepted is always False pending separate model/phase/acceptance qualification.
+Exhaustion, bad trials, failed sensitivities and stalled local searches return
+search_incomplete, never a global infeasibility or optimality claim.
+
+Source module: `flahax.joint_solver`. Import with `from flahax import solve_joint_problem`.
+
 ## flahax.material_chemistry
 
 ### `material_chemistry`
