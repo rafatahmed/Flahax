@@ -10,6 +10,10 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Distinguish target-subset charge from emitted nutrient inventory without claiming
+  impossibility from partial charge sums. Label unmet-target structural proofs and
+  relaxed search observations explicitly, including source-water and zero misses.
+
 - Preserve every positive product dose at full floating-point precision so emitted
   quantities reproduce nutrient results, including trace molybdenum.
 - Render mass-only pH reagents in grams across terminal, report and batch sheets

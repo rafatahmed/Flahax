@@ -31,6 +31,7 @@ from .engine import (
     forward,
     _report,
     _diagnose,
+    _charge_report,
 )
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
 from .root_finding import shrink_bracket
@@ -423,6 +424,7 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
         )
         for s in salts
     ]
+    _charge_report(result)
     selected = {s['id'] for s in salts}
     result['excluded'] = [e for e in result['excluded'] if e.get('id') not in selected]
     result['requirementConflicts'] = [

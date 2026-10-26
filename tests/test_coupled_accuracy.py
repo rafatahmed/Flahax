@@ -30,6 +30,11 @@ class RecipeBlendTests(unittest.TestCase):
         rows = {r['symbol']: r for r in result['rows']}
         for symbol, value in expected.items():
             self.assertEqual(rows[symbol]['final'], float(value))
+        self.assertAlmostEqual(
+            result['recipeIonBalance']['cationsMeqPerL'], 85 / 39.0983 + 2 * 25 / 40.078
+        )
+        self.assertNotEqual(result['recipeIonBalance'], self.ends[0]['recipeIonBalance'])
+        self.assertEqual(result['chargeAssessment']['assayOnlyProducts'], ['k', 'ca'])
         self.assertEqual(result['grams'], [0.75, 0.25])
         self.assertEqual(result['loss'], float(Fraction(15, 100) ** 2 + Fraction(75, 100) ** 2))
         for miss in result['unmetTargets']:
