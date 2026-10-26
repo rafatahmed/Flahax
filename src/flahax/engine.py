@@ -42,7 +42,7 @@ NNLS_ADDITION_FACTOR = 4
 GRAM_PIVOT_FLOOR = 1e-8
 # Pivot ratio below which the Gram solution is refined against the original columns.
 GRAM_REFINE_BELOW = 1e-4
-# Double-precision unit round-off, for scale-aware NNLS optimality tests.
+# Binary64 spacing at one (2^-52), twice round-to-nearest unit roundoff.
 ROUNDOFF = 2.220446049250313e-16
 # Grams below this do not appear in the recipe.
 KEEP_GRAMS = 1e-6
@@ -212,6 +212,8 @@ def nnls(
     rhs: list[float],
     x0: list[float] | None = None,
     gram: "_LazyGram | None" = None,
+    *,
+    diagnostics: dict | None = None,
 ) -> list[float]:
     """Lawson-Hanson non-negative least squares. matrix is rows × columns.
 
@@ -219,6 +221,8 @@ def nnls(
     entries form the initial passive set. The problem is convex, so the optimum is
     the same; a nearby start needs far fewer column additions. gram, when given, is a
     _LazyGram of this same matrix, shared by calls that change only rhs.
+    Optional diagnostics receives direct residual/KKT checks and rank exclusions;
+    numerical stationarity is not a certificate for downstream recipe policies.
     """
     if not matrix:
         return []
@@ -241,8 +245,18 @@ def nnls(
 
     # A caller solving several right-hand sides for one matrix may share its Gram cache.
     gram = _LazyGram(cols) if gram is None else gram
+    # Reject unrepresentable Gram scales before a zero/NaN dual weight can be
+    # mistaken for optimality. Zero columns remain legitimate inactive columns.
+    for j, column in enumerate(cols):
+        diagonal = gram[j][j]
+        if not math.isfinite(diagonal) or (diagonal == 0 and any(column)):
+            raise InputError(
+                'NNLS column products exceed floating-point range; rescale the problem'
+            )
     cross = [sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
     cross_size = [sum(abs(a * b) for a, b in zip(ci, rhs)) for ci in cols]
+    if not all(map(math.isfinite, cross_size)):
+        raise InputError('NNLS right-hand-side products exceed floating-point range')
 
     def least_squares(chosen: list[int]) -> list[float]:
         sub = _gram_lstsq(gram, cross, cols, rhs, chosen)
@@ -325,6 +339,23 @@ def nnls(
         additions += 1
         rejected.clear()
         settle(sub)
+    if diagnostics is not None:
+        residual = [math.fsum(a * v for a, v in zip(row, x)) - y for row, y in zip(matrix, rhs)]
+        gradient = [math.fsum(a * r for a, r in zip(column, residual)) for column in cols]
+        allowances = [bound * size for size in sizes]
+        violations = [abs(g) if value > 0 else max(0.0, -g) for g, value in zip(gradient, x)]
+        diagnostics.update(
+            residual=residual,
+            residual_norm=math.hypot(*residual),
+            gradient=gradient,
+            optimality_allowances=allowances,
+            optimality_passed=all(v <= a for v, a in zip(violations, allowances)),
+            rejected_columns=sorted(rejected),
+            column_additions=additions,
+            condition_estimate=None,
+            qualification='numerical KKT check of the supplied least-squares problem only; '
+            'rank exclusions and input rounding can limit forward accuracy',
+        )
     return x
 
 

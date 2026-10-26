@@ -55,6 +55,43 @@ parameter provenance. Neither harness coverage nor reference agreement establish
 physical accuracy. Numerical tolerance selection and broader golden-reference
 qualification remain separate work; physical validation is a later stage.
 
+## Numerical stopping and diagnostic contracts
+
+Run `python -m unittest tests.test_numerical_precision tests.test_root_finding
+tests.test_solver_convergence -v`. These controls compare scaled systems with
+exact rational solutions and ideal acid roots with 80-digit exact-sign brackets.
+They exercise zero/trace right-hand sides, nearly dependent columns, overflow,
+nonfinite values, exhausted iteration budgets and adjacent floating-point endpoints.
+
+| Calculation | Acceptance or diagnostic rule | Scope of the evidence |
+|---|---|---|
+| Bracketed root | `hi-lo <= width + relative*abs(hi)`, exact evaluated zero, or an explicit caller acceptance predicate | No hidden tolerance; invalid signs fail, and exhausted budgets or unattainable widths raise `nonconvergent`. Continuity and endpoint evaluations are caller obligations. |
+| Equilibrium linear step | Row-equilibrated pivoted elimination; reject zero pivots and nonfinite results | Uniformly scaled systems from `1e-150` to `1e150` are checked against rational solutions. Removing the dimensional `1e-25` pivot floor does not certify ill-conditioned forward error. The nonlinear solver must still close its residual. |
+| Calculated pH | Charge residual at most `1e-12` and bracket width at most `1e-7`; exact-zero scan points can return immediately | Both limits are unchanged. Small charge alone cannot bound pH error in a weakly buffered system. Sign comparisons avoid multiplying tiny residuals into zero. |
+| Aqueous Newton solve | Existing log mass-action residual below `2e-10` | A log balance error of this size corresponds to a relative balance error below `10**(2e-10)-1` before floating-point and phase-clipping effects. Returned diagnostics expose the actual balance error separately. |
+| Ionic strength and water activity | Existing absolute update thresholds below `1e-12` | Diagnostics distinguish fixed ionic strength from iterated ionic strength. Small updates are iteration checks, not universal forward-error bounds. Warm/cold and pinned-reference controls remain mandatory. |
+| NNLS optimality | Existing per-column allowance `10*max(rows,columns)*ROUNDOFF*term_magnitudes` | `ROUNDOFF` is binary64 spacing at one, `2**-52`, not unit roundoff. Direct residual and gradient checks are available through `nnls(..., diagnostics=record)`. The report identifies excluded columns and does not invent a condition-number estimate. |
+
+The optional NNLS diagnostic applies to a nonempty supplied least-squares problem;
+it does not certify later recipe simplification or hard-limit policy. A failed
+diagnostic remains failed even if the active-set search has stopped. Rank and
+active-set policy review continues with the dedicated solver work. No fitting,
+chemistry, or reference tolerance was increased by these changes.
+NNLS rejects nonzero columns whose squared norms underflow to zero or overflow,
+and nonfinite right-hand-side product magnitudes. These are representability
+failures, not infeasibility certificates. Rescale the mathematical problem;
+do not widen nutrient acceptance limits to make it pass.
+
+`AqueousResult.numerical_diagnostics` records mass-action and component-balance
+residuals, ionic-strength/water updates and their existing limits. Residuals are
+distinct from forward error: a nearly singular problem can have a small residual
+and uncertain coordinates. The controlled linear tests bound backward error by
+eight binary64 spacings times the evaluated term magnitudes; their `1e-9`
+coordinate comparison covers the explicitly tested near-dependent systems only.
+The ideal-acid test uses the attained bracket width plus eight endpoint ulps for
+evaluation rounding. These are test-family allowances, not new runtime tolerances
+or applicability claims. Physical validation remains separate.
+
 ## User manual and retained release artifacts
 
 The canonical manual is `src/flahax/data/USER_GUIDE.md`. It is bundled as a package resource in both distributions; all nine Python examples are executed during source regression and isolated wheel/sdist verification. The verification report records the exact manual hash and example count. The bundled `API_REFERENCE.md` covers every top-level public export; source tests reject signature drift and clean installs check export coverage and record its hash. `docs/index.md` is the documentation navigation page; historical material is separate.

@@ -37,6 +37,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Reject invalid or unfinished root searches, remove the scale-dependent absolute
+  equilibrium pivot floor, and require pH-width evidence alongside charge closure.
+  Added numerical residual and NNLS optimality diagnostics with independent scaled
+  and high-precision controls; existing acceptance tolerances are unchanged
+  ([#165](https://github.com/rafatahmed/Flahax/issues/165)).
+
 - Account for supported noncarbonate alkalinity before inferring missing carbon.
   Preserve measured zero/fixed carbon and titrated alkalinity; keep interactive
   titration input separate from the legacy HCO3 carbon approximation. Reject
