@@ -159,15 +159,20 @@ class TankGroupingTests(unittest.TestCase):
         recipe = workflow('Tomato (Howard Resh)').recommendation
         grouping = group_tanks(recipe['salts'], PRODUCTS)
         self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
-        for name in (
-            'Magnesium Sulfate (Heptahydrate)',
-            'Potassium Monobasic Phosphate',
-            'Potassium Dibasic Phosphate',
-        ):
-            self.assertEqual(grouping.tank_of(name), 'B', name)
+        selected = {s['name'] for s in recipe['salts']}
+        phosphates = selected.intersection(
+            {
+                'Potassium Monobasic Phosphate',
+                'Potassium Dibasic Phosphate',
+                'Ammonium Monobasic Phosphate',
+            }
+        )
+        self.assertTrue(phosphates)
+        self.assertEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'), 'B')
         pairs = {(a, b) for a, b, _ in grouping.waived}
-        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Monobasic Phosphate'), pairs)
-        self.assertIn(('Magnesium Sulfate (Heptahydrate)', 'Potassium Dibasic Phosphate'), pairs)
+        for name in phosphates:
+            self.assertEqual(grouping.tank_of(name), 'B', name)
+            self.assertIn(('Magnesium Sulfate (Heptahydrate)', name), pairs)
         self.assertEqual({why for *_, why in grouping.waived}, {OWNER_TWO_TANKS})
 
     def test_calcium_separations_still_hold(self):
@@ -430,7 +435,7 @@ class IncidentalAssessmentTests(unittest.TestCase):
             ['N_NH4', 'Na'],
         )  # neither maximum was declared
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
-        self.assertNotIn('N_NH4', summary['stages']['formulation'].get('message') or '')
+        self.assertIn('N_NH4', summary['stages']['formulation'].get('message') or '')
 
     def test_each_incidental_names_the_products_that_supply_it(self):
         flow = plan_fertilizer_workflow(
@@ -442,7 +447,14 @@ class IncidentalAssessmentTests(unittest.TestCase):
             equilibrium=RO,
             ph_adjustment=self.NITRIC,
         )
-        self.assertEqual(self.row(flow.recommendation)['source'], ['Calcium Nitrate (ag grade)'])
+        selected = {s['name'] for s in flow.recommendation['salts']}
+        sources = {
+            p['name']
+            for p in PRODUCTS
+            if p['name'] in selected and p['elements'].get('N_NH4', 0) > 0
+        }
+        self.assertTrue(sources)
+        self.assertEqual(set(self.row(flow.recommendation)['source']), sources)
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
         rows = {r['symbol']: r for r in summary['formulation']['rows']}
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])

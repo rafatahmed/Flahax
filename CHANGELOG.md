@@ -10,6 +10,18 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Fix coupled pH trial direction crossings and discontinuous product switches by
+  bracketing and verifying a blend of the endpoint recipes. Rebuild final nutrient
+  assessments without changing targets, ceilings or chemistry constants. Initial
+  opposite-direction products remain inapplicable; global joint fitting remains open.
+
+- Fix primary fitting to minimize positive-target squared relative error without
+  hidden dose or incidental-ion penalties. Keep incidental reporting and hard limits.
+  `ridge` now defaults to zero and rejects nonzero values; remove old explicit
+  regularization arguments. Report unexplained fit degradation without blaming a
+  removed penalty, and recognize binding ceilings within the solver convergence criterion.
+
+
 - Enforce explicit zero nutrient requirements and targeted hard maxima; report
   contradictory targets and source-water excess without relaxing the inputs.
 
@@ -90,7 +102,7 @@ The grower release: FlahaX becomes a tool a grower or agronomist can run without
 (`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock
 solubility, and moves to Beta. No breaking API change (14 names added, none removed); Python 3.11
 or newer, still with no runtime dependencies. Known limits: the full-screen `flahax mix` is alpha
-(`--plain` always works; typing "à" on Windows swallows the next key, #127), solubility checks are
+(`--plain` always works; typing "Ã " on Windows swallows the next key, #127), solubility checks are
 single-salt lower bounds, and there is no physical validation yet (#41).
 [Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md).
 
@@ -110,7 +122,7 @@ single-salt lower bounds, and there is no physical validation yet (#41).
 
 ### Changed
 
-- The documentation site is organised for its readers (Diátaxis): Get started, a grower, an agronomist and a developer and researcher guide, Reference (command line, Python API, input files, error codes), Explanation, Evidence and Project, with diagrams; moved pages redirect from their old addresses.
+- The documentation site is organised for its readers (DiÃ¡taxis): Get started, a grower, an agronomist and a developer and researcher guide, Reference (command line, Python API, input files, error codes), Explanation, Evidence and Project, with diagrams; moved pages redirect from their old addresses.
 - `flahax --help` describes every command, with examples and links to the documentation and the issue tracker; the README follows the order a reader needs (installation, quick start, commands, troubleshooting); the changelog follows Keep a Changelog 1.1.0 for every release.
 - Supplier labels may differ from their chemical's charge balance by up to 1 % (was 0.1 %) (#93).
 - A water report without chloride closes its charge balance on alkalinity instead of being blocked (#100).
@@ -154,7 +166,7 @@ the 26 shipped formulas (catalogue corrections below).
 - `recommend()` is 2.8-4.0x faster (#59); equilibrium solves are 3-5x and their searches 10-25x faster (#37, #61), with numerically equivalent results.
 - Incidental NH4-N is allowed up to the smaller of 10 % of total N and 1.5 mmol/L when the formula has no N_NH4 (#54).
 - Incidental-ion ceilings reach their limit in one refit (#56).
-- Catalogue: Mg Nitrate is Mg(NO3)2·6H2O; Phosphoric Acid (75%) is a 75 % solution; Calcium Nitrate cites the Haifa sheet; ammonium sulfate and urea cite ChemicalBook sheets.
+- Catalogue: Mg Nitrate is Mg(NO3)2Â·6H2O; Phosphoric Acid (75%) is a 75 % solution; Calcium Nitrate cites the Haifa sheet; ammonium sulfate and urea cite ChemicalBook sheets.
 - Chelates carry their sodium counterions in chemistry, and formulation reports that sodium as incidental Na.
 - Chlorine uses 35.45 g/mol everywhere.
 - NNLS raises `InputError` at its iteration cap instead of returning a non-optimal fit (#55).
@@ -217,7 +229,7 @@ planning commands and reports. [Full notes](https://github.com/rafatahmed/Flahax
 
 Yanked on PyPI on 2026-10-17, after 0.3.1 was published: its source distribution contained a
 third-party PDF. Use 0.3.1. Core `recommend` and CLI input contracts are unchanged, with no
-third-party runtime dependencies; the chemistry boundary is 25 °C, Davies I ≤ 0.1 mol/kg water,
+third-party runtime dependencies; the chemistry boundary is 25 Â°C, Davies I â‰¤ 0.1 mol/kg water,
 fixed product oxidation states and closed analytical inorganic carbon. Hosted checks were blocked
 by account billing; the owner approved publication on verified local evidence.
 [Release record](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.3.0.md).

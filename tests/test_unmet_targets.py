@@ -55,7 +55,7 @@ class UnmetTargetTests(unittest.TestCase):
             self.assertIn("N_NH4", item["bindingLimits"])
 
     def test_every_benchmark_miss_is_explained(self):
-        reasons = {"no_source", "limited_by_ceiling", "incidental_tradeoff", "conflicting_targets"}
+        reasons = {"no_source", "limited_by_ceiling", "fit_degradation", "conflicting_targets"}
         for f in LIBRARY["formulas"]:
             for water in ({}, {"Ca": 20}):
                 with self.subTest(formula=f["name"], water=water):

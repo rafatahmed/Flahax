@@ -332,9 +332,12 @@ class AcidSelectionTests(unittest.TestCase):
     def test_four_acids_conserve_charge_and_add_the_correct_nutrients(self):
         args = self.arguments()
         result = plan_acid_options(**args)
-        self.assertEqual(result.selected_product_id, 'C6H8O7')
+        # All acids preserve the only positive target (Na). Incidental additions
+        # under explicit maxima do not break this accuracy tie; input order does.
+        self.assertEqual(result.selected_product_id, args['products'][0]['id'])
         for candidate in result.candidates:
             self.assertEqual(candidate.status, 'accepted', candidate)
+            self.assertEqual(candidate.loss, 0)
             self.assertGreater(candidate.dose_molal, 0)
             self.assertLess(abs(candidate.target.charge_balance), 2e-12)
             self.assertAlmostEqual(

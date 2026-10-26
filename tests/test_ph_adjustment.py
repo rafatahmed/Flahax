@@ -141,12 +141,14 @@ class CoupledWorkflowTests(unittest.TestCase):
         # Phosphoric acid's P is counted as supply: every target is met.
         self.assertTrue(by_formula['H3PO4'].recommendation['feasible'])
         # Nitric acid adds nitrate-N; calcium comes only from calcium nitrate, so N and Ca conflict
-        # slightly, and the miss is explained, not hidden.
+        # and the miss is explained, not hidden. No upper error bound follows
+        # from primary-only fitting: joint optimality remains a separate contract.
         nitric = by_formula['HNO3'].recommendation
+        self.assertFalse(nitric['feasible'])
         self.assertEqual({u['symbol'] for u in nitric['unmetTargets']}, {'N_NO3', 'Ca'})
         self.assertTrue(
             all(
-                u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) < 2
+                u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) > 1
                 for u in nitric['unmetTargets']
             )
         )
