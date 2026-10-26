@@ -59,3 +59,36 @@ The mass fractions must be elemental fractions from 0 to 1 and cannot total more
 ## Boundary
 
 The quantity layer does not calculate stock concentration, tank compatibility, reagent normality, pH dose, pump runtime, or hardware commands. Those calculations belong to their respective planning APIs. Its role is to make their inputs dimensionally clear and preserve the original solver balance.
+
+## Recalculate actual weighed masses
+
+`salts[].gramsPerLitre` is the authoritative binary64 product dose. Every positive
+solver dose is retained, including trace doses below 0.000001 g/L. JSON round trips
+retain these values. `totalGramsPerLitre` sums the same unrounded doses. Formatting
+is for display; a displayed rounded mass must not be substituted silently.
+
+When scale resolution or actual weighing changes a dose, recalculate:
+
+```python
+from flahax import MassGrams, VolumeLitres, rescore_weighed_recipe
+
+actual = rescore_weighed_recipe(
+    products, {product_id: MassGrams(measured_grams)}, VolumeLitres(100),
+    original_targets, original_water,
+    maximum_concentrations=original_effective_maxima,
+)
+```
+
+Pass every actually weighed product; omitted IDs contribute zero. The function
+converts grams divided by final litres to g/L, recomputes nutrient concentrations,
+loss, zero requirements and hard limits, and returns fresh feasibility. It never
+refits the recipe or inherits planned feasibility. Retain original targets and
+water; include effective ammonium limits if the original caller set that policy.
+A passing nutrient assessment does not establish pH, stock compatibility or scale
+suitability. Re-run the applicable chemistry and delivery assessments for changed
+quantities. Small masses may require an independently assessed dilution procedure;
+the mathematical engine does not silently omit them or invent scale resolution.
+
+Reagent reports use liquid volume only when the product has a density-based
+conversion. Otherwise they retain grams in terminal, report and batch sheets;
+missing density never implies zero volume or permission to use an acid injector.

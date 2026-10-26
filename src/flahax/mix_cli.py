@@ -27,7 +27,7 @@ from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, rend
 from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
-from .grower_report import number, render_report
+from .grower_report import _reagent_line, number, render_report
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -715,7 +715,9 @@ def summarize(summary, say):
                 f'{grams(product["gramsPerBatch"])}'
             )
     selected = summary['ph'] and summary['ph']['selected']
-    if selected and not blocked:
+    if selected and not blocked and selected['volume_ml_per_batch'] is None:
+        say(_reagent_line(summary))
+    elif selected and not blocked:
         say(
             f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL '
             f'{selected["product"]}, added to water '

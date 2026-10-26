@@ -569,6 +569,21 @@ flag. It does not reinterpret the solver's nutrient balance or round doses.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import final_solution_recipe`.
 
+### `rescore_weighed_recipe`
+
+```text
+rescore_weighed_recipe(products: 'list[dict]', masses: 'Mapping[str, MassGrams]', final_volume: 'VolumeLitres', targets: 'Mapping[str, Any]', water: 'Mapping[str, Any] | None' = None, *, maximum_concentrations: 'Mapping[str, Any] | None' = None) -> 'dict'
+```
+
+Recalculate nutrient results from actual masses without fitting new doses.
+
+``masses`` maps product IDs to weighed grams. Omitted products contribute zero.
+Supply the original targets, water and effective maxima, including any caller
+ammonium policy. Feasibility is recalculated; no planned flag is inherited.
+This nutrient assessment does not establish pH, stock or physical suitability.
+
+Source module: `flahax.delivery_quantities`. Import with `from flahax import rescore_weighed_recipe`.
+
 ### `rescore_with_reagent`
 
 ```text

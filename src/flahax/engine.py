@@ -44,8 +44,8 @@ GRAM_PIVOT_FLOOR = 1e-8
 GRAM_REFINE_BELOW = 1e-4
 # Binary64 spacing at one (2^-52), twice round-to-nearest unit roundoff.
 ROUNDOFF = 2.220446049250313e-16
-# Grams below this do not appear in the recipe.
-KEEP_GRAMS = 1e-6
+# Only exact zero doses are omitted; every positive binary64 dose is authoritative.
+KEEP_GRAMS = 0.0
 # A recipe is feasible when every requested ion is inside this Δ%.
 TOLERANCE_PCT = 1.0
 # A binding ceiling is met as a constraint (#68): a row of moderate weight whose aim is
@@ -614,7 +614,7 @@ def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
                 {
                     "id": salt["id"],
                     "name": salt["name"],
-                    "gramsPerLitre": round(gram, 6),
+                    "gramsPerLitre": gram,
                 }
             )
     return chosen
@@ -961,7 +961,7 @@ def _report(
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
         "undesiredIons": undesired,
-        "totalGramsPerLitre": round(sum(gram for gram in grams if gram > 0), 6),
+        "totalGramsPerLitre": sum(gram for gram in grams if gram > 0),
         "warnings": warnings,
     }
 

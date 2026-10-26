@@ -19,7 +19,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from flahax.grower_report import grams, millilitres, number
+from flahax.grower_report import grams, number
 from flahax.grower_sheet import render_mix_sheet
 from flahax.mix_cli import main
 
@@ -95,12 +95,18 @@ class OwnerSessionConsistency(unittest.TestCase):
             self.report, r'\(Monohydrate\)\s+[\d.e-]+\s+0\s'
         )  # no '0' weight in the report
 
-    def test_the_acid_reads_the_same_everywhere(self):
-        per_batch = millilitres(self.selected['volume_ml_per_batch'])
+    def test_selected_reagent_quantity_reads_the_same_everywhere(self):
+        selected = self.selected
+        # Keep the original owner inputs: accuracy-first fitting now selects a base.
+        self.assertEqual(selected['direction'], 'base')
+        self.assertIsNone(selected['volume_ml_per_batch'])
+        per_batch = grams(selected['mass_g_per_batch'])
+        self.assertGreater(selected['mass_g_per_batch'], 0)
         for name, page in self.outputs().items():
             with self.subTest(output=name):
-                self.assertIn(f'{per_batch} mL', page)
-                self.assertNotIn(f'{number(self.selected["volume_ml_per_batch"], 0)} mL of', page)
+                self.assertIn(per_batch, page)
+                self.assertIn(selected['product'], page)
+                self.assertNotIn('None mL', page)
 
     def test_one_ph_after_fertilizers_the_weighed_recipe(self):
         mixed = number(self.summary['chemistry']['mixed_ph'], 2)
@@ -135,3 +141,15 @@ class OwnerSessionConsistency(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ReagentQuantityRendering(unittest.TestCase):
+    def test_liquid_volume_and_mass_have_distinct_units(self):
+        from flahax.grower_report import _reagent_amount
+
+        self.assertEqual(
+            _reagent_amount(dict(volume_ml_per_batch=12.34, mass_g_per_batch=16.042)), '12.3 mL'
+        )
+        self.assertEqual(
+            _reagent_amount(dict(volume_ml_per_batch=None, mass_g_per_batch=16.042)), '16 g'
+        )

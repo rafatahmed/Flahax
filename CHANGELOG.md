@@ -10,6 +10,13 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Preserve every positive product dose at full floating-point precision so emitted
+  quantities reproduce nutrient results, including trace molybdenum.
+- Render mass-only pH reagents in grams across terminal, report and batch sheets
+  without inventing a liquid volume or crashing (#169).
+- Add `rescore_weighed_recipe` to reassess actual weighed masses against original
+  nutrient targets, source water and hard limits without refitting.
+
 - Prevent recipe simplification from degrading the original nutrient fit or
   accumulating drift across product removals. Recheck zeros and maxima on each
   trial and retain all positive internal doses; product count cannot increase

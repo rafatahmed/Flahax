@@ -610,6 +610,13 @@ def _card(label, value, note):
     )
 
 
+def _reagent_amount(candidate):
+    """Display a supported liquid volume, otherwise retain the reagent mass."""
+    if candidate['volume_ml_per_batch'] is None:
+        return grams(candidate['mass_g_per_batch'])
+    return f"{millilitres(candidate['volume_ml_per_batch'])} mL"
+
+
 def _reagent_line(summary):
     ph = summary['ph']
     if ph is None:
@@ -629,7 +636,7 @@ def _reagent_line(summary):
             'See the candidates and their reasons.'
         )
     return (
-        f'Add {millilitres(chosen["volume_ml_per_batch"])} mL of {chosen["product"]} '
+        f'Add {_reagent_amount(chosen)} of {chosen["product"]} '
         f'({chosen["formula"]}) per '
         f'{number(summary["batch_litres"], 0)} L to go from pH {number(ph["mixed_ph"], 2)} to '
         f'{number(ph["target_ph"], 2)}. Add it in steps and measure.'
@@ -738,12 +745,12 @@ def render_report(summary):
             )
             + '.</p>'
             + table(
-                ['Reagent', 'Formula', 'mL per batch', 'Status', 'Reason'],
+                ['Reagent', 'Formula', 'Quantity per batch', 'Status', 'Reason'],
                 [
                     (
                         c['product'],
                         c['formula'],
-                        millilitres(c['volume_ml_per_batch']),
+                        _reagent_amount(c),
                         c['status'],
                         c['message'] or '',
                     )

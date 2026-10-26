@@ -64,6 +64,7 @@ __all__ = [
     "elemental_contribution",
     "final_solution_recipe",
     "rescore_with_reagent",
+    "rescore_weighed_recipe",
     "gap_for",
     "gypsum_reference_values",
     "load_library",
@@ -179,6 +180,7 @@ from .delivery_quantities import (
     elemental_contribution,
     final_solution_recipe,
     rescore_with_reagent,
+    rescore_weighed_recipe,
 )
 from .engine import gap_for, load_library, recommend, solve_weights
 from .equilibrium import (
