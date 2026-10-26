@@ -272,7 +272,10 @@ Dose tolerance is 3% relative plus 1e-9 mol/kg-water, pH tolerance 0.01, and
 PHREEQC charge error must not exceed 0.1%. The existing database and all prior
 product/phase/failure captures are preserved.
 
-Regenerate only the new captures using `python tools/acid_selection_evidence.py`.
+Generate review candidates using
+`python tools/acid_selection_evidence.py --output NEW_DIRECTORY`.
+The destination must be new and outside the immutable historical fixture tree;
+existing captures and their comparison budgets are never replaced by this command.
 It uses the pinned external 3.8.6-17100 installation and temporarily merges
 unchanged `minteq.v4.dat` with the existing chelate and phase extensions. No
 executable or merged database is checked in.

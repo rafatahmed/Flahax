@@ -106,6 +106,47 @@ The source distribution now includes offline fixture inputs/outputs, extensions 
 
 ## Mandatory live reference validation
 
+The reviewed `tests/reference_inventory.json` pins all 197 pre-existing PHREEQC
+fixture files, including expected results, comparison budgets, extensions,
+historical successes, failure captures and probe inputs. The inventory verifier
+rejects missing, changed or unregistered files. The manifest is reviewable source,
+not a cryptographic signature; changing both a fixture and its inventory requires
+an explicit evidence review, not automatic regeneration to make a test pass.
+
+The current live families comprise 10 product cases, 11 phase cases and four acid
+cases (27 retained input programs including the additional nitric-acid stages).
+Every replay now checks the pinned executable, base database and temporary merged
+database. The phase captures' original metadata is preserved; the common pin
+qualifies the **current replay installation**, not an unrecorded historical binary.
+Execution rejects errors, warnings, absent charge-error evidence, charge error
+above the existing 0.1% limit, empty output, duplicate headings, mismatched row
+widths and nonfinite numbers. Missing installations fail the required CI job.
+
+Four older JSON fixtures, six intermediate successes, diagnostic failures and
+standalone probes remain historical evidence. Some identify a different PHREEQC
+version or lack complete executable/database provenance. They are checked for
+integrity and retain their existing comparisons, but are not labelled as current
+matched live qualification. Historical broad tolerances are not adopted as
+current numerical accuracy bounds. Preserved failed captures stay failed.
+
+Run `python -m unittest tests.test_reference_integrity
+tests.test_preserved_chemistry_evidence tests.test_live_reference_policy -v` for
+inventory, malformed-data, overwrite, warning and missing-installation controls.
+The required live job also runs these controls alongside product/phase/acid replay.
+
+Capture tools require `--output NEW_DIRECTORY` outside the historical fixture
+tree. For example, `python tools/phreeqc_evidence.py --output ../new-product-captures`;
+the phase and acid tools accept the same option. Existing destinations and
+existing per-case artifacts are rejected before execution. New captures remain
+candidates for review; they do not replace golden files or amend the inventory.
+Original inputs and failed output are retained when a capture fails.
+
+PHREEQC and FlahaX share thermodynamic data, and some fixed-valence input
+transformations read runtime reactions. Their agreement tests implementation
+consistency under declared assumptions, not independent parameter or physical
+validation. Missing ligand interactions remain explicit model limitations rather
+than being repaired in reference databases.
+
 `tools/provision_phreeqc.ps1` uses the [official USGS Windows 3.8.6-17100 installer](https://water.usgs.gov/water-resources/software/PHREEQC/). It verifies installer SHA-256 before administrative extraction into TEMP, then verifies executable and database SHA-256. An existing installation is reused only after hash verification. No PATH, base database or global installation is changed. The Windows CI job sets `FLAHAX_PHREEQC_ROOT` and `FLAHAX_REQUIRE_PHREEQC=1`; missing tools are an error, not a skipped success.
 
 ```powershell

@@ -25,6 +25,7 @@ recursive-include src/flahax *.py
 recursive-include src/flahax/data *.json
 recursive-include src/flahax/data *.md
 recursive-include tests *.py
+include tests/reference_inventory.json
 recursive-include tests/fixtures *.json *.pqi *.out *.sel *.screen *.dat *.md *.inp
 recursive-include tools *.py *.ps1
 include tools/requirements-benchmark-report.txt

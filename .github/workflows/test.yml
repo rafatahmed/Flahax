@@ -109,7 +109,7 @@ jobs:
       - name: Required live reference replay and runtime equivalence
         shell: pwsh
         run: |
-          python -m unittest tests.test_product_phreeqc tests.test_acid_reference -v 2>&1 | Tee-Object -FilePath phreeqc-validation.log
+          python -m unittest tests.test_product_phreeqc tests.test_acid_reference tests.test_preserved_chemistry_evidence tests.test_live_reference_policy tests.test_reference_integrity -v 2>&1 | Tee-Object -FilePath phreeqc-validation.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()

@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 import unittest
 
+from tools.phreeqc_evidence import selected
+
 ROOT = Path(__file__).parent / 'fixtures/phreeqc'
 
 
@@ -18,6 +20,12 @@ class PreservedEvidenceTests(unittest.TestCase):
         successes = 0
         for record in manifest['artifacts']:
             successes += record['kind'] == 'historical_success'
+            if record['kind'] == 'historical_success':
+                name = record['case']
+                self.assertEqual(selected(ROOT / (name + '.sel')), record['selected_rows'])
+                output = (ROOT / (name + '.out')).read_text()
+                self.assertNotIn('ERROR:', output)
+                self.assertNotIn('WARNING:', output)
             for name, digest in record['hashes'].items():
                 self.assertEqual(
                     hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), digest, name

@@ -37,6 +37,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Protect retained PHREEQC reference bytes with a complete inventory and require
+  fresh capture destinations. Reject malformed/nonfinite reference results, verify
+  executable/database pins for every current live family, and distinguish historical
+  evidence from shared-data implementation agreement
+  ([#166](https://github.com/rafatahmed/Flahax/issues/166)).
+
 - Reject invalid or unfinished root searches, remove the scale-dependent absolute
   equilibrium pivot floor, and require pH-width evidence alongside charge closure.
   Added numerical residual and NNLS optimality diagnostics with independent scaled
