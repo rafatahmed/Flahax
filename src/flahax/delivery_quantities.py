@@ -15,9 +15,9 @@ from dataclasses import dataclass
 import math
 from typing import Any, Mapping
 
-from .composition import IONS, InputError, validate_profile
+from .composition import IONS, InputError, assay_conflict, validate_profile
 from .delivery_contracts import DeliveryError
-from .engine import score
+from .engine import _report, forward, score
 
 
 def _value(raw: Any, label: str, *, minimum: float | None = None, strict: bool = False) -> float:
@@ -332,3 +332,77 @@ def rescore_with_reagent(
             )
         final[symbol] = final.get(symbol, 0.0) + amount.value
     return score(final, clean_targets)
+
+
+def rescore_weighed_recipe(
+    products: list[dict],
+    masses: Mapping[str, MassGrams],
+    final_volume: VolumeLitres,
+    targets: Mapping[str, Any],
+    water: Mapping[str, Any] | None = None,
+    *,
+    maximum_concentrations: Mapping[str, Any] | None = None,
+) -> dict:
+    """Recalculate nutrient results from actual masses without fitting new doses.
+
+    ``masses`` maps product IDs to weighed grams. Omitted products contribute zero.
+    Supply the original targets, water and effective maxima, including any caller
+    ammonium policy. Feasibility is recalculated; no planned flag is inherited.
+    This nutrient assessment does not establish pH, stock or physical suitability.
+    """
+    if not isinstance(final_volume, VolumeLitres):
+        raise DeliveryError('invalid_type', 'final_volume must be a VolumeLitres value')
+    if not isinstance(products, list) or not isinstance(masses, Mapping):
+        raise DeliveryError('invalid_type', 'products must be a list and masses an object')
+    by_id = {}
+    for product in products:
+        if not isinstance(product, dict) or not isinstance(product.get('id'), str):
+            raise DeliveryError('invalid_type', 'each product requires a string id')
+        key = product['id']
+        if not key.strip() or key in by_id or assay_conflict(product):
+            raise DeliveryError('invalid_value', 'product IDs must be unique and assays valid')
+        by_id[key] = product
+    doses = []
+    selected = []
+    for key, mass in masses.items():
+        if key not in by_id:
+            raise DeliveryError('unknown_product', f'unknown weighed product {key}')
+        if not isinstance(mass, MassGrams):
+            raise DeliveryError('invalid_type', 'weighed masses must be MassGrams values')
+        doses.append(GramsPerLitre(mass.value / final_volume.value).value)
+        selected.append(by_id[key])
+    if not all(
+        isinstance(value, Mapping)
+        for value in (
+            targets,
+            water if water is not None else {},
+            maximum_concentrations if maximum_concentrations is not None else {},
+        )
+    ):
+        raise DeliveryError('invalid_type', 'targets, water and maxima must be objects')
+    clean_targets = validate_profile(dict(targets), 'targets')
+    if not clean_targets:
+        raise InputError('targets are required')
+    clean_water = validate_profile(dict(water or {}), 'water')
+    maxima = validate_profile(dict(maximum_concentrations or {}), 'maximum_concentrations')
+    achieved = forward(selected, doses, clean_water)
+    loss, rows = score(achieved, clean_targets)
+    result = dict(loss=loss, rows=rows, **_report(rows, doses, [], maxima))
+    result['salts'] = [
+        dict(id=p['id'], name=p.get('name', p['id']), gramsPerLitre=dose)
+        for p, dose in zip(selected, doses)
+        if dose > 0
+    ]
+    result['requirementConflicts'] = [
+        dict(
+            symbol=symbol,
+            reason='target_above_maximum',
+            targetPpm=target,
+            maximumPpm=maxima[symbol],
+        )
+        for symbol, target in clean_targets.items()
+        if symbol in maxima and target > maxima[symbol]
+    ]
+    if result['requirementConflicts']:
+        result['feasible'] = False
+    return result

@@ -143,6 +143,10 @@ def _reagent_card(summary, volumes):
             f'<div class="card warn"><h2>pH '
             f'reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
         )
+    if chosen['volume_ml_per_batch'] is None:
+        return (
+            f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(_reagent_line(summary))}</p></div>'
+        )
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
     container = (
