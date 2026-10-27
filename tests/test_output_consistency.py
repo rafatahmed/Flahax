@@ -52,6 +52,8 @@ ANSWERS = [
 
 
 def text_of(page):
+    # Human display assertions exclude the separately tested exact JSON evidence.
+    page = re.sub(r'<pre id="flahax-result-data">.*?</pre>', '', page, flags=re.S)
     return html.unescape(re.sub(r'<[^>]+>', ' ', page))
 
 

@@ -8,6 +8,7 @@ Every value comes from the batch ``summary`` through the helpers the batch sheet
 the sheet's rounding, so the screen and the sheet always agree.
 """
 
+from .grower_report import percentage, qualification_lines
 from . import __version__
 from .grower_report import _reagent_line, grams, litres, millilitres, number
 from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by, readable
@@ -129,7 +130,11 @@ def _nutrient_rows(summary):
         ]
     ]
     for r in agronomist_rows(summary):
-        diff = '' if r['target'] is None else f'{r["diff_mg_l"]:+.2f} ({r["diff_pct"]:+.1f} %)'
+        diff = (
+            ''
+            if r['target'] is None
+            else f'{r["diff_mg_l"]:+.2f} ({percentage(r["diff_pct"], 1, " %")})'
+        )
         cells = (
             LABEL.get(r['nutrient'], r['nutrient']),
             cell(r['target']),
@@ -142,7 +147,14 @@ def _nutrient_rows(summary):
         line = ' '.join(
             c.rjust(w) if i else c.ljust(w) for i, (c, (_, w)) in enumerate(zip(cells, COLUMNS))
         )
-        style = 'dim' if r['target'] is None else 'warn' if abs(r['diff_pct']) > 1 else None
+        style = (
+            'dim'
+            if r['target'] is None
+            else 'warn'
+            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
+            or (r['target'] == 0 and r['diff_mg_l'] != 0)
+            else None
+        )
         rows.append([(line, style)])
     ph, chemistry = summary['ph'], summary.get('chemistry')
     path = [f'water {number(chemistry["water_ph"], 2)}'] if chemistry else []
@@ -158,6 +170,7 @@ def _nutrient_rows(summary):
 def _note_rows(summary, width):
     blocking = key_reasons(summary) if summary['status'] == 'blocked' else []
     ordered = blocking + [w for w in summary['warnings'] if w not in blocking]
+    ordered += qualification_lines(summary)
     rows = []
     for warning in ordered:
         style = 'error' if warning in blocking else None

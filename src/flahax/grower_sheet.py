@@ -23,6 +23,7 @@ from .grower_report import (
     litres,
     millilitres,
     number,
+    percentage,
     text,
 )
 
@@ -78,17 +79,17 @@ def agronomist_rows(summary):
     rows = []
     for r in summary['formulation']['rows']:
         target, final, w = r['target'], r['final'], water.get(r['symbol'], 0.0)
-        if not target and final < 1e-6:
+        if target is None and final < 1e-6:
             continue
         rows.append(
             dict(
                 nutrient=r['symbol'],
-                target=target or None,
+                target=target,
                 water=w,
-                required=None if not target else target - w,
+                required=None if target is None else target - w,
                 achieved=final - w,
                 final=final,
-                diff_mg_l=None if not target else final - target,
+                diff_mg_l=None if target is None else final - target,
                 diff_pct=None if not target else 100.0 * (final - target) / target,
                 source=r.get('source', []),
             )
@@ -174,7 +175,9 @@ def _reagent_card(summary, volumes):
 def _check_card(summary):
     ec = summary['ec']
     expected = (
-        f'about {number(ec["ec25_ms_cm"], 2)} mS/cm' if ec and ec.get('ec25_ms_cm') else 'measure'
+        f'about {number(ec["ec25_ms_cm"], 2)} mS/cm'
+        if ec and ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None
+        else 'measure'
     )
     return (
         '<div class="card"><h2>Check after mixing</h2><table><tbody>'
@@ -202,13 +205,18 @@ def _agronomist_section(summary):
                 f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
-        hi = ' class="num hi"' if abs(r['diff_pct']) > 1 else ' class="num"'
+        hi = (
+            ' class="num hi"'
+            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
+            or (r['target'] == 0 and r['diff_mg_l'] != 0)
+            else ' class="num"'
+        )
         body += (
             f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
             f'class="num">{cell(r["water"])}</td>'
             f'<td class="num">{cell(r["required"])}</td><td class="num">{cell(r["achieved"])}</td>'
             f'<td class="num">{cell(r["final"])}</td><td{hi}>{r["diff_mg_l"]:+.2f} '
-            f'({r["diff_pct"]:+.1f} %)</td></tr>'
+            f'({percentage(r["diff_pct"], 1, " %")})</td></tr>'
         )
     table = (
         '<h2>Nutrients, mg/L in the irrigation solution</h2><div '
