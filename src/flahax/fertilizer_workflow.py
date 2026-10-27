@@ -9,6 +9,7 @@ import math
 from collections.abc import Mapping
 
 from .calculated_ph import calculate_equilibrium_ph
+from .canonical_result import CanonicalResult
 from .composition import validate_profile
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis, VolumeLitres, final_solution_recipe
@@ -78,6 +79,7 @@ class FertilizerWorkflow:
     # Laboratory and charge-balanced water at the final volume, and the limits whose decision
     # the balancing alone would change (#84). None when the water was not charge-balanced.
     water_basis: dict | None = None
+    canonical_result: CanonicalResult | None = None
 
 
 def _positive(value, name):
@@ -817,6 +819,23 @@ def plan_fertilizer_workflow(
         _review_water_basis(
             output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations
         )
+    output.canonical_result = CanonicalResult.capture(
+        output,
+        dict(
+            salts=salts,
+            targets=targets,
+            water=water,
+            target_ph=target_ph,
+            final_volume=final_volume,
+            equilibrium=equilibrium,
+            nitric=nitric,
+            titration=titration,
+            stocks=stocks,
+            acids=acids,
+            maximum_concentrations=maximum_concentrations,
+            ph_adjustment=ph_adjustment,
+        ),
+    )
     return output
 
 

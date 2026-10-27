@@ -12,6 +12,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Bind workflow reports to immutable calculation snapshots, product records and
+  model-source fingerprints. Reject changed calculated fields, retain shared
+  export identities, and separate computational and delivery qualifications (#177).
+
 - Reconcile stock masses, final-volume ratios and distinct reagent/pump channels
   before delivery validation. Reject stock-volume overflow/underflow and future
   calibration dates; retain titration final-volume identity and qualify additive

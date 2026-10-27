@@ -171,6 +171,9 @@ def results_lines(summary, view, width, height, scroll, g, output, message=None)
 
     ``message`` (a question such as the leave confirmation) replaces the "Sheets:" line.
     """
+    from .canonical_result import verify_summary
+
+    verify_summary(summary)
     if width < MIN_WIDTH or height < MIN_HEIGHT:
         return [SMALL]
     usable = width - 1

@@ -161,6 +161,7 @@ class OwnerSessionConsistency(unittest.TestCase):
         from flahax import summarize_batch, load_library
 
         workflow = copy.copy(self.workflow)
+        workflow.canonical_result = None  # Explicit legacy unbound fixture.
         workflow.stages = dict(workflow.stages)
         stage = copy.copy(workflow.stages['ph_adjustment'])
         stage.value = replace(stage.value, unadjusted_state=None)

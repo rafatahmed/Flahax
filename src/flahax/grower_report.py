@@ -11,6 +11,7 @@ number comes from the workflow; nothing is typed in. These are planning document
 not dosing instructions: measure EC and pH after mixing.
 """
 
+from .canonical_result import result_statuses, seal_summary, verify_summary
 from dataclasses import asdict
 from html import escape
 import math
@@ -234,6 +235,9 @@ def summarize_batch(
     is the recipe to weigh. Each concentrate is compared with source-qualified
     references at ``temperature_c``; conditional floors cannot prove dissolution failure.
     """
+    canonical = workflow.canonical_result
+    if canonical is not None:
+        canonical.verify(workflow, products)
     batch = workflow.stages.get('batch')
     if batch is None or batch.status != 'calculated':
         raise DeliveryError('missing_field', 'the workflow needs a final volume for a batch sheet')
@@ -316,6 +320,7 @@ def summarize_batch(
             message=ph_stage.message,
         )
 
+    state = None
     chemistry = ec = None
     chem = workflow.stages.get('chemistry')
     unadjusted_state = getattr(plan, 'unadjusted_state', None)
@@ -548,7 +553,7 @@ def summarize_batch(
                 status = 'requires_review'
             warnings.append(f'{row.product}: solubility {row.reason.replace("_", " ")}.')
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
-    return dict(
+    summary = dict(
         title=title,
         water_label=water_label,
         flahax_version=__version__,
@@ -604,6 +609,27 @@ def summarize_batch(
         ],
     )
 
+    summary['statuses'] = result_statuses(summary)
+    summary['calculation_identity'] = dict(
+        status='bound' if canonical is not None else 'legacy_unverified',
+        result_id=canonical.result_id if canonical is not None else None,
+        input_sha256=None,
+        source_sha256=None,
+        recipe_sha256=None,
+        state_sha256=None,
+    )
+    if canonical is not None:
+        from .canonical_result import _digest
+
+        snapshot = canonical.to_dict()
+        summary['calculation_identity'].update(
+            input_sha256=_digest(snapshot['inputs']),
+            source_sha256=_digest(snapshot['sources']),
+            recipe_sha256=_digest(recipe),
+            state_sha256=_digest(state) if state is not None else None,
+        )
+    return seal_summary(summary)
+
 
 STYLE = """
 :root{color-scheme:light;font-family:Segoe UI,Arial,sans-serif;color:#20353f;background:#eef3f5}
@@ -649,6 +675,16 @@ STATUS_TEXT = {
     'requires_review': ('warn', 'Usable after review: read the warnings before mixing.'),
     'blocked': ('stop', 'Not usable as planned: see the blocked stages and warnings.'),
 }
+
+
+def result_reference(summary):
+    """Render the calculation content identity or explicitly label an unbound legacy view."""
+    identity = summary.get('calculation_identity') or {}
+    return (
+        '<p class="small">Calculation reference: '
+        + text(identity.get('result_id') or 'legacy unverified')
+        + '</p>'
+    )
 
 
 def _page(title, body, style):
@@ -703,6 +739,7 @@ def _reagent_line(summary):
 
 def render_report(summary):
     """Self-contained HTML report from ``summarize_batch``."""
+    verify_summary(summary)
     s, f = summary, summary['formulation']
     css, line = STATUS_TEXT[s['status']]
     ph, chem, ec, tanks = s['ph'], s['chemistry'], s['ec'], s['tanks']
@@ -885,7 +922,7 @@ def render_report(summary):
         + ''.join(f'<li>{text(a)}</li>' for a in s['assumptions'])
         + '</ul></section>'
     )
-    return _page(s['title'], body, STYLE)
+    return _page(s['title'], body + result_reference(s), STYLE)
 
 
 def _limit_rows(s):
@@ -1108,6 +1145,7 @@ def _unchecked_line(s):
 
 def render_batch_sheet(summary):
     """Printable A4 batch sheet from ``summarize_batch``."""
+    verify_summary(summary)
     s, tanks = summary, summary['tanks']
     css, line = STATUS_TEXT[s['status']]
     litres, ratio = s['batch_litres'], tanks['injection_ratio']
@@ -1199,4 +1237,4 @@ def render_batch_sheet(summary):
         'your supplier '
         'certificates.</p>'
     )
-    return _page(s['title'] + ' - batch sheet', body, SHEET_STYLE)
+    return _page(s['title'] + ' - batch sheet', body + result_reference(s), SHEET_STYLE)

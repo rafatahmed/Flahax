@@ -36,9 +36,19 @@ def sheet_text(summary, depth):
     )
 
 
+def unbound_summary(actual):
+    """Detach an explicitly synthetic mutable display fixture from calculation identity."""
+    result = copy.deepcopy(actual)
+    result.pop('export_identity', None)
+    result.pop('calculation_identity', None)
+    return result
+
+
 def presentation_summary(actual):
     """Synthetic renderer state, never a chemistry result or mixing approval."""
     summary = copy.deepcopy(actual)
+    summary.pop('export_identity', None)  # Synthetic presentation, no calculation claim.
+    summary.pop('calculation_identity', None)
     summary['status'] = 'requires_review'
     for tank in summary['tanks']['tanks']:
         for key in ('prepared_litres', 'capacity_litres'):
@@ -64,7 +74,7 @@ class ResultViewTests(unittest.TestCase):
                     say=lambda *a: None,
                 )
             cls.summary = json.loads((Path(tmp) / 'out' / 'summary.json').read_text('utf-8'))
-        cls.blocked = copy.deepcopy(cls.summary)
+        cls.blocked = unbound_summary(cls.summary)
         cls.blocked['status'] = 'blocked'
         cls.blocked['stages']['chemistry']['status'] = 'blocked'
         cls.blocked['warnings'].insert(0, 'chemistry: a phase forms; do not mix this recipe.')
@@ -77,7 +87,7 @@ class ResultViewTests(unittest.TestCase):
             (['ok'], 'mixture unqualified'),
             (['exceeds'], 'single-product limit'),
         ]:
-            summary = copy.deepcopy(self.summary)
+            summary = unbound_summary(self.summary)
             summary['solubility'] = [dict(status=status) for status in statuses]
             text = ' '.join(screen(summary, 0, width=160, height=100))
             self.assertIn(expected, text)
@@ -141,7 +151,7 @@ class ResultViewTests(unittest.TestCase):
         )
 
     def test_long_product_name_keeps_its_weight(self):
-        summary = copy.deepcopy(self.summary)
+        summary = unbound_summary(self.summary)
         product = summary['tanks']['tanks'][0]['products'][0]
         product['name'] = (
             'Compound NPK 20-20-20 plus trace elements, chelated, from data sheet 2025-03'
@@ -165,7 +175,7 @@ class ResultViewTests(unittest.TestCase):
                 line.encode('latin-1')
 
     def test_no_ph_path_no_ph_line(self):  # 130
-        summary = copy.deepcopy(self.summary)
+        summary = unbound_summary(self.summary)
         summary['chemistry'] = None
         summary['ph'] = None
         self.assertFalse(any(line.strip().startswith('pH:') for line in screen(summary, 1)))
@@ -196,7 +206,7 @@ class ResultViewTests(unittest.TestCase):
     def test_rounding_noise_is_zero_and_columns_stay_apart(self):  # 140
         self.assertEqual(number(7.105e-15, 2), '0')
         self.assertEqual(number(-3e-12, 2), '0')
-        summary = copy.deepcopy(self.summary)
+        summary = unbound_summary(self.summary)
         for row in summary['formulation']['rows']:
             if row['symbol'] == 'K':
                 row['final'] = 0.0
@@ -219,7 +229,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('sets the batch', joined)
 
     def test_notes_use_grower_words(self):  # 142
-        summary = copy.deepcopy(self.summary)
+        summary = unbound_summary(self.summary)
         summary['warnings'] = [
             'None of the available products supplies N_NO3.',
             'ph_adjustment: targets missed: N_NO3 -65.5% (no_source), '

@@ -334,6 +334,7 @@ class ReportTests(unittest.TestCase):
             side_effect=lambda r: 'x 1 mg/L' if r is first else None,
         ):
             wf = copy.copy(base)
+            wf.canonical_result = None  # Explicit synthetic stage fixture.
             wf.stages = dict(base.stages, formulation=copy.copy(stage))
             wf.stages['formulation'].status, wf.stages['formulation'].message = (
                 'requires_review',
@@ -352,6 +353,7 @@ class ReportTests(unittest.TestCase):
             side_effect=lambda r: None if r is first else 'y 2 mg/L',
         ):
             wf = copy.copy(base)
+            wf.canonical_result = None  # Explicit synthetic stage fixture.
             wf.stages = dict(base.stages, formulation=copy.copy(stage))
             wf.stages['formulation'].status, wf.stages['formulation'].message = 'calculated', None
             s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
@@ -364,6 +366,7 @@ class ReportTests(unittest.TestCase):
         # a block is never downgraded
         with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
             wf = copy.copy(base)
+            wf.canonical_result = None  # Explicit synthetic stage fixture.
             wf.stages = dict(base.stages, formulation=copy.copy(stage))
             wf.stages['formulation'].status, wf.stages['formulation'].message = 'blocked', 'nope'
             s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
@@ -554,7 +557,12 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
             self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
             self.assertIn('Tank A', out)
-            self.assertNotIn('Tank C', out)
+            # No two-tank waiver: #161 retains all required separated stocks.
+            self.assertIn('Tank C', out)
+            self.assertGreater(
+                summary['tanks']['required_tanks'], summary['tanks']['available_tanks']
+            )
+            self.assertEqual(summary['status'], 'blocked')
             with self.assertRaises(SystemExit):  # never overwrites
                 self.run_batch(
                     '--crop', 'tomato (howard', '--water', 'ro', '--output', str(target)

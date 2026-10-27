@@ -175,3 +175,19 @@ The unchanged owner-session regression previously combined weighed pH 5.32 with
 rejected-candidate mixed pH 5.20. It now consistently presents 5.32 for the weighed
 recipe and retains 5.20 only in the rejected-candidate diagnostic. This corrects
 state identity, not equilibrium parameters or acceptance tolerances.
+
+
+## Match outputs to the same calculation
+
+Reports and sheets show a calculation reference. Compare it with
+`calculation_identity.result_id` in the JSON summary when keeping or sharing
+outputs. The reference binds the input records, product doses, selected chemistry
+state and model sources. Editing a bound summary causes rendering to fail; rerun
+with the corrected inputs rather than editing calculated fields.
+
+The JSON `statuses` distinguish nutrient feasibility, chemistry and phase
+qualification, pH, EC, stock mixing, delivery and physical validation. A feasible
+nutrient recipe does not establish stock compatibility or validated delivery.
+Missing numerical convergence evidence is labeled `not_reported`; physical
+validation remains a separate later stage. The existing overall block always
+wins over review or successful individual stages.

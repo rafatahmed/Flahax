@@ -261,6 +261,9 @@ def _agronomist_section(summary):
 def render_mix_sheet(summary, depth=1):
     """Printable sheet: depth 1 tank cards; depth 2 and 3 add the nutrient table, limits and pH
     path."""
+    from .canonical_result import verify_summary
+
+    verify_summary(summary)
     s, volumes = summary, summary.get('volumes')
     blocked = s['status'] == 'blocked'
     css = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'stop'}[s['status']]
@@ -287,4 +290,6 @@ def render_mix_sheet(summary, depth=1):
         'products and '
         'assays against your supplier certificates.</p>'
     )
-    return _page(s['title'] + ' - batch sheet', body, CARD_STYLE)
+    from .grower_report import result_reference
+
+    return _page(s['title'] + ' - batch sheet', body + result_reference(s), CARD_STYLE)
