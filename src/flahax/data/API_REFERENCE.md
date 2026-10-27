@@ -170,6 +170,20 @@ table alone is not a complete analysis. Charge adjustment changes only pH.
 
 Source module: `flahax.calculated_ph`. Import with `from flahax import calculate_equilibrium_ph`.
 
+## flahax.canonical_result
+
+### `CanonicalResult`
+
+```text
+CanonicalResult(payload: str) -> None
+```
+
+Immutable JSON snapshot of inputs, source fingerprints and completed workflow state.
+
+Record fields: `payload`.
+
+Source module: `flahax.canonical_result`. Import with `from flahax import CanonicalResult`.
+
 ## flahax.catalogue_chemistry
 
 ### `ProductChemistry`
@@ -1802,6 +1816,51 @@ plan_pump_command(calibration: 'Mapping[str, Any]', requested_volume: 'VolumeLit
 Calculate a bounded command; this function performs no device I/O.
 
 Source module: `flahax.pump_planning`. Import with `from flahax import plan_pump_command`.
+
+## flahax.result_acceptance
+
+### `accept_result`
+
+```text
+accept_result(summary, *, actor, reason)
+```
+
+Record explicit consent to this exact proposal, without changing any result status.
+
+Actor is caller-supplied attribution, not authenticated identity. Consent does
+not waive constraints, certify EC, or authorize physical delivery.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import accept_result`.
+
+### `load_result`
+
+```text
+load_result(record)
+```
+
+Validate a saved result and return its detached payload, preserving old provenance.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import load_result`.
+
+### `save_result`
+
+```text
+save_result(summary, acceptance=None)
+```
+
+Build a detached versioned archive; no acceptance is inferred by saving.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import save_result`.
+
+### `verify_acceptance`
+
+```text
+verify_acceptance(summary, acceptance)
+```
+
+Reject stale or malformed consent. Success leaves every calculation guard intact.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import verify_acceptance`.
 
 ## flahax.stock_planning
 

@@ -468,3 +468,30 @@ then save it under a reviewed name with `store.save('sessions', name, migrated)`
 Migration discards old consent and old fingerprints; it captures current inputs,
 not reconstructed history. The original dictionary/file is unchanged. Rerun the
 calculation and review the new result before creating any new acceptance record.
+
+
+## Public command and file contracts
+
+`recommend` is a nutrient-fit JSON adapter: its supported keyword fields match
+`recommend` in Python, with `salts` providing the product library and legacy
+`allowIons`/`allowCarbonates` aliases retained. Duplicate aliases, unknown fields
+and string-valued permission booleans are errors. Explicit hard maxima are passed
+to the same engine. A successful calculation can still be infeasible.
+
+The `workflow` JSON adapter accepts `salts`, `targets`, `water`, `target_ph`,
+`final_volume_litres`, `stocks`, `equilibrium`, `acids`, `maximum_concentrations`,
+`remedy_options` and `max_remedy_evaluations`. Other Python-only configurations
+are rejected, never silently applied or approximated. Its serialized canonical
+result retains the immutable `payload`; reconstruct `CanonicalResult(payload)`
+to obtain its result ID. Missing chemistry stays `needs_input`.
+
+Batch/plain mix JSON summaries and HTML outputs refer to the same canonical
+calculation and export identity. Blocked outputs contain diagnostic quantities,
+not preparation instructions. Saved-result archives are a separate versioned
+format; raw session answers and legacy summaries do not imply acceptance. The
+Python acceptance/archive functions are now top-level exports documented in the
+[API inventory](../reference/api.md).
+
+Use the user guide's command-specific exit contract: JSON calculators use zero
+for a returned result, while batch/mix return three for a written blocked result.
+Always inspect the result rather than using process success as an approval gate.
