@@ -35,7 +35,7 @@ MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
 def litres(value):
     """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small
     batch)."""
-    return number(value, 1 if value >= 10 else 3)
+    return dose_number(value, 1 if value >= 10 else 3)
 
 
 def grams(value):
@@ -47,7 +47,7 @@ def grams(value):
 
 def millilitres(value):
     """A reagent volume, one decimal, the same on every output."""
-    return number(value, 1)
+    return dose_number(value, 1)
 
 
 def text(value):
@@ -667,13 +667,13 @@ td.num,th.num{text-align:right}.tick{width:16px;height:16px;border:1.5px solid #
 """  # noqa: E501
 
 STATUS_WORDS = {
-    'ready': 'ready',
-    'requires_review': 'review notes before mixing',
+    'ready': 'calculation complete',
+    'requires_review': 'review required',
     'blocked': 'do not mix',
 }
 STATUS_TEXT = {
-    'ready': ('ok', 'Every target is met and the pH plan is accepted.'),
-    'requires_review': ('warn', 'Usable after review: read the warnings before mixing.'),
+    'ready': ('ok', 'Calculation checks passed; physical validation remains separate.'),
+    'requires_review': ('warn', 'Review required: unresolved qualifications remain.'),
     'blocked': ('stop', 'Not usable as planned: see the blocked stages and warnings.'),
 }
 
@@ -698,6 +698,68 @@ def remedy_section(summary):
     )
 
 
+def percentage(value, digits=2, suffix="%"):
+    """Format a relative difference without inventing a percentage for zero targets."""
+    return 'undefined (zero target)' if value is None else f'{value:+.{digits}f}{suffix}'
+
+
+def dose_number(value, digits=2):
+    """Preserve a positive dose when fixed-point display would round it to zero."""
+    shown = number(value, digits)
+    if value is not None and value > 0 and float(shown.replace(',', '')) == 0:
+        return f'{value:.6g}'
+    return shown
+
+
+def qualification_lines(summary):
+    """Keep model applicability and physical validation distinct from feasibility."""
+    lines = [
+        'Planning calculation; physical validation is not established by this report.',
+    ]
+    for name, status in (summary.get('statuses') or {}).items():
+        lines.append(f'{name}: {status}')
+    ec = summary.get('ec')
+    if not ec:
+        return lines + ['EC: not evaluated; no estimate or uncertainty interval available.']
+    lines.append(f"EC status: {ec.get('status', 'not reported')}")
+    for key in ('reason', 'qualifier'):
+        if ec.get(key):
+            lines.append(f"EC {key}: {ec[key]}")
+    if ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None:
+        lines.append(f"EC25 calculated estimate: {ec['ec25_ms_cm']} mS/cm.")
+    if ec.get('known_species_subtotal_ms_cm') is not None:
+        lines.append(
+            f"Known-species subtotal: {ec['known_species_subtotal_ms_cm']} mS/cm; "
+            "not a total EC estimate, bound or midpoint."
+        )
+    if ec.get('ec25_range_ms_cm') is not None:
+        lines.append(f"Reported EC range: {ec['ec25_range_ms_cm']} mS/cm.")
+    else:
+        lines.append('EC uncertainty interval: not quantified.')
+    lines.append(f"EC uncertainty components: {ec.get('uncertainty_components', 'not reported')}")
+    audit = ec.get('audit') or {}
+    for key in ('model', 'chemistrySha256', 'coefficientsSha256'):
+        lines.append(f"EC {key}: {audit.get(key, 'not reported')}")
+    if ec.get('missing_species'):
+        lines.append(f"Uncovered EC species: {ec['missing_species']}")
+    return lines
+
+
+def evidence_section(summary):
+    """Embed escaped, full-precision evidence without scripts or network resources."""
+    import json
+
+    lines = ''.join(f'<li>{text(line)}</li>' for line in qualification_lines(summary))
+    payload = json.dumps(summary, ensure_ascii=False, allow_nan=False, sort_keys=True)
+    return (
+        '<section aria-label="Scientific evidence"><h2>Scientific qualifications</h2>'
+        f'<ul>{lines}</ul><details><summary>Full calculation evidence</summary>'
+        '<p>Digits preserve the computed result; they do not establish measurement '
+        'accuracy. Displayed quantities may be rounded.</p>'
+        f'<pre id="flahax-result-data">{text(payload)}</pre></details></section>'
+    )
+
+
 def result_reference(summary):
     """Render the calculation content identity or explicitly label an unbound legacy view."""
     identity = summary.get('calculation_identity') or {}
@@ -705,6 +767,7 @@ def result_reference(summary):
         '<p class="small">Calculation reference: '
         + text(identity.get('result_id') or 'legacy unverified')
         + '</p>'
+        + evidence_section(summary)
     )
 
 
@@ -734,6 +797,11 @@ def _reagent_amount(candidate):
 
 def _reagent_line(summary):
     ph = summary['ph']
+    if summary.get('status') == 'blocked':
+        return (
+            'Blocked calculation: any reagent quantities are diagnostic only. '
+            'Do not prepare this batch; resolve the recorded reasons and recalculate.'
+        )
     if ph is None:
         return 'pH was not planned: supply complete water chemistry and pH reagents to plan it.'
     chosen = ph['selected']
@@ -764,7 +832,7 @@ def render_report(summary):
     s, f = summary, summary['formulation']
     css, line = STATUS_TEXT[s['status']]
     ph, chem, ec, tanks = s['ph'], s['chemistry'], s['ec'], s['tanks']
-    targets = [r for r in f['rows'] if r['target']]
+    targets = [r for r in f['rows'] if r['target'] is not None]
     body = (
         '<header><div class="eyebrow">FlahaX '
         + text(s['flahax_version'])
@@ -799,10 +867,10 @@ def render_report(summary):
         + table(
             ['Product', 'g/L', f'g per {number(s["batch_litres"], 0)} L'],
             [
-                (x['name'], number(x['gramsPerLitre'], 4), grams(x['gramsPerBatch']))
+                (x['name'], dose_number(x['gramsPerLitre'], 4), grams(x['gramsPerBatch']))
                 for x in f['salts']
             ],
-            'Products to weigh',
+            'Diagnostic recipe quantities' if s['status'] == 'blocked' else 'Products to weigh',
         )
         + ''.join(
             bars(
@@ -825,9 +893,9 @@ def render_report(summary):
             [
                 (
                     r['symbol'],
-                    number(r['target'], 3) if r['target'] else 'not a target',
+                    number(r['target'], 3) if r['target'] is not None else 'not a target',
                     number(r['final'], 3),
-                    f'{r["deltaPct"]:+.2f}%' if r['deltaPct'] is not None else 'incidental',
+                    percentage(r['deltaPct']) if r['target'] is not None else 'incidental',
                 )
                 for r in f['rows']
             ],
@@ -837,7 +905,7 @@ def render_report(summary):
             (
                 '<p>Missed targets:</p><ul>'
                 + ''.join(
-                    f'<li><b>{text(u["symbol"])}</b> {u["deltaPct"]:+.2f}% - '
+                    f'<li><b>{text(u["symbol"])}</b> {percentage(u["deltaPct"])} - '
                     f'{text(u["reason"])}</li>'
                     for u in f['unmet']
                 )
@@ -1169,13 +1237,14 @@ def render_batch_sheet(summary):
     """Printable A4 batch sheet from ``summarize_batch``."""
     verify_summary(summary)
     s, tanks = summary, summary['tanks']
+    blocked = s['status'] == 'blocked'
     css, line = STATUS_TEXT[s['status']]
     litres, ratio = s['batch_litres'], tanks['injection_ratio']
     rows = ''.join(
         f'<tr><td>{text(t["name"])}</td><td>{text(p["name"])}</td><td '
-        f'class="num">{number(p["gramsPerBatch"], 1)}</td>'
-        f'<td class="num">{number(p["stockGramsPerLitre"], 2)}</td><td><span '
-        f'class="tick"></span></td></tr>'
+        f'class="num">{dose_number(p["gramsPerBatch"], 1)}</td>'
+        f'<td class="num">{dose_number(p["stockGramsPerLitre"], 2)}</td><td><span '
+        f'class="{"muted" if blocked else "tick"}"></span></td></tr>'
         for t in tanks['tanks']
         for p in t['products']
     )
@@ -1201,17 +1270,22 @@ def render_batch_sheet(summary):
         f'<h1>{text(s["title"])}</h1><div class="meta">Batch sheet &middot; FlahaX '
         f'{text(s["flahax_version"])} '
         f'&middot; {number(litres, 0)} L final solution</div>'
-        f'<div class="box {css}"><b>{text(s["status"].replace("_", " ").capitalize())}.</b> '
+        f'<div class="box {css}"><b>{text(STATUS_WORDS[s["status"]].capitalize())}.</b> '
         f'{text(line)}</div>'
         f'<div class="box"><b>Water:</b> {text(s["water_label"])}</div>'
-        '<h2>Weigh and dissolve</h2><table><thead><tr><th>Tank</th><th>Product</th>'
+        f'<h2>{"Diagnostic quantities — do not prepare" if blocked else "Weigh and dissolve"}</h2>'
+        '<table><thead><tr><th>Tank</th><th>Product</th>'
         f'<th class="num">g per {number(litres, 0)} L batch</th><th class="num">Concentrate g/L '
         f'at 1:{ratio}</th>'
         f'<th>Done</th></tr></thead><tbody>{rows}</tbody></table>'
-        f'<p class="small">Direct batch: dissolve everything in {number(litres, 0)} L. '
-        f'Concentrates: '
-        f'{number(litres / ratio, 1)} L of each tank per batch at 1:{ratio}; keep the tanks '
-        f'apart as listed.</p>'
+        + (
+            '<p class="small">Blocked calculation: quantities are diagnostic only; '
+            'do not prepare this batch.</p>'
+            if blocked
+            else f'<p class="small">Direct batch: dissolve everything in {number(litres, 0)} L. '
+            f'Concentrates: {number(litres / ratio, 1)} L of each tank per batch '
+            f'at 1:{ratio}; keep the tanks apart as listed.</p>'
+        )
         + (f'<ul class="small">{tank_notes}</ul>' if tank_notes else '')
         + f'<h2>Solubility at {number(tanks["temperature_c"], 1)} '
         f'&deg;C</h2><table><thead><tr><th>Tank</th>'
@@ -1247,13 +1321,17 @@ def render_batch_sheet(summary):
             else ''
         )
         + (f'<h2>Read before mixing</h2><ul class="small">{warnings}</ul>' if warnings else '')
-        + '<h2>Measure after '
-        'mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
-        f'<tbody>{check_rows}</tbody></table>'
-        '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span '
-        'class="fill"></span> &nbsp; '
-        'Signature <span class="fill"></span></p>'
-        '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock '
+        + (
+            '<h2>Measure after '
+            'mixing</h2><table><thead><tr><th>Check</th><th>Planned</th><th>Measured</th></tr></thead>'
+            f'<tbody>{check_rows}</tbody></table>'
+            '<p class="small">Operator <span class="fill"></span> &nbsp; Date <span '
+            'class="fill"></span> &nbsp; '
+            'Signature <span class="fill"></span></p>'
+            if not blocked
+            else ''
+        )
+        + '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock '
         'solubility is checked '
         'only where source basis, grade and temperature are qualified. Confirm assays against '
         'your supplier '

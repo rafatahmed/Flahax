@@ -82,8 +82,8 @@ The plan status is one of:
 
 | Status | Meaning |
 |---|---|
-| `ready` | Every target is met and the pH plan is accepted. |
-| `requires_review` | Usable after review: a target is missed with its reason, or explicit condition-qualified phase evidence still needs review (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
+| `ready` | Calculation checks passed; physical validation remains separate. |
+| `requires_review` | Review required: a target is missed with its reason, or explicit condition-qualified phase evidence still needs review (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
 | `blocked` | Not usable as planned: a declared maximum is exceeded on the laboratory analysis, a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. A review never downgrades a block. |
 
 When a pH reagent is selected, the recipe to weigh is the refitted one that
@@ -218,3 +218,22 @@ Saved sessions contain answers; they are not consent. New sessions detect change
 referenced records or model sources before rerunning. Older sessions have no
 historical provenance claim and must be reviewed against current inputs when
 migrated. See the developer guide's saved-state schemas for explicit migration.
+
+
+## Exact output evidence and zero targets
+
+An explicit nutrient target of zero remains a hard zero in the report, sheet and terminal
+nutrient table. Its absolute difference remains defined; its percentage difference is
+**undefined (zero target)**. An omitted target is incidental and is not converted into zero.
+
+Every HTML report and sheet includes an inert JSON summary in
+`pre#flahax-result-data`. Parsing its text recovers the full-precision result, including
+dose, status and provenance fields. The displayed tables are rounded for reading.
+The export identity detects modification; a legacy unbound summary remains explicitly
+unverified. This identity establishes record integrity, not scientific validation.
+
+The scientific qualifications distinguish estimated, partial and unsupported EC.
+Known-species subtotals cannot be used as total estimates or uncertainty bounds.
+A range is displayed only if the result actually provides one; otherwise the interval
+remains unquantified. Model, numerical and input uncertainty are reported separately.
+Feasibility does not imply accepted chemistry, qualified stocks, delivery or physical validation.

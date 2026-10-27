@@ -10,6 +10,10 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Preserve hard-zero targets and undefined relative differences in reports, sheets and terminal
+  views; suppress blocked-sheet preparation actions and retain offline full-precision scientific
+  qualifications, provenance and EC applicability evidence.
+
 ### Added
 
 - Add native console/PTY and controlled terminal lifecycle checks, including

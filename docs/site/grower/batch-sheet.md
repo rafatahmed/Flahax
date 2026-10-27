@@ -1,11 +1,11 @@
 # Read the batch sheet
 
-The batch sheet (`batch-sheet.html`) is what you print and take to the tanks. The full screen
+The batch sheet (`batch-sheet.html`) is a printable record of the calculated plan. The full screen
 shows the same on its **Tanks** view.
 
 ```{mermaid}
 ---
-caption: Two concentrate tanks and the acid container, each on its own injector
+caption: Illustrative tank layout; actual assignments depend on qualified conditions
 ---
 flowchart LR
     A[Tank A<br/>calcium nitrate,<br/>micronutrients<br/>never acid] -->|1 : ratio| I[Irrigation water]
@@ -26,13 +26,23 @@ flowchart LR
 - **Check after mixing.** The pH to expect and, when it can be estimated, the EC. Write your
   measured values on the sheet.
 
-## If the sheet says "review notes" or "do not mix"
+## Calculation status
 
-- **Review notes before mixing.** Read each note on the sheet (or the **Notes** view). Most are
-  for your agronomist to judge; mix only when every note is understood.
-- **Do not mix.** The plan is blocked, and the first note says why: for example a limit is broken,
-  a stock would not dissolve, or no acid was offered for a feed that needs one. Fix the reason, or
-  call your agronomist.
+- **Calculation complete.** The calculation checks passed. This does not establish physical
+  validation, supplier compatibility or measured performance.
+- **Review required.** Unresolved qualifications remain; read the notes with your agronomist.
+- **Do not mix.** The plan is blocked. Quantities are diagnostic only: the sheet suppresses
+  preparation instructions, reagent preparation and completion boxes. Resolve the recorded
+  reason and calculate a new result.
+
+Every depth retains **Scientific qualifications**: separate result statuses, EC applicability,
+uncovered species, uncertainty status and model/source identifiers. A known-species EC subtotal
+is not a total estimate, bound or midpoint. No uncertainty interval is invented.
+
+The expandable **Full calculation evidence** contains the exact summary as inert, escaped JSON,
+including calculation and export identities. It works offline without scripts or network access.
+Human-readable amounts may be rounded; retained digits are computational precision, not a claim
+of measurement accuracy. A positive small dose is never displayed as zero in a dosing quantity.
 
 **Next:** [Mix safely](mix-safely.md). For the full nutrient table, see
 [Reading the results](../agronomist/reading-results.md).
