@@ -10,6 +10,12 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+### Added
+
+- Evaluate explicitly supplied catalogue bundles, treated-water analyses and stock
+  equipment alternatives under unchanged targets and limits. Retain candidate
+  evidence, remaining requirements and honest conditional/budget outcomes (#178).
+
 ### Fixed
 
 - Bind workflow reports to immutable calculation snapshots, product records and

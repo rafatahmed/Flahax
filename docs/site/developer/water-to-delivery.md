@@ -367,3 +367,58 @@ EC, stock, delivery, physical and overall qualifications. Numerical convergence 
 certificate; feasibility is not substituted for one. Delivery and physical
 validation remain `not_validated`. Overall blocking retains the existing precedence;
 no successful stage promotes an unrelated unsupported stage to success.
+
+
+## Evaluate remedies without changing the original plan
+
+Pass `remedy_options` and an explicit `max_remedy_evaluations` budget to
+`plan_fertilizer_workflow`. The default budget is 20 workflow evaluations.
+Each option has a unique `id`, `kind` and `changes` mapping:
+
+- `catalogue`: `changes.products` is a bundle of product records to add to the
+  supplied pool. `available: true` confirms the whole bundle is available.
+  All products are fitted together, retaining permissions, targets and maxima.
+  Changed assays need new record IDs; an existing record cannot be overwritten.
+- `treatment`: `changes.water` supplies the treated nutrient analysis and
+  `changes.equilibrium` supplies its equilibrium configuration. `evidence.source`
+  and `evidence.revision` identify the supplied analysis. No removal efficiency,
+  water composition or treatment performance is invented. Missing chemistry
+  inputs remain unresolved even when nutrient constraints improve.
+- `equipment`: `changes.stocks` supplies the complete stock-planning configuration.
+  Tank capacity, separation, solubility and mixture-model qualification are
+  rechecked. Additional tanks alone do not establish mixture compatibility.
+
+```python
+workflow = plan_fertilizer_workflow(
+    available_products, targets, measured_water, target_ph,
+    final_volume=VolumeLitres(100),
+    remedy_options=[{
+        "id": "available-bundle", "kind": "catalogue", "available": True,
+        "changes": {"products": additional_available_products},
+    }],
+    max_remedy_evaluations=5,
+)
+```
+
+`workflow.remedies.requirements` provides a next action for every unmet nutrient,
+violated maximum and unfinished stage. Scoped structural proofs remain attached;
+failed numerical searches never become global impossibility claims. The original
+recipe and water are retained. Explicitly rerun with the chosen inputs to adopt a
+scenario; there is no automatic replacement or external action.
+
+Each option reports `potential_remedy`, `not_evaluated`, `evaluation_failed`,
+`evaluated_no_resolution` or `evaluated_candidate`. An evaluated candidate resolves
+at least one baseline requirement; it can still introduce or retain other issues.
+Inspect `resolved_requirements`, `introduced_requirements` and
+`remaining_requirements`, plus the immutable candidate `snapshot` and
+`calculation_id`. These results do not imply delivery or physical approval.
+
+The search covers only the supplied scenarios and product bundles. It does not
+combine separate options automatically, enumerate the whole market, prove a
+minimum-cost equipment solution or select a manufacturer model. Budget skips and
+conditional options make `search_incomplete` explicit. `declared_options_evaluated`
+only means the supplied scenarios were attempted, not that a solution exists.
+
+The JSON `workflow` command accepts the same option fields. Its equipment options
+use the existing stock JSON shape (`final_litres_per_stock_litre`, `temperature_c`
+and tanks with `id`/`capacity_litres`). Python callers use the typed stock values.

@@ -80,6 +80,7 @@ class FertilizerWorkflow:
     # the balancing alone would change (#84). None when the water was not charge-balanced.
     water_basis: dict | None = None
     canonical_result: CanonicalResult | None = None
+    remedies: dict = field(default_factory=dict)
 
 
 def _positive(value, name):
@@ -249,6 +250,8 @@ def plan_fertilizer_workflow(
     acids=None,
     maximum_concentrations=None,
     ph_adjustment=None,
+    remedy_options=(),
+    max_remedy_evaluations=20,
 ):
     """Run available stages; expose missing inputs and rejected stages separately.
 
@@ -256,6 +259,9 @@ def plan_fertilizer_workflow(
     It is never silently promoted to a complete acid/base analysis. Optional
     configurations are mappings documented in docs/water-to-delivery.md.
     No stage performs external writes, mixing or equipment operation.
+    remedy_options declares catalogue bundles, treated-water analyses or stock
+    equipment alternatives. Up to max_remedy_evaluations scenarios are re-run
+    with unchanged targets/limits; no candidate is adopted automatically.
 
     ph_adjustment (products, maximum_reagent_volume_litres, optional
     preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
@@ -819,21 +825,29 @@ def plan_fertilizer_workflow(
         _review_water_basis(
             output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations
         )
+    request = dict(
+        salts=salts,
+        targets=targets,
+        water=water,
+        target_ph=target_ph,
+        final_volume=final_volume,
+        equilibrium=equilibrium,
+        nitric=nitric,
+        titration=titration,
+        stocks=stocks,
+        acids=acids,
+        maximum_concentrations=maximum_concentrations,
+        ph_adjustment=ph_adjustment,
+    )
+    from .evaluated_remedies import evaluate_remedies
+
+    output.remedies = evaluate_remedies(output, request, remedy_options, max_remedy_evaluations)
     output.canonical_result = CanonicalResult.capture(
         output,
         dict(
-            salts=salts,
-            targets=targets,
-            water=water,
-            target_ph=target_ph,
-            final_volume=final_volume,
-            equilibrium=equilibrium,
-            nitric=nitric,
-            titration=titration,
-            stocks=stocks,
-            acids=acids,
-            maximum_concentrations=maximum_concentrations,
-            ph_adjustment=ph_adjustment,
+            **request,
+            remedy_options=remedy_options,
+            max_remedy_evaluations=max_remedy_evaluations,
         ),
     )
     return output

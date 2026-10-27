@@ -554,6 +554,7 @@ def summarize_batch(
             warnings.append(f'{row.product}: solubility {row.reason.replace("_", " ")}.')
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
+        remedies=workflow.remedies,
         title=title,
         water_label=water_label,
         flahax_version=__version__,
@@ -675,6 +676,26 @@ STATUS_TEXT = {
     'requires_review': ('warn', 'Usable after review: read the warnings before mixing.'),
     'blocked': ('stop', 'Not usable as planned: see the blocked stages and warnings.'),
 }
+
+
+def remedy_section(summary):
+    """Show evaluated alternatives separately from conditional next actions."""
+    remedies = summary.get('remedies') or {}
+    rows = [(r['id'], r['status'], r['next_action']) for r in remedies.get('requirements', [])]
+    rows += [(r['id'], r['status'], r['next_action']) for r in remedies.get('options', [])]
+    return (
+        (
+            '<section><h2>Remedies and next actions</h2>'
+            + table(
+                ('Requirement or option', 'Status', 'Next action'),
+                rows,
+                'Conditional planning alternatives; no automatic adoption',
+            )
+            + '</section>'
+        )
+        if rows
+        else ''
+    )
 
 
 def result_reference(summary):
@@ -922,6 +943,7 @@ def render_report(summary):
         + ''.join(f'<li>{text(a)}</li>' for a in s['assumptions'])
         + '</ul></section>'
     )
+    body += remedy_section(s)
     return _page(s['title'], body + result_reference(s), STYLE)
 
 

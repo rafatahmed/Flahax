@@ -882,13 +882,13 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>) -> None
 ```
 
 The recommendation, water, nutrient gap and pH target, with each stage's result; the pH must
 still be measured after mixing.
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -908,7 +908,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20)
 ```
 
 Run available stages; expose missing inputs and rejected stages separately.
@@ -917,6 +917,9 @@ Water nutrient mg/L is mandatory ({} explicitly denotes zero nutrients).
 It is never silently promoted to a complete acid/base analysis. Optional
 configurations are mappings documented in docs/water-to-delivery.md.
 No stage performs external writes, mixing or equipment operation.
+remedy_options declares catalogue bundles, treated-water analyses or stock
+equipment alternatives. Up to max_remedy_evaluations scenarios are re-run
+with unchanged targets/limits; no candidate is adopted automatically.
 
 ph_adjustment (products, maximum_reagent_volume_litres, optional
 preferred_product_id and joint) plans the recipe and its pH reagent together (#74):

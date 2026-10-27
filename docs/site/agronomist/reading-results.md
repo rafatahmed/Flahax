@@ -191,3 +191,19 @@ nutrient recipe does not establish stock compatibility or validated delivery.
 Missing numerical convergence evidence is labeled `not_reported`; physical
 validation remains a separate later stage. The existing overall block always
 wins over review or successful individual stages.
+
+
+## Remedies are evaluated alternatives, not promises
+
+The full report and JSON summary list next actions for unmet requirements and
+show any explicitly supplied alternative scenarios. A catalogue product without
+confirmed availability, a treatment without analysis provenance or missing
+stock-equipment data is a **potential remedy**. It has not been validated by
+merely appearing in the list.
+
+An **evaluated candidate** resolves at least one requirement after re-running the
+workflow with unchanged crop targets and hard limits. Read its remaining and newly
+introduced requirements: nutrient feasibility alone cannot establish pH, stock,
+equipment or physical suitability. The original recipe remains the recipe to
+weigh until a new calculation explicitly adopts different inputs. A budget-limited
+search says which options were not evaluated; it never calls them impossible.
