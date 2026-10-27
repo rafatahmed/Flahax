@@ -117,3 +117,17 @@ class ValidationTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class VolumeBoundaryTests(unittest.TestCase):
+    def test_invalid_and_unrepresentable_quantities(self):
+        base = dict(tank_litres={'A': 1, 'B': 1, 'acid': 1}, ratio=100, mode='fill')
+        for change in (
+            {'tank_litres': None},
+            {'ratio': 3},
+            {'ratio': 2},
+            {'tank_litres': dict(A=1e308, B=1e308, acid=1e308)},
+            {'mode': 'once', 'irrigation_litres': 1e-300, 'ratio': 1e308},
+        ):
+            with self.subTest(change=change), self.assertRaises(DeliveryError):
+                prepare_stocks(**(base | change))

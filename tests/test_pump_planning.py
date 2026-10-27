@@ -66,3 +66,55 @@ class PumpPlanningTests(unittest.TestCase):
         with self.assertRaises(DeliveryError) as c:
             plan_pump_command(item, VolumeLitres(0.12), VolumeLitres(1), as_of=CALIBRATION_AS_OF)
         self.assertEqual(c.exception.code, "out_of_range")
+
+
+class PumpBoundaryTests(unittest.TestCase):
+    def test_invalid_time_and_uncertainty(self):
+        for changes in (
+            {'as_of': datetime(2026, 9, 27)},
+            {'as_of': 'today'},
+            {'runtime_standard_deviation_minutes': True},
+            {'runtime_standard_deviation_minutes': 'bad'},
+            {'runtime_standard_deviation_minutes': -1},
+            {'max_calibration_age_days': float('inf')},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(DeliveryError):
+                plan_pump_command(
+                    calibration(),
+                    VolumeLitres(0.1),
+                    VolumeLitres(1),
+                    **({'as_of': CALIBRATION_AS_OF} | changes),
+                )
+        for stamp in ('2026-10-01T00:00:00Z', '2026-09-25T00:00:00'):
+            with self.subTest(stamp=stamp), self.assertRaises(DeliveryError):
+                plan_pump_command(
+                    calibration() | {'recordedAt': stamp},
+                    VolumeLitres(0.1),
+                    VolumeLitres(1),
+                    as_of=CALIBRATION_AS_OF,
+                )
+
+    def test_hypotenuse_avoids_intermediate_square_overflow(self):
+        p = plan_pump_command(
+            calibration() | {'standardDeviationLitresPerMinute': 1e200},
+            VolumeLitres(0.12),
+            VolumeLitres(1),
+            0,
+            as_of=CALIBRATION_AS_OF,
+        )
+        self.assertEqual(p.volume_uncertainty.value, 1e200)
+
+    def test_type_and_derived_overflow(self):
+        with self.assertRaises(DeliveryError):
+            plan_pump_command(calibration(), 0.1, VolumeLitres(1))
+        for changes in (
+            {'flowLitresPerMinute': 1e-320},
+            {'standardDeviationLitresPerMinute': 1e308, 'flowLitresPerMinute': 0.01},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(DeliveryError):
+                plan_pump_command(
+                    calibration() | changes,
+                    VolumeLitres(0.12),
+                    VolumeLitres(1),
+                    as_of=CALIBRATION_AS_OF,
+                )

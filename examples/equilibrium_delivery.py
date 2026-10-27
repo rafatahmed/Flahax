@@ -14,7 +14,6 @@ from flahax import (
     plan_fertilizer_workflow,
     plan_pump_command,
     compose_delivery_plan,
-    transition_plan,
     delivery_report,
 )
 from .common import catalogue, record, show
@@ -104,7 +103,7 @@ def run():
         [command],
         {'modelVersion': 'synthetic-example'},
     )
-    validated = transition_plan(draft, 'validated')
+    # No qualified stock-mixture model is supplied: retain a draft for review.
     # Deliberately do not manufacture an operator-approved state or execute I/O.
     return dict(
         assumptions=[
@@ -113,11 +112,12 @@ def run():
             'All acid assays, density, limits and calibration are fictional teaching inputs.',
             'Fixed as_of date demonstrates reproducibility, not current calibration validity.',
             'Aqueous-only, 25 C, closed carbon; no automatic hardware control.',
+            'Draft only: stock-mixture qualification and fertilizer pump command are missing.',
         ],
         workflow=workflow,
         calibration=calibration,
-        delivery=validated,
-        human_report=delivery_report(validated),
+        delivery=draft,
+        human_report=delivery_report(draft),
     )
 
 

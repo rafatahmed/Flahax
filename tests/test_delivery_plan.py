@@ -115,11 +115,19 @@ class DeliveryPlanTests(unittest.TestCase):
         command = plan_pump_command(
             calibration(), VolumeLitres(1), stocks.tanks[0].stock_volume, as_of=CALIBRATION_AS_OF
         )
+        acid_calibration = calibration()
+        acid_calibration.update(channelId='acid', validMinLitres=0)
+        acid = plan_pump_command(
+            acid_calibration,
+            VolumeLitres(ph_plan.reagent_volume_litres),
+            VolumeLitres(1),
+            as_of=CALIBRATION_AS_OF,
+        )
         plan = compose_delivery_plan(
             recipe,
             stocks,
             ph_plan,
-            [command],
+            [command, acid],
             {"modelVersion": "0.2.0", "waterAnalysisId": water["id"]},
         )
         for state in ("validated", "operator-approved", "executed", "verified"):

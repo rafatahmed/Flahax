@@ -28,6 +28,7 @@ from flahax import (
 from flahax.aqueous_model import solve
 from flahax.product_conversion import catalogue_dose_totals
 from tests.test_ph_planning import record
+from tests.test_stock_assignments import synthetic_model
 from tests.test_pump_planning import calibration
 
 
@@ -130,6 +131,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             [],
             limits,
             TemperatureCelsius(25),
+            mixture_model=synthetic_model,
         )
         cal = calibration()
         cal['validMinLitres'] = 1e-6
@@ -140,8 +142,14 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             VolumeLitres(1),
             as_of=datetime(2026, 9, 27, tzinfo=timezone.utc),
         )
+        stock_command = plan_pump_command(
+            calibration(),
+            stocks.tanks[0].stock_volume,
+            VolumeLitres(2),
+            as_of=datetime(2026, 9, 27, tzinfo=timezone.utc),
+        )
         return compose_delivery_plan(
-            p.recipe, stocks, p, [command], {'modelVersion': 'package-test'}
+            p.recipe, stocks, p, [command, stock_command], {'modelVersion': 'package-test'}
         )
 
     def test_complete_recipe_to_reviewed_delivery_path(self):
