@@ -422,3 +422,49 @@ only means the supplied scenarios were attempted, not that a solution exists.
 The JSON `workflow` command accepts the same option fields. Its equipment options
 use the existing stock JSON shape (`final_litres_per_stock_litre`, `temperature_c`
 and tanks with `id`/`capacity_litres`). Python callers use the typed stock values.
+
+
+## Exact-result acceptance and saved-state schemas
+
+`flahax.result_acceptance.accept_result(summary, actor=..., reason=...)` records
+explicit consent to the exact proposal in a bound summary. It does not change
+calculation statuses or waive any guard. Actor and reason are explicit caller
+inputs; attribution is not authenticated. A blocked zero/hard limit stays blocked,
+an unassessed EC stays unassessed, and physical validation stays separate.
+
+The schema-version-1 acceptance record contains `scope=exact_result_proposal`,
+`actor`, `reason`, a timezone-qualified `recorded_at`, `result_id` and
+`export_sha256`. `verify_acceptance` rejects changed doses, inputs, state, evidence,
+source identity or export metadata, including a modified export that was resealed.
+Recalculation requires fresh explicit acceptance if its content differs. Hashes
+identify content; they do not establish authenticity or scientific validity.
+
+`save_result(summary, acceptance=None)` builds an archive with `schema_version=1`,
+`payload={summary, acceptance}` and the payload `sha256`. Saving alone creates no
+consent. `load_result` validates both the archive and its nested identities and
+returns a detached payload. `Store.save('results', name, archive)` and
+`Store.load('results', name)` validate the same contract. Use
+`batch_cli.render_saved_result(archive)` to validate before rendering an archived
+result. Historical results preserve their historical source identities; rendering
+is not recalculation against the current engine.
+
+New saved mix sessions retain their answer fields and add `saved_state` with
+`schema_version=1`, `inputs_sha256`, named-item `references` fingerprints and
+package `sources` fingerprints. Execution rejects changed answers, referenced
+water/formula/product/reagent files or model sources. Unknown schema versions and
+malformed metadata fail explicitly. Both terminal interfaces use the shared store
+and option conversion; neither grants consent automatically.
+
+### Migrating saved sessions
+
+Legacy answer-only sessions remain readable and rerun using current inputs. They
+have no asserted historical provenance or result consent. Legacy `accepted` or
+`acceptance` fields are rejected on ordinary load: they cannot become approval of
+another result. No files in the user's home are migrated automatically.
+
+After reviewing the answers and current referenced records, call
+`mix_store.migrate_session(store, old_answers)` to obtain a new bound session,
+then save it under a reviewed name with `store.save('sessions', name, migrated)`.
+Migration discards old consent and old fingerprints; it captures current inputs,
+not reconstructed history. The original dictionary/file is unchanged. Rerun the
+calculation and review the new result before creating any new acceptance record.

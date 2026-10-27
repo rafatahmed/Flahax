@@ -40,7 +40,7 @@ from .grower_sheet import (
     render_mix_sheet,
 )  # noqa: F401 (STATUS_WORDS re-exported)
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
-from .mix_store import Store, slug
+from .mix_store import Store, slug, check_saved_state, verify_session
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
 from .stock_volumes import prepare_stocks
 from .terminal import supported
@@ -525,6 +525,9 @@ def ask_acids(p, store, pending):
 def options_for(store, session):
     """``BatchOptions`` from a session; every saved item it names must exist."""
 
+    check_session(session, "saved answers")
+    verify_session(store, session)
+
     def path(kind, name):
         file = store.path(kind, name)
         if not file.is_file():
@@ -601,7 +604,11 @@ def interview(p, store):
 
 
 def _is_number(value):
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (isinstance(value, int) or math.isfinite(value))
+    )
 
 
 def check_session(data, path):
@@ -644,10 +651,11 @@ def check_session(data, path):
     acids = data['acids']
     if not isinstance(acids, list) or not all(isinstance(a, str) for a in acids):
         bad("'acids' must be a list of names")
-    if 'depth' in data and data['depth'] not in (1, 2, 3):
+    if 'depth' in data and (type(data['depth']) is not int or data['depth'] not in (1, 2, 3)):
         bad("'depth' must be 1, 2 or 3")
     if not isinstance(data.get('formula_title', ''), str):
         bad("'formula_title' must be text")
+    check_saved_state(data)
     return data
 
 

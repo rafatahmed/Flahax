@@ -539,6 +539,13 @@ def render(summary):
     }
 
 
+def render_saved_result(record):
+    """Validate an archived result/consent before rendering its original qualified outputs."""
+    from .result_acceptance import load_result
+
+    return render(load_result(record)['summary'])
+
+
 def build(args):
     """Run the batch for parsed ``flahax batch`` arguments; returns the rendered terminal text and
     the summary.
