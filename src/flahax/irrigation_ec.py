@@ -29,7 +29,7 @@ from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .delivery_contracts import DeliveryError
 from .equilibrium_delivery import EquilibriumPhPlan
-from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
+from .materials import IDENTITIES_SHA256, ResolvedMaterial, material_audit_entry, resolve_material
 from .measured_water import BalancedWaterAnalysis
 from .product_conversion import catalogue_dose_contributions, catalogue_dose_totals
 
@@ -116,10 +116,8 @@ MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2b-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
 _ASSAY_LIMIT_PERCENT = 0.1
-# Decision O2 (design spec section 13): upper limit on the limiting molar conductivity per unit
-# charge, S cm2/mol, at infinite dilution and with no ionic-strength reduction. In the
-# limiting-conductivity table (Adamson 1973, p. 512) no ion other than H+ and OH- (always
-# covered by McCleskey) exceeds it; the highest are SO4-2 at 79.8 and Br- at 78.4.
+# Retained only to reproduce the historical phosphate fit diagnostics. It is not
+# a proven universal bound and must never qualify a public EC prediction.
 LAMBDA_MAX_PER_CHARGE = 80.0
 _CORE_AUDIT_KEYS = frozenset(
     (
@@ -150,14 +148,10 @@ _CORE_AUDIT_KEYS = frozenset(
 class IrrigationECResult:
     """EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-    A bounded estimate (``bounded`` True, decision O2) has status 'estimated' with
-    ``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
-    ``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
-    ``transport_numbers`` are empty: they need the whole current, which is not known.
-
-    The midpoint and ``uncertainty_ms_cm`` describe only the uncovered-species interval;
-    they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
-    charge is conservative, the true value tends to lie in the lower half of the range.
+    Missing material species produce a partial known-species subtotal, not a
+    total, midpoint or uncertainty interval. Legacy interval fields remain None.
+    Numerical, input and model uncertainty are separately reported as unquantified;
+    absence of a quantified uncertainty is never zero uncertainty.
     """
 
     status: str
@@ -179,6 +173,13 @@ class IrrigationECResult:
     ec25_range_ms_cm: tuple | None = None
     uncertainty_ms_cm: float | None = None
     uncovered_bound_ms_cm: float | None = None
+    uncertainty_components: dict = field(
+        default_factory=lambda: {
+            'numerical': {'status': 'not_quantified', 'bound_ms_cm': None},
+            'input': {'status': 'not_propagated', 'bound_ms_cm': None},
+            'model': {'status': 'not_validated', 'bound_ms_cm': None},
+        }
+    )
 
 
 @lru_cache(maxsize=1)
@@ -291,7 +292,7 @@ def _audit(
         'charge_balance': state.charge_balance if state is not None else None,
         'model': MODEL_VERSION,
         'uncovered_bound_ms_cm': uncovered_bound,
-        'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE,
+        'lambda_max_per_charge': None,
         # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
         # the fit's data reach only this ionic strength.
         'supplementaryCoefficients': supplementary_used,
@@ -354,14 +355,9 @@ def _ec_from_state(
     """EXPERIMENTAL: EC25 from an already-solved 25 C, closed-carbon state.
 
     The caller has validated the mode inputs (see _validate_request). Status
-    order: phosphate fit applicability, O5 assay gate, then (supplied only)
-    unrecorded counterions; when these
-    pass, uncovered charged species give a bounded estimate (decision O2,
-    bound = sum |z| * LAMBDA_MAX_PER_CHARGE * m over them, in mS/cm). The O5 gate uses
-    assay_residual_percent (the
-    declared-form percent) when given, else the residual over the speciated
-    absolute equivalents. A not_supported result carries no contributions.
-    Supersaturation warnings (dissolved policy) are reported whatever the status.
+    order: phosphate fit applicability, O5 assay gate, then unrecorded counterions.
+    Missing material species prevent a total prediction even if other gates pass.
+    Supersaturation and incomplete-coverage warnings survive rejection.
     """
     charges = _charges()
     species_map = _coverage()
@@ -407,8 +403,13 @@ def _ec_from_state(
     elif ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
         status, reason, unrecorded = 'partial', 'unrecorded_counterions', excess
     else:
-        # Missing species alone no longer block (decision O2): a bounded estimate.
-        status, reason = 'estimated', None
+        status, reason = (
+            ('partial', 'missing_species_contributions') if missing else ('estimated', None)
+        )
+    if missing:
+        warnings += (
+            'Conductivity of missing species is unknown; no total EC or bound is available.',
+        )
     if outside_fit:
         status, reason = 'not_supported', 'ionic_strength_outside_phosphate_fit'
         warnings += ('Supplementary phosphate conductivity exceeds its recorded fit domain.',)
@@ -416,12 +417,7 @@ def _ec_from_state(
         contributions = {}
     subtotal = sum(contributions.values())
     bound = ec_range = uncertainty = None
-    if status == 'estimated' and missing:
-        bound = sum(abs(s['charge']) * LAMBDA_MAX_PER_CHARGE * s['molal'] for s in missing)
-        ec_range, uncertainty = (subtotal, subtotal + bound), bound / 2
-        ec = subtotal + uncertainty
-        transport = {}
-    elif status == 'estimated':
+    if status == 'estimated':
         ec = subtotal
         transport = {n: c / subtotal for n, c in contributions.items()} if ec else {}
     else:
@@ -479,16 +475,16 @@ def calculate_ec_from_totals(
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
     speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
     or 'not_supported'; invalid input raises DeliveryError. Charged species
-    without a coefficient (listed in missing_species) make the estimate
-    bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
-    + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-    bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
+    without a coefficient (listed in missing_species) make the result partial:
+    only known_species_subtotal_ms_cm is available, with no total, interval,
+    uncertainty bound or transport numbers. The historical universal per-charge
+    bound is not used. H2PO4- and HPO4-2 use 25 C
     coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
     material supplementary species above the stored fit ceiling return
     not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
     The audit retains supplementaryCoefficients and
     phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
-    bounded estimates and equals the range's lower limit. Unrecorded counterions stay
+    partial predictions and is not a complete EC estimate. Unrecorded counterions stay
     'partial' and the domain checks 'not_supported'. The 0.1 % O5
     assay gate uses assay_charge_residual_percent when given (the declared-form
     percent, as from assay_charge_residual()); when None (raw totals without
@@ -781,7 +777,11 @@ def _end_material(material, end: str):
 
 
 def calculate_irrigation_ec_band(
-    doses_g_per_kg_water: Mapping[str, float], *, materials: Mapping | None = None, **kwargs
+    doses_g_per_kg_water: Mapping[str, float],
+    *,
+    materials: Mapping | None = None,
+    joint_scenarios: Mapping | None = None,
+    **kwargs,
 ) -> dict:
     """EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
 
@@ -793,7 +793,23 @@ def calculate_irrigation_ec_band(
     not_supported / band_end_open; nothing is substituted. Each end's audit records
     ``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
     reports no nominal numbers (its audit assay residual is None too).
+    Optional joint_scenarios maps named scenarios to complete material mappings for
+    all dosed products. Each mapping describes a coherent joint assay realization;
+    no independence, probability or statistical bounds are inferred. Results in
+    scenarios retain individual domain/coverage failures, never an envelope promise.
     """
+    if joint_scenarios is not None:
+        if not isinstance(joint_scenarios, Mapping) or any(
+            not isinstance(name, str)
+            or not name.strip()
+            or not isinstance(scenario, Mapping)
+            or set(scenario) != set(doses_g_per_kg_water)
+            or any(not isinstance(material, ResolvedMaterial) for material in scenario.values())
+            for name, scenario in joint_scenarios.items()
+        ):
+            raise DeliveryError(
+                'invalid_ec_scenarios', 'named scenarios must cover all dosed products'
+            )
     nominal = calculate_irrigation_ec(doses_g_per_kg_water, materials=materials, **kwargs)
     chosen = dict(materials or {})
     sources = {name: chosen.get(name) or resolve_material(name) for name in doses_g_per_kg_water}
@@ -836,6 +852,23 @@ def calculate_irrigation_ec_band(
             continue
         ended = calculate_irrigation_ec(doses_g_per_kg_water, materials=built, **kwargs)
         result[end] = replace(ended, audit={**ended.audit, 'band_end': end})
+    if joint_scenarios is not None:
+        result['scenarios'] = {}
+        for name, scenario in joint_scenarios.items():
+            calculated = calculate_irrigation_ec(
+                doses_g_per_kg_water, materials=scenario, **kwargs
+            )
+            components = copy.deepcopy(calculated.uncertainty_components)
+            components['input'] = {
+                'status': 'joint_scenario_only',
+                'scenario': name,
+                'bound_ms_cm': None,
+            }
+            result['scenarios'][name] = replace(
+                calculated,
+                uncertainty_components=components,
+                audit={**calculated.audit, 'input_scenario': name},
+            )
     result['note'] = BAND_END_NOTE
     return result
 

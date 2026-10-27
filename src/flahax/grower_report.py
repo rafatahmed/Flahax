@@ -11,6 +11,7 @@ number comes from the workflow; nothing is typed in. These are planning document
 not dosing instructions: measure EC and pH after mixing.
 """
 
+from dataclasses import asdict
 from html import escape
 import math
 
@@ -348,7 +349,7 @@ def summarize_batch(
                 ph=state.ph,
                 phase_policy='dissolved',
             )
-            ec = dict(status=result.status, ec25_ms_cm=result.ec25_ms_cm, ph=result.ph)
+            ec = asdict(result)
         except DeliveryError as exc:
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
 
@@ -387,6 +388,11 @@ def summarize_batch(
     )
 
     warnings = list(recipe['warnings'])
+    if ec:
+        warnings.extend(ec.get('warnings', ()))
+        if ec.get('reason'):
+            warnings.append('EC: ' + ec['reason'].replace('_', ' ') + '.')
+        warnings.append(ec.get('qualifier', 'EC accuracy is not established.'))
     chemistry_stage = workflow.stages.get('chemistry')
     concentration_basis = (
         chemistry_stage.value.get('concentration_basis')
@@ -613,6 +619,8 @@ def _card(label, value, note):
 def _reagent_amount(candidate):
     """Display a supported liquid volume, otherwise retain the reagent mass."""
     if candidate['volume_ml_per_batch'] is None:
+        if candidate['mass_g_per_batch'] is None:
+            return 'Not available'
         return grams(candidate['mass_g_per_batch'])
     return f"{millilitres(candidate['volume_ml_per_batch'])} mL"
 
@@ -666,7 +674,9 @@ def render_report(summary):
         )
         + _card(
             'EC25 estimate',
-            f'{number(ec["ec25_ms_cm"], 2)} mS/cm' if ec and ec['ec25_ms_cm'] else 'n/a',
+            f'{number(ec["ec25_ms_cm"], 2)} mS/cm'
+            if ec and ec['status'] == 'estimated' and ec['ec25_ms_cm'] is not None
+            else 'n/a',
             'experimental',
         )
         + '</div></header>'
@@ -1048,7 +1058,7 @@ def render_batch_sheet(summary):
         (
             'EC25 (mS/cm)',
             f'about {number(ec["ec25_ms_cm"], 2)} (experimental)'
-            if ec and ec['ec25_ms_cm']
+            if ec and ec['status'] == 'estimated' and ec['ec25_ms_cm'] is not None
             else 'measure',
         ),
         ('pH', number(s['target_ph'], 2)),

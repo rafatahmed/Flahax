@@ -70,6 +70,11 @@ def estimate_manufacturer_ec(
         status='screening_estimate',
         ec_ms_cm=None,
         uncertainty_ms_cm=None,
+        uncertainty_components={
+            'numerical': {'status': 'not_quantified', 'bound_ms_cm': None},
+            'input': {'status': 'not_propagated', 'bound_ms_cm': None},
+            'model': {'status': 'unvalidated_additivity', 'bound_ms_cm': None},
+        },
         water_ec_ms_cm=water,
         channel=channel,
         source=dict(SOURCE),
