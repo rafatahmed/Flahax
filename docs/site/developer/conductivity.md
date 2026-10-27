@@ -180,15 +180,18 @@ molar conductivity exceeds 80 S cm2/mol per unit charge at infinite dilution
 The midpoint and `uncertainty_ms_cm` describe only the uncovered-species interval; they are not an accuracy statement and exclude model error. Because 80 S·cm²/mol per charge is conservative, the true value tends to lie in the lower half of the range.
 
 `partial` arises only from unrecorded counterions; temperature, carbon,
-ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas return `estimated`, with ranges up to 5.4 % of
-the midpoint (Generic Wet Season, mostly citrate pairs; 14.4 % before the
-phosphate coefficients).
+ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas at the current recommended doses exceed the stored
+phosphate fit ceiling and return `not_supported`. Earlier estimates and their
+reported interval widths relied on extrapolation and do not establish applicability.
 
 **Phosphate (M2b).** H2PO4- and HPO4-2 are covered at 25 C by coefficients
 fitted to the measured KH2PO4 and K2HPO4 conductivities of Pethybridge,
 Talbot and House (2006), Table III, through FlahaX speciation (lambda0 and A
 fitted, B = 1.5; RMS 0.13 % over 22 points). The data reach I = 0.014 mol/kgw;
-above that the fit is extrapolated, and the audit records
+the exact stored maximum is enforced. Above it, material H2PO4- or HPO4-2
+(molality greater than the existing 1e-12 reporting cutoff) returns
+`not_supported` / `ionic_strength_outside_phosphate_fit`, with no EC point,
+interval or contributions. The audit retains
 `phosphate_fit_max_ionic_strength` and `supplementaryCoefficients`. PO4-3 and
 minor phosphate pairs such as KHPO4- stay under the bound. KHPO4- is not covered; the fitted HPO4-2 coefficients absorb part of its current, so the upper end of a mixture's range may count it twice (small and conservative). `compare_measured_ec`
 also returns `ec25_range_ms_cm` and `within_range` (True, False, or None when the
@@ -254,3 +257,35 @@ calibration pack with hold-out validation is still required for that claim.
 Dated development checks are preserved in the
 [planning validation history](../evidence/planning-validation-history.md#conductivity-validation).
 They record those runs only and do not establish current release validation.
+
+
+### Reproducing the conductivity coefficients
+
+Run `python -m unittest tests.test_irrigation_ec.CoefficientTests
+ tests.test_irrigation_ec.PhosphateCoefficientTests tests.test_ec_fit_domain -v`
+(on one line, with `PYTHONPATH=src;.` on Windows). The independent Table 1
+transcription checks all 196 values (28 ions, seven coefficients each).
+`python tools/fit_phosphate_conductivity.py` reproduces the 22-point weighted
+phosphate fit without writing the coefficient file. Do not use `--write` merely
+to run verification. `python tools/verify_conductivity.py` independently assembles
+the fit using the second transcription and solves with 50-digit Decimal QR,
+without the production normal equations. Both share FlahaX aqueous speciation;
+this is independent numerical fitting, not an independent chemistry model.
+The existing coefficient reproduction tolerance remains 1e-7 relative with a
+1e-9 absolute floor. Reference data and fitted coefficients are unchanged.
+
+The phosphate ceiling applies to the total ionic strength of the solved mixture,
+not its analytical phosphate concentration. The exact ceiling is read from
+`supplementary.fit.max_ionic_strength`; equality is allowed and the next larger
+floating-point value is rejected. The infinite-dilution coefficient at zero
+remains available. Phosphate-free mixtures retain the existing chemistry domain,
+25 C and closed-carbon requirements. The low-level Table 1 equation evaluator is
+an algebraic utility; its values alone do not qualify a mixture prediction.
+
+IUPAC KCl standards are withheld from the phosphate fit. Compare their molal
+concentrations and conductivities at 25 C without refitting coefficients or
+mistaking measurement uncertainty for model accuracy. An out-of-domain standard
+must be rejected by the public prediction API. The unresolved treatment of
+uncovered species and the meaning of the reported uncertainty range are tracked
+separately in issue #161; these coefficient checks do not establish a universal
+bound or physical accuracy on fertilizer mixtures.

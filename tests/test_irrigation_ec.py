@@ -345,15 +345,14 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.uncovered_bound_ms_cm)
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
-    def test_all_shipped_formulas_estimated(self):
-        # Slow (several minutes): every shipped formula, recommend doses with g/L taken as g/kgw,
-        # declared RO water, calculated pH. Observed maximum width/midpoint 0.1438 under M2a and
-        # 0.0540 under M2b (Generic Wet Season, citrate pairs; 2026-10-19 recount in design
-        # section 13); asserted with a 0.006 margin.
+    def test_all_shipped_formulas_respect_phosphate_fit_domain(self):
+        # Historical raw failures are retained in conductivity-qualification/tests.log.
+        # F08's independent oracle forbids an unqualified out-of-fit prediction.
         from flahax.engine import load_library, recommend
 
         library = load_library()
-        widths = {}
+        limit = load_conductivity_coefficients()['supplementary']['fit']['max_ionic_strength']
+        checked = 0
         for formula in library['formulas']:
             fit = recommend(library['salts'], formula['targets'])
             doses = {s['name']: s['gramsPerLitre'] for s in fit['salts']}
@@ -365,12 +364,16 @@ class BoundTests(unittest.TestCase):
                 phase_policy='dissolved',
             )
             with self.subTest(formula=formula['name']):
-                self.assertEqual(r.status, 'estimated', r.reason)
-                self.assertTrue(r.bounded, formula['name'])
-                low, high = r.ec25_range_ms_cm
-                widths[formula['name']] = (high - low) / r.ec25_ms_cm
-        self.assertEqual(len(widths), 26)
-        self.assertLessEqual(max(widths.values()), 0.060, widths)
+                self.assertGreater(r.ionic_strength, limit)
+                self.assertEqual(r.status, 'not_supported')
+                self.assertEqual(r.reason, 'ionic_strength_outside_phosphate_fit')
+                self.assertTrue(r.audit['supplementaryCoefficients'])
+                self.assertIsNone(r.ec25_ms_cm)
+                self.assertIsNone(r.ec25_range_ms_cm)
+                self.assertFalse(r.bounded)
+                self.assertEqual(r.contributions_ms_cm, {})
+                checked += 1
+        self.assertEqual(checked, 26)
 
 
 def _assert_close_tree(case, got, want, path='supplementary'):
