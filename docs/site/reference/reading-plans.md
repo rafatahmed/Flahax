@@ -9,7 +9,7 @@ and reason.
 |---|---|---|
 | `calculated` | The stage returned a result | Check its warnings and the stages that depend on it |
 | `needs_input` | Required evidence is missing | Supply the inputs it names; FlahaX does not invent them |
-| `requires_review` | Usable after review: an incidental nutrient without a maximum, a review-class mineral, a missed target or a chemistry assumption | Read the reason and decide |
+| `requires_review` | Usable after review: an incidental nutrient without a maximum, a condition-qualified phase finding, a missed target or a chemistry assumption | Read the reason and decide |
 | `blocked` | The stage was rejected | Read its message and correct the inputs |
 
 A calculated stage is not a validated delivery plan.

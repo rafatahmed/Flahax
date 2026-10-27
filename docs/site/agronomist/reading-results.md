@@ -83,7 +83,7 @@ The plan status is one of:
 | Status | Meaning |
 |---|---|
 | `ready` | Every target is met and the pH plan is accepted. |
-| `requires_review` | Usable after review: a target is missed with its reason, or a review-class phase is supersaturated (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
+| `requires_review` | Usable after review: a target is missed with its reason, or explicit condition-qualified phase evidence still needs review (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
 | `blocked` | Not usable as planned: a declared maximum is exceeded on the laboratory analysis, a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. A review never downgrades a block. |
 
 When a pH reagent is selected, the recipe to weigh is the refitted one that

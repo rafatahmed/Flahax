@@ -12,6 +12,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Remove phase-name exemptions from saturation decisions. Keep thermodynamic
+  signs, applicability evidence and allocated solids distinct; unresolved or
+  out-of-condition evidence prevents approval without inventing kinetics (#161).
+
 - Keep unknown conductivity contributions partial instead of inventing a universal
   bound or midpoint. Preserve EC qualifications in grower output, distinguish
   uncertainty sources, and evaluate explicit joint assay scenarios (#161).

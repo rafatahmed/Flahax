@@ -2,105 +2,217 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Which positive saturation indices block a plan, and which need review only (#78).
+"""Condition-qualified saturation findings; thermodynamics is not precipitation rate.
 
-A positive saturation index is a thermodynamic statement, not a rate. FlahaX and
-live PHREEQC 3.8.6 agree on every sign at the coupled target states (#78), so the
-classification below is about the phases, not the solver. Phases listed in REVIEW
-are supersaturated in typical feeds but are either kinetically inhibited at feed
-conditions, or rest on a doubtful constant, or arise from the fixed oxidation state
-the model uses; each carries its reason and sources (owner decision and research
-summary on rafatahmed/Flahax#78, 2026-10-22). Every other positive index,
-and any allocated solid, still blocks. The indices are always reported.
+No phase name grants an exemption. Sources retained in REVIEW are pointers for
+review, not proof of applicability or absence of measurements. No kinetic or
+redox applicability envelopes are shipped. Allocation is reported independently.
 """
 
 from collections.abc import Mapping
+import math
 
-# Index below which a phase counts as undersaturated (same threshold as before #78).
+from .delivery_contracts import DeliveryError
+
+# Existing numerical comparison guard, not a kinetic or agronomic allowance.
 SI_THRESHOLD = 1e-7
-
 REVIEW = {
     'Hydroxylapatite': (
-        'Hydroxylapatite does not form directly from feed-like solutions: calcium phosphate '
-        'precipitates through '
-        'amorphous, octacalcium-phosphate and brushite precursors, and magnesium slows the '
-        'transformation. Brushite '
-        '(CaHPO4:2H2O), the precursor that does form, stays a hard gate.',
-        'Nancollas, Tomazic & Tomson (1976) Croat. Chem. Acta 48(4), 431-438.',
+        'Condition-specific precursor/kinetic evidence requires review.',
+        'Nancollas, Tomazic & Tomson (1976), Croat. Chem. Acta 48, 431-438.',
     ),
     'Goethite': (
-        'Crystalline goethite forms slowly from ferrihydrite (months to years at 24 C); '
-        'ferrihydrite, the Fe(III) '
-        'phase that precipitates quickly, stays a hard gate.',
-        'Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284, '
-        'doi:10.1346/CCMN.1983.0310405.',
+        'Condition-specific transformation kinetics require review.',
+        'Schwertmann & Murad (1983), doi:10.1346/CCMN.1983.0310405.',
     ),
     'MnHPO4': (
-        'The database constant for anhydrous MnHPO4 (log K -25.4) traces only to the 1976 '
-        'WATEQF program data, with '
-        'no measurement behind it; the anhydrous phase is not reported to form in water at 25 '
-        'C, and no Mn phosphate '
-        'precipitation is reported in dilute nutrient feeds. Keep micronutrients and phosphate '
-        'in separate '
-        'concentrate tanks, where the real risk is.',
-        'Ball & Nordstrom (1991) USGS OFR 91-183, Table 2 (after Plummer, Jones & Truesdell '
-        '1976, USGS WRI 76-13); '
-        'Pedas et al. (2011) Front. Plant Sci. 2:37, doi:10.3389/fpls.2011.00037.',
+        'The measurement/source chain and its applicability remain unverified here.',
+        'Ball & Nordstrom (1991), USGS OFR 91-183; Plummer et al. (1976), WRI 76-13.',
     ),
     'Vivianite': (
-        'Vivianite is an Fe(II) phosphate of reducing environments; the model holds Fe(II) at a '
-        'fixed oxidation '
-        'state, but in an aerated feed Fe(II) oxidizes and vivianite itself oxidizes in oxic '
-        'water. See the iron(II) '
-        'advisory for what does precipitate.',
-        'Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe, Kleeberg & Hupfer (2016) '
+        'Oxidation-state and redox applicability require explicit evidence.',
+        'Metz et al. (2024), Environ. Sci. Technol. 58, 15321; Rothe et al. (2016), '
         'Earth-Sci. Rev. 158, 51.',
     ),
 }
-
 FERROUS_IRON_ADVISORY = (
-    'Iron supplied as iron(II) oxidizes in an aerated feed (half-life about hours at pH 6, days '
-    'at pH 5.5, faster '
-    'with phosphate) and precipitates as amorphous Fe(III) phosphate, taking some phosphate '
-    'with it. Prefer a '
-    'chelated iron source, or re-dose iron. Sources: Stumm & Lee (1961) Ind. Eng. Chem. 53, '
-    '143; Voegelin et al. '
-    '(2010) Geochim. Cosmochim. Acta 74, 164; Hoagland & Arnon (1950) Calif. Agric. Exp. Stn. '
-    'Circ. 347; '
-    'Jacobson (1951) Plant Physiol. 26, 411.'
+    'Iron(II) is represented at a fixed oxidation state. Actual redox conditions and '
+    'holding time are required to assess oxidation and subsequent solids; no rate '
+    'or absence of precipitation is established by this calculation.'
+)
+_REQUIRED_CONDITIONS = frozenset(
+    {
+        'temperature_c',
+        'ph',
+        'ionic_strength',
+        'holding_time_hours',
+        'redox',
+        'matrix_id',
+    }
 )
 
 
-def assess_saturation(state):
-    """Classify a state's positive saturation indices and solids.
+def _applicability(phase, conditions, evidence):
+    record = evidence.get(phase)
+    if not isinstance(record, Mapping):
+        return 'missing_evidence', None
+    if (
+        record.get('phase') != phase
+        or record.get('reviewed') is not True
+        or not isinstance(record.get('source'), str)
+        or not record['source'].strip()
+        or not isinstance(record.get('review_id'), str)
+        or not record['review_id'].strip()
+        or record.get('decision') != 'review_only'
+    ):
+        return 'unreviewed_evidence', None
+    envelope = record.get('conditions')
+    if not isinstance(envelope, Mapping) or not _REQUIRED_CONDITIONS <= envelope.keys():
+        return 'incomplete_evidence_conditions', None
+    for name, constraint in envelope.items():
+        if name in {
+            'temperature_c',
+            'ph',
+            'ionic_strength',
+            'holding_time_hours',
+        } and not isinstance(constraint, (list, tuple)):
+            return 'invalid_evidence_conditions', record['review_id']
+        if name in {'redox', 'matrix_id'} and (
+            not isinstance(constraint, str)
+            or constraint.strip().lower() in {'', 'unknown', 'unspecified'}
+        ):
+            return 'invalid_evidence_conditions', record['review_id']
+        value = conditions.get(name)
+        if value is None:
+            return 'missing_conditions', record['review_id']
+        if isinstance(constraint, (list, tuple)):
+            if (
+                len(constraint) != 2
+                or any(
+                    isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                    for v in constraint
+                )
+                or constraint[0] > constraint[1]
+            ):
+                return 'invalid_evidence_conditions', record['review_id']
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+            ):
+                return 'invalid_conditions', record['review_id']
+            if not constraint[0] <= value <= constraint[1]:
+                return 'outside_evidence_conditions', record['review_id']
+        elif not isinstance(constraint, str) or not constraint:
+            return 'invalid_evidence_conditions', record['review_id']
+        elif value != constraint:
+            return 'outside_evidence_conditions', record['review_id']
+    return 'applicable_for_review', record['review_id']
 
-    Returns {'blocking': [(phase, si)], 'review': [(phase, si, reason, sources)],
-    'advisories': [text], 'solids': {phase: molal}}; ``blocks`` is True when a hard
-    phase is supersaturated or any solid is allocated.
+
+def assess_saturation(state, *, conditions=None, evidence=None, si_uncertainty=None):
+    """Return separate thermodynamic, applicability and allocation findings.
+
+    Positive SI blocks unless a caller-reviewed phase-specific envelope matches
+    every condition. Such evidence permits review only, never mixing approval.
+    No envelopes are supplied by default. Conditions must explicitly identify
+    temperature, pH, ionic strength, holding time, redox and solution matrix;
+    state pH/ionic strength override conflicting caller values when available.
+    SI intervals touching zero remain unresolved and block. Caller SI uncertainty
+    is a nonnegative half-width in log10 units; the existing numerical guard is
+    always retained. This interval is not a kinetic allowance or certified error.
+    Every positive allocated solid blocks independently of evidence or SI sign.
     """
-    indices = state.saturation_indices
-    positive = sorted(
-        ((p, si) for p, si in indices.items() if si > SI_THRESHOLD), key=lambda item: -item[1]
-    )
-    solids = {p: v for p, v in state.precipitated.items() if v > 1e-12}
-    blocking = [(p, si) for p, si in positive if p not in REVIEW]
-    review = [(p, si, *REVIEW[p]) for p, si in positive if p in REVIEW]
-    advisories = []
+    for value in (conditions, evidence, si_uncertainty):
+        if value is not None and not isinstance(value, Mapping):
+            raise DeliveryError('invalid_phase_evidence', 'phase evidence inputs must be mappings')
+    conditions, evidence = dict(conditions or {}), evidence or {}
+    for key, attribute in (('ph', 'ph'), ('ionic_strength', 'ionic_strength')):
+        if hasattr(state, attribute):
+            conditions[key] = getattr(state, attribute)
+    uncertainties = si_uncertainty or {}
+    for phase, width in uncertainties.items():
+        if (
+            phase not in state.saturation_indices
+            or isinstance(width, bool)
+            or not isinstance(width, (int, float))
+            or not math.isfinite(width)
+            or width < 0
+        ):
+            raise DeliveryError(
+                'invalid_si_uncertainty',
+                'SI half-width must be finite and nonnegative for a reported phase',
+            )
+    blocking, review, thermodynamic, applicability = [], [], {}, {}
+    for phase, si in sorted(state.saturation_indices.items(), key=lambda item: item[0]):
+        width = max(SI_THRESHOLD, uncertainties.get(phase, 0.0))
+        valid = isinstance(si, (int, float)) and not isinstance(si, bool)
+        if valid and si == -math.inf:
+            thermodynamic[phase] = {'status': 'absent_reactant', 'interval': None}
+            continue
+        if not valid or not math.isfinite(si):
+            thermodynamic[phase] = {'status': 'invalid_index', 'interval': None}
+            blocking.append((phase, si))
+            continue
+        low, high = si - width, si + width
+        if not math.isfinite(low) or not math.isfinite(high):
+            thermodynamic[phase] = {'status': 'invalid_interval', 'interval': None}
+            blocking.append((phase, si))
+            continue
+        sign = 'supersaturated' if low > 0 else 'undersaturated' if high < 0 else 'uncertain_sign'
+        thermodynamic[phase] = {'status': sign, 'interval': (low, high)}
+        if sign == 'undersaturated':
+            continue
+        status, review_id = _applicability(phase, conditions, evidence)
+        applicability[phase] = {'status': status, 'review_id': review_id}
+        reason = (
+            'SI sign is unresolved within the numerical/declared interval.'
+            if sign == 'uncertain_sign'
+            else 'Thermodynamic supersaturation; ' + status.replace('_', ' ') + '.'
+        )
+        sources = (
+            evidence[phase]['source']
+            if status == 'applicable_for_review'
+            else REVIEW.get(phase, ('', ''))[1]
+        )
+        review.append((phase, si, reason, sources))
+        if sign == 'uncertain_sign' or status != 'applicable_for_review':
+            blocking.append((phase, si))
+    solids = {}
+    invalid_solids = []
+    for phase, amount in state.precipitated.items():
+        if (
+            isinstance(amount, bool)
+            or not isinstance(amount, (int, float))
+            or not math.isfinite(amount)
+            or amount < 0
+        ):
+            invalid_solids.append(phase)
+        elif amount > 0:
+            solids[phase] = amount
     totals = getattr(state, 'totals', None)
-    if isinstance(totals, Mapping) and totals.get('Fe+2', 0) > 0:
-        advisories.append(FERROUS_IRON_ADVISORY)
+    advisories = (
+        [FERROUS_IRON_ADVISORY]
+        if isinstance(totals, Mapping) and totals.get('Fe+2', 0) > 0
+        else []
+    )
     return {
         'blocking': blocking,
         'review': review,
         'advisories': advisories,
         'solids': solids,
-        'blocks': bool(blocking or solids),
+        'blocks': bool(blocking or solids or invalid_solids),
+        'thermodynamic': thermodynamic,
+        'applicability': applicability,
+        'invalid_solids': invalid_solids,
+        'mixing_approved': False,
     }
 
 
 def describe(assessment):
-    """One line per finding, for messages and warnings."""
-    lines = [f'{p} SI {si:.2f} (blocks)' for p, si in assessment['blocking']]
+    """One line per finding, including unresolved allocation data."""
+    lines = [f'{p} SI {si} (blocks)' for p, si in assessment['blocking']]
     lines += [f'solid {p} allocated' for p in assessment['solids']]
     lines += [f'{p} SI {si:.2f} (review: {reason})' for p, si, reason, _ in assessment['review']]
+    lines += [f'invalid solid allocation: {p}' for p in assessment.get('invalid_solids', ())]
     return lines
