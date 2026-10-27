@@ -962,8 +962,8 @@ Plain data for a grower report and batch sheet.
 ``products`` are the product records it was planned with (they give the tank
 grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
 a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-is the recipe to weigh. Each concentrate is checked against sourced solubility at
-``temperature_c`` (°C); a stock that does not dissolve blocks the batch.
+is the recipe to weigh. Each concentrate is compared with source-qualified
+references at ``temperature_c``; conditional floors cannot prove dissolution failure.
 
 Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 

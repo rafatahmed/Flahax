@@ -36,6 +36,19 @@ def sheet_text(summary, depth):
     )
 
 
+def presentation_summary(actual):
+    """Synthetic renderer state, never a chemistry result or mixing approval."""
+    summary = copy.deepcopy(actual)
+    summary['status'] = 'requires_review'
+    summary['ph']['selected'] = dict(
+        direction='acid',
+        product='Synthetic rendering reagent',
+        formula='HNO3',
+        volume_ml_per_batch=123.0,
+    )
+    return summary
+
+
 class ResultViewTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -53,15 +66,40 @@ class ResultViewTests(unittest.TestCase):
         cls.blocked['stages']['chemistry']['status'] = 'blocked'
         cls.blocked['warnings'].insert(0, 'chemistry: a phase forms; do not mix this recipe.')
 
+    def test_solubility_footer_never_claims_mixture_dissolution(self):
+        for statuses, expected in [
+            ([], 'not checked'),
+            (['screening_only'], 'not checked'),
+            (['inconclusive'], 'not checked'),
+            (['ok'], 'mixture unqualified'),
+            (['exceeds'], 'single-product limit'),
+        ]:
+            summary = copy.deepcopy(self.summary)
+            summary['solubility'] = [dict(status=status) for status in statuses]
+            text = ' '.join(screen(summary, 0, width=160, height=100))
+            self.assertIn(expected, text)
+            self.assertNotIn('all dissolve', text)
+
+    def test_real_workflow_remains_phase_blocked_without_reagent(self):
+        self.assertEqual(self.summary['status'], 'blocked')
+        self.assertTrue(self.summary['chemistry']['phase_assessment']['blocks'])
+        self.assertIsNone(self.summary['ph']['selected'])
+        self.assertEqual(first_view(self.summary), 2)
+        tanks = '\n'.join(screen(self.summary, 0))
+        self.assertIn('not to be prepared', tanks)
+        self.assertNotIn('sets the batch', tanks)
+        self.assertNotIn('Synthetic rendering reagent', tanks)
+
     def test_tanks_match_sheet(self):
-        tanks, sheet = '\n'.join(screen(self.summary, 0)), sheet_text(self.summary, 1)
-        for tank in self.summary['tanks']['tanks']:
+        summary = presentation_summary(self.summary)
+        tanks, sheet = '\n'.join(screen(summary, 0)), sheet_text(summary, 1)
+        for tank in summary['tanks']['tanks']:
             self.assertIn(f'Tank {tank["name"]}', tanks)
             for product in tank['products']:
                 self.assertIn(product['name'], tanks)
                 self.assertIn(grams(product['gramsPerBatch']), tanks)
                 self.assertIn(grams(product['gramsPerBatch']), sheet)
-        acid = millilitres(self.summary['ph']['selected']['volume_ml_per_batch'])
+        acid = millilitres(summary['ph']['selected']['volume_ml_per_batch'])
         self.assertIn(f'{acid} mL', tanks)
         self.assertIn(f'{acid} mL', sheet)
         self.assertIn('no acid in this tank', tanks)
@@ -89,7 +127,8 @@ class ResultViewTests(unittest.TestCase):
             self.assertEqual(notes.count(shown), 1, warning[:60])
 
     def test_blocked_opens_notes(self):
-        self.assertEqual(first_view(self.summary), 0)
+        self.assertEqual(first_view(self.summary), 2)
+        self.assertEqual(first_view(presentation_summary(self.summary)), 0)
         self.assertEqual(first_view(self.blocked), 2)
         self.assertIn('do not mix', '\n'.join(screen(self.blocked, 0)))
         notes = screen(self.blocked, 2)
@@ -110,7 +149,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertLessEqual(len(row), 79)
 
     def test_base_reagent_is_not_called_acid(self):
-        summary = copy.deepcopy(self.summary)
+        summary = presentation_summary(self.summary)
         summary['ph']['selected']['direction'] = 'base'
         tanks = '\n'.join(screen(summary, 0))
         self.assertIn('pH reagent', tanks)
@@ -137,7 +176,7 @@ class ResultViewTests(unittest.TestCase):
         ready['status'] = 'ready'
         self.assertIn('\x1b[92m', status_line(ready))
         self.assertIn('\x1b[91m', status_line(self.blocked))
-        self.assertIn('\x1b[93m', status_line(self.summary))
+        self.assertIn('\x1b[93m', status_line(presentation_summary(self.summary)))
 
     def test_no_faint_text(self):
         # The key help ("Q Quit") and the inactive tab names must stay readable (owner's trial).
@@ -168,7 +207,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertTrue(any(' -200.00 (-100.0 %)' in line for line in lines))
 
     def test_tank_cards_keep_their_border_at_80_columns(self):  # 141
-        lines = screen(self.summary, 0, 80, 60)
+        lines = screen(presentation_summary(self.summary), 0, 80, 60)
         cards = [line for line in lines if line.strip().startswith('│')]
         self.assertTrue(cards)
         self.assertTrue(all(line.rstrip().endswith('│') for line in cards), cards)
