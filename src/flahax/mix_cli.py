@@ -684,6 +684,12 @@ def find_session(store, spec):
 
 def summarize(summary, say):
     """The grower depth in the terminal: status and reasons, tanks, grams and the acid."""
+    from .canonical_result import verify_summary
+
+    verify_summary(summary)
+    identity = summary.get('calculation_identity') or {}
+    if identity.get('result_id'):
+        say('Calculation reference: ' + identity['result_id'])
     volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')

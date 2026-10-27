@@ -333,3 +333,37 @@ percentages use the shared carrier remainder; serial devices see different local
 flows. Manufacturer operating curves, pressure differential, turndown and stock
 properties remain necessary to select hardware. No contact-time, contraction or
 hydraulic mixing model is supplied, and no equipment is operated.
+
+
+## Canonical calculation and export identity
+
+`plan_fertilizer_workflow` retains a `canonical_result`: an immutable JSON snapshot
+of normalized inputs, complete stage values (including selected and rejected
+candidates), package version and SHA-256 fingerprints of packaged Python/JSON
+model sources. Its `result_id` identifies that exact calculation content.
+`to_dict()` returns a detached copy. Changing the workflow after calculation or
+supplying different product records to `summarize_batch` raises
+`canonical_result_mismatch`; rerun the calculation with the intended inputs.
+
+The summary retains `calculation_identity` with the calculation ID and input,
+source, weighed-recipe and actual-state fingerprints. An unavailable state has
+no state fingerprint. `export_identity` binds all final export fields. Batch
+metadata is added before final export sealing. Report-time tank ratios, temperatures
+and display metadata belong to the export identity; the calculation ID identifies
+the preceding workflow snapshot. HTML, sheets and terminal views
+check bound exports and reject later edits. The same calculation reference
+appears in reports, sheets and the plain terminal summary. These hashes establish
+content identity, not authenticity, independent review or scientific validity.
+
+Legacy manually assembled workflows have `legacy_unverified` identity and cannot
+claim a bound calculation. Synthetic presentation fixtures explicitly remove their
+calculation identity; they are not production acceptance evidence. A stored export
+can still be rendered on a newer installation: its identity describes its retained
+calculation, whereas a live workflow rejects model-source changes before reporting.
+
+The `statuses` mapping preserves independent formulation, chemistry, phase, pH,
+EC, stock, delivery, physical and overall qualifications. Numerical convergence is
+`not_reported` because the legacy recommendation does not expose a convergence
+certificate; feasibility is not substituted for one. Delivery and physical
+validation remain `not_validated`. Overall blocking retains the existing precedence;
+no successful stage promotes an unrelated unsupported stage to success.

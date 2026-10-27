@@ -38,6 +38,7 @@ KHCO3, K2CO3) are always evaluated.
 """
 
 import argparse
+from .canonical_result import seal_summary
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -526,7 +527,7 @@ def run_batch(options):
         if r.get('name') in weighed
     }
     summary['product_notes'] = {k: v for k, v in summary['product_notes'].items() if v}
-    return summary
+    return seal_summary(summary)
 
 
 def render(summary):
