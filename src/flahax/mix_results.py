@@ -97,11 +97,11 @@ def _tank_rows(summary, width, g):
         rows += _card('pH reagent', [[(_reagent_line(summary), 'warn')]], width, g)
     checks = summary['solubility'] or []
     if any(c['status'] == 'exceeds' for c in checks):
-        dissolves = 'a product does not dissolve (see Notes)'
-    elif any(c['status'] != 'ok' for c in checks):
+        dissolves = 'a product exceeds its single-product limit (see Notes)'
+    elif not checks or any(c['status'] != 'ok' for c in checks):
         dissolves = 'solubility not checked for every product'
     else:
-        dissolves = f'all dissolve {g["tick"]}'
+        dissolves = f'single-product limits checked; mixture unqualified {g["tick"]}'
     ratio = summary['tanks']['injection_ratio']
     mode = 'prepared full' if volumes.get('mode') == 'fill' else 'one irrigation'
     temperature = summary['tanks'].get('temperature_c')

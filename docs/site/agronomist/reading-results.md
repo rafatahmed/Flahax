@@ -118,19 +118,23 @@ phosphates can form (#78). **Tank A is never acidified** (Yara p. 63: do not
 acidify tanks with microelement chelates): dose acid on its own channel or into
 another tank. pH reagents always have their own channel.
 
-The table states compatibility, not solubility. Check that every concentrate
-dissolves at its strength and temperature; `plan_stocks` does this with your
-sourced solubility limits, and `default_compatibility_rules(products)` gives it
-the same rules as records. `summarize_batch(..., temperature_c=25)` also lists
-each concentrate against sourced single-salt solubility at that temperature
-(`summary['solubility']`); a stock that does not dissolve blocks the batch. The
-packaged table (`data/solubility.json`) covers 20 products at 0-40 °C: 18 from
-the CRC Handbook aqueous solubility table, calcium nitrate (ag grade) from
-Yara's CALCINIT sheet (its 20 °C value used as a floor from 20 to 40 °C) and
-urea from the U.S. Coast Guard CHRIS compilation. Mass percent is converted to
-grams per litre at a density of 1 g/cm3, which understates solubility, so a
-stock that would not dissolve is never passed. The chelates, CH - micro and
-potassium citrate have no sourced data and show "not checked". Your own `compatibilityRule` records (`--rules`, or
+The tank table states compatibility, not dissolution approval. The single-product
+screen in `summary['solubility']` distinguishes qualified limits from conditional
+screening floors. A floor exceedance is **inconclusive**, not proof that a product
+will not dissolve. A comparison below a floor does not approve a mixed stock.
+Unqualified comparisons keep the batch under review; other blocking findings
+remain blocking.
+
+The unchanged historical table contains 20 products, principally CRC-derived
+values, plus CALCINIT and urea source values. Its density-one conversions are
+conditional screening values, not measured limits. CALCINIT's source specifies
+20 °C; the historical extension through 40 °C is no longer applied. Intermediate
+temperatures require explicit interpolation review. Missing basis, grade, density
+or temperature evidence is never silently supplied. See the
+[qualification contract](solubility-qualification.md) for conversion equations,
+source provenance and the caller-reviewed limit interface.
+
+Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient
 rule.
 

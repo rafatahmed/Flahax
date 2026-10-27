@@ -12,6 +12,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Distinguish historical solubility screening floors from qualified limits. Require
+  explicit source basis, grade and temperature evidence; report floor exceedances
+  as inconclusive and retain qualification in public reports (#172).
+- Separate synthetic terminal rendering states from actual phase-blocked workflow
+  tests, preserving blocked status and absent reagent selection (#173).
+
 - Remove phase-name exemptions from saturation decisions. Keep thermodynamic
   signs, applicability evidence and allocated solids distinct; unresolved or
   out-of-condition evidence prevents approval without inventing kinetics (#161).

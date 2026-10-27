@@ -106,6 +106,7 @@ A batch from files <agronomist/batch-command>
 Formulas and products <agronomist/formula-and-products>
 pH, acids and bases <agronomist/ph-and-acids>
 Tanks and solubility <agronomist/tanks-and-solubility>
+Solubility qualification <agronomist/solubility-qualification>
 Reading the results <agronomist/reading-results>
 ```
 
