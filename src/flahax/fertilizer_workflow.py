@@ -781,7 +781,21 @@ def plan_fertilizer_workflow(
                     stocks['compatibility_rules'],
                     stocks['solubility_limits'],
                     stocks['temperature'],
+                    mixture_model=stocks.get('mixture_model'),
+                    max_assignments=stocks.get('max_assignments', 100000),
                 ),
+            )
+
+    stock_stage = stages.get('stocks')
+    if (
+        stock_stage is not None
+        and stock_stage.value is not None
+        and stock_stage.status == 'calculated'
+    ):
+        if not stock_stage.value.mixture_approved:
+            stock_stage.status = 'requires_review'
+            stock_stage.message = (
+                'Separation assignment only; stock mixture applicability is unqualified.'
             )
 
     output.maximum_concentrations = dict(maximum_concentrations or {})

@@ -38,7 +38,6 @@ from flahax.tank_grouping import (
     ANALOGUE,
     CLASS_RULES,
     MICRO_PHOSPHATE,
-    OWNER_TWO_TANKS,
     WAIVED_RULES,
     _class_conflict,
     product_classes,
@@ -122,8 +121,7 @@ class TankGroupingTests(unittest.TestCase):
             )
         }
         self.assertEqual(found, PAGE_65_NO)
-        self.assertEqual([r[:2] for r in WAIVED_RULES], [('magnesium', 'phosphate')])
-        self.assertEqual(WAIVED_RULES[0][3], OWNER_TWO_TANKS)
+        self.assertEqual(WAIVED_RULES, ())
 
     def test_micronutrients_join_calcium_in_tank_a_which_takes_no_acid(self):
         grouping = group_tanks(
@@ -140,13 +138,13 @@ class TankGroupingTests(unittest.TestCase):
         tanks = {t.name: t for t in grouping.tanks}
         self.assertEqual(
             [p.name for p in tanks['A'].products],
-            ['Calcium Nitrate (ag grade)', 'Zinc Sulfate (Monohydrate)', 'Iron EDTA'],
+            ['Calcium Nitrate (ag grade)', 'Iron EDTA'],
         )
         self.assertFalse(tanks['A'].acid_allowed)
-        self.assertTrue(any('never acidify' in n for n in tanks['A'].notes))
-        # Owner rule: magnesium sulfate shares tank B with the phosphates, so two tanks.
-        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
-        self.assertEqual(
+        self.assertTrue(any('never acidify' in n.lower() for n in tanks['A'].notes))
+        # Equipment cannot waive the magnesium/phosphate separation.
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B', 'C'])
+        self.assertNotEqual(
             grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
@@ -155,25 +153,17 @@ class TankGroupingTests(unittest.TestCase):
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
 
-    def test_tomato_fits_two_tanks(self):
+    def test_tomato_reports_required_equipment_without_waivers(self):
         recipe = workflow('Tomato (Howard Resh)').recommendation
         grouping = group_tanks(recipe['salts'], PRODUCTS)
-        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
-        selected = {s['name'] for s in recipe['salts']}
-        phosphates = selected.intersection(
-            {
-                'Potassium Monobasic Phosphate',
-                'Potassium Dibasic Phosphate',
-                'Ammonium Monobasic Phosphate',
-            }
+        self.assertEqual(len(grouping.tanks), 3)
+        self.assertFalse(grouping.waived)
+        self.assertNotEqual(
+            grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
+            grouping.tank_of('Potassium Monobasic Phosphate'),
         )
-        self.assertTrue(phosphates)
-        self.assertEqual(grouping.tank_of('Magnesium Sulfate (Heptahydrate)'), 'B')
-        pairs = {(a, b) for a, b, _ in grouping.waived}
-        for name in phosphates:
-            self.assertEqual(grouping.tank_of(name), 'B', name)
-            self.assertIn(('Magnesium Sulfate (Heptahydrate)', name), pairs)
-        self.assertEqual({why for *_, why in grouping.waived}, {OWNER_TWO_TANKS})
+        with self.assertRaises(DeliveryError):
+            group_tanks(recipe['salts'], PRODUCTS, max_tanks=2)
 
     def test_calcium_separations_still_hold(self):
         grouping = group_tanks(
@@ -221,6 +211,7 @@ class TankGroupingTests(unittest.TestCase):
                 ),
                 PRODUCTS,
                 rules=[rule],
+                max_tanks=2,
             )
         self.assertEqual(caught.exception.code, 'too_many_tanks')
         self.assertIn('Magnesium Sulfate (Heptahydrate)', str(caught.exception))
@@ -321,9 +312,10 @@ class ReportTests(unittest.TestCase):
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
-        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B'])
-        self.assertTrue(s['tanks']['waived'])
-        self.assertIn('two tanks', render_report(s))
+        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B', 'C'])
+        self.assertFalse(s['tanks']['waived'])
+        self.assertFalse(s['tanks']['mixture_approved'])
+        self.assertIn('needs 3 tanks', render_report(s))
         self.assertTrue(s['chemistry']['review'])
         json.dumps(s, allow_nan=False)
 
@@ -382,7 +374,10 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(s['status'], 'blocked')
         self.assertIsNone(s['ph']['selected'])
         self.assertNotIn('Phosphoric Acid (75%)', [x['name'] for x in s['formulation']['salts']])
-        self.assertIn('CaHPO4', [b['phase'] for b in s['chemistry']['blocking']])
+        self.assertEqual(s['chemistry']['state_basis'], 'unadjusted_recipe')
+        rejected = s['chemistry']['rejected_candidate_diagnostics']
+        self.assertEqual(rejected['state_basis'], 'rejected_candidate_not_weighed')
+        self.assertIn('CaHPO4', [p for p, _ in rejected['phase_assessment']['blocking']])
 
     def test_html_is_complete_and_offline(self):
         for s in (self.tomato, self.chilli):
@@ -394,7 +389,7 @@ class ReportTests(unittest.TestCase):
                 for salt in s['formulation']['salts']:
                     self.assertIn(salt['name'], html)
         self.assertIn('<svg', render_report(self.tomato))
-        self.assertIn('never acidify', render_batch_sheet(self.tomato))
+        self.assertIn('never acidify', render_batch_sheet(self.tomato).lower())
 
 
 class IncidentalAssessmentTests(unittest.TestCase):

@@ -1,3 +1,7 @@
+> Historical example: the two-tank magnesium/phosphate waiver below is retired.
+> Current assignments retain all separations, report required equipment, and do not
+> approve unqualified stock mixtures. See [stock assignments](stock-assignments.md).
+
 # A batch from files: `flahax batch`
 
 This page takes you from a water analysis and a crop to a printed batch sheet in four steps with

@@ -271,8 +271,10 @@ class WaterWorkflowTests(unittest.TestCase):
                 temperature=TemperatureCelsius(25),
             ),
         )
-        for stage in ('formulation', 'batch', 'chemistry', 'nitric', 'acid_selection', 'stocks'):
+        for stage in ('formulation', 'batch', 'chemistry', 'nitric', 'acid_selection'):
             self.assertEqual(result.stages[stage].status, 'calculated', result.stages[stage])
+        self.assertEqual(result.stages['stocks'].status, 'requires_review')
+        self.assertFalse(result.stages['stocks'].value.mixture_approved)
         self.assertEqual(result.stages['acid_selection'].value.selected_product_id, 'HNO3')
         self.assertAlmostEqual(result.stages['nitric'].value.equilibrium.target.ph, 6.5)
         self.assertGreater(result.stages['nitric'].value.reagent_volume_litres, 0)
