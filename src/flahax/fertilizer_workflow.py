@@ -204,6 +204,12 @@ def limit_message(recommendation):
 def no_reagent_message(plan):
     """Why no pH reagent was selected: none offered in the needed direction, or the reasons each
     one failed."""
+    if any(c.joint_result is not None for c in plan.candidates):
+        return 'no offered candidate has passed joint workflow acceptance: ' + '; '.join(
+            f'{(c.product_record or {}).get("name") or c.product_id}: '
+            f'{c.message or (c.joint_result or {}).get("reason") or c.error_code or c.status}'
+            for c in plan.candidates
+        )
     need = 'an acid' if plan.direction == 'acid' else 'a base'
     tried = [
         c
@@ -250,9 +256,12 @@ def plan_fertilizer_workflow(
     No stage performs external writes, mixing or equipment operation.
 
     ph_adjustment (products, maximum_reagent_volume_litres, optional
-    preferred_product_id) plans the recipe and its pH reagent together (#74):
+    preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
     acids or bases, with the reagent's nutrients counted as supply. It needs the
     equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+    joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
+    and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
+    water_mass_kg. Optional starting_points are never accepted without verification.
     """
     if not isinstance(water, Mapping):
         raise DeliveryError('missing_field', 'explicit water nutrient concentrations are required')
@@ -715,6 +724,8 @@ def plan_fertilizer_workflow(
                     final_volume_litres=final_volume.value,
                     maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
                     preferred_product_id=ph_adjustment.get('preferred_product_id'),
+                    joint=ph_adjustment.get('joint'),
+                    water_components=water_totals,
                     phases=equilibrium['phases'],
                     maximum_concentrations=maximum_concentrations,
                 ),

@@ -133,12 +133,14 @@ class JointProblem:
         if set(self.phases) - {p['name'] for p in chemistry()['phases']}:
             raise DeliveryError('unknown_phase', 'unsupported phase selection')
 
-    def evaluate(self, fertilizer_g_per_litre, reagent_g_per_litre):
+    def evaluate(self, fertilizer_g_per_litre, reagent_g_per_litre, *, equilibrium_start=None):
         """Evaluate a supplied dose vector without fitting, clipping or changing targets.
 
         Missing fertilizer IDs mean zero. Charge residual and equilibrium residuals
         are exposed without defining a new pass threshold. Nonconvergence propagates
-        as DeliveryError, never as an accepted or substituted candidate.
+        as DeliveryError, never as an accepted or substituted candidate. An optional
+        equilibrium_start only seeds the existing safeguarded equilibrium iteration;
+        callers must still verify the final candidate from a fresh solve.
         """
         doses = _profile_doses(fertilizer_g_per_litre, self.fertilizers)
         q = _number(reagent_g_per_litre, 'reagent dose')
@@ -208,7 +210,11 @@ class JointProblem:
         ):
             if failed:
                 violations.append(dict(kind=kind))
-        state = None if missing else solve(components, self.target_ph, phases=self.phases)
+        state = (
+            None
+            if missing
+            else solve(components, self.target_ph, phases=self.phases, start=equilibrium_start)
+        )
         chemistry_nutrients = {
             k: g * self.solvent_mass_kg / self.final_volume_litres * 1000
             for k, g in component_nutrient_masses(components).items()

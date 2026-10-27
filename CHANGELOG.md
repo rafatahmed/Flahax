@@ -10,6 +10,28 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Integrate explicit joint fertilizer/reagent fitting into the public workflow;
+  rebuild final quantities and diagnoses and independently verify final pH.
+  Add bounded zero-reagent recovery when the legacy call offers no reagent in
+  the initial required direction; retain unresolved search and hard limits.
+
+- Recheck final joint charge corrections on cold equilibrium states and rebuild
+  stationarity at the corrected quantities. Restore charge through bounded
+  fertilizer adjustments when the reagent cannot move in the required direction.
+
+- Add opt-in joint objective-gap and first-order stationarity checks for nonzero
+  best-fit results, with rational certificates and fresh constraint verification.
+  Add linearized charge-equality steps and separately checked charge sensitivities;
+  preserve existing target thresholds and production acceptance policy.
+  Use direct nutrient gradients and precision-preserving feasible-step comparisons
+  to prevent roundoff from hiding near-optimum progress. Opt-in implicit equilibrium
+  derivatives, curvature polishing and verified zero-boundary recovery address stiff
+  chelate sensitivities; independent derivative and cold-state checks retain failures.
+
+- Add joint-fit qualification checks with independent rational nutrient accounting,
+  water-only objective lower bounds and retention of every multistart failure.
+  Add matched acid-reference regressions; production acceptance is unchanged.
+
 - Add a joint fertilizer/reagent numerical search with feasible steps, checked
   sensitivities, rank-aware fallback and fresh final residual verification.
   Explicit caller controls and incomplete-search diagnostics keep numerical
