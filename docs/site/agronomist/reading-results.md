@@ -207,3 +207,14 @@ introduced requirements: nutrient feasibility alone cannot establish pH, stock,
 equipment or physical suitability. The original recipe remains the recipe to
 weigh until a new calculation explicitly adopts different inputs. A budget-limited
 search says which options were not evaluated; it never calls them impossible.
+
+
+## Saved results and consent
+
+Acceptance records identify one exact calculated proposal. They never turn a
+blocked limit into a pass, certify an unassessed EC, or establish physical
+validation. Changed inputs, grams or evidence require a new result review.
+Saved sessions contain answers; they are not consent. New sessions detect changed
+referenced records or model sources before rerunning. Older sessions have no
+historical provenance claim and must be reviewed against current inputs when
+migrated. See the developer guide's saved-state schemas for explicit migration.

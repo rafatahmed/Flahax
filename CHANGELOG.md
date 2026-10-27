@@ -12,6 +12,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Bind explicit proposal acceptance to exact result content, validate saved-result
+  archives, and detect saved-session input/source drift with explicit legacy
+  migration. Consent never waives calculation guards (#179).
+
 - Evaluate explicitly supplied catalogue bundles, treated-water analyses and stock
   equipment alternatives under unchanged targets and limits. Retain candidate
   evidence, remaining requirements and honest conditional/budget outcomes (#178).
