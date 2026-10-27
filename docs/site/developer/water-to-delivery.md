@@ -495,3 +495,34 @@ Python acceptance/archive functions are now top-level exports documented in the
 Use the user guide's command-specific exit contract: JSON calculators use zero
 for a returned result, while batch/mix return three for a written blocked result.
 Always inspect the result rather than using process success as an approval gate.
+
+
+## Terminal lifecycle and platform validation
+
+The full-screen adapter calls the shared saved-session validation and batch
+workflow. It renders the same content-bound summary as plain mode, with no
+separate formulation calculation. Modified summaries fail identity verification;
+stale saved sessions fail before the workflow runs. Resize and result-navigation
+paths do not change calculated state.
+
+`Terminal` attempts screen/cursor cleanup and restores the captured console mode
+on normal exit and errors. A failed entry write/flush triggers best-effort screen
+cleanup while preserving the original exception. POSIX EOF terminates input
+instead of repeatedly reading an empty descriptor; buffered keys are delivered
+before a subsequent EOF. POSIX `termios.error` is normalized explicitly: failed
+mode probing returns unavailable, failed setup attempts rollback, and failed
+restoration raises a handled `OSError`. Windows uses native console keys and ANSI mode; POSIX
+uses the captured termios state and cbreak input.
+
+Run `python -m unittest tests.test_terminal tests.test_terminal_platform
+ tests.test_mix_tui tests.test_mix_results` with `PYTHONPATH=src;.` on Windows
+(`PYTHONPATH=src:.` on POSIX). Native Windows testing creates a hidden, isolated
+child console and verifies Unicode input and mode restoration. Native POSIX
+testing uses a real PTY in an isolated child session and verifies input, cbreak
+mode and exception restoration. The child ignores its PTY teardown hangup so
+closing the test PTY cannot terminate the test runner. Cygwin uses this POSIX path;
+record its runtime explicitly rather than claiming Linux/macOS validation.
+Each native check skips on the other runtime. Controlled-interface tests exercise both
+adapters but are not substitutes for native-platform evidence. Record both native
+runs before claiming cross-platform validation; a skipped native check remains
+unverified on that host.
