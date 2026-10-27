@@ -31,6 +31,25 @@ def serializable(value):
     return value
 
 
+def _stock_config(stocks):
+    if stocks is not None:
+        if not isinstance(stocks, dict):
+            raise DeliveryError('invalid_type', 'stocks must be an object')
+        stocks = dict(stocks)
+        if 'final_litres_per_stock_litre' in stocks:
+            stocks['injection_ratio'] = InjectionRatio(stocks.pop('final_litres_per_stock_litre'))
+        if 'temperature_c' in stocks:
+            stocks['temperature'] = TemperatureCelsius(stocks.pop('temperature_c'))
+        if 'tanks' in stocks:
+            try:
+                stocks['tanks'] = [
+                    StockTank(t['id'], VolumeLitres(t['capacity_litres'])) for t in stocks['tanks']
+                ]
+            except (KeyError, TypeError) as exc:
+                raise DeliveryError('invalid_type', 'tanks need id and capacity_litres') from exc
+    return stocks
+
+
 def execute(command, payload):
     """Run one planning command (``workflow``, ``ec`` or ``size``) on a JSON payload; raises
     DeliveryError for an unknown command or field.
@@ -53,6 +72,8 @@ def execute(command, payload):
         'equilibrium',
         'acids',
         'maximum_concentrations',
+        'remedy_options',
+        'max_remedy_evaluations',
     }
     if unknown:
         raise DeliveryError(
@@ -68,16 +89,17 @@ def execute(command, payload):
         )
     if not isinstance(payload['targets'], dict):
         raise DeliveryError('invalid_type', 'targets must be a nutrient mg/L map')
-    stocks = payload.get('stocks')
-    if stocks is not None:
-        if not isinstance(stocks, dict):
-            raise DeliveryError('invalid_type', 'stocks must be an object')
-        stocks = dict(stocks)
-        stocks['injection_ratio'] = InjectionRatio(stocks.pop('final_litres_per_stock_litre'))
-        stocks['temperature'] = TemperatureCelsius(stocks.pop('temperature_c'))
-        stocks['tanks'] = [
-            StockTank(t['id'], VolumeLitres(t['capacity_litres'])) for t in stocks['tanks']
-        ]
+    stocks = _stock_config(payload.get('stocks'))
+    options = payload.get('remedy_options', ())
+    if isinstance(options, (list, tuple)):
+        from copy import deepcopy
+
+        options = deepcopy(options)
+        for option in options:
+            if isinstance(option, dict) and option.get('kind') == 'equipment':
+                changes = option.get('changes')
+                if isinstance(changes, dict) and changes.get('stocks') is not None:
+                    changes['stocks'] = _stock_config(changes['stocks'])
     return plan_fertilizer_workflow(
         payload['salts'],
         payload['targets'],
@@ -88,6 +110,8 @@ def execute(command, payload):
         acids=payload.get('acids'),
         stocks=stocks,
         maximum_concentrations=payload.get('maximum_concentrations'),
+        remedy_options=options,
+        max_remedy_evaluations=payload.get('max_remedy_evaluations', 20),
     )
 
 
