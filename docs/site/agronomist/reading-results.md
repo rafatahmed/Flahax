@@ -150,8 +150,9 @@ workflow = plan_fertilizer_workflow(
                      carbon_boundary='closed', temperature_c=25, phases=[]),
     ph_adjustment=dict(products=[nitric] + catalogue_ph_reagents(), maximum_reagent_volume_litres=5))
 summary = summarize_batch(workflow, products, title='Tomato', water_label='RO water')
-open('report.html', 'w', encoding='utf-8').write(render_report(summary))
-open('batch-sheet.html', 'w', encoding='utf-8').write(render_batch_sheet(summary))
+from pathlib import Path
+Path('report.html').write_text(render_report(summary), encoding='utf-8')
+Path('batch-sheet.html').write_text(render_batch_sheet(summary), encoding='utf-8')
 ```
 
 `summary` is plain JSON-ready data with the same numbers as the two pages.

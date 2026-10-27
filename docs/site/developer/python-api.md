@@ -54,13 +54,15 @@ After installation, `flahax` is the same program. A missing or empty `targets` o
 
 ## Public functions
 
-```python
+Signature summary (not executable Python):
+
+```text
 from flahax import gap_for, load_library, recommend, solve_weights
 
 load_library() -> dict
 gap_for(targets, water) -> dict
 recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
-          maximum_concentrations=None, max_ammonium_fraction=0.10) -> dict
+          maximum_concentrations=None, max_ammonium_fraction=None) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
@@ -74,11 +76,11 @@ Targets and water are maps of element symbol to ppm. Use the database symbols:
 
 `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
 
-A missing target means the formula does not ask for that element. That is different from a target of zero. Any ppm the salts still produce for an unrequested element is penalized, unless that element has a ceiling (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
+A missing target means the formula does not ask for that element. That is different from a target of zero. Untargeted contributions are reported without a fitting penalty; explicit maxima remain hard constraints (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
 
 A salt is a dictionary:
 
-```python
+```json
 {
     "id": "…",
     "name": "Potassium Nitrate",
@@ -91,7 +93,7 @@ A salt is a dictionary:
 
 ## Result
 
-```python
+```json
 {
     "salts": [{"id": "…", "name": "…", "gramsPerLitre": 0.5458}],
     "saltIds": ["…"],
@@ -256,7 +258,8 @@ small error into a large pH error. Start from the measured pH instead:
 ```python
 from flahax import balance_water_analysis
 
-# mol/kg water; CO3-2 is total inorganic carbon
+# Fully specified synthetic electrolyte; not a site prescription.
+analysis_totals = {"Na+": 0.002, "Cl-": 0.002, "CO3-2": 0.0}
 balanced = balance_water_analysis(analysis_totals, measured_ph=7.8)
 print(balanced.imbalance_percent, balanced.balance_ion, balanced.balance_adjustment_molal)
 ```

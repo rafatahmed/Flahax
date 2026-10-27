@@ -21,7 +21,9 @@ The quantity objects are frozen. Arithmetic stays at full floating-point precisi
 
 ## Final batch adaptation
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.equilibrium_delivery` from the checkout.
+
+```text
 from flahax import VolumeLitres, final_solution_recipe
 
 recipe = final_solution_recipe(recommendation, VolumeLitres(250))
@@ -45,7 +47,9 @@ Acids and bases are not pH-only products. Given reagent mass `M`, elemental mass
 Delta_C_i [mg/L] = M [g] * f_i * 1000 / V [L]
 ```
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.equilibrium_delivery` from the checkout.
+
+```text
 from flahax import MassGrams, VolumeLitres, elemental_contribution, rescore_with_reagent
 
 addition = elemental_contribution(
@@ -69,7 +73,9 @@ is for display; a displayed rounded mass must not be substituted silently.
 
 When scale resolution or actual weighing changes a dose, recalculate:
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.equilibrium_delivery` from the checkout.
+
+```text
 from flahax import MassGrams, VolumeLitres, rescore_weighed_recipe
 
 actual = rescore_weighed_recipe(

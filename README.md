@@ -35,6 +35,10 @@ dependency-free library, verified against PHREEQC.
   limits, against real water analyses and real commercial products.
 - **Developers**: a tested, dependency-free engine for nutrition and fertigation software.
 
+For changes from published recipes to this development checkout, see the
+[migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html).
+Recalculate and review saved results; acceptance does not transfer to changed inputs or sources.
+
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.

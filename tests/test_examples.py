@@ -82,7 +82,8 @@ class CapabilityExamplesTests(unittest.TestCase):
 
     def test_delivery_is_calculated_not_operator_approved(self):
         result = self.results['delivery']
-        self.assertEqual(result['delivery']['state'], 'validated')
+        self.assertEqual(result['delivery']['state'], 'draft')
+        self.assertIn('Draft only', ' '.join(result['assumptions']))
         stages = result['workflow']['stages']
         self.assertEqual(len(stages['acid_selection']['value']['candidates']), 2)
         self.assertTrue(result['delivery']['commands'][0]['requires_operator_verification'])

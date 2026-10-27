@@ -84,6 +84,7 @@ instructions. Measure pH and EC after mixing. See [Scope and limits](explanation
 Install <start/install>
 Your first batch <start/first-batch>
 Your first recipe in Python <start/first-recipe>
+Migrate saved workflows <start/migration>
 ```
 
 ```{toctree}

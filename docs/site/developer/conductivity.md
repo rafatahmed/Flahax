@@ -82,7 +82,9 @@ not EC after an unaccounted acid addition.
 
 ## API and injection connection
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.ec_and_injection` from the checkout.
+
+```text
 from flahax import plan_ec_delivery
 
 # `stocks` is returned by plan_stocks or workflow.stages['stocks'].value.

@@ -49,7 +49,7 @@ result = plan_fertilizer_workflow(
     water={'Ca': 20}, target_ph=6.5,
 )
 assert result.nutrient_gap['Ca'] == 84
-assert result.stages['formulation'].status == 'requires_review'
+assert result.stages['formulation'].status == 'blocked'
 assert result.stages['chemistry'].status == 'needs_input'
 ```
 
@@ -388,7 +388,9 @@ Each option has a unique `id`, `kind` and `changes` mapping:
   Tank capacity, separation, solubility and mixture-model qualification are
   rechecked. Additional tanks alone do not establish mixture compatibility.
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.calculated_site_planning` from the checkout.
+
+```text
 workflow = plan_fertilizer_workflow(
     available_products, targets, measured_water, target_ph,
     final_volume=VolumeLitres(100),

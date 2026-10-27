@@ -10,6 +10,9 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+- Correct the current release index while retaining historical publication evidence; add
+  migration guidance and executable documentation checks for current calculation contracts.
+
 - Preserve hard-zero targets and undefined relative differences in reports, sheets and terminal
   views; suppress blocked-sheet preparation actions and retain offline full-precision scientific
   qualifications, provenance and EC applicability evidence.

@@ -108,21 +108,18 @@ Read it from top to bottom before you weigh anything.
 
    | Status | Meaning |
    |---|---|
-   | **Ready** | Every target is met and the pH plan is accepted. |
+   | **Calculation complete** | Calculation checks passed; physical validation remains separate. |
    | **Requires review** | Review the stated evidence and conditions; this status alone does not approve mixing. |
    | **Blocked** | Do not mix. The sheet says why: usually a limit your water already breaks, a mineral that would precipitate, or no acid or base that reaches the pH. |
 
-2. **Weigh and dissolve.** This gives the grams of each product per batch,
-   grouped by concentrate tank, and the strength of each concentrate at your
-   injection ratio.
-   - Tank A holds the calcium products, micronutrients and chelates. Never put
-     acid into tank A.
-   - Keep the two tanks apart. Magnesium sulfate shares tank B with the
-     phosphates by FlahaX's two-tank rule; the sheet lists each such pair.
-   - FlahaX does not check that each concentrate dissolves at that strength.
-     Check it with your supplier's solubility data.
+2. **Quantities and assignments.** Product mass follows final batch volume. A blocked
+   sheet labels these as diagnostic and offers no preparation boxes. Assignments respect
+   separation constraints and may require more than two tanks; no magnesium/phosphate
+   separation is waived to fit equipment. Qualified solubility limits and unresolved
+   stock-mixture evidence remain visible.
 
-3. **pH.** How much reagent to add per batch. Add it in steps and measure.
+3. **pH.** Read the selected or rejected reagent diagnosis. Blocked quantities are not
+   instructions to add a reagent.
 
 4. **Limits.** Each maximum you declared, with the final concentration from
    your laboratory values and the decision. If you declared none, the sheet
@@ -130,8 +127,8 @@ Read it from top to bottom before you weigh anything.
 
 5. **Read before mixing.** Every warning and review reason, in plain words.
 
-6. **Measure after mixing.** The planned EC and pH, with space for what you
-   measure.
+6. **Scientific qualifications.** Preserve EC status, model limits and uncertainty.
+   Measurement fields appear only on nonblocked sheets; a computed value is not validation.
 
 ## Worked example: tomato on a brackish well
 
