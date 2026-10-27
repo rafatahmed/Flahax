@@ -105,6 +105,13 @@ class ECPrediction:
     error_code: str | None = None
     message: str | None = None
     uncertainty_ms_cm: float | None = None
+    uncertainty_components: dict = field(
+        default_factory=lambda: {
+            'numerical': {'status': 'not_quantified', 'bound_ms_cm': None},
+            'input': {'status': 'not_propagated', 'bound_ms_cm': None},
+            'model': {'status': 'not_quantified', 'bound_ms_cm': None},
+        }
+    )
 
 
 @dataclass(frozen=True)
@@ -206,6 +213,16 @@ def _predict(profile, water, strength, key, channel, source_id):
         profile['id'],
         digest,
         uncertainty_ms_cm=uncertainty,
+        uncertainty_components={
+            'numerical': {'status': 'not_quantified', 'bound_ms_cm': None},
+            'input': {'status': 'not_propagated', 'bound_ms_cm': None},
+            'model': {
+                'status': 'profile_declared_max_error'
+                if uncertainty is not None
+                else 'not_quantified',
+                'bound_ms_cm': uncertainty,
+            },
+        },
     )
 
 

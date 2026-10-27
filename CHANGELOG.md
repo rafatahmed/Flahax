@@ -12,6 +12,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Keep unknown conductivity contributions partial instead of inventing a universal
+  bound or midpoint. Preserve EC qualifications in grower output, distinguish
+  uncertainty sources, and evaluate explicit joint assay scenarios (#161).
+
 - Reject irrigation EC predictions beyond the recorded phosphate fit ceiling,
   retain fit-domain audit evidence, and reproduce coefficients with independent
   Decimal QR verification and withheld KCl comparisons (#161).

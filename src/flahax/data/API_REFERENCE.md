@@ -278,13 +278,13 @@ Source module: `flahax.conductivity`. Import with `from flahax import ECDelivery
 ### `ECPrediction`
 
 ```text
-ECPrediction(status: str, ec_ms_cm: float | None = None, profile_id: str | None = None, profile_sha256: str | None = None, error_code: str | None = None, message: str | None = None, uncertainty_ms_cm: float | None = None) -> None
+ECPrediction(status: str, ec_ms_cm: float | None = None, profile_id: str | None = None, profile_sha256: str | None = None, error_code: str | None = None, message: str | None = None, uncertainty_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
 ```
 
 An EC estimate in mS/cm from an irrigation profile, with its uncertainty, or the error code
 and message why none was made.
 
-Record fields: `status`, `ec_ms_cm`, `profile_id`, `profile_sha256`, `error_code`, `message`, `uncertainty_ms_cm`.
+Record fields: `status`, `ec_ms_cm`, `profile_id`, `profile_sha256`, `error_code`, `message`, `uncertainty_ms_cm`, `uncertainty_components`.
 
 Source module: `flahax.conductivity`. Import with `from flahax import ECPrediction`.
 
@@ -1001,21 +1001,17 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import DeclaredP
 ### `IrrigationECResult`
 
 ```text
-IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None) -> None
+IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
 ```
 
 EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-A bounded estimate (``bounded`` True, decision O2) has status 'estimated' with
-``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
-``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
-``transport_numbers`` are empty: they need the whole current, which is not known.
+Missing material species produce a partial known-species subtotal, not a
+total, midpoint or uncertainty interval. Legacy interval fields remain None.
+Numerical, input and model uncertainty are separately reported as unquantified;
+absence of a quantified uncertainty is never zero uncertainty.
 
-The midpoint and ``uncertainty_ms_cm`` describe only the uncovered-species interval;
-they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
-charge is conservative, the true value tends to lie in the lower half of the range.
-
-Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`.
+Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`, `uncertainty_components`.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import IrrigationECResult`.
 
@@ -1045,14 +1041,16 @@ EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
 or 'not_supported'; invalid input raises DeliveryError. Charged species
-without a coefficient (listed in missing_species) make the estimate
-bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
-+ sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
+without a coefficient (listed in missing_species) make the result partial:
+only known_species_subtotal_ms_cm is available, with no total, interval,
+uncertainty bound or transport numbers. The historical universal per-charge
+bound is not used. H2PO4- and HPO4-2 use 25 C
 coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
-the audit then records supplementaryCoefficients and
+material supplementary species above the stored fit ceiling return
+not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
+The audit retains supplementaryCoefficients and
 phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
-bounded estimates and equals the range's lower limit. Unrecorded counterions stay
+partial predictions and is not a complete EC estimate. Unrecorded counterions stay
 'partial' and the domain checks 'not_supported'. The 0.1 % O5
 assay gate uses assay_charge_residual_percent when given (the declared-form
 percent, as from assay_charge_residual()); when None (raw totals without
@@ -1082,7 +1080,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 ### `calculate_irrigation_ec_band`
 
 ```text
-calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, **kwargs) -> dict
+calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, joint_scenarios: collections.abc.Mapping | None = None, **kwargs) -> dict
 ```
 
 EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
@@ -1095,6 +1093,10 @@ any dosed product has an open band end (a shipped product has none) is
 not_supported / band_end_open; nothing is substituted. Each end's audit records
 ``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
 reports no nominal numbers (its audit assay residual is None too).
+Optional joint_scenarios maps named scenarios to complete material mappings for
+all dosed products. Each mapping describes a coherent joint assay realization;
+no independence, probability or statistical bounds are inferred. Results in
+scenarios retain individual domain/coverage failures, never an envelope promise.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec_band`.
 

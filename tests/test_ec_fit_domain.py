@@ -69,7 +69,7 @@ class FitDomainTests(unittest.TestCase):
         )
         limit = load_conductivity_coefficients()['supplementary']['fit']['max_ionic_strength']
         for strength, expected in (
-            (limit, 'estimated'),
+            (limit, 'partial'),
             (math.nextafter(limit, math.inf), 'not_supported'),
         ):
             result = _ec_from_state(
