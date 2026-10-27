@@ -919,9 +919,12 @@ configurations are mappings documented in docs/water-to-delivery.md.
 No stage performs external writes, mixing or equipment operation.
 
 ph_adjustment (products, maximum_reagent_volume_litres, optional
-preferred_product_id) plans the recipe and its pH reagent together (#74):
+preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
 acids or bases, with the reagent's nutrients counted as supply. It needs the
 equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
+and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
+water_mass_kg. Optional starting_points are never accepted without verification.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import plan_fertilizer_workflow`.
 
@@ -1164,7 +1167,7 @@ Source module: `flahax.joint_problem`. Import with `from flahax import JointSour
 ### `solve_joint_problem`
 
 ```text
-solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks)
+solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks, objective_gap_tolerance=None, stationarity_tolerance=None, active_bound_tolerance=None, sensitivity_method='finite_difference', curvature_block=False)
 ```
 
 Search one immutable JointProblem from an explicitly supplied start.
@@ -1174,6 +1177,15 @@ scale. trust_radius bounds the infinity norm of steps in those scaled variables.
 Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
 squared relative nutrient errors. sensitivity_tolerance is relative agreement
 of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+
+Optional objective_gap_tolerance bounds the certified absolute objective gap,
+not the nutrient loss. Optional stationarity_tolerance (relative KKT residual)
+and active_bound_tolerance (distance in scaled variables) must be supplied
+together. They enable local first-order stationarity, not a minimum proof.
+These modes use linearized charge equality, adaptive derivative probes and
+an L1 merit weight above the equality multiplier outside charge feasibility.
+Feasible comparisons use exact nutrient loss plus the signed charge multiplier
+term to avoid masking progress with charge roundoff. All are opt-in caller policy.
 
 Returns numerical_candidate only after fresh final residual/constraint checks;
 accepted is always False pending separate model/phase/acceptance qualification.
@@ -1450,13 +1462,13 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustm
 ### `PhCandidate`
 
 ```text
-PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None) -> None
+PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None, joint_result: dict | None = None) -> None
 ```
 
 One pH reagent tried in one direction: its dose, reagent amount, nutrient contribution and
 solved solutions, or why it was not usable.
 
-Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`.
+Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`, `joint_result`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhCandidate`.
 
@@ -1492,15 +1504,19 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import make_join
 ### `plan_coupled_ph`
 
 ```text
-plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None)
+plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, water_components=None)
 ```
 
 Fit the recipe and its pH reagent together; one candidate per offered product.
 
 mix(recommendation) returns the mixed state (water and products, before any
-reagent) at its calculated pH. Candidates whose direction does not fit the feed
-are reported as not applicable. A candidate's dose is reported even when it is
-rejected, so the reason and the amount are both visible.
+reagent) at its calculated pH. Explicit joint configuration supplies controls,
+final solvent mass, reagent solvent fractions and mass caps; optional starting
+points are checked as search seeds. water_components supplies the declared
+final-basis water inventory. Joint mode evaluates every offered reagent and
+independently calculates final pH. Legacy mode retains directional fitting,
+with bounded zero-reagent recovery when no matching direction is offered.
+A candidate's quantities and unresolved numerical status remain inspectable.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import plan_coupled_ph`.
 

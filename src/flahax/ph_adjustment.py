@@ -133,6 +133,7 @@ class PhCandidate:
     message: str | None = None
     product_record: dict | None = None
     saturation: dict | None = None
+    joint_result: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -206,13 +207,19 @@ def plan_coupled_ph(
     preferred_product_id=None,
     phases=(),
     maximum_concentrations=None,
+    joint=None,
+    water_components=None,
 ):
     """Fit the recipe and its pH reagent together; one candidate per offered product.
 
     mix(recommendation) returns the mixed state (water and products, before any
-    reagent) at its calculated pH. Candidates whose direction does not fit the feed
-    are reported as not applicable. A candidate's dose is reported even when it is
-    rejected, so the reason and the amount are both visible.
+    reagent) at its calculated pH. Explicit joint configuration supplies controls,
+    final solvent mass, reagent solvent fractions and mass caps; optional starting
+    points are checked as search seeds. water_components supplies the declared
+    final-basis water inventory. Joint mode evaluates every offered reagent and
+    independently calculates final pH. Legacy mode retains directional fitting,
+    with bounded zero-reagent recovery when no matching direction is offered.
+    A candidate's quantities and unresolved numerical status remain inspectable.
     """
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
@@ -241,10 +248,33 @@ def plan_coupled_ph(
     candidates = []
     for product in products:
         identity, formula = product.get('id'), product.get('chemicalFormula')
+        zero_failure = None
         try:
             fraction, density = _check_product(product)
             reagent_direction, components, molar_mass, _ = REAGENTS[formula]
             nutrients = component_nutrient_masses(components)
+            if joint is not None:
+                from .joint_workflow import joint_candidate
+
+                candidates.append(
+                    joint_candidate(
+                        pool,
+                        targets,
+                        water,
+                        target_ph,
+                        product,
+                        unadjusted,
+                        mix,
+                        mass,
+                        volume,
+                        cap,
+                        phases,
+                        maximum_concentrations,
+                        water_components,
+                        joint,
+                    )
+                )
+                continue
             if direction == 'none':
                 # No reagent, but the same final acceptance as every dosed candidate (#84).
                 status, code, message, saturation = _judge(
@@ -272,6 +302,48 @@ def plan_coupled_ph(
                 )
                 continue
             if reagent_direction != direction:
+                if (
+                    water_components is not None
+                    and not phases
+                    and not any(
+                        REAGENTS.get(p.get('chemicalFormula'), ('unknown',))[0] == direction
+                        for p in products
+                    )
+                ):
+                    from .joint_workflow import joint_candidate
+
+                    try:
+                        candidates.append(
+                            joint_candidate(
+                                pool,
+                                targets,
+                                water,
+                                target_ph,
+                                product,
+                                unadjusted,
+                                mix,
+                                mass,
+                                volume,
+                                cap,
+                                phases,
+                                maximum_concentrations,
+                                water_components,
+                            )
+                        )
+                    except DeliveryError as exc:
+                        if exc.code not in (
+                            'joint_search_incomplete',
+                            'joint_verification_failed',
+                        ):
+                            raise
+                        zero_failure = dict(
+                            status='search_incomplete',
+                            accepted=False,
+                            globalOptimalityProven=False,
+                            reason=str(exc),
+                        )
+                    else:
+                        continue
                 candidates.append(
                     PhCandidate(
                         identity,
@@ -282,6 +354,7 @@ def plan_coupled_ph(
                         message=f'the feed mixes at pH {base_state.ph:.2f} and must be '
                         f'{"raised" if direction == "base" else "lowered"} to {target_ph:g}',
                         product_record=dict(product),
+                        joint_result=zero_failure,
                     )
                 )
                 continue
@@ -314,6 +387,16 @@ def plan_coupled_ph(
                     error_code=exc.code,
                     message=str(exc),
                     product_record=dict(product) if isinstance(product, Mapping) else None,
+                    joint_result=(
+                        dict(
+                            status='search_incomplete',
+                            accepted=False,
+                            globalOptimalityProven=False,
+                            reason=str(exc),
+                        )
+                        if joint is not None
+                        else None
+                    ),
                 )
             )
     # Accepted plans first; a plan with review-only findings (#78) is usable after review.
@@ -400,7 +483,14 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     salts = [dict(entries[key], gramsPerLitre=g) for key, g in doses.items() if g > 0]
     grams = [doses.get(p['id'], 0.0) for p in pool]
     loss, rows = score(forward(pool, grams, supply), targets)
-    result = dict(endpoints[0], salts=salts, grams=grams, rows=rows, loss=loss)
+    result = dict(
+        endpoints[0],
+        salts=salts,
+        saltIds=[s['id'] for s in salts],
+        grams=grams,
+        rows=rows,
+        loss=loss,
+    )
     warnings = [
         w for w in result['warnings'] if not w.startswith('Fit includes formula counterion')
     ]
