@@ -184,7 +184,10 @@ def supported(stdin=None, stdout=None):
             )
         import termios
 
-        termios.tcgetattr(stdin.fileno())
+        try:
+            termios.tcgetattr(stdin.fileno())
+        except termios.error:
+            return False
         return True
     except (AttributeError, OSError, ValueError, ImportError):
         return False
@@ -204,8 +207,12 @@ class Terminal:
             self.stream.write(ENTER_SCREEN)
             self.stream.flush()
         except BaseException:
-            self._restore()
-            self._restore = None
+            # Entry may have written the alternate-screen/cursor sequence before
+            # flushing failed. Try both cleanups, retaining the original error.
+            try:
+                self.__exit__()
+            except BaseException:
+                pass
             raise
         return self
 
@@ -215,8 +222,8 @@ class Terminal:
             self.stream.flush()
         finally:
             if self._restore is not None:
-                self._restore()
-                self._restore = None
+                restore, self._restore = self._restore, None
+                restore()
 
     def _console_on(self):
         """Put the console in the wizard's mode; returns the function that restores it."""
@@ -237,9 +244,26 @@ class Terminal:
         import tty
 
         fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd)
-        tty.setcbreak(fd)
-        return lambda: termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        try:
+            old = termios.tcgetattr(fd)
+        except termios.error as exc:
+            raise TerminalUnavailable('cannot read terminal mode') from exc
+
+        def restore():
+            try:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+            except termios.error as exc:
+                raise OSError('cannot restore terminal mode') from exc
+
+        try:
+            tty.setcbreak(fd)
+        except (termios.error, OSError) as exc:
+            try:
+                restore()
+            except OSError:
+                pass
+            raise TerminalUnavailable('cannot enable terminal input mode') from exc
+        return restore
 
     def read_key(self, timeout=0.1):
         """The next key, or None after ``timeout`` seconds without one (time to redraw)."""
@@ -260,8 +284,13 @@ class Terminal:
         if not select.select([fd], [], [], timeout)[0]:
             return None
         data = os.read(fd, 64)
+        if not data:
+            raise EOFError('terminal input closed')
         while select.select([fd], [], [], 0.02)[0] and len(data) < 1024:
-            data += os.read(fd, 64)
+            chunk = os.read(fd, 64)
+            if not chunk:
+                break
+            data += chunk
         self._pending = decode_posix(data)
         return self._pending.pop(0) if self._pending else None
 

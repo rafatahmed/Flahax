@@ -12,6 +12,9 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Add native console/PTY and controlled terminal lifecycle checks, including
+  canonical-result and stale-session rejection in the full-screen workflow (#182).
+
 - Export canonical-result acceptance and archive APIs at package level. Validate
   public CLI/file contracts and preserve hard nutrient maxima and explicit
   permissions in recommendation JSON; reject unsupported fields (#181).
@@ -27,6 +30,14 @@ each release, with numbers, sources and decisions, are in
   evidence, remaining requirements and honest conditional/budget outcomes (#178).
 
 ### Fixed
+
+- Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback
+  after partial input-mode setup; validate the distinct native `termios.error`
+  path as well as ordinary I/O failures (#183).
+
+- Stop terminal input on POSIX EOF and attempt screen/cursor cleanup after partial
+  screen-entry failures while restoring console mode and retaining the original
+  error (#182).
 
 - Bind workflow reports to immutable calculation snapshots, product records and
   model-source fingerprints. Reject changed calculated fields, retain shared
