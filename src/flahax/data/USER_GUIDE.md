@@ -115,7 +115,31 @@ assert 'feasible' in answer
 print(answer['feasible'])
 ```
 
-A nonzero process exit is an error; inspect stderr rather than treating it as an empty recommendation. A successful process may still return an infeasible recipe. The CLI is a formulation interface, not a stock or pump executor.
+For `recommend`, exit 0 means a recommendation was calculated, including an
+infeasible one: always inspect `feasible`, `limitViolations` and `unmetTargets`.
+Planning JSON commands (`workflow`, `ec`, `size`) also use exit 0 for a returned
+qualified result; inspect stage statuses and missing-input/model qualifications.
+For `batch` and `mix`, exit 3 means a blocked result was written, exit 0 means the
+result was written (possibly requiring review), and exit 1 means invalid input or
+an operation failure. Invalid command-line syntax uses exit 2. An interrupted top-level
+command uses exit 130; the mix interview catches interruption and returns 1.
+No successful exit certifies chemistry, field readiness or physical validation.
+
+The recommendation JSON accepts `salts`, `targets`, `water`, `allow_ions`,
+`allow_carbonates`, `ridge`, `maximum_concentrations` and
+`max_ammonium_fraction`. Units match Python: elemental mg/L for targets, water
+and maxima; fertilizer doses are g/L. An explicit zero maximum stays a hard zero.
+`allowIons` and `allowCarbonates` remain compatibility aliases; supplying both an
+alias and its snake-case name is an error. Permission flags must be JSON booleans,
+not strings. Unsupported or misspelled fields fail explicitly instead of being
+silently ignored. Products must be supplied explicitly; permissions do not expand
+the inventory. This interface is a formulation calculator, not a stock or pump executor.
+
+The top-level Python exports `CanonicalResult`, `accept_result`,
+`verify_acceptance`, `save_result` and `load_result` expose immutable result identity
+and exact-proposal consent. Consent never modifies a result's scientific status.
+For versioned archives and explicit saved-session migration, see
+[the developer workflow guide](https://flahax.readthedocs.io/en/latest/developer/water-to-delivery.html).
 
 ### Additional planning commands in 0.3.1
 

@@ -5,6 +5,11 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 __all__ = [
+    "CanonicalResult",
+    "accept_result",
+    "verify_acceptance",
+    "save_result",
+    "load_result",
     "solve_joint_problem",
     "JointSource",
     "JointProblem",
@@ -289,3 +294,6 @@ from .joint_problem import JointSource, JointProblem
 from .ph_adjustment import make_joint_problem
 
 from .joint_solver import solve_joint_problem
+
+from .canonical_result import CanonicalResult
+from .result_acceptance import accept_result, verify_acceptance, save_result, load_result

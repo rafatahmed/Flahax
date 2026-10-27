@@ -128,6 +128,11 @@ difference. Element keys are `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, 
 
 `flahax --help` shows every command with examples. Commands plan; they never operate pumps,
 valves or other hardware.
+`recommend` accepts the Python API's explicit `maximum_concentrations` and other
+fit options; unknown JSON fields are rejected. Exit 0 means a calculation was
+returned, not that it is feasible or physically validated. `batch` and `mix` use
+exit 3 for a blocked result. Always inspect the returned qualifications and limits.
+
 
 ## What it does
 

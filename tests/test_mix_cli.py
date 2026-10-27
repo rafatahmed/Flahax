@@ -88,12 +88,13 @@ class MixTests(unittest.TestCase):
 
     def test_first_run_tomato_ro_fill_mode(self):
         code, lines, target = self.full()
-        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertEqual(code, 3, '\n'.join(lines))
         sheet = (target / 'batch-sheet.html').read_text(encoding='utf-8')
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
-        self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B'])
-        self.assertNotIn('Tank C', sheet)
-        self.assertNotIn('<td>C</td>', sheet)
+        self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B', 'C'])
+        self.assertEqual(summary['status'], 'blocked')
+        self.assertIsNone(summary['ph']['selected'])
+        self.assertIn('do not mix', sheet.lower())
         self.assertIn('2,000 L of irrigation', sheet)
         self.assertEqual(
             summary['volumes'],
@@ -106,13 +107,11 @@ class MixTests(unittest.TestCase):
         )
         self.assertEqual(summary['tanks']['temperature_c'], 25)
         self.assertTrue(any(line.startswith('Tank A') for line in lines), lines)
-        word = {'ready': 'ready', 'requires_review': 'review notes before mixing'}[
-            summary['status']
-        ]
         head = [line for line in lines if line.startswith('FlahaX') and ' - ' in line][-1]
-        self.assertTrue(head.endswith(word), head)
-        self.assertTrue(any(line.startswith('  [ ] ') for line in lines), lines)
-        self.assertTrue(any('Nitric acid 60%' in line and 'mL' in line for line in lines), lines)
+        self.assertTrue(head.endswith('do not mix'), head)
+        self.assertFalse(any(line.startswith('  [ ] ') for line in lines), lines)
+        self.assertTrue(any('precipitation risk' in line for line in lines), lines)
+        self.assertFalse(any(line.startswith('Acid container:') for line in lines), lines)
         store = Store(self.home)
         self.assertEqual(store.list('sessions'), ['tomato-howard-resh-ro'])
         session = store.load('sessions', 'tomato-howard-resh-ro')
@@ -144,7 +143,7 @@ class MixTests(unittest.TestCase):
 
     def test_second_run_from_session_asks_nothing(self):
         code, _, first = self.full()
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
 
         def refuse(prompt):
             raise AssertionError(f'asked {prompt!r}')
@@ -160,7 +159,7 @@ class MixTests(unittest.TestCase):
             )
         finally:
             os.chdir(cwd)
-        self.assertEqual(code, 0, lines)
+        self.assertEqual(code, 3, lines)
         again = json.loads(
             (Path(self.tmp.name) / 'flahax-mix-tomato-howard-resh-ro/summary.json').read_text(
                 'utf-8'
@@ -208,7 +207,7 @@ class MixTests(unittest.TestCase):
         names = [f['name'] for f in load_library()['formulas']]
         pick = str(names.index('Tomato (Howard Resh)') + 1)
         code, lines, target = self.full(formula=['1', 'MKP', '20-20-20', '', pick])
-        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertEqual(code, 3, '\n'.join(lines))
         self.assertTrue(
             any(
                 "Nothing matches 'mkp'; press Enter to see the whole list." in line
@@ -233,7 +232,8 @@ class MixTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertTrue(any('do not mix' in line for line in lines))
         reason = next(line for line in lines if line.startswith('  ! pH adjustment:'))
-        self.assertIn('needs an acid to reach pH 5.80; none was offered: add an acid', reason)
+        self.assertIn('no offered candidate has passed joint workflow acceptance', reason)
+        self.assertIn('a volume cap requires reagent density', reason)
         well = water('salty', {'Ca': '40', 'Na': '200', 'Cl': '308', 'Alk': '61'}, limits='Na=69')
         code, lines, _ = self.run_mix(
             SPEC + well + TOMATO + CATALOGUE + NITRIC + END,
@@ -252,8 +252,9 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'tiny'),
         )
-        self.assertEqual(code, 0, '\n'.join(lines))
-        self.assertIn('  1 L of irrigation; prepare 0.01 L in each container.', lines)
+        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertIn('Irrigation supplied: 1 L at 1:100', lines)
+        self.assertTrue(any('not to be prepared' in line for line in lines))
 
     def test_a_wrong_value_is_corrected_without_retyping_the_analysis(self):
         wrong = water(
@@ -267,7 +268,7 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'fixed'),
         )
-        self.assertEqual(code, 0, '\n'.join(lines))
+        self.assertEqual(code, 3, '\n'.join(lines))
         self.assertTrue(
             any(line.startswith('Charge balance:') and '0.0 % apart' in line for line in lines),
             lines,
@@ -302,21 +303,12 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'first'),
         )
-        self.assertEqual(code, 0, '\n'.join(lines))
-        self.assertIn(
-            '  1,000 L of irrigation; prepare 10 L in each container (your 10 L acid container '
-            'sets the batch).',
-            lines,
-        )
-        self.assertTrue(
-            any(
-                line.startswith(
-                    'Tank A: prepare 10 L in your 100 L tank (your 10 L acid container'
-                )
-                for line in lines
-            )
-        )
-        weights = [line for line in lines if line.startswith('  [ ] ')]
+        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertIn('Irrigation supplied: 1,000 L at 1:100', lines)
+        self.assertIn('Tank A: not to be prepared (do not mix)', lines)
+        self.assertFalse(any('Tank A: prepare' in line for line in lines))
+        weights = [line for line in lines if line.startswith('  - ')]
+        self.assertTrue(weights)
         self.assertFalse([line for line in weights if line.endswith(': 0 g')], weights)
         for typed in (
             ['Tomato', 'Stage.1'],
@@ -327,7 +319,7 @@ class MixTests(unittest.TestCase):
                 code, again, _ = self.run_mix(
                     [], *typed, '--output', str(Path(self.tmp.name) / '-'.join(typed))
                 )
-                self.assertEqual(code, 0, '\n'.join(again))
+                self.assertEqual(code, 3, '\n'.join(again))
         code, listed, _ = self.run_mix([], 'sessions')
         self.assertEqual((code, listed), (0, ['Saved sessions: tomato-stage-1']))
         code, missing, _ = self.run_mix([], 'sessions/x')
@@ -346,7 +338,7 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'sweep'),
         )
-        self.assertEqual(code, 0, chr(10).join(lines))
+        self.assertEqual(code, 3, chr(10).join(lines))
         self.assertIn('  FlahaX plans with these acids only: HNO3, H3PO4, H2SO4, C6H8O7.', lines)
         self.assertTrue(
             any(
@@ -354,7 +346,8 @@ class MixTests(unittest.TestCase):
                 for line in lines
             )
         )
-        self.assertTrue(any('HNO3 60%' in line and 'mL' in line for line in lines), lines)
+        self.assertEqual(Store(self.home).load('acids', 'hno3-60')['fraction'], 0.6)
+        self.assertFalse(any(line.startswith('Acid container:') for line in lines))
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(err):
             code = batch(
@@ -612,7 +605,7 @@ class MixTests(unittest.TestCase):
         )
 
 
-def owner_transcript():
+def owner_transcript(*, with_summary=False):
     """Every prompt and line of the owner's session (line mode), temp folder and version hidden."""
     with tempfile.TemporaryDirectory() as tmp:
         answers, lines = list(ANSWERS), []
@@ -627,19 +620,39 @@ def owner_transcript():
                 ask=ask,
                 say=lambda *a: lines.append(' '.join(map(str, a))),
             )
+        summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
     # Paths under the temporary folder use "/" so the transcript is the same on every system.
     masked = [line.replace(tmp, '<TMP>').replace(__version__, '<VERSION>') for line in lines]
     masked = [line.replace('\\', '/') if '<TMP>' in line else line for line in masked]
-    return '\n'.join(masked) + '\n'
+    text = '\n'.join(masked) + '\n'
+    return (text, summary) if with_summary else text
 
 
 class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_with_explicit_only_ammonium_policy(self):
-        # The pre-migration owner-session-plain.txt is retained as historical evidence.
-        expected = (FIXTURES / 'owner-session-prefit-material-inventory.txt').read_text(
-            encoding='utf-8'
+        # Historical numerical transcript stays unchanged. The interview prefix is
+        # stable; current output must describe the actual qualified result (#180).
+        expected = (
+            (FIXTURES / 'owner-session-prefit-material-inventory.txt')
+            .read_text(encoding='utf-8')
+            .splitlines()
         )
-        self.assertEqual(owner_transcript().splitlines(), expected.splitlines())
+        transcript, summary = owner_transcript(with_summary=True)
+        actual = transcript.splitlines()
+        stop = next(i for i, line in enumerate(expected) if line.startswith('Saved the answers'))
+        self.assertEqual(actual[: stop + 1], expected[: stop + 1])
+        self.assertEqual(summary['status'], 'blocked')
+        self.assertIsNone(summary['ph']['selected'])
+        self.assertIn(
+            'Calculation reference: ' + summary['calculation_identity']['result_id'], actual
+        )
+        self.assertTrue(any('precipitation risk' in line for line in actual))
+        for tank in summary['tanks']['tanks']:
+            self.assertIn(f'Tank {tank["name"]}: not to be prepared (do not mix)', actual)
+        self.assertFalse(any(line.startswith(('  [ ] ', 'Acid container:')) for line in actual))
+        self.assertEqual(
+            actual[-1], 'Wrote batch-sheet.html, summary.json, report.html to <TMP>/out'
+        )
 
 
 class TtyStream(io.StringIO):

@@ -12,6 +12,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Export canonical-result acceptance and archive APIs at package level. Validate
+  public CLI/file contracts and preserve hard nutrient maxima and explicit
+  permissions in recommendation JSON; reject unsupported fields (#181).
+- Update mix CLI regression assertions for qualified blocked workflows while
+  preserving historical numerical transcripts (#180).
+
 - Bind explicit proposal acceptance to exact result content, validate saved-result
   archives, and detect saved-session input/source drift with explicit legacy
   migration. Consent never waives calculation guards (#179).
