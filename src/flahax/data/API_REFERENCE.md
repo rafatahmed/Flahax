@@ -953,7 +953,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25)
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -1452,12 +1452,12 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve
 ### `PhAdjustmentPlan`
 
 ```text
-PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True) -> None
+PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None) -> None
 ```
 
 Every pH reagent tried and the selected one; the pH must still be measured after mixing.
 
-Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`.
+Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
 
@@ -1805,12 +1805,12 @@ Source module: `flahax.pump_planning`. Import with `from flahax import plan_pump
 ### `StockPlan`
 
 ```text
-StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]') -> None
+StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True) -> None
 ```
 
-A compatible, capacity-checked plan without any hardware command.
+A capacity-checked assignment with explicit mixture qualification and search status.
 
-Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`.
+Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockPlan`.
 
@@ -1853,14 +1853,18 @@ Source module: `flahax.stock_planning`. Import with `from flahax import StockTan
 ### `plan_stocks`
 
 ```text
-plan_stocks(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', tanks: 'Iterable[StockTank]', compatibility_rules: 'Iterable[Mapping[str, Any]]', solubility_limits: 'Iterable[Mapping[str, Any]]', temperature: 'TemperatureCelsius') -> 'StockPlan'
+plan_stocks(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', tanks: 'Iterable[StockTank]', compatibility_rules: 'Iterable[Mapping[str, Any]]', solubility_limits: 'Iterable[Mapping[str, Any]]', temperature: 'TemperatureCelsius', *, mixture_model=None, max_assignments=100000) -> 'StockPlan'
 ```
 
 Assign a feasible recipe to compatible concentrated-stock tanks.
 
 Stock concentration is ``final_g_per_litre * injection_ratio`` and each
 used tank holds ``final_volume / injection_ratio``. The planner chooses the
-first deterministic assignment using the fewest tanks, then tank-id order.
+first qualified assignment using the fewest tanks, then tank-id order.
+Without a reviewed mixture model, return a structural requires_review plan,
+never mixing approval. The callable receives (StockTankPlan, temperature)
+and must report matched product IDs, basis, source, review and domain bounds.
+Search evaluates alternatives after mixture rejection; exhaustion is explicit.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import plan_stocks`.
 
@@ -1976,26 +1980,23 @@ The default table as ``compatibilityRule`` records for ``plan_stocks``.
 
 One "separate" record per incompatible pair among ``products`` (catalogue or
 grade records with ``id``, ``elements`` and optional ``formula``). Micronutrient
-products are kept only from phosphate (FlahaX rule).
+products retain elemental separation screens; no small-dose waiver applies.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import default_compatibility_rules`.
 
 ### `group_tanks`
 
 ```text
-group_tanks(salts, products, *, rules=())
+group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=100000)
 ```
 
-Group a recipe's products into concentrate tanks.
+Find a minimum-tank separation assignment; no mixture approval is implied.
 
-``salts`` are recipe rows with ``id``, ``name`` and ``gramsPerLitre`` (as in
-``recommend(...)['salts']``); ``products`` are the records they came from.
-Tank A takes the calcium products, then every micronutrient product; the others
-follow by descending dose into the first tank without a conflict; acids never
-join a tank holding calcium or micronutrients. pH reagents are returned apart, for
-their own channel. ``rules`` are extra ``compatibilityRule`` records that
-separate products by id; they also override the micronutrient rule. At most
-two tanks: products that need a third raise ``too_many_tanks``.
+With max_tanks=None, report the required equipment rather than waive a rule.
+An explicit tank count is a hard equipment limit. Search is deterministic and
+bounded; exhaustion is reported separately from proven incompatibility.
+Reagent products use a separate channel. Every separation is conservative
+even outside its source temperature envelope; it never becomes permission.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import group_tanks`.
 

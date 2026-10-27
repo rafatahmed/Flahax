@@ -119,15 +119,19 @@ def _tank_card(tank, volumes, blocked):
             f'prepare <b>{litres(volumes["prepared_litres"][name])} L</b> in your '
             f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
         )
-        if volumes
-        else ''
+        if volumes and not blocked
+        else ('not to be prepared (do not mix)' if blocked else '')
     )
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(
         f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
         for p in tank['products']
     )
-    rule = '' if tank['acid_allowed'] else '<p class="small"><b>Never add acid to tank A.</b></p>'
+    rule = (
+        ''
+        if tank['acid_allowed']
+        else f'<p class="small"><b>Never add acid to tank {text(name)}.</b></p>'
+    )
     return (
         f'<div class="card"><h2>Tank '
         f'{text(name)}</h2><p>{head}</p><table><tbody>{rows}</tbody></table>'

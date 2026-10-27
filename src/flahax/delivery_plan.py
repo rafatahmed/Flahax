@@ -125,6 +125,10 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
         )
     if target == "validated" and (plan.ph_plan is None or not plan.commands):
         raise DeliveryError("incomplete_plan", "validated plan needs pH plan and pump commands")
+    if target == 'validated' and not plan.stocks.mixture_approved:
+        raise DeliveryError(
+            'unqualified_stock_mixture', 'stock mixtures require qualified model evidence'
+        )
     if target == 'validated' and isinstance(plan.ph_plan, EquilibriumPhPlan):
         result = plan.ph_plan.equilibrium.target
         # A phase name or operator acknowledgement cannot establish applicability.

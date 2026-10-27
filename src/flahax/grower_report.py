@@ -215,7 +215,15 @@ def _water_and_limits(workflow, recipe):
 
 
 def summarize_batch(
-    workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25
+    workflow,
+    products,
+    *,
+    title,
+    water_label,
+    injection_ratio=100,
+    rules=(),
+    temperature_c=25,
+    available_tanks=2,
 ):
     """Plain data for a grower report and batch sheet.
 
@@ -234,9 +242,7 @@ def summarize_batch(
     ph_stage = workflow.stages.get('ph_adjustment')
     plan = ph_stage.value if ph_stage is not None else None
     chosen = plan.selected if plan is not None else None
-    # Without a selected reagent, report the pH plan's own recipe (acids are not nutrient sources
-    # there) and the rejected state of its first computed candidate, so the blocking phases are
-    # shown.
+    # Rejected-candidate diagnostics must never replace the weighed recipe state.
     rejected = None
     if plan is not None and chosen is None:
         rejected = next(
@@ -312,16 +318,51 @@ def summarize_batch(
 
     chemistry = ec = None
     chem = workflow.stages.get('chemistry')
-    if chem is not None and chem.status in ('calculated', 'requires_review'):
-        picked = chosen or rejected
+    unadjusted_state = getattr(plan, 'unadjusted_state', None)
+    state_available = (
+        plan is None
+        or (chosen is not None and chosen.mixed is not None and chosen.target is not None)
+        or (chosen is None and unadjusted_state is not None)
+    )
+    if not state_available:
+        ec = dict(
+            status='not_supported',
+            ec25_ms_cm=None,
+            reason='weighed_recipe_state_unavailable',
+            qualifier=(
+                'Weighed recipe chemistry is unavailable; '
+                'rejected candidates are not substitutes.'
+            ),
+        )
+    if chem is not None and chem.status in ('calculated', 'requires_review') and state_available:
         mixed = (
-            picked.mixed
-            if picked is not None and picked.mixed is not None
+            chosen.mixed
+            if chosen is not None and chosen.mixed is not None
+            else unadjusted_state
+            if unadjusted_state is not None
             else chem.value['mixed']
         )
-        state = picked.target if picked is not None else mixed
+        state = chosen.target if chosen is not None else mixed
         assessment = assess_saturation(state)
         chemistry = dict(
+            state_basis=(
+                'selected_recipe'
+                if chosen is not None
+                else 'unadjusted_recipe'
+                if unadjusted_state is not None
+                else 'initial_workflow'
+            ),
+            rejected_candidate_diagnostics=(
+                dict(
+                    product_id=rejected.product_id,
+                    mixed_ph=rejected.mixed.ph if rejected.mixed is not None else None,
+                    target_ph=rejected.target.ph,
+                    phase_assessment=assess_saturation(rejected.target),
+                    state_basis='rejected_candidate_not_weighed',
+                )
+                if rejected is not None
+                else None
+            ),
             water_ph=chem.value['water'].ph,
             mixed_ph=mixed.ph,
             final_ph=state.ph,
@@ -354,12 +395,17 @@ def summarize_batch(
         except DeliveryError as exc:
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
 
+    if type(available_tanks) is not int or available_tanks < 1:
+        raise DeliveryError('invalid_value', 'available_tanks must be a positive integer')
     grouping = group_tanks(recipe['salts'], products, rules=rules)
     solubility = check_stock_solubility(
         grouping.tanks, injection_ratio, temperature_c, table=load_solubility_table()
     )
     tanks = dict(
         source=grouping.source,
+        required_tanks=len(grouping.tanks),
+        available_tanks=available_tanks,
+        mixture_approved=False,
         injection_ratio=injection_ratio,
         temperature_c=temperature_c,
         solubility_checked=bool(solubility)
@@ -484,6 +530,15 @@ def summarize_batch(
             warnings.append(row['note'])
     # A stock that does not dissolve at the entered temperature blocks; nothing here lowers a block
     # (#84).
+    if len(grouping.tanks) > available_tanks:
+        status = 'blocked'
+        warnings.append(
+            f'Stock assignment needs {len(grouping.tanks)} tanks; '
+            f'only {available_tanks} supplied. No separation is waived.'
+        )
+    elif status == 'ready':
+        status = 'requires_review'
+    warnings.append('Tank separation is a structural assignment, not qualified mixture approval.')
     for row in solubility:
         if row.status == 'exceeds':
             status = 'blocked'
@@ -541,7 +596,7 @@ def summarize_batch(
             'EC is the experimental speciation estimate (McCleskey 2012), not a measurement.',
             'Tanks follow '
             + grouping.source
-            + '; micronutrients and chelates go to tank A (FlahaX rule). '
+            + '; no equipment or small-dose separation waiver is applied. '
             f'Single-product solubility screening at {temperature_c:g} °C distinguishes '
             'qualified limits from conditional floors; unresolved source, grade or temperature '
             'requires review and no comparison approves a mixed stock.',
@@ -771,7 +826,13 @@ def render_report(summary):
         }
         body += (
             '<section><h2>Chemistry of the final feed</h2>'
-            f'<p>Water pH {number(chem["water_ph"], 2)}; mixed {number(chem["mixed_ph"], 2)}; '
+            + (
+                '<p>Rejected-reagent diagnostics are retained separately in the summary; '
+                'the chemistry and EC below describe the weighed recipe.</p>'
+                if chem.get('rejected_candidate_diagnostics')
+                else ''
+            )
+            + f'<p>Water pH {number(chem["water_ph"], 2)}; mixed {number(chem["mixed_ph"], 2)}; '
             f'final '
             f'{number(chem["final_ph"], 2)}; ionic strength {number(chem["ionic_strength"], 4)} '
             f'mol/kg.</p>'

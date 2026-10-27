@@ -12,6 +12,14 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Keep weighed-recipe chemistry, pH and EC on the same equilibrium state when no
+  reagent is selected. Retain rejected-candidate diagnostics separately and report
+  unavailable legacy state identity explicitly (#174).
+
+- Retain stock separations regardless of tank count or micronutrient dose. Search
+  equipment-constrained alternatives, require matched mixture-model applicability,
+  and prevent unqualified stock layouts from validating delivery plans (#161).
+
 - Distinguish historical solubility screening floors from qualified limits. Require
   explicit source basis, grade and temperature evidence; report floor exceedances
   as inconclusive and retain qualification in public reports (#172).

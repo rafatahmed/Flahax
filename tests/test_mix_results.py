@@ -40,6 +40,9 @@ def presentation_summary(actual):
     """Synthetic renderer state, never a chemistry result or mixing approval."""
     summary = copy.deepcopy(actual)
     summary['status'] = 'requires_review'
+    for tank in summary['tanks']['tanks']:
+        for key in ('prepared_litres', 'capacity_litres'):
+            summary['volumes'][key].setdefault(tank['name'], summary['volumes'][key]['A'])
     summary['ph']['selected'] = dict(
         direction='acid',
         product='Synthetic rendering reagent',
@@ -172,7 +175,7 @@ class ResultViewTests(unittest.TestCase):
             lines = results_lines(summary, 0, 100, 40, 0, UTF8, 'out')
             return lines[2]
 
-        ready = copy.deepcopy(self.summary)
+        ready = presentation_summary(self.summary)
         ready['status'] = 'ready'
         self.assertIn('\x1b[92m', status_line(ready))
         self.assertIn('\x1b[91m', status_line(self.blocked))

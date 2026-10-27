@@ -107,6 +107,7 @@ Formulas and products <agronomist/formula-and-products>
 pH, acids and bases <agronomist/ph-and-acids>
 Tanks and solubility <agronomist/tanks-and-solubility>
 Solubility qualification <agronomist/solubility-qualification>
+Condition-qualified stock assignments <agronomist/stock-assignments>
 Reading the results <agronomist/reading-results>
 ```
 

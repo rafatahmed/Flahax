@@ -96,27 +96,22 @@ warnings to read before mixing and blank lines for measured EC and pH.
 The default grouping (`group_tanks`) follows Yara, *Fertilizantes para
 fertirrigación*, page 65 mixing compatibility table, read with page 63. The
 table's twelve "No" pairs are exactly three rules, applied to every product from
-its elemental analysis. FlahaX waives the last one (see below):
+its elemental analysis. Calcium/phosphate, calcium/sulfate and
+magnesium/phosphate separations remain hard constraints. Neither equipment count
+nor a micronutrient's small dose waives them. These are conservative separation
+screens, not predictions of precipitation at every concentration.
 
-| Keep apart | Why |
-|---|---|
-| calcium and phosphate | calcium phosphate precipitates in a concentrate (pp. 63, 65) |
-| calcium and sulfate | gypsum precipitates in a concentrate (pp. 63, 65) |
-| magnesium and phosphate | magnesium phosphate precipitates in a concentrate (p. 65); **waived** by the two-tank rule |
+`group_tanks` computes a minimum-tank layout under those constraints. Supply
+`max_tanks` to impose an equipment limit; if it cannot fit, the function reports
+`too_many_tanks`. An exhausted search is reported separately. The default reports
+required tanks without inventing equipment. `summarize_batch` assumes two available
+tanks unless `available_tanks` is supplied and blocks preparation when more are
+required. Every product remains in the report, including products assigned to
+additional required tanks. Reagents retain their separate channel.
 
-FlahaX rule (owner decision 2026-10-22): there are exactly **two** concentrate
-tanks, A and B. Magnesium sulfate shares tank B with the phosphates, against
-the magnesium-phosphate rule above. The report lists every pair this lets share
-a tank (`TankGrouping.waived`), and check the strength of tank B against your
-supplier's solubility data. Products that still need a third tank, for example
-because of rules of your own, are refused with `too_many_tanks`.
-
-FlahaX rule (owner decision, #79): micronutrients and chelates go to **tank A**
-with the calcium products, because their doses are too small to precipitate
-there; they are kept out of phosphate concentrates, where manganese and iron
-phosphates can form (#78). **Tank A is never acidified** (Yara p. 63: do not
-acidify tanks with microelement chelates): dose acid on its own channel or into
-another tank. pH reagents always have their own channel.
+See [condition-qualified assignments](stock-assignments.md) for the mixture-model
+interface, alternative search and approval boundary. Historical two-tank captures
+are retained as historical evidence; they are not current preparation instructions.
 
 The tank table states compatibility, not dissolution approval. The single-product
 screen in `summary['solubility']` distinguishes qualified limits from conditional
@@ -160,3 +155,23 @@ open('batch-sheet.html', 'w', encoding='utf-8').write(render_batch_sheet(summary
 ```
 
 `summary` is plain JSON-ready data with the same numbers as the two pages.
+
+
+## Weighed chemistry and rejected reagents
+
+When a reagent is selected, chemistry uses its mixed and target states. When none
+is selected, chemistry and EC use the retained unadjusted recipe state: the same
+recipe whose products are weighed. Rejected-candidate pH and saturation diagnostics
+remain separate in `chemistry.rejected_candidate_diagnostics`, labeled
+`rejected_candidate_not_weighed`. They do not supply final-feed chemistry or EC.
+`chemistry.state_basis` identifies the state used. Existing phase and equipment
+blocks still apply.
+
+If a legacy manually constructed pH plan has no retained state for the weighed
+recipe, chemistry is unavailable and EC is `not_supported` with reason
+`weighed_recipe_state_unavailable`; a rejected state is never substituted.
+
+The unchanged owner-session regression previously combined weighed pH 5.32 with
+rejected-candidate mixed pH 5.20. It now consistently presents 5.32 for the weighed
+recipe and retains 5.20 only in the rejected-candidate diagnostic. This corrects
+state identity, not equilibrium parameters or acceptance tolerances.

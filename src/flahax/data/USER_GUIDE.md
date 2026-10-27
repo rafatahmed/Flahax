@@ -207,7 +207,7 @@ Final solvent mass includes reagent carrier water, and final volume is the make-
 ## 7. Stock, calibration and review workflow
 
 1. Obtain a feasible nutrient recipe and adapt it to an explicit batch volume.
-2. Supply versioned compatibility rules, per-product solubility limits and temperature coverage to `plan_stocks`. Missing evidence is a rejection, not implicit compatibility.
+2. Supply versioned compatibility rules, per-product solubility limits and temperature coverage to `plan_stocks`. A structural assignment is not mixture approval: a reviewed mixture model must cover the exact stock and its conditions before delivery validation. Missing model evidence remains `requires_review`.
 3. Choose a pH route: measured-curve `plan_ph` returns `PhPlan`; the mixed-equilibrium adapter returns `EquilibriumPhPlan`. Do not interchange their required inputs.
 4. Use sourced pump calibration and `plan_pump_command` to calculate bounded planning values. The default calibration-age policy uses the actual current date; simulations may supply an explicit assessment date.
 5. Call `compose_delivery_plan` with matching recipe/stocks, pH plan, commands and audit metadata. Equilibrium acid requires a separate channel and a command matching its volume; zero acid means no acid command.
@@ -226,7 +226,7 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
 | `identity_inconsistent` | A label does not fit its chemical: its charges are more than 1 % out of balance (rounded labels and commercial grades stay well inside; a one-point typing error does not). Check the label. |
 | `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
-| `too_many_tanks` | The products need more than two concentrate tanks under the rules; the message names the conflicting products. |
+| `too_many_tanks` | The products need more tanks than the supplied equipment limit; no separation is waived. |
 | `tank_too_small` | One irrigation needs more stock than a tank holds; the message names the tank. |
 | `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
 | `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |

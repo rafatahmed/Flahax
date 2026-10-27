@@ -148,6 +148,7 @@ class PhAdjustmentPlan:
     selection_policy: str
     unadjusted_recommendation: dict | None = None
     post_mix_measurement_required: bool = True
+    unadjusted_state: object | None = None
 
     @property
     def selected(self):
@@ -420,7 +421,14 @@ def plan_coupled_ph(
         else 'lowest final nutrient loss; input order breaks ties'
     )
     return PhAdjustmentPlan(
-        float(target_ph), base_state.ph, direction, tuple(candidates), selected, policy, unadjusted
+        float(target_ph),
+        base_state.ph,
+        direction,
+        tuple(candidates),
+        selected,
+        policy,
+        unadjusted,
+        unadjusted_state=base_state,
     )
 
 
