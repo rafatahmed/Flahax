@@ -105,7 +105,7 @@ Read it from top to bottom before you weigh anything.
    | Status | Meaning |
    |---|---|
    | **Ready** | Every target is met and the pH plan is accepted. |
-   | **Requires review** | Usable after you read the "Read before mixing" list and agree with it. |
+   | **Requires review** | Review the stated evidence and conditions; this status alone does not approve mixing. |
    | **Blocked** | Do not mix. The sheet says why: usually a limit your water already breaks, a mineral that would precipitate, or no acid or base that reaches the pH. |
 
 2. **Weigh and dissolve.** This gives the grams of each product per batch,
@@ -130,6 +130,12 @@ Read it from top to bottom before you weigh anything.
    measure.
 
 ## Worked example: tomato on a brackish well
+
+The figures below preserve a historical run. They are not current predictions or
+mixing approvals: the earlier phase-name exemptions have been retired, and EC
+fit/coverage limits may also prevent a complete estimate. Re-run the command and
+use its current blocked/review diagnostics; do not reuse the historical dose or
+EC as an operating instruction.
 
 The well is station 104 from Shomar et al. (2024), *Groundwater*,
 doi:10.1111/gwat.13411, at measured pH 7.80: the `well.json` above. It is
@@ -172,7 +178,8 @@ value on the sheet rather than relying on this arithmetic alone.
 - **Limits.** Cl is 102.4 mg/L and Na 55.1 mg/L, both within their limits.
 - **EC.** The estimate is about 2.6 mS/cm. It is experimental, so measure it.
 
-**Why "requires review".** The sheet lists four reasons:
+**Historical review findings.** The old sheet listed these reasons; unresolved
+phase applicability now blocks approval:
 - **Ammonium.** The recipe carries 9.2 mg/L NH4-N, a nutrient you did not
   target and gave no maximum for. Check it, or declare a maximum.
 - **The well analysis is 3.5 % out of charge balance.** For the chemistry,
@@ -182,9 +189,9 @@ value on the sheet rather than relying on this arithmetic alone.
   laboratory's chloride uncertainty in the water file
   (`"balance_ion_uncertainty_percent"`) and FlahaX will accept the closure if
   it falls within it.
-- **Hydroxylapatite and MnHPO4 are supersaturated.** These two calcium and
-  manganese phosphates do not form in practice at feed conditions. The sheet
-  gives the reasons and sources ([saturation
+- **Hydroxylapatite and MnHPO4 are supersaturated.** Their names do not prove that
+  precipitation is absent at these conditions. Without applicable reviewed evidence,
+  the phase assessment prevents approval. The sheet retains the findings ([saturation
   indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
 - **Iron(II) sulfate.** The recipe uses it, and in an aerated feed iron(II)
   oxidizes and settles out with some phosphate. A chelated iron is the safer

@@ -312,12 +312,12 @@ class ReportTests(unittest.TestCase):
             workflow('Chilli (maximumyield)'), PRODUCTS, title='Chilli', water_label='RO'
         )
 
-    def test_selected_reagent_recipe_is_the_one_to_weigh(self):
+    def test_phase_block_keeps_unadjusted_recipe_and_quantity_outputs(self):
         s = self.tomato
-        self.assertEqual(s['status'], 'requires_review')
-        chosen = s['ph']['selected']
-        self.assertGreater(chosen['volume_ml_per_batch'], 0)
-        self.assertAlmostEqual(s['chemistry']['final_ph'], 5.8, places=6)
+        self.assertEqual(s['status'], 'blocked')
+        self.assertIsNone(s['ph']['selected'])
+        self.assertTrue(s['chemistry']['phase_assessment']['blocks'])
+        self.assertFalse(s['chemistry']['phase_assessment']['mixing_approved'])
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
@@ -368,7 +368,7 @@ class ReportTests(unittest.TestCase):
             ('requires_review', 'y 2 mg/L'),
         )
         self.assertIn('formulation: y 2 mg/L', s['warnings'])
-        self.assertEqual(s['status'], 'requires_review')
+        self.assertEqual(s['status'], 'blocked')  # phase block survives incidental review
         # a block is never downgraded
         with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
             wf = copy.copy(base)
@@ -420,7 +420,13 @@ class IncidentalAssessmentTests(unittest.TestCase):
         )
         first, refit = (
             self.row(flow.recommendation),
-            self.row(flow.stages['ph_adjustment'].value.selected.recommendation),
+            self.row(
+                next(
+                    c.recommendation
+                    for c in flow.stages['ph_adjustment'].value.candidates
+                    if c.target is not None
+                )
+            ),
         )
         self.assertEqual(first['assessment'], 'requires_review')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
@@ -473,7 +479,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
             maximum_concentrations=limits,
         )
         stage = flow.stages['ph_adjustment']
-        chosen = stage.value.selected
+        self.assertIsNone(stage.value.selected)
+        self.assertEqual(stage.status, 'blocked')
+        chosen = next(c for c in stage.value.candidates if c.target is not None)
         self.assertEqual(self.row(chosen.recommendation)['assessment'], 'within_limit')
         for candidate in stage.value.candidates:
             self.assertNotIn('N_NH4', candidate.message or '')
@@ -543,7 +551,7 @@ class BatchCommandTests(unittest.TestCase):
                 '--output',
                 str(target),
             )
-            self.assertEqual(code, 0)
+            self.assertEqual(code, 3)  # reports are written, but phase applicability blocks
             self.assertEqual(
                 sorted(p.name for p in target.iterdir()),
                 ['batch-sheet.html', 'report.html', 'summary.json'],

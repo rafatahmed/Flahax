@@ -239,31 +239,43 @@ or with inorganic carbon (KHCO3, K2CO3) under the closed carbon boundary.
 pH-up products (Potassium Hydroxide (45% solution), Potassium Bicarbonate,
 Potassium Carbonate); acids are supplied by the user with the assay and density
 from the supplier's certificate. A plan is rejected when its target state has
-solids or a supersaturated phase that forms readily; phases that only need
-review make it `requires_review` (next section).
+solids, unresolved SI sign, or supersaturation without applicable evidence
+(next section).
 
 ## Saturation indices and acceptance
 
-A positive saturation index says a solid is thermodynamically possible, not
-that it forms. FlahaX and live PHREEQC 3.8.6 agreed on every sign at the retained
-matched target states (#78); this does not establish agreement for every new recipe, so the question is which phases form at feed conditions.
-Four phases, supersaturated in most phosphate feeds, make a plan
-`requires_review` instead of rejecting it, each with its reason and sources:
+A positive saturation index is a thermodynamic finding, not a precipitation rate.
+No phase name grants an exemption. Supersaturation without matching reviewed
+kinetic/redox evidence prevents approval, including Hydroxylapatite, Goethite,
+MnHPO4 and Vivianite. The MnHPO4 measurement/source chain remains unverified;
+that is not proof that measurements or precipitation do not exist.
 
-| Phase | Why it needs review, not rejection | Sources |
-|---|---|---|
-| Hydroxylapatite | Forms through amorphous, octacalcium-phosphate and brushite precursors; magnesium slows it. Brushite stays a hard gate | Nancollas, Tomazic & Tomson (1976) Croat. Chem. Acta 48(4), 431-438 |
-| Goethite | Forms slowly from ferrihydrite (months to years at 24 C); ferrihydrite stays a hard gate | Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284 |
-| MnHPO4 | The anhydrous phase's constant (log K -25.4) traces only to 1976 program data; not reported to form at 25 C or in dilute feeds | Ball & Nordstrom (1991) USGS OFR 91-183; Pedas et al. (2011) Front. Plant Sci. 2:37 |
-| Vivianite | An Fe(II) phosphate of reducing environments; the model holds Fe(II) fixed, but it oxidizes in an aerated feed | Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe et al. (2016) Earth-Sci. Rev. 158, 51 |
+`assess_saturation` reports `thermodynamic`, `applicability`, `solids`, and
+`invalid_solids` separately. The existing SI comparison guard is numerical only.
+An SI interval touching zero has `uncertain_sign` and prevents approval; a
+caller-supplied SI uncertainty half-width can widen that interval but cannot
+remove the guard. It is not a kinetic allowance or a certified model-error bound.
+Any positive allocated solid prevents approval, even below the old reporting
+cutoff or when the reported SI is negative. Invalid SI/allocation data fail closed.
+Negative infinity denotes an absent-reactant index, not a finite uncertainty interval.
 
-When the feed contains iron(II) (for example from iron(II) sulfate), plans also
-carry an advisory: the iron oxidizes within hours (pH 6) to days (pH 5.5) and
-precipitates as amorphous Fe(III) phosphate; prefer a chelated iron source.
-Every other positive index, for example brushite, monetite, gypsum, struvite,
-calcite or ferrihydrite, still rejects the plan, and allocated solids always
-do. All indices are reported. The classification is in
-`flahax/saturation_policy.py`.
+The optional `conditions` and `evidence` mappings support explicit applicability
+review. A phase-specific evidence record must contain `phase`, `source`,
+`review_id`, `reviewed=True`, `decision="review_only"` and a `conditions` envelope.
+It must specify temperature (C), pH, ionic strength (mol/kg water), holding time
+(hours), redox and solution-matrix identity. Numeric envelopes are inclusive
+pairs; categorical conditions must match exactly. All additional conditions in
+the record must match too. State pH and ionic strength take precedence over
+caller values. Missing, unreviewed or out-of-envelope evidence cannot exempt a
+phase. These are caller-reviewed evidence records, not automatically verified
+source claims. No physical applicability envelopes ship with FlahaX.
+
+Matching evidence permits review only: `mixing_approved` remains false. The
+public workflows use the conservative default and do not infer holding time,
+redox, matrix identity or evidence from a phase name. Mathematical completion
+requires testing these decisions, not waiting for future physical experiments.
+Iron(II) has a fixed oxidation state in this model; its advisory does not invent
+an oxidation half-life or guarantee which real solids will form.
 
 ## Reproducible evidence
 

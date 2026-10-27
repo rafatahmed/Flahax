@@ -325,6 +325,7 @@ def summarize_batch(
             water_ph=chem.value['water'].ph,
             mixed_ph=mixed.ph,
             final_ph=state.ph,
+            phase_assessment=assessment,
             ionic_strength=state.ionic_strength,
             blocking=[dict(phase=p, si=si) for p, si in assessment['blocking']],
             review=[

@@ -50,8 +50,11 @@ class JointWorkflowTests(unittest.TestCase):
                 joint=configuration(pool, product),
             ),
         )
-        c = result.stages['ph_adjustment'].value.selected
-        self.assertIsNotNone(c)
+        stage = result.stages['ph_adjustment']
+        self.assertEqual(stage.status, 'blocked')
+        self.assertIsNone(stage.value.selected)
+        c = next(c for c in stage.value.candidates if c.target is not None)
+        self.assertTrue(c.saturation['blocks'])
         self.assertEqual(c.reagent_mass_g, 0)
         self.assertAlmostEqual(amended_ph(c), 5.8, delta=0.001)
         self.assertFalse(c.joint_result['accepted'])

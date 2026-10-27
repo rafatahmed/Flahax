@@ -127,7 +127,7 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
         raise DeliveryError("incomplete_plan", "validated plan needs pH plan and pump commands")
     if target == 'validated' and isinstance(plan.ph_plan, EquilibriumPhPlan):
         result = plan.ph_plan.equilibrium.target
-        # Review-class phases (#78) travel as plan warnings; operator approval is the review.
+        # A phase name or operator acknowledgement cannot establish applicability.
         if assess_saturation(result)['blocks']:
             raise DeliveryError(
                 'precipitation_risk',
