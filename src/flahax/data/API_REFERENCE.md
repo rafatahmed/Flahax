@@ -1542,12 +1542,12 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import reagent_d
 ### `PhPlan`
 
 ```text
-PhPlan(water_analysis_id: 'str', titration_curve_id: 'str', reagent_id: 'str', direction: 'str', target_ph: 'float', source_alkalinity: 'MilliEquivalentsPerLitre', demand: 'MilliEquivalentsPerLitre', reagent_volume_litres: 'float', reagent_mass: 'MassGrams', nutrient_contribution: 'dict[str, MilligramsPerLitre]', loss: 'float', rows: 'tuple[dict, ...]', post_mix_measurement_required: 'bool' = True) -> None
+PhPlan(water_analysis_id: 'str', titration_curve_id: 'str', reagent_id: 'str', direction: 'str', target_ph: 'float', source_alkalinity: 'MilliEquivalentsPerLitre', demand: 'MilliEquivalentsPerLitre', reagent_volume_litres: 'float', reagent_mass: 'MassGrams', nutrient_contribution: 'dict[str, MilligramsPerLitre]', loss: 'float', rows: 'tuple[dict, ...]', post_mix_measurement_required: 'bool' = True, final_volume: 'VolumeLitres | None' = None, reagent_channel_id: 'str' = 'acid') -> None
 ```
 
 A bounded initial pH-adjustment plan with re-scored nutrient balance.
 
-Record fields: `water_analysis_id`, `titration_curve_id`, `reagent_id`, `direction`, `target_ph`, `source_alkalinity`, `demand`, `reagent_volume_litres`, `reagent_mass`, `nutrient_contribution`, `loss`, `rows`, `post_mix_measurement_required`.
+Record fields: `water_analysis_id`, `titration_curve_id`, `reagent_id`, `direction`, `target_ph`, `source_alkalinity`, `demand`, `reagent_volume_litres`, `reagent_mass`, `nutrient_contribution`, `loss`, `rows`, `post_mix_measurement_required`, `final_volume`, `reagent_channel_id`.
 
 Source module: `flahax.ph_planning`. Import with `from flahax import PhPlan`.
 

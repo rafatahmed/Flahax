@@ -310,3 +310,26 @@ They record those runs only and do not establish current release validation.
 
 See [total alkalinity and carbon inference](../models/total-alkalinity.md) for the
 qualified inorganic proton reference and distinct water JSON titration field.
+
+
+## Size channels and reconcile delivery
+
+Use `size_injection_requirements` with final batch litres, or concurrently active
+area in m2 times gross depth in mm, plus duration in hours. Specify each channel's
+final-litres-per-stock-litre ratio and actual available prepared stock litres.
+For a 120 L batch over two hours, ratios 100, 200 and 400 require 1.2, 0.6 and
+0.3 L respectively; their additive carrier remainder is 117.9 L. Per-channel
+flows are 0.6, 0.3 and 0.15 L/h. These numbers follow direct division and summation,
+not empirical equipment performance.
+
+Transfer each required channel volume to `plan_pump_command` using its own
+calibration and inventory. Include every fertilizer channel and the separately
+planned reagent channel once. A pump command's runtime is litres divided by
+calibrated litres/minute. Reconcile the resulting commands with
+`compose_delivery_plan` before advancing the draft.
+
+A final-volume ratio is not a motive-water injector setting. Common-carrier
+percentages use the shared carrier remainder; serial devices see different local
+flows. Manufacturer operating curves, pressure differential, turndown and stock
+properties remain necessary to select hardware. No contact-time, contraction or
+hydraulic mixing model is supplied, and no equipment is operated.

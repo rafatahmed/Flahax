@@ -12,6 +12,11 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Reconcile stock masses, final-volume ratios and distinct reagent/pump channels
+  before delivery validation. Reject stock-volume overflow/underflow and future
+  calibration dates; retain titration final-volume identity and qualify additive
+  carrier accounting separately from hydraulic and contact models (#175).
+
 - Keep weighed-recipe chemistry, pH and EC on the same equilibrium state when no
   reagent is selected. Retain rejected-candidate diagnostics separately and report
   unavailable legacy state identity explicitly (#174).

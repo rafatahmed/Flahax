@@ -92,3 +92,42 @@ the mathematical engine does not silently omit them or invent scale resolution.
 Reagent reports use liquid volume only when the product has a density-based
 conversion. Otherwise they retain grams in terminal, report and batch sheets;
 missing density never implies zero volume or permission to use an acid injector.
+
+
+## End-to-end delivery balance
+
+For each occupied stock channel, `V_stock = V_final / R`, where `R` is final
+solution litres per stock litre. Each product must occur in exactly one stock;
+`C_stock * V_stock = dose_final * V_final = mass_recipe` in grams. Capacity is
+not prepared inventory. Mixing acid into a fertilizer channel is unsupported.
+
+`compose_delivery_plan` rejects duplicate/unknown channels, inconsistent product
+masses, wrong command volumes and nonpositive carrier remainders. Drafts may lack
+stock commands; state advancement requires exactly one command for every stock
+and nonzero reagent channel. A zero reagent dose has no reagent command.
+Titration `PhPlan` retains its `final_volume`; the default separate channel is
+`acid`. Legacy manually constructed plans without that volume cannot validate.
+Equilibrium plans retain their matching recipe and explicit reagent channel.
+
+Command-volume identities retain `isclose(rel_tol=1e-9, abs_tol=1e-12)` in litres.
+Product-mass identities use relative tolerance 1e-9 with **zero absolute floor**,
+so a trace product cannot disappear within an absolute gram allowance. This is
+a numerical reconciliation check, not a dosing, weighing, calibration or
+scientific accuracy specification.
+
+`V_carrier = V_final - sum(V_stock) - V_reagent` is **additive-volume bookkeeping**.
+It does not predict solution-volume contraction, water mass, contact time,
+transient concentrations, hydraulic mixing or precipitation during injection.
+Final solvent mass remains a separate explicit chemistry input. These arithmetic
+checks do not qualify an otherwise unsupported stock mixture.
+
+`prepare_stocks` reserves three equal A/B/acid volumes and therefore requires a
+ratio greater than three. It rejects derived nonfinite or zero volumes. If actual
+reagent volume differs from that reserved container volume, use the explicitly
+planned reagent dose when composing delivery; do not count both volumes.
+
+Pump calibration and `as_of` timestamps must be timezone-aware. Future or expired
+calibrations fail; inventory and calibrated dose bounds are enforced. Independent
+flow and timing standard deviations combine by a stable Euclidean norm. This
+propagation assumes independent errors and excludes bias and correlated errors;
+the retained minimum represented uncertainty is 1e-15 L.

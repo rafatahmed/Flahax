@@ -90,6 +90,8 @@ def size_injection_requirements(
         ],
         assumptions=[
             'Constant flow during the stated irrigation period; no automatic device operation.',
+            'Additive-volume accounting only; no contraction, contact-time or hydraulic mixing '
+            'model is supplied.',
             'Prepared stock inventory is not tank nominal capacity.',
             'Common-carrier ratio is not a setting for serial injectors; their local flows '
             'differ.',
