@@ -10,6 +10,12 @@ each release, with numbers, sources and decisions, are in
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject irrigation EC predictions beyond the recorded phosphate fit ceiling,
+  retain fit-domain audit evidence, and reproduce coefficients with independent
+  Decimal QR verification and withheld KCl comparisons (#161).
+
 - Integrate explicit joint fertilizer/reagent fitting into the public workflow;
   rebuild final quantities and diagnoses and independently verify final pH.
   Add bounded zero-reagent recovery when the legacy call offers no reagent in

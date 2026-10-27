@@ -75,7 +75,9 @@ def ionic_molal_conductivity(
     """Eq. 8: lambda = lambda0(T) - A(T)*sqrt(I)/(1 + B*sqrt(I)), T in C.
 
     Supplementary ions (H2PO4-, HPO4-2) have 25 C coefficients only; any other
-    temperature raises temperature_outside_reference.
+    temperature raises temperature_outside_reference. Strength above the recorded
+    phosphate fit maximum raises ionic_strength_outside_phosphate_fit. Zero
+    remains available for the fitted infinite-dilution coefficient.
     """
     row = _load()['ions'].get(ion) if isinstance(ion, str) else None
     extra = _supplementary().get(ion) if isinstance(ion, str) and row is None else None
@@ -94,6 +96,11 @@ def ionic_molal_conductivity(
             raise DeliveryError(
                 'temperature_outside_reference',
                 f'supplementary coefficient for {ion!r} is for 25 C only',
+            )
+        if ionic_strength > _load()['supplementary']['fit']['max_ionic_strength']:
+            raise DeliveryError(
+                'ionic_strength_outside_phosphate_fit',
+                'supplementary phosphate coefficient exceeds its recorded fit domain',
             )
         return extra['lambda0_25c'] - extra['A_25c'] * root / (1 + extra['B'] * root)
     t = float(temperature_c)
@@ -347,7 +354,8 @@ def _ec_from_state(
     """EXPERIMENTAL: EC25 from an already-solved 25 C, closed-carbon state.
 
     The caller has validated the mode inputs (see _validate_request). Status
-    order: O5 assay gate, then (supplied only) unrecorded counterions; when both
+    order: phosphate fit applicability, O5 assay gate, then (supplied only)
+    unrecorded counterions; when these
     pass, uncovered charged species give a bounded estimate (decision O2,
     bound = sum |z| * LAMBDA_MAX_PER_CHARGE * m over them, in mS/cm). The O5 gate uses
     assay_residual_percent (the
@@ -364,12 +372,20 @@ def _ec_from_state(
         percent = assay_residual_percent
     else:
         percent = 100 * assay_residual_eq / equivalents if equivalents else 0.0
+    supplementary_used = any(
+        state.species.get(name, 0.0) > _REPORTING_TOLERANCE for name in supplementary
+    )
+    outside_fit = (
+        supplementary_used and strength > _load()['supplementary']['fit']['max_ionic_strength']
+    )
     contributions, missing = {}, []
     for name in sorted(state.species):
         molal, charge = state.species[name], charges.get(name, 0)
         if not charge or molal <= _REPORTING_TOLERANCE:
             continue
         if name in species_map:
+            if outside_fit:
+                continue
             contributions[name] = ionic_molal_conductivity(species_map[name], strength) * molal
         else:
             missing.append({'name': name, 'charge': charge, 'molal': molal})
@@ -393,6 +409,9 @@ def _ec_from_state(
     else:
         # Missing species alone no longer block (decision O2): a bounded estimate.
         status, reason = 'estimated', None
+    if outside_fit:
+        status, reason = 'not_supported', 'ionic_strength_outside_phosphate_fit'
+        warnings += ('Supplementary phosphate conductivity exceeds its recorded fit domain.',)
     if status == 'not_supported':
         contributions = {}
     subtotal = sum(contributions.values())
@@ -436,7 +455,7 @@ def _ec_from_state(
             state=state,
             audit_inputs=audit_inputs,
             uncovered_bound=bound,
-            supplementary_used=any(n in supplementary for n in contributions),
+            supplementary_used=supplementary_used,
         ),
     )
 
@@ -465,7 +484,9 @@ def calculate_ec_from_totals(
     + sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
     bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
     coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
-    the audit then records supplementaryCoefficients and
+    material supplementary species above the stored fit ceiling return
+    not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
+    The audit retains supplementaryCoefficients and
     phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
     bounded estimates and equals the range's lower limit. Unrecorded counterions stay
     'partial' and the domain checks 'not_supported'. The 0.1 % O5
