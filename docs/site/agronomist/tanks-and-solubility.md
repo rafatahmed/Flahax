@@ -5,7 +5,9 @@
 
 ## API
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.titration_and_stocks` from the checkout.
+
+```text
 from flahax import (
     InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres, plan_stocks,
 )

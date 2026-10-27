@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.6.0, released 2026-10-24. The release workflow ran the Python 3.11–3.14 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
+**Version:** 0.6.1.dev0, unpublished development checkout. The 0.6.0 publication dated 2026-10-24 is historical evidence for its tagged commit, not validation of this checkout.
 
 ## Contents
 
@@ -26,7 +26,7 @@ For exact public signatures and result-record fields, see the bundled
 
 FlahaX selects fertilizer salts and their grams per litre for fixed nutrient targets after accounting for source water. Optional Python APIs evaluate one mixed aqueous system and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
 
-Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions (by default ammonium) within stated limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
+Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
 The mixed model covers 32 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
@@ -390,6 +390,38 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 ```
 
 ## 10. Upgrading, integration and citation
+
+### Current development migration from 0.6.0
+
+Recalculate saved recipes from their original inputs; do not reuse an old acceptance
+or relabel a historical result as a new calculation. Package, schema, model/source
+hashes and result identity are distinct identifiers.
+
+- Target zero is a hard zero; omitted targets are incidental. Declare nutrient
+  maximums explicitly. No ammonium fraction is supplied by default.
+- Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
+  Keep product IDs with doses rather than zipping a filtered result to the catalogue.
+- Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input
+  fields and ambiguous total N are rejected.
+- Declare final solution volume separately from final solvent mass. Retain water,
+  fertilizer and reagent inventories and count reagent nutrients exactly once.
+- Explicit joint fitting requires declared solvent fractions, mass caps and controls.
+  Legacy sequential fitting and bounded zero-reagent recovery remain separate modes.
+- EC can be estimated, partial or unsupported. A known-species subtotal is neither a
+  total estimate nor a bound/midpoint. Unquantified uncertainty remains unknown.
+- Phase and stock decisions require condition-qualified evidence. Do not restore
+  retired phase exemptions or force two tanks by waiving separations.
+- Delivery remains a draft when stock-mixture or command evidence is missing.
+  Acceptance binds to the exact result; changing inputs, sources or quantities requires
+  recalculation. Legacy unbound summaries remain unverified.
+- Reports retain full-precision evidence offline. Blocked sheets are diagnostic.
+  Numerical completion is not physical validation.
+
+The online [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html)
+maps these changes to current references and executable checks.
+
+### Historical release changes
+
 
 0.5.0 preserves every 0.4.0 public export and signature; `recommend` gains the keyword-only `maximum_concentrations` and `max_ammonium_fraction`, and `catalogue_dose_totals` gains `materials`. It adds the material traceability API (`load_identities`, `identity_for_product`, `make_grade`, `make_lot`, `resolve_material`, `nutrient_band`) and experimental speciation-based irrigation EC (`calculate_irrigation_ec` and related functions); see the API reference. **Recipes change:** the default ammonium limit, the corrected catalogue assays (Mg nitrate hexahydrate, 75% phosphoric acid) and the constraint treatment of ceilings give different doses for most shipped formulas, and chelate sodium now appears in chemistry and EC. Re-run and review saved recipes before reusing them. The equilibrium solver is faster with numerically equivalent results. The full list is in `CHANGELOG.md`.
 

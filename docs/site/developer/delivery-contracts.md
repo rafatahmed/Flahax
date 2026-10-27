@@ -9,11 +9,26 @@ Schema version `0.1` supports **batch** planning records only. `proportional` in
 
 ## Public API
 
-```python
-from flahax import DeliveryError, make_audit_record, validate_delivery_request
+This standalone synthetic envelope demonstrates record validation only. Empty planning lists
+do not qualify a recipe, stock mixture or delivery plan.
 
+```python
+from flahax import make_audit_record, validate_delivery_request
+
+request = {
+    "schemaVersion": "0.1", "mode": "batch",
+    "waterAnalysis": {
+        "schemaVersion": "0.1", "id": "synthetic-water",
+        "source": "Teaching example, not laboratory evidence", "revision": "1",
+        "recordedAt": "2026-10-27T00:00:00Z",
+        "ions": {}, "temperatureC": 25, "pH": 7, "alkalinityMgLAsCaCO3": 0,
+    },
+    "products": [], "compatibilityRules": [], "solubilityLimits": [],
+    "titrationCurves": [], "pumpCalibrations": [],
+}
 validated = validate_delivery_request(request)
 audit = make_audit_record(validated, model_version="delivery-contracts-0.1")
+assert validated["mode"] == "batch"
 ```
 
 `validate_delivery_request` returns a normalized copy of the input. `make_audit_record` revalidates the request and returns deterministic record identifiers and the supplied model version. Neither function writes files, databases, or external systems.
