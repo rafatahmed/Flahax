@@ -126,3 +126,27 @@ with a line-number suffix. Generate the final JSON report using the complete
 inventoried Python source list, with paths normalized for the measurement host.
 Check that report files match that inventory. Do not omit real Python sources to
 work around synthetic snippet filenames or silently ignore missing source.
+
+## Support tool validation
+
+Install the pinned development dependencies in `benchmarks/requirements.txt` and
+`tools/requirements-benchmark-report.txt` before measuring support coverage. Run
+`python -m unittest discover -s tests -p "test_support_*.py" -t .` with the checkout
+and `src` on PYTHONPATH. The ordinary suite skips tests needing absent optional
+SciPy or matplotlib dependencies; those skips cannot satisfy the coverage gate.
+Neither dependency is required by the runtime package.
+
+Support tests write captures, catalogues, archives, charts and reports into
+temporary directories. External competitor engines, PHREEQC subprocesses and
+build/install subprocesses are explicitly simulated where their protocol is the
+subject of the test. These checks establish adapter and refusal behavior, not
+external numerical agreement, real installation success or measured performance.
+Real numerical kernels and phosphate fitting retain separate numerical checks.
+Run the pinned external environment and clean-package checks before claiming
+those respective results. Never overwrite published captures to make a test pass.
+
+Retain hashes of every combined coverage input and the exact source inventory.
+Discard older measurements for changed support files before combining data,
+just as for runtime files. Inspect missing statement and branch counts for tools,
+examples, benchmarks and documentation configuration individually. Preserve
+non-Python executable contract checks separately from Python coverage.

@@ -158,11 +158,11 @@ def catalogue_part(run):
         for name, call in run.items():
             value, seconds = timed(lambda: call(macro, ions, elements))
             row[name] = dict(value, ms=1000 * seconds)
-        if full["ec_us_cm"] is not None:
+        if full["ec_us_cm"] is not None and row["flahax"]["ec_us_cm"]:
             row["dropped_share_percent"] = 100 * (full["ec_us_cm"] / row["flahax"]["ec_us_cm"] - 1)
         values = [row[n]["ec_us_cm"] for n in run if row[n]["ec_us_cm"] is not None]
-        mean = sum(values) / len(values)
-        row["spread_percent"] = 100 * (max(values) - min(values)) / mean
+        mean = sum(values) / len(values) if values else 0.0
+        row["spread_percent"] = 100 * (max(values) - min(values)) / mean if mean else None
         rows.append(row)
     return {"rows": rows}
 
@@ -190,8 +190,9 @@ def run():
     catalogue = catalogue_part(calls)
     for row in catalogue["rows"]:
         for name in calls:
-            row[name]["vs_flahax_percent"] = 100 * (
-                row[name]["ec_us_cm"] / row["flahax"]["ec_us_cm"] - 1
+            value, reference = row[name]["ec_us_cm"], row["flahax"]["ec_us_cm"]
+            row[name]["vs_flahax_percent"] = (
+                100 * (value / reference - 1) if value is not None and reference else None
             )
     return {
         "phreeqc_database": {
@@ -204,7 +205,14 @@ def run():
         "summary": {
             "standards_error_percent": summarise(standards, calls, "error_percent"),
             "catalogue_vs_flahax_percent": summarise(catalogue, calls, "vs_flahax_percent"),
-            "catalogue_max_spread_percent": max(r["spread_percent"] for r in catalogue["rows"]),
+            "catalogue_max_spread_percent": max(
+                (
+                    r["spread_percent"]
+                    for r in catalogue["rows"]
+                    if r["spread_percent"] is not None
+                ),
+                default=None,
+            ),
         },
     }
 
@@ -234,7 +242,7 @@ def main():
     print(
         "catalogue vs FlahaX, max |%|",
         {
-            n: round(s["max_abs"], 2)
+            n: round(s["max_abs"], 2) if s["max_abs"] is not None else None
             for n, s in report["summary"]["catalogue_vs_flahax_percent"].items()
         },
     )
