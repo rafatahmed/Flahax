@@ -4,11 +4,20 @@
 # its results are calculations, not dosing instructions.
 """Optional aggregate elemental N ledger: forms stay independent; no invented splits."""
 
+from fractions import Fraction
 import unittest
 
 from flahax import recommend
 from flahax.composition import InputError, validate_profile
-from flahax.engine import CEILING_MARGIN, CEILING_TOLERANCE, forward, gap_for, score
+from flahax.engine import (
+    AMMONIUM_CAP_MG_PER_L,
+    AMMONIUM_FRACTION,
+    CEILING_MARGIN,
+    CEILING_TOLERANCE,
+    forward,
+    gap_for,
+    score,
+)
 from flahax.nutrient_ledger import (
     N_FORMS,
     assess_nitrogen_constraints,
@@ -145,6 +154,85 @@ class AggregateNitrogenCeiling(unittest.TestCase):
             limit * (1 - CEILING_MARGIN),
             delta=2 * CEILING_TOLERANCE * limit + 1e-6,
         )
+
+
+class FeasibilityContractTests(unittest.TestCase):
+    """F01/F02/F04-class recommend contract + Dutch NH4 disclosure (#160 / spine Task 3)."""
+
+    def test_f01_explicit_zero_nh4_rejects_calcium_nitrate_inventory(self):
+        ca_nitrate = {
+            "id": "ca-nit-ag",
+            "name": "Calcium Nitrate (ag grade)",
+            "elements": {"N_NO3": 14.4, "N_NH4": 1.1, "Ca": 19.0},
+        }
+        result = recommend(
+            [ca_nitrate],
+            {"N_NO3": 144.0, "Ca": 190.0, "N_NH4": 0.0},
+            {},
+            ridge=0,
+        )
+        nh4 = next(row["final"] for row in result["rows"] if row["symbol"] == "N_NH4")
+        self.assertEqual(nh4, 0.0)
+        self.assertEqual(result["salts"], [])
+        self.assertFalse(result["feasible"])
+        self.assertIsNone(result["ammoniumLimit"])
+        reasons = {miss["reason"] for miss in result["unmetTargets"]}
+        self.assertIn("prohibited_by_zero_requirement", reasons)
+
+    def test_f02_targeted_max_below_stoichiometric_binds_in_search(self):
+        # Meeting K=100 from K2SO4-like assay would deliver S≈41; max S=20 must bind.
+        salt = {"id": "ks", "name": "ks", "elements": {"K": 44.87, "S": 18.4}}
+        result = recommend(
+            [salt],
+            {"K": 100.0},
+            {},
+            maximum_concentrations={"S": 20.0},
+            ridge=0,
+        )
+        finals = {row["symbol"]: row["final"] for row in result["rows"]}
+        self.assertLessEqual(finals["S"], 20.0 + 1e-9)
+        self.assertLess(finals["K"], 99.0)
+        self.assertEqual(result["limitViolations"], [])
+        self.assertFalse(result["feasible"])
+
+    def test_f04_tiny_mo_dose_matches_emitted_salts(self):
+        product = {"id": "mo", "name": "mo", "elements": {"Mo": 10.0}}
+        target = 1e-5
+        result = recommend([product], {"Mo": target}, {}, ridge=0)
+        self.assertEqual(len(result["salts"]), 1)
+        emitted = Fraction(str(result["salts"][0]["gramsPerLitre"])) * 100
+        mo_final = next(row["final"] for row in result["rows"] if row["symbol"] == "Mo")
+        self.assertGreater(emitted, 0)
+        self.assertAlmostEqual(mo_final, float(emitted), places=14)
+        self.assertAlmostEqual(mo_final / target, 1.0, places=12)
+        self.assertTrue(result["feasible"])
+
+    def test_dutch_cap_disclosed_when_nh4_omitted(self):
+        self.assertEqual(AMMONIUM_FRACTION, 0.10)
+        self.assertAlmostEqual(AMMONIUM_CAP_MG_PER_L, 1.5 * 14.0067)
+        # total N 140 → 10% = 14 < 21.01 absolute cap
+        result = recommend(
+            [
+                {
+                    "id": "ca-nit-ag",
+                    "name": "Calcium Nitrate (ag grade)",
+                    "elements": {"N_NO3": 14.4, "N_NH4": 1.1, "Ca": 19.0},
+                },
+                {"id": "kno3", "name": "Potassium Nitrate", "elements": {"K": 38.67, "N_NO3": 13.856}},
+            ],
+            {"N_NO3": 140.0, "Ca": 190.0, "K": 280.0},
+            {},
+        )
+        limit = result["ammoniumLimit"]
+        self.assertIsNotNone(limit)
+        self.assertEqual(limit["fractionOfTotalN"], 0.10)
+        self.assertAlmostEqual(limit["absoluteCapMgPerL"], AMMONIUM_CAP_MG_PER_L)
+        self.assertAlmostEqual(limit["mgPerL"], 14.0)
+        self.assertIn("achievedMgPerL", limit)
+        nh4 = next(row["final"] for row in result["rows"] if row["symbol"] == "N_NH4")
+        self.assertAlmostEqual(limit["achievedMgPerL"], nh4)
+        self.assertLessEqual(nh4, limit["mgPerL"] + 1e-12)
+        self.assertIn("Dutch", limit["basis"])
 
 
 if __name__ == "__main__":

@@ -53,6 +53,24 @@ def assess_incidental(rows, maximum_concentrations=None):
     }
 
 
+def incidental_ammonium_limit(total_n, fraction, absolute_cap_mg_per_l, basis):
+    """Effective incidental NH4-N ceiling and disclosure fields (achieved filled later)."""
+    limit = min(float(fraction) * float(total_n), float(absolute_cap_mg_per_l))
+    return {
+        'mgPerL': limit,
+        'fractionOfTotalN': float(fraction),
+        'absoluteCapMgPerL': float(absolute_cap_mg_per_l),
+        'basis': basis,
+    }
+
+
+def with_ammonium_achieved(allowance, achieved_mg_per_l):
+    """Attach the delivered NH4-N to an applied incidental ammonium policy."""
+    if allowance is None:
+        return None
+    return {**allowance, 'achievedMgPerL': float(achieved_mg_per_l or 0.0)}
+
+
 def assessed_limits(maximum_concentrations, recommendation):
     """The user's maxima plus the N_NH4 allowance ``recommend`` applied when none was declared."""
     limits = dict(maximum_concentrations or {})

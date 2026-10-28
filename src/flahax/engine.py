@@ -20,6 +20,7 @@ import math
 from importlib.resources import files
 
 from .composition import (
+    ATOMIC,
     ATOMIC_CONVENTION,
     CONSENT_IONS,
     RESTRICTED_IONS,
@@ -30,7 +31,12 @@ from .composition import (
     target_ion_balance,
     validate_profile,
 )
-from .nutrient_acceptance import assess_incidental, name_sources
+from .nutrient_acceptance import (
+    assess_incidental,
+    incidental_ammonium_limit,
+    name_sources,
+    with_ammonium_achieved,
+)
 from .nutrient_ledger import N_AGGREGATE, N_FORMS, elemental_nitrogen
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
 
@@ -61,6 +67,15 @@ CEILING_TOLERANCE = 1e-9
 PH_REAGENT = "ph_reagent"
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
+# Default incidental NH4-N ceiling (#54 / owner 2026-10-28): min(10% of target N, 1.5 mmol/L).
+# Dutch soilless practice (De Kreij, Voogt et al.; Voogt "max 90:10"). None opts out.
+AMMONIUM_FRACTION = 0.10
+AMMONIUM_CAP_MG_PER_L = 1.5 * ATOMIC["N"]
+AMMONIUM_BASIS = (
+    "incidental NH4-N up to min(10% of total target N, 1.5 mmol/L); owner "
+    "decision based on Dutch soilless practice (De Kreij, Voogt et al.; Voogt "
+    "'max 90:10'); see docs for references"
+)
 
 
 def load_library() -> dict:
@@ -1091,7 +1106,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
-    max_ammonium_fraction: float | None = None,
+    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -1119,10 +1134,10 @@ def recommend(
             feasible False. Omitted keeps the default.
         max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
             none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-            the total target N (form keys, or aggregate ``N`` when forms are omitted).
-            This is an explicit caller policy, with no additional absolute cap.
-            Default None adds no ammonium maximum. Untargeted nutrients do not
-            enter the objective.
+            the total target N (form keys, or aggregate ``N`` when forms are omitted),
+            capped at 1.5 mmol/L NH4-N (``AMMONIUM_CAP_MG_PER_L``). Default 0.10
+            (Dutch soilless practice). None restores a fit with no ammonium ceiling.
+            Applied policy is disclosed on ``ammoniumLimit`` (fraction, cap, achieved).
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1170,14 +1185,13 @@ def recommend(
             total_n = float(targets[N_AGGREGATE])
         # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
         if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
-            limit = max_ammonium_fraction * total_n
-            maxima["N_NH4"] = limit
-            ammonium_limit = {
-                "mgPerL": limit,
-                "fractionOfTotalN": max_ammonium_fraction,
-                "absoluteCapMgPerL": None,
-                "basis": "explicit caller fraction of total target N; no additional cap",
-            }
+            ammonium_limit = incidental_ammonium_limit(
+                total_n,
+                max_ammonium_fraction,
+                AMMONIUM_CAP_MG_PER_L,
+                AMMONIUM_BASIS,
+            )
+            maxima["N_NH4"] = ammonium_limit["mgPerL"]
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     warnings: list[str] = []
     balance = target_ion_balance(targets)
@@ -1236,7 +1250,10 @@ def recommend(
         )
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     name_sources(solved, solved["salts"], salts, water)
-    solved["ammoniumLimit"] = ammonium_limit
+    achieved_nh4 = next(
+        (row["final"] for row in solved["rows"] if row["symbol"] == "N_NH4"), 0.0
+    )
+    solved["ammoniumLimit"] = with_ammonium_achieved(ammonium_limit, achieved_nh4)
     solved["targetIonBalance"] = balance
     _charge_report(solved)
     solved["requirementConflicts"] = [

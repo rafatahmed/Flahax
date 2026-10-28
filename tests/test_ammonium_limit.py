@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""An ammonium allowance is an explicit caller policy, never an invented default."""
+"""Incidental ammonium uses the Dutch default when N_NH4 is omitted, and discloses it."""
 
 import unittest
 
 from flahax import load_library, recommend
+from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION
 
 LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
@@ -25,28 +26,36 @@ def total_n(targets):
 
 
 class AmmoniumLimitTests(unittest.TestCase):
-    def test_fraction_is_explicit_and_default_adds_no_limit(self):
+    def test_default_is_dutch_ten_percent_capped_at_1_5_mmol(self):
+        self.assertEqual(AMMONIUM_FRACTION, 0.10)
+        self.assertAlmostEqual(AMMONIUM_CAP_MG_PER_L, 1.5 * 14.0067)
         targets = formula("Tomato (Howard Resh)")["targets"]  # total N 140 -> 14 mg/L
-        self.assertIsNone(recommend(SALTS, targets, {})['ammoniumLimit'])
-        result = recommend(SALTS, targets, {}, max_ammonium_fraction=0.10)
-        self.assertEqual(result["ammoniumLimit"]["fractionOfTotalN"], 0.10)
-        self.assertAlmostEqual(result["ammoniumLimit"]["mgPerL"], 0.10 * total_n(targets))
-        self.assertIn("explicit caller", result["ammoniumLimit"]["basis"])
+        result = recommend(SALTS, targets, {})
+        limit = result["ammoniumLimit"]
+        self.assertEqual(limit["fractionOfTotalN"], 0.10)
+        self.assertAlmostEqual(limit["mgPerL"], 0.10 * total_n(targets))
+        self.assertAlmostEqual(limit["absoluteCapMgPerL"], AMMONIUM_CAP_MG_PER_L)
+        self.assertAlmostEqual(limit["achievedMgPerL"], final(result, "N_NH4"))
+        self.assertIn("Dutch", limit["basis"])
+        self.assertLessEqual(final(result, "N_NH4"), limit["mgPerL"] + 1e-12)
 
-    def test_fraction_has_no_undeclared_absolute_cap(self):
+    def test_absolute_cap_binds_when_ten_percent_exceeds_1_5_mmol(self):
         targets = formula("Chilli (maximumyield)")["targets"]  # total N 320 -> 32 > 21.01
-        result = recommend(SALTS, targets, {}, max_ammonium_fraction=0.10)
-        self.assertEqual(result["ammoniumLimit"]["mgPerL"], 32)
-        self.assertIsNone(result["ammoniumLimit"]["absoluteCapMgPerL"])
-        self.assertLessEqual(final(result, "N_NH4"), 32)
+        result = recommend(SALTS, targets, {})
+        self.assertAlmostEqual(result["ammoniumLimit"]["mgPerL"], AMMONIUM_CAP_MG_PER_L)
+        self.assertAlmostEqual(result["ammoniumLimit"]["absoluteCapMgPerL"], AMMONIUM_CAP_MG_PER_L)
+        self.assertLessEqual(final(result, "N_NH4"), AMMONIUM_CAP_MG_PER_L + 1e-12)
 
-    def test_target_exact_recipes_now_pass_within_the_limit(self):
+    def test_target_exact_recipes_pass_within_the_dutch_limit(self):
         for name in ("Chilli (maximumyield)", "Tomato (Howard Resh)"):
             with self.subTest(formula=name):
                 targets = formula(name)["targets"]
-                result = recommend(SALTS, targets, {}, max_ammonium_fraction=0.10)
+                result = recommend(SALTS, targets, {})
                 self.assertTrue(result["feasible"], result["rows"])
-                self.assertLessEqual(final(result, "N_NH4"), 0.10 * total_n(targets) + 1e-12)
+                self.assertLessEqual(
+                    final(result, "N_NH4"),
+                    min(0.10 * total_n(targets), AMMONIUM_CAP_MG_PER_L) + 1e-12,
+                )
                 self.assertEqual(result["limitViolations"], [])
 
     def test_formula_with_an_ammonium_target_is_unaffected(self):
@@ -72,12 +81,11 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertIsNone(result["ammoniumLimit"])
         self.assertLessEqual(final(result, "N_NH4"), 12 + 1e-12)
 
-    def test_none_keeps_accuracy_first_fit_without_an_implicit_limit(self):
+    def test_none_restores_the_fit_without_an_ammonium_ceiling(self):
         targets = formula("Chilli (maximumyield)")["targets"]
         result = recommend(SALTS, targets, {}, max_ammonium_fraction=None)
         self.assertIsNone(result["ammoniumLimit"])
-        self.assertTrue(result["feasible"])
-        self.assertEqual(result["limitViolations"], [])
+        self.assertGreater(final(result, "N_NH4"), AMMONIUM_CAP_MG_PER_L)
 
     def test_invalid_fraction_is_rejected(self):
         targets = formula("Chilli (maximumyield)")["targets"]
@@ -85,9 +93,10 @@ class AmmoniumLimitTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(Exception):
                 recommend(SALTS, targets, {}, max_ammonium_fraction=bad)
 
-    def test_zero_fraction_is_recorded_without_becoming_an_unspecified_limit(self):
-        result = recommend(SALTS, {'K': 100, 'N_NO3': 100}, max_ammonium_fraction=0)
-        self.assertEqual(result['ammoniumLimit']['mgPerL'], 0)
+    def test_zero_fraction_is_recorded_as_a_hard_zero_allowance(self):
+        result = recommend(SALTS, {"K": 100, "N_NO3": 100}, max_ammonium_fraction=0)
+        self.assertEqual(result["ammoniumLimit"]["mgPerL"], 0)
+        self.assertEqual(result["ammoniumLimit"]["achievedMgPerL"], final(result, "N_NH4"))
 
 
 if __name__ == "__main__":
