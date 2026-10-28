@@ -190,6 +190,32 @@ class BenchmarkHarnessTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Inconsistent'):
                 baseline.historical(history)
 
+    def test_provenance_records_missing_optional_package_without_inventing_version(self):
+        packages = ('asv', 'scipy', 'numpy', 'asv-runner')
+        for missing in packages:
+
+            def version(name):
+                if name == missing:
+                    raise baseline.importlib.metadata.PackageNotFoundError(name)
+                return 'test-version-' + name
+
+            with (
+                self.subTest(missing=missing),
+                patch.object(
+                    baseline.importlib.metadata, 'version', side_effect=version
+                ) as lookup,
+            ):
+                report = baseline.provenance()
+                self.assertEqual(
+                    report['tool_versions'],
+                    {
+                        name: None if name == missing else 'test-version-' + name
+                        for name in packages
+                    },
+                )
+                self.assertEqual([call.args[0] for call in lookup.call_args_list], list(packages))
+                self.assertTrue(report['input_sha256'])
+
     def test_installed_source_provenance_keeps_explicit_origin(self):
         import flahax
 
