@@ -494,11 +494,11 @@ A zero NH4 target has no meaningful percentage deviation. Real products may
 add NH4: report the absolute addition separately; never relabel it as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
-When targets omit NH4 entirely, `recommend` adds no ammonium maximum by default.
-Supply `max_ammonium_fraction` explicitly to set a fraction of total target N;
-`ammoniumLimit` records that caller policy, without an additional absolute cap.
-The default `None` retains the existing incidental-ion objective. An explicit
-NH4 target or absolute maximum takes precedence over the fraction.
+When targets omit NH4 entirely, `recommend` applies the Dutch incidental NH4-N
+ceiling by default: the smaller of 10% of total target N and 1.5 mmol/L
+(`max_ammonium_fraction=0.10`), disclosed on `ammoniumLimit` with fraction, absolute
+cap and achieved amount. Pass `max_ammonium_fraction=None` to opt out. An explicit
+NH4 target (including 0) or `maximum_concentrations` entry takes precedence.
 
 ### Reading misses, limits and provenance
 
@@ -508,9 +508,9 @@ from flahax import load_library, recommend
 
 library = load_library()
 grow = next(f for f in library['formulas'] if f['name'] == 'Generic Grow (maximumyield)')
-result = recommend(library['salts'], grow['targets'], max_ammonium_fraction=0.10)
+result = recommend(library['salts'], grow['targets'])
 assert result['targetIonBalance']['exceedsWarning']        # anions exceed cations by 17%
-assert math.isclose(result['ammoniumLimit']['mgPerL'], 16)  # 10% of the 160 mg/L target N
+assert math.isclose(result['ammoniumLimit']['mgPerL'], 16)  # Dutch 10% of the 160 mg/L target N
 assert not result['limitViolations']
 assert {miss['reason'] for miss in result['unmetTargets']} == {'limited_by_ceiling'}
 for miss in result['unmetTargets']:
@@ -520,8 +520,8 @@ print(result['salts'][0]['name'], result['salts'][0]['provenance']['identityId']
 
 Generic Grow lists 17% more anion than cation charge, so no salt combination
 meets every target; its warning says so. Its N_NO3, K, Ca and S misses are all
-`limited_by_ceiling`: meeting them would need more ammonium than the explicit
-limit allows, and `bindingLimits` names it. Other reasons are `no_source` (no
+`limited_by_ceiling`: meeting them would need more ammonium than the Dutch
+default allows, and `bindingLimits` names it. Other reasons are `no_source` (no
 product supplies the element), `incidental_tradeoff` (reachable, but the
 penalty on an unrequested ion chose otherwise) and `conflicting_targets` (with
 `conflictsWith`, and `reachableWithChloride` when chloride products would

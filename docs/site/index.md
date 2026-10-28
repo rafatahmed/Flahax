@@ -73,9 +73,10 @@ upgrading and checking your version.
 
 ## Status and limits
 
-FlahaX is in Beta. Its chemistry is checked against PHREEQC 3.8.6 (USGS), but it has not been
-validated in the laboratory or in the field: results are calculations for planning, not dosing
-instructions. Measure pH and EC after mixing. See [Scope and limits](explanation/scope-and-limits.md).
+FlahaX is in Beta. Equilibrium chemistry is checked against PHREEQC 3.8.6 (USGS); that does not
+cover formulation fit or measured EC. It has not been validated in the laboratory or in the
+field: results are calculations for planning, not dosing instructions. Measure pH and EC after
+mixing. See [Scope and limits](explanation/scope-and-limits.md).
 
 ```{toctree}
 :caption: Get started

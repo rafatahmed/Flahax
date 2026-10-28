@@ -25,7 +25,9 @@ hashes, so a result can be reviewed and reproduced.
 
 To our knowledge, FlahaX is the first Python package to unite fertilizer formulation,
 fertilizer-specific aqueous equilibrium chemistry and auditable delivery planning in one
-dependency-free library, verified against PHREEQC.
+dependency-free library. Equilibrium speciation, saturation indices and acid titration
+cases are checked against pinned PHREEQC 3.8.6; that evidence does not cover NNLS salt
+selection, crop-formula nitrogen semantics or measured EC accuracy.
 
 **Who it is for**
 
@@ -184,8 +186,10 @@ separates formulation fit, numerical chemistry, runtime and memory, and physical
 [measured results](https://flahax.readthedocs.io/en/latest/evidence/benchmark-results.html) come
 with tables, charts, provenance and their limitations.
 
-- The automated test suite includes live replay of every catalogue product, phase and acid case
-  against pinned PHREEQC 3.8.6 (USGS).
+- The automated test suite includes live replay of every catalogue product, phase and acid
+  equilibrium case against pinned PHREEQC 3.8.6 (USGS). That agreement is for the mixed
+  aqueous model only; formulation fit, total-N catalogue policy and McCleskey EC are separate
+  contracts and are not PHREEQC-verified.
 - Hosted checks run on Python 3.11, 3.12, 3.13 and 3.14 on Linux, and on Windows and macOS,
   with clean wheel and source installations.
 - Evidence is recorded per release in the
@@ -196,7 +200,7 @@ This is computational evidence. FlahaX has not been validated in the laboratory 
 owner's [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
 is not an independent review. Results are calculations for planning, not dosing instructions:
 measure pH and EC after mixing. No recipe, pH or EC value is an authorization to operate
-equipment.
+equipment. Do not treat PHREEQC agreement as measured EC accuracy.
 
 **Roadmap.** Broader numerical and input-boundary testing, stable consumer contracts, physical
 validation, and a validated

@@ -17,6 +17,19 @@ each release, with numbers, sources and decisions, are in
   views; suppress blocked-sheet preparation actions and retain offline full-precision scientific
   qualifications, provenance and EC applicability evidence.
 
+### Changed
+
+- Restore the documented Dutch incidental NH4-N default when targets omit `N_NH4`:
+  `min(10% of total target N, 1.5 mmol/L)`, disclosed on `ammoniumLimit` (fraction, absolute
+  cap, achieved); `max_ammonium_fraction=None` opts out (#54 / owner 2026-10-28).
+- Scope public PHREEQC verification claims to equilibrium evidence only (speciation, SI,
+  acid titration cases). Formulation/NNLS fit, crop-formula N semantics and measured EC
+  accuracy are not claimed via PHREEQC.
+- Document REVIEW-class phases (Hydroxylapatite, Goethite, MnHPO4, Vivianite) as
+  `requires_review` at the target pH state, not evidence hard-blocks (#78).
+- Note that the Ultrasol Magsul 1.2 mS/cm brochure anchor is quarantined from screening
+  mixture totals.
+
 ### Added
 
 - Add native console/PTY and controlled terminal lifecycle checks, including

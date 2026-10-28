@@ -87,14 +87,19 @@ No new compatibility database entries or approved StockPlan were generated.
 | Ultrasol MKP | 0.7 |
 | Ultrasol MAP | 0.9 |
 | Ultrasol Calcium | 1.2 |
-| Ultrasol Magsul | 1.2 |
+| Ultrasol Magsul | 1.2 (quarantined; see below) |
 | Ultrasol Magnit | 0.9 |
 
 The brochure also lists Magnum P44 at 1.5; this acidifying urea-phosphate
 product is not included in the pre-acid screening implementation. Acid/base
-reactions require more than an additive conductivity assumption. Magsul is
-**1.2**, not 0.9. Headline grades can differ from detailed guaranteed analysis:
-e.g. Magnit's nitrate-N table is 10.7%, not the rounded headline 11.
+reactions require more than an additive conductivity assumption. Magsul prints
+**1.2**, not 0.9, but that figure is physically impossible for MgSO₄·7H₂O
+(full-dissociation ceiling about 1.08 mS/cm) and is **quarantined** from
+`estimate_manufacturer_ec` mixture totals (`UNUSABLE_BROCHURE_ANCHORS`); doses
+that include it return `not_supported` / `unusable_brochure_anchor`. It is not
+an accuracy or screening reference. Headline grades can differ from detailed
+guaranteed analysis: e.g. Magnit's nitrate-N table is 10.7%, not the rounded
+headline 11.
 
 ## What can now be calculated without new measurements
 

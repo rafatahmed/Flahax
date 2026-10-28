@@ -41,16 +41,14 @@ Missing impurity, hydration, ligand or counterion information is not evidence of
 absence. Existing composition flags, identity status and nutrient basis remain
 available; downstream model qualification is a separate decision.
 
-## Explicit ammonium policy
+## Incidental ammonium policy
 
-`recommend` defaults to `max_ammonium_fraction=None`. Omitting an ammonium
-maximum no longer invents a crop-practice limit. A caller may explicitly request
-a fraction of total target nitrogen, or supply `maximum_concentrations` in mg/L.
-The fraction has no additional 1.5 mmol/L cap. An explicit ammonium target or
-absolute maximum retains precedence over the fraction.
+`recommend` defaults to `max_ammonium_fraction=0.10`. When targets omit `N_NH4`,
+incidental NH4-N is capped at the smaller of 10% of total target N and
+1.5 mmol/L (Dutch soilless practice; De Kreij, Voogt et al.). The applied
+ceiling is disclosed on `ammoniumLimit`. Pass `None` to opt out, or supply
+`maximum_concentrations` / an explicit `N_NH4` target to override.
 
-This changes recipes that previously relied on the implicit allowance. It does
-not change targets or prove the remaining incidental-ion objective is optimal.
-Exact-zero targets now exclude contributing products, and absolute maxima also
+Exact-zero targets exclude contributing products, and absolute maxima also
 constrain targeted nutrients. These constraints do not qualify the remaining
 objective, secondary-selection or trace-reporting behavior.

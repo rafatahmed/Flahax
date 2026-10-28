@@ -78,7 +78,8 @@ Candidate claim wording, strongest defensible first:
 > To our knowledge, FlahaX is the first Python package to unite fertilizer
 > formulation, fertilizer-specific aqueous equilibrium chemistry and auditable
 > delivery planning (stock tanks, acid dosing and injection) in one
-> dependency-free library, verified against PHREEQC.
+> dependency-free library. Equilibrium cases are checked against PHREEQC 3.8.6
+> (not NNLS, N semantics or measured EC).
 
 ## SWOT
 

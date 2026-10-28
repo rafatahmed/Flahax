@@ -431,20 +431,24 @@ class IncidentalAssessmentTests(unittest.TestCase):
                 )
             ),
         )
-        self.assertEqual(first['assessment'], 'requires_review')
+        # Dutch incidental NH4 default (#54): both fits share the disclosed ceiling.
+        self.assertEqual(first['assessment'], 'within_limit')
+        self.assertEqual(refit['assessment'], 'within_limit')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
-        self.assertIsNone(first['maximumPpm'])
-        self.assertEqual(refit['assessment'], 'requires_review')
+        self.assertAlmostEqual(first['maximumPpm'], 14.0)
+        self.assertIsNotNone(flow.recommendation['ammoniumLimit'])
         self.assertEqual(
             [
                 r['symbol']
                 for r in flow.recommendation['incidentalContributions']
                 if r['assessment'] == 'requires_review'
             ],
-            ['N_NH4', 'Na'],
-        )  # neither maximum was declared
+            ['Na'],
+        )  # Na still has no declared maximum; NH4 uses the Dutch allowance
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
-        self.assertIn('N_NH4', summary['stages']['formulation'].get('message') or '')
+        message = summary['stages']['formulation'].get('message') or ''
+        self.assertIn('Na', message)
+        self.assertNotIn('N_NH4', message)
 
     def test_each_incidental_names_the_products_that_supply_it(self):
         flow = plan_fertilizer_workflow(

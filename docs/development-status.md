@@ -9,7 +9,7 @@ The matrix below describes the 0.3.1 capabilities and their boundaries.
 | Capability | Implemented evidence | Remaining boundary |
 |---|---|---|
 | Nutrient targets minus source-water contribution | `fertilizer_workflow.py`, `test_water_workflow.py`, pepper example | User supplies water; nutrient concentrations do not establish complete acid/base chemistry |
-| Incidental zero/omitted-target nutrients | `nutrient_acceptance.py`, engine/delivery tests | Separate review or explicit maximum limits; no invented safe threshold |
+| Incidental zero/omitted-target nutrients | `nutrient_acceptance.py`, engine/delivery tests | Dutch NH4 default when omitted (`min(10% of N, 1.5 mmol/L)`, disclosed); other ions need explicit maxima or stay `requires_review` |
 | Calculated initial pH, mixed species/complexes/SI | `calculated_ph.py`, workflow, existing coupled solver and PHREEQC reference tests | Complete analytical totals, 25 C, closed carbon, explicit phase policy, Davies range |
 | Industrial acid selection and product mass/volume | Standard workflow HNO3/H3PO4, `acid_selection.py`, four preserved lower-level PHREEQC acid fixtures | Supplied assay/density/provenance, nutrient and volume limits; no automatic dosing approval |
 | Source-specific CLI | `planning_cli.py`, `__main__.py`, `test_site_planning.py` | Explicit JSON/interactive inputs, no default water or equipment model |

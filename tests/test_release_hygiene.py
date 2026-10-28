@@ -80,3 +80,34 @@ class ReleaseHygieneTests(unittest.TestCase):
                 if path:
                     with self.subTest(document=str(document.relative_to(ROOT)), target=target):
                         self.assertTrue((document.parent / path).is_file(), target)
+
+    def test_phreeqc_claims_cover_equilibrium_only(self):
+        readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+        self.assertNotRegex(
+            readme,
+            r'verified against PHREEQC(?!\s*3\.8\.6)',
+            'README must not claim blanket PHREEQC verification',
+        )
+        self.assertIn('Equilibrium speciation, saturation indices and acid titration', readme)
+        self.assertIn('does not cover NNLS', readme)
+        self.assertIn('not PHREEQC-verified', readme)
+        self.assertIn('Do not treat PHREEQC agreement as measured EC accuracy', readme)
+        scope = (ROOT / 'docs' / 'site' / 'explanation' / 'scope-and-limits.md').read_text(
+            encoding='utf-8'
+        )
+        self.assertIn('does not verify', scope)
+        self.assertIn('measured EC accuracy', scope)
+
+    def test_dutch_ammonium_default_is_documented(self):
+        from importlib.resources import files
+
+        manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
+        self.assertIn('Dutch incidental NH4-N', manual)
+        self.assertIn('1.5 mmol/L', manual)
+        self.assertNotIn('adds no ammonium maximum by default', manual)
+        api = files('flahax').joinpath('data/API_REFERENCE.md').read_text(encoding='utf-8')
+        self.assertIn('Default 0.10', api)
+        self.assertIn('Dutch soilless practice', api)
+        self.assertNotIn('Default None adds\n        no ammonium maximum', api)
+        migration = (ROOT / 'docs' / 'site' / 'start' / 'migration.md').read_text(encoding='utf-8')
+        self.assertIn('Dutch incidental ceiling', migration)

@@ -198,9 +198,9 @@ phase applicability now blocks approval:
   laboratory's chloride uncertainty in the water file
   (`"balance_ion_uncertainty_percent"`) and FlahaX will accept the closure if
   it falls within it.
-- **Hydroxylapatite and MnHPO4 are supersaturated.** Their names do not prove that
-  precipitation is absent at these conditions. Without applicable reviewed evidence,
-  the phase assessment prevents approval. The sheet retains the findings ([saturation
+- **Hydroxylapatite and MnHPO4 are supersaturated.** These are REVIEW-class phases:
+  the plan is `requires_review` with their reasons, not hard-blocked. Their names
+  do not prove precipitation is absent. The sheet retains the findings ([saturation
   indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
 - **Iron(II) sulfate.** The recipe uses it, and in an aerated feed iron(II)
   oxidizes and settles out with some phosphate. A chelated iron is the safer

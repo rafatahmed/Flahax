@@ -62,7 +62,7 @@ from flahax import gap_for, load_library, recommend, solve_weights
 load_library() -> dict
 gap_for(targets, water) -> dict
 recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
-          maximum_concentrations=None, max_ammonium_fraction=None) -> dict
+          maximum_concentrations=None, max_ammonium_fraction=0.10) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
@@ -171,10 +171,10 @@ targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
-**Explicit ammonium policy.** `max_ammonium_fraction` defaults to `None`: no
-ammonium maximum is invented. When explicitly supplied and the targets omit
-`N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
-without an additional absolute cap. `result["ammoniumLimit"]` records it.
+**Incidental ammonium policy.** `max_ammonium_fraction` defaults to `0.10` (Dutch
+soilless practice). When targets omit `N_NH4`, incidental NH4-N may reach the
+smaller of that fraction of total target N and 1.5 mmol/L; `result["ammoniumLimit"]`
+discloses fraction, absolute cap and achieved amount. Pass `None` to opt out.
 An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
 Explicit zeros and targeted ceilings are enforced independently of the objective.
 `score` retains all nutrient rows but sums only positive-target squared relative errors.
@@ -193,9 +193,10 @@ This bounded repair does not certify global joint optimality; issue #158 remains
 
 ## Caller-defined agronomic requirements
 
-FlahaX does not prescribe feed-pH bands, a residual-bicarbonate minimum,
-or an ammonium fraction. Supply the target pH and any nutrient limits explicitly.
-The equilibrium acid plan reports residual bicarbonate in
+FlahaX does not prescribe feed-pH bands or a residual-bicarbonate minimum.
+Supply the target pH and any nutrient limits explicitly. The default incidental
+ammonium ceiling is the disclosed Dutch policy above; override or opt out with
+`max_ammonium_fraction`. The equilibrium acid plan reports residual bicarbonate in
 `audit["residualBicarbonateMmolPerKg"]` without a crop-suitability warning.
 Numerical feasibility establishes agreement with supplied inputs only.
 

@@ -22,7 +22,8 @@ their positive-target fit calculation and report additional fields:
 Percentage deviation from zero remains `None`, not infinity or a fabricated
 percentage. An explicit `maximum_concentrations={'N_NH4': 0}` does prohibit
 ammonium. Without that maximum, incidental ammonium is reported for separate
-assessment; the package does not invent a safe threshold or call it harmless.
+assessment; aside from the disclosed Dutch incidental NH4 default when `N_NH4` is
+omitted, the package does not invent a safe threshold or call incidental ions harmless.
 The optimizer's existing objective is unchanged; maxima are post-solve checks,
 not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
@@ -239,41 +240,38 @@ or with inorganic carbon (KHCO3, K2CO3) under the closed carbon boundary.
 pH-up products (Potassium Hydroxide (45% solution), Potassium Bicarbonate,
 Potassium Carbonate); acids are supplied by the user with the assay and density
 from the supplier's certificate. A plan is rejected when its target state has
-solids, unresolved SI sign, or supersaturation without applicable evidence
-(next section).
+solids, unresolved SI sign, or hard-blocking supersaturation; REVIEW-class
+phases alone yield `requires_review` (next section).
 
 ## Saturation indices and acceptance
 
 A positive saturation index is a thermodynamic finding, not a precipitation rate.
-No phase name grants an exemption. Supersaturation without matching reviewed
-kinetic/redox evidence prevents approval, including Hydroxylapatite, Goethite,
-MnHPO4 and Vivianite. The MnHPO4 measurement/source chain remains unverified;
+Coupled pH and delivery plans assess SI at the **target** state (#78).
+
+**REVIEW-class phases** (Hydroxylapatite, Goethite, MnHPO4, Vivianite) yield
+`requires_review` qualifications with their reasons and sources; they do **not**
+hard-block the plan. The MnHPO4 measurement/source chain remains unverified;
 that is not proof that measurements or precipitation do not exist.
 
+**Hard blockers** remain: brushite, monetite, gypsum, struvite, calcite,
+ferrihydrite and every other non-REVIEW phase with positive SI; any positive
+allocated solid; unresolved SI sign (`uncertain_sign`); and invalid SI/allocation
+data. Caller-reviewed evidence envelopes can demote a hard phase to review-only
+when every condition matches; `mixing_approved` stays false. No physical
+applicability envelopes ship with FlahaX.
+
 `assess_saturation` reports `thermodynamic`, `applicability`, `solids`, and
-`invalid_solids` separately. The existing SI comparison guard is numerical only.
-An SI interval touching zero has `uncertain_sign` and prevents approval; a
-caller-supplied SI uncertainty half-width can widen that interval but cannot
-remove the guard. It is not a kinetic allowance or a certified model-error bound.
-Any positive allocated solid prevents approval, even below the old reporting
-cutoff or when the reported SI is negative. Invalid SI/allocation data fail closed.
-Negative infinity denotes an absent-reactant index, not a finite uncertainty interval.
+`invalid_solids` separately. The SI comparison guard is numerical only; a
+caller-supplied SI uncertainty half-width can widen the zero-touching interval
+but cannot remove the guard. It is not a kinetic allowance or a certified
+model-error bound. Negative infinity denotes an absent-reactant index, not a
+finite uncertainty interval.
 
 The optional `conditions` and `evidence` mappings support explicit applicability
 review. A phase-specific evidence record must contain `phase`, `source`,
-`review_id`, `reviewed=True`, `decision="review_only"` and a `conditions` envelope.
-It must specify temperature (C), pH, ionic strength (mol/kg water), holding time
-(hours), redox and solution-matrix identity. Numeric envelopes are inclusive
-pairs; categorical conditions must match exactly. All additional conditions in
-the record must match too. State pH and ionic strength take precedence over
-caller values. Missing, unreviewed or out-of-envelope evidence cannot exempt a
-phase. These are caller-reviewed evidence records, not automatically verified
-source claims. No physical applicability envelopes ship with FlahaX.
-
-Matching evidence permits review only: `mixing_approved` remains false. The
-public workflows use the conservative default and do not infer holding time,
-redox, matrix identity or evidence from a phase name. Mathematical completion
-requires testing these decisions, not waiting for future physical experiments.
+`review_id`, `reviewed=True`, `decision="review_only"` and a `conditions` envelope
+(temperature C, pH, ionic strength mol/kg water, holding time hours, redox,
+matrix identity). State pH and ionic strength take precedence over caller values.
 Iron(II) has a fixed oxidation state in this model; its advisory does not invent
 an oxidation half-life or guarantee which real solids will form.
 

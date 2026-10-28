@@ -28,8 +28,10 @@ of each available product so that the final solution comes as close to every tar
 products allow, with no negative amounts (non-negative least squares). A target missed by more
 than 1 % is reported with its reason, for example no product supplies it, or a relaxed search still misses targets. A target-only charge imbalance cannot
 prove a conflict: untargeted counterions may supply the missing charge. Ions you did not target are kept within
-the maximum constraints supplied to the solver. An ammonium allowance is added only
-when explicitly requested; omitting a maximum does not select a crop-practice limit.
+the maximum constraints supplied to the solver. When `N_NH4` is omitted,
+incidental NH4-N uses the disclosed Dutch default
+(`min(10% of total target N, 1.5 mmol/L)`); pass `max_ammonium_fraction=None`
+to opt out.
 
 Supported formula counterions enter the fit before dose selection. The
 [material inventory](../models/material-inventory.md) records the same analytical

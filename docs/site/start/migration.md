@@ -26,7 +26,7 @@ remain separate; field evidence is not invented to complete software work.
 |---|---|---|
 | Nutrient inputs | Zero is a hard zero; omitted targets are incidental. Reject total N and unknown fields. | [File formats](../reference/file-formats.md); tests.test_entry_inputs |
 | Objective | Remove nonzero ridge. Incidental ions and dose magnitude do not contribute to fitting loss. | [Python API](../developer/python-api.md); tests.test_unmet_targets |
-| Maximums | Supply ammonium and other caps explicitly; omitted data does not select crop limits. | [Python API](../developer/python-api.md#incidental-ions-and-ceilings); tests.test_ammonium_limit |
+| Maximums | Omitted `N_NH4` applies the Dutch incidental ceiling (`min(10% of N, 1.5 mmol/L)`), disclosed on `ammoniumLimit`; pass `max_ammonium_fraction=None` to opt out. Other caps stay explicit. | [Python API](../developer/python-api.md#incidental-ions-and-ceilings); tests.test_ammonium_limit |
 | Composition | Keep ID-bearing doses and counterions; review assay-only qualifications. | [Inventory](../models/material-inventory.md); tests.test_material_inventory |
 | Units | Distinguish final litres, solvent kg, analytical totals and species; reconcile measured water explicitly. | [Basis](../models/concentration-basis.md); tests.test_unit_basis |
 | Recipe/reagent | Choose joint mode with its controls or documented legacy mode. Count reagent nutrients once; search exhaustion is unresolved. | [Joint fitting](../developer/joint-problem.md); tests.test_joint_workflow |

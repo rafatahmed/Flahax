@@ -163,7 +163,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         reasons = ' '.join(row[2] for row in assessment['review'])
         self.assertNotIn('no measurement behind it', reasons)
 
-    def test_f12_unspecified_ammonium_maximum_is_not_invented(self):
+    def test_f12_omitted_ammonium_uses_disclosed_dutch_default(self):
+        # Owner decision 2026-10-28 / #54: Dutch min(10% of N, 1.5 mmol/L) when N_NH4
+        # is omitted; disclosed on ammoniumLimit (not a silent invented ceiling).
         products = [
             dict(
                 id='synthetic',
@@ -172,7 +174,14 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             )
         ]
         result = recommend(products, {'K': 100, 'N_NO3': 100}, {})
-        self.assertIsNone(result.get('ammoniumLimit'))
+        limit = result['ammoniumLimit']
+        self.assertEqual(limit['fractionOfTotalN'], 0.10)
+        self.assertAlmostEqual(limit['mgPerL'], 10.0)
+        self.assertAlmostEqual(limit['absoluteCapMgPerL'], 1.5 * 14.0067)
+        self.assertIn('Dutch', limit['basis'])
+        self.assertIn('achievedMgPerL', limit)
+        opted_out = recommend(products, {'K': 100, 'N_NO3': 100}, {}, max_ammonium_fraction=None)
+        self.assertIsNone(opted_out.get('ammoniumLimit'))
 
     def test_f13_omitted_ligand_competition_is_not_silently_qualified(self):
         # The pinned model has DTPA protonation and Fe-DTPA, but no Cu-DTPA reaction.
