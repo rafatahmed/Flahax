@@ -30,10 +30,11 @@ questions come line by line.
 
 ## 3. Read the result
 
-FlahaX calculates for a few seconds, writes the batch sheet, and opens the results on **Tanks**:
-what to weigh into tank A and tank B and how much acid goes in the acid container. Tab shows
-**Nutrients** and **Notes**. Press Q and then Y to leave; the recipe stays in your terminal and the
-folder with `batch-sheet.html` is named on the last line.
+FlahaX writes the result files. A blocked calculation opens **Notes** first and says
+**Do not mix**. Quantities remain diagnostic: the sheet suppresses preparation actions.
+Other results open **Tanks**; assignments may require additional equipment or review.
+Tab shows **Nutrients** and **Notes**. Read every status and qualification before using
+the result for planning. Press Q and then Y to leave; the output folder is named on the last line.
 
 ## 4. Next time
 
@@ -41,7 +42,9 @@ folder with `batch-sheet.html` is named on the last line.
 flahax mix sessions/NAME
 ```
 
-repeats the batch without questions.
+replays the saved inputs through validation. Changed inputs or model/source identity require
+review and explicit migration; see [Migrate saved workflows](migration.md). An old acceptance
+does not authorize a changed result.
 
 **Next:** [Read the batch sheet](../grower/batch-sheet.md) and [Mix safely](../grower/mix-safely.md).
 With your own water report, see [What you need](../grower/inputs.md).

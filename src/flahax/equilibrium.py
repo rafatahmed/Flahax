@@ -170,6 +170,8 @@ def solve_calcite_co2_equilibrium(
             ionic_strength = updated
             break
         ionic_strength = (ionic_strength + updated) / 2.0
+    else:
+        raise DeliveryError("nonconvergent", "legacy calcite ionic-strength iteration limit")
     species = _species_at_ph(ph, ionic_strength, log_pco2)
     si_calcite = math.log10(species["a_ca"] * species["a_co3"]) - LOG_K_CALCITE_25C
     return CalciteCo2Equilibrium(

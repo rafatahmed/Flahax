@@ -44,11 +44,29 @@ A and tank B (prepared litres and grams to weigh, with tick boxes), the acid
 container and the checks after mixing. **Agronomist**: the same, plus the
 nutrient table (target, from water, required, achieved, final, difference),
 the limits and the pH path. **Developer or manager**: both, plus the full
-report and `summary.json`. Tank A holds calcium and the micronutrients and never
-takes acid; tank B holds the sulfates and phosphates, magnesium sulfate and any
-phosphate compound included; acid has its own container and injector. A stock
-that would not dissolve at your temperature blocks the sheet, and products
-without sourced solubility data are listed as not checked.
+report and `summary.json`. Use the calculated tank assignments: additional tanks
+may be required, and equipment capacity never waives an incompatibility. A blocked
+result shows diagnostic quantities without preparation instructions. Missing or
+condition-limited solubility evidence remains qualified in the result.
+
+## Resizing, stopping and reopening
+
+The full-screen view redraws when the window size changes. Esc or Q on the results
+asks before leaving; Ctrl+C also leaves the result screen. Sheets already written
+remain available. During the interview, stopping before all answers are complete
+saves nothing. After answers have been saved, a calculation error does not turn the
+saved session into an accepted result.
+
+The terminal attempts to restore its cursor, normal screen and console mode on
+exit, including input disconnection and output errors. If a console cannot support
+full-screen mode, use `flahax mix --plain`. A closed terminal cannot display cleanup
+output; reopen a terminal if the host window itself has disconnected.
+
+Saved-session replay uses the same calculation and result identity as plain mode.
+Changed saved inputs/model sources are rejected for review, and changed result
+content is rejected before display. Review and explicitly migrate stale sessions
+as described in the developer guide; no terminal action grants result acceptance.
+
 
 The steps below do the same with `flahax batch`, one command with files, for
 scripts and for checking a plan by hand.

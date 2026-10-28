@@ -12,6 +12,7 @@ from flahax.pump_planning import plan_pump_command
 from flahax.stock_planning import StockTank, plan_stocks
 from flahax.ph_planning import plan_ph
 from tests.test_ph_planning import inputs
+from tests.test_stock_assignments import synthetic_model
 from tests.test_pump_planning import calibration, CALIBRATION_AS_OF
 
 
@@ -51,6 +52,25 @@ class DeliveryPlanTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             transition_plan(plan, "validated")
 
+    def test_complete_hardware_does_not_qualify_a_stock_mixture(self):
+        from dataclasses import replace
+
+        plan = self.make_plan()
+        water, curve, reagent = inputs()
+        ph = plan_ph(
+            water,
+            curve,
+            reagent,
+            6.7,
+            VolumeLitres(100),
+            VolumeLitres(1),
+            {'N_NO3': 100},
+            {'N_NO3': 111.592},
+        )
+        with self.assertRaises(DeliveryError) as caught:
+            transition_plan(replace(plan, ph_plan=ph), 'validated')
+        self.assertEqual(caught.exception.code, 'unqualified_stock_mixture')
+
     def test_report_and_matching_recipe(self):
         plan = self.make_plan()
         self.assertIn("draft", delivery_report(plan))
@@ -79,6 +99,7 @@ class DeliveryPlanTests(unittest.TestCase):
                 }
             ],
             TemperatureCelsius(20),
+            mixture_model=synthetic_model,
         )
         water, curve, reagent = inputs()
         ph_plan = plan_ph(
@@ -94,11 +115,19 @@ class DeliveryPlanTests(unittest.TestCase):
         command = plan_pump_command(
             calibration(), VolumeLitres(1), stocks.tanks[0].stock_volume, as_of=CALIBRATION_AS_OF
         )
+        acid_calibration = calibration()
+        acid_calibration.update(channelId='acid', validMinLitres=0)
+        acid = plan_pump_command(
+            acid_calibration,
+            VolumeLitres(ph_plan.reagent_volume_litres),
+            VolumeLitres(1),
+            as_of=CALIBRATION_AS_OF,
+        )
         plan = compose_delivery_plan(
             recipe,
             stocks,
             ph_plan,
-            [command],
+            [command, acid],
             {"modelVersion": "0.2.0", "waterAnalysisId": water["id"]},
         )
         for state in ("validated", "operator-approved", "executed", "verified"):

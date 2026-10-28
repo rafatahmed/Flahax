@@ -2,7 +2,7 @@
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.6.0, released 2026-10-24. The release workflow ran the Python 3.11–3.14 checks and the live PHREEQC replay on the tagged commit; see the repository's release evidence.
+**Version:** 0.6.1.dev0, unpublished development checkout. The 0.6.0 publication dated 2026-10-24 is historical evidence for its tagged commit, not validation of this checkout.
 
 ## Contents
 
@@ -26,7 +26,7 @@ For exact public signatures and result-record fields, see the bundled
 
 FlahaX selects fertilizer salts and their grams per litre for fixed nutrient targets after accounting for source water. Optional Python APIs evaluate one mixed aqueous system and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
 
-Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions (by default ammonium) within stated limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
+Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
 The mixed model covers 32 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
@@ -115,7 +115,31 @@ assert 'feasible' in answer
 print(answer['feasible'])
 ```
 
-A nonzero process exit is an error; inspect stderr rather than treating it as an empty recommendation. A successful process may still return an infeasible recipe. The CLI is a formulation interface, not a stock or pump executor.
+For `recommend`, exit 0 means a recommendation was calculated, including an
+infeasible one: always inspect `feasible`, `limitViolations` and `unmetTargets`.
+Planning JSON commands (`workflow`, `ec`, `size`) also use exit 0 for a returned
+qualified result; inspect stage statuses and missing-input/model qualifications.
+For `batch` and `mix`, exit 3 means a blocked result was written, exit 0 means the
+result was written (possibly requiring review), and exit 1 means invalid input or
+an operation failure. Invalid command-line syntax uses exit 2. An interrupted top-level
+command uses exit 130; the mix interview catches interruption and returns 1.
+No successful exit certifies chemistry, field readiness or physical validation.
+
+The recommendation JSON accepts `salts`, `targets`, `water`, `allow_ions`,
+`allow_carbonates`, `ridge`, `maximum_concentrations` and
+`max_ammonium_fraction`. Units match Python: elemental mg/L for targets, water
+and maxima; fertilizer doses are g/L. An explicit zero maximum stays a hard zero.
+`allowIons` and `allowCarbonates` remain compatibility aliases; supplying both an
+alias and its snake-case name is an error. Permission flags must be JSON booleans,
+not strings. Unsupported or misspelled fields fail explicitly instead of being
+silently ignored. Products must be supplied explicitly; permissions do not expand
+the inventory. This interface is a formulation calculator, not a stock or pump executor.
+
+The top-level Python exports `CanonicalResult`, `accept_result`,
+`verify_acceptance`, `save_result` and `load_result` expose immutable result identity
+and exact-proposal consent. Consent never modifies a result's scientific status.
+For versioned archives and explicit saved-session migration, see
+[the developer workflow guide](https://flahax.readthedocs.io/en/latest/developer/water-to-delivery.html).
 
 ### Additional planning commands in 0.3.1
 
@@ -207,10 +231,10 @@ Final solvent mass includes reagent carrier water, and final volume is the make-
 ## 7. Stock, calibration and review workflow
 
 1. Obtain a feasible nutrient recipe and adapt it to an explicit batch volume.
-2. Supply versioned compatibility rules, per-product solubility limits and temperature coverage to `plan_stocks`. Missing evidence is a rejection, not implicit compatibility.
+2. Supply versioned compatibility rules, per-product solubility limits and temperature coverage to `plan_stocks`. A structural assignment is not mixture approval: a reviewed mixture model must cover the exact stock and its conditions before delivery validation. Missing model evidence remains `requires_review`.
 3. Choose a pH route: measured-curve `plan_ph` returns `PhPlan`; the mixed-equilibrium adapter returns `EquilibriumPhPlan`. Do not interchange their required inputs.
 4. Use sourced pump calibration and `plan_pump_command` to calculate bounded planning values. The default calibration-age policy uses the actual current date; simulations may supply an explicit assessment date.
-5. Call `compose_delivery_plan` with matching recipe/stocks, pH plan, commands and audit metadata. Equilibrium acid requires a separate channel and a command matching its volume; zero acid means no acid command.
+5. Match every stock and reagent channel to exactly one calibrated command before validation; conserve product masses and retain positive carrier remainder on an additive-volume basis. Titration plans must retain the matching final volume. Contact time and hydraulic mixing are not modeled. Call `compose_delivery_plan` with matching recipe/stocks, pH plan, commands and audit metadata. Equilibrium acid requires a separate channel and a command matching its volume; zero acid means no acid command.
 6. Request explicit state transitions. Incomplete plans, target supersaturation or formed solids cannot become validated equilibrium delivery plans. Operator approval is never automatic.
 
 A plan or state label does not execute hardware or prove physical mixing occurred. Post-mix pH measurement remains required before correction; computational acceptance does not certify commercial products or site safety.
@@ -226,7 +250,7 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
 | `identity_inconsistent` | A label does not fit its chemical: its charges are more than 1 % out of balance (rounded labels and commercial grades stay well inside; a one-point typing error does not). Check the label. |
 | `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
-| `too_many_tanks` | The products need more than two concentrate tanks under the rules; the message names the conflicting products. |
+| `too_many_tanks` | The products need more tanks than the supplied equipment limit; no separation is waived. |
 | `tank_too_small` | One irrigation needs more stock than a tank holds; the message names the tank. |
 | `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
 | `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |
@@ -353,6 +377,30 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_ph_input` / `invalid_phase_policy` / `incomplete_prediction` / `invalid_audit_inputs` | Calculated-EC options conflict. | Follow the option rules in the message. |
 | `invalid_fixture` | A PHREEQC reference fixture is unreadable or of an unsupported schema (verification tooling). | Recapture the fixture with the pinned PHREEQC. |
 
+**Current calculation and saved-result errors**
+
+| Code | Meaning and action |
+|---|---|
+| `canonical_result_mismatch` | Output content no longer matches its canonical calculation. Recalculate; do not mix fields from different runs. |
+| `invalid_acceptance`, `stale_acceptance` | Acceptance evidence is malformed or belongs to different result content. Review the current result and record new acceptance. |
+| `invalid_saved_result`, `stale_session` | Saved data is malformed or its source inputs/results changed. Load valid data or recalculate before reuse. |
+| `invalid_remedy` | The requested remedy is not a valid scoped change. Inspect the permitted remedy and its inputs. |
+| `ionic_strength_outside_phosphate_fit` | The phosphate conductivity fit does not cover this ionic strength. No supported total EC is available from that fit. |
+| `invalid_ec_scenarios` | EC sensitivity scenarios are malformed. Supply the required explicit scenario inputs. |
+| `unknown_component`, `duplicate_product` | A component is not supported or a product ID is repeated. Correct the analytical inventory or unique product IDs. |
+| `missing_density` | A volume-based reagent calculation lacks density. Supply sourced density or use a supported mass-based input. |
+| `numerical_failure`, `unresolved_sensitivity`, `unusable_trial` | A numerical trial or derivative could not be qualified. Inspect diagnostics; do not accept an unverified solution. |
+| `missing_chemistry`, `inconsistent_basis` | Joint fitting lacks chemical inventory or uses inconsistent solvent bases. Supply complete, consistent inputs. |
+| `joint_search_incomplete`, `joint_verification_failed` | The joint search or independent verification did not qualify a solution. Retain the diagnostics and resolve the reported constraints or numerical failure. |
+| `invalid_role` | A reagent role is inconsistent with the supported request. Correct the role; do not infer it from a display name. |
+| `duplicate_field` | A request repeats a field. Supply each field once so the intended value is unambiguous. |
+| `future_calibration` | A calibration is dated after the evaluation time. Correct the timestamps before evaluating equipment. |
+| `invalid_phase_evidence`, `invalid_si_uncertainty` | Phase applicability evidence or saturation-index uncertainty is invalid. Supply qualified evidence; do not suppress the phase finding. |
+| `invalid_mixture_result`, `unqualified_stock_mixture` | The stock-mixture assessment is invalid or lacks applicable qualification. The proposed stock cannot be approved on that evidence. |
+| `stock_search_limit` | Stock assignment search exhausted its budget. This is not proof that no arrangement exists. Review constraints and search diagnostics. |
+| `invalid_solubility_input`, `invalid_solubility_basis`, `invalid_solubility_table` | Solubility data has invalid values, units/basis or table structure. Correct the sourced record before screening. |
+| `unqualified_solubility_limit` | The solubility limit lacks applicable conditions or evidence. A screening floor is not a qualified maximum. |
+
 ## 9. Verification and reproducibility
 
 From an installed development checkout, run `python -m unittest discover -s tests -t .` and `python -m compileall -q src tools`. Use `PYTHONPATH=src` if the checkout is not installed. Reference acceptance also requires the pinned external PHREEQC run with `FLAHAX_REQUIRE_PHREEQC=1`; the executable is never a runtime package dependency.
@@ -366,6 +414,38 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 ```
 
 ## 10. Upgrading, integration and citation
+
+### Current development migration from 0.6.0
+
+Recalculate saved recipes from their original inputs; do not reuse an old acceptance
+or relabel a historical result as a new calculation. Package, schema, model/source
+hashes and result identity are distinct identifiers.
+
+- Target zero is a hard zero; omitted targets are incidental. Declare nutrient
+  maximums explicitly. No ammonium fraction is supplied by default.
+- Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
+  Keep product IDs with doses rather than zipping a filtered result to the catalogue.
+- Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input
+  fields and ambiguous total N are rejected.
+- Declare final solution volume separately from final solvent mass. Retain water,
+  fertilizer and reagent inventories and count reagent nutrients exactly once.
+- Explicit joint fitting requires declared solvent fractions, mass caps and controls.
+  Legacy sequential fitting and bounded zero-reagent recovery remain separate modes.
+- EC can be estimated, partial or unsupported. A known-species subtotal is neither a
+  total estimate nor a bound/midpoint. Unquantified uncertainty remains unknown.
+- Phase and stock decisions require condition-qualified evidence. Do not restore
+  retired phase exemptions or force two tanks by waiving separations.
+- Delivery remains a draft when stock-mixture or command evidence is missing.
+  Acceptance binds to the exact result; changing inputs, sources or quantities requires
+  recalculation. Legacy unbound summaries remain unverified.
+- Reports retain full-precision evidence offline. Blocked sheets are diagnostic.
+  Numerical completion is not physical validation.
+
+The online [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html)
+maps these changes to current references and executable checks.
+
+### Historical release changes
+
 
 0.5.0 preserves every 0.4.0 public export and signature; `recommend` gains the keyword-only `maximum_concentrations` and `max_ammonium_fraction`, and `catalogue_dose_totals` gains `materials`. It adds the material traceability API (`load_identities`, `identity_for_product`, `make_grade`, `make_lot`, `resolve_material`, `nutrient_band`) and experimental speciation-based irrigation EC (`calculate_irrigation_ec` and related functions); see the API reference. **Recipes change:** the default ammonium limit, the corrected catalogue assays (Mg nitrate hexahydrate, 75% phosphoric acid) and the constraint treatment of ceilings give different doses for most shipped formulas, and chelate sodium now appears in chemistry and EC. Re-run and review saved recipes before reusing them. The equilibrium solver is faster with numerically equivalent results. The full list is in `CHANGELOG.md`.
 
@@ -414,11 +494,11 @@ A zero NH4 target has no meaningful percentage deviation. Real products may
 add NH4: report the absolute addition separately; never relabel it as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
-When targets omit NH4 entirely, `recommend` allows incidental NH4-N up to the
-smaller of 10% of the total target N and 1.5 mmol/L (21.01 mg/L N) by default,
-an owner decision based on Dutch soilless practice (5-15% of total N, at most
-1-1.5 mmol/L; De Kreij, Voogt et al.). `ammoniumLimit` reports it;
-`max_ammonium_fraction` raises it and `None` turns it off.
+When targets omit NH4 entirely, `recommend` adds no ammonium maximum by default.
+Supply `max_ammonium_fraction` explicitly to set a fraction of total target N;
+`ammoniumLimit` records that caller policy, without an additional absolute cap.
+The default `None` retains the existing incidental-ion objective. An explicit
+NH4 target or absolute maximum takes precedence over the fraction.
 
 ### Reading misses, limits and provenance
 
@@ -428,7 +508,7 @@ from flahax import load_library, recommend
 
 library = load_library()
 grow = next(f for f in library['formulas'] if f['name'] == 'Generic Grow (maximumyield)')
-result = recommend(library['salts'], grow['targets'])
+result = recommend(library['salts'], grow['targets'], max_ammonium_fraction=0.10)
 assert result['targetIonBalance']['exceedsWarning']        # anions exceed cations by 17%
 assert math.isclose(result['ammoniumLimit']['mgPerL'], 16)  # 10% of the 160 mg/L target N
 assert not result['limitViolations']
@@ -440,7 +520,7 @@ print(result['salts'][0]['name'], result['salts'][0]['provenance']['identityId']
 
 Generic Grow lists 17% more anion than cation charge, so no salt combination
 meets every target; its warning says so. Its N_NO3, K, Ca and S misses are all
-`limited_by_ceiling`: meeting them would need more ammonium than the default
+`limited_by_ceiling`: meeting them would need more ammonium than the explicit
 limit allows, and `bindingLimits` names it. Other reasons are `no_source` (no
 product supplies the element), `incidental_tradeoff` (reachable, but the
 penalty on an unrequested ion chose otherwise) and `conflicting_targets` (with
@@ -490,8 +570,9 @@ and maximum concentrations always use it, and the balanced `totals` only feed
 the chemistry (#84). An imbalance above `maximum_imbalance_percent` (default
 5%) is rejected with `charge_imbalance_exceeded`: correct the analysis rather
 than forcing it. Supply inorganic carbon as `CO3-2`, or titrated total
-alkalinity as `alkalinity_eq_per_kg` (treated as carbonate alkalinity;
-phosphate, borate and organic contributions are neglected), never both.
+alkalinity as `alkalinity_eq_per_kg` on the supported inorganic proton reference.
+Phosphate, borate, ammonia and sulfate protonation are included. Unqualified
+organic/trace-metal systems are rejected. Never supply both, even for zero carbon.
 
 In `plan_fertilizer_workflow`, add `measured_ph` to the `equilibrium` record
 (with optional `alkalinity_eq_per_kg`, `balance_ion` and
@@ -564,3 +645,34 @@ the checkout first or set `PYTHONPATH=src`. Reports must distinguish final
 irrigation from A/B stock concentrations, recipe acid from additional acid,
 candidate tank assignments from approved stock plans, and unavailable values
 from zero. Never use synthetic example records as site measurements.
+
+## Explicit solvent basis
+
+`SolventBasis(final_volume_litres, water_mass_kg)` converts mg/L and mol/kg water
+without equating litres with kilograms. Its `from_solution_mass` constructor
+requires density and complete nonwater mass. Its `from_water_ledger` constructor
+sums disjoint source, reagent-carrier and dissolved-hydrate water. Final solvent
+includes these contributions already; do not count them twice.
+
+Water JSON accepts `final_volume_litres` with `water_mass_kg`, or with both
+`density_kg_per_litre` and `nonwater_mass_kg`. The fixed final ratio scales to the
+batch volume. Legacy inputs report the 1 kg solvent/L assumption and unquantified
+uncertainty. Explicit inputs do not establish measurement uncertainty.
+
+## Titrated total alkalinity
+
+| Error | Meaning | Action |
+|---|---|---|
+| `unsupported_alkalinity` | An active species has no qualified proton reference, or alkalinity is only a detection interval. | Supply a supported complete analysis; do not infer carbonate from unsupported contributors. |
+| `invalid_alkalinity` | A species amount is non-finite, negative or not numeric. | Correct the molal species inventory before calculating alkalinity. |
+
+Use `alkalinity_meq_per_litre` in water JSON for a signed total-alkalinity
+measurement, separately from `mg_per_litre`. Do not combine it with `HCO3`,
+including zero. Interactive entry now stores titrations in equivalents, not
+as carbon. Legacy HCO3 carbon assumptions remain explicitly reported.
+
+The supported proton reference includes carbonate, phosphate, borate, ammonia,
+sulfate and major-ion complexes. Unqualified organic/trace-metal alkalinity is
+rejected. Measured zeros and fixed carbon stay fixed; no chloride does not
+authorize altering the titration. The original laboratory inventory continues
+to determine nutrient limits.

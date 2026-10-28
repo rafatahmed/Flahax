@@ -55,7 +55,8 @@ def run():
             '1000 L illustrative final batch; targets and water in mg/L.',
             'No invented chloride, alkalinity, acid density or measured titration curve.',
             'Catalogue Phosphoric Acid (75%) P assay needs commercial-grade confirmation.',
-            'NH4/Na additions require separate review, not automatic zero-target failure.',
+            'Explicit zero NH4/Na targets prohibit contributing products; '
+            'unavailable clean sources block the formulation.',
         ],
         targets_mg_per_l=TARGETS,
         water_mg_per_l=water,

@@ -15,9 +15,9 @@ from dataclasses import dataclass
 import math
 from typing import Any, Mapping
 
-from .composition import IONS, InputError, validate_profile
+from .composition import IONS, InputError, assay_conflict, validate_profile
 from .delivery_contracts import DeliveryError
-from .engine import score
+from .engine import _report, forward, score
 
 
 def _value(raw: Any, label: str, *, minimum: float | None = None, strict: bool = False) -> float:
@@ -55,6 +55,74 @@ class VolumeLitres:
         object.__setattr__(
             self, "value", _value(self.value, "volume litres", minimum=0.0, strict=True)
         )
+
+
+@dataclass(frozen=True, slots=True)
+class SolventBasis:
+    """Final solution volume and final solvent-water mass, including carrier/hydrate water.
+
+    Neither density nor volume alone determines solvent mass. A stated final inventory
+    already includes water supplied by reagents and dissolved hydrates; never add it twice.
+    These are accounting inputs, not independently verified measurements.
+    """
+
+    final_volume_litres: float
+    water_mass_kg: float
+
+    def __post_init__(self):
+        for name in ('final_volume_litres', 'water_mass_kg'):
+            object.__setattr__(
+                self, name, _value(getattr(self, name), name, minimum=0, strict=True)
+            )
+
+    @classmethod
+    def from_solution_mass(cls, final_volume_litres, density_kg_per_litre, nonwater_mass_kg):
+        """Subtract all nonwater mass from density times final solution volume.
+
+        Nonwater mass includes solutes, reagent solute and any suspended material.
+        An elemental nutrient sum is not a complete nonwater mass measurement.
+        """
+        volume = _value(final_volume_litres, 'final_volume_litres', minimum=0, strict=True)
+        density = _value(density_kg_per_litre, 'density_kg_per_litre', minimum=0, strict=True)
+        nonwater = _value(nonwater_mass_kg, 'nonwater_mass_kg', minimum=0)
+        return cls(volume, density * volume - nonwater)
+
+    @classmethod
+    def from_water_ledger(
+        cls,
+        final_volume_litres,
+        *,
+        source_water_kg,
+        reagent_carrier_water_kg,
+        dissolved_hydrate_water_kg,
+    ):
+        """Sum disjoint, explicitly quantified water contributions after dissolution.
+
+        Unknown carrier or hydrate water must not be passed as zero. This does not
+        infer dissolution, hydrate stoichiometry or reagent purity from nutrient assays.
+        """
+        entries = dict(
+            source_water_kg=source_water_kg,
+            reagent_carrier_water_kg=reagent_carrier_water_kg,
+            dissolved_hydrate_water_kg=dissolved_hydrate_water_kg,
+        )
+        return cls(final_volume_litres, sum(_value(v, k, minimum=0) for k, v in entries.items()))
+
+    def mg_per_litre_to_molality(self, concentration, molar_mass):
+        """Convert mg/L of a stated component to mol/kg solvent water."""
+        mg = _value(concentration, 'concentration mg/L', minimum=0)
+        mw = _value(molar_mass, 'molar mass g/mol', minimum=0, strict=True)
+        return mg * self.final_volume_litres / (1000 * mw * self.water_mass_kg)
+
+    def molality_to_mg_per_litre(self, molality, molar_mass):
+        """Convert mol/kg water to mg/L on the same component basis."""
+        molal = _value(molality, 'molality mol/kg water', minimum=0)
+        mw = _value(molar_mass, 'molar mass g/mol', minimum=0, strict=True)
+        return molal * mw * 1000 * self.water_mass_kg / self.final_volume_litres
+
+    def grams_per_litre_to_grams_per_kg_water(self, dose):
+        """Normalize product mass by final solvent mass without a density assumption."""
+        return _value(dose, 'dose g/L', minimum=0) * self.final_volume_litres / self.water_mass_kg
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,3 +332,77 @@ def rescore_with_reagent(
             )
         final[symbol] = final.get(symbol, 0.0) + amount.value
     return score(final, clean_targets)
+
+
+def rescore_weighed_recipe(
+    products: list[dict],
+    masses: Mapping[str, MassGrams],
+    final_volume: VolumeLitres,
+    targets: Mapping[str, Any],
+    water: Mapping[str, Any] | None = None,
+    *,
+    maximum_concentrations: Mapping[str, Any] | None = None,
+) -> dict:
+    """Recalculate nutrient results from actual masses without fitting new doses.
+
+    ``masses`` maps product IDs to weighed grams. Omitted products contribute zero.
+    Supply the original targets, water and effective maxima, including any caller
+    ammonium policy. Feasibility is recalculated; no planned flag is inherited.
+    This nutrient assessment does not establish pH, stock or physical suitability.
+    """
+    if not isinstance(final_volume, VolumeLitres):
+        raise DeliveryError('invalid_type', 'final_volume must be a VolumeLitres value')
+    if not isinstance(products, list) or not isinstance(masses, Mapping):
+        raise DeliveryError('invalid_type', 'products must be a list and masses an object')
+    by_id = {}
+    for product in products:
+        if not isinstance(product, dict) or not isinstance(product.get('id'), str):
+            raise DeliveryError('invalid_type', 'each product requires a string id')
+        key = product['id']
+        if not key.strip() or key in by_id or assay_conflict(product):
+            raise DeliveryError('invalid_value', 'product IDs must be unique and assays valid')
+        by_id[key] = product
+    doses = []
+    selected = []
+    for key, mass in masses.items():
+        if key not in by_id:
+            raise DeliveryError('unknown_product', f'unknown weighed product {key}')
+        if not isinstance(mass, MassGrams):
+            raise DeliveryError('invalid_type', 'weighed masses must be MassGrams values')
+        doses.append(GramsPerLitre(mass.value / final_volume.value).value)
+        selected.append(by_id[key])
+    if not all(
+        isinstance(value, Mapping)
+        for value in (
+            targets,
+            water if water is not None else {},
+            maximum_concentrations if maximum_concentrations is not None else {},
+        )
+    ):
+        raise DeliveryError('invalid_type', 'targets, water and maxima must be objects')
+    clean_targets = validate_profile(dict(targets), 'targets')
+    if not clean_targets:
+        raise InputError('targets are required')
+    clean_water = validate_profile(dict(water or {}), 'water')
+    maxima = validate_profile(dict(maximum_concentrations or {}), 'maximum_concentrations')
+    achieved = forward(selected, doses, clean_water)
+    loss, rows = score(achieved, clean_targets)
+    result = dict(loss=loss, rows=rows, **_report(rows, doses, [], maxima))
+    result['salts'] = [
+        dict(id=p['id'], name=p.get('name', p['id']), gramsPerLitre=dose)
+        for p, dose in zip(selected, doses)
+        if dose > 0
+    ]
+    result['requirementConflicts'] = [
+        dict(
+            symbol=symbol,
+            reason='target_above_maximum',
+            targetPpm=target,
+            maximumPpm=maxima[symbol],
+        )
+        for symbol, target in clean_targets.items()
+        if symbol in maxima and target > maxima[symbol]
+    ]
+    if result['requirementConflicts']:
+        result['feasible'] = False
+    return result

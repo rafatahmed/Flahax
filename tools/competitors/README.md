@@ -81,3 +81,15 @@ SHA-256 ab0a8f7c…5ae7: upstream phreeqc3-database commit
 26398a442446dc31463fb08c3d1cd06df609b633, with CRLF line endings.
 
 Timings are best of three on one machine. Compare them only within a single run.
+
+## Unavailable conductivity results
+
+An engine may return no applicable conductivity estimate. Such results remain
+JSON `null`; a zero reference also leaves relative ratios undefined (`null`).
+Catalogue spread uses available estimates only. With no estimates or a zero
+mean, the relative spread is `null`. A catalogue
+with no defined spreads reports a `null` maximum. This preserves partial results
+without manufacturing agreement or crashing the report.
+
+Synthetic adapter tests exercise these contracts without running the external
+engines. They do not replace the pinned comparison environment above.

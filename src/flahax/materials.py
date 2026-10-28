@@ -25,7 +25,7 @@ from functools import lru_cache
 from importlib.resources import files
 from typing import Any
 
-from .composition import ATOMIC, theoretical_assay
+from .composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from .delivery_contracts import DeliveryError
 
 _RESOURCE = 'data/material_identities.json'
@@ -71,12 +71,25 @@ def _check(record: dict) -> None:
         _invalid(identity_id, "id must start with 'idn-'")
     if record['status'] not in IDENTITY_STATUSES:
         _invalid(identity_id, f"unknown status {record['status']!r}")
+    mass = record['molecular_weight']
+    if mass is not None and (
+        isinstance(mass, bool)
+        or not isinstance(mass, (int, float))
+        or not math.isfinite(mass)
+        or mass <= 0
+    ):
+        _invalid(identity_id, 'molecular_weight must be null or a finite positive number')
     if not record['products'] or not all(isinstance(p, str) and p for p in record['products']):
         _invalid(identity_id, 'products must be a non-empty list of names')
     if not isinstance(record['ion_forms'], dict) or not record['ion_forms']:
         _invalid(identity_id, 'ion_forms must be a non-empty mapping')
     for value in record['ion_forms'].values():
-        if not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or value <= 0
+        ):
             _invalid(identity_id, 'ion_forms stoichiometry must be positive numbers')
     if set(record['comparator']) != {'product', 'url', 'accessed'}:
         _invalid(identity_id, 'comparator needs product, url, accessed')
@@ -703,6 +716,9 @@ def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> Resol
         'source': None,
         'oxideConversions': {'grade': dict(grade.oxide_conversions), 'lot': {}},
         'assumed': False,
+        'sourceStatus': 'grade_documented',
+        'assumptionStatus': 'declared_composition_not_independently_verified',
+        'atomicMassConvention': ATOMIC_CONVENTION,
         'identitiesSha256': IDENTITIES_SHA256,
         'chelatingAgent': grade.chelating_agent,
         'declaredCheck': asdict(check),
@@ -847,6 +863,10 @@ def resolve_material(
     ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
     stays the product name. A ``declared_ions`` grade (a compound entered from its data
     sheet) names the product itself; its record id is the grade id.
+
+    Provenance separates sourceStatus (document supplied or unattributed),
+    assumptionStatus and atomicMassConvention. Documentation is not independent
+    verification of a composition, grade or lot.
     """
     if grade is not None and grade.composition == 'declared_ions':
         return _resolve_declared(product_name, grade, lot)
@@ -948,6 +968,20 @@ def resolve_material(
             'lot': dict(lot.oxide_conversions) if lot is not None else {},
         },
         'assumed': assumed,
+        'sourceStatus': (
+            'lot_documented'
+            if lot is not None
+            else 'grade_documented'
+            if grade is not None
+            else 'catalogue_documented'
+            if source is not None
+            else 'catalogue_unattributed'
+        ),
+        'assumptionStatus': (
+            'assumed_composition' if assumed else 'declared_composition_not_independently_verified'
+        ),
+        'identityStatus': None if blend else identity['status'],
+        'atomicMassConvention': ATOMIC_CONVENTION,
         'identitiesSha256': IDENTITIES_SHA256,
     }
     if blend:

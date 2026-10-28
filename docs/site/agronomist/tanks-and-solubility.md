@@ -1,11 +1,13 @@
 (conservative-stock-planning-p2)=
 # Stock tank planning
 
-`plan_stocks` converts a feasible final-solution recipe into a compatible concentrated-stock plan. It is conservative by design: it uses only supplied, versioned compatibility and solubility records. It does not infer product compatibility from names, formulas, or nutrient assays.
+`plan_stocks` converts a feasible final-solution recipe into an equipment-constrained stock assignment with explicit mixture qualification. It is conservative by design: it uses only supplied, versioned compatibility and solubility records. It does not infer product compatibility from names, formulas, or nutrient assays.
 
 ## API
 
-```python
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.titration_and_stocks` from the checkout.
+
+```text
 from flahax import (
     InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres, plan_stocks,
 )
@@ -33,6 +35,9 @@ V_stock = V_f / R               [L stock]
 
 Each used tank must have capacity at least `V_stock`. The planner performs all comparisons before display rounding.
 
+See [condition-qualified assignments](stock-assignments.md) for `mixture_model`,
+its required evidence, alternative search and the downstream validation gate.
+
 ## Required evidence
 
 Every salt in the recipe needs a sourced solubility-limit record that covers the requested temperature:
@@ -57,7 +62,7 @@ The planner rejects:
 
 ## Deterministic assignment
 
-The planner evaluates valid tank assignments in tank-ID order and chooses one that uses the fewest tanks. It returns the first deterministic assignment at that minimum. This is an explainable constraint solution, not a chemical equilibrium calculation.
+The planner evaluates valid tank assignments in tank-ID order and chooses one that uses the fewest tanks. It prefers the first model-qualified assignment at that minimum; without a qualified model, a structural layout remains under review. This is an explainable constraint solution, not a chemical equilibrium calculation.
 
 (mathematical-verification-is-the-completion-criterion)=
 ## Model verification and limits

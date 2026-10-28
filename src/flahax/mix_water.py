@@ -39,6 +39,7 @@ def to_elements(values, units, alkalinity, micro='mg'):
     """Lab values (``WATER_IONS`` names) in ``units`` to the ``read_water`` keys in mg/L.
 
     Micronutrients are in ``micro`` (``mg`` of the element or ``umol``) whatever ``units`` is.
+    This preserves solution volume; ``read_water`` applies the disclosed solvent basis.
     """
     out = {}
     for ion, value in values.items():
@@ -189,6 +190,18 @@ def ask_analysis(p, store):
         if apart > WATER_SCREEN_PERCENT and pick == 2:
             continue
         data = {'id': name, 'measured_ph': ph, 'mg_per_litre': mg}
+        # The lab's alkalinity-as-HCO3 is an equivalent mass, not measured carbon.
+        if 'HCO3' in mg:
+            data['alkalinity_meq_per_litre'] = mg.pop('HCO3') / HCO3
+        p.say(
+            'Concentration basis: no solvent mass was entered; the report flags '
+            'the 1 kg final solvent/L assumption and unquantified uncertainty. '
+            'Water JSON can supply final solvent mass/volume or density/nonwater mass.'
+        )
         if below:
             data['below_detection'] = to_elements(below, units, alkalinity, micro)
+            if 'HCO3' in data['below_detection']:
+                data['alkalinity_below_detection_meq_per_litre'] = (
+                    data['below_detection'].pop('HCO3') / HCO3
+                )
         return name, data

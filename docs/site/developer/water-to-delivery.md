@@ -49,7 +49,7 @@ result = plan_fertilizer_workflow(
     water={'Ca': 20}, target_ph=6.5,
 )
 assert result.nutrient_gap['Ca'] == 84
-assert result.stages['formulation'].status == 'requires_review'
+assert result.stages['formulation'].status == 'blocked'
 assert result.stages['chemistry'].status == 'needs_input'
 ```
 
@@ -113,11 +113,10 @@ below_detection=None)` speciates a laboratory analysis at its measured pH.
   rest is closed on `balance_ion` (`Cl-` or `Na+`), as PHREEQC's `charge`
   option does, only if that ion is measured, positive and not fixed
   (`fixed_balance_ion`, `missing_balance_ion`). When the default `Cl-` is not
-  measured, zero or below detection and the analysis has carbonate, the rest is
-  closed on the carbonate instead (`closed_on_alkalinity`, `balance_ion` `CO3-2`;
-  owner decision 2026-10-23, #100): alkalinity is the value the measured pH
-  depends on and usually the least precise. It is noted in the report and does
-  not put the plan in review. No other ion is tried. With
+  measured, zero or below detection, only positive, nonfixed directly supplied carbon
+  may use the legacy model-only fallback (`closed_on_alkalinity`). Titrated alkalinity,
+  fixed carbon and carbon measured zero are held fixed. A measured titration without
+  a suitable balance ion requires further input; no other ion is tried. With
   `balance_ion_uncertainty_percent` the adjustment must lie within that stated
   measurement uncertainty (`reconciled`, else `reconciliation_out_of_bounds`).
   Without it the closure is an assumption (`assumed`): the workflow's chemistry
@@ -217,12 +216,21 @@ its targets and the plan is rejected. `ph_adjustment` plans them together:
    nitric acid, P from phosphoric acid, K from the bases) are counted as supply,
    like the water's, and the recipe is fitted again. This repeats until the
    recipe and the dose agree; if the recipe switches products between nearby
-   doses, the nearer side is taken and its nutrients are rescored at the dose
-   that recipe needs.
+   doses, the two bracketing product recipes are blended. Charge balance is solved
+   on each actual mixture; pH values are never interpolated. A trial that crosses
+   to the opposite reagent direction bounds the search but cannot be returned as
+   a plan. The final dose is independently recalculated, and nutrient rows, limits,
+   source attribution and unmet-target diagnostics are rebuilt from that recipe.
+   A missing charge bracket or dose disagreement reports nonconvergence.
 4. Every candidate reports its dose (mol/kg water, product grams and, with a
    density, litres), nutrient contribution, recipe and target-pH state, even
    when it is rejected. A plan is selected only from accepted candidates, by
    lowest final nutrient loss.
+
+This search is not a global joint-optimization certificate. Recipe selection can
+change when the nutrient objective changes; an acid-only inventory may become
+inapplicable if the new unadjusted recipe needs a base. Existing targets and
+maximum concentrations remain unchanged.
 
 A recipe that misses a target still gets a pH plan: the miss stays in the
 recipe's `unmetTargets`. Bases are added as K+ with implicit hydroxide (KOH),
@@ -231,31 +239,43 @@ or with inorganic carbon (KHCO3, K2CO3) under the closed carbon boundary.
 pH-up products (Potassium Hydroxide (45% solution), Potassium Bicarbonate,
 Potassium Carbonate); acids are supplied by the user with the assay and density
 from the supplier's certificate. A plan is rejected when its target state has
-solids or a supersaturated phase that forms readily; phases that only need
-review make it `requires_review` (next section).
+solids, unresolved SI sign, or supersaturation without applicable evidence
+(next section).
 
 ## Saturation indices and acceptance
 
-A positive saturation index says a solid is thermodynamically possible, not
-that it forms. FlahaX and live PHREEQC 3.8.6 agree on every sign at the coupled
-target states (#78), so the question is which phases form at feed conditions.
-Four phases, supersaturated in most phosphate feeds, make a plan
-`requires_review` instead of rejecting it, each with its reason and sources:
+A positive saturation index is a thermodynamic finding, not a precipitation rate.
+No phase name grants an exemption. Supersaturation without matching reviewed
+kinetic/redox evidence prevents approval, including Hydroxylapatite, Goethite,
+MnHPO4 and Vivianite. The MnHPO4 measurement/source chain remains unverified;
+that is not proof that measurements or precipitation do not exist.
 
-| Phase | Why it needs review, not rejection | Sources |
-|---|---|---|
-| Hydroxylapatite | Forms through amorphous, octacalcium-phosphate and brushite precursors; magnesium slows it. Brushite stays a hard gate | Nancollas, Tomazic & Tomson (1976) Croat. Chem. Acta 48(4), 431-438 |
-| Goethite | Forms slowly from ferrihydrite (months to years at 24 C); ferrihydrite stays a hard gate | Schwertmann & Murad (1983) Clays Clay Miner. 31(4), 277-284 |
-| MnHPO4 | The anhydrous phase's constant (log K -25.4) traces only to 1976 program data; not reported to form at 25 C or in dilute feeds | Ball & Nordstrom (1991) USGS OFR 91-183; Pedas et al. (2011) Front. Plant Sci. 2:37 |
-| Vivianite | An Fe(II) phosphate of reducing environments; the model holds Fe(II) fixed, but it oxidizes in an aerated feed | Metz et al. (2024) Environ. Sci. Technol. 58, 15321; Rothe et al. (2016) Earth-Sci. Rev. 158, 51 |
+`assess_saturation` reports `thermodynamic`, `applicability`, `solids`, and
+`invalid_solids` separately. The existing SI comparison guard is numerical only.
+An SI interval touching zero has `uncertain_sign` and prevents approval; a
+caller-supplied SI uncertainty half-width can widen that interval but cannot
+remove the guard. It is not a kinetic allowance or a certified model-error bound.
+Any positive allocated solid prevents approval, even below the old reporting
+cutoff or when the reported SI is negative. Invalid SI/allocation data fail closed.
+Negative infinity denotes an absent-reactant index, not a finite uncertainty interval.
 
-When the feed contains iron(II) (for example from iron(II) sulfate), plans also
-carry an advisory: the iron oxidizes within hours (pH 6) to days (pH 5.5) and
-precipitates as amorphous Fe(III) phosphate; prefer a chelated iron source.
-Every other positive index, for example brushite, monetite, gypsum, struvite,
-calcite or ferrihydrite, still rejects the plan, and allocated solids always
-do. All indices are reported. The classification is in
-`flahax/saturation_policy.py`.
+The optional `conditions` and `evidence` mappings support explicit applicability
+review. A phase-specific evidence record must contain `phase`, `source`,
+`review_id`, `reviewed=True`, `decision="review_only"` and a `conditions` envelope.
+It must specify temperature (C), pH, ionic strength (mol/kg water), holding time
+(hours), redox and solution-matrix identity. Numeric envelopes are inclusive
+pairs; categorical conditions must match exactly. All additional conditions in
+the record must match too. State pH and ionic strength take precedence over
+caller values. Missing, unreviewed or out-of-envelope evidence cannot exempt a
+phase. These are caller-reviewed evidence records, not automatically verified
+source claims. No physical applicability envelopes ship with FlahaX.
+
+Matching evidence permits review only: `mixing_approved` remains false. The
+public workflows use the conservative default and do not infer holding time,
+redox, matrix identity or evidence from a phase name. Mathematical completion
+requires testing these decisions, not waiting for future physical experiments.
+Iron(II) has a fixed oxidation state in this model; its advisory does not invent
+an oxidation half-life or guarantee which real solids will form.
 
 ## Reproducible evidence
 
@@ -273,7 +293,10 @@ Dose tolerance is 3% relative plus 1e-9 mol/kg-water, pH tolerance 0.01, and
 PHREEQC charge error must not exceed 0.1%. The existing database and all prior
 product/phase/failure captures are preserved.
 
-Regenerate only the new captures using `python tools/acid_selection_evidence.py`.
+Generate review candidates using
+`python tools/acid_selection_evidence.py --output NEW_DIRECTORY`.
+The destination must be new and outside the immutable historical fixture tree;
+existing captures and their comparison budgets are never replaced by this command.
 It uses the pinned external 3.8.6-17100 installation and temporarily merges
 unchanged `minteq.v4.dat` with the existing chelate and phase extensions. No
 executable or merged database is checked in.
@@ -284,3 +307,224 @@ executable or merged database is checked in.
 Dated development checks are preserved in the
 [planning validation history](../evidence/planning-validation-history.md#water-to-delivery-validation).
 They record those runs only and do not establish current release validation.
+
+See [total alkalinity and carbon inference](../models/total-alkalinity.md) for the
+qualified inorganic proton reference and distinct water JSON titration field.
+
+
+## Size channels and reconcile delivery
+
+Use `size_injection_requirements` with final batch litres, or concurrently active
+area in m2 times gross depth in mm, plus duration in hours. Specify each channel's
+final-litres-per-stock-litre ratio and actual available prepared stock litres.
+For a 120 L batch over two hours, ratios 100, 200 and 400 require 1.2, 0.6 and
+0.3 L respectively; their additive carrier remainder is 117.9 L. Per-channel
+flows are 0.6, 0.3 and 0.15 L/h. These numbers follow direct division and summation,
+not empirical equipment performance.
+
+Transfer each required channel volume to `plan_pump_command` using its own
+calibration and inventory. Include every fertilizer channel and the separately
+planned reagent channel once. A pump command's runtime is litres divided by
+calibrated litres/minute. Reconcile the resulting commands with
+`compose_delivery_plan` before advancing the draft.
+
+A final-volume ratio is not a motive-water injector setting. Common-carrier
+percentages use the shared carrier remainder; serial devices see different local
+flows. Manufacturer operating curves, pressure differential, turndown and stock
+properties remain necessary to select hardware. No contact-time, contraction or
+hydraulic mixing model is supplied, and no equipment is operated.
+
+
+## Canonical calculation and export identity
+
+`plan_fertilizer_workflow` retains a `canonical_result`: an immutable JSON snapshot
+of normalized inputs, complete stage values (including selected and rejected
+candidates), package version and SHA-256 fingerprints of packaged Python/JSON
+model sources. Its `result_id` identifies that exact calculation content.
+`to_dict()` returns a detached copy. Changing the workflow after calculation or
+supplying different product records to `summarize_batch` raises
+`canonical_result_mismatch`; rerun the calculation with the intended inputs.
+
+The summary retains `calculation_identity` with the calculation ID and input,
+source, weighed-recipe and actual-state fingerprints. An unavailable state has
+no state fingerprint. `export_identity` binds all final export fields. Batch
+metadata is added before final export sealing. Report-time tank ratios, temperatures
+and display metadata belong to the export identity; the calculation ID identifies
+the preceding workflow snapshot. HTML, sheets and terminal views
+check bound exports and reject later edits. The same calculation reference
+appears in reports, sheets and the plain terminal summary. These hashes establish
+content identity, not authenticity, independent review or scientific validity.
+
+Legacy manually assembled workflows have `legacy_unverified` identity and cannot
+claim a bound calculation. Synthetic presentation fixtures explicitly remove their
+calculation identity; they are not production acceptance evidence. A stored export
+can still be rendered on a newer installation: its identity describes its retained
+calculation, whereas a live workflow rejects model-source changes before reporting.
+
+The `statuses` mapping preserves independent formulation, chemistry, phase, pH,
+EC, stock, delivery, physical and overall qualifications. Numerical convergence is
+`not_reported` because the legacy recommendation does not expose a convergence
+certificate; feasibility is not substituted for one. Delivery and physical
+validation remain `not_validated`. Overall blocking retains the existing precedence;
+no successful stage promotes an unrelated unsupported stage to success.
+
+
+## Evaluate remedies without changing the original plan
+
+Pass `remedy_options` and an explicit `max_remedy_evaluations` budget to
+`plan_fertilizer_workflow`. The default budget is 20 workflow evaluations.
+Each option has a unique `id`, `kind` and `changes` mapping:
+
+- `catalogue`: `changes.products` is a bundle of product records to add to the
+  supplied pool. `available: true` confirms the whole bundle is available.
+  All products are fitted together, retaining permissions, targets and maxima.
+  Changed assays need new record IDs; an existing record cannot be overwritten.
+- `treatment`: `changes.water` supplies the treated nutrient analysis and
+  `changes.equilibrium` supplies its equilibrium configuration. `evidence.source`
+  and `evidence.revision` identify the supplied analysis. No removal efficiency,
+  water composition or treatment performance is invented. Missing chemistry
+  inputs remain unresolved even when nutrient constraints improve.
+- `equipment`: `changes.stocks` supplies the complete stock-planning configuration.
+  Tank capacity, separation, solubility and mixture-model qualification are
+  rechecked. Additional tanks alone do not establish mixture compatibility.
+
+Call template: supply the named records described on this page; this fragment is not a standalone example. For a complete synthetic repository example, run `python -m examples.calculated_site_planning` from the checkout.
+
+```text
+workflow = plan_fertilizer_workflow(
+    available_products, targets, measured_water, target_ph,
+    final_volume=VolumeLitres(100),
+    remedy_options=[{
+        "id": "available-bundle", "kind": "catalogue", "available": True,
+        "changes": {"products": additional_available_products},
+    }],
+    max_remedy_evaluations=5,
+)
+```
+
+`workflow.remedies.requirements` provides a next action for every unmet nutrient,
+violated maximum and unfinished stage. Scoped structural proofs remain attached;
+failed numerical searches never become global impossibility claims. The original
+recipe and water are retained. Explicitly rerun with the chosen inputs to adopt a
+scenario; there is no automatic replacement or external action.
+
+Each option reports `potential_remedy`, `not_evaluated`, `evaluation_failed`,
+`evaluated_no_resolution` or `evaluated_candidate`. An evaluated candidate resolves
+at least one baseline requirement; it can still introduce or retain other issues.
+Inspect `resolved_requirements`, `introduced_requirements` and
+`remaining_requirements`, plus the immutable candidate `snapshot` and
+`calculation_id`. These results do not imply delivery or physical approval.
+
+The search covers only the supplied scenarios and product bundles. It does not
+combine separate options automatically, enumerate the whole market, prove a
+minimum-cost equipment solution or select a manufacturer model. Budget skips and
+conditional options make `search_incomplete` explicit. `declared_options_evaluated`
+only means the supplied scenarios were attempted, not that a solution exists.
+
+The JSON `workflow` command accepts the same option fields. Its equipment options
+use the existing stock JSON shape (`final_litres_per_stock_litre`, `temperature_c`
+and tanks with `id`/`capacity_litres`). Python callers use the typed stock values.
+
+
+## Exact-result acceptance and saved-state schemas
+
+`flahax.result_acceptance.accept_result(summary, actor=..., reason=...)` records
+explicit consent to the exact proposal in a bound summary. It does not change
+calculation statuses or waive any guard. Actor and reason are explicit caller
+inputs; attribution is not authenticated. A blocked zero/hard limit stays blocked,
+an unassessed EC stays unassessed, and physical validation stays separate.
+
+The schema-version-1 acceptance record contains `scope=exact_result_proposal`,
+`actor`, `reason`, a timezone-qualified `recorded_at`, `result_id` and
+`export_sha256`. `verify_acceptance` rejects changed doses, inputs, state, evidence,
+source identity or export metadata, including a modified export that was resealed.
+Recalculation requires fresh explicit acceptance if its content differs. Hashes
+identify content; they do not establish authenticity or scientific validity.
+
+`save_result(summary, acceptance=None)` builds an archive with `schema_version=1`,
+`payload={summary, acceptance}` and the payload `sha256`. Saving alone creates no
+consent. `load_result` validates both the archive and its nested identities and
+returns a detached payload. `Store.save('results', name, archive)` and
+`Store.load('results', name)` validate the same contract. Use
+`batch_cli.render_saved_result(archive)` to validate before rendering an archived
+result. Historical results preserve their historical source identities; rendering
+is not recalculation against the current engine.
+
+New saved mix sessions retain their answer fields and add `saved_state` with
+`schema_version=1`, `inputs_sha256`, named-item `references` fingerprints and
+package `sources` fingerprints. Execution rejects changed answers, referenced
+water/formula/product/reagent files or model sources. Unknown schema versions and
+malformed metadata fail explicitly. Both terminal interfaces use the shared store
+and option conversion; neither grants consent automatically.
+
+### Migrating saved sessions
+
+Legacy answer-only sessions remain readable and rerun using current inputs. They
+have no asserted historical provenance or result consent. Legacy `accepted` or
+`acceptance` fields are rejected on ordinary load: they cannot become approval of
+another result. No files in the user's home are migrated automatically.
+
+After reviewing the answers and current referenced records, call
+`mix_store.migrate_session(store, old_answers)` to obtain a new bound session,
+then save it under a reviewed name with `store.save('sessions', name, migrated)`.
+Migration discards old consent and old fingerprints; it captures current inputs,
+not reconstructed history. The original dictionary/file is unchanged. Rerun the
+calculation and review the new result before creating any new acceptance record.
+
+
+## Public command and file contracts
+
+`recommend` is a nutrient-fit JSON adapter: its supported keyword fields match
+`recommend` in Python, with `salts` providing the product library and legacy
+`allowIons`/`allowCarbonates` aliases retained. Duplicate aliases, unknown fields
+and string-valued permission booleans are errors. Explicit hard maxima are passed
+to the same engine. A successful calculation can still be infeasible.
+
+The `workflow` JSON adapter accepts `salts`, `targets`, `water`, `target_ph`,
+`final_volume_litres`, `stocks`, `equilibrium`, `acids`, `maximum_concentrations`,
+`remedy_options` and `max_remedy_evaluations`. Other Python-only configurations
+are rejected, never silently applied or approximated. Its serialized canonical
+result retains the immutable `payload`; reconstruct `CanonicalResult(payload)`
+to obtain its result ID. Missing chemistry stays `needs_input`.
+
+Batch/plain mix JSON summaries and HTML outputs refer to the same canonical
+calculation and export identity. Blocked outputs contain diagnostic quantities,
+not preparation instructions. Saved-result archives are a separate versioned
+format; raw session answers and legacy summaries do not imply acceptance. The
+Python acceptance/archive functions are now top-level exports documented in the
+[API inventory](../reference/api.md).
+
+Use the user guide's command-specific exit contract: JSON calculators use zero
+for a returned result, while batch/mix return three for a written blocked result.
+Always inspect the result rather than using process success as an approval gate.
+
+
+## Terminal lifecycle and platform validation
+
+The full-screen adapter calls the shared saved-session validation and batch
+workflow. It renders the same content-bound summary as plain mode, with no
+separate formulation calculation. Modified summaries fail identity verification;
+stale saved sessions fail before the workflow runs. Resize and result-navigation
+paths do not change calculated state.
+
+`Terminal` attempts screen/cursor cleanup and restores the captured console mode
+on normal exit and errors. A failed entry write/flush triggers best-effort screen
+cleanup while preserving the original exception. POSIX EOF terminates input
+instead of repeatedly reading an empty descriptor; buffered keys are delivered
+before a subsequent EOF. POSIX `termios.error` is normalized explicitly: failed
+mode probing returns unavailable, failed setup attempts rollback, and failed
+restoration raises a handled `OSError`. Windows uses native console keys and ANSI mode; POSIX
+uses the captured termios state and cbreak input.
+
+Run `python -m unittest tests.test_terminal tests.test_terminal_platform
+ tests.test_mix_tui tests.test_mix_results` with `PYTHONPATH=src;.` on Windows
+(`PYTHONPATH=src:.` on POSIX). Native Windows testing creates a hidden, isolated
+child console and verifies Unicode input and mode restoration. Native POSIX
+testing uses a real PTY in an isolated child session and verifies input, cbreak
+mode and exception restoration. The child ignores its PTY teardown hangup so
+closing the test PTY cannot terminate the test runner. Cygwin uses this POSIX path;
+record its runtime explicitly rather than claiming Linux/macOS validation.
+Each native check skips on the other runtime. Controlled-interface tests exercise both
+adapters but are not substitutes for native-platform evidence. Record both native
+runs before claiming cross-platform validation; a skipped native check remains
+unverified on that host.

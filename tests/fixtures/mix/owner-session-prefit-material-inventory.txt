@@ -1,0 +1,91 @@
+FlahaX <VERSION> mix: five steps. Enter keeps the value in brackets; Ctrl+C stops.
+1/5 Specification
+? Tank A capacity, L [1000]: 
+? Tank B capacity, L [1000]: 
+? Acid container capacity, L [100]: 
+? Injection ratio, litres of irrigation per litre of stock [100]: 
+? Stock temperature, °C [25]: 
+How is stock prepared?
+  1  Fill the tanks full and run several irrigations from them
+  2  Make just enough for one irrigation
+? Number [1]: 
+  1,000 L of irrigation; prepare 10 L in each container (your 10 L acid container sets the batch).
+2/5 Water analysis
+Water
+  1  RO water (no ions)
+  2  A new analysis
+? Number [1]: 
+? Concentration limits in the final solution, mg/L, e.g. Na=69 Cl=106 [none]: 
+3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)
+Formula
+  1  A packaged formula
+  2  Start from a packaged formula and change it
+  3  Type a new one
+? Number [1]: 
+? Crop formula (part of the name; Enter lists all 26): 
+9 match:
+  1  Tomato (Howard Resh)
+  2  Tomato Stage.1 - 10-14 days (Howard Resh)
+  3  Tomato Stage.2 - first cluster (Howard Resh)
+  4  Tomato Stage.3 - to plant maturity (Howard Resh)
+  5  Tomatoes - Fourth Cluster (U of Florida)
+  6  Tomatoes - Second Cluster (U of Florida)
+  7  Tomatoes - Third Cluster (U of Florida)
+  8  Tomatoes - till First Cluster (U of Florida)
+  9  Tomatoes - to termination (U of Florida)
+? Number [1]: 
+Formula balance: cations 11.75 meq/L, anions 11.74 meq/L (+0.1 %).
+4/5 Fertilizers available
+Fertilizers
+  1  The whole catalogue
+  2  Tick what I have
+? Number [1]: 
+Add a product?
+  1  No
+  2  A single chemical with its label analysis
+  3  A compound from its data sheet
+? Number [1]: 
+Acids for the pH plan
+  1  A new acid from its certificate
+  2  No acid
+? Number [1]: 
+? Acid formula (HNO3, H3PO4, H2SO4, C6H8O7) [HNO3]: 
+? Assay on the certificate, % w/w: 
+? Density on the certificate, kg/L: 
+? Name of this acid [HNO3 65%]: 
+  Added HNO3 65% for the pH plan.
+Acids for the pH plan
+  1  A new acid from its certificate
+  2  Done
+? Number [2]: 
+5/5 pH requirement
+? Target pH of the final solution [5.8]: 
+Output depth
+  1  Grower: tanks A and B, and the acid
+  2  Agronomist: adds the nutrient table and the pH path
+  3  Full report
+? Number [1]: 
+? Save these answers as [Tomato Stage.1 - 10-14 days (Howard Resh) ro]: 
+Saved the answers as <TMP>/home/sessions/tomato-stage-1.json; next time: flahax mix sessions/tomato-stage-1
+FlahaX <VERSION>: Tomato Stage.1 - 10-14 days (Howard Resh) - review notes before mixing
+  ! Sodium Molybdate (Dihydrate) is included because Mo stayed more than 1% short without it. It also carries Na.
+  ! Fit includes formula counterion sodium (chelates D2, CH - micro borax/molybdate): 0.6696 mg/L.
+  ! Concentration basis: Assumes 1 kg final solvent water per litre; carrier/hydrate water and nonwater mass are not independently quantified. Uncertainty ... (full text on the batch sheet)
+  ... 5 more notes: choose output 2 or 3 to see them all
+Irrigation supplied: 1,000 L at 1:100
+Tank A: prepare 10 L in your 100 L tank (your 10 L acid container sets the batch); no acid
+  [ ] Calcium Nitrate (ag grade): 524.5 g
+  [ ] Boric Acid: 1.72 g
+  [ ] Copper Sulfate (pentahydrate): 0.28 g
+  [ ] Iron II Sulfate (Hepahydrate): 14.9 g
+  [ ] Mn EDTA: 6.15 g
+  [ ] Zinc Sulfate (Monohydrate): 0.27 g
+  [ ] Sodium Molybdate (Dihydrate): 0.076 g
+  [ ] Mg Nitrate: 78.5 g
+  [ ] Potassium Citrate: 38.1 g
+Tank B: prepare 10 L in your 100 L tank (your 10 L acid container sets the batch)
+  [ ] Potassium Dibasic Phosphate: 225 g
+  [ ] Potassium Sulfate: 188.1 g
+  [ ] Magnesium Sulfate (Heptahydrate): 127.4 g
+Acid container: 84.6 mL HNO3 65%, added to water and made up to 10 L (acid to water, never water to acid)
+Wrote batch-sheet.html, summary.json, report.html to <TMP>/out

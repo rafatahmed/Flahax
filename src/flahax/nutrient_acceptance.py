@@ -9,20 +9,22 @@ from .composition import validate_profile
 
 def assess_incidental(rows, maximum_concentrations=None):
     """Untargeted nutrients present in the solution and the limits exceeded; an incidental nutrient
-    without a limit requires review.
+    without a limit requires review. Explicit zero targets are hard zero limits,
+    not incidental nutrients. Limits are compared directly without an absolute slack.
     """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
     )
+    maximums.update({row['symbol']: 0.0 for row in rows if row['target'] == 0})
     final = {row['symbol']: row['final'] for row in rows}
     violations = [
         {'symbol': ion, 'ppm': final.get(ion, 0.0), 'maximumPpm': limit}
         for ion, limit in maximums.items()
-        if final.get(ion, 0.0) > limit + 1e-12
+        if final.get(ion, 0.0) > limit
     ]
     incidental = []
     for row in rows:
-        if row['target'] not in (None, 0) or row['final'] <= 1e-12:
+        if row['target'] is not None or row['final'] <= 0:
             continue
         limit = maximums.get(row['symbol'])
         incidental.append(
@@ -33,7 +35,7 @@ def assess_incidental(rows, maximum_concentrations=None):
                 'maximumPpm': limit,
                 'assessment': 'requires_review'
                 if limit is None
-                else ('within_limit' if row['final'] <= limit + 1e-12 else 'exceeds_limit'),
+                else ('within_limit' if row['final'] <= limit else 'exceeds_limit'),
             }
         )
     return {
@@ -59,7 +61,7 @@ def name_sources(assessment, dosed, library, water=None):
     ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre}); ``library`` the product records.
     Formula counterion sodium (chelates, #84) names the product that carries it.
     """
-    from .product_conversion import counterion_sodium_mg_per_l
+    from .product_conversion import material_inventory
 
     records = {record.get('id'): record for record in library}
     for row in assessment['incidentalContributions']:
@@ -68,10 +70,7 @@ def name_sources(assessment, dosed, library, water=None):
             record = records.get(item['id'])
             if record is None:
                 continue
-            if row['symbol'] in record.get('elements', {}) or (
-                row['symbol'] == 'Na'
-                and counterion_sodium_mg_per_l([(record, item['gramsPerLitre'])]) > 0
-            ):
+            if material_inventory(record)['nutrient_percent'].get(row['symbol'], 0) > 0:
                 names.append(item['name'])
         if (water or {}).get(row['symbol'], 0) > 0:
             names.append('water')
@@ -96,8 +95,8 @@ def assess_water_basis(rows, maximum_concentrations, analytical_ppm, modelled_pp
     for ion, limit in sorted(maximums.items()):
         measured = final.get(ion, 0.0)
         modelled = measured - analytical_ppm.get(ion, 0.0) + modelled_ppm.get(ion, 0.0)
-        if (measured > limit + 1e-12) != (modelled > limit + 1e-12):
-            exceeds = measured > limit + 1e-12
+        if (measured > limit) != (modelled > limit):
+            exceeds = measured > limit
             findings.append(
                 {
                     'symbol': ion,

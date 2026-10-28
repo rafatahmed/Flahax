@@ -50,6 +50,8 @@ def prepare_stocks(
     """Litres to prepare in tanks A and B and the acid container, filling them (``fill``) or for
     one irrigation (``once``).
     """
+    if not isinstance(tank_litres, Mapping):
+        raise DeliveryError("invalid_type", "tank_litres must be a mapping")
     if set(tank_litres) != set(CONTAINERS):
         raise DeliveryError(
             'invalid_value',
@@ -57,6 +59,8 @@ def prepare_stocks(
         )
     capacity = {name: _positive(tank_litres[name], f'{name} capacity') for name in CONTAINERS}
     ratio = _positive(ratio, 'injection ratio')
+    if ratio <= len(CONTAINERS):
+        raise DeliveryError('invalid_ratio', 'three stock channels require positive carrier water')
     if mode not in MODES:
         raise DeliveryError('invalid_value', f'mode must be one of {MODES}, got {mode!r}')
 
@@ -64,12 +68,12 @@ def prepare_stocks(
         # Assumption: irrigation_litres is ignored in fill mode. Each container is prepared to the
         # smallest capacity directly: (x * ratio) / ratio can round 1 ulp above x.
         prepared_each = min(capacity.values())
-        irrigation = prepared_each * ratio
+        irrigation = _positive(prepared_each * ratio, 'derived irrigation litres')
     else:
         if irrigation_litres is None:
             raise DeliveryError('invalid_value', 'one-irrigation mode needs irrigation_litres')
         irrigation = _positive(irrigation_litres, 'irrigation_litres')
-        prepared_each = irrigation / ratio
+        prepared_each = _positive(irrigation / ratio, 'derived prepared litres')
         too_small = [name for name in CONTAINERS if prepared_each > capacity[name]]
         if too_small:
             raise DeliveryError(

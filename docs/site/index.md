@@ -84,6 +84,7 @@ instructions. Measure pH and EC after mixing. See [Scope and limits](explanation
 Install <start/install>
 Your first batch <start/first-batch>
 Your first recipe in Python <start/first-recipe>
+Migrate saved workflows <start/migration>
 ```
 
 ```{toctree}
@@ -106,6 +107,8 @@ A batch from files <agronomist/batch-command>
 Formulas and products <agronomist/formula-and-products>
 pH, acids and bases <agronomist/ph-and-acids>
 Tanks and solubility <agronomist/tanks-and-solubility>
+Solubility qualification <agronomist/solubility-qualification>
+Condition-qualified stock assignments <agronomist/stock-assignments>
 Reading the results <agronomist/reading-results>
 ```
 
@@ -120,6 +123,7 @@ Site planning <developer/site-planning>
 Conductivity <developer/conductivity>
 Delivery contracts <developer/delivery-contracts>
 Delivery quantities <developer/delivery-quantities>
+Joint fertilizer/reagent problem <developer/joint-problem>
 Verification <developer/verification>
 Contributing <developer/contributing>
 ```
@@ -147,6 +151,11 @@ Method <models/method>
 Fertilizer equilibrium model <models/fertilizer-equilibrium-model>
 Equilibrium kernel <models/equilibrium-kernel>
 Full fertilizer chemistry <models/full-fertilizer-chemistry>
+Material masses and evidence status <models/material-mass-convention>
+Material inventory before fitting <models/material-inventory>
+Concentration and solvent mass <models/concentration-basis>
+Total alkalinity and carbon inference <models/total-alkalinity>
+Reaction qualification and domains <models/reaction-qualification>
 Chemistry coverage matrix <models/chemistry-coverage-matrix>
 PHREEQC reference fixtures <models/reference-fixtures>
 Chelate extension (25 °C) <models/flahax-chelate-thermodynamic-profile>

@@ -40,8 +40,9 @@ class SimpleTomatoTests(unittest.TestCase):
 
     def test_balance_and_ec_are_reported(self):
         self.assertLess(abs(self.r['ion_balance']['imbalancePercent']), 1.0)
-        self.assertEqual(self.r['ec']['status'], 'estimated')
-        self.assertGreater(self.r['ec']['ec25_ms_cm'], 1.0)
+        self.assertEqual(self.r['ec']['status'], 'not_supported')
+        self.assertIsNone(self.r['ec']['ec25_ms_cm'])
+        self.assertIsNone(self.r['ec']['range_ms_cm'])
 
 
 class AdvancedTomatoTests(unittest.TestCase):
@@ -84,11 +85,14 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertEqual(
             {c['product'] for c in acid['candidates']}, {'HNO3-example', 'H3PO4-example'}
         )
-        self.assertIsNone(acid['selected'])  # nitric needs review (#78); phosphoric misses P
+        self.assertIsNone(acid['selected'])  # phase-blocked nitric; phosphoric misses P
         self.assertEqual(
             {c['product']: c['status'] for c in acid['candidates']}['HNO3-example'],
-            'requires_review',
+            'rejected',
         )
+        nitric = next(c for c in acid['candidates'] if c['product'] == 'HNO3-example')
+        self.assertIn('Hydroxylapatite', nitric['message'])
+        self.assertIsNone(nitric['volume_litres'])
         self.assertTrue(acid['supersaturated_after_acid'])
         self.assertGreater(acid['nitric_ml_per_batch'], 0)
         miss = (

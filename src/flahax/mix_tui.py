@@ -467,7 +467,7 @@ def show_results(term, g, summary, output, ahead=()):
             if answer in ('y', 'Y'):
                 return
             done = answer is None
-        shown = None
+            shown = None  # redraw after the confirmation overlay
 
 
 def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):

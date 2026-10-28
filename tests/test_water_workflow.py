@@ -83,15 +83,29 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(result.nutrient_gap['Ca'], 84)
         self.assertEqual(result.target_ph, 6.5)
         self.assertEqual(result.water['Ca'], 20)
-        self.assertTrue(result.recommendation['feasible'])
-        self.assertEqual(result.stages['formulation'].status, 'requires_review')
-        violations = {
-            r['symbol']: r['ppm'] for r in result.recommendation['incidentalContributions']
+        self.assertFalse(result.recommendation['feasible'])
+        self.assertEqual(result.stages['formulation'].status, 'blocked')
+        self.assertEqual(result.recommendation['incidentalContributions'], [])
+        finals = {r['symbol']: r['final'] for r in result.recommendation['rows']}
+        self.assertEqual(finals['N_NH4'], 0)
+        self.assertEqual(finals['Na'], 0)
+        # Independent Na inventory: assayed sodium plus two Na per Mn-EDTA.
+        # Fit changes may change doses; a historical recipe's Na is not an oracle.
+        sodium_rates = {
+            p['name']: p['elements'].get('Na', 0) * 10
+            + (
+                p['elements']['Mn'] * 10 / 54.938044 * 2 * 22.989769
+                if p['name'] == 'Mn EDTA'
+                else 0
+            )
+            for p in products()
         }
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 4.84511367294
-        self.assertAlmostEqual(violations['N_NH4'], 4.84519260402, places=8)
-        # F2 chelate sodium reported (D2): was .0479192828162 (molybdate Na only)
-        self.assertAlmostEqual(violations['Na'], 1.7218299698621453, places=10)
+        expected_na = sum(
+            s['gramsPerLitre'] * sodium_rates[s['name']] for s in result.recommendation['salts']
+        )
+        # Published doses have six decimals; continuous fitted rows remain F04's scope.
+        rounding_bound = sum(sodium_rates.values()) * 0.5e-6
+        self.assertAlmostEqual(finals['Na'], expected_na, delta=rounding_bound + 1e-12)
         self.assertEqual(result.stages['chemistry'].status, 'needs_input')
         self.assertIsNone(result.stages['chemistry'].value)
         self.assertIn('water_totals', result.stages['chemistry'].required_inputs)
@@ -102,22 +116,31 @@ class WaterWorkflowTests(unittest.TestCase):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
         for function in (recommend, solve_weights):
             result = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19, 'N_NH4': 0}, {})
-            self.assertTrue(result['feasible'])
-            self.assertTrue(result['incidentalContributions'])
-            self.assertTrue(result['requiresReview'])
+            self.assertFalse(result['feasible'])
+            self.assertEqual(result['grams'], [0])
+            self.assertEqual(result['incidentalContributions'], [])
+            unspecified = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19}, {})
+            self.assertTrue(unspecified['incidentalContributions'])
+            self.assertTrue(unspecified['requiresReview'])
         result = recommend([products()[5]], {'K': 10, 'N_NH4': 0}, {})
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})
         result = plan_fertilizer_workflow(
             products(), TARGETS, {'Ca': 20}, 6.5, maximum_concentrations={'N_NH4': 6, 'Na': 2}
-        )  # F2 chelate sodium reported (D2): Na limit was .1
-        self.assertTrue(result.recommendation['feasible'])
+        )  # A positive allowance cannot override explicit zero targets.
+        self.assertFalse(result.recommendation['feasible'])
         self.assertFalse(result.recommendation['requiresReview'])
         blocked = plan_fertilizer_workflow(
             products(), TARGETS, {'Ca': 20}, 6.5, maximum_concentrations={'N_NH4': 0}
         )
         self.assertFalse(blocked.recommendation['feasible'])
-        self.assertEqual(blocked.recommendation['limitViolations'][0]['symbol'], 'N_NH4')
+        self.assertEqual(blocked.recommendation['limitViolations'], [])
+        self.assertTrue(
+            any(
+                r['reason'] == 'prohibited_by_zero_requirement'
+                for r in blocked.recommendation['unmetTargets']
+            )
+        )
 
     def test_calculated_ph_requires_explicit_boundary_and_conserves_components(self):
         totals = {'Na+': 0.002, 'Cl-': 0.002}
@@ -248,8 +271,10 @@ class WaterWorkflowTests(unittest.TestCase):
                 temperature=TemperatureCelsius(25),
             ),
         )
-        for stage in ('formulation', 'batch', 'chemistry', 'nitric', 'acid_selection', 'stocks'):
+        for stage in ('formulation', 'batch', 'chemistry', 'nitric', 'acid_selection'):
             self.assertEqual(result.stages[stage].status, 'calculated', result.stages[stage])
+        self.assertEqual(result.stages['stocks'].status, 'requires_review')
+        self.assertFalse(result.stages['stocks'].value.mixture_approved)
         self.assertEqual(result.stages['acid_selection'].value.selected_product_id, 'HNO3')
         self.assertAlmostEqual(result.stages['nitric'].value.equilibrium.target.ph, 6.5)
         self.assertGreater(result.stages['nitric'].value.reagent_volume_litres, 0)
@@ -309,9 +334,12 @@ class AcidSelectionTests(unittest.TestCase):
     def test_four_acids_conserve_charge_and_add_the_correct_nutrients(self):
         args = self.arguments()
         result = plan_acid_options(**args)
-        self.assertEqual(result.selected_product_id, 'C6H8O7')
+        # All acids preserve the only positive target (Na). Incidental additions
+        # under explicit maxima do not break this accuracy tie; input order does.
+        self.assertEqual(result.selected_product_id, args['products'][0]['id'])
         for candidate in result.candidates:
             self.assertEqual(candidate.status, 'accepted', candidate)
+            self.assertEqual(candidate.loss, 0)
             self.assertGreater(candidate.dose_molal, 0)
             self.assertLess(abs(candidate.target.charge_balance), 2e-12)
             self.assertAlmostEqual(

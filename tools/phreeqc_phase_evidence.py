@@ -7,10 +7,9 @@
 
 import json
 import tempfile
-import shutil
+import argparse
 from pathlib import Path
 from phreeqc_evidence import (
-    ROOT,
     INSTALL,
     merge,
     execute,
@@ -18,6 +17,7 @@ from phreeqc_evidence import (
     sha,
     fixed_ammonium,
     CASES as PRODUCTS,
+    new_capture_root,
 )
 from flahax.aqueous_model import chemistry
 from flahax.product_conversion import catalogue_dose_totals
@@ -61,26 +61,15 @@ CASES = {
 }
 
 
-def generate():
+def generate(destination):
+    destination = new_capture_root(destination)
     exe = INSTALL / 'bin/Release/phreeqc.exe'
     base = INSTALL / 'database/minteq.v4.dat'
     with tempfile.TemporaryDirectory(prefix='flahax-phases-') as tmp:
         db = Path(tmp) / 'merged.dat'
         merge(base, db)
         for name, (totals, ph, phases) in CASES.items():
-            folder = ROOT / 'tests/fixtures/phreeqc/phases' / name
-            previous = folder / (name + '.out')
-            if previous.exists() and any(
-                marker in previous.read_text(errors='replace') for marker in ('ERROR:', 'WARNING:')
-            ):
-                archive = (
-                    ROOT
-                    / 'tests/fixtures/phreeqc/failures'
-                    / ('phase_' + name + '_initial_charge')
-                )
-                archive.mkdir(parents=True, exist_ok=True)
-                for artifact in folder.glob(name + '.*'):
-                    shutil.copy2(artifact, archive / artifact.name)
+            folder = destination / name
             totals = totals | {'Na+': 0.01, 'Cl-': 0.01}
             definitions = {r['name']: r for r in chemistry()['phases']}
             phases = [
@@ -102,6 +91,7 @@ def generate():
                 'selected_rows': rows,
                 'reference': {
                     'software': 'PHREEQC 3.8.6-17100',
+                    'executable_sha256': sha(exe),
                     'base_sha256': sha(base),
                     'merged_sha256': sha(db),
                 },
@@ -118,9 +108,11 @@ def generate():
                     if p.suffix in ('.pqi', '.sel', '.out', '.screen')
                 },
             }
-            (folder / 'expected.json').write_text(json.dumps(data, indent=2) + '\n')
+            (folder / 'expected.json').write_bytes((json.dumps(data, indent=2) + '\n').encode())
             print(name, 'pH', rows[-1]['pH'], 'charge', rows[-1]['pct_err'], flush=True)
 
 
 if __name__ == '__main__':
-    generate()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, required=True, help='new capture directory')
+    generate(parser.parse_args().output)

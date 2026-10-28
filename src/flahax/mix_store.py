@@ -19,7 +19,7 @@ import tempfile
 
 from .delivery_contracts import DeliveryError
 
-KINDS = ('waters', 'formulas', 'stores', 'acids', 'sessions')
+KINDS = ('waters', 'formulas', 'stores', 'acids', 'sessions', 'results')
 
 
 def default_root():
@@ -65,10 +65,28 @@ class Store:
             )
         from .batch_cli import read_json  # names the file and the line if it is damaged
 
-        return read_json(path, f'saved {kind[:-1]}')
+        data = read_json(path, f'saved {kind[:-1]}')
+        if kind == 'results':
+            from .result_acceptance import load_result
+
+            load_result(data)
+        if kind == 'sessions':
+            from .mix_cli import check_session
+
+            check_session(data, path)
+        return data
 
     def save(self, kind, name, data):
         """Write a saved item atomically and return its path."""
+        if kind == 'sessions':
+            from .mix_cli import check_session
+
+            check_session(data, name)
+            data = bind_session(self, data)
+        if kind == 'results':
+            from .result_acceptance import load_result
+
+            load_result(data)
         path = self.path(kind, name)
         path.parent.mkdir(parents=True, exist_ok=True)
         handle, temp = tempfile.mkstemp(prefix=f'.{path.stem}-', suffix='.tmp', dir=path.parent)
@@ -84,3 +102,93 @@ class Store:
             Path(temp).unlink(missing_ok=True)
             raise
         return path
+
+
+def session_inputs(data):
+    """User answers only; stored metadata cannot grant result acceptance."""
+    return {k: v for k, v in data.items() if k != 'saved_state'}
+
+
+def check_saved_state(data):
+    """Validate versioned answers; legacy inputs have no asserted provenance."""
+    from .canonical_result import _digest
+
+    if 'acceptance' in data or 'accepted' in data:
+        raise DeliveryError('invalid_session', 'acceptance belongs to an exact saved result')
+    if 'saved_state' not in data:
+        return
+    state = data['saved_state']
+    if (
+        not isinstance(state, dict)
+        or set(state) != {'schema_version', 'inputs_sha256', 'references', 'sources'}
+        or type(state['schema_version']) is not int
+        or state['schema_version'] != 1
+        or not isinstance(state['references'], dict)
+        or not isinstance(state['sources'], dict)
+        or state['inputs_sha256'] != _digest(session_inputs(data))
+    ):
+        raise DeliveryError('invalid_session', 'saved session metadata or inputs changed')
+
+
+def _references(store, data):
+    from .canonical_result import _digest
+    from .engine import load_library
+
+    packaged = {f['name'] for f in load_library()['formulas']}
+    names = [('acids', name) for name in data['acids']]
+    for kind, key, builtin in [
+        ('waters', 'water', {'ro'}),
+        ('formulas', 'formula', packaged),
+        ('stores', 'store', {'catalogue'}),
+    ]:
+        if data[key] not in builtin:
+            names.append((kind, data[key]))
+    return {f'{kind}/{name}': _digest(store.load(kind, name)) for kind, name in names}
+
+
+def bind_session(store, data):
+    """Explicitly capture current answers/references; legacy provenance is not reconstructed."""
+    from copy import deepcopy
+    from .canonical_result import _digest, _sources
+
+    check_saved_state(data)
+    if 'saved_state' in data:
+        verify_session(store, data)
+        return deepcopy(data)
+    result = deepcopy(data)
+    result['saved_state'] = dict(
+        schema_version=1,
+        inputs_sha256=_digest(data),
+        references=_references(store, data),
+        sources=_sources(),
+    )
+    return result
+
+
+def verify_session(store, data):
+    """Detect reference/model drift before running saved answers. Legacy answers rerun normally."""
+    from .canonical_result import _sources
+
+    check_saved_state(data)
+    if 'saved_state' not in data:
+        return
+    state = data['saved_state']
+    if state['references'] != _references(store, data) or state['sources'] != _sources():
+        raise DeliveryError(
+            'stale_session', 'saved inputs or model changed; review and resave answers'
+        )
+
+
+def migrate_session(store, data):
+    """Explicitly rebind reviewed answers to current inputs; discard all old consent metadata.
+
+    This returns a new object without writing the old session or claiming its history.
+    Call Store.save only after reviewing the returned answers and referenced inputs.
+    """
+    from .mix_cli import check_session
+
+    if not isinstance(data, dict):
+        raise DeliveryError('invalid_session', 'session must be an object')
+    answers = {k: v for k, v in data.items() if k not in ('saved_state', 'acceptance', 'accepted')}
+    check_session(answers, 'migration')
+    return bind_session(store, answers)

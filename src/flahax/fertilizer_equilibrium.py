@@ -173,6 +173,8 @@ def _phosphate_complexes(
             ca, mg, po = next_ca, next_mg, next_po
             break
         ca, mg, po = (ca + next_ca) / 2, (mg + next_mg) / 2, (po + next_po) / 2
+    else:
+        raise DeliveryError("nonconvergent", "legacy phosphate complexation iteration limit")
     hpo = 10.0**LOG_BETA_HPO4_25C * po * h
     h2 = 10.0**LOG_BETA_H2PO4_25C * po * h**2
     return {
@@ -196,7 +198,9 @@ def _at_fixed_ionic_strength(
     calcium_available = totals.calcium
     phosphate_result = None
     pair = 0.0
-    for _ in range(20):
+    # The historical reference needs more than 20 sweeps to meet 1e-14.
+    # Budget increased without relaxing that balance-update criterion (#168).
+    for _ in range(100):
         if totals.phosphate:
             phosphate_result = _phosphate_complexes(
                 calcium_available,
@@ -233,6 +237,8 @@ def _at_fixed_ionic_strength(
         pair = (pair + next_pair) / 2.0
         calcium_available = (calcium_available + next_calcium) / 2.0
         sulfate = (sulfate + next_sulfate) / 2.0
+    else:
+        raise DeliveryError("nonconvergent", "legacy calcium-sulfate pairing iteration limit")
     carbonate = _carbonate(totals.carbonate, ph, gamma1, gamma2)
     ammonia = ammonia_speciation(totals.ammonium, ph, ionic_strength) if totals.ammonium else None
     species = {
@@ -382,6 +388,11 @@ def solve_legacy_phreeqc_macro(
             if not changed:
                 break
     result = _fixed_ph_equilibrium(current, ph)
+    if allow_precipitation and any(
+        si > 1e-8 and _phase_limit(current, phase) > 0
+        for phase, si in result.saturation_indices.items()
+    ):
+        raise DeliveryError("nonconvergent", "legacy phase allocation iteration limit")
     return FertilizerEquilibrium(
         result.totals,
         result.ph,

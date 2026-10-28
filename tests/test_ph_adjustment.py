@@ -46,12 +46,13 @@ RO = dict(
 CLOSED = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
 
 
-def coupled(formula, target_ph=5.8):
+def coupled(formula, target_ph=5.8, maxima=None):
     return plan_fertilizer_workflow(
         LIBRARY['salts'],
         FORMULAS[formula],
         {},
         target_ph,
+        maximum_concentrations=maxima,
         final_volume=VolumeLitres(1000),
         equilibrium=RO,
         ph_adjustment=dict(
@@ -120,7 +121,8 @@ class CatalogueTests(unittest.TestCase):
 class CoupledWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.alkaline = coupled('Tomato (Howard Resh)')  # mixes near pH 6.9 in RO water
+        # Preserve this reaction-accounting fixture's historical, now explicit allowance.
+        cls.alkaline = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
         cls.acidic = coupled(
             'Chilli (maximumyield)'
         )  # mixed at pH 3 when phosphoric acid was a P source
@@ -139,12 +141,14 @@ class CoupledWorkflowTests(unittest.TestCase):
         # Phosphoric acid's P is counted as supply: every target is met.
         self.assertTrue(by_formula['H3PO4'].recommendation['feasible'])
         # Nitric acid adds nitrate-N; calcium comes only from calcium nitrate, so N and Ca conflict
-        # slightly, and the miss is explained, not hidden.
+        # and the miss is explained, not hidden. No upper error bound follows
+        # from primary-only fitting: joint optimality remains a separate contract.
         nitric = by_formula['HNO3'].recommendation
+        self.assertFalse(nitric['feasible'])
         self.assertEqual({u['symbol'] for u in nitric['unmetTargets']}, {'N_NO3', 'Ca'})
         self.assertTrue(
             all(
-                u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) < 2
+                u['reason'] == 'conflicting_targets' and abs(u['deltaPct']) > 1
                 for u in nitric['unmetTargets']
             )
         )
@@ -176,16 +180,17 @@ class CoupledWorkflowTests(unittest.TestCase):
             all(not c.recommendation['feasible'] for c in computed)
         )  # reported, not hidden
 
-    def test_review_phases_give_a_usable_plan_with_their_reasons(self):
-        # Hydroxylapatite and MnHPO4 are supersaturated in every phosphate feed; they are
-        # review-class (#78), so a plan is selected and the stage asks for review.
+    def test_phase_names_cannot_authorize_a_plan_without_applicable_evidence(self):
         stage = self.alkaline.stages['ph_adjustment']
-        self.assertEqual(stage.status, 'requires_review')
-        chosen = stage.value.selected
-        self.assertIsNotNone(chosen)
-        self.assertFalse(chosen.saturation['blocks'])
-        self.assertIn('Hydroxylapatite', chosen.message)
-        self.assertTrue(math.isfinite(chosen.reagent_mass_g))
+        self.assertEqual(stage.status, 'blocked')
+        self.assertIsNone(stage.value.selected)
+        calculated = [c for c in stage.value.candidates if c.target is not None]
+        self.assertTrue(calculated)
+        for candidate in calculated:
+            self.assertTrue(candidate.saturation['blocks'])
+            self.assertFalse(candidate.saturation['mixing_approved'])
+            self.assertIn('Hydroxylapatite', candidate.message)
+            self.assertTrue(math.isfinite(candidate.reagent_mass_g))
 
     def test_readily_forming_phases_still_block_and_keep_the_dose(self):
         # Chilli with a base: monetite (CaHPO4) is supersaturated, a hard phase.

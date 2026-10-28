@@ -22,13 +22,13 @@ class SaturationPolicyTests(unittest.TestCase):
         for phase, (reason, sources) in REVIEW.items():
             self.assertTrue(reason and sources, phase)
 
-    def test_review_only_phases_do_not_block(self):
+    def test_phase_names_do_not_exempt_missing_evidence(self):
         result = assess_saturation(
             state({'Hydroxylapatite': 2.0, 'MnHPO4': 3.1, 'Goethite': 0.1, 'Gypsum': -0.5})
         )
-        self.assertFalse(result['blocks'])
+        self.assertTrue(result['blocks'])
         self.assertEqual(
-            [p for p, *_ in result['review']], ['MnHPO4', 'Hydroxylapatite', 'Goethite']
+            [p for p, *_ in result['review']], ['Goethite', 'Hydroxylapatite', 'MnHPO4']
         )
 
     def test_readily_forming_phases_and_solids_still_block(self):

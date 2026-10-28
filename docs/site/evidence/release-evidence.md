@@ -4,13 +4,17 @@ This page is the release log: for each FlahaX version, what was checked, on
 which revision, and with what result. Newest first.
 
 :::{note}
-**Current release: 0.4.0**, published to PyPI on 2026-10-17 through Trusted
-Publishing, after hosted CI on Python 3.11, 3.12 and 3.13 and a live PHREEQC
-replay passed. FlahaX is a dependency-free **planning and verification
-prototype**: the evidence is computational (see the
-[computational assessment](computational-review.md)), and no record here
-authorizes autonomous dosing, pump control, deployment or universal chemical
-certification.
+**Current release: 0.6.0**, the latest publication recorded on this page, dated
+2026-10-24. Its exact tagged revision, checks and artifact hashes are recorded
+[below](#060-publication-2026-10-24). This index summarizes recorded publications;
+it is not a new registry or hosted-CI verification.
+
+The checkout is **0.6.1.dev0**, an unpublished development version. Historical CI,
+reference replay and package checks do not certify this modified checkout.
+FlahaX is a planning and verification prototype: computational evidence is not
+laboratory/field validation and does not authorize dosing or deployment.
+See the [migration guide](../start/migration.md) and
+[computational assessment](computational-review.md).
 
 Each section is a record written at the time. Words such as "unpublished",
 "remaining" or "outstanding" describe that moment, not today.
@@ -22,7 +26,9 @@ They are kept here because the records cite them.
 
 | Version | Date | Status | Record |
 |---|---|---|---|
-| 0.4.0 | 2026-10-17 | Published, latest | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
+| 0.6.0 | 2026-10-24 | Published, latest recorded | [Publication](#060-publication-2026-10-24) |
+| 0.5.0 | 2026-10-20 | Published | [Publication](#050-publication-2026-10-20) |
+| 0.4.0 | 2026-10-17 | Published | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
 

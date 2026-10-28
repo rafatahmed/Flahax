@@ -28,7 +28,17 @@ ACID = 'HNO3:0.60:1.37:Nitric acid 60%'
 def run(tmp, *argv):
     out = Path(tmp) / str(abs(hash(argv)))
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        code = batch(['--formula', 'Tomato (Howard Resh)', *argv, '--output', str(out)])
+        code = batch(
+            [
+                '--formula',
+                'Tomato (Howard Resh)',
+                '--limit',
+                'N_NH4=14',
+                *argv,
+                '--output',
+                str(out),
+            ]
+        )
     return code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
 
 
@@ -49,43 +59,37 @@ class GrowersPageTests(unittest.TestCase):
         block = re.search(r'```json\n(\{"id": "station-104".*?)```', self.page, re.S).group(1)
         self.assertEqual(json.loads(block), WELL)
 
-    def test_the_sheet_table_matches_a_fresh_run(self):
+    def test_historical_table_is_not_current_delivery_authorization(self):
         code, summary = self.eight
-        self.assertEqual((code, summary['status']), (0, 'requires_review'))
-        produced = {
-            (t['name'], p['name']): (
-                round(p['gramsPerBatch'], 1),
-                round(p['stockGramsPerLitre'], 2),
-            )
-            for t in summary['tanks']['tanks']
-            for p in t['products']
-        }
-        rows = re.findall(r'^\| ([A-C]) \| ([^|]+?) \| ([\d.]+) \| ([\d.]+) \|$', self.page, re.M)
-        documented = {
-            (tank, name): (float(grams), float(stock)) for tank, name, grams, stock in rows
-        }
-        self.assertEqual(documented, produced)
+        self.assertEqual((code, summary['status']), (3, 'blocked'))
+        self.assertIn('Historical 0.6.0 figures', self.page)
+        self.assertIn('not current mixing instructions', self.page)
+        # Current equipment keeps the magnesium/phosphate separation.
+        self.assertEqual(len(summary['tanks']['tanks']), 3)
+        tanks = {p['name']: t['name'] for t in summary['tanks']['tanks'] for p in t['products']}
+        self.assertNotEqual(
+            tanks['Magnesium Sulfate (Heptahydrate)'], tanks['Potassium Monobasic Phosphate']
+        )
 
-    def test_the_quoted_numbers_match(self):
+    def test_current_eight_percent_output_preserves_limits_and_blocks_reagent(self):
         _, s = self.eight
         self.assertFalse(s['formulation']['unmet'])
-        self.assertEqual(round(s['ph']['selected']['volume_ml_per_batch'], 1), 1.5)
-        self.assertEqual(round(s['chemistry']['mixed_ph'], 2), 5.84)
-        limits = {row['symbol']: round(row['analyticalPpm'], 1) for row in s['limits']}
-        self.assertEqual(limits, {'Cl': 102.4, 'Na': 55.1})
-        self.assertEqual(round(s['ec']['ec25_ms_cm'], 1), 2.6)
-        nh4 = next(r['final'] for r in s['formulation']['rows'] if r['symbol'] == 'N_NH4')
-        self.assertEqual(round(nh4, 1), 9.2)
-        for text in (
-            '1.5 mL',
-            '5.84',
-            'Cl is 102.4 mg/L and Na 55.1 mg/L',
-            '9.2 mg/L NH4-N',
-            '2.6 mS/cm',
-        ):
-            self.assertIn(text, self.page)
+        self.assertIsNone(s['ph']['selected'])
+        self.assertEqual(s['ph']['status'], 'blocked')
+        self.assertTrue(s['ph']['candidates'])
+        self.assertTrue(all(c['status'] == 'rejected' for c in s['ph']['candidates']))
+        self.assertIn('Hydroxylapatite', s['ph']['candidates'][0]['message'])
+        limits = {row['symbol']: row['analyticalPpm'] for row in s['limits']}
+        # Product chloride may add to the measured water, up to the explicit cap.
+        self.assertGreaterEqual(limits['Cl'], WELL['mg_per_litre']['Cl'] * 0.08)
+        self.assertLessEqual(limits['Cl'], 106.35)
+        self.assertLessEqual(limits['Na'], 68.97)
+        self.assertLessEqual(limits['N_NH4'], 14)
+        self.assertEqual(s['ec']['status'], 'not_supported')
+        self.assertEqual(s['ec']['reason'], 'ionic_strength_outside_phosphate_fit')
+        self.assertIsNone(s['ec']['ec25_ms_cm'])
 
-    def test_nine_percent_is_blocked_and_ro_needs_acid(self):
+    def test_nine_percent_and_ro_cases_remain_blocked(self):
         code, nine = self.nine
         self.assertEqual((code, nine['status']), (3, 'blocked'))
         self.assertEqual(
@@ -93,10 +97,7 @@ class GrowersPageTests(unittest.TestCase):
             115.2,
         )
         self.assertIn('115.2 mg/L chloride', self.page)
-        _, ro = self.ro
-        self.assertEqual(round(ro['ph']['selected']['volume_ml_per_batch']), 47)
-        self.assertIn('47 mL of nitric', self.page)
-        code, bare = self.ro_no_acid
-        self.assertEqual(
-            (code, bare['status'], round(bare['ph']['unadjusted_ph'], 1)), (3, 'blocked', 6.9)
-        )
+        for code, result in (self.ro, self.ro_no_acid):
+            self.assertEqual((code, result['status']), (3, 'blocked'))
+            self.assertIsNone(result['ph']['selected'])
+            self.assertGreater(result['ph']['unadjusted_ph'], result['ph']['target_ph'])

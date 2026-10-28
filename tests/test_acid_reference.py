@@ -11,7 +11,15 @@ import tempfile
 import unittest
 
 from flahax import calculate_equilibrium_ph, plan_acid_options
-from tools.phreeqc_evidence import INSTALL, merge, execute, selected, sha
+from tools.phreeqc_evidence import (
+    INSTALL,
+    merge,
+    execute,
+    selected,
+    sha,
+    verify_reference_inventory,
+    verify_reference_installation,
+)
 
 FIXTURES = Path(__file__).parent / 'fixtures/phreeqc/acid_selection'
 
@@ -81,6 +89,7 @@ class AcidReferenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='flahax-acid-replay-') as temporary:
             database = Path(temporary) / 'merged.dat'
             merge(base, database)
+            verify_reference_installation(exe, base, database, verify_reference_inventory())
             for path in sorted(FIXTURES.glob('*/expected.json')):
                 data = json.loads(path.read_text())
                 self.assertEqual(sha(base), data['database_sha256'])

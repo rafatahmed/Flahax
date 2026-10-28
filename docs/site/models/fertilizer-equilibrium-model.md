@@ -2,6 +2,12 @@
 
 ## Current unified model contract
 
+Results carry [model-domain and omitted-competition qualifications](reaction-qualification.md).
+Numerical convergence alone does not qualify an incomplete reaction family.
+
+The [shared material inventory](material-inventory.md) supplies pre-fit nutrients
+and chemistry components, with explicit incomplete/composition-disagreement fields.
+
 `catalogue_dose_totals(doses)` converts `library.json` products in **g/kg water**, not g/L, into analytical molal totals. `solve_catalogue_product_doses(doses, ph, water_totals=..., allow_precipitation=True)` sums them into `aqueous_model.solve`. Macro and trace wrappers use that same solver. `plan_catalogue_nitric_target(doses, initial_ph, target_ph, water_totals=..., phases=...)` adds nitrate and repeatedly calls the identical model. Volume-based recipe callers must supply water mass; density is not guessed.
 
 The generated `data/chemistry_25c.json` stores the exact master-basis expansion of 197 aqueous entries and 28 phases from pinned MINTEQ plus two extensions. [Every reaction](chemistry-coverage-matrix.md) has its original equation, log K and source line. `LIGAND_PROFILES` is derived from that file, not an independently rounded table.
@@ -37,3 +43,32 @@ Historical `phreeqc.dat` tests explicitly call `solve_legacy_phreeqc_macro` and 
 ## Historical reference
 
 Earlier reduced-model development notes are [archived separately](https://github.com/rafatahmed/Flahax/blob/main/docs/history/reduced-equilibrium-model.md). Legacy kernels and fixtures remain available for compatibility and regression evidence; they are not the current mixed-system planning contract.
+
+### Retained compatibility kernels and numerical checks
+
+The public macro and trace wrappers use the simultaneous model above. The
+explicit `solve_legacy_phreeqc_macro` and `plan_legacy_phreeqc_nitric` functions,
+calcite/gypsum reference solvers, isolated phosphate speciation and reduced
+struvite mixture retain their original reaction subsets for compatibility and
+historical fixture interpretation. They do not inherit the current model's
+ligand coverage, phase competition or full charge accounting.
+
+Both current and retained iterative kernels report `nonconvergent` when their
+convergence budgets are exhausted. The retained macro calcium-sulfate iteration
+now allows 100 sweeps instead of 20: the historical target-pH fixture did not
+meet its existing 1e-14 update criterion in 20 sweeps. The criterion and fixture
+tolerances are unchanged. Retained phase allocation also checks for remaining
+supersaturation with available component inventory before returning.
+
+The reduced struvite mixture's isolated calcium-sulfate pair uses a rationalized
+positive quadratic root. Free calcium plus neutral pair equals total calcium;
+free sulfate plus pair equals total sulfate. This replaces a fixed-point cycle
+that could previously violate those balances. It does not add reactions or
+qualify the reduced model for general mixtures.
+
+Kernel tests distinguish independently accumulated component balances,
+activity-based saturation indices and a 60-digit Decimal pairing oracle from
+fault-injected iteration/fallback checks. Reaction-table balance checks share
+the model's stoichiometry; they are independent bookkeeping, not independent
+thermodynamic data. Passing branch coverage and numerical tests establishes
+neither parameter accuracy nor physical validation.

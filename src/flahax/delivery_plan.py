@@ -44,6 +44,70 @@ class DeliveryPlan:
     state: str = "draft"
 
 
+def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
+    """Check additive batch-volume bookkeeping and unrounded product identities."""
+
+    def matches(actual, expected, *, absolute=1e-12):
+        # Preserve command-volume tolerance; product mass has no absolute floor.
+        return (
+            math.isfinite(actual)
+            and math.isfinite(expected)
+            and math.isclose(actual, expected, rel_tol=1e-9, abs_tol=absolute)
+        )
+
+    def fail(message):
+        raise DeliveryError('cross_stage_constraint', message)
+
+    expected = {}
+    masses = {}
+    for tank in stocks.tanks:
+        channel = tank.tank.tank_id
+        if channel in expected:
+            fail('stock channels must be unique')
+        volume = tank.stock_volume.value
+        if volume > tank.tank.capacity.value or not matches(
+            volume, recipe.final_volume.value / stocks.injection_ratio.value
+        ):
+            fail('stock volume must match ratio and fit tank capacity')
+        expected[channel] = volume
+        for salt in tank.salts:
+            if salt.salt_id in masses:
+                fail('each product must occur in exactly one stock')
+            masses[salt.salt_id] = salt.concentration.value * volume
+    recipe_masses = {salt.salt_id: salt.mass.value for salt in recipe.salts}
+    if len(recipe_masses) != len(recipe.salts) or set(masses) != set(recipe_masses):
+        fail('stock products must match recipe products exactly')
+    for salt in recipe.salts:
+        if not matches(masses[salt.salt_id], salt.mass.value, absolute=0.0) or not matches(
+            salt.dose.value * recipe.final_volume.value, salt.mass.value, absolute=0.0
+        ):
+            fail('stock and final-solution product masses differ')
+    if ph_plan is not None:
+        if isinstance(ph_plan, PhPlan) and ph_plan.final_volume != recipe.final_volume:
+            fail('titration plan must retain the matching final volume')
+        channel = ph_plan.reagent_channel_id
+        if not isinstance(channel, str) or not channel.strip() or channel in expected:
+            fail('reagent needs a distinct nonempty channel')
+        volume = ph_plan.reagent_volume_litres
+        if not math.isfinite(volume) or volume < 0:
+            fail('reagent volume must be finite and non-negative')
+        if volume > 0:
+            expected[channel] = volume
+    total = sum(expected.values())
+    if not math.isfinite(total) or total >= recipe.final_volume.value:
+        fail('combined stocks and reagent must leave positive carrier volume')
+    seen = set()
+    for command in commands:
+        if command.channel_id in seen or command.channel_id not in expected:
+            fail('duplicate or unknown delivery channel')
+        seen.add(command.channel_id)
+        if not matches(command.requested_volume.value, expected[command.channel_id]):
+            fail('command volume differs from planned channel volume')
+    if complete and seen != set(expected):
+        raise DeliveryError('incomplete_plan', 'every stock and reagent needs one command')
+    return recipe.final_volume.value - total
+
+
 def compose_delivery_plan(
     recipe: FinalSolutionRecipe,
     stocks: StockPlan,
@@ -81,28 +145,14 @@ def compose_delivery_plan(
         raise DeliveryError(
             "cross_stage_constraint", "a feasible recipe and non-empty stock plan are required"
         )
+    _check_delivery_balance(recipe, stocks, ph_plan, clean_commands, complete=False)
     audit = dict(audit_record)
     combined_warnings = tuple(str(x) for x in warnings)
     if isinstance(ph_plan, EquilibriumPhPlan):
-        if ph_plan.reagent_channel_id in {tank.tank.tank_id for tank in stocks.tanks}:
-            raise DeliveryError(
-                'cross_stage_constraint', 'nitric acid must use a separate stock channel'
-            )
         acid_commands = [c for c in clean_commands if c.channel_id == ph_plan.reagent_channel_id]
-        if ph_plan.reagent_volume_litres > 0:
-            if len(acid_commands) != 1 or not math.isclose(
-                acid_commands[0].requested_volume.value,
-                ph_plan.reagent_volume_litres,
-                rel_tol=1e-9,
-                abs_tol=1e-12,
-            ):
-                raise DeliveryError(
-                    'cross_stage_constraint',
-                    'one acid command must match the planned nitric-acid volume',
-                )
-        elif acid_commands:
+        if ph_plan.reagent_volume_litres > 0 and len(acid_commands) != 1:
             raise DeliveryError(
-                'cross_stage_constraint', 'a zero-acid plan must not include acid commands'
+                'cross_stage_constraint', 'one acid command must match the planned reagent'
             )
         if 'equilibrium' in audit and audit['equilibrium'] != ph_plan.audit:
             raise DeliveryError(
@@ -125,9 +175,21 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
         )
     if target == "validated" and (plan.ph_plan is None or not plan.commands):
         raise DeliveryError("incomplete_plan", "validated plan needs pH plan and pump commands")
+    if target == 'validated' and not plan.stocks.mixture_approved:
+        raise DeliveryError(
+            'unqualified_stock_mixture', 'stock mixtures require qualified model evidence'
+        )
+    if target != 'blocked':
+        # Revalidate even manually constructed/replaced values before advancing state.
+        compose_delivery_plan(
+            plan.recipe, plan.stocks, plan.ph_plan, plan.commands, plan.audit_record
+        )
+        _check_delivery_balance(
+            plan.recipe, plan.stocks, plan.ph_plan, plan.commands, complete=True
+        )
     if target == 'validated' and isinstance(plan.ph_plan, EquilibriumPhPlan):
         result = plan.ph_plan.equilibrium.target
-        # Review-class phases (#78) travel as plan warnings; operator approval is the review.
+        # A phase name or operator acknowledgement cannot establish applicability.
         if assess_saturation(result)['blocks']:
             raise DeliveryError(
                 'precipitation_risk',
@@ -163,6 +225,11 @@ def delivery_report(plan: DeliveryPlan) -> str:
         f"Pump commands: {len(plan.commands)}",
         f"Audit model: {plan.audit_record.get('modelVersion', 'unspecified')}",
     ]
+    carrier = _check_delivery_balance(
+        plan.recipe, plan.stocks, plan.ph_plan, plan.commands, complete=False
+    )
+    lines.append(f"Carrier remainder (additive-volume accounting): {carrier:g} L")
+    lines.append("Contact time, hydraulic mixing and volume contraction are not modeled.")
     if plan.ph_plan:
         lines.append(f"pH target: {plan.ph_plan.target_ph:g}; post-mix measurement required")
     lines.extend(f"Warning: {warning}" for warning in plan.warnings)
