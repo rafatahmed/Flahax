@@ -55,6 +55,8 @@ class PhPlan:
     loss: float
     rows: tuple[dict, ...]
     post_mix_measurement_required: bool = True
+    final_volume: VolumeLitres | None = None
+    reagent_channel_id: str = "acid"
 
 
 def _target_ph(value: Any) -> float:
@@ -165,4 +167,5 @@ def plan_ph(
         contribution,
         loss,
         tuple(rows),
+        final_volume=final_volume,
     )

@@ -1,7 +1,9 @@
 # Traceable materials: identity, grade and lot
 
-Every number FlahaX calculates with can be traced to a **chemical identity**
-and a **source document**. Evidence:
+FlahaX separates **chemical identity**, supplier grade and measured lot. Some
+catalogue analyses have no source document; provenance records that absence rather
+than implying verification. See [mass conventions and evidence status](../models/material-mass-convention.md).
+Historical evidence:
 [materials identity audit](../evidence/audit/2026-10-18-materials-identity/review.md).
 
 Catalogue size does not measure chemical
@@ -198,15 +200,14 @@ that produced the salt. A record without provenance reports
 `analysisBasis: "unattributed"`; a basis is never guessed. `analysisBasis` is a
 string for shipped records and a per-nutrient dict for resolved materials. The
 result also carries `identitiesSha256`, which pins the shipped catalogue.
-`solve_weights` and `forward` are unchanged.
+`solve_weights` and `forward` use the shared nutrient inventory.
 
-**Counterion sodium in formulation rows.** Formula counterion sodium not
-already assayed as elemental Na (chelate sodium, D2, and CH - micro's borax and
-molybdate sodium) is added to the `Na` row and to the incidental-ion review
-after the fit, with a warning naming the amount; an `Na` target's `deltaPct` is
-recomputed. It never enters `elements`, eligibility, the fit or the
-grams. Na stays a restricted ion, so a tight Na maximum can make a recipe with
-chelates require review or be infeasible.
+**Counterion sodium in formulation rows.** Supported formula counterion sodium
+not already assayed as elemental Na (chelate sodium and CH - micro's borax and
+molybdate sodium) enters the matrix before fitting. It affects the selected doses
+and the resulting Na row, including a supplied Na target or maximum. The source
+`elements` and existing eligibility/permission policy remain unchanged. A warning
+identifies the selected products' counterion sodium contribution.
 
 **Chemistry at the band ends.** `calculate_irrigation_ec_band` takes the
 arguments of `calculate_irrigation_ec` and returns `nominal`, `minimum` and
@@ -258,3 +259,13 @@ Band ends are corner cases (every product at its minimum, or every product at it
 In unbuffered pure water the pH follows the assay charge residual, so the small
 residual differences between the ends move pH strongly (6.52, 8.45 and 8.78
 here). This is not a buffered-solution prediction.
+
+## Check material contributions before fitting
+
+The fit includes supported formula counterions, including chelate sodium. Inspect
+`recommend(...)["materialInventory"]` to see each selected material's assay,
+derived nutrients, conserved components and limitations. For a source record,
+use `material_inventory(record)`; supply `material=resolved` for a resolved
+supplier grade or lot. Check `assay_component_difference_percent` when a blend's
+label and ingredients disagree. An `assay_only` result cannot qualify chemistry.
+See the [inventory contract](../models/material-inventory.md).

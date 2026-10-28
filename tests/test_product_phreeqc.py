@@ -17,7 +17,15 @@ from flahax.product_conversion import (
     solve_catalogue_product_doses,
     plan_catalogue_nitric_target,
 )
-from tools.phreeqc_evidence import FIXTURES, INSTALL, merge, execute, selected
+from tools.phreeqc_evidence import (
+    FIXTURES,
+    INSTALL,
+    merge,
+    execute,
+    selected,
+    verify_reference_inventory,
+    verify_reference_installation,
+)
 
 
 def cases():
@@ -123,6 +131,7 @@ class LiveProductPhreeqcTests(unittest.TestCase):
             folder = Path(tmp)
             db = folder / 'merged.dat'
             merge(base, db)
+            verify_reference_installation(exe, base, db, verify_reference_inventory())
             for path in cases() + sorted((FIXTURES.parent / 'phases').glob('*/expected.json')):
                 data = json.loads(path.read_text())
                 self.assertEqual(

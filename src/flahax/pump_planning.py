@@ -39,21 +39,25 @@ def plan_pump_command(
         available_volume, VolumeLitres
     ):
         raise DeliveryError("invalid_type", "requested and available volumes must be VolumeLitres")
-    if (
-        not math.isfinite(runtime_standard_deviation_minutes)
-        or runtime_standard_deviation_minutes < 0
-        or not math.isfinite(max_calibration_age_days)
-        or max_calibration_age_days < 0
+    for label, value in (
+        ('runtime standard deviation', runtime_standard_deviation_minutes),
+        ('maximum calibration age', max_calibration_age_days),
     ):
-        raise DeliveryError(
-            "out_of_range", "runtime standard deviation must be finite and non-negative"
-        )
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise DeliveryError('invalid_type', f'{label} must be a number')
+        if not math.isfinite(value) or value < 0:
+            raise DeliveryError('out_of_range', f'{label} must be finite and non-negative')
     item = validate_pump_calibration(calibration)
-    reference = as_of or datetime.now(timezone.utc)
-    if reference.tzinfo is None:
+    reference = datetime.now(timezone.utc) if as_of is None else as_of
+    if not isinstance(reference, datetime) or reference.utcoffset() is None:
         raise DeliveryError("invalid_value", "as_of must be timezone-aware")
     recorded = datetime.fromisoformat(item["recordedAt"].replace("Z", "+00:00"))
-    if (reference - recorded).total_seconds() > max_calibration_age_days * 86400:
+    if recorded.utcoffset() is None:
+        raise DeliveryError('invalid_value', 'calibration timestamp must be timezone-aware')
+    age_days = (reference - recorded).total_seconds() / 86400
+    if age_days < 0:
+        raise DeliveryError('future_calibration', 'calibration is later than as_of')
+    if age_days > max_calibration_age_days:
         raise DeliveryError("stale_calibration", "pump calibration exceeds allowed age")
     if not item["validMinLitres"] <= requested_volume.value <= item["validMaxLitres"]:
         raise DeliveryError(
@@ -63,9 +67,9 @@ def plan_pump_command(
         raise DeliveryError("dry_tank_risk", "requested volume exceeds available stock")
     flow = FlowLitresPerMinute(item["flowLitresPerMinute"])
     runtime = DurationMinutes(requested_volume.value / flow.value)
-    uncertainty = math.sqrt(
-        (runtime.value * item["standardDeviationLitresPerMinute"]) ** 2
-        + (flow.value * runtime_standard_deviation_minutes) ** 2
+    uncertainty = math.hypot(
+        runtime.value * item["standardDeviationLitresPerMinute"],
+        flow.value * runtime_standard_deviation_minutes,
     )
     return PumpCommand(
         item["id"],

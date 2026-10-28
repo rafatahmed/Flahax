@@ -53,3 +53,12 @@ def serializable(value):
 
 def show(value):
     print(json.dumps(serializable(value), indent=2, allow_nan=False))
+
+
+def ec_summary(value):
+    """Render a qualified estimate without inventing a value for a partial result."""
+    ec = value['ec25_ms_cm']
+    ph = value['ph']
+    estimate = 'unavailable' if ec is None else f'{ec:.2f} mS/cm'
+    acidity = 'unavailable' if ph is None else f'{ph:.2f}'
+    return f"EC25: {estimate}; pH: {acidity} ({value['status']}, experimental)"

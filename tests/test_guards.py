@@ -59,7 +59,8 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertIn("Sodium Molybdate (Dihydrate)", names)
         self.assertFalse(result["feasible"])
-        self.assertAlmostEqual(result["maxAbsDeltaPct"], 37.4319, places=3)
+        # Residual magnitude changes with the declared objective; exclusion
+        # policy and the known sulfur deficit are the contract here.
         self.assertFalse(any("Potassium Chloride" in note for note in result["warnings"]))
         sulfur = next(row for row in result["rows"] if row["symbol"] == "S")
         self.assertLess(sulfur["deltaPct"], -30)

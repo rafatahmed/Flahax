@@ -9,9 +9,10 @@ import math
 from collections.abc import Mapping
 
 from .calculated_ph import calculate_equilibrium_ph
+from .canonical_result import CanonicalResult
 from .composition import validate_profile
 from .delivery_contracts import DeliveryError
-from .delivery_quantities import VolumeLitres, final_solution_recipe
+from .delivery_quantities import SolventBasis, VolumeLitres, final_solution_recipe
 from .engine import recommend, gap_for, load_library
 from .measured_water import (
     DEFAULT_MAXIMUM_IMBALANCE_PERCENT,
@@ -78,6 +79,8 @@ class FertilizerWorkflow:
     # Laboratory and charge-balanced water at the final volume, and the limits whose decision
     # the balancing alone would change (#84). None when the water was not charge-balanced.
     water_basis: dict | None = None
+    canonical_result: CanonicalResult | None = None
+    remedies: dict = field(default_factory=dict)
 
 
 def _positive(value, name):
@@ -204,6 +207,12 @@ def limit_message(recommendation):
 def no_reagent_message(plan):
     """Why no pH reagent was selected: none offered in the needed direction, or the reasons each
     one failed."""
+    if any(c.joint_result is not None for c in plan.candidates):
+        return 'no offered candidate has passed joint workflow acceptance: ' + '; '.join(
+            f'{(c.product_record or {}).get("name") or c.product_id}: '
+            f'{c.message or (c.joint_result or {}).get("reason") or c.error_code or c.status}'
+            for c in plan.candidates
+        )
     need = 'an acid' if plan.direction == 'acid' else 'a base'
     tried = [
         c
@@ -241,6 +250,8 @@ def plan_fertilizer_workflow(
     acids=None,
     maximum_concentrations=None,
     ph_adjustment=None,
+    remedy_options=(),
+    max_remedy_evaluations=20,
 ):
     """Run available stages; expose missing inputs and rejected stages separately.
 
@@ -248,11 +259,17 @@ def plan_fertilizer_workflow(
     It is never silently promoted to a complete acid/base analysis. Optional
     configurations are mappings documented in docs/water-to-delivery.md.
     No stage performs external writes, mixing or equipment operation.
+    remedy_options declares catalogue bundles, treated-water analyses or stock
+    equipment alternatives. Up to max_remedy_evaluations scenarios are re-run
+    with unchanged targets/limits; no candidate is adopted automatically.
 
     ph_adjustment (products, maximum_reagent_volume_litres, optional
-    preferred_product_id) plans the recipe and its pH reagent together (#74):
+    preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
     acids or bases, with the reagent's nutrients counted as supply. It needs the
     equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+    joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
+    and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
+    water_mass_kg. Optional starting_points are never accepted without verification.
     """
     if not isinstance(water, Mapping):
         raise DeliveryError('missing_field', 'explicit water nutrient concentrations are required')
@@ -353,6 +370,7 @@ def plan_fertilizer_workflow(
                 materials, records = {}, {}
                 config = equilibrium
                 mass = _positive(config['water_mass_kg'], 'water_mass_kg')
+                solvent = SolventBasis(final_volume.value, mass)
                 if (
                     not isinstance(config['water_analysis_id'], str)
                     or not config['water_analysis_id'].strip()
@@ -474,7 +492,9 @@ def plan_fertilizer_workflow(
                             'product_chemistry_mismatch',
                             'chemistry requires the supplied product records',
                         )
-                    doses[salt.name] = doses.get(salt.name, 0) + salt.mass.value / mass
+                    doses[salt.name] = doses.get(
+                        salt.name, 0
+                    ) + solvent.grams_per_litre_to_grams_per_kg_water(salt.dose.value)
                 totals = dict(water_totals)
                 for basis, amount in _dose_totals(doses, materials, records).items():
                     totals[basis] = totals.get(basis, 0) + amount
@@ -490,6 +510,17 @@ def plan_fertilizer_workflow(
                     'water_totals': water_totals,
                     'analytical_water_totals': analytical,
                     'water_balance': balance,
+                    'water_input_notes': config.get('water_input_notes', []),
+                    'concentration_basis': config.get(
+                        'concentration_basis',
+                        {
+                            'status': 'declared',
+                            'water_kg_per_litre': mass / final_volume.value,
+                            'uncertainty': 'not supplied',
+                            'note': 'Final solvent inventory includes carrier and '
+                            'dissolved hydrate water.',
+                        },
+                    ),
                 }
 
             value = run('chemistry', chemical_states)
@@ -701,6 +732,8 @@ def plan_fertilizer_workflow(
                     final_volume_litres=final_volume.value,
                     maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
                     preferred_product_id=ph_adjustment.get('preferred_product_id'),
+                    joint=ph_adjustment.get('joint'),
+                    water_components=water_totals,
                     phases=equilibrium['phases'],
                     maximum_concentrations=maximum_concentrations,
                 ),
@@ -756,7 +789,21 @@ def plan_fertilizer_workflow(
                     stocks['compatibility_rules'],
                     stocks['solubility_limits'],
                     stocks['temperature'],
+                    mixture_model=stocks.get('mixture_model'),
+                    max_assignments=stocks.get('max_assignments', 100000),
                 ),
+            )
+
+    stock_stage = stages.get('stocks')
+    if (
+        stock_stage is not None
+        and stock_stage.value is not None
+        and stock_stage.status == 'calculated'
+    ):
+        if not stock_stage.value.mixture_approved:
+            stock_stage.status = 'requires_review'
+            stock_stage.message = (
+                'Separation assignment only; stock mixture applicability is unqualified.'
             )
 
     output.maximum_concentrations = dict(maximum_concentrations or {})
@@ -778,6 +825,31 @@ def plan_fertilizer_workflow(
         _review_water_basis(
             output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations
         )
+    request = dict(
+        salts=salts,
+        targets=targets,
+        water=water,
+        target_ph=target_ph,
+        final_volume=final_volume,
+        equilibrium=equilibrium,
+        nitric=nitric,
+        titration=titration,
+        stocks=stocks,
+        acids=acids,
+        maximum_concentrations=maximum_concentrations,
+        ph_adjustment=ph_adjustment,
+    )
+    from .evaluated_remedies import evaluate_remedies
+
+    output.remedies = evaluate_remedies(output, request, remedy_options, max_remedy_evaluations)
+    output.canonical_result = CanonicalResult.capture(
+        output,
+        dict(
+            **request,
+            remedy_options=remedy_options,
+            max_remedy_evaluations=max_remedy_evaluations,
+        ),
+    )
     return output
 
 

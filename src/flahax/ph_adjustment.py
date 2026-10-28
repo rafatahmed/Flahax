@@ -23,9 +23,19 @@ from collections.abc import Callable, Mapping, Sequence
 from .aqueous_model import AqueousResult, solve
 from .composition import ATOMIC
 from .delivery_contracts import DeliveryError
-from .engine import PH_REAGENT, TOLERANCE_PCT, load_library, recommend, score
-from .nutrient_acceptance import assess_incidental, assessed_limits
+from .engine import (
+    PH_REAGENT,
+    load_library,
+    recommend,
+    score,
+    forward,
+    _report,
+    _diagnose,
+    _charge_report,
+)
+from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
 from .root_finding import shrink_bracket
+from .product_conversion import component_nutrient_masses, material_inventory
 from .saturation_policy import assess_saturation, describe
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
@@ -123,6 +133,7 @@ class PhCandidate:
     message: str | None = None
     product_record: dict | None = None
     saturation: dict | None = None
+    joint_result: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -137,6 +148,7 @@ class PhAdjustmentPlan:
     selection_policy: str
     unadjusted_recommendation: dict | None = None
     post_mix_measurement_required: bool = True
+    unadjusted_state: object | None = None
 
     @property
     def selected(self):
@@ -196,13 +208,19 @@ def plan_coupled_ph(
     preferred_product_id=None,
     phases=(),
     maximum_concentrations=None,
+    joint=None,
+    water_components=None,
 ):
     """Fit the recipe and its pH reagent together; one candidate per offered product.
 
     mix(recommendation) returns the mixed state (water and products, before any
-    reagent) at its calculated pH. Candidates whose direction does not fit the feed
-    are reported as not applicable. A candidate's dose is reported even when it is
-    rejected, so the reason and the amount are both visible.
+    reagent) at its calculated pH. Explicit joint configuration supplies controls,
+    final solvent mass, reagent solvent fractions and mass caps; optional starting
+    points are checked as search seeds. water_components supplies the declared
+    final-basis water inventory. Joint mode evaluates every offered reagent and
+    independently calculates final pH. Legacy mode retains directional fitting,
+    with bounded zero-reagent recovery when no matching direction is offered.
+    A candidate's quantities and unresolved numerical status remain inspectable.
     """
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
@@ -231,9 +249,33 @@ def plan_coupled_ph(
     candidates = []
     for product in products:
         identity, formula = product.get('id'), product.get('chemicalFormula')
+        zero_failure = None
         try:
             fraction, density = _check_product(product)
-            reagent_direction, _, molar_mass, nutrients = REAGENTS[formula]
+            reagent_direction, components, molar_mass, _ = REAGENTS[formula]
+            nutrients = component_nutrient_masses(components)
+            if joint is not None:
+                from .joint_workflow import joint_candidate
+
+                candidates.append(
+                    joint_candidate(
+                        pool,
+                        targets,
+                        water,
+                        target_ph,
+                        product,
+                        unadjusted,
+                        mix,
+                        mass,
+                        volume,
+                        cap,
+                        phases,
+                        maximum_concentrations,
+                        water_components,
+                        joint,
+                    )
+                )
+                continue
             if direction == 'none':
                 # No reagent, but the same final acceptance as every dosed candidate (#84).
                 status, code, message, saturation = _judge(
@@ -261,6 +303,48 @@ def plan_coupled_ph(
                 )
                 continue
             if reagent_direction != direction:
+                if (
+                    water_components is not None
+                    and not phases
+                    and not any(
+                        REAGENTS.get(p.get('chemicalFormula'), ('unknown',))[0] == direction
+                        for p in products
+                    )
+                ):
+                    from .joint_workflow import joint_candidate
+
+                    try:
+                        candidates.append(
+                            joint_candidate(
+                                pool,
+                                targets,
+                                water,
+                                target_ph,
+                                product,
+                                unadjusted,
+                                mix,
+                                mass,
+                                volume,
+                                cap,
+                                phases,
+                                maximum_concentrations,
+                                water_components,
+                            )
+                        )
+                    except DeliveryError as exc:
+                        if exc.code not in (
+                            'joint_search_incomplete',
+                            'joint_verification_failed',
+                        ):
+                            raise
+                        zero_failure = dict(
+                            status='search_incomplete',
+                            accepted=False,
+                            globalOptimalityProven=False,
+                            reason=str(exc),
+                        )
+                    else:
+                        continue
                 candidates.append(
                     PhCandidate(
                         identity,
@@ -271,6 +355,7 @@ def plan_coupled_ph(
                         message=f'the feed mixes at pH {base_state.ph:.2f} and must be '
                         f'{"raised" if direction == "base" else "lowered"} to {target_ph:g}',
                         product_record=dict(product),
+                        joint_result=zero_failure,
                     )
                 )
                 continue
@@ -303,6 +388,16 @@ def plan_coupled_ph(
                     error_code=exc.code,
                     message=str(exc),
                     product_record=dict(product) if isinstance(product, Mapping) else None,
+                    joint_result=(
+                        dict(
+                            status='search_incomplete',
+                            accepted=False,
+                            globalOptimalityProven=False,
+                            reason=str(exc),
+                        )
+                        if joint is not None
+                        else None
+                    ),
                 )
             )
     # Accepted plans first; a plan with review-only findings (#78) is usable after review.
@@ -326,7 +421,14 @@ def plan_coupled_ph(
         else 'lowest final nutrient loss; input order breaks ties'
     )
     return PhAdjustmentPlan(
-        float(target_ph), base_state.ph, direction, tuple(candidates), selected, policy, unadjusted
+        float(target_ph),
+        base_state.ph,
+        direction,
+        tuple(candidates),
+        selected,
+        policy,
+        unadjusted,
+        unadjusted_state=base_state,
     )
 
 
@@ -377,6 +479,75 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
     return accepted, None, None, saturation
 
 
+def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
+    """Conserve product doses and rebuild assessments for a convex recipe blend."""
+    maxima = maxima or {}
+    by_id = {p['id']: p for p in pool}
+    entries = {s['id']: s for r in endpoints for s in r['salts']}
+    doses = {}
+    for recipe, factor in zip(endpoints, (1 - weight, weight)):
+        for salt in recipe['salts']:
+            doses[salt['id']] = doses.get(salt['id'], 0.0) + factor * salt['gramsPerLitre']
+    salts = [dict(entries[key], gramsPerLitre=g) for key, g in doses.items() if g > 0]
+    grams = [doses.get(p['id'], 0.0) for p in pool]
+    loss, rows = score(forward(pool, grams, supply), targets)
+    result = dict(
+        endpoints[0],
+        salts=salts,
+        saltIds=[s['id'] for s in salts],
+        grams=grams,
+        rows=rows,
+        loss=loss,
+    )
+    warnings = [
+        w for w in result['warnings'] if not w.startswith('Fit includes formula counterion')
+    ]
+    result.update(_report(rows, grams, warnings, maxima))
+    name_sources(result, salts, pool, supply)
+    result['unmetTargets'] = _diagnose(
+        pool,
+        targets,
+        supply,
+        rows,
+        maxima,
+        frozenset(s for s, v in maxima.items() if v > 0),
+        False,
+    )
+    result['materialInventory'] = [
+        dict(
+            recordId=s['id'],
+            name=s['name'],
+            gramsPerLitre=s['gramsPerLitre'],
+            **material_inventory(by_id[s['id']]),
+        )
+        for s in salts
+    ]
+    _charge_report(result)
+    selected = {s['id'] for s in salts}
+    result['excluded'] = [e for e in result['excluded'] if e.get('id') not in selected]
+    result['requirementConflicts'] = [
+        dict(symbol=s, reason='target_above_maximum', targetPpm=t, maximumPpm=maxima[s])
+        for s, t in targets.items()
+        if s in maxima and t > maxima[s]
+    ] + [
+        dict(symbol=s, reason='water_above_maximum', waterPpm=supply[s], maximumPpm=limit)
+        for s, limit in (maxima | {s: 0 for s, t in targets.items() if t == 0}).items()
+        if supply.get(s, 0) > limit
+    ]
+    if result['requirementConflicts']:
+        result['feasible'] = False
+    if 'substitutionSearch' in result:
+        result['substitutionSearch'] = dict(
+            result['substitutionSearch'],
+            status='candidate_found' if result['feasible'] else 'search_incomplete',
+            method='convex blend of searched endpoint recipes; no global search certificate',
+            attemptedProductIds=[
+                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
+            ],
+        )
+    return result
+
+
 def _couple(
     pool,
     targets,
@@ -399,8 +570,10 @@ def _couple(
     F(d) is the dose required by the recipe fitted with supply water + reagent(d).
     A few fixed-point steps settle most feeds; otherwise the root of F(d) - d is
     bracketed (the fixed-point step can oscillate, and the recipe can switch
-    products between nearby doses). Where a switch leaves no exact root, the plan
-    takes the nearer side and rescores the nutrients at the dose that recipe needs.
+    products between nearby doses). A direction-crossing trial bounds the search
+    but cannot be returned as a plan. At a product switch, blend the bracketing
+    product doses and solve charge balance on the actual mixture. This preserves
+    nonnegative mass accounting; it is not a global joint-optimality certificate.
     """
     formula, identity = product['chemicalFormula'], product['id']
     cache = {}
@@ -417,9 +590,15 @@ def _couple(
                 pool, targets, supply, maximum_concentrations=maximum_concentrations
             )
             mixed = mix(recommendation)
-            dose, target = reagent_dose(
-                mixed.totals, mixed.ph, target_ph, formula, phases=phases, initial=mixed
-            )
+            try:
+                dose, target = reagent_dose(
+                    mixed.totals, mixed.ph, target_ph, formula, phases=phases, initial=mixed
+                )
+            except DeliveryError as exc:
+                if exc.code != 'wrong_reagent_direction' or assumed == 0:
+                    raise
+                # This trial bounds the search but cannot be emitted as a plan.
+                dose, target = 0.0, None
             cache[assumed] = (dose, recommendation, mixed, target)
         return cache[assumed]
 
@@ -427,12 +606,12 @@ def _couple(
         return evaluate(assumed)[0] - assumed
 
     def settled(assumed):
-        dose = evaluate(assumed)[0]
-        return abs(dose - assumed) <= DOSE_TOLERANCE * max(dose, 1e-12)
+        dose, _, _, target = evaluate(assumed)
+        return target is not None and abs(dose - assumed) <= DOSE_TOLERANCE * max(dose, 1e-12)
 
     assumed = 0.0
     for _ in range(4):
-        if settled(assumed):
+        if settled(assumed) or evaluate(assumed)[3] is None:
             break
         assumed = evaluate(assumed)[0]
     if not settled(assumed):
@@ -448,7 +627,7 @@ def _couple(
                 'nonconvergent', f'{formula} dose could not be bracketed against the recipe'
             )
         low = max([x for x in below if x < high], default=0.0)
-        shrink_bracket(
+        low, high = shrink_bracket(
             gap,
             low,
             gap(low),
@@ -458,22 +637,53 @@ def _couple(
             accept=lambda x, g_x, lo, hi: settled(x),
             max_steps=60,
         )
-        assumed = min(cache, key=lambda x: abs(gap(x)) / max(evaluate(x)[0], 1e-12))
+        assumed = min(
+            (x for x in cache if evaluate(x)[3] is not None),
+            key=lambda x: abs(gap(x)) / max(evaluate(x)[0], 1e-12),
+        )
     dose, recommendation, mixed, target = evaluate(assumed)
     if not settled(assumed):
-        # The recipe switches products between nearby doses: rescore it at the dose it needs.
-        achieved = {row['symbol']: row['final'] for row in recommendation['rows']}
+        # A product switch makes the optimizer's selection discontinuous. Blend
+        # the two bracketing recipes, not their pH values: mass contributions are
+        # affine, but chemistry must be solved on each trial mixture.
+        ends = [evaluate(x)[1] for x in (low, high)]
+        blended = {}
+
+        def at(weight):
+            if weight not in blended:
+                assumed_dose = low * (1 - weight) + high * weight
+                supply = dict(water)
+                for ion, mg in contribution(assumed_dose).items():
+                    supply[ion] = supply.get(ion, 0.0) + mg
+                recipe = _blend_recipe(pool, targets, supply, ends, weight, maximum_concentrations)
+                state = mix(recipe)
+                amended = dict(state.totals)
+                for basis, n in REAGENTS[formula][1].items():
+                    amended[basis] = amended.get(basis, 0.0) + n * assumed_dose
+                target_state = solve(amended, target_ph, phases=phases, start=state)
+                blended[weight] = (assumed_dose, recipe, state, target_state)
+            return blended[weight]
+
+        def charge_gap(weight):
+            _, _, state, target_state = at(weight)
+            return target_state.charge_balance - state.charge_balance
+
+        g_left, g_right = charge_gap(0.0), charge_gap(1.0)
+        if g_left != 0 and g_right != 0 and (g_left > 0) == (g_right > 0):
+            raise DeliveryError('nonconvergent', 'recipe blend does not bracket charge balance')
+        left, right = shrink_bracket(charge_gap, 0.0, g_left, 1.0, g_right, width=2.0**-40)
+        assumed_dose, recommendation, mixed, _ = at((left + right) / 2)
+        dose, target = reagent_dose(
+            mixed.totals, mixed.ph, target_ph, formula, phases=phases, initial=mixed
+        )
+        if abs(dose - assumed_dose) > DOSE_TOLERANCE * max(dose, 1e-12):
+            raise DeliveryError('nonconvergent', 'blended recipe and reagent dose disagree')
+        # Recompute every assessment at the actual dose, including diagnostic rows.
+        supply = dict(water)
         for ion, mg in contribution(dose).items():
-            achieved[ion] = achieved.get(ion, 0.0) + mg - contribution(assumed).get(ion, 0.0)
-        loss, rows = score(achieved, targets)
-        recommendation = dict(
-            recommendation,
-            rows=rows,
-            loss=loss,
-            feasible=all(
-                abs(r['deltaPct']) <= TOLERANCE_PCT for r in rows if r['deltaPct'] is not None
-            )
-            and not recommendation.get('limitViolations'),
+            supply[ion] = supply.get(ion, 0.0) + mg
+        recommendation = _blend_recipe(
+            pool, targets, supply, [recommendation] * 2, 0.0, maximum_concentrations
         )
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
@@ -528,3 +738,41 @@ def catalogue_ph_reagents():
             }
         )
     return records
+
+
+def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fraction, **conditions):
+    """Compile a fixed-target contract from supplied nutrient and reagent records.
+
+    conditions supplies the explicit water components, final solvent mass/volume,
+    target pH, reference charge and reagent mass cap required by JointProblem.
+    Reagent solvent fraction is declared separately; assay remainder is not water.
+    This compiler does not run the sequential or joint optimizer. Fertilizer carrier
+    or hydrate solvent is not inferred; use explicit JointSource records when needed.
+    """
+    from .joint_problem import JointSource, JointProblem, _number
+
+    reagent_solvent_fraction = _number(reagent_solvent_fraction, "reagent solvent fraction")
+    if len(nutrient_salts(salts)) != len(salts):
+        raise DeliveryError('invalid_role', 'pH reagents cannot also be fertilizer variables')
+    fraction, density = _check_product(reagent)
+    _, components, molar_mass, nutrients = REAGENTS[reagent['chemicalFormula']]
+    if reagent_solvent_fraction + fraction > 1:
+        raise DeliveryError('inconsistent_assay', 'active and solvent fractions exceed one')
+    sources = []
+    for salt in salts:
+        inventory = material_inventory(salt)
+        sources.append(
+            JointSource(
+                salt['id'],
+                {k: v / 100 for k, v in inventory['nutrient_percent'].items()},
+                inventory['components_moles_per_gram'],
+            )
+        )
+    active = JointSource(
+        reagent['id'],
+        {k: fraction * g / molar_mass for k, g in nutrients.items()},
+        {k: fraction * n / molar_mass for k, n in components.items()},
+        solvent_fraction=reagent_solvent_fraction,
+        density_kg_per_litre=density,
+    )
+    return JointProblem(tuple(sources), active, targets, water, **conditions)

@@ -1,0 +1,27 @@
+{
+  "convention": "flahax-atomic-legacy-1",
+  "source": "https://ciaaw.org/atomic-weights.htm",
+  "reference_title": "Standard Atomic Weights 2024",
+  "accessed": "2026-10-25",
+  "scope": "Frozen legacy values compared with CIAAW intervals or nominal value plus/minus printed uncertainty after rounding to legacy precision. This does not make the rounded legacy values exact physical masses or lot measurements.",
+  "elements": {
+    "H": ["1.00784", "1.00784", "1.00811"],
+    "B": ["10.81", "10.806", "10.821"],
+    "C": ["12.011", "12.0096", "12.0116"],
+    "N": ["14.0067", "14.00643", "14.00728"],
+    "O": ["15.999", "15.99903", "15.99977"],
+    "Na": ["22.989769", "22.98976926", "22.98976930"],
+    "Mg": ["24.305", "24.304", "24.307"],
+    "Si": ["28.085", "28.084", "28.086"],
+    "P": ["30.973762", "30.973761993", "30.973762003"],
+    "S": ["32.06", "32.059", "32.076"],
+    "Cl": ["35.45", "35.446", "35.457"],
+    "K": ["39.0983", "39.0982", "39.0984"],
+    "Ca": ["40.078", "40.074", "40.082"],
+    "Mn": ["54.938044", "54.938041", "54.938045"],
+    "Fe": ["55.845", "55.843", "55.847"],
+    "Cu": ["63.546", "63.543", "63.549"],
+    "Zn": ["65.38", "65.36", "65.40"],
+    "Mo": ["95.95", "95.94", "95.96"]
+  }
+}

@@ -1068,11 +1068,15 @@ class ChemistryUseTests(unittest.TestCase):
             'Magnesium Sulfate (Heptahydrate)': 0.5,
         }
         before = _old_totals(doses)
-        self.assertEqual(catalogue_dose_totals(doses), before)
-        self.assertEqual(catalogue_dose_totals(doses, materials={}), before)
-        self.assertEqual(catalogue_dose_totals(doses, materials=None), before)
+        for basis, value in catalogue_dose_totals(doses).items():
+            self.assertAlmostEqual(value, before[basis], delta=1e-14 * max(abs(value), 1e-30))
+        for basis, value in catalogue_dose_totals(doses, materials={}).items():
+            self.assertAlmostEqual(value, before[basis], delta=1e-14 * max(abs(value), 1e-30))
+        for basis, value in catalogue_dose_totals(doses, materials=None).items():
+            self.assertAlmostEqual(value, before[basis], delta=1e-14 * max(abs(value), 1e-30))
         shipped = {name: resolve_material(name) for name in doses}
-        self.assertEqual(catalogue_dose_totals(doses, materials=shipped), before)
+        for basis, value in catalogue_dose_totals(doses, materials=shipped).items():
+            self.assertAlmostEqual(value, before[basis], delta=1e-14 * max(abs(value), 1e-30))
         self.assertEqual(
             assay_charge_residual(doses, materials=shipped), assay_charge_residual(doses)
         )
@@ -1269,7 +1273,11 @@ class FormulationProvenanceTests(unittest.TestCase):
             for s in load_library()['salts']
         ]
         _, entries = self.entries(library)
-        resolved = entries[material.record['id']]
+        # Full-library accuracy fitting may select an equivalent alternative.
+        # Also exercise the resolved product as the only available source, with
+        # the same targets, so provenance propagation remains non-vacuous.
+        _, only = self.entries([material.record])
+        resolved = only[material.record['id']]
         self.assertEqual(resolved['provenance']['recordId'], f"{material.record['id']}")
         self.assertIn('+grd-kno3', resolved['provenance']['recordId'])
         self.assertEqual(resolved['provenance']['analysisBasis'], material.basis)
@@ -1369,7 +1377,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
         formula = next(f for f in library['formulas'] if f['name'].startswith('Chilli'))
         return library['salts'], formula['targets']
 
-    def test_chelate_sodium_reported_not_fitted(self):
+    def test_chelate_sodium_fitted_independently_of_warning(self):
         from unittest import mock
         from flahax import engine
 
@@ -1392,13 +1400,14 @@ class ChelateSodiumReportTests(unittest.TestCase):
         def na(res):
             return next(r for r in res['rows'] if r['symbol'] == 'Na')
 
-        self.assertAlmostEqual(na(base)['final'] - na(off)['final'], extra, places=9)
+        self.assertEqual(na(base), na(off))
+        self.assertGreater(na(base)['final'], 0)
         self.assertIsNone(na(base)['target'])
         entry = next(i for i in base['incidentalContributions'] if i['symbol'] == 'Na')
         self.assertAlmostEqual(entry['ppm'], na(base)['final'], places=9)
         self.assertEqual(entry['assessment'], 'requires_review')
         self.assertIn(
-            'Incidental Na includes formula counterion sodium (chelates D2, '
+            'Fit includes formula counterion sodium (chelates D2, '
             f'CH - micro borax/molybdate): {extra:.4f} mg/L.',
             base['warnings'],
         )
@@ -1415,31 +1424,24 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertIsNone(row['target'])
         self.assertGreater(row['final'], 0)
 
-    def test_no_chelate_recipe_unchanged(self):
+    def test_no_chelate_recipe_has_no_counterion_sodium(self):
         from flahax.engine import recommend
+        from flahax.product_conversion import counterion_sodium_mg_per_l
 
-        # Pinned to the penalty-only fit: the #54 ammonium allowance changes this recipe
-        # independently of chelate sodium reporting (Ca 119.40 -> 119.98 mg/L).
         result = recommend(
             load_library()['salts'], self.NO_CHELATE_TARGETS, max_ammonium_fraction=None
         )
         self.assertNotIn('Mn EDTA', {s['name'] for s in result['salts']})
-        self.assertEqual(len(result['rows']), len(self.NO_CHELATE_ROWS))
-        for got, want in zip(result['rows'], self.NO_CHELATE_ROWS):
-            self.assertEqual(got['symbol'], want['symbol'])
-            self.assertEqual(got['target'], want['target'])
-            self.assertAlmostEqual(got['final'], want['final'], places=9)
-        self.assertEqual(result['incidentalContributions'][0]['symbol'], 'N_NH4')
-        self.assertEqual(len(result['incidentalContributions']), 1)
-        self.assertAlmostEqual(
-            result['incidentalContributions'][0]['ppm'],
-            self.NO_CHELATE_INCIDENTAL[0]['ppm'],
-            places=9,
-        )
-        # The synthetic targets omit S, so the formula is unbalanced (+16.6%) and says so;
-        # no other warning, in particular no chelate-sodium note, may appear.
+        records = {s['id']: s for s in load_library()['salts']}
+        doses = [(records[s['id']], s['gramsPerLitre']) for s in result['salts']]
+        self.assertEqual(counterion_sodium_mg_per_l(doses), 0)
+        self.assertFalse(any(r['symbol'] == 'Na' and r['final'] > 0 for r in result['rows']))
+        self.assertFalse(any('counterion sodium' in warning for warning in result['warnings']))
+        # The earlier numeric snapshot above is historical: the primary objective
+        # no longer penalizes incidental sulfate or ammonium.
         self.assertEqual(
-            [w for w in result['warnings'] if 'not electrically balanced' not in w], []
+            {r['symbol']: r['target'] for r in result['rows'] if r['target'] is not None},
+            self.NO_CHELATE_TARGETS,
         )
 
     def test_helper_matches_chemistry(self):
@@ -1454,7 +1456,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
             'Iron DTPA': 0.03,
             'Iron EDDHA': 0.04,
         }
-        expected = catalogue_dose_totals(doses)['Na+'] * 22.98977 * 1000.0
+        expected = catalogue_dose_totals(doses)['Na+'] * 22.989769 * 1000.0
         got = counterion_sodium_mg_per_l([(by_name[n], d) for n, d in doses.items()])
         self.assertGreater(got, 0)
         self.assertAlmostEqual(got, expected, places=6)
@@ -1464,7 +1466,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
 
         by_name = {s['name']: s for s in load_library()['salts']}
         got = counterion_sodium_mg_per_l([(by_name['CH - micro'], 1.0)])
-        full = catalogue_dose_totals({'CH - micro': 1.0})['Na+'] * 22.98977 * 1000.0
+        full = catalogue_dose_totals({'CH - micro': 1.0})['Na+'] * 22.989769 * 1000.0
         self.assertAlmostEqual(got, full, places=9)  # chelate share plus borax/molybdate sodium
         self.assertAlmostEqual(got, 63.23, places=2)
         # Standalone borax and sodium molybdate assay Na as an element: no counterion sodium.
@@ -1479,7 +1481,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
             0.0,
         )
 
-    def test_na_target_delta_recomputed(self):
+    def test_na_target_delta_uses_fitted_inventory(self):
         from unittest import mock
         from flahax import engine
 
@@ -1490,9 +1492,9 @@ class ChelateSodiumReportTests(unittest.TestCase):
             off = engine.recommend(pool, targets)
         row = next(r for r in base['rows'] if r['symbol'] == 'Na')
         off_row = next(r for r in off['rows'] if r['symbol'] == 'Na')
-        self.assertGreater(row['final'], off_row['final'])
+        self.assertEqual(row, off_row)
         self.assertAlmostEqual(row['deltaPct'], 100.0 * (row['final'] - 5.0) / 5.0, places=9)
-        self.assertNotAlmostEqual(row['deltaPct'], off_row['deltaPct'], places=6)
+        self.assertEqual(row['deltaPct'], off_row['deltaPct'])
 
 
 class WorkflowGradeTests(unittest.TestCase):
@@ -1565,9 +1567,14 @@ class WorkflowGradeTests(unittest.TestCase):
         product, material = self.graded(0.97)
         self.assertEqual(material.flags, ())
         shipped, graded = self.workflow(), self.workflow(product)
-        for stage in ('chemistry', 'ph_adjustment'):
-            self.assertIn(graded.stages[stage].status, ('calculated', 'requires_review'), stage)
         self.assertEqual(graded.stages['chemistry'].status, 'calculated')
+        adjustment = graded.stages['ph_adjustment']
+        self.assertEqual(
+            (adjustment.status, adjustment.error_code), ('blocked', 'no_acceptable_reagent')
+        )
+        self.assertIsNone(adjustment.value.selected)
+        self.assertEqual(len(adjustment.value.candidates), 1)
+        self.assertIn('Hydroxylapatite', adjustment.message)
         fe_sources = [
             s['name']
             for s in graded.recommendation['salts']
@@ -1588,7 +1595,8 @@ class WorkflowGradeTests(unittest.TestCase):
         catalogue = catalogue_dose_totals(doses)
         self.assertAlmostEqual(chemistry['mixed'].totals['Fe+2'], label['Fe+2'], delta=1e-15)
         self.assertAlmostEqual(label['Fe+2'], 0.97 * catalogue['Fe+2'], delta=1e-15)
-        selected = graded.stages['ph_adjustment'].value.selected
+        selected = adjustment.value.candidates[0]
+        self.assertEqual(selected.status, 'rejected')
         mixed_doses = self.doses(selected.recommendation)  # g/L x 1000 L / 1000 kg water
         self.assertAlmostEqual(
             selected.mixed.totals['Fe+2'],
@@ -1804,18 +1812,30 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertIn(self.NAME, doses)
         chemistry = workflow.stages['chemistry'].value
         self.assertEqual(chemistry['materials'][self.NAME], material)
-        sodium = catalogue_dose_totals(doses, materials=chemistry['materials'])['Na+'] * 22.98977e3
+        sodium = (
+            catalogue_dose_totals(doses, materials=chemistry['materials'])['Na+'] * 22.989769e3
+        )
         na_row = next(r for r in recommendation['rows'] if r['symbol'] == 'Na')
-        self.assertAlmostEqual(na_row['final'] / sodium, 1.0, delta=1e-9)
+        # Each published dose is rounded by at most 0.5 microgram/L (F04 is
+        # tracked separately). Bound its Na effect using each material's assay.
+        from flahax.product_conversion import material_inventory
+
+        rounding_bound = sum(
+            material_inventory(s)['nutrient_percent'].get('Na', 0) * 10 * 0.5e-6 for s in salts
+        )
+        self.assertAlmostEqual(na_row['final'], sodium, delta=rounding_bound + 1e-12)
         self.assertAlmostEqual(
-            chemistry['mixed'].totals['Na+'] * 22.98977e3, sodium, delta=1e-5 * sodium
+            chemistry['mixed'].totals['Na+'] * 22.989769e3, sodium, delta=1e-5 * sodium
         )
         alone = catalogue_dose_totals(
             {self.NAME: doses[self.NAME]}, materials={self.NAME: material}
         )['Na+']
         self.assertGreater(alone, 0)
         self.assertTrue(
-            any(w.startswith('Incidental Na includes') for w in recommendation['warnings'])
+            any(
+                w.startswith('Fit includes formula counterion sodium')
+                for w in recommendation['warnings']
+            )
         )
 
     def test_declared_compound_matches_equivalent_salts(self):

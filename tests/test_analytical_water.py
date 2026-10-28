@@ -220,7 +220,7 @@ class WorkflowLimitTests(unittest.TestCase):
         b = balance_water_analysis(water, measured_ph=measured_at_own_ph(water)).diluted(0.5)
         workflow = self.plan(
             b,
-            {'Cl': 1},
+            {'Cl': 0},  # A zero source analysis alone does not prohibit fertilizer chloride.
             ph_adjustment=dict(products=catalogue_ph_reagents(), maximum_reagent_volume_litres=5),
         )
         chemistry = workflow.stages['chemistry']
@@ -352,7 +352,7 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((out / 'summary.json').read_text(encoding='utf-8'))
             self.assertEqual(summary['status'], 'blocked')
             self.assertEqual(summary['limits'][0]['analyticalPpm'], 1280.4)
-            self.assertIn('Blocked.', (out / 'batch-sheet.html').read_text(encoding='utf-8'))
+            self.assertIn('Do not mix.', (out / 'batch-sheet.html').read_text(encoding='utf-8'))
             report = (out / 'report.html').read_text(encoding='utf-8')
             self.assertIn('Laboratory mg/L', report)
             self.assertIn('exceeds', report)
@@ -389,7 +389,16 @@ class BatchCommandTests(unittest.TestCase):
                     ),
                 ),
             )
-            limits = ('--limit', 'Na=68.97', '--limit', 'Cl=106.35', '--acid', 'HNO3:0.60:1.37')
+            limits = (
+                '--limit',
+                'Na=68.97',
+                '--limit',
+                'Cl=106.35',
+                '--limit',
+                'N_NH4=14',
+                '--acid',
+                'HNO3:0.60:1.37',
+            )
             runs = {}
             for share in ('8', '9'):
                 out = Path(tmp) / share
@@ -406,7 +415,8 @@ class BatchCommandTests(unittest.TestCase):
                 )
                 runs[share] = code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
             code, eight = runs['8']
-            self.assertEqual((code, eight['status']), (0, 'requires_review'))
+            self.assertEqual((code, eight['status']), (3, 'blocked'))
+            self.assertEqual(eight['stages']['ph_adjustment']['status'], 'blocked')
             self.assertAlmostEqual(
                 eight['water']['analysis_mg_per_litre']['Cl'], 1280.4 * 0.08, places=9
             )

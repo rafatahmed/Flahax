@@ -1,3 +1,7 @@
+> Historical example: the two-tank magnesium/phosphate waiver below is retired.
+> Current assignments retain all separations, report required equipment, and do not
+> approve unqualified stock mixtures. See [stock assignments](stock-assignments.md).
+
 # A batch from files: `flahax batch`
 
 This page takes you from a water analysis and a crop to a printed batch sheet in four steps with
@@ -67,8 +71,13 @@ write them in mg/L (N_NO3 and N_NH4 as N) and pass the file with `--targets`:
 
 ## Step 3. Run the command
 
+This worked example explicitly chooses an NH4-N maximum of 14 mg/L, including
+the RO comparisons below. It is an illustrative caller constraint, not a crop
+recommendation. Supply limits appropriate to your own requirements; FlahaX no
+longer supplies an ammonium allowance automatically.
+
 ```bash
-flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 --acid "HNO3:0.60:1.37:Nitric acid 60%" --limit Na=68.97 --limit Cl=106.35 --output tomato-batch
+flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 --acid "HNO3:0.60:1.37:Nitric acid 60%" --limit Na=68.97 --limit Cl=106.35 --limit N_NH4=14 --output tomato-batch
 ```
 
 - `--acid` takes the formula, mass fraction and density (kg/L) from your
@@ -99,21 +108,18 @@ Read it from top to bottom before you weigh anything.
 
    | Status | Meaning |
    |---|---|
-   | **Ready** | Every target is met and the pH plan is accepted. |
-   | **Requires review** | Usable after you read the "Read before mixing" list and agree with it. |
+   | **Calculation complete** | Calculation checks passed; physical validation remains separate. |
+   | **Requires review** | Review the stated evidence and conditions; this status alone does not approve mixing. |
    | **Blocked** | Do not mix. The sheet says why: usually a limit your water already breaks, a mineral that would precipitate, or no acid or base that reaches the pH. |
 
-2. **Weigh and dissolve.** This gives the grams of each product per batch,
-   grouped by concentrate tank, and the strength of each concentrate at your
-   injection ratio.
-   - Tank A holds the calcium products, micronutrients and chelates. Never put
-     acid into tank A.
-   - Keep the two tanks apart. Magnesium sulfate shares tank B with the
-     phosphates by FlahaX's two-tank rule; the sheet lists each such pair.
-   - FlahaX does not check that each concentrate dissolves at that strength.
-     Check it with your supplier's solubility data.
+2. **Quantities and assignments.** Product mass follows final batch volume. A blocked
+   sheet labels these as diagnostic and offers no preparation boxes. Assignments respect
+   separation constraints and may require more than two tanks; no magnesium/phosphate
+   separation is waived to fit equipment. Qualified solubility limits and unresolved
+   stock-mixture evidence remain visible.
 
-3. **pH.** How much reagent to add per batch. Add it in steps and measure.
+3. **pH.** Read the selected or rejected reagent diagnosis. Blocked quantities are not
+   instructions to add a reagent.
 
 4. **Limits.** Each maximum you declared, with the final concentration from
    your laboratory values and the decision. If you declared none, the sheet
@@ -121,10 +127,16 @@ Read it from top to bottom before you weigh anything.
 
 5. **Read before mixing.** Every warning and review reason, in plain words.
 
-6. **Measure after mixing.** The planned EC and pH, with space for what you
-   measure.
+6. **Scientific qualifications.** Preserve EC status, model limits and uncertainty.
+   Measurement fields appear only on nonblocked sheets; a computed value is not validation.
 
 ## Worked example: tomato on a brackish well
+
+The figures below preserve a historical run. They are not current predictions or
+mixing approvals: the earlier phase-name exemptions have been retired, and EC
+fit/coverage limits may also prevent a complete estimate. Re-run the command and
+use its current blocked/review diagnostics; do not reuse the historical dose or
+EC as an operating instruction.
 
 The well is station 104 from Shomar et al. (2024), *Groundwater*,
 doi:10.1111/gwat.13411, at measured pH 7.80: the `well.json` above. It is
@@ -141,7 +153,15 @@ Take a whole percent below the chloride figure, 8 %, and blend the rest with
 RO water. The products add a little sodium (the molybdate), so check the final
 value on the sheet rather than relying on this arithmetic alone.
 
-**Run** the command from step 3. FlahaX 0.6.0 gives this sheet:
+### Historical 0.6.0 figures
+
+The following table and quoted doses are retained publication history, not current mixing instructions.
+A current run of step 3 is blocked: no reagent is selected, the phosphate EC fit does not
+cover the resulting ionic strength, and stock assignment retains three separated tanks.
+Product chloride can contribute up to the explicit final chloride limit; the water-only
+chloride value below is not necessarily the current final concentration.
+
+FlahaX 0.6.0 reported the following figures:
 
 | Tank | Product | g per 1000 L | Concentrate g/L at 1:100 |
 |---|---|---:|---:|
@@ -167,7 +187,8 @@ value on the sheet rather than relying on this arithmetic alone.
 - **Limits.** Cl is 102.4 mg/L and Na 55.1 mg/L, both within their limits.
 - **EC.** The estimate is about 2.6 mS/cm. It is experimental, so measure it.
 
-**Why "requires review".** The sheet lists four reasons:
+**Historical review findings.** The old sheet listed these reasons; unresolved
+phase applicability now blocks approval:
 - **Ammonium.** The recipe carries 9.2 mg/L NH4-N, a nutrient you did not
   target and gave no maximum for. Check it, or declare a maximum.
 - **The well analysis is 3.5 % out of charge balance.** For the chemistry,
@@ -177,9 +198,9 @@ value on the sheet rather than relying on this arithmetic alone.
   laboratory's chloride uncertainty in the water file
   (`"balance_ion_uncertainty_percent"`) and FlahaX will accept the closure if
   it falls within it.
-- **Hydroxylapatite and MnHPO4 are supersaturated.** These two calcium and
-  manganese phosphates do not form in practice at feed conditions. The sheet
-  gives the reasons and sources ([saturation
+- **Hydroxylapatite and MnHPO4 are supersaturated.** Their names do not prove that
+  precipitation is absent at these conditions. Without applicable reviewed evidence,
+  the phase assessment prevents approval. The sheet retains the findings ([saturation
   indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
 - **Iron(II) sulfate.** The recipe uses it, and in an aerated feed iron(II)
   oxidizes and settles out with some phosphate. A chelated iron is the safer
@@ -195,3 +216,25 @@ acid per 1000 L: RO water has no bicarbonate, and the mix sits at pH 6.9.
 Without an `--acid` the sheet is blocked: no base can lower the pH. A full,
 scripted version of the brackish-well example, with charts, is in the
 repository (`python -m examples.tomato_report --output tomato-report`).
+
+## Current input contracts
+
+### Concentration basis
+
+Water JSON can declare final solvent mass/volume or final solution density and
+complete nonwater mass. See [concentration and solvent mass](../models/concentration-basis.md)
+for input examples, carrier/hydrate accounting and blend assumptions. Legacy
+inputs retain a reported 1 kg solvent/L assumption with unquantified uncertainty.
+
+### Titrated total alkalinity
+
+Use `alkalinity_meq_per_litre` in water JSON for a signed total-alkalinity
+measurement, separately from `mg_per_litre`. Do not combine it with `HCO3`,
+including zero. Interactive entry now stores titrations in equivalents, not
+as carbon. Legacy HCO3 carbon assumptions remain explicitly reported.
+
+The supported proton reference includes carbonate, phosphate, borate, ammonia,
+sulfate and major-ion complexes. Unqualified organic/trace-metal alkalinity is
+rejected. Measured zeros and fixed carbon stay fixed; no chloride does not
+authorize altering the titration. The original laboratory inventory continues
+to determine nutrient limits.

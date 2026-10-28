@@ -8,10 +8,13 @@ thumb, so it needs the water's composition and its measured pH.
 
 **Why the lab report is balanced.** In any water the positive charges (calcium,
 magnesium, sodium, potassium) equal the negative ones (bicarbonate, chloride,
-sulfate, nitrate). A lab report never adds up exactly, because every value
-carries a small measurement error. To calculate pH, FlahaX closes that small
-gap: on chloride, or on the alkalinity when the report has no chloride. This
+sulfate, nitrate). A lab report may contain a charge imbalance. FlahaX can reconcile a small
+gap on a measured balance ion. Titrated alkalinity is held fixed; missing chloride
+does not authorize changing the titration or inventing carbon. This
 changes only the chemistry model; your targets and limits always use the
 values on the report. A report more than 5 % out of balance is flagged when
 you enter it, because that usually means a typing or unit error. RO water has
 nothing to balance.
+
+[Total alkalinity and carbon inference](../models/total-alkalinity.md) explains
+noncarbonate buffers, the supported proton reference and input limitations.

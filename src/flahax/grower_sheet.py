@@ -23,6 +23,7 @@ from .grower_report import (
     litres,
     millilitres,
     number,
+    percentage,
     text,
 )
 
@@ -78,17 +79,17 @@ def agronomist_rows(summary):
     rows = []
     for r in summary['formulation']['rows']:
         target, final, w = r['target'], r['final'], water.get(r['symbol'], 0.0)
-        if not target and final < 1e-6:
+        if target is None and final < 1e-6:
             continue
         rows.append(
             dict(
                 nutrient=r['symbol'],
-                target=target or None,
+                target=target,
                 water=w,
-                required=None if not target else target - w,
+                required=None if target is None else target - w,
                 achieved=final - w,
                 final=final,
-                diff_mg_l=None if not target else final - target,
+                diff_mg_l=None if target is None else final - target,
                 diff_pct=None if not target else 100.0 * (final - target) / target,
                 source=r.get('source', []),
             )
@@ -119,15 +120,19 @@ def _tank_card(tank, volumes, blocked):
             f'prepare <b>{litres(volumes["prepared_litres"][name])} L</b> in your '
             f'{litres(volumes["capacity_litres"][name])} L tank{limited_by(volumes)}'
         )
-        if volumes
-        else ''
+        if volumes and not blocked
+        else ('not to be prepared (do not mix)' if blocked else '')
     )
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(
         f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
         for p in tank['products']
     )
-    rule = '' if tank['acid_allowed'] else '<p class="small"><b>Never add acid to tank A.</b></p>'
+    rule = (
+        ''
+        if tank['acid_allowed']
+        else f'<p class="small"><b>Never add acid to tank {text(name)}.</b></p>'
+    )
     return (
         f'<div class="card"><h2>Tank '
         f'{text(name)}</h2><p>{head}</p><table><tbody>{rows}</tbody></table>'
@@ -142,6 +147,10 @@ def _reagent_card(summary, volumes):
         return (
             f'<div class="card warn"><h2>pH '
             f'reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
+        )
+    if chosen['volume_ml_per_batch'] is None:
+        return (
+            f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(_reagent_line(summary))}</p></div>'
         )
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
@@ -166,7 +175,9 @@ def _reagent_card(summary, volumes):
 def _check_card(summary):
     ec = summary['ec']
     expected = (
-        f'about {number(ec["ec25_ms_cm"], 2)} mS/cm' if ec and ec.get('ec25_ms_cm') else 'measure'
+        f'about {number(ec["ec25_ms_cm"], 2)} mS/cm'
+        if ec and ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None
+        else 'measure'
     )
     return (
         '<div class="card"><h2>Check after mixing</h2><table><tbody>'
@@ -194,13 +205,18 @@ def _agronomist_section(summary):
                 f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
-        hi = ' class="num hi"' if abs(r['diff_pct']) > 1 else ' class="num"'
+        hi = (
+            ' class="num hi"'
+            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
+            or (r['target'] == 0 and r['diff_mg_l'] != 0)
+            else ' class="num"'
+        )
         body += (
             f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
             f'class="num">{cell(r["water"])}</td>'
             f'<td class="num">{cell(r["required"])}</td><td class="num">{cell(r["achieved"])}</td>'
             f'<td class="num">{cell(r["final"])}</td><td{hi}>{r["diff_mg_l"]:+.2f} '
-            f'({r["diff_pct"]:+.1f} %)</td></tr>'
+            f'({percentage(r["diff_pct"], 1, " %")})</td></tr>'
         )
     table = (
         '<h2>Nutrients, mg/L in the irrigation solution</h2><div '
@@ -253,6 +269,9 @@ def _agronomist_section(summary):
 def render_mix_sheet(summary, depth=1):
     """Printable sheet: depth 1 tank cards; depth 2 and 3 add the nutrient table, limits and pH
     path."""
+    from .canonical_result import verify_summary
+
+    verify_summary(summary)
     s, volumes = summary, summary.get('volumes')
     blocked = s['status'] == 'blocked'
     css = {'ready': 'ok', 'requires_review': 'warn', 'blocked': 'stop'}[s['status']]
@@ -279,4 +298,6 @@ def render_mix_sheet(summary, depth=1):
         'products and '
         'assays against your supplier certificates.</p>'
     )
-    return _page(s['title'] + ' - batch sheet', body, CARD_STYLE)
+    from .grower_report import result_reference
+
+    return _page(s['title'] + ' - batch sheet', body + result_reference(s), CARD_STYLE)

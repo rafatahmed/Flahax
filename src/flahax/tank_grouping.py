@@ -2,35 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Concentrate-tank grouping from a sourced default compatibility table (#79).
+"""Conservative automatic separation assignments, never mixture-solubility approval.
 
-Source: Yara, "Fertilizantes para fertirrigación", page 65 mixing compatibility
-table, read with page 63 ("DO NOT mix calcium content fertilizers with phosphate or
-sulphate fertilizer"; "do not acidify tanks with microelement chelates"). The table
-covers twelve products; its twelve "No" pairs are exactly three chemical rules,
-applied here to every product from its elemental analysis:
-
-- calcium with phosphate, and calcium with sulfate (page 63 and page 65);
-- magnesium with phosphate (page 65: magnesium nitrate and magnesium sulfate with
-  potassium and ammonium phosphates and phosphoric acid).
-
-FlahaX rule (owner decision 2026-10-22): there are exactly two concentrate tanks, so
-the magnesium-phosphate rule is waived: magnesium sulfate shares tank B with the
-phosphates. The waiver is listed in ``WAIVED_RULES`` and reported for every pair it
-lets share a tank; products that still need a third tank are refused.
-
-FlahaX rule (owner decision, rafatahmed/Flahax#79): micronutrients and chelates go
-to tank A with the calcium products, because their doses are too small to
-precipitate there, and tank A is never acidified (page 63). They are kept out of
-phosphate concentrates, where manganese and iron phosphates can form (#78). Acids are dosed on
-their own channel or into another tank; pH reagents always have their own channel.
-
-The table states compatibility in concentrates, not solubility: every stock still
-needs a grade- and temperature-qualified solubility check. Separation rules of your
-own (``compatibilityRule`` records, as for ``plan_stocks``) are applied on top.
+Sourced pair prohibitions remain hard constraints. Equipment cannot waive them.
+Element classes are conservative screens, not evidence that a mixture dissolves.
+Caller rules add separations; reagent products retain their own channel.
 """
 
 from dataclasses import dataclass
+import math
 
 from .delivery_contracts import DELIVERY_SCHEMA_VERSION, DeliveryError, validate_compatibility_rule
 from .engine import PH_REAGENT
@@ -54,20 +34,17 @@ CLASS_RULES = (
     ('calcium', 'sulfate', 'calcium and sulfate precipitate as gypsum in a concentrate'),
 )
 
-OWNER_TWO_TANKS = (
-    'FlahaX rule (owner decision 2026-10-22): two tanks; '
-    'magnesium sulfate shares tank B with the phosphates'
-)
-# Sourced rules (p. 65) that the two-tank rule waives: (class, class, reason, waived by).
-WAIVED_RULES = (
+# Retained historical name for import compatibility, not an active policy.
+OWNER_TWO_TANKS = 'Retired two-tank waiver; equipment cannot establish compatibility'
+CLASS_RULES += (
     (
         'magnesium',
         'phosphate',
-        'magnesium and phosphate precipitate as magnesium phosphate in a concentrate',
-        OWNER_TWO_TANKS,
+        'magnesium and phosphate require separation without mixture evidence',
     ),
 )
-MAX_TANKS = 2
+WAIVED_RULES = ()
+MAX_TANKS = 2  # Legacy equipment default for callers that explicitly request it.
 
 # Page 65 products, for labelling only: catalogue name -> Yara name. Grouping uses the class rules.
 ANALOGUE = {
@@ -97,7 +74,7 @@ FLAHAX_RULE = 'FlahaX rule (owner decision, rafatahmed/Flahax#79)'
 MICRO_PHOSPHATE = (
     'micronutrients stay out of phosphate concentrates, where manganese and iron phosphates can '
     'form '
-    '(#78); with calcium their small doses are harmless (FlahaX rule)'
+    '(#78); no small-dose compatibility exemption is inferred'
 )
 TANK_A_RULE = (
     'Tank A holds the calcium products, micronutrients and chelates: never acidify it. '
@@ -167,22 +144,11 @@ def product_classes(record):
 
 
 def _class_conflict(a, b, rules=CLASS_RULES):
-    if 'micronutrient' in a | b:
-        # FlahaX rule: the page 63/65 rules are waived for micronutrients (small doses), but they
-        # stay out of phosphate concentrates (manganese and iron phosphates, #78).
-        return MICRO_PHOSPHATE if 'phosphate' in a | b else None
+    if 'micronutrient' in a | b and 'phosphate' in a | b:
+        return MICRO_PHOSPHATE
     for x, y, reason, *_ in rules:
         if (x in a and y in b) or (y in a and x in b):
             return reason
-    return None
-
-
-def _waived(a, b):
-    if 'micronutrient' in a | b:
-        return None
-    for x, y, _, why in WAIVED_RULES:
-        if (x in a and y in b) or (y in a and x in b):
-            return why
     return None
 
 
@@ -191,7 +157,7 @@ def default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z')
 
     One "separate" record per incompatible pair among ``products`` (catalogue or
     grade records with ``id``, ``elements`` and optional ``formula``). Micronutrient
-    products are kept only from phosphate (FlahaX rule).
+    products retain elemental separation screens; no small-dose waiver applies.
     """
     records = [p for p in products if p.get('role') != PH_REAGENT]
     rules = []
@@ -219,120 +185,124 @@ def default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z')
     return rules
 
 
-def group_tanks(salts, products, *, rules=()):
-    """Group a recipe's products into concentrate tanks.
+def group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=100000):
+    """Find a minimum-tank separation assignment; no mixture approval is implied.
 
-    ``salts`` are recipe rows with ``id``, ``name`` and ``gramsPerLitre`` (as in
-    ``recommend(...)['salts']``); ``products`` are the records they came from.
-    Tank A takes the calcium products, then every micronutrient product; the others
-    follow by descending dose into the first tank without a conflict; acids never
-    join a tank holding calcium or micronutrients. pH reagents are returned apart, for
-    their own channel. ``rules`` are extra ``compatibilityRule`` records that
-    separate products by id; they also override the micronutrient rule. At most
-    two tanks: products that need a third raise ``too_many_tanks``.
+    With max_tanks=None, report the required equipment rather than waive a rule.
+    An explicit tank count is a hard equipment limit. Search is deterministic and
+    bounded; exhaustion is reported separately from proven incompatibility.
+    Reagent products use a separate channel. Every separation is conservative
+    even outside its source temperature envelope; it never becomes permission.
     """
+    if (max_tanks is not None and (type(max_tanks) is not int or max_tanks < 1)) or (
+        type(max_search_nodes) is not int or max_search_nodes < 1
+    ):
+        raise DeliveryError('invalid_value', 'tank and search limits must be positive integers')
     by_id = {p['id']: p for p in products}
     extra = [validate_compatibility_rule(r) for r in rules]
-    rows = []
+    rows, seen = [], set()
     for salt in salts:
+        if salt['id'] in seen:
+            raise DeliveryError('invalid_value', 'recipe product ids must be unique')
+        seen.add(salt['id'])
         record = by_id.get(salt['id'])
         if record is None:
-            raise DeliveryError(
-                'unknown_product', f'{salt["name"]} is not among the supplied product records'
-            )
-        rows.append((salt, record, product_classes(record)))
+            raise DeliveryError('unknown_product', f'{salt["name"]} is not supplied')
+        dose = salt['gramsPerLitre']
+        if (
+            isinstance(dose, bool)
+            or not isinstance(dose, (int, float))
+            or not math.isfinite(dose)
+            or dose < 0
+        ):
+            raise DeliveryError('invalid_value', 'recipe dose must be finite and nonnegative')
+        if dose > 0:
+            rows.append((salt, record, product_classes(record)))
     reagents = tuple(s['name'] for s, r, _ in rows if r.get('role') == PH_REAGENT)
-    rows = [row for row in rows if row[1].get('role') != PH_REAGENT]
+    rows = [r for r in rows if r[1].get('role') != PH_REAGENT]
+    rows.sort(
+        key=lambda r: (
+            'calcium' not in r[2],
+            'micronutrient' not in r[2],
+            -r[0]['gramsPerLitre'],
+            r[0]['id'],
+        )
+    )
 
-    def user_rule(a, b):
+    def reason(a, b):
         for rule in extra:
-            if a['id'] in rule['productIds'] and b['id'] in rule['productIds']:
+            if a[0]['id'] in rule['productIds'] and b[0]['id'] in rule['productIds']:
                 return f'{rule["reason"]} ({rule["source"]})'
+        if ('acid' in a[2] and b[2] & {'calcium', 'micronutrient'}) or (
+            'acid' in b[2] and a[2] & {'calcium', 'micronutrient'}
+        ):
+            return 'acid separated from calcium and micronutrients'
+        return _class_conflict(a[2], b[2])
+
+    conflicts = {
+        (i, j): reason(a, b) for i, a in enumerate(rows) for j, b in enumerate(rows) if i < j
+    }
+    nodes = 0
+
+    def assign(index, groups, count):
+        nonlocal nodes
+        nodes += 1
+        if nodes > max_search_nodes:
+            raise DeliveryError('stock_search_limit', 'assignment search budget exhausted')
+        if index == len(rows):
+            return [g[:] for g in groups]
+        for group in groups:
+            if all(not conflicts[(j, index)] for j in group):
+                group.append(index)
+                found = assign(index + 1, groups, count)
+                group.pop()
+                if found is not None:
+                    return found
+        if len(groups) < count:
+            groups.append([index])
+            found = assign(index + 1, groups, count)
+            groups.pop()
+            if found is not None:
+                return found
         return None
 
-    def reason(row, other):
-        return user_rule(row[0], other[0]) or _class_conflict(row[2], other[2])
-
-    def holds_a(tank):
-        return any('calcium' in r[2] or 'micronutrient' in r[2] for r in tank)
-
-    calcium = sorted(
-        (r for r in rows if 'calcium' in r[2] and 'micronutrient' not in r[2]),
-        key=lambda r: -r[0]['gramsPerLitre'],
-    )
-    micros = [r for r in rows if 'micronutrient' in r[2]]
-    others = sorted(
-        (r for r in rows if r not in calcium and r not in micros),
-        key=lambda r: -r[0]['gramsPerLitre'],
-    )
-    tanks, basis = [[]], {}
-    for row in calcium + micros:
-        micro = 'micronutrient' in row[2]
-        if any(reason(row, other) for other in tanks[0]):
-            others.append(row)
-            continue
-        tanks[0].append(row)
-        basis[row[0]['name']] = (
-            'micronutrient or chelate: tank A (FlahaX rule, small doses)'
-            if micro
-            else 'calcium product: tank A'
-        )
-    for row in others:
-        acid = 'acid' in row[2]
-        for tank in tanks:
-            if (acid and holds_a(tank)) or any(reason(row, other) for other in tank):
-                continue
-            tank.append(row)
+    selected = [] if not rows else None
+    for count in range(1, min(len(rows), max_tanks or len(rows)) + 1):
+        selected = assign(0, [], count)
+        if selected is not None:
             break
-        else:
-            if len(tanks) == MAX_TANKS:
-                names = ', '.join(r[0]['name'] for t in tanks for r in t if reason(row, r))
-                raise DeliveryError(
-                    'too_many_tanks',
-                    f'{row[0]["name"]} conflicts with {names or "every tank"}, so the '
-                    f'products need more than {MAX_TANKS} concentrate tanks',
-                )
-            tanks.append([row])
-        basis.setdefault(
-            row[0]['name'],
-            'acid: never with calcium or chelates' if acid else 'first tank without a conflict',
+    if selected is None:
+        raise DeliveryError(
+            'too_many_tanks',
+            f'No separation assignment fits {max_tanks} tanks: '
+            + ', '.join(r[0]['name'] for r in rows),
         )
-    tanks = [t for t in tanks if t]
-    separations = []
-    for i, tank in enumerate(tanks):
-        for later in tanks[i + 1 :]:
-            for row in tank:
-                for other in later:
-                    why = reason(row, other)
-                    if why:
-                        separations.append((row[0]['name'], other[0]['name'], why))
-
-    waived = tuple(
-        (a[0]['name'], b[0]['name'], why)
-        for tank in tanks
-        for i, a in enumerate(tank)
-        for b in tank[i + 1 :]
-        if (why := _waived(a[2], b[2])) and not reason(a, b)
-    )
-
-    def notes(tank):
-        names = {ANALOGUE.get(r[0]['name']) for r in tank} - {None}
-        found = sorted({n for pair, n in FOOTNOTES.items() if pair <= names})
-        if holds_a(tank):
-            found.insert(0, TANK_A_RULE)
-        return tuple(found)
-
     built = []
-    for index, tank in enumerate(tanks):
+    for index, group in enumerate(selected):
+        contents = [rows[i] for i in group]
+        protected = any(r[2] & {'calcium', 'micronutrient'} for r in contents)
+        names = {ANALOGUE.get(r[0]['name']) for r in contents} - {None}
+        notes = sorted({n for pair, n in FOOTNOTES.items() if pair <= names})
+        notes.append('Separation assignment only; mixture solubility is unqualified.')
+        if protected:
+            notes.append('Never acidify a tank holding calcium or micronutrients.')
         built.append(
             ConcentrateTank(
-                name='ABCDEFGH'[index],
-                products=tuple(
-                    TankProduct(s['id'], s['name'], s['gramsPerLitre'], basis[s['name']])
-                    for s, _, _ in tank
+                chr(65 + index) if index < 26 else f'Tank-{index + 1}',
+                tuple(
+                    TankProduct(
+                        r[0]['id'],
+                        r[0]['name'],
+                        r[0]['gramsPerLitre'],
+                        'automatic separation assignment; not mixture approval',
+                    )
+                    for r in contents
                 ),
-                acid_allowed=not holds_a(tank),
-                notes=notes(tank),
+                not protected,
+                tuple(notes),
             )
         )
-    return TankGrouping(tuple(built), reagents, tuple(separations), waived)
+    separations = tuple(
+        (rows[i][0]['name'], rows[j][0]['name'], why) for (i, j), why in conflicts.items() if why
+    )
+    return TankGrouping(tuple(built), reagents, separations)

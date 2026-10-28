@@ -16,9 +16,9 @@ flowchart TB
     D --> M[Balanced water<br/>chemistry only: pH, saturation,<br/>acid dose]
 ```
 
-The laboratory values are what every target and limit is checked against. The small gap every
-lab report has is closed for the chemistry only, on chloride or, when no chloride is measured, on
-the alkalinity. The report shows both side by side.
+Laboratory values determine every target and limit check. A small charge gap may be
+reconciled on a measured balance ion for chemistry only. Titrated alkalinity and fixed
+carbon stay unchanged. The report shows laboratory and model inventories side by side.
 
 ## In this guide
 

@@ -17,6 +17,8 @@ from flahax import (
     recommend,
 )
 
+from .common import ec_summary
+
 FORMULA = 'Tomato (Howard Resh)'  # shipped in the FlahaX catalogue
 BATCH_LITRES = 1000
 
@@ -26,7 +28,8 @@ def run():
     targets = next(f['targets'] for f in library['formulas'] if f['name'] == FORMULA)
 
     # 1. Choose products and doses for the targets; RO water brings no nutrients.
-    result = recommend(library['salts'], targets, water={})
+    # Explicit illustrative allowance, not a default agronomic recommendation.
+    result = recommend(library['salts'], targets, water={}, max_ammonium_fraction=0.10)
 
     # 2. Scale the recipe to a batch.
     batch = final_solution_recipe(result, VolumeLitres(BATCH_LITRES))
@@ -106,11 +109,8 @@ def main():
         f"{balance['anionsMeqPerL']:.1f} meq/L ({balance['imbalancePercent']:+.1f}%)"
     )
     ec = report['ec']
-    print(
-        f"Estimated EC25: {ec['ec25_ms_cm']:.2f} mS/cm at pH {ec['ph']:.2f} ({ec['status']}, "
-        f"experimental)"
-    )
-    if not 5.3 <= ec['ph'] <= 5.8:
+    print(ec_summary(ec))
+    if ec['ph'] is not None and not 5.3 <= ec['ph'] <= 5.8:
         print(
             f"Mixed pH {ec['ph']:.2f} is outside the 5.3-5.8 feed range: plan an acid dose "
             "(see python -m examples.tomato_advanced)."

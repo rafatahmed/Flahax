@@ -5,6 +5,15 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 __all__ = [
+    "CanonicalResult",
+    "accept_result",
+    "verify_acceptance",
+    "save_result",
+    "load_result",
+    "solve_joint_problem",
+    "JointSource",
+    "JointProblem",
+    "make_joint_problem",
     "DeliveryError",
     "DeliveryPlan",
     "FertilizerEquilibrium",
@@ -32,6 +41,8 @@ __all__ = [
     "PhPlan",
     "ProductChemistry",
     "ProductAnalyticalTotals",
+    "material_inventory",
+    "component_nutrient_masses",
     "NitricAcidTargetPlan",
     "PumpCommand",
     "PhaseAllocation",
@@ -44,6 +55,7 @@ __all__ = [
     "TemperatureCelsius",
     "TraceEquilibrium",
     "VolumeLitres",
+    "SolventBasis",
     "alkalinity_meq_per_litre",
     "assert_catalogue_coverage",
     "ammonia_speciation",
@@ -61,6 +73,7 @@ __all__ = [
     "elemental_contribution",
     "final_solution_recipe",
     "rescore_with_reagent",
+    "rescore_weighed_recipe",
     "gap_for",
     "gypsum_reference_values",
     "load_library",
@@ -122,6 +135,7 @@ __all__ = [
     "BalancedWaterAnalysis",
     "balance_water_analysis",
     "carbonate_alkalinity",
+    "total_alkalinity",
     "IrrigationECResult",
     "DeclaredPureWater",
     "calculate_irrigation_ec",
@@ -161,6 +175,7 @@ from .fertilizer_equilibrium import (
 )
 from .delivery_plan import DeliveryPlan, compose_delivery_plan, delivery_report, transition_plan
 from .delivery_quantities import (
+    SolventBasis,
     DurationMinutes,
     FinalSolutionRecipe,
     FlowLitresPerMinute,
@@ -174,6 +189,7 @@ from .delivery_quantities import (
     elemental_contribution,
     final_solution_recipe,
     rescore_with_reagent,
+    rescore_weighed_recipe,
 )
 from .engine import gap_for, load_library, recommend, solve_weights
 from .equilibrium import (
@@ -212,6 +228,8 @@ from .trace_equilibrium import (
 from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
 from .product_conversion import (
     ProductAnalyticalTotals,
+    material_inventory,
+    component_nutrient_masses,
     convert_catalogue_product_dose,
     convert_product_dose,
     solve_catalogue_product_doses,
@@ -243,7 +261,12 @@ from .grower_report import render_batch_sheet, render_report, summarize_batch
 from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
 from .calculated_ec import estimate_manufacturer_ec
 from .injector_sizing import size_injection_requirements
-from .measured_water import BalancedWaterAnalysis, balance_water_analysis, carbonate_alkalinity
+from .measured_water import (
+    BalancedWaterAnalysis,
+    balance_water_analysis,
+    carbonate_alkalinity,
+    total_alkalinity,
+)
 from .irrigation_ec import (
     IrrigationECResult,
     DeclaredPureWater,
@@ -266,3 +289,11 @@ from .materials import (
     load_identities,
     identity_for_product,
 )
+
+from .joint_problem import JointSource, JointProblem
+from .ph_adjustment import make_joint_problem
+
+from .joint_solver import solve_joint_problem
+
+from .canonical_result import CanonicalResult
+from .result_acceptance import accept_result, verify_acceptance, save_result, load_result

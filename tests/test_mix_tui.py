@@ -432,7 +432,7 @@ class RunTuiTests(unittest.TestCase):
 
     def test_run_tui_end_to_end(self):
         term, code, lines = self.run_tui(OWNER_KEYS + ['TAB', 'TAB', 'q', 'y'], 'tui-home')
-        self.assertEqual((code, self.plain_code), (0, 0))
+        self.assertEqual((code, self.plain_code), (3, 3))
         self.assertTrue(term.exited)
         for name in ('batch-sheet.html', 'summary.json', 'report.html'):
             self.assertEqual(
@@ -448,18 +448,18 @@ class RunTuiTests(unittest.TestCase):
         recipe = []
         summarize(self.summary, recipe.append)
         self.assertEqual(lines[1:-1], recipe)
-        self.assertTrue(any(line.startswith('Tank A: prepare') for line in recipe))
-        self.assertTrue(any(line.startswith('Acid container:') for line in recipe))
+        self.assertTrue(any(line.startswith('Tank A: not to be prepared') for line in recipe))
+        self.assertFalse(any(line.startswith('Acid container:') for line in recipe))
         shown = ['\n'.join(f) for f in term.frames]
         self.assertTrue(any('Calculating the recipe, pH and tanks' in f for f in shown))
         self.assertTrue(any('From water' in f for f in shown))
 
     def test_run_tui_saved_session(self):
         term, code, _ = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'again')
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         shown = ['\n'.join(f) for f in term.frames]
         self.assertFalse(any('Enter Choose' in f or 'Enter Next' in f for f in shown))
-        self.assertIn('Tank A', shown[-1])
+        self.assertIn('Notes', shown[-1])
 
     def test_run_tui_restores_on_interrupt(self):
         term, code, lines = self.run_tui(entry('100') + ['CTRL_C'], 'stopped-home')
@@ -478,7 +478,7 @@ class RunTuiTests(unittest.TestCase):
             term, code, _ = self.run_tui(
                 ['q', 'n', 'TAB', 'ESC', 'x', 'q', 'Y'], 'plain-home', 'tomato stage 1', 'ask'
             )
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         asked = [
             i
             for i, f in enumerate(term.frames)
@@ -494,18 +494,33 @@ class RunTuiTests(unittest.TestCase):
         with mock.patch('flahax.mix_tui.calculate', return_value=(self.summary, [])):
             term, code, lines = self.run_tui(['CTRL_C'], 'plain-home', 'tomato stage 1', 'ctrl-c')
         self.assertTrue(term.exited)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html'), lines)
 
     def test_run_tui_blocked_exit_code(self):
-        blocked = copy.deepcopy(self.summary)
-        blocked['status'] = 'blocked'
-        blocked['stages']['chemistry']['status'] = 'blocked'
-        with mock.patch('flahax.mix_tui.run_batch', return_value=blocked):
+        with mock.patch('flahax.mix_tui.run_batch', return_value=self.summary):
             term, code, _ = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'blocked')
         self.assertEqual(code, 3)
-        self.assertIn('do not mix', term.frames[-1][2])
-        self.assertTrue(any(line.lstrip().startswith('- ') for line in term.frames[-1]))
+        self.assertTrue(any('do not mix' in line for line in term.frames[-1]))
+        self.assertTrue(any('Notes' in line for line in term.frames[-1]))
+
+    def test_modified_result_is_rejected_and_terminal_restored(self):
+        changed = copy.deepcopy(self.summary)
+        changed['status'] = 'ready'
+        with mock.patch('flahax.mix_tui.run_batch', return_value=changed):
+            term, code, lines = self.run_tui([], 'plain-home', 'tomato stage 1', 'modified')
+        self.assertEqual(code, 1)
+        self.assertTrue(term.exited)
+        self.assertIn('export changed after finalization', lines[-1])
+
+    def test_stale_session_is_rejected_before_workflow_and_terminal_restored(self):
+        with mock.patch('flahax.canonical_result._sources', return_value={}):
+            with mock.patch('flahax.mix_tui.run_batch') as calculate_batch:
+                term, code, lines = self.run_tui([], 'plain-home', 'tomato stage 1', 'stale')
+        self.assertEqual(code, 1)
+        self.assertTrue(term.exited)
+        calculate_batch.assert_not_called()
+        self.assertIn('saved inputs or model changed', lines[-1])
 
 
 if __name__ == '__main__':

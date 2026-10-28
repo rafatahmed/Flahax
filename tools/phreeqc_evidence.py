@@ -105,8 +105,59 @@ def merge(base, destination):
 
 def selected(path):
     lines = [line.split() for line in path.read_text().splitlines() if line.strip()]
+    if len(lines) < 2:
+        raise ValueError('selected output requires headings and at least one data row')
     headings = [h.replace('AmmH4', 'NH4').replace('AmmH3', 'NH3') for h in lines[0]]
-    return [dict(zip(headings, map(float, row))) for row in lines[1:]]
+    if len(set(headings)) != len(headings):
+        raise ValueError('selected output has duplicate headings')
+    rows = []
+    for row in lines[1:]:
+        if len(row) != len(headings):
+            raise ValueError('selected output row width does not match headings')
+        values = list(map(float, row))
+        if not all(map(math.isfinite, values)):
+            raise ValueError('selected output contains nonfinite values')
+        rows.append(dict(zip(headings, values)))
+    return rows
+
+
+def verify_reference_inventory(root=None, manifest=None):
+    """Verify the entire frozen corpus, including budgets and expected JSON."""
+    root = ROOT / 'tests/fixtures/phreeqc' if root is None else Path(root)
+    manifest = ROOT / 'tests/reference_inventory.json' if manifest is None else Path(manifest)
+    inventory = json.loads(manifest.read_text())
+    actual = {p.relative_to(root).as_posix(): sha(p) for p in root.rglob('*') if p.is_file()}
+    if inventory['schema'] != 1 or not inventory['files'] or actual != inventory['files']:
+        raise ValueError('reference inventory drift: changed, missing or unregistered files')
+    return inventory
+
+
+def verify_reference_installation(exe, base, merged, inventory):
+    """Require the pinned executable and databases for every current live family."""
+    reference = inventory['live_reference']
+    for path, key in [
+        (exe, 'executable_sha256'),
+        (base, 'base_sha256'),
+        (merged, 'merged_sha256'),
+    ]:
+        if sha(path) != reference[key]:
+            raise ValueError(f'reference installation mismatch: {key}')
+
+
+def _capture_path(destination):
+    destination = Path(destination)
+    if destination.resolve().is_relative_to((ROOT / 'tests/fixtures/phreeqc').resolve()):
+        raise ValueError(
+            'historical reference tree is immutable; use an external capture directory'
+        )
+    return destination
+
+
+def new_capture_root(destination):
+    """Reserve a new capture directory; never rewrite a retained evidence tree."""
+    destination = _capture_path(destination)
+    destination.mkdir(parents=True, exist_ok=False)
+    return destination
 
 
 def fixed_ammonium(text):
@@ -179,6 +230,11 @@ def input_text(name, totals, ph, *, balance='Na+', phases=()):
 
 
 def execute(exe, db, folder, name, text):
+    folder = _capture_path(folder)
+    if Path(name).name != name or name in ('', '.', '..'):
+        raise ValueError('capture name must be a single file stem')
+    if any((folder / (name + suffix)).exists() for suffix in ('.pqi', '.out', '.sel', '.screen')):
+        raise FileExistsError(f'refusing to overwrite capture {folder / name}')
     folder.mkdir(parents=True, exist_ok=True)
     (folder / f'{name}.pqi').write_text(text)
     run = subprocess.run(
@@ -196,20 +252,22 @@ def execute(exe, db, folder, name, text):
         raise RuntimeError(f'{name}: PHREEQC warning; inspect preserved capture')
     rows = selected(folder / f'{name}.sel')
     for row in rows:
-        if not math.isfinite(row['pct_err']) or abs(row['pct_err']) > 0.1:
+        if 'pct_err' not in row:
+            raise RuntimeError(f'{name}: selected output has no charge-error evidence')
+        if abs(row['pct_err']) > 0.1:
             raise RuntimeError(f'{name}: rejected charge error {row["pct_err"]}%')
     return rows
 
 
-def generate(exe, base, cases=None):
-    FIXTURES.mkdir(parents=True, exist_ok=True)
+def generate(exe, base, cases=None, *, destination):
+    destination = new_capture_root(destination)
     with tempfile.TemporaryDirectory(prefix='flahax-evidence-') as tmp:
         db = Path(tmp) / 'minteq-flahax.dat'
         merge(base, db)
         for name, doses in CASES.items():
             if cases and name not in cases:
                 continue
-            folder = FIXTURES / name
+            folder = destination / name
             totals = catalogue_dose_totals(doses)
             # Explicit background electrolyte permits fixed-pH charge balance
             # by sodium without assuming unlabelled product counterions.
@@ -311,6 +369,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--exe', type=Path, default=INSTALL / 'bin/Release/phreeqc.exe')
     parser.add_argument('--database', type=Path, default=INSTALL / 'database/minteq.v4.dat')
-    parser.add_argument('--case', action='append', help='recapture only this case (repeatable)')
+    parser.add_argument('--case', action='append', help='capture only this case (repeatable)')
+    parser.add_argument('--output', type=Path, required=True, help='new capture directory')
     args = parser.parse_args()
-    generate(args.exe, args.database, args.case)
+    generate(args.exe, args.database, args.case, destination=args.output)

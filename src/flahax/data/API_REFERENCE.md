@@ -122,13 +122,17 @@ Source module: `flahax.aqueous_model`. Import with `from flahax import AcidResul
 ### `AqueousResult`
 
 ```text
-AqueousResult(totals: dict, ph: float, ionic_strength: float, species: dict, activities: dict, saturation_indices: dict, precipitated: dict, residuals: dict, iterations: int, charge_balance: float, water_activity: float) -> None
+AqueousResult(totals: dict, ph: float, ionic_strength: float, species: dict, activities: dict, saturation_indices: dict, precipitated: dict, residuals: dict, iterations: int, charge_balance: float, water_activity: float, model_limitations: tuple = (), model_domain: dict = <factory>, numerical_diagnostics: dict = <factory>) -> None
 ```
 
 A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
 precipitated phases, residuals and charge balance.
 
-Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `saturation_indices`, `precipitated`, `residuals`, `iterations`, `charge_balance`, `water_activity`.
+model_limitations identifies omitted positive ligand/metal competition and
+selected profile assumptions. model_domain states the numerical/chemical
+conventions; a converged result does not establish physical applicability.
+
+Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `saturation_indices`, `precipitated`, `residuals`, `iterations`, `charge_balance`, `water_activity`, `model_limitations`, `model_domain`, `numerical_diagnostics`.
 
 Source module: `flahax.aqueous_model`. Import with `from flahax import AqueousResult`.
 
@@ -165,6 +169,20 @@ that the software can identify absent laboratory measurements. A nutrient
 table alone is not a complete analysis. Charge adjustment changes only pH.
 
 Source module: `flahax.calculated_ph`. Import with `from flahax import calculate_equilibrium_ph`.
+
+## flahax.canonical_result
+
+### `CanonicalResult`
+
+```text
+CanonicalResult(payload: str) -> None
+```
+
+Immutable JSON snapshot of inputs, source fingerprints and completed workflow state.
+
+Record fields: `payload`.
+
+Source module: `flahax.canonical_result`. Import with `from flahax import CanonicalResult`.
 
 ## flahax.catalogue_chemistry
 
@@ -274,13 +292,13 @@ Source module: `flahax.conductivity`. Import with `from flahax import ECDelivery
 ### `ECPrediction`
 
 ```text
-ECPrediction(status: str, ec_ms_cm: float | None = None, profile_id: str | None = None, profile_sha256: str | None = None, error_code: str | None = None, message: str | None = None, uncertainty_ms_cm: float | None = None) -> None
+ECPrediction(status: str, ec_ms_cm: float | None = None, profile_id: str | None = None, profile_sha256: str | None = None, error_code: str | None = None, message: str | None = None, uncertainty_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
 ```
 
 An EC estimate in mS/cm from an irrigation profile, with its uncertainty, or the error code
 and message why none was made.
 
-Record fields: `status`, `ec_ms_cm`, `profile_id`, `profile_sha256`, `error_code`, `message`, `uncertainty_ms_cm`.
+Record fields: `status`, `ec_ms_cm`, `profile_id`, `profile_sha256`, `error_code`, `message`, `uncertainty_ms_cm`, `uncertainty_components`.
 
 Source module: `flahax.conductivity`. Import with `from flahax import ECPrediction`.
 
@@ -502,6 +520,22 @@ Record fields: `value`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import MilligramsPerLitre`.
 
+### `SolventBasis`
+
+```text
+SolventBasis(final_volume_litres: 'float', water_mass_kg: 'float') -> None
+```
+
+Final solution volume and final solvent-water mass, including carrier/hydrate water.
+
+Neither density nor volume alone determines solvent mass. A stated final inventory
+already includes water supplied by reagents and dissolved hydrates; never add it twice.
+These are accounting inputs, not independently verified measurements.
+
+Record fields: `final_volume_litres`, `water_mass_kg`.
+
+Source module: `flahax.delivery_quantities`. Import with `from flahax import SolventBasis`.
+
 ### `TemperatureCelsius`
 
 ```text
@@ -549,6 +583,21 @@ flag. It does not reinterpret the solver's nutrient balance or round doses.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import final_solution_recipe`.
 
+### `rescore_weighed_recipe`
+
+```text
+rescore_weighed_recipe(products: 'list[dict]', masses: 'Mapping[str, MassGrams]', final_volume: 'VolumeLitres', targets: 'Mapping[str, Any]', water: 'Mapping[str, Any] | None' = None, *, maximum_concentrations: 'Mapping[str, Any] | None' = None) -> 'dict'
+```
+
+Recalculate nutrient results from actual masses without fitting new doses.
+
+``masses`` maps product IDs to weighed grams. Omitted products contribute zero.
+Supply the original targets, water and effective maxima, including any caller
+ammonium policy. Feasibility is recalculated; no planned flag is inherited.
+This nutrient assessment does not establish pH, stock or physical suitability.
+
+Source module: `flahax.delivery_quantities`. Import with `from flahax import rescore_weighed_recipe`.
+
 ### `rescore_with_reagent`
 
 ```text
@@ -589,7 +638,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.02, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -599,22 +648,25 @@ Args:
         percentages in elements. Use load_library()['salts'] deliberately.
     targets: Required nonempty elemental mg/L map; nitrogen forms are
         separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
+        An explicit zero prohibits positive contribution, unlike a missing key.
     water: Source-water elemental mg/L; omitted entries default to zero.
     allow_ions: Explicit exceptions to the default restricted-ion filter.
     allow_carbonates: Permit carbonate products in nutrient fitting only;
         this does not establish dissolution or stock compatibility.
-    ridge: L2 dose penalty, not a limit on the number of products.
-    maximum_concentrations: Optional mg/L ceilings for incidental ions, for
+    ridge: Retained compatibility argument; must be zero. Nonzero dose
+        regularization raises InputError because it degrades target accuracy.
+    maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
         example {"Cl": 70}. An ion with a positive ceiling is admitted like
-        allow_ions and is not penalized up to the ceiling; a fit above it is
-        solved again with the ion held on the ceiling as a constraint, and any
+        allow_ions. Untargeted nutrients are not penalized up to their ceiling;
+        a fit above it is solved again with the ion held on the ceiling as a
+        constraint, and any
         excess that cannot be removed is reported in limitViolations with
         feasible False. Omitted keeps the default.
     max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
         none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-        the total target N (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L
-        NH4 (21.01 mg/L N). Default 0.10 (Dutch soilless practice; users may
-        raise it, e.g. to 0.15); None keeps the penalty-only fit.
+        the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
+        caller policy, with no additional absolute cap. Default None adds
+        no ammonium maximum. Untargeted nutrients do not enter the objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -622,12 +674,18 @@ Returns:
     Each salt carries provenance (recordId, identityId, analysisBasis,
     documents, flags) taken from the record that produced it, or
     analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
-    Chelate counterion sodium (D2) is added to the Na row and incidental
-    review after the fit; it never affects eligibility, the fit or grams.
+    Supported counterions are included in the fitting and forward nutrient
+    inventory. materialInventory exposes conserved components and limitations;
+    eligibility policy still uses the declared assay and explicit permissions.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
-    product-to-dose mapping. Feasible is positive-target fit within 1%,
-    not chemical, stock or operational approval.
+    product-to-dose mapping. Feasible requires positive-target fit within 1%,
+    satisfied zero requirements and maxima, and no requirement conflicts.
+    requirementConflicts identifies targets above maxima and water above limits.
+    substitutionSearch records supplied and attempted product IDs and whether
+    a nutrient-feasible candidate was found. Recovery never expands the supplied
+    inventory; exhausted search is not a global infeasibility certificate.
+    This is not chemical, stock or operational approval.
 
 Raises:
     InputError: Invalid targets/water or no eligible products. Inspect
@@ -641,7 +699,7 @@ Source module: `flahax.engine`. Import with `from flahax import recommend`.
 solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0) -> 'dict'
 ```
 
-Non-negative grams per litre minimizing squared Δ%.
+Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 
@@ -838,13 +896,13 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>) -> None
 ```
 
 The recommendation, water, nutrient gap and pH target, with each stage's result; the pH must
 still be measured after mixing.
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -864,7 +922,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20)
 ```
 
 Run available stages; expose missing inputs and rejected stages separately.
@@ -873,11 +931,17 @@ Water nutrient mg/L is mandatory ({} explicitly denotes zero nutrients).
 It is never silently promoted to a complete acid/base analysis. Optional
 configurations are mappings documented in docs/water-to-delivery.md.
 No stage performs external writes, mixing or equipment operation.
+remedy_options declares catalogue bundles, treated-water analyses or stock
+equipment alternatives. Up to max_remedy_evaluations scenarios are re-run
+with unchanged targets/limits; no candidate is adopted automatically.
 
 ph_adjustment (products, maximum_reagent_volume_litres, optional
-preferred_product_id) plans the recipe and its pH reagent together (#74):
+preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
 acids or bases, with the reagent's nutrients counted as supply. It needs the
 equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
+and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
+water_mass_kg. Optional starting_points are never accepted without verification.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import plan_fertilizer_workflow`.
 
@@ -906,7 +970,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25)
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -915,8 +979,8 @@ Plain data for a grower report and batch sheet.
 ``products`` are the product records it was planned with (they give the tank
 grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
 a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-is the recipe to weigh. Each concentrate is checked against sourced solubility at
-``temperature_c`` (°C); a stock that does not dissolve blocks the batch.
+is the recipe to weigh. Each concentrate is compared with source-qualified
+references at ``temperature_c``; conditional floors cannot prove dissolution failure.
 
 Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 
@@ -954,21 +1018,17 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import DeclaredP
 ### `IrrigationECResult`
 
 ```text
-IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None) -> None
+IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
 ```
 
 EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-A bounded estimate (``bounded`` True, decision O2) has status 'estimated' with
-``ec25_range_ms_cm`` = (known subtotal, known subtotal + uncovered bound),
-``ec25_ms_cm`` its midpoint and ``uncertainty_ms_cm`` half the bound. Its
-``transport_numbers`` are empty: they need the whole current, which is not known.
+Missing material species produce a partial known-species subtotal, not a
+total, midpoint or uncertainty interval. Legacy interval fields remain None.
+Numerical, input and model uncertainty are separately reported as unquantified;
+absence of a quantified uncertainty is never zero uncertainty.
 
-The midpoint and ``uncertainty_ms_cm`` describe only the uncovered-species interval;
-they are not an accuracy statement and exclude model error. Because 80 S cm2/mol per
-charge is conservative, the true value tends to lie in the lower half of the range.
-
-Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`.
+Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`, `uncertainty_components`.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import IrrigationECResult`.
 
@@ -998,14 +1058,16 @@ EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
 or 'not_supported'; invalid input raises DeliveryError. Charged species
-without a coefficient (listed in missing_species) make the estimate
-bounded (decision O2): ec25_range_ms_cm = (known subtotal, known subtotal
-+ sum |z| * 80 * m), ec25_ms_cm is its midpoint, uncertainty_ms_cm half the
-bound, and transport_numbers is empty. H2PO4- and HPO4-2 use 25 C
+without a coefficient (listed in missing_species) make the result partial:
+only known_species_subtotal_ms_cm is available, with no total, interval,
+uncertainty bound or transport numbers. The historical universal per-charge
+bound is not used. H2PO4- and HPO4-2 use 25 C
 coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
-the audit then records supplementaryCoefficients and
+material supplementary species above the stored fit ceiling return
+not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
+The audit retains supplementaryCoefficients and
 phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
-bounded estimates and equals the range's lower limit. Unrecorded counterions stay
+partial predictions and is not a complete EC estimate. Unrecorded counterions stay
 'partial' and the domain checks 'not_supported'. The 0.1 % O5
 assay gate uses assay_charge_residual_percent when given (the declared-form
 percent, as from assay_charge_residual()); when None (raw totals without
@@ -1035,7 +1097,7 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate
 ### `calculate_irrigation_ec_band`
 
 ```text
-calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, **kwargs) -> dict
+calculate_irrigation_ec_band(doses_g_per_kg_water: collections.abc.Mapping[str, float], *, materials: collections.abc.Mapping | None = None, joint_scenarios: collections.abc.Mapping | None = None, **kwargs) -> dict
 ```
 
 EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
@@ -1048,6 +1110,10 @@ any dosed product has an open band end (a shipped product has none) is
 not_supported / band_end_open; nothing is substituted. Each end's audit records
 ``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
 reports no nominal numbers (its audit assay residual is None too).
+Optional joint_scenarios maps named scenarios to complete material mappings for
+all dosed products. Each mapping describes a coherent joint assay realization;
+no independence, probability or statistical bounds are inferred. Results in
+scenarios retain individual domain/coverage failures, never an envelope promise.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_irrigation_ec_band`.
 
@@ -1080,6 +1146,72 @@ measurement lies inside it (both ends inclusive), False when outside, and None w
 prediction is not bounded (it has no range). It is a fact, not a pass/fail.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import compare_measured_ec`.
+
+## flahax.joint_problem
+
+### `JointProblem`
+
+```text
+JointProblem(fertilizers: tuple[flahax.joint_problem.JointSource, ...], reagent: flahax.joint_problem.JointSource, targets: collections.abc.Mapping, water: collections.abc.Mapping, water_components: collections.abc.Mapping | None, final_volume_litres: float, solvent_mass_kg: float, target_ph: float, reference_charge_mol_per_kg: float, maximum_reagent_mass_g: float, maximum_concentrations: collections.abc.Mapping = <factory>, maximum_reagent_volume_litres: float | None = None, phases: tuple[str, ...] = ()) -> None
+```
+
+One fixed-target problem with one explicitly offered reagent per candidate.
+
+reference_charge_mol_per_kg is the declared charge/proton closure on the same
+final-solvent basis; it must not be inferred from a nutrient subtotal. Analytical
+nutrient totals and dissolved/precipitated chemistry remain distinct outputs.
+
+Record fields: `fertilizers`, `reagent`, `targets`, `water`, `water_components`, `final_volume_litres`, `solvent_mass_kg`, `target_ph`, `reference_charge_mol_per_kg`, `maximum_reagent_mass_g`, `maximum_concentrations`, `maximum_reagent_volume_litres`, `phases`.
+
+Source module: `flahax.joint_problem`. Import with `from flahax import JointProblem`.
+
+### `JointSource`
+
+```text
+JointSource(product_id: str, nutrients: collections.abc.Mapping, components: collections.abc.Mapping | None, solvent_fraction: float = 0.0, density_kg_per_litre: float | None = None) -> None
+```
+
+One permitted product with explicit coefficients and solvent/density data.
+
+None components means missing chemistry; an empty map explicitly declares no
+conserved components. Solvent fraction is declared, never inferred from assay
+remainder. The caller is responsible for coefficient provenance and product roles.
+
+Record fields: `product_id`, `nutrients`, `components`, `solvent_fraction`, `density_kg_per_litre`.
+
+Source module: `flahax.joint_problem`. Import with `from flahax import JointSource`.
+
+## flahax.joint_solver
+
+### `solve_joint_problem`
+
+```text
+solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks, objective_gap_tolerance=None, stationarity_tolerance=None, active_bound_tolerance=None, sensitivity_method='finite_difference', curvature_block=False)
+```
+
+Search one immutable JointProblem from an explicitly supplied start.
+
+dose_steps maps every fertilizer/reagent ID to a positive g/L finite-difference
+scale. trust_radius bounds the infinity norm of steps in those scaled variables.
+Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
+squared relative nutrient errors. sensitivity_tolerance is relative agreement
+of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+
+Optional objective_gap_tolerance bounds the certified absolute objective gap,
+not the nutrient loss. Optional stationarity_tolerance (relative KKT residual)
+and active_bound_tolerance (distance in scaled variables) must be supplied
+together. They enable local first-order stationarity, not a minimum proof.
+These modes use linearized charge equality, adaptive derivative probes and
+an L1 merit weight above the equality multiplier outside charge feasibility.
+Feasible comparisons use exact nutrient loss plus the signed charge multiplier
+term to avoid masking progress with charge roundoff. All are opt-in caller policy.
+
+Returns numerical_candidate only after fresh final residual/constraint checks;
+accepted is always False pending separate model/phase/acceptance qualification.
+Exhaustion, bad trials, failed sensitivities and stalled local searches return
+search_incomplete, never a global infeasibility or optimality claim.
+
+Source module: `flahax.joint_solver`. Import with `from flahax import solve_joint_problem`.
 
 ## flahax.material_chemistry
 
@@ -1222,6 +1354,10 @@ ids, so a resolved record is never mistaken for the shipped product; ``record['n
 stays the product name. A ``declared_ions`` grade (a compound entered from its data
 sheet) names the product itself; its record id is the grade id.
 
+Provenance separates sourceStatus (document supplied or unattributed),
+assumptionStatus and atomicMassConvention. Documentation is not independent
+verification of a composition, grade or lot.
+
 Source module: `flahax.materials`. Import with `from flahax import resolve_material`.
 
 ## flahax.measured_water
@@ -1258,7 +1394,9 @@ measured zero and stays zero; an omitted component is not measured.
 detection limit (mol/kg); they enter the chemistry as 0, are recorded, and are
 never adjusted. Supply inorganic carbon either as ``totals['CO3-2']`` (0 for
 explicitly carbon-free water) or as ``alkalinity_eq_per_kg`` (titrated total
-alkalinity treated as carbonate alkalinity), never both.
+alkalinity on the supported inorganic proton reference), never both, including
+an explicitly zero carbon inventory. Organic/trace-metal alkalinity without
+a qualified proton reference is rejected rather than attributed to carbonate.
 
 The composition is first speciated at the measured pH. If its charge closes
 within ``CLOSURE_TOLERANCE`` it is returned unchanged (``reconciliation`` is
@@ -1285,6 +1423,21 @@ Each carbon species counts 2 x carbon - H+ relative to H2CO3; OH- and H+
 count +1 and -1. Phosphate, borate and organic bases are not included.
 
 Source module: `flahax.measured_water`. Import with `from flahax import carbonate_alkalinity`.
+
+### `total_alkalinity`
+
+```text
+total_alkalinity(state)
+```
+
+Supported inorganic proton balance in eq/kg solvent water.
+
+Includes carbonate, phosphate relative to H2PO4-, borate, ammonia, sulfate
+protonation, water and complexes of supported major ions. Active species
+with an unqualified proton reference (including organic ligands and trace
+metals) are rejected. No seawater constants or salinity assumptions are used.
+
+Source module: `flahax.measured_water`. Import with `from flahax import total_alkalinity`.
 
 ## flahax.mixed_equilibrium
 
@@ -1316,25 +1469,25 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve
 ### `PhAdjustmentPlan`
 
 ```text
-PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True) -> None
+PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None) -> None
 ```
 
 Every pH reagent tried and the selected one; the pH must still be measured after mixing.
 
-Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`.
+Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
 
 ### `PhCandidate`
 
 ```text
-PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None) -> None
+PhCandidate(product_id: str, formula: str, direction: str, status: str, dose_molal: float | None = None, reagent_mass_g: float | None = None, reagent_volume_litres: float | None = None, nutrient_contribution: dict | None = None, recommendation: dict | None = None, mixed: flahax.aqueous_model.AqueousResult | None = None, target: flahax.aqueous_model.AqueousResult | None = None, iterations: int = 0, loss: float | None = None, error_code: str | None = None, message: str | None = None, product_record: dict | None = None, saturation: dict | None = None, joint_result: dict | None = None) -> None
 ```
 
 One pH reagent tried in one direction: its dose, reagent amount, nutrient contribution and
 solved solutions, or why it was not usable.
 
-Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`.
+Record fields: `product_id`, `formula`, `direction`, `status`, `dose_molal`, `reagent_mass_g`, `reagent_volume_litres`, `nutrient_contribution`, `recommendation`, `mixed`, `target`, `iterations`, `loss`, `error_code`, `message`, `product_record`, `saturation`, `joint_result`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhCandidate`.
 
@@ -1351,18 +1504,38 @@ phosphoric acid record (assay and density from the supplier certificate).
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import catalogue_ph_reagents`.
 
+### `make_joint_problem`
+
+```text
+make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fraction, **conditions)
+```
+
+Compile a fixed-target contract from supplied nutrient and reagent records.
+
+conditions supplies the explicit water components, final solvent mass/volume,
+target pH, reference charge and reagent mass cap required by JointProblem.
+Reagent solvent fraction is declared separately; assay remainder is not water.
+This compiler does not run the sequential or joint optimizer. Fertilizer carrier
+or hydrate solvent is not inferred; use explicit JointSource records when needed.
+
+Source module: `flahax.ph_adjustment`. Import with `from flahax import make_joint_problem`.
+
 ### `plan_coupled_ph`
 
 ```text
-plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None)
+plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, water_components=None)
 ```
 
 Fit the recipe and its pH reagent together; one candidate per offered product.
 
 mix(recommendation) returns the mixed state (water and products, before any
-reagent) at its calculated pH. Candidates whose direction does not fit the feed
-are reported as not applicable. A candidate's dose is reported even when it is
-rejected, so the reason and the amount are both visible.
+reagent) at its calculated pH. Explicit joint configuration supplies controls,
+final solvent mass, reagent solvent fractions and mass caps; optional starting
+points are checked as search seeds. water_components supplies the declared
+final-basis water inventory. Joint mode evaluates every offered reagent and
+independently calculates final pH. Legacy mode retains directional fitting,
+with bounded zero-reagent recovery when no matching direction is offered.
+A candidate's quantities and unresolved numerical status remain inspectable.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import plan_coupled_ph`.
 
@@ -1386,12 +1559,12 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import reagent_d
 ### `PhPlan`
 
 ```text
-PhPlan(water_analysis_id: 'str', titration_curve_id: 'str', reagent_id: 'str', direction: 'str', target_ph: 'float', source_alkalinity: 'MilliEquivalentsPerLitre', demand: 'MilliEquivalentsPerLitre', reagent_volume_litres: 'float', reagent_mass: 'MassGrams', nutrient_contribution: 'dict[str, MilligramsPerLitre]', loss: 'float', rows: 'tuple[dict, ...]', post_mix_measurement_required: 'bool' = True) -> None
+PhPlan(water_analysis_id: 'str', titration_curve_id: 'str', reagent_id: 'str', direction: 'str', target_ph: 'float', source_alkalinity: 'MilliEquivalentsPerLitre', demand: 'MilliEquivalentsPerLitre', reagent_volume_litres: 'float', reagent_mass: 'MassGrams', nutrient_contribution: 'dict[str, MilligramsPerLitre]', loss: 'float', rows: 'tuple[dict, ...]', post_mix_measurement_required: 'bool' = True, final_volume: 'VolumeLitres | None' = None, reagent_channel_id: 'str' = 'acid') -> None
 ```
 
 A bounded initial pH-adjustment plan with re-scored nutrient balance.
 
-Record fields: `water_analysis_id`, `titration_curve_id`, `reagent_id`, `direction`, `target_ph`, `source_alkalinity`, `demand`, `reagent_volume_litres`, `reagent_mass`, `nutrient_contribution`, `loss`, `rows`, `post_mix_measurement_required`.
+Record fields: `water_analysis_id`, `titration_curve_id`, `reagent_id`, `direction`, `target_ph`, `source_alkalinity`, `demand`, `reagent_volume_litres`, `reagent_mass`, `nutrient_contribution`, `loss`, `rows`, `post_mix_measurement_required`, `final_volume`, `reagent_channel_id`.
 
 Source module: `flahax.ph_planning`. Import with `from flahax import PhPlan`.
 
@@ -1544,6 +1717,20 @@ materials the catalogue does not hold; see ``catalogue_dose_contributions``.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import catalogue_dose_totals`.
 
+### `component_nutrient_masses`
+
+```text
+component_nutrient_masses(totals)
+```
+
+Nutrient grams from analytical component moles, retaining the input denominator.
+
+Thus mol/kg water produces g/kg water, and mol/g product produces g/g
+product. Organic ligand N and carbon remain in their analytical components;
+they are not relabelled as available nitrogen or carbonate.
+
+Source module: `flahax.product_conversion`. Import with `from flahax import component_nutrient_masses`.
+
 ### `convert_catalogue_product_dose`
 
 ```text
@@ -1569,6 +1756,22 @@ D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
 is retained as inert carrier.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_product_dose`.
+
+### `material_inventory`
+
+```text
+material_inventory(product, *, material=None)
+```
+
+One gram of material: assayed/derived nutrients and conserved chemistry components.
+
+Nutrients are mass percent; analytical components are mol/g product. Ligand
+nitrogen is retained in its ligand, never relabelled as plant-available N.
+Unknown chemistry retains an explicitly incomplete assay-only inventory;
+callers requiring equilibrium must reject that status. Source records are
+not modified, and supplied assays take precedence over inferred counterions.
+
+Source module: `flahax.product_conversion`. Import with `from flahax import material_inventory`.
 
 ### `plan_catalogue_nitric_target`
 
@@ -1614,17 +1817,62 @@ Calculate a bounded command; this function performs no device I/O.
 
 Source module: `flahax.pump_planning`. Import with `from flahax import plan_pump_command`.
 
+## flahax.result_acceptance
+
+### `accept_result`
+
+```text
+accept_result(summary, *, actor, reason)
+```
+
+Record explicit consent to this exact proposal, without changing any result status.
+
+Actor is caller-supplied attribution, not authenticated identity. Consent does
+not waive constraints, certify EC, or authorize physical delivery.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import accept_result`.
+
+### `load_result`
+
+```text
+load_result(record)
+```
+
+Validate a saved result and return its detached payload, preserving old provenance.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import load_result`.
+
+### `save_result`
+
+```text
+save_result(summary, acceptance=None)
+```
+
+Build a detached versioned archive; no acceptance is inferred by saving.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import save_result`.
+
+### `verify_acceptance`
+
+```text
+verify_acceptance(summary, acceptance)
+```
+
+Reject stale or malformed consent. Success leaves every calculation guard intact.
+
+Source module: `flahax.result_acceptance`. Import with `from flahax import verify_acceptance`.
+
 ## flahax.stock_planning
 
 ### `StockPlan`
 
 ```text
-StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]') -> None
+StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True) -> None
 ```
 
-A compatible, capacity-checked plan without any hardware command.
+A capacity-checked assignment with explicit mixture qualification and search status.
 
-Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`.
+Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockPlan`.
 
@@ -1667,14 +1915,18 @@ Source module: `flahax.stock_planning`. Import with `from flahax import StockTan
 ### `plan_stocks`
 
 ```text
-plan_stocks(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', tanks: 'Iterable[StockTank]', compatibility_rules: 'Iterable[Mapping[str, Any]]', solubility_limits: 'Iterable[Mapping[str, Any]]', temperature: 'TemperatureCelsius') -> 'StockPlan'
+plan_stocks(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', tanks: 'Iterable[StockTank]', compatibility_rules: 'Iterable[Mapping[str, Any]]', solubility_limits: 'Iterable[Mapping[str, Any]]', temperature: 'TemperatureCelsius', *, mixture_model=None, max_assignments=100000) -> 'StockPlan'
 ```
 
 Assign a feasible recipe to compatible concentrated-stock tanks.
 
 Stock concentration is ``final_g_per_litre * injection_ratio`` and each
 used tank holds ``final_volume / injection_ratio``. The planner chooses the
-first deterministic assignment using the fewest tanks, then tank-id order.
+first qualified assignment using the fewest tanks, then tank-id order.
+Without a reviewed mixture model, return a structural requires_review plan,
+never mixing approval. The callable receives (StockTankPlan, temperature)
+and must report matched product IDs, basis, source, review and domain bounds.
+Search evaluates alternatives after mixture rejection; exhaustion is explicit.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import plan_stocks`.
 
@@ -1790,26 +2042,23 @@ The default table as ``compatibilityRule`` records for ``plan_stocks``.
 
 One "separate" record per incompatible pair among ``products`` (catalogue or
 grade records with ``id``, ``elements`` and optional ``formula``). Micronutrient
-products are kept only from phosphate (FlahaX rule).
+products retain elemental separation screens; no small-dose waiver applies.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import default_compatibility_rules`.
 
 ### `group_tanks`
 
 ```text
-group_tanks(salts, products, *, rules=())
+group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=100000)
 ```
 
-Group a recipe's products into concentrate tanks.
+Find a minimum-tank separation assignment; no mixture approval is implied.
 
-``salts`` are recipe rows with ``id``, ``name`` and ``gramsPerLitre`` (as in
-``recommend(...)['salts']``); ``products`` are the records they came from.
-Tank A takes the calcium products, then every micronutrient product; the others
-follow by descending dose into the first tank without a conflict; acids never
-join a tank holding calcium or micronutrients. pH reagents are returned apart, for
-their own channel. ``rules`` are extra ``compatibilityRule`` records that
-separate products by id; they also override the micronutrient rule. At most
-two tanks: products that need a third raise ``too_many_tanks``.
+With max_tanks=None, report the required equipment rather than waive a rule.
+An explicit tank count is a hard equipment limit. Search is deterministic and
+bounded; exhaustion is reported separately from proven incompatibility.
+Reagent products use a separate channel. Every separation is conservative
+even outside its source temperature envelope; it never becomes permission.
 
 Source module: `flahax.tank_grouping`. Import with `from flahax import group_tanks`.
 

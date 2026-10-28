@@ -54,17 +54,19 @@ After installation, `flahax` is the same program. A missing or empty `targets` o
 
 ## Public functions
 
-```python
+Signature summary (not executable Python):
+
+```text
 from flahax import gap_for, load_library, recommend, solve_weights
 
 load_library() -> dict
 gap_for(targets, water) -> dict
-recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.02,
-          maximum_concentrations=None, max_ammonium_fraction=0.10) -> dict
+recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
+          maximum_concentrations=None, max_ammonium_fraction=None) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
-`solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then calls the fit with `ridge=0.02`. `ridge` shrinks grams. It is not a count of salts.
+`solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then fits positive targets by squared relative error. Both APIs retain `ridge` for compatibility but require zero; nonzero or invalid values raise `InputError`. Remove an old explicit `ridge=0.02` argument to migrate. Dose magnitude and untargeted nutrient concentrations do not enter the primary objective. Equivalent best-fit allocations need not use identical products.
 
 `forward(salts, grams, water=None)` and `score(achieved, targets)` live in `flahax.engine`. `forward` applies the ppm equation. `score` returns the loss and the percentage-error rows.
 
@@ -74,11 +76,11 @@ Targets and water are maps of element symbol to ppm. Use the database symbols:
 
 `N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
 
-A missing target means the formula does not ask for that element. That is different from a target of zero. Any ppm the salts still produce for an unrequested element is penalized, unless that element has a ceiling (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
+A missing target means the formula does not ask for that element. That is different from a target of zero. Untargeted contributions are reported without a fitting penalty; explicit maxima remain hard constraints (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
 
 A salt is a dictionary:
 
-```python
+```json
 {
     "id": "…",
     "name": "Potassium Nitrate",
@@ -91,7 +93,7 @@ A salt is a dictionary:
 
 ## Result
 
-```python
+```json
 {
     "salts": [{"id": "…", "name": "…", "gramsPerLitre": 0.5458}],
     "saltIds": ["…"],
@@ -112,8 +114,8 @@ has no target for that symbol or its target is zero.
 
 In the water-to-delivery workflow, `feasible` measures positive-target
 fit; it is not an assertion that every incidental addition is acceptable.
-`incidentalContributions` and `requiresReview` report zero/omitted-target
-nutrients separately. Explicit `maximum_concentrations` in the workflow or
+`incidentalContributions` and `requiresReview` report omitted-target
+nutrients separately. Explicit zero targets are hard zero limits. Explicit `maximum_concentrations` in the workflow or
 acid adapters enforce absolute nutrient limits, including a true zero limit.
 See [water-to-delivery](water-to-delivery.md).
 
@@ -125,48 +127,72 @@ assumption: no published standard gives a per-ion tolerance for preparing a feed
 solution. Dutch practice corrects only when root-zone analyses deviate by 25% or
 more (De Kreij et al. 2003).
 
-A real nutrient solution is electrically neutral (Steiner 1961). `recommend`
-reports `targetIonBalance`: the cation and anion meq/L implied by the formula
-itself, counting P as H2PO4- and S as SO4 2- and excluding urea, Si and
-micronutrients. When the two sums differ by more than 10% of the larger, a
-warning explains that no salt combination can meet every target exactly. The
-10% follows the window used by Steiner-type software (Martinez-Corral et al.
-2009). Several shipped formulas exceed it, including Pepper (Howard Resh) at
--39.5% and the U of Florida tomato clusters at +19% to +30%.
+`targetIonBalance` is a conventional charge check on requested nutrient entries,
+not the whole solution. `recipeIonBalance` applies the same convention to all
+emitted nutrient concentrations, including supported counterions and source water.
+Both expose `scope="nutrient_subset_convention"`, `provesInfeasibility=False`
+and `unrepresentedNutrients`. The existing 10% warning is informational: it
+cannot rule out an exact nutrient fit. P is represented as H2PO4- and S as SO4 2-;
+this convention does not perform speciation.
 
-Every positive target missed by more than 1% appears in `unmetTargets` with a
-reason:
+`chargeAssessment.status="partial_charge_inventory"` explicitly records the
+boundary. `assayOnlyProducts` identifies emitted products without supported
+analytical components. `materialInventory` records available components, including
+ligands; even supported components do not establish full water chemistry or the
+pH-dependent species charge. A balanced nutrient subtotal is not proof of a
+chemically complete solution.
+
+Every positive target missed by more than 1%, and every violated zero target,
+appears in `unmetTargets`. Relative error remains null for zero targets.
 
 | Reason | Meaning |
 |---|---|
-| `no_source` | No catalogue product supplies the element (for example Si). |
-| `limited_by_ceiling` | The targets are reachable, but an incidental ceiling binds; `bindingLimits` names it. |
-| `incidental_tradeoff` | The targets are reachable, but the incidental-ion penalty chose otherwise. |
-| `conflicting_targets` | Dropping one of the `conflictsWith` targets makes the rest reachable; `reachableWithChloride` says whether chloride products (which need a Cl ceiling) would reach it. |
+| `water_exceeds_target` | Source water already exceeds the missed target; nonnegative product additions cannot subtract it. |
+| `target_above_maximum` | The requested target contradicts its explicit hard maximum. |
+| `no_source` | No admitted nutrient product supplies the deficient nutrient. |
+| `prohibited_by_zero_requirement` | Every source of the deficient nutrient carries a prohibited nutrient; `zeroRequirements` and `blockedProducts` identify the witness. |
+| `limited_by_ceiling` | A relaxed target-only fit succeeds and a limit is observed binding; this is a possible cause, not proof the ceiling forces this miss. |
+| `fit_degradation` | Relaxed fitting succeeds but no binding ceiling is identified. |
+| `conflicting_targets` | The relaxed search still misses targets; `conflictsWith` lists successful drop-one searches and `reachableWithChloride` reports a relaxed chloride search. Neither establishes feasibility under the original constraints. |
 
-The diagnosis is a least-squares check on the target rows alone. It names a
-likely cause; it does not prove infeasibility.
+The first four reasons carry `status="proven_infeasible"` and an explicit
+`proofScope`: the declared nonnegative nutrient inventory and caller constraints.
+The remaining reasons carry `status="search_incomplete"` and null `proofScope`.
+`searchScope` discloses the relaxed zero/maximum constraints. No failed numerical
+search or partial charge sum is promoted to an impossibility proof. Feasibility
+and hard-limit assessment of the actual emitted recipe remain separate.
 
 ## Incidental ions and ceilings
 
 An incidental ion is one the products add but the formula does not ask for.
-Without a ceiling, each mg/L of it is penalized in the fit. With a ceiling in
-`maximum_concentrations` (mg/L), the ion is free up to that value. If the fit
+Without a ceiling, it is reported for review and does not affect fitting loss.
+With a ceiling in `maximum_concentrations` (mg/L), it is allowed up to that value. If the fit
 would exceed it, the ceiling is applied as a constraint: the best fit to the
 targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
-**Ammonium default.** When the targets omit `N_NH4` and no `N_NH4` ceiling is
-given, incidental NH4-N may reach the smaller of 10% of the formula's total
-target N (`N_NO3 + N_NH4 + N_UREA`) and 1.5 mmol/L NH4 (21.01 mg/L N). Calcium
-nitrate (ag grade) always carries some ammonium, so without this allowance the
-fit under-doses calcium to avoid it. `result["ammoniumLimit"]` reports the limit
-applied. Raise the share with `max_ammonium_fraction` (for example `0.15`), or
-pass `None` for the previous penalty-only fit. An explicit `N_NH4` target,
-including `0` ("none wanted"), keeps its own fit and is never relaxed.
+**Explicit ammonium policy.** `max_ammonium_fraction` defaults to `None`: no
+ammonium maximum is invented. When explicitly supplied and the targets omit
+`N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
+without an additional absolute cap. `result["ammoniumLimit"]` records it.
+An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
+Explicit zeros and targeted ceilings are enforced independently of the objective.
+`score` retains all nutrient rows but sums only positive-target squared relative errors.
+Binding-limit diagnostics use the same numerical aim and convergence tolerance as
+the ceiling search; hard-limit acceptance still compares directly with the stated limit.
+Secondary product removal uses the original error reference throughout:
+no positive-target error may increase from that fit, primary loss may not increase
+from the best accepted trial, and zeros/maxima are rechecked. No additional
+numerical allowance is granted; equal fits may retain extra products because of
+floating-point differences. Published dose rounding remains separately tracked.
+The coupled pH search treats an opposite-direction trial as a bound, never as an
+accepted dose. At a product switch it can blend the two bracketing product recipes,
+solve charge balance on the mixture, and rebuild nutrient and limit assessments at
+the verified reagent dose. Initial wrong-direction products remain not applicable.
+This bounded repair does not certify global joint optimality; issue #158 remains open.
 
-The values are the project owner's decisions (2026-10-20), grounded in Dutch
+The historical defaults were project-owner decisions (2026-10-20), grounded in Dutch
 soilless practice. Recommended NH4 is 5-15% of total N, with at most about
 1-1.5 mmol/L (Van der Lugt et al., following De Kreij, Voogt et al.). Voogt's
 WUR lecture gives "heavy fruit bearing - max 90:10" NO3:NH4. The Dutch standard
@@ -232,7 +258,8 @@ small error into a large pH error. Start from the measured pH instead:
 ```python
 from flahax import balance_water_analysis
 
-# mol/kg water; CO3-2 is total inorganic carbon
+# Fully specified synthetic electrolyte; not a site prescription.
+analysis_totals = {"Na+": 0.002, "Cl-": 0.002, "CO3-2": 0.0}
 balanced = balance_water_analysis(analysis_totals, measured_ph=7.8)
 print(balanced.imbalance_percent, balanced.balance_ion, balanced.balance_adjustment_molal)
 ```
@@ -252,3 +279,72 @@ python -m unittest discover -s tests -t .
 ```
 
 `test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the example export has 28 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
+
+### Chemistry failure and compatibility contract
+
+`solve_fertilizer_equilibrium`, `solve_mixed_fertilizer_equilibrium` and
+`solve_ch_micro_equilibrium` expose views of the current simultaneous model.
+The explicitly named legacy macro/acid functions and isolated reference kernels
+retain narrower reaction sets. Use the [model scope](../models/fertilizer-equilibrium-model.md)
+to distinguish them; the historical nitric helper uses a reduced alkalinity
+expression, while the current nitric target conserves added nitrate.
+
+Callers must handle `DeliveryError` with code `nonconvergent` from retained
+iterative kernels as well as the current solver. A failed iteration budget is
+not a usable last-iterate result. Fixed-pH solutions do not automatically imply
+charge neutrality, and equilibrium phase amounts do not predict kinetics.
+
+
+## Zero requirements and hard maxima
+
+A missing target leaves a nutrient unspecified. A target of `0` prohibits its
+positive contribution. Because product contributions are nonnegative, fitting
+excludes every product carrying that nutrient, including formula counterions and
+arbitrarily small positive assays. This also applies to `solve_weights`.
+A positive maximum or `allow_ions` permission cannot override an explicit zero.
+
+`maximum_concentrations` applies whether the nutrient has a target or is
+incidental. Positive target rows remain in the objective when a ceiling binds;
+the ceiling is an additional constraint. The existing solver uses an interior
+numerical aim one millionth below a binding positive limit. This does not change
+the requested maximum or authorize exceeding it. Classification uses the actual
+reported concentration and maximum directly, without an absolute slack.
+
+`requirementConflicts` records `target_above_maximum` and
+`water_above_maximum`, with the nutrient and original mg/L values. Such results
+are not feasible. Water already at a maximum permits no further addition of
+that nutrient; water above it cannot be corrected by adding fertilizer. Review
+`limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
+empty recipe when water complies. The positive-target feasibility tolerance and trace-dose reporting remain
+separately tracked solver work.
+
+## Automatic search within available products
+
+Pass only available product records to `recommend` or `plan_fertilizer_workflow`.
+The engine fits nonnegative mixtures of the eligible pool, then automatically
+reconsiders supplied sodium-bearing sources for deficient nutrients under the
+existing recovery policy. Recovery also works when the initial pool is empty.
+After each substitution it checks for new deficits and repeats until no new
+permitted source is found. Every successful pass adds a supplied product ID, so
+the recovery process terminates on a finite inventory. Product input order breaks
+numerical ties; no manual solver mode is needed.
+
+`substitutionSearch` records `availableProductIds`, `attemptedProductIds`, method
+and scope. `candidate_found` means the resulting nutrient recipe passes the
+existing nutrient acceptance checks. `search_incomplete` means no acceptable
+candidate was found by this search, not that every possible mixture is impossible.
+Scoped structural proofs remain in `unmetTargets`. Coupled blends disclose their
+endpoint product sets and reassess the status for their actual final recipe.
+
+Targets, nitrogen forms, water and hard limits are never changed. Chloride still
+requires explicit permission (target, positive ceiling or `allow_ions`); carbonate
+and pH-reagent restrictions still apply. No absent catalogue product is loaded.
+If no admissible source remains after recovery, the existing `InputError` contract
+is preserved. An available-stock failure is not permission to use a catalogue-only
+alternative or change the pH target. Chemical/stock suitability is assessed later.
+
+## Joint fertilizer/reagent contract
+
+See [the joint problem contract](joint-problem.md) for `JointSource`, `JointProblem`
+and `make_joint_problem`, including residuals, units, zero-dose boundaries and
+the distinction between evaluating a candidate and finding an accepted solution.

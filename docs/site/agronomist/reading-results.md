@@ -70,9 +70,9 @@ only (pH, saturation, EC, reagent dose) the analysis is speciated at its
 measured pH: used unchanged if it already balances; otherwise closed on the
 balance ion within its stated uncertainty, or, without one, as an assumption
 that puts the plan in review. An analysis more than 5 % out of charge balance
-is refused. An analysis without chloride (not measured, zero or below
-detection) is closed on its alkalinity instead and the report notes it; no
-other ion is adjusted automatically. The report shows
+is refused. Missing chloride does not authorize changing a measured titration.
+Positive, nonfixed directly supplied carbon may undergo the disclosed legacy model
+reconciliation; measured zeros and fixed carbon remain unchanged. The report shows
 laboratory and modelled water side by side (see
 [measured-pH water balancing](../developer/water-to-delivery.md#measured-ph-water-balancing)).
 
@@ -82,8 +82,8 @@ The plan status is one of:
 
 | Status | Meaning |
 |---|---|
-| `ready` | Every target is met and the pH plan is accepted. |
-| `requires_review` | Usable after review: a target is missed with its reason, or a review-class phase is supersaturated (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
+| `ready` | Calculation checks passed; physical validation remains separate. |
+| `requires_review` | Review required: a target is missed with its reason, or explicit condition-qualified phase evidence still needs review (see [saturation indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)). |
 | `blocked` | Not usable as planned: a declared maximum is exceeded on the laboratory analysis, a phase that forms at feed conditions is supersaturated, no reagent reaches the pH, or the chemistry could not be calculated. The reason is given. A review never downgrades a block. |
 
 When a pH reagent is selected, the recipe to weigh is the refitted one that
@@ -96,41 +96,40 @@ warnings to read before mixing and blank lines for measured EC and pH.
 The default grouping (`group_tanks`) follows Yara, *Fertilizantes para
 fertirrigación*, page 65 mixing compatibility table, read with page 63. The
 table's twelve "No" pairs are exactly three rules, applied to every product from
-its elemental analysis. FlahaX waives the last one (see below):
+its elemental analysis. Calcium/phosphate, calcium/sulfate and
+magnesium/phosphate separations remain hard constraints. Neither equipment count
+nor a micronutrient's small dose waives them. These are conservative separation
+screens, not predictions of precipitation at every concentration.
 
-| Keep apart | Why |
-|---|---|
-| calcium and phosphate | calcium phosphate precipitates in a concentrate (pp. 63, 65) |
-| calcium and sulfate | gypsum precipitates in a concentrate (pp. 63, 65) |
-| magnesium and phosphate | magnesium phosphate precipitates in a concentrate (p. 65); **waived** by the two-tank rule |
+`group_tanks` computes a minimum-tank layout under those constraints. Supply
+`max_tanks` to impose an equipment limit; if it cannot fit, the function reports
+`too_many_tanks`. An exhausted search is reported separately. The default reports
+required tanks without inventing equipment. `summarize_batch` assumes two available
+tanks unless `available_tanks` is supplied and blocks preparation when more are
+required. Every product remains in the report, including products assigned to
+additional required tanks. Reagents retain their separate channel.
 
-FlahaX rule (owner decision 2026-10-22): there are exactly **two** concentrate
-tanks, A and B. Magnesium sulfate shares tank B with the phosphates, against
-the magnesium-phosphate rule above. The report lists every pair this lets share
-a tank (`TankGrouping.waived`), and check the strength of tank B against your
-supplier's solubility data. Products that still need a third tank, for example
-because of rules of your own, are refused with `too_many_tanks`.
+See [condition-qualified assignments](stock-assignments.md) for the mixture-model
+interface, alternative search and approval boundary. Historical two-tank captures
+are retained as historical evidence; they are not current preparation instructions.
 
-FlahaX rule (owner decision, #79): micronutrients and chelates go to **tank A**
-with the calcium products, because their doses are too small to precipitate
-there; they are kept out of phosphate concentrates, where manganese and iron
-phosphates can form (#78). **Tank A is never acidified** (Yara p. 63: do not
-acidify tanks with microelement chelates): dose acid on its own channel or into
-another tank. pH reagents always have their own channel.
+The tank table states compatibility, not dissolution approval. The single-product
+screen in `summary['solubility']` distinguishes qualified limits from conditional
+screening floors. A floor exceedance is **inconclusive**, not proof that a product
+will not dissolve. A comparison below a floor does not approve a mixed stock.
+Unqualified comparisons keep the batch under review; other blocking findings
+remain blocking.
 
-The table states compatibility, not solubility. Check that every concentrate
-dissolves at its strength and temperature; `plan_stocks` does this with your
-sourced solubility limits, and `default_compatibility_rules(products)` gives it
-the same rules as records. `summarize_batch(..., temperature_c=25)` also lists
-each concentrate against sourced single-salt solubility at that temperature
-(`summary['solubility']`); a stock that does not dissolve blocks the batch. The
-packaged table (`data/solubility.json`) covers 20 products at 0-40 °C: 18 from
-the CRC Handbook aqueous solubility table, calcium nitrate (ag grade) from
-Yara's CALCINIT sheet (its 20 °C value used as a floor from 20 to 40 °C) and
-urea from the U.S. Coast Guard CHRIS compilation. Mass percent is converted to
-grams per litre at a density of 1 g/cm3, which understates solubility, so a
-stock that would not dissolve is never passed. The chelates, CH - micro and
-potassium citrate have no sourced data and show "not checked". Your own `compatibilityRule` records (`--rules`, or
+The unchanged historical table contains 20 products, principally CRC-derived
+values, plus CALCINIT and urea source values. Its density-one conversions are
+conditional screening values, not measured limits. CALCINIT's source specifies
+20 °C; the historical extension through 40 °C is no longer applied. Intermediate
+temperatures require explicit interpolation review. Missing basis, grade, density
+or temperature evidence is never silently supplied. See the
+[qualification contract](solubility-qualification.md) for conversion equations,
+source provenance and the caller-reviewed limit interface.
+
+Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient
 rule.
 
@@ -151,8 +150,91 @@ workflow = plan_fertilizer_workflow(
                      carbon_boundary='closed', temperature_c=25, phases=[]),
     ph_adjustment=dict(products=[nitric] + catalogue_ph_reagents(), maximum_reagent_volume_litres=5))
 summary = summarize_batch(workflow, products, title='Tomato', water_label='RO water')
-open('report.html', 'w', encoding='utf-8').write(render_report(summary))
-open('batch-sheet.html', 'w', encoding='utf-8').write(render_batch_sheet(summary))
+from pathlib import Path
+Path('report.html').write_text(render_report(summary), encoding='utf-8')
+Path('batch-sheet.html').write_text(render_batch_sheet(summary), encoding='utf-8')
 ```
 
 `summary` is plain JSON-ready data with the same numbers as the two pages.
+
+
+## Weighed chemistry and rejected reagents
+
+When a reagent is selected, chemistry uses its mixed and target states. When none
+is selected, chemistry and EC use the retained unadjusted recipe state: the same
+recipe whose products are weighed. Rejected-candidate pH and saturation diagnostics
+remain separate in `chemistry.rejected_candidate_diagnostics`, labeled
+`rejected_candidate_not_weighed`. They do not supply final-feed chemistry or EC.
+`chemistry.state_basis` identifies the state used. Existing phase and equipment
+blocks still apply.
+
+If a legacy manually constructed pH plan has no retained state for the weighed
+recipe, chemistry is unavailable and EC is `not_supported` with reason
+`weighed_recipe_state_unavailable`; a rejected state is never substituted.
+
+The unchanged owner-session regression previously combined weighed pH 5.32 with
+rejected-candidate mixed pH 5.20. It now consistently presents 5.32 for the weighed
+recipe and retains 5.20 only in the rejected-candidate diagnostic. This corrects
+state identity, not equilibrium parameters or acceptance tolerances.
+
+
+## Match outputs to the same calculation
+
+Reports and sheets show a calculation reference. Compare it with
+`calculation_identity.result_id` in the JSON summary when keeping or sharing
+outputs. The reference binds the input records, product doses, selected chemistry
+state and model sources. Editing a bound summary causes rendering to fail; rerun
+with the corrected inputs rather than editing calculated fields.
+
+The JSON `statuses` distinguish nutrient feasibility, chemistry and phase
+qualification, pH, EC, stock mixing, delivery and physical validation. A feasible
+nutrient recipe does not establish stock compatibility or validated delivery.
+Missing numerical convergence evidence is labeled `not_reported`; physical
+validation remains a separate later stage. The existing overall block always
+wins over review or successful individual stages.
+
+
+## Remedies are evaluated alternatives, not promises
+
+The full report and JSON summary list next actions for unmet requirements and
+show any explicitly supplied alternative scenarios. A catalogue product without
+confirmed availability, a treatment without analysis provenance or missing
+stock-equipment data is a **potential remedy**. It has not been validated by
+merely appearing in the list.
+
+An **evaluated candidate** resolves at least one requirement after re-running the
+workflow with unchanged crop targets and hard limits. Read its remaining and newly
+introduced requirements: nutrient feasibility alone cannot establish pH, stock,
+equipment or physical suitability. The original recipe remains the recipe to
+weigh until a new calculation explicitly adopts different inputs. A budget-limited
+search says which options were not evaluated; it never calls them impossible.
+
+
+## Saved results and consent
+
+Acceptance records identify one exact calculated proposal. They never turn a
+blocked limit into a pass, certify an unassessed EC, or establish physical
+validation. Changed inputs, grams or evidence require a new result review.
+Saved sessions contain answers; they are not consent. New sessions detect changed
+referenced records or model sources before rerunning. Older sessions have no
+historical provenance claim and must be reviewed against current inputs when
+migrated. See the developer guide's saved-state schemas for explicit migration.
+
+
+## Exact output evidence and zero targets
+
+An explicit nutrient target of zero remains a hard zero in the report, sheet and terminal
+nutrient table. Its absolute difference remains defined; its percentage difference is
+**undefined (zero target)**. An omitted target is incidental and is not converted into zero.
+
+Every HTML report and sheet includes an inert JSON summary in
+`pre#flahax-result-data`. Parsing its text recovers the full-precision result, including
+dose, status and provenance fields. The displayed tables are rounded for reading.
+The export identity detects modification; a legacy unbound summary remains explicitly
+unverified. This identity establishes record integrity, not scientific validation.
+
+The scientific qualifications distinguish estimated, partial and unsupported EC.
+Known-species subtotals cannot be used as total estimates or uncertainty bounds.
+A range is displayed only if the result actually provides one; otherwise the interval
+remains unquantified. Model, numerical and input uncertainty are reported separately.
+Feasibility does not imply accepted chemistry, qualified stocks, delivery or physical validation.

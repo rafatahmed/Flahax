@@ -31,6 +31,78 @@ def serializable(value):
     return value
 
 
+def recommend_request(payload):
+    """Adapt a strict recommendation JSON object to the Python nutrient-fit contract.
+
+    Legacy allowIons/allowCarbonates names remain supported, but cannot be mixed
+    with their snake-case counterparts. Unknown fields fail instead of being ignored.
+    """
+    from .engine import recommend
+
+    if not isinstance(payload, dict):
+        raise DeliveryError('invalid_type', 'Expected a JSON object on stdin.')
+    values = dict(payload)
+    for old, new in [('allowIons', 'allow_ions'), ('allowCarbonates', 'allow_carbonates')]:
+        if old in values:
+            if new in values:
+                raise DeliveryError('duplicate_field', f'use either {old} or {new}, not both')
+            values[new] = values.pop(old)
+    unknown = set(values) - {
+        'salts',
+        'targets',
+        'water',
+        'allow_ions',
+        'allow_carbonates',
+        'ridge',
+        'maximum_concentrations',
+        'max_ammonium_fraction',
+    }
+    if unknown:
+        raise DeliveryError(
+            'unknown_field', 'Unsupported recommendation fields: ' + ', '.join(sorted(unknown))
+        )
+    salts = values.pop('salts', None)
+    if not isinstance(salts, list) or not salts:
+        raise DeliveryError(
+            'missing_field',
+            'salts are required. Pass the saved fertilizer rows. '
+            'The packaged library is only an example.',
+        )
+    water = values.get('water')
+    if water is not None and not isinstance(water, dict):
+        raise DeliveryError('invalid_type', 'water must be a map of ion symbol to ppm.')
+    maxima = values.get('maximum_concentrations')
+    if maxima is not None and not isinstance(maxima, dict):
+        raise DeliveryError('invalid_type', 'maximum_concentrations must be a nutrient mg/L map.')
+    allow = values.get('allow_ions', [])
+    if not isinstance(allow, list) or not all(isinstance(ion, str) for ion in allow):
+        raise DeliveryError('invalid_type', 'allowIons must be a list of ion symbols.')
+    values['allow_ions'] = set(allow)
+    if not isinstance(values.get('allow_carbonates', False), bool):
+        raise DeliveryError('invalid_type', 'allowCarbonates must be a JSON boolean.')
+    values.setdefault('targets', None)
+    return recommend(salts, **values)
+
+
+def _stock_config(stocks):
+    if stocks is not None:
+        if not isinstance(stocks, dict):
+            raise DeliveryError('invalid_type', 'stocks must be an object')
+        stocks = dict(stocks)
+        if 'final_litres_per_stock_litre' in stocks:
+            stocks['injection_ratio'] = InjectionRatio(stocks.pop('final_litres_per_stock_litre'))
+        if 'temperature_c' in stocks:
+            stocks['temperature'] = TemperatureCelsius(stocks.pop('temperature_c'))
+        if 'tanks' in stocks:
+            try:
+                stocks['tanks'] = [
+                    StockTank(t['id'], VolumeLitres(t['capacity_litres'])) for t in stocks['tanks']
+                ]
+            except (KeyError, TypeError) as exc:
+                raise DeliveryError('invalid_type', 'tanks need id and capacity_litres') from exc
+    return stocks
+
+
 def execute(command, payload):
     """Run one planning command (``workflow``, ``ec`` or ``size``) on a JSON payload; raises
     DeliveryError for an unknown command or field.
@@ -53,6 +125,8 @@ def execute(command, payload):
         'equilibrium',
         'acids',
         'maximum_concentrations',
+        'remedy_options',
+        'max_remedy_evaluations',
     }
     if unknown:
         raise DeliveryError(
@@ -68,16 +142,17 @@ def execute(command, payload):
         )
     if not isinstance(payload['targets'], dict):
         raise DeliveryError('invalid_type', 'targets must be a nutrient mg/L map')
-    stocks = payload.get('stocks')
-    if stocks is not None:
-        if not isinstance(stocks, dict):
-            raise DeliveryError('invalid_type', 'stocks must be an object')
-        stocks = dict(stocks)
-        stocks['injection_ratio'] = InjectionRatio(stocks.pop('final_litres_per_stock_litre'))
-        stocks['temperature'] = TemperatureCelsius(stocks.pop('temperature_c'))
-        stocks['tanks'] = [
-            StockTank(t['id'], VolumeLitres(t['capacity_litres'])) for t in stocks['tanks']
-        ]
+    stocks = _stock_config(payload.get('stocks'))
+    options = payload.get('remedy_options', ())
+    if isinstance(options, (list, tuple)):
+        from copy import deepcopy
+
+        options = deepcopy(options)
+        for option in options:
+            if isinstance(option, dict) and option.get('kind') == 'equipment':
+                changes = option.get('changes')
+                if isinstance(changes, dict) and changes.get('stocks') is not None:
+                    changes['stocks'] = _stock_config(changes['stocks'])
     return plan_fertilizer_workflow(
         payload['salts'],
         payload['targets'],
@@ -88,6 +163,8 @@ def execute(command, payload):
         acids=payload.get('acids'),
         stocks=stocks,
         maximum_concentrations=payload.get('maximum_concentrations'),
+        remedy_options=options,
+        max_remedy_evaluations=payload.get('max_remedy_evaluations', 20),
     )
 
 

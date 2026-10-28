@@ -2,20 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Stock solubility at the entered temperature and injection ratio (interactive mix, Task 6).
-
-The fixture holds values from the sourced draft table awaiting owner approval; nothing is
-packaged. Each value is g of
-product per L of stock:
-- CRC Handbook of Chemistry and Physics (ed. Lide), "Aqueous Solubility of Inorganic Compounds at
-Various
-  Temperatures", pp. 8-112 to 8-117, mass percent of anhydrous solute, converted with the
-  Laliberte (2009, J. Chem. Eng.
-  Data 54, 1725) solution density where the point is inside its fit, otherwise with rho = 1 g/cm3
-  (a lower bound);
-- Calcium Nitrate (ag grade): Yara, YaraTera CALCINIT product sheet, 1200 g/L water at 20 C (lower
-bound 545.9 g/L).
-"""
+"""Historical source values remain fixtures, not qualified dissolution limits."""
 
 import unittest
 from unittest import mock
@@ -82,7 +69,7 @@ class LimitTests(unittest.TestCase):
 
 
 class StockSolubilityTests(unittest.TestCase):
-    def test_tomato_at_1_100_and_20_c_dissolves(self):
+    def test_legacy_table_does_not_claim_dissolution(self):
         flow, summary = tomato(100, 20)
         grouping = group_tanks(flow.recommendation['salts'], PRODUCTS)
         found = check_stock_solubility(grouping.tanks, 100, 20, table=TABLE)
@@ -91,7 +78,11 @@ class StockSolubilityTests(unittest.TestCase):
         )
         for row in found:
             self.assertIsInstance(row, SolubilityRow)
-            self.assertEqual(row.status, 'not_checked' if row.product in UNSOURCED else 'ok', row)
+            self.assertEqual(
+                row.status,
+                'not_checked',
+                row,
+            )
             self.assertEqual(row.tank, grouping.tank_of(row.product))
         k2so4 = next(r for r in found if r.product == 'Potassium Sulfate')
         self.assertAlmostEqual(
@@ -104,39 +95,29 @@ class StockSolubilityTests(unittest.TestCase):
                 if p.name == 'Potassium Sulfate'
             ),
         )
-        self.assertEqual((k2so4.limit_g_per_l, k2so4.source), (107.5, CRC))
+        self.assertEqual((k2so4.limit_g_per_l, k2so4.source), (None, CRC))
         # The summary checks the recipe it weighs (the pH plan's refit).
-        self.assertNotEqual(summary['status'], 'blocked')
+        self.assertFalse(summary['tanks']['solubility_checked'])
         weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
         self.assertEqual({r['product'] for r in summary['solubility']}, weighed)
         for row in summary['solubility']:
             self.assertEqual(
-                row['status'], 'not_checked' if row['product'] in UNSOURCED else 'ok', row
+                row['status'],
+                'not_checked',
+                row,
             )
         self.assertTrue(all(r['note'] == SINGLE_SALT for r in summary['solubility']))
         self.assertFalse(any('does not dissolve' in w for w in summary['warnings']))
 
-    def test_potassium_sulfate_at_1_200_and_10_c_blocks(self):
+    def test_unqualified_cold_stock_is_not_a_proven_failure(self):
         _, summary = tomato(200, 10)
         row = next(r for r in summary['solubility'] if r['product'] == 'Potassium Sulfate')
-        self.assertEqual(
-            (row['status'], row['tank'], row['limit_g_per_l']), ('exceeds', 'B', 90.6)
-        )
+        self.assertEqual(row['status'], 'not_checked')
+        self.assertIsNone(row['limit_g_per_l'])
         self.assertGreater(row['stock_g_per_l'], 90.6)
-        self.assertEqual(summary['status'], 'blocked')
-        self.assertIn(
-            f'Potassium Sulfate does not dissolve in tank B: {row["stock_g_per_l"]:.4g} g/L '
-            f'needed, '
-            '90.6 g/L at 10 °C',
-            summary['warnings'],
-        )
-        # Calcium nitrate has a 20 C point only: at 10 C it is not checked, never passed.
-        cal = next(
-            r for r in summary['solubility'] if r['product'] == 'Calcium Nitrate (ag grade)'
-        )
-        self.assertEqual(cal['status'], 'not_checked')
-        self.assertIn('does not dissolve', render_batch_sheet(summary))
-        self.assertIn('does not dissolve', render_report(summary))
+        for render in (render_batch_sheet, render_report):
+            self.assertNotIn('does not dissolve', render(summary))
+            self.assertIn('not checked', render(summary))
 
     def test_a_block_elsewhere_is_never_downgraded(self):
         flow = workflow('Tomato (Howard Resh)')
@@ -182,14 +163,15 @@ class StockSolubilityTests(unittest.TestCase):
         _, summary = tomato(100, 20)
         sheet = render_batch_sheet(summary)
         self.assertIn('Solubility not checked', sheet)
-        for name in UNSOURCED:
+        missing = {r['product'] for r in summary['solubility'] if r['status'] == 'not_checked'}
+        self.assertTrue(missing)
+        for name in missing:
             self.assertIn(name, sheet.split('Solubility not checked', 1)[1])
         self.assertFalse(summary['tanks']['solubility_checked'])
 
 
 class PackagedTableTests(unittest.TestCase):
-    """The owner-approved table (2026-10-23): density-1 lower bounds, sourced, rising with
-    temperature."""
+    """Historical density-one values remain unchanged, without certifying applicability."""
 
     def setUp(self):
         self.table = load_solubility_table()
@@ -206,21 +188,21 @@ class PackagedTableTests(unittest.TestCase):
         names = {r['product'] for r in self.table}
         self.assertFalse(names & {'Mn EDTA', 'Iron EDTA', 'Potassium Citrate', 'CH - micro'})
 
-    def test_values_are_the_density_one_bound(self):
+    def test_historical_density_one_values_are_retained(self):
         records = {r['product']: r for r in self.table}
         self.assertEqual(limit_at(records['Potassium Sulfate']['points'], 20), 99.5)  # CRC 9.95 %
         self.assertAlmostEqual(
             limit_at(records['Magnesium Sulfate (Heptahydrate)']['points'], 25), 538.6
         )
 
-    def test_calcium_nitrate_floor_from_20_to_40_c(self):
+    def test_historical_calcium_values_remain_unchanged(self):
         points = next(r for r in self.table if r['product'] == 'Calcium Nitrate (ag grade)')[
             'points'
         ]
         self.assertEqual([limit_at(points, t) for t in (20, 25, 40)], [545.9] * 3)
         self.assertIsNone(limit_at(points, 15))
 
-    def test_tomato_at_25_c_dissolves_and_sulfate_at_200_to_1_in_the_cold_does_not(self):
+    def test_packaged_floor_comparisons_are_inconclusive(self):
         flow = workflow('Tomato (Howard Resh)')
 
         def packaged(ratio, temperature):  # the packaged table, not the test fixture
@@ -235,11 +217,14 @@ class PackagedTableTests(unittest.TestCase):
 
         summary = packaged(100, 25)
         status = {r['product']: r['status'] for r in summary['solubility']}
-        self.assertEqual({p for p, s in status.items() if s == 'not_checked'}, set(UNSOURCED))
-        self.assertTrue(all(s == 'ok' for p, s in status.items() if p not in UNSOURCED), status)
+        self.assertEqual(status['Calcium Nitrate (ag grade)'], 'not_checked')
+        self.assertTrue(
+            all(s in {'screening_only', 'inconclusive', 'not_checked'} for s in status.values())
+        )
+        self.assertTrue(all(not r['mixture_approved'] for r in summary['solubility']))
         cold = packaged(200, 10)
         row = next(r for r in cold['solubility'] if r['product'] == 'Potassium Sulfate')
-        self.assertEqual(row['status'], 'exceeds')
+        self.assertEqual(row['status'], 'inconclusive')
         self.assertEqual(cold['status'], 'blocked')
 
 

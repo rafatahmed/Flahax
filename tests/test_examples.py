@@ -19,12 +19,15 @@ class CapabilityExamplesTests(unittest.TestCase):
     def setUpClass(cls):
         cls.results = {name: serializable(run()) for name, run in SCENARIOS.items()}
 
-    def test_pepper_preserves_water_and_incidental_boundary(self):
+    def test_pepper_preserves_water_and_zero_requirements(self):
         workflow = self.results['pepper']['workflow']
         self.assertEqual(workflow['nutrient_gap']['Ca'], 84)
         self.assertEqual(workflow['stages']['chemistry']['status'], 'needs_input')
-        self.assertEqual(workflow['stages']['formulation']['status'], 'requires_review')
-        self.assertGreater(workflow['recommendation']['incidentalContributions'][0]['ppm'], 0)
+        self.assertEqual(workflow['stages']['formulation']['status'], 'blocked')
+        rows = {r['symbol']: r['final'] for r in workflow['recommendation']['rows']}
+        self.assertEqual(rows['N_NH4'], 0)
+        self.assertEqual(rows['Na'], 0)
+        self.assertEqual(workflow['recommendation']['incidentalContributions'], [])
 
     def test_pepper_tank_review_keeps_all_products_and_acid_accounting(self):
         pepper = self.results['pepper']
@@ -37,10 +40,11 @@ class CapabilityExamplesTests(unittest.TestCase):
             row = rows[salt['name']]
             self.assertAlmostEqual(row['recipe_mass_g'], salt['gramsPerLitre'] * 1000)
             self.assertIsNone(row['stock_concentration_g_per_litre'])
-        self.assertEqual(rows['Calcium Nitrate (ag grade)']['proposed_channel'], 'A')
+        self.assertNotIn('Calcium Nitrate (ag grade)', rows)
         self.assertEqual(rows['Mg Nitrate']['proposed_channel'], 'A')
-        self.assertEqual(rows['Mn EDTA']['proposed_channel'], 'A')
-        self.assertEqual(rows['Potassium Monobasic Phosphate']['proposed_channel'], 'B')
+        self.assertNotIn('Mn EDTA', rows)
+        if 'Potassium Monobasic Phosphate' in rows:
+            self.assertEqual(rows['Potassium Monobasic Phosphate']['proposed_channel'], 'B')
         self.assertEqual(rows['Potassium Sulfate']['proposed_channel'], 'B')
         self.assertEqual(rows['Phosphoric Acid (75%)']['proposed_channel'], 'Acid')
         for name in (
@@ -48,9 +52,9 @@ class CapabilityExamplesTests(unittest.TestCase):
             'Copper Sulfate (pentahydrate)',
             'Zinc Sulfate (Monohydrate)',
             'Boric Acid',
-            'Sodium Molybdate (Dihydrate)',
         ):
             self.assertEqual(rows[name]['proposed_channel'], 'Unassigned')
+        self.assertNotIn('Sodium Molybdate (Dihydrate)', rows)
         self.assertIn('Do not add that mass again', review['acid_accounting'])
         self.assertIn('not a requirement stated by the PDF', review['acid_policy'])
 
@@ -78,7 +82,8 @@ class CapabilityExamplesTests(unittest.TestCase):
 
     def test_delivery_is_calculated_not_operator_approved(self):
         result = self.results['delivery']
-        self.assertEqual(result['delivery']['state'], 'validated')
+        self.assertEqual(result['delivery']['state'], 'draft')
+        self.assertIn('Draft only', ' '.join(result['assumptions']))
         stages = result['workflow']['stages']
         self.assertEqual(len(stages['acid_selection']['value']['candidates']), 2)
         self.assertTrue(result['delivery']['commands'][0]['requires_operator_verification'])
@@ -112,7 +117,7 @@ class CapabilityExamplesTests(unittest.TestCase):
         for chart in charts:
             ET.fromstring(chart)
         self.assertIn('FICTIONAL CALIBRATION DATA', html)
-        self.assertIn('requires_review', html)
+        self.assertIn('blocked', html)
         self.assertIn('Missing measured EC profiles', html)
         self.assertIn('id="tank-allocation"', html)
         self.assertIn('Not ready for mixing.', html)

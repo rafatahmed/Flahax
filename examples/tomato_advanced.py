@@ -16,6 +16,8 @@ own batch.
 Run from the repository root:  python -m examples.tomato_advanced
 """
 
+from .common import ec_summary
+
 from flahax import (
     VolumeLitres,
     balance_water_analysis,
@@ -424,6 +426,8 @@ def main():
     a = r['acid']
     for c in a['candidates']:
         print(f"Acid {c['product']}: {c['status']} - {c['message']}")
+    if a['selected'] is None:
+        print('No accepted reagent plan. The following nitric demand is diagnostic only.')
     print(
         f"Nitric demand to pH {r['target_ph']}: {a['nitric_ml_per_batch']:.0f} mL of "
         f"{a['nitric_grade']} "
@@ -439,7 +443,7 @@ def main():
         ', '.join(f'{p} {s:.2f}' for p, s in a['supersaturated_after_acid']) or 'none',
     )
     for label, e in r['ec'].items():
-        print(f"EC25 {label}: {e['ec25_ms_cm']:.2f} mS/cm at pH {e['ph']:.2f} (experimental)")
+        print(f"{label}: {ec_summary(e)}")
     print('\nConcentrate tanks (1:%d):' % r['injection_ratio'])
     for name, tank in r['tanks']['tanks'].items():
         print(f"  Tank {name}: " + ', '.join(p['name'] for p in tank['products']))

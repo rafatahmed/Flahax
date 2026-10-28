@@ -11,8 +11,11 @@ Water is ``ro`` (no ions) or a JSON file::
                       "S": 241.4, "N_NO3": 3.47, "HCO3": 197}}
 
 Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
-bicarbonate in mg/L as HCO3. Iron is taken as Fe(III), the form in aerated water.
-One litre of water is taken as one kilogram.
+the legacy equivalent-carbon input in mg/L as HCO3, not titrated alkalinity.
+For a titration use signed ``alkalinity_meq_per_litre`` instead of HCO3.
+Iron is taken as Fe(III), the form in aerated water.
+Explicit final solvent mass/volume or solution density/nonwater mass define the
+concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
 
 A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
 water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
@@ -35,6 +38,7 @@ KHCO3, K2CO3) are always evaluated.
 """
 
 import argparse
+from .canonical_result import seal_summary
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -43,7 +47,7 @@ import sys
 
 from . import __version__
 from .delivery_contracts import DeliveryError
-from .delivery_quantities import VolumeLitres
+from .delivery_quantities import SolventBasis, VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
 from .grower_report import millilitres, render_batch_sheet, render_report, summarize_batch
@@ -136,10 +140,52 @@ def _mg(key, value, what='water value'):
     return number
 
 
+def water_basis(data):
+    """Return a final solvent basis and its disclosed input/uncertainty status."""
+    keys = {'water_mass_kg', 'final_volume_litres', 'density_kg_per_litre', 'nonwater_mass_kg'}
+    present = keys.intersection(data)
+    if not present:
+        return SolventBasis(1, 1), {
+            'status': 'assumed',
+            'water_kg_per_litre': 1.0,
+            'uncertainty': 'not quantified',
+            'note': 'Assumes 1 kg final solvent water per litre; '
+            'carrier/hydrate water and nonwater mass are not independently quantified.',
+        }
+    if 'final_volume_litres' not in present:
+        raise DeliveryError('missing_field', 'solvent basis requires final_volume_litres')
+    if 'water_mass_kg' in present:
+        if present != {'water_mass_kg', 'final_volume_litres'}:
+            raise DeliveryError(
+                'contradictory_water_inputs', 'supply solvent mass or density basis, not both'
+            )
+        basis = SolventBasis(data['final_volume_litres'], data['water_mass_kg'])
+        source = 'declared final solvent mass including carrier and dissolved hydrate water'
+    else:
+        if present != {'final_volume_litres', 'density_kg_per_litre', 'nonwater_mass_kg'}:
+            raise DeliveryError(
+                'missing_field', 'density basis requires complete nonwater_mass_kg'
+            )
+        basis = SolventBasis.from_solution_mass(
+            data['final_volume_litres'], data['density_kg_per_litre'], data['nonwater_mass_kg']
+        )
+        source = 'declared final solution density minus complete nonwater mass'
+    return basis, {
+        'status': 'declared',
+        'water_kg_per_litre': basis.water_mass_kg / basis.final_volume_litres,
+        'uncertainty': 'not supplied; not inferred from input precision',
+        'note': source,
+    }
+
+
 def read_water(spec):
     """(label, nutrient mg/L, equilibrium configuration) from ``ro`` or a JSON file."""
     if spec.lower() == 'ro':
-        return 'RO water, no ions', {}, dict(water_totals={}, water_analysis_id='RO')
+        return (
+            'RO water, no ions',
+            {},
+            dict(water_totals={}, water_analysis_id='RO', concentration_basis=water_basis({})[1]),
+        )
     data = read_json(spec, 'water')
     if not isinstance(data, dict) or not isinstance(data.get('mg_per_litre'), dict):
         raise DeliveryError('invalid_type', 'water JSON needs an "mg_per_litre" object')
@@ -168,10 +214,31 @@ def read_water(spec):
         raise DeliveryError(
             'invalid_value', f'"measured_ph" = {data["measured_ph"]!r} is not a number'
         )
+    solvent, basis_audit = water_basis(data)
+    alkalinity = data.get('alkalinity_meq_per_litre')
+    if 'alkalinity_below_detection_meq_per_litre' in data:
+        raise DeliveryError(
+            'unsupported_alkalinity',
+            'below-detection alkalinity is an interval, not measured zero; '
+            'supply a resolved analysis',
+        )
+    if 'alkalinity_meq_per_litre' in data:
+        if 'HCO3' in data['mg_per_litre'] or 'HCO3' in below:
+            raise DeliveryError(
+                'ambiguous_carbon', 'supply HCO3 carbon or total alkalinity, not both'
+            )
+        if (
+            isinstance(alkalinity, bool)
+            or not isinstance(alkalinity, (int, float))
+            or not math.isfinite(alkalinity)
+        ):
+            raise DeliveryError(
+                'invalid_value', 'alkalinity_meq_per_litre must be a finite signed number'
+            )
     totals = {}
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
-        totals[basis] = totals.get(basis, 0) + float(mg) / grams / 1000
+        totals[basis] = totals.get(basis, 0) + solvent.mg_per_litre_to_molality(mg, grams)
     # Nutrients straight from the laboratory analysis; the workflow balances it for chemistry only.
     nutrients = {key: float(mg) for key, mg in data['mg_per_litre'].items() if key != 'HCO3'}
     analysis_id = str(data.get('id', Path(spec).stem))
@@ -180,11 +247,22 @@ def read_water(spec):
         water_totals=totals,
         measured_ph=data['measured_ph'],
         water_analysis_id=analysis_id,
+        concentration_basis=basis_audit,
         below_detection={
-            WATER_KEYS[k][0]: _mg(k, v, 'detection limit') / WATER_KEYS[k][1] / 1000
+            WATER_KEYS[k][0]: solvent.mg_per_litre_to_molality(
+                _mg(k, v, 'detection limit'), WATER_KEYS[k][1]
+            )
             for k, v in below.items()
         },
     )
+    if alkalinity is not None:
+        config['alkalinity_eq_per_kg'] = alkalinity / 1000 / basis_audit['water_kg_per_litre']
+    if 'HCO3' in data['mg_per_litre']:
+        config['water_input_notes'] = [
+            'Legacy HCO3 is treated as equivalent total inorganic carbon. '
+            'This is not a bicarbonate speciation measurement or a titration; '
+            'use alkalinity_meq_per_litre for measured total alkalinity.'
+        ]
     if 'balance_ion' in data:
         ions = {'Cl': 'Cl-', 'Na': 'Na+'}
         if data['balance_ion'] not in ions:
@@ -209,9 +287,27 @@ def blend(label, water, chemistry, percent):
     if not 0 < percent <= 100:
         raise DeliveryError('invalid_value', '--water-share must be a percentage in (0, 100]')
     fraction = percent / 100
+    source_basis = chemistry.get('concentration_basis', water_basis({})[1])
+    source_ratio = source_basis['water_kg_per_litre']
+    mixed_ratio = fraction * source_ratio + (1 - fraction)
+    # The share is volumetric; the molal dilution is the source solvent mass share.
+    molal_fraction = fraction * source_ratio / mixed_ratio
+    basis_audit = dict(source_basis, water_kg_per_litre=mixed_ratio)
+    if percent != 100:
+        basis_audit.update(
+            status='assumed',
+            uncertainty='not quantified',
+            note='Blend assumes additive solution volumes and 1 kg solvent/L '
+            'for ion-free water; ' + source_basis['note'],
+        )
     options = {
         key: chemistry[key]
-        for key in ('balance_ion', 'balance_ion_uncertainty_percent', 'below_detection')
+        for key in (
+            'balance_ion',
+            'balance_ion_uncertainty_percent',
+            'below_detection',
+            'alkalinity_eq_per_kg',
+        )
         if key in chemistry
     }
     label = f'{percent:g}% {label}, {100 - percent:g}% ion-free water'
@@ -229,8 +325,10 @@ def blend(label, water, chemistry, percent):
         label,
         water,
         dict(
-            water_balance=balanced.diluted(fraction),
+            water_balance=balanced.diluted(molal_fraction),
             water_analysis_id=f'{chemistry["water_analysis_id"]}-{percent:g}pct',
+            concentration_basis=basis_audit,
+            water_input_notes=chemistry.get('water_input_notes', []),
         ),
     )
 
@@ -378,7 +476,7 @@ def run_batch(options):
         if chemistry is None
         else dict(
             chemistry,
-            water_mass_kg=volume,
+            water_mass_kg=volume * chemistry['concentration_basis']['water_kg_per_litre'],
             complete_analysis=True,
             carbon_boundary='closed',
             temperature_c=25,
@@ -399,6 +497,25 @@ def run_batch(options):
         rules=rules,
         temperature_c=options.temperature_c,
     )
+    if chemistry is not None:
+        for note in chemistry.get('water_input_notes', []):
+            if note not in summary['warnings']:
+                summary['warnings'].append(note)
+        summary['concentration_basis'] = dict(
+            chemistry['concentration_basis'],
+            final_volume_litres=volume,
+            water_mass_kg=volume * chemistry['concentration_basis']['water_kg_per_litre'],
+        )
+        warning = (
+            'Concentration basis: '
+            + chemistry['concentration_basis']['note']
+            + ' Uncertainty: '
+            + chemistry['concentration_basis']['uncertainty']
+            + '.'
+        )
+        if warning not in summary['warnings']:
+            summary['warnings'].append(warning)
+
     if volumes is not None:
         summary['volumes'] = dict(asdict(volumes), mode=options.mode)
     weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
@@ -410,7 +527,7 @@ def run_batch(options):
         if r.get('name') in weighed
     }
     summary['product_notes'] = {k: v for k, v in summary['product_notes'].items() if v}
-    return summary
+    return seal_summary(summary)
 
 
 def render(summary):
@@ -420,6 +537,13 @@ def render(summary):
         'batch-sheet.html': render_batch_sheet(summary),
         'summary.json': json.dumps(serializable(summary), indent=1, allow_nan=False) + '\n',
     }
+
+
+def render_saved_result(record):
+    """Validate an archived result/consent before rendering its original qualified outputs."""
+    from .result_acceptance import load_result
+
+    return render(load_result(record)['summary'])
 
 
 def build(args):

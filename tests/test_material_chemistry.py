@@ -315,10 +315,20 @@ class MaterialChemistryTests(unittest.TestCase):
             shipped.stages['chemistry'].value['mixed'].ph,
             delta=1e-9,
         )
+        # Equivalent inventories must also receive the same phase-policy rejection.
+        for result in (mine, shipped):
+            stage = result.stages['ph_adjustment']
+            self.assertEqual(
+                (stage.status, stage.error_code), ('blocked', 'no_acceptable_reagent')
+            )
+            self.assertIsNone(stage.value.selected)
+            self.assertEqual(len(stage.value.candidates), 1)
+            self.assertIn('Hydroxylapatite', stage.message)
         a, b = (
-            mine.stages['ph_adjustment'].value.selected,
-            shipped.stages['ph_adjustment'].value.selected,
+            mine.stages['ph_adjustment'].value.candidates[0],
+            shipped.stages['ph_adjustment'].value.candidates[0],
         )
+        self.assertEqual(a.status, 'rejected')
         self.assertEqual((a.status, a.product_id), (b.status, b.product_id))
         self.assertAlmostEqual(a.dose_molal, b.dose_molal, delta=1e-9 * b.dose_molal)
         self.assertAlmostEqual(a.target.ph, b.target.ph, delta=1e-9)

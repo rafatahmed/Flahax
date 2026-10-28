@@ -165,6 +165,25 @@ _DECLARED_BASIS = {
     'Zn': 'Zn+2',
     'Cu': 'Cu+2',
 }
+NUTRIENT_BASES = {basis: nutrient for nutrient, basis in _DECLARED_BASIS.items()}
+NUTRIENT_BASES['Fe+2'] = 'Fe'
+
+
+def component_nutrient_masses(totals):
+    """Nutrient grams from analytical component moles, retaining the input denominator.
+
+    Thus mol/kg water produces g/kg water, and mol/g product produces g/g
+    product. Organic ligand N and carbon remain in their analytical components;
+    they are not relabelled as available nitrogen or carbonate.
+    """
+    masses = {}
+    for basis, nutrient in NUTRIENT_BASES.items():
+        if basis in totals:
+            value = totals[basis] * MOLAR_MASS[nutrient.split('_')[0]]
+            masses[nutrient] = masses.get(nutrient, 0.0) + value * (2 if basis == 'Ure' else 1)
+    return masses
+
+
 _DECLARED_CHARGE = {
     'NO3-': -1,
     'NH4+': 1,
@@ -353,13 +372,78 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, 
     return units
 
 
-_NA_MG_PER_MOL = 22.98977 * 1000.0
+_NA_MG_PER_MOL = MOLAR_MASS['Na'] * 1000.0
+
+
+def material_inventory(product, *, material=None):
+    """One gram of material: assayed/derived nutrients and conserved chemistry components.
+
+    Nutrients are mass percent; analytical components are mol/g product. Ligand
+    nitrogen is retained in its ligand, never relabelled as plant-available N.
+    Unknown chemistry retains an explicitly incomplete assay-only inventory;
+    callers requiring equilibrium must reject that status. Source records are
+    not modified, and supplied assays take precedence over inferred counterions.
+    """
+    nutrients = dict(product['elements'])
+    name = product.get('name', '')
+    try:
+        if material is None and isinstance(product.get('grade'), Mapping):
+            from .materials import make_grade, resolve_material
+
+            grade = make_grade(product['grade'])
+            material = resolve_material(name, grade=grade)
+            if material.record['elements'] != product['elements']:
+                raise DeliveryError(
+                    'material_mismatch', 'grade inventory differs from supplied assay'
+                )
+        units = catalogue_dose_contributions(
+            {name: 1.0},
+            products=[product],
+            materials=None if material is None else {name: material},
+        )
+    except DeliveryError as exc:
+        return dict(
+            nutrient_percent=nutrients,
+            components_moles_per_gram=None,
+            status='assay_only',
+            limitation_code=exc.code,
+            limitation=str(exc),
+            component_nutrient_percent=None,
+            assay_component_difference_percent=None,
+        )
+    components = {}
+    for _, _, totals in units:
+        for basis, amount in totals.items():
+            components[basis] = components.get(basis, 0.0) + amount
+    # Derive only missing nutrients; declared assays are authoritative. These are
+    # already the same components chemistry consumes, not an after-fit correction.
+    for nutrient, grams in component_nutrient_masses(components).items():
+        if nutrient not in nutrients:
+            nutrients[nutrient] = grams * 100
+    component_percent = {k: v * 100 for k, v in component_nutrient_masses(components).items()}
+    # Disclosed blend assays and ingredient-derived chemistry can differ. Preserve
+    # both observations and expose the discrepancy instead of claiming closure.
+    differences = {
+        k: value - component_percent.get(k, 0.0) for k, value in product['elements'].items()
+    }
+    return dict(
+        nutrient_percent=nutrients,
+        component_nutrient_percent=component_percent,
+        assay_component_difference_percent=differences,
+        components_moles_per_gram=components,
+        status='supported_components',
+        limitation_code=None,
+        limitation='Carrier/hydrate solvent and unassayed remainder are not inferred; '
+        'use a declared final solvent inventory. Reaction-domain qualification is separate.',
+    )
 
 
 def counterion_sodium_mg_per_l(salts_with_doses) -> float:
     """Formula counterion sodium in mg/L for ``[(product record, g/L), ...]``.
 
-    Doses in g/L are treated as g/kg water. Sums the counterion sodium that
+    Linear assay conversion is evaluated per litre here: its intermediate mole
+    amounts are mol/L, not mol/kg water. No solvent-density assumption enters
+    this nutrient-only calculation. Sums the counterion sodium that
     ``convert_catalogue_product_dose`` reports for every dosed product: the chelate
     sodium (D2) of the EDTA, DTPA and EDDHA products and all of CH - micro's
     sodium (chelate share plus its borax and molybdate), and the chelate sodium of a
@@ -401,12 +485,21 @@ def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None, product
     (user grade or lot); ``products`` supplies material records by name, for
     materials the catalogue does not hold; see ``catalogue_dose_contributions``.
     """
+    from .engine import load_library
+
+    library = {p['name']: p for p in load_library()['salts']} | _named(products)
+    resolved = _check_materials(doses, materials)
     result = {}
-    for _, _, totals in catalogue_dose_contributions(
-        doses, materials=materials, products=products
-    ):
-        for basis, amount in totals.items():
-            result[basis] = result.get(basis, 0.0) + amount
+    for name, dose in doses.items():
+        if name not in library and name not in resolved:
+            raise DeliveryError('unknown_product', f'product {name!r} is not available')
+        record = resolved[name].record if name in resolved else library[name]
+        inventory = material_inventory(record, material=resolved.get(name))
+        if inventory['components_moles_per_gram'] is None:
+            raise DeliveryError(inventory['limitation_code'], inventory['limitation'])
+        dose = _finite_dose(dose)
+        for basis, amount in inventory['components_moles_per_gram'].items():
+            result[basis] = result.get(basis, 0.0) + dose * amount
     return result
 
 
