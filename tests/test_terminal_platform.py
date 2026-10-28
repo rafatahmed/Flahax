@@ -256,6 +256,47 @@ class NativePlatformTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['platform'], sys.platform)
 
 
+def assert_restored_termios(case, before, after, platform, pendin):
+    """Compare configuration, allowing only Darwin's kernel-owned pending-input bit."""
+    expected, actual = list(before), list(after)
+    if platform == 'darwin':
+        # XNU tty.c sets PENDIN when ICANON is restored, even for an empty queue.
+        # Do not flush input or change production cleanup to satisfy this witness.
+        expected[3] &= ~pendin
+        actual[3] &= ~pendin
+    case.assertEqual(actual, expected)
+
+
+class TermiosRestorationWitnessTests(unittest.TestCase):
+    def test_darwin_pending_input_is_the_only_allowed_difference(self):
+        before = [11010, 3, 19200, 1483, 9600, 9600, [b'\x04']]
+        after = list(before)
+        pendin = 0x20000000  # Darwin termios.h; matches the hosted failure.
+        after[3] |= pendin
+        self.assertNotEqual(before, after)
+        assert_restored_termios(self, before, after, 'darwin', pendin)
+        for platform in ('linux', 'cygwin'):
+            with self.subTest(platform=platform), self.assertRaises(AssertionError):
+                assert_restored_termios(self, before, after, platform, pendin)
+        for index, value in (
+            (0, 0),
+            (1, 0),
+            (2, 0),
+            (3, after[3] ^ 2),
+            (3, after[3] ^ 8),
+            (4, 4800),
+            (5, 4800),
+            (6, [b'X']),
+        ):
+            changed = list(after)
+            changed[index] = value
+            with self.subTest(index=index, value=value), self.assertRaises(AssertionError):
+                assert_restored_termios(self, before, changed, 'darwin', pendin)
+        self.assertEqual(before[3], 1483)
+        self.assertEqual(after[3], 536872395)
+        assert_restored_termios(self, before, before, 'linux', pendin)
+
+
 def posix_pty_witness():
     """Exercise a real PTY in an isolated session, ignoring its teardown hangup."""
     import signal
@@ -280,7 +321,9 @@ def posix_pty_witness():
                         case.assertEqual(term.read_key(), 'UP')
                         case.assertEqual(term.read_key(), 'م')
                         raise RuntimeError('restore witness')
-        case.assertEqual(termios.tcgetattr(slave), before)
+        assert_restored_termios(
+            case, before, termios.tcgetattr(slave), sys.platform, getattr(termios, 'PENDIN', 0)
+        )
     finally:
         os.close(master)
         os.close(slave)
