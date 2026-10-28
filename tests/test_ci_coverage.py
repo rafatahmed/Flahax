@@ -31,10 +31,13 @@ class NativeCoverageTests(unittest.TestCase):
         (root / 'src/flahax/model.py').write_text(
             'def choose(x):\n    if x:\n        return 1\n    return 2\n', encoding='utf-8'
         )
+        (root / 'examples/model.py').write_text('VALUE = 9\n', encoding='utf-8')
+        for package in ('src/flahax', 'examples', 'benchmarks'):
+            (root / package / '__init__.py').write_text('VALUE = 1\n', encoding='utf-8')
         (root / 'docs/site/conf.py').write_text('VALUE = 1\n', encoding='utf-8')
         (root / 'pyproject.toml').write_text(
             '[tool.coverage.run]\nbranch=true\nrelative_files=true\n'
-            'source=["src/flahax", "docs/site"]\n'
+            'source=["src/flahax", "examples", "benchmarks", "docs/site"]\n'
             '[tool.coverage.report]\nexclude_lines=[]\npartial_branches=[]\n',
             encoding='utf-8',
         )
@@ -58,11 +61,14 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
     c.start()
     ns = runpy.run_path('src/flahax/model.py')
     ns['choose'](index != 1 or sys.argv[2] == 'False')
-    runpy.run_path('docs/site/conf.py')
+    for source in ('docs/site/conf.py', 'examples/model.py', 'src/flahax/__init__.py',
+                   'examples/__init__.py', 'benchmarks/__init__.py'):
+        runpy.run_path(source)
     c.stop()
     c.save()
     c.json_report(morfs=[str(pathlib.Path(p)) for p in
-                  ('src/flahax/model.py', 'docs/site/conf.py')],
+                  ('src/flahax/model.py', 'docs/site/conf.py', 'examples/model.py',
+                   'src/flahax/__init__.py', 'examples/__init__.py', 'benchmarks/__init__.py')],
                   outfile=str(path / 'coverage.json'))
 """
         subprocess.run(
@@ -99,7 +105,7 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             root, inputs, current = self.fixture(folder)
             self.aggregate(root, inputs, current)
             result = ci.read(root / 'aggregate/provenance.json')
-            self.assertEqual((result['statements'], result['branches']), (5, 2))
+            self.assertEqual((result['statements'], result['branches']), (9, 2))
             self.assertEqual(len(result['shards']), 3)
             self.assertTrue(ci.read(root / 'aggregate/gate.json')['passed'])
             with self.assertRaisesRegex(ValueError, 'preserve'):
@@ -171,17 +177,14 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
     def test_xml_disagreement_cannot_be_uploaded(self):
         with tempfile.TemporaryDirectory() as folder:
             root, inputs, current = self.fixture(folder)
-            fake = SimpleNamespace(
-                getroot=lambda: SimpleNamespace(
-                    attrib={
-                        'lines-valid': '999',
-                        'lines-covered': '0',
-                        'branches-valid': '2',
-                        'branches-covered': '2',
-                    }
-                )
-            )
-            with patch.object(ci.ET, 'parse', return_value=fake):
+            real_parse = ci.ET.parse
+
+            def wrong_totals(path):
+                tree = real_parse(path)
+                tree.getroot().set('lines-valid', '999')
+                return tree
+
+            with patch.object(ci.ET, 'parse', side_effect=wrong_totals):
                 with self.assertRaisesRegex(ValueError, 'XML differs'):
                     self.aggregate(root, inputs, current)
 
@@ -283,6 +286,63 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                     ci.verify_upload(root, output, revision)
             ci.write(output / 'provenance.json', provenance)
             ci.verify_upload(root, output, revision)
+
+    def test_xml_file_details_cannot_hide_behind_correct_header_totals(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root, inputs, current = self.fixture(folder)
+            self.aggregate(root, inputs, current)
+            output = root / 'aggregate'
+            xml = ci.ET.parse(output / 'coverage.xml').getroot()
+            report = ci.read(output / 'coverage.json')
+            self.assertEqual(
+                {c.get('filename') for c in xml.findall('.//class')}, set(current['files'])
+            )
+            ci.validate_xml_files(xml, report)
+            modes = (
+                'short-path',
+                'missing-file',
+                'duplicate-file',
+                'missing-line',
+                'duplicate-line',
+                'wrong-line',
+                'missed-hit',
+                'negative-hit',
+                'missing-branch',
+                'extra-branch',
+                'wrong-branch-count',
+            )
+            for mode in modes:
+                changed = copy.deepcopy(xml)
+                classes = changed.find('./packages/package/classes')
+                model = next(
+                    c
+                    for c in changed.findall('.//class')
+                    if c.get('filename') == 'src/flahax/model.py'
+                )
+                lines = model.find('lines')
+                branch = next(line for line in lines if line.get('branch') == 'true')
+                if mode == 'short-path':
+                    model.set('filename', 'model.py')
+                elif mode == 'missing-file':
+                    classes.remove(classes[0])
+                elif mode == 'duplicate-file':
+                    classes.append(copy.deepcopy(classes[0]))
+                elif mode == 'missing-line':
+                    lines.remove(lines[0])
+                elif mode == 'duplicate-line':
+                    lines.append(copy.deepcopy(lines[0]))
+                elif mode == 'wrong-line':
+                    lines[0].set('number', '999')
+                elif mode in ('missed-hit', 'negative-hit'):
+                    lines[0].set('hits', '0' if mode == 'missed-hit' else '-1')
+                elif mode == 'missing-branch':
+                    branch.attrib.pop('branch')
+                elif mode == 'extra-branch':
+                    lines[0].set('branch', 'true')
+                else:
+                    branch.set('condition-coverage', '100% (3/3)')
+                with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, 'XML'):
+                    ci.validate_xml_files(changed, report)
 
     def test_module_help_entrypoint(self):
         with (

@@ -174,6 +174,13 @@ including unimported files. Zero missing statements and zero missing branch
 destinations are required; rounded percentages cannot pass this gate. Synthetic
 cross-platform labels in unit tests validate the protocol, not native execution.
 
+The XML reporting stage retains full repository-relative file paths. Measurement
+source roots remain unchanged; shortening filenames during XML export can merge
+distinct files with the same basename. Before upload, every XML file, executable
+line, hit state and per-line branch count must agree with the accepted JSON.
+Missing or duplicate file/line entries fail even if the XML header totals match.
+The same per-file comparison also runs in the before/after upload integrity checks.
+
 Only the passing aggregate XML is uploaded to Codecov, with its candidate revision
 explicitly supplied. XML statement/branch totals must match the exact local gate.
 The uploader uses `plugins: noop` to disable report regeneration. Before and after
