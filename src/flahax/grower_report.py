@@ -239,7 +239,8 @@ def summarize_batch(
     if canonical is not None:
         canonical.verify(workflow, products)
     batch = workflow.stages.get('batch')
-    if batch is None or batch.status != 'calculated':
+    # Blocked batches still carry diagnostic volumes; only missing volume refuses the sheet.
+    if batch is None or batch.value is None:
         raise DeliveryError('missing_field', 'the workflow needs a final volume for a batch sheet')
     litres = batch.value.final_volume.value
     stages = {name: _stage(stage) for name, stage in workflow.stages.items()}
@@ -339,7 +340,8 @@ def summarize_batch(
                 'rejected candidates are not substitutes.'
             ),
         )
-    if chem is not None and chem.status in ('calculated', 'requires_review') and state_available:
+    # Rolled-up blocked chemistry may still hold a diagnostic mixed state.
+    if chem is not None and chem.value is not None and state_available:
         mixed = (
             chosen.mixed
             if chosen is not None and chosen.mixed is not None
@@ -512,7 +514,9 @@ def summarize_batch(
         status = 'requires_review'  # pH not planned
         warnings.append('pH was not planned: measure it after mixing and adjust before use.')
 
-    if form['status'] == 'requires_review' and status == 'ready':
+    if form['status'] == 'blocked':
+        status = 'blocked'
+    elif form['status'] == 'requires_review' and status == 'ready':
         status = 'requires_review'
     water, limits = _water_and_limits(workflow, recipe)
     # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always

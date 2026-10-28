@@ -74,6 +74,7 @@ class CanonicalResultTests(unittest.TestCase):
         )
         self.assertEqual(s['statuses']['delivery'], 'not_validated')
         self.assertEqual(s['statuses']['physical'], 'not_validated')
+        self.assertEqual(s['statuses']['numerical'], 'not_validated')
         self.assertEqual(s['statuses']['overall'], s['status'])
 
     def test_mutated_exports_fail_all_renderers(self):
@@ -96,7 +97,7 @@ class CanonicalResultTests(unittest.TestCase):
         s['formulation']['feasible'] = False
         s['tanks']['available_tanks'] = 0
         statuses = result_statuses(s)
-        self.assertEqual(statuses['formulation'], 'infeasible')
+        self.assertEqual(statuses['formulation'], 'blocked')
         self.assertEqual(statuses['overall'], 'blocked')
         self.assertEqual(statuses['stock'], 'blocked')
         verify_summary(seal_summary(s))
@@ -107,7 +108,7 @@ class CanonicalResultTests(unittest.TestCase):
         for blocks, review, expected in (
             (True, [], 'blocked'),
             (False, ['condition-qualified'], 'requires_review'),
-            (False, [], 'assessed'),
+            (False, [], 'ready'),
         ):
             s['chemistry'] = {'phase_assessment': {'blocks': blocks, 'review': review}}
             self.assertEqual(result_statuses(s)['phase'], expected)

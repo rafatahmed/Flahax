@@ -95,7 +95,7 @@ class CucumberRoWitnessTests(unittest.TestCase):
         self.assertNotEqual(self.summary['statuses']['overall'], 'ready')
         self.assertEqual(self.summary['status'], observed['status'])
         self.assertEqual(self.summary['statuses'], observed['statuses'])
-        self.assertEqual(self.summary['statuses']['formulation'], 'infeasible')
+        self.assertEqual(self.summary['statuses']['formulation'], 'blocked')
         self.assertEqual(self.summary['statuses']['ph'], 'blocked')
         self.assertEqual(self.summary['statuses']['ec'], 'not_supported')
         self.assertEqual(self.summary['statuses']['overall'], 'blocked')
@@ -105,8 +105,8 @@ class CucumberRoWitnessTests(unittest.TestCase):
             for name, stage in self.summary['stages'].items()
         }
         self.assertEqual(stages, observed['stages'])
-        # Tip fragmentation: batch reports calculated while formulation is blocked.
-        self.assertEqual(stages['batch'], 'calculated')
+        # Status contract: batch cannot outrank blocked formulation.
+        self.assertEqual(stages['batch'], 'blocked')
         self.assertEqual(stages['formulation'], 'blocked')
 
 

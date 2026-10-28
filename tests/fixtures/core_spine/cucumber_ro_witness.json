@@ -2,7 +2,7 @@
   "metadata": {
     "tip_sha": "12afceece3585be783f7bee86afa2eca468c7afa",
     "formula": "Cucumber (Howard Resh)",
-    "note": "Frozen observed tip behavior for core-contract-spine; documents current failing statuses, not readiness."
+    "note": "Cucumber RO witness for core-contract-spine; statuses reflect post-rollup honesty (batch cannot outrank blocked formulation), not readiness."
   },
   "inputs": {
     "water": "ro",
@@ -39,9 +39,9 @@
   "observed": {
     "status": "blocked",
     "statuses": {
-      "numerical": "not_reported",
-      "formulation": "infeasible",
-      "chemistry": "calculated",
+      "numerical": "not_validated",
+      "formulation": "blocked",
+      "chemistry": "blocked",
       "phase": "blocked",
       "ph": "blocked",
       "ec": "not_supported",
@@ -52,8 +52,8 @@
     },
     "stages": {
       "formulation": "blocked",
-      "batch": "calculated",
-      "chemistry": "calculated",
+      "batch": "blocked",
+      "chemistry": "blocked",
       "nitric": "needs_input",
       "titration": "needs_input",
       "acid_selection": "needs_input",

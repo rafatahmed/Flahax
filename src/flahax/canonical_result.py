@@ -141,29 +141,67 @@ def verify_summary(summary):
         raise DeliveryError('canonical_result_mismatch', 'export changed after finalization')
 
 
+STATUS_VOCABULARY = frozenset(
+    {
+        'ready',
+        'requires_review',
+        'blocked',
+        'not_supported',
+        'needs_input',
+        'not_validated',
+    }
+)
+
+# Legacy / stage-local tokens mapped onto the grower status contract.
+_STATUS_ALIASES = {
+    'calculated': 'ready',
+    'feasible': 'ready',
+    'infeasible': 'blocked',
+    'assessed': 'ready',
+    'not_assessed': 'needs_input',
+    'not_reported': 'not_validated',
+}
+
+
+def contract_status(raw):
+    """Map a stage or legacy token onto STATUS_VOCABULARY."""
+    if raw in STATUS_VOCABULARY:
+        return raw
+    return _STATUS_ALIASES.get(raw, raw)
+
+
 def result_statuses(summary):
-    """Expose independent computational qualifications without promoting overall readiness."""
+    """Expose independent qualifications in the unified status vocabulary."""
     stages = summary['stages']
     chemistry = summary.get('chemistry')
     stocks = summary['tanks']
-    return dict(
-        numerical='not_reported',
-        formulation='feasible' if summary['formulation']['feasible'] else 'infeasible',
-        chemistry=stages.get('chemistry', {}).get('status', 'needs_input'),
-        phase='blocked'
+    if not summary['formulation']['feasible']:
+        formulation = 'blocked'
+    else:
+        formulation = contract_status(
+            stages.get('formulation', {}).get('status', 'ready')
+        )
+    phase = (
+        'blocked'
         if chemistry and chemistry['phase_assessment']['blocks']
         else 'requires_review'
         if chemistry and chemistry['phase_assessment']['review']
-        else 'assessed'
+        else 'ready'
         if chemistry
-        else 'not_assessed',
-        ph=(summary.get('ph') or {}).get('status', 'needs_input'),
-        ec=(summary.get('ec') or {}).get('status', 'not_assessed'),
+        else 'needs_input'
+    )
+    return dict(
+        numerical='not_validated',
+        formulation=formulation,
+        chemistry=contract_status(stages.get('chemistry', {}).get('status', 'needs_input')),
+        phase=phase,
+        ph=contract_status((summary.get('ph') or {}).get('status', 'needs_input')),
+        ec=contract_status((summary.get('ec') or {}).get('status', 'needs_input')),
         stock='blocked'
         if stocks['required_tanks'] > stocks['available_tanks']
         or any(row['status'] == 'exceeds' for row in summary['solubility'])
         else 'requires_review',
         delivery='not_validated',
         physical='not_validated',
-        overall=summary['status'],
+        overall=contract_status(summary['status']),
     )

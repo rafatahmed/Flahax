@@ -45,6 +45,50 @@ ASSUMED_CLOSURE = (
     'use the laboratory values (#84).'
 )
 
+# Parent stage -> hard dependencies. A parent cannot stay calculated/ready when a dependency is
+# blocked (status contract; cucumber batch=calculated over formulation=blocked).
+_STAGE_DEPENDENCIES = {
+    'batch': ('formulation',),
+    'chemistry': ('batch',),
+    'nitric': ('chemistry',),
+    'titration': ('chemistry',),
+    'acid_selection': ('chemistry',),
+    'ph_adjustment': ('chemistry',),
+    'stocks': ('batch',),
+}
+
+
+def apply_status_rollup(stages):
+    """Demote parents that claim calculated/ready while a hard child is blocked.
+
+    Diagnostic values are kept; only the status token is lowered so grower surfaces cannot outrank
+    a blocked dependency.
+    """
+    order = (
+        'formulation',
+        'batch',
+        'chemistry',
+        'nitric',
+        'titration',
+        'acid_selection',
+        'ph_adjustment',
+        'stocks',
+    )
+    for name in order:
+        stage = stages.get(name)
+        if stage is None or name not in _STAGE_DEPENDENCIES:
+            continue
+        if stage.status not in ('calculated', 'ready'):
+            continue
+        for dep_name in _STAGE_DEPENDENCIES[name]:
+            dep = stages.get(dep_name)
+            if dep is not None and dep.status == 'blocked':
+                stage.status = 'blocked'
+                stage.error_code = stage.error_code or 'dependency_blocked'
+                note = f'{dep_name} is blocked'
+                stage.message = '; '.join(filter(None, [stage.message, note]))
+                break
+
 
 @dataclass
 class WorkflowStage:
@@ -809,6 +853,7 @@ def plan_fertilizer_workflow(
         _review_water_basis(
             output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations
         )
+    apply_status_rollup(stages)
     request = dict(
         salts=salts,
         targets=targets,
