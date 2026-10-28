@@ -36,10 +36,6 @@ from .nutrient_acceptance import (
 )
 
 
-# Feed-solution pH guidance (research report 2026-10-20): Dutch soilless practice feeds at
-# about pH 5.3-5.8 (Van der Lugt et al.; Savvas); 5.0-7.0 is the acceptable outer band.
-RECOMMENDED_FEED_PH = (5.3, 5.8)
-ACCEPTABLE_FEED_PH = (5.0, 7.0)
 # Chemistry a later stage may build on: calculated, or calculated on an assumed charge closure
 # (review).
 USABLE = ('calculated', 'requires_review')
@@ -300,18 +296,6 @@ def plan_fertilizer_workflow(
     )
     if recommendation['limitViolations']:
         recommendation['feasible'] = False
-    if not ACCEPTABLE_FEED_PH[0] <= target_ph <= ACCEPTABLE_FEED_PH[1]:
-        recommendation['warnings'].append(
-            f'Target pH {target_ph:g} is outside '
-            f'{ACCEPTABLE_FEED_PH[0]:g}-{ACCEPTABLE_FEED_PH[1]:g}, the range '
-            'acceptable for most soilless crops.'
-        )
-    elif not RECOMMENDED_FEED_PH[0] <= target_ph <= RECOMMENDED_FEED_PH[1]:
-        recommendation['warnings'].append(
-            f'Target pH {target_ph:g} is outside the '
-            f'{RECOMMENDED_FEED_PH[0]:g}-{RECOMMENDED_FEED_PH[1]:g} feed range of '
-            'Dutch soilless practice (root zone about 5.5-6.0).'
-        )
     output = FertilizerWorkflow(recommendation, water, gap_for(targets, water), float(target_ph))
     stages = output.stages
 

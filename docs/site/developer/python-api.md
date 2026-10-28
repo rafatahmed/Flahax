@@ -124,8 +124,7 @@ See [water-to-delivery](water-to-delivery.md).
 `feasible` means every positive target is within 1% of the formula value (an
 absolute 0.01 mg/L floor applies in the benchmark evaluator). The 1% is a FlahaX
 assumption: no published standard gives a per-ion tolerance for preparing a feed
-solution. Dutch practice corrects only when root-zone analyses deviate by 25% or
-more (De Kreij et al. 2003).
+solution. It is a numerical recipe-fit criterion, not a crop-response threshold.
 
 `targetIonBalance` is a conventional charge check on requested nutrient entries,
 not the whole solution. `recipeIonBalance` applies the same convention to all
@@ -192,39 +191,13 @@ solve charge balance on the mixture, and rebuild nutrient and limit assessments 
 the verified reagent dose. Initial wrong-direction products remain not applicable.
 This bounded repair does not certify global joint optimality; issue #158 remains open.
 
-The historical defaults were project-owner decisions (2026-10-20), grounded in Dutch
-soilless practice. Recommended NH4 is 5-15% of total N, with at most about
-1-1.5 mmol/L (Van der Lugt et al., following De Kreij, Voogt et al.). Voogt's
-WUR lecture gives "heavy fruit bearing - max 90:10" NO3:NH4. The Dutch standard
-solutions carry 5.9-8.8% NH4-N for most crops (gerbera 12.8%). The often-quoted
-"5-10% in hydroponics, 10-15% in substrate" is Dickson and Fisher's (2019)
-attribution to Sonneveld and Voogt (2009) without a page reference, and it
-describes the pH-neutral share rather than a limit. That primary text has not
-been checked.
+## Caller-defined agronomic requirements
 
-References:
-
-- De Kreij, C., Voogt, W. and Baas, R. (2003). *Nutrient solutions and water
-  quality for soilless cultures*. Brochure 191, PPO Glasshouse Horticulture,
-  Naaldwijk. <https://edepot.wur.nl/456342>
-- Voogt, W. Lecture slides on nutrient solutions, Wageningen UR.
-  <https://edepot.wur.nl/13081>
-- Sonneveld, C. and Voogt, W. (2009). *Plant Nutrition of Greenhouse Crops*.
-  Springer, Dordrecht. <https://doi.org/10.1007/978-90-481-2532-6>
-  (chapters 12-13, pp. 257-312; not consulted directly).
-- Dickson, R. W. and Fisher, P. R. (2019). Quantifying the acidic and basic
-  effects of vegetable and herb species in peat-based substrate and
-  hydroponics. *HortScience* 54(6): 1093-1100.
-  <https://doi.org/10.21273/HORTSCI13959-19>
-
-## Feed pH and residual bicarbonate
-
-`plan_fertilizer_workflow` adds a note when the target pH lies outside 5.3-5.8,
-the feed range of Dutch soilless practice (root zone about 5.5-6.0; Van der Lugt
-et al.; Savvas). A stronger note appears outside 5.0-7.0. FlahaX doses acid to the
-target pH, so the bicarbonate left afterwards is an outcome. The equilibrium acid
-plan reports it in `audit["residualBicarbonateMmolPerKg"]` and warns when it is
-below the 0.5 mmol/L that Dutch practice leaves as a pH buffer (0.5-0.75 mmol/L).
+FlahaX does not prescribe feed-pH bands, a residual-bicarbonate minimum,
+or an ammonium fraction. Supply the target pH and any nutrient limits explicitly.
+The equilibrium acid plan reports residual bicarbonate in
+`audit["residualBicarbonateMmolPerKg"]` without a crop-suitability warning.
+Numerical feasibility establishes agreement with supplied inputs only.
 
 ## Additional planning commands (since 0.3.1)
 
@@ -278,7 +251,7 @@ From the repository root, after the package is installed:
 python -m unittest discover -s tests -t .
 ```
 
-`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the example export has 28 salts, 3 waters, and 26 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
+`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the curated catalogue has 32 salts, 3 waters, and 21 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
 
 ### Chemistry failure and compatibility contract
 

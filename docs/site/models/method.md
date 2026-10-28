@@ -71,7 +71,7 @@ internal doses participate; published dose precision remains separately tracked.
 |---|---:|---|
 | `salts` | 28 | Example fertilizers used by the tests. A live recommendation receives the saved rows instead. |
 | `waters` | 3 | `Default Water Profile` (no ions), `WC1` (Ca 20), `WC2` (N, Mg, Ca, Fe) |
-| `formulas` | 26 | Name, targets, linked water, salt names stored on the formula |
+| `formulas` | 21 | Name, targets, linked water, salt names stored on the formula |
 
 The file is an example for the tests. `python -m flahax` does not read it. The caller passes the fertilizer rows. A name that starts with `test` or a formula of `Input Formula Here` is still rejected if one is passed. Nothing in the solver prefers a salt because its name is MAP, MKP, or SOP.
 

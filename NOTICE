@@ -87,8 +87,7 @@ underlying measurements.
 
 7. Crop formulas (src/flahax/data/library.json, "formulas")
    - Published nutrient formulas as named in the library: Howard Resh;
-     Douglas Peckenpaugh; maximumyield; Growing Edge; University of
-     Florida; schundler.com; and the Hoagland solution (Hoagland and Arnon).
+     Douglas Peckenpaugh; maximumyield; Growing Edge; schundler.com; and the Hoagland solution (Hoagland and Arnon).
 
 Trademarks (YaraLiva, YaraTera, Calcinit, Krista, Ultrasol, Haifa) belong
 to their owners and are used only to identify sources.

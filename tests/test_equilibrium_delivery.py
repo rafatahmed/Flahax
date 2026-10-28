@@ -108,9 +108,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             1000 * p.equilibrium.target.species.get('HCO3-', 0.0),
             places=12,
         )
-        carbon = 1000 * self.args['water_totals'].get('CO3-2', 0.0)
-        flagged = any('Residual bicarbonate' in w for w in p.warnings)
-        self.assertEqual(flagged, carbon > 0.5 and p.audit['residualBicarbonateMmolPerKg'] < 0.5)
+        self.assertFalse(any('Residual bicarbonate' in w for w in p.warnings))
 
     def compose(self, plan=None):
         p = plan or self.plan

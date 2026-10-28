@@ -1,5 +1,10 @@
 # Competitor comparison
 
+> Historical benchmark inputs include five presets retired under #202. Their
+> inclusion tested numerical behavior; it did not validate crop recommendations.
+> Raw captures are preserved. The current catalogue contains 21 formulas.
+
+
 **Measured snapshot: 2026-10-22-competitors-1ade5b6.** One run on one Windows
 laptop, at FlahaX commit `1ade5b6`. Every tool is pinned. Failures, refusals and
 results unfavourable to FlahaX are retained. This is a comparison of software on

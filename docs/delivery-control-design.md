@@ -178,7 +178,6 @@ plan_ph(water_analysis, reagent, target_ph, target_residual_alkalinity,
 
 The plan should provide the initial calculated dose, the elemental additions, valid operating range, and a mandatory post-mix measurement request. Automatic closed-loop correction should be bounded by maximum dose per event, minimum mix time, sensor freshness, and an operator alarm threshold.
 
-For many hydroponic systems, nutrient-solution pH is commonly managed around 5.0–6.0, but this is a starting range, not a universal setpoint; the crop and root-zone system own the target. Oklahoma State notes both the importance of pH/EC monitoring and the common 5.0–6.0 range for hydroponics [Hydroponics](https://extension.okstate.edu/fact-sheets/hydroponics) and [EC and pH guide](https://extension.okstate.edu/fact-sheets/electrical-conductivity-and-ph-guide-for-hydroponics).
 
 ## 4. Dosing-hardware model
 
@@ -289,10 +288,5 @@ These rules keep the current lightweight package intact: FlahaX can remain depen
 - Parkhurst, D. L. and Appelo, C. A. J. (2013). *Description of Input and Examples for PHREEQC Version 3*. U.S. Geological Survey Techniques and Methods 6-A43. DOI: [10.3133/tm6A43](https://doi.org/10.3133/tm6A43). Reference for activity-based aqueous speciation, saturation indices, mixing, and equilibrium validation.
 - “The Formation of Calcium Phosphate Precipitation in Nutrient Solution for Hydroponic Cultivation” (1993). DOI: [10.1080/00380768.1993.10419799](https://doi.org/10.1080/00380768.1993.10419799). Direct evidence for treating calcium/phosphate compatibility as a hard design concern.
 
-- Oklahoma State University Extension, [Electrical Conductivity and pH Guide for Hydroponics](https://extension.okstate.edu/fact-sheets/electrical-conductivity-and-ph-guide-for-hydroponics). Describes water analysis, EC, pH, and nutrient-solution management.
-- Oklahoma State University Extension, [Hydroponics](https://extension.okstate.edu/fact-sheets/hydroponics). Discusses hydroponic pH/EC management and the need to check adjustments.
-- Penn State Extension, [Interpreting Irrigation Water Tests](https://extension.psu.edu/interpreting-irrigation-water-tests). Explains alkalinity, its reporting as CaCO3, and why pH must be interpreted with alkalinity.
-- University of Minnesota Extension, [Should you acidify your high tunnel irrigation water?](https://blog-fruit-vegetable-ipm.extension.umn.edu/2022/04/should-you-acidify-your-high-tunnel.html). Covers acid injection, injector ratios, and nutrient additions from nitric, phosphoric, and sulfuric acids.
-- Penn State Extension, [Irrigation Water Quality Guidelines for Turfgrass Sites](https://extension.psu.edu/irrigation-water-quality-guidelines-for-turfgrass-sites). Gives the equivalent-based residual sodium carbonate equation and illustrates use of meq/L in irrigation-water chemistry.
 
 These references establish operational principles. Product-specific compatibility, solubility, and dosing limits must be sourced from the actual manufacturer documentation and verified under the intended operating conditions before automation is enabled.

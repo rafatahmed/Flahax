@@ -630,12 +630,10 @@ def owner_transcript(*, with_summary=False):
 
 class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_with_explicit_only_ammonium_policy(self):
-        # Historical numerical transcript stays unchanged. The interview prefix is
-        # stable; current output must describe the actual qualified result (#180).
+        # Historical numerical transcripts stay unchanged. This separate prefix
+        # captures the current menu after preset retirement (#202).
         expected = (
-            (FIXTURES / 'owner-session-prefit-material-inventory.txt')
-            .read_text(encoding='utf-8')
-            .splitlines()
+            (FIXTURES / 'current-interview-prefix.txt').read_text(encoding='utf-8').splitlines()
         )
         transcript, summary = owner_transcript(with_summary=True)
         actual = transcript.splitlines()

@@ -39,11 +39,6 @@ def _number(value, name, *, positive=False):
     return float(value)
 
 
-# Residual HCO3 (mmol/L) Dutch soilless practice leaves after acidification as a pH buffer
-# (0.5-0.75 mmol/L; Van der Lugt et al., Nutrient Solutions for Greenhouse Crops).
-RESIDUAL_BICARBONATE_BUFFER = 0.5
-
-
 @dataclass(frozen=True)
 class EquilibriumPhPlan:
     """An acid dose for the target pH, solved by equilibrium for one recipe and water, with the
@@ -236,19 +231,7 @@ def plan_equilibrium_delivery(
         for p, si, reason, sources in saturation['review']
     ]
     warnings += saturation['advisories']
-    # Dutch practice leaves 0.5-0.75 mmol/L HCO3 as a pH buffer (Van der Lugt et al.);
-    # FlahaX doses to the target pH, so the residual is reported, not imposed.
     residual_bicarbonate = 1000 * result.target.species.get('HCO3-', 0.0)
-    if (
-        1000 * water.get('CO3-2', 0.0) > RESIDUAL_BICARBONATE_BUFFER
-        and residual_bicarbonate < RESIDUAL_BICARBONATE_BUFFER
-    ):
-        warnings.append(
-            f'Residual bicarbonate at pH {target_ph:g} is {residual_bicarbonate:.2f} mmol/kg '
-            f'water, below the '
-            f'{RESIDUAL_BICARBONATE_BUFFER:g} mmol/L Dutch practice leaves as a pH buffer; a '
-            f'higher target pH keeps more.'
-        )
     audit = {
         'modelVersion': 'minteq-flahax-25c-v1',
         'waterAnalysisId': water_analysis_id,

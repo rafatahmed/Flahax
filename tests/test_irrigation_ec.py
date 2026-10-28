@@ -372,7 +372,7 @@ class BoundTests(unittest.TestCase):
                 self.assertFalse(r.bounded)
                 self.assertEqual(r.contributions_ms_cm, {})
                 checked += 1
-        self.assertEqual(checked, 26)
+        self.assertEqual(checked, 21)
 
 
 def _assert_close_tree(case, got, want, path='supplementary'):
