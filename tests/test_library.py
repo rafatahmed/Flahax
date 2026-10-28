@@ -18,6 +18,11 @@ class LibrarySuite(unittest.TestCase):
         self.assertEqual(len(LIBRARY["waters"]), 3)
         self.assertEqual(len(LIBRARY["formulas"]), 21)
         self.assertIn("WC1", [water["name"] for water in LIBRARY["waters"]])
+        # UF tomato presets retired under #202; not restored for N provenance.
+        self.assertEqual(
+            [f["name"] for f in LIBRARY["formulas"] if "Florida" in f["name"]],
+            [],
+        )
 
     def test_each_crop_formula_is_solved_from_the_whole_library(self):
         salts = [salt for salt in LIBRARY["salts"] if assay_conflict(salt) is None]
