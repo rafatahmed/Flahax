@@ -45,8 +45,8 @@ ASSUMED_CLOSURE = (
     'use the laboratory values (#84).'
 )
 
-# Parent stage -> hard dependencies. A parent cannot stay calculated/ready when a dependency is
-# blocked (status contract; cucumber batch=calculated over formulation=blocked).
+# Parent stage -> hard dependencies. A parent cannot stay calculated/ready/requires_review when a
+# dependency is blocked (status contract; cucumber batch=calculated over formulation=blocked).
 _STAGE_DEPENDENCIES = {
     'batch': ('formulation',),
     'chemistry': ('batch',),
@@ -56,13 +56,14 @@ _STAGE_DEPENDENCIES = {
     'ph_adjustment': ('chemistry',),
     'stocks': ('batch',),
 }
+_ROLLUP_SUCCESS = frozenset({'calculated', 'ready', 'requires_review'})
 
 
 def apply_status_rollup(stages):
-    """Demote parents that claim calculated/ready while a hard child is blocked.
+    """Demote parents that outrank a blocked hard child.
 
-    Diagnostic values are kept; only the status token is lowered so grower surfaces cannot outrank
-    a blocked dependency.
+    ``requires_review`` is demoted as well as ``calculated``/``ready``. Diagnostic values are kept;
+    only the status token is lowered.
     """
     order = (
         'formulation',
@@ -78,7 +79,7 @@ def apply_status_rollup(stages):
         stage = stages.get(name)
         if stage is None or name not in _STAGE_DEPENDENCIES:
             continue
-        if stage.status not in ('calculated', 'ready'):
+        if stage.status not in _ROLLUP_SUCCESS:
             continue
         for dep_name in _STAGE_DEPENDENCIES[name]:
             dep = stages.get(dep_name)

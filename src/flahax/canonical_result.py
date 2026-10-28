@@ -164,10 +164,13 @@ _STATUS_ALIASES = {
 
 
 def contract_status(raw):
-    """Map a stage or legacy token onto STATUS_VOCABULARY."""
+    """Map a stage or legacy token onto STATUS_VOCABULARY.
+
+    Unknown tokens become ``not_validated`` so callers cannot invent out-of-contract statuses.
+    """
     if raw in STATUS_VOCABULARY:
         return raw
-    return _STATUS_ALIASES.get(raw, raw)
+    return _STATUS_ALIASES.get(raw, 'not_validated')
 
 
 def result_statuses(summary):

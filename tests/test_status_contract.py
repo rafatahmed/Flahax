@@ -8,7 +8,7 @@ import unittest
 
 from flahax import VolumeLitres, load_library, plan_fertilizer_workflow, summarize_batch
 from flahax.batch_cli import run_batch
-from flahax.canonical_result import STATUS_VOCABULARY, result_statuses
+from flahax.canonical_result import STATUS_VOCABULARY, contract_status, result_statuses
 from flahax.fertilizer_workflow import apply_status_rollup, WorkflowStage
 from tests.test_core_cucumber_witness import witness_inputs
 
@@ -33,6 +33,29 @@ class StatusVocabularyTests(unittest.TestCase):
             ),
         )
 
+    def test_unknown_token_does_not_pass_through(self):
+        self.assertEqual(contract_status('legacy_mystery'), 'not_validated')
+        self.assertIn(contract_status('legacy_mystery'), STATUS_VOCABULARY)
+
+    def test_result_statuses_values_are_all_in_vocabulary(self):
+        summary = {
+            'status': 'blocked',
+            'formulation': {'feasible': False},
+            'stages': {
+                'formulation': {'status': 'blocked'},
+                'chemistry': {'status': 'calculated'},
+            },
+            'chemistry': {'phase_assessment': {'blocks': [], 'review': []}},
+            'ph': {'status': 'blocked'},
+            'ec': {'status': 'not_supported'},
+            'tanks': {'required_tanks': 2, 'available_tanks': 2},
+            'solubility': [],
+        }
+        statuses = result_statuses(summary)
+        for name, status in statuses.items():
+            with self.subTest(status=name):
+                self.assertIn(status, STATUS_VOCABULARY)
+
 
 class StatusRollupTests(unittest.TestCase):
     def test_batch_cannot_stay_calculated_when_formulation_is_blocked(self):
@@ -53,6 +76,22 @@ class StatusRollupTests(unittest.TestCase):
         apply_status_rollup(stages)
         self.assertEqual(stages['chemistry'].status, 'blocked')
         self.assertIsNotNone(stages['chemistry'].value)
+
+    def test_requires_review_chemistry_demotes_when_formulation_blocked(self):
+        # Assumed-closure chemistry must not outrank a blocked formulation/batch.
+        stages = {
+            'formulation': WorkflowStage('blocked', error_code='infeasible_recipe'),
+            'batch': WorkflowStage('blocked', value=object(), error_code='dependency_blocked'),
+            'chemistry': WorkflowStage(
+                'requires_review',
+                value={'mixed': object()},
+                message='assumed charge closure',
+            ),
+        }
+        apply_status_rollup(stages)
+        self.assertEqual(stages['chemistry'].status, 'blocked')
+        self.assertIsNotNone(stages['chemistry'].value)
+        self.assertIn('assumed charge closure', stages['chemistry'].message or '')
 
     def test_calculated_batch_survives_when_formulation_is_ok(self):
         stages = {
