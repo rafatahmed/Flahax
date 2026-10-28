@@ -292,7 +292,9 @@ def _close_on_carbonate(working, state, measured_ph, phases, imbalance, carbon_s
     ).charge_balance
     for _ in range(100):
         if f_hi == f_lo:
-            break
+            raise DeliveryError(
+                'nonconvergent', 'carbonate reconciliation stalled before charge closure'
+            )
         carbon = hi - f_hi * (hi - lo) / (f_hi - f_lo)
         if carbon <= 0:
             raise DeliveryError(
@@ -502,10 +504,6 @@ def balance_water_analysis(
             'charge_imbalance_exceeded',
             f'analysis charge imbalance {imbalance:.2f}% at measured pH exceeds '
             f'{maximum_imbalance_percent:g}%',
-        )
-    if balance_ion not in BALANCE_IONS:
-        raise DeliveryError(
-            'unsupported_balance_ion', f'balance_ion must be one of {sorted(BALANCE_IONS)}'
         )
     analysed = totals.get(balance_ion, 0.0)
     if (

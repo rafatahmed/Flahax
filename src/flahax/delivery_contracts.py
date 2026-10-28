@@ -189,7 +189,6 @@ def validate_compatibility_rule(payload: Any) -> dict:
 
 def _invalid_constraint() -> str:
     _error("invalid_value", "compatibilityRule.constraint must be 'separate'")
-    raise AssertionError("unreachable")
 
 
 def validate_solubility_limit(payload: Any) -> dict:

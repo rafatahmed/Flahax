@@ -1567,9 +1567,14 @@ class WorkflowGradeTests(unittest.TestCase):
         product, material = self.graded(0.97)
         self.assertEqual(material.flags, ())
         shipped, graded = self.workflow(), self.workflow(product)
-        for stage in ('chemistry', 'ph_adjustment'):
-            self.assertIn(graded.stages[stage].status, ('calculated', 'requires_review'), stage)
         self.assertEqual(graded.stages['chemistry'].status, 'calculated')
+        adjustment = graded.stages['ph_adjustment']
+        self.assertEqual(
+            (adjustment.status, adjustment.error_code), ('blocked', 'no_acceptable_reagent')
+        )
+        self.assertIsNone(adjustment.value.selected)
+        self.assertEqual(len(adjustment.value.candidates), 1)
+        self.assertIn('Hydroxylapatite', adjustment.message)
         fe_sources = [
             s['name']
             for s in graded.recommendation['salts']
@@ -1590,7 +1595,8 @@ class WorkflowGradeTests(unittest.TestCase):
         catalogue = catalogue_dose_totals(doses)
         self.assertAlmostEqual(chemistry['mixed'].totals['Fe+2'], label['Fe+2'], delta=1e-15)
         self.assertAlmostEqual(label['Fe+2'], 0.97 * catalogue['Fe+2'], delta=1e-15)
-        selected = graded.stages['ph_adjustment'].value.selected
+        selected = adjustment.value.candidates[0]
+        self.assertEqual(selected.status, 'rejected')
         mixed_doses = self.doses(selected.recommendation)  # g/L x 1000 L / 1000 kg water
         self.assertAlmostEqual(
             selected.mixed.totals['Fe+2'],
