@@ -176,6 +176,11 @@ cross-platform labels in unit tests validate the protocol, not native execution.
 
 Only the passing aggregate XML is uploaded to Codecov, with its candidate revision
 explicitly supplied. XML statement/branch totals must match the exact local gate.
+The uploader uses `plugins: noop` to disable report regeneration. Before and after
+upload, report hashes and exact XML counts must match the candidate provenance;
+the post-upload check runs even when upload fails. A successful upload alone does
+not establish report integrity.
+
 Upload errors fail CI, report auto-discovery and file fixes are disabled, and
 project/patch targets are 100% with zero threshold and no informational bypass or
 flag carryforward. The hosted Codecov result still needs verification against the
