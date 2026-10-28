@@ -187,10 +187,17 @@ FlahaX 0.6.0 reported the following figures:
 - **Limits.** Cl is 102.4 mg/L and Na 55.1 mg/L, both within their limits.
 - **EC.** The estimate is about 2.6 mS/cm. It is experimental, so measure it.
 
-**Historical review findings.** The old sheet listed these reasons; unresolved
-phase applicability now blocks approval:
-- **Ammonium.** The recipe carries 9.2 mg/L NH4-N, a nutrient you did not
-  target and gave no maximum for. Check it, or declare a maximum.
+**Review findings (tip policy).** On tip, REVIEW-class supersaturation
+(Hydroxylapatite, Goethite, MnHPO4, Vivianite) at the target pH makes the plan
+`requires_review`; hard-blocking phases, allocated solids and unresolved SI sign
+still block approval ([saturation
+indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
+The 0.6.0 sheet narrative below is publication history for that release's wording
+where noted.
+- **Ammonium (0.6.0 sheet wording only).** That sheet reported 9.2 mg/L NH4-N
+  with no declared maximum and asked for review. On tip, omitted `N_NH4` uses the
+  disclosed Dutch incidental ceiling (`min(10% of total target N, 1.5 mmol/L)` on
+  `ammoniumLimit`); within that ceiling the assessment is `within_limit`.
 - **The well analysis is 3.5 % out of charge balance.** For the chemistry,
   FlahaX closed it on chloride (−9.5 %). That step is a modelling assumption,
   not a measurement, so the pH and precipitation results need your judgement.
@@ -200,8 +207,7 @@ phase applicability now blocks approval:
   it falls within it.
 - **Hydroxylapatite and MnHPO4 are supersaturated.** These are REVIEW-class phases:
   the plan is `requires_review` with their reasons, not hard-blocked. Their names
-  do not prove precipitation is absent. The sheet retains the findings ([saturation
-  indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
+  do not prove precipitation is absent. The sheet retains the findings.
 - **Iron(II) sulfate.** The recipe uses it, and in an aerated feed iron(II)
   oxidizes and settles out with some phosphate. A chelated iron is the safer
   choice. To make FlahaX use one, pass a product list without iron sulfate

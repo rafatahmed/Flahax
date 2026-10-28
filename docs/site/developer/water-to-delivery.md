@@ -28,14 +28,18 @@ The optimizer's existing objective is unchanged; maxima are post-solve checks,
 not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
 
-With the supplied pepper targets, twelve selected catalogue products and
-water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
-and 0.047919 mg/L Na. Positive targets fit within 1%, but these incidental
-amounts require review. These are catalogue-assay calculations, not a dosing
-authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`
-lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
-Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
-requires confirmation before physical use.
+With pepper targets that omit `N_NH4` (not an explicit zero), twelve selected
+catalogue products and water Ca 20 mg/L, the regression recipe carries about
+4.85 mg/L NH4-N and about 1.72 mg/L Na from chelate/molybdate sodium. Positive
+targets fit within 1%. Under the disclosed Dutch incidental NH4 ceiling
+(`min(10% of total target N, 1.5 mmol/L)`; here 12.8 mg/L on `ammoniumLimit`),
+that NH4-N is `within_limit`. Na has no declared maximum, so it stays
+`requires_review`. An explicit `N_NH4: 0` target still prohibits ammonium.
+These are catalogue-assay calculations, not a dosing authorization. Since the
+2026-10-18 catalogue correction, `Phosphoric Acid (75%)` lists 23.706035% P
+(a 75% w/w aqueous product, dosed by product mass) and Mg Nitrate is
+Mg(NO3)2·6H2O theory; the actual grade of each product still requires
+confirmation before physical use.
 See [traceable materials](../agronomist/formula-and-products.md) for supplying that grade or lot.
 
 ## Public orchestration
