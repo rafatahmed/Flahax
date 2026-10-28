@@ -192,9 +192,32 @@ def aggregate(root, inputs, output, expected):
     )
 
 
+def verify_upload(root, output, expected):
+    """Reject report mutation before or after the uploader runs."""
+    provenance = read(output / 'provenance.json')
+    if provenance['source_revision'] != expected:
+        raise ValueError('upload evidence belongs to a different candidate')
+    for name, key in (('coverage.xml', 'xml_sha256'), ('coverage.json', 'report_sha256')):
+        if digest(output / name) != provenance[key]:
+            raise ValueError('validated upload report changed: ' + name)
+    xml = ET.parse(output / 'coverage.xml').getroot()
+    wanted = {
+        'lines-valid': provenance['statements'],
+        'lines-covered': provenance['statements'],
+        'branches-valid': provenance['branches'],
+        'branches-covered': provenance['branches'],
+    }
+    if provenance['statements'] <= 0 or any(
+        int(xml.attrib[key]) != count for key, count in wanted.items()
+    ):
+        raise ValueError('upload XML counts differ from accepted coverage')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('record', 'run', 'report', 'aggregate'))
+    parser.add_argument(
+        'action', choices=('record', 'run', 'report', 'aggregate', 'verify-upload')
+    )
     parser.add_argument('--root', type=Path, default=Path.cwd())
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--inputs', type=Path)
@@ -207,7 +230,9 @@ def main():
     if args.action == 'aggregate':
         aggregate(args.root, args.inputs, args.output, args.candidate)
     else:
-        {'record': record, 'report': report}[args.action](args.root, args.output, args.candidate)
+        {'record': record, 'report': report, 'verify-upload': verify_upload}[args.action](
+            args.root, args.output, args.candidate
+        )
     return 0
 
 

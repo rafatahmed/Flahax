@@ -261,6 +261,29 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                         ci.read(Path(folder) / 'tests.json')['passed'], bool(count and success)
                     )
 
+    def test_upload_integrity_rejects_regeneration_and_wrong_candidate(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root, inputs, current = self.fixture(folder)
+            self.aggregate(root, inputs, current)
+            output = root / 'aggregate'
+            revision = current['source_revision']
+            ci.verify_upload(root, output, revision)
+            with self.assertRaisesRegex(ValueError, 'candidate'):
+                ci.verify_upload(root, output, 'b' * 40)
+            for name in ('coverage.xml', 'coverage.json'):
+                original = (output / name).read_bytes()
+                (output / name).write_bytes(original + b' ')
+                with self.assertRaisesRegex(ValueError, 'changed'):
+                    ci.verify_upload(root, output, revision)
+                (output / name).write_bytes(original)
+            provenance = ci.read(output / 'provenance.json')
+            for key, value in (('statements', 0), ('statements', 999), ('branches', 999)):
+                ci.write(output / 'provenance.json', dict(provenance, **{key: value}))
+                with self.assertRaisesRegex(ValueError, 'counts'):
+                    ci.verify_upload(root, output, revision)
+            ci.write(output / 'provenance.json', provenance)
+            ci.verify_upload(root, output, revision)
+
     def test_module_help_entrypoint(self):
         with (
             patch.object(sys, 'argv', ['ci', '--help']),
@@ -271,12 +294,13 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             self.assertEqual(caught.exception.code, 0)
 
     def test_cli_dispatch_and_required_aggregation_input(self):
-        for action in ('record', 'report', 'run', 'aggregate'):
+        for action in ('record', 'report', 'run', 'aggregate', 'verify-upload'):
             args = ['ci', action, '--output', 'out', '--candidate', 'a' * 40]
             if action == 'aggregate':
                 args += ['--inputs', 'in']
             with (
                 patch.object(sys, 'argv', args),
+                patch.object(ci, 'verify_upload'),
                 patch.object(ci, 'record'),
                 patch.object(ci, 'report'),
                 patch.object(ci, 'run_tests', return_value=1),
@@ -318,6 +342,7 @@ class WorkflowEnforcementTests(unittest.TestCase):
         steps = gate['steps']
         upload = next(s for s in steps if s.get('uses', '').startswith('codecov/'))
         self.assertEqual(upload['with']['fail_ci_if_error'], 'true')
+        self.assertEqual(upload['with']['plugins'], 'noop')
         self.assertEqual(upload['with']['disable_search'], 'true')
         self.assertEqual(upload['with']['disable_file_fixes'], 'true')
         self.assertEqual(upload['with']['override_commit'], '${{ env.CANDIDATE_SHA }}')
@@ -325,6 +350,15 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertLess(
             next(i for i, s in enumerate(steps) if 'ci_coverage aggregate' in s.get('run', '')),
             steps.index(upload),
+        )
+        integrity = [
+            i for i, step in enumerate(steps) if 'ci_coverage verify-upload' in step.get('run', '')
+        ]
+        self.assertEqual(len(integrity), 2)
+        self.assertLess(integrity[0], steps.index(upload))
+        self.assertGreater(integrity[1], steps.index(upload))
+        self.assertEqual(
+            steps[integrity[1]]['if'], "always() && steps.aggregate.outcome == 'success'"
         )
         download = next(
             s for s in steps if s.get('uses', '').startswith('actions/download-artifact@')
