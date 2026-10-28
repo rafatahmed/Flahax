@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "tip_sha": "12afceece3585be783f7bee86afa2eca468c7afa",
+    "formula": "Cucumber (Howard Resh)",
+    "note": "Frozen observed tip behavior for core-contract-spine; documents current failing statuses, not readiness."
+  },
+  "inputs": {
+    "water": "ro",
+    "formula": "Cucumber (Howard Resh)",
+    "products": "catalogue",
+    "acid": [
+      "HNO3:0.65:1.3:HNO3 65%"
+    ],
+    "tank_litres": {
+      "A": 1000.0,
+      "B": 1000.0,
+      "acid": 100.0
+    },
+    "ratio": 100.0,
+    "ph": 5.9,
+    "temperature_c": 25.0,
+    "mode": "fill",
+    "limit": []
+  },
+  "formula_targets": {
+    "N_NO3": 140,
+    "P": 50,
+    "K": 350,
+    "Mg": 50,
+    "Ca": 200,
+    "S": 150,
+    "B": 0.3,
+    "Fe": 3,
+    "Zn": 0.1,
+    "Cu": 0.07,
+    "Mo": 0.03,
+    "Mn": 0.8
+  },
+  "observed": {
+    "status": "blocked",
+    "statuses": {
+      "numerical": "not_reported",
+      "formulation": "infeasible",
+      "chemistry": "calculated",
+      "phase": "blocked",
+      "ph": "blocked",
+      "ec": "not_supported",
+      "stock": "blocked",
+      "delivery": "not_validated",
+      "physical": "not_validated",
+      "overall": "blocked"
+    },
+    "stages": {
+      "formulation": "blocked",
+      "batch": "calculated",
+      "chemistry": "calculated",
+      "nitric": "needs_input",
+      "titration": "needs_input",
+      "acid_selection": "needs_input",
+      "ph_adjustment": "blocked",
+      "stocks": "needs_input"
+    },
+    "formulation_feasible": false,
+    "target_ph": 5.9,
+    "ph_status": "blocked",
+    "ph_unadjusted": 7.8456782549619675,
+    "ph_selected": null,
+    "ec_status": "not_supported",
+    "ec_reason": "ionic_strength_outside_phosphate_fit",
+    "n_no3_final": 145.33038386467146,
+    "n_nh4_final": 11.10162654521796,
+    "n_nh4_target": null,
+    "n_no3_target": 140.0,
+    "total_n_sum": 156.43201040988941,
+    "n_no3_delta_pct": 3.8074170461939003,
+    "unmet_symbols": [
+      "N_NO3",
+      "Ca"
+    ],
+    "unmet_reasons": {
+      "N_NO3": "conflicting_targets",
+      "Ca": "conflicting_targets"
+    },
+    "batch_litres": 10000.0,
+    "acid_candidates": [
+      [
+        "HNO3 65%",
+        "rejected"
+      ]
+    ]
+  }
+}
