@@ -17,6 +17,8 @@ from flahax import (
     recommend,
 )
 
+from .common import ec_summary
+
 FORMULA = 'Tomato (Howard Resh)'  # shipped in the FlahaX catalogue
 BATCH_LITRES = 1000
 
@@ -107,11 +109,8 @@ def main():
         f"{balance['anionsMeqPerL']:.1f} meq/L ({balance['imbalancePercent']:+.1f}%)"
     )
     ec = report['ec']
-    print(
-        f"Estimated EC25: {ec['ec25_ms_cm']:.2f} mS/cm at pH {ec['ph']:.2f} ({ec['status']}, "
-        f"experimental)"
-    )
-    if not 5.3 <= ec['ph'] <= 5.8:
+    print(ec_summary(ec))
+    if ec['ph'] is not None and not 5.3 <= ec['ph'] <= 5.8:
         print(
             f"Mixed pH {ec['ph']:.2f} is outside the 5.3-5.8 feed range: plan an acid dose "
             "(see python -m examples.tomato_advanced)."
