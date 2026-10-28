@@ -70,3 +70,14 @@ the README and nine packaged-manual examples run through tests.test_release_hygi
 Existing old site URLs remain redirected. Historical audits, benchmarks and publication
 records are retained. Documentation checks do not establish clean-package, full-coverage,
 hosted-platform or live-reference acceptance of a future release.
+
+
+## Removed agronomic presets and advice
+
+The five University of Florida tomato presets are no longer shipped. Calls by
+those preset names fail lookup; choose an explicitly reviewed target file instead.
+Existing user-saved targets remain user inputs and are not silently rewritten.
+Feed-pH range warnings and the residual-bicarbonate buffer warning are removed.
+Calculated pH, bicarbonate inventories, explicit nutrient limits, and chemical
+model applicability checks remain available. Crop suitability is not inferred
+from software regression tests or extension guidance.

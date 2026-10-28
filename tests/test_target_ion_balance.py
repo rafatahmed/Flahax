@@ -35,8 +35,8 @@ class TargetIonBalanceTests(unittest.TestCase):
         pepper = target_ion_balance(formula("Pepper (Howard Resh)"))
         self.assertLess(pepper["imbalancePercent"], -10)
         self.assertTrue(pepper["exceedsWarning"])
-        florida = target_ion_balance(formula("Tomatoes - till First Cluster (U of Florida)"))
-        self.assertGreater(florida["imbalancePercent"], 10)
+        synthetic = target_ion_balance({"N_NO3": 60, "Ca": 160})
+        self.assertGreater(synthetic["imbalancePercent"], 10)
 
     def test_recommend_reports_balance_and_warns(self):
         result = recommend(LIBRARY["salts"], formula("Pepper (Howard Resh)"), {})

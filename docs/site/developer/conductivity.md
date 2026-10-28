@@ -185,8 +185,9 @@ maximum error as belonging to that profile; it does not include unpropagated
 assay/input uncertainty or certify a different recipe.
 
 `partial` also arises from unrecorded counterions; temperature, carbon,
-ionic-strength domain and undisclosed blends give `not_supported`. All 26 shipped formulas at the current recommended doses exceed the stored
-phosphate fit ceiling and return `not_supported`. Earlier estimates and their
+ionic-strength domain and undisclosed blends give `not_supported`. The historical 26-formula audit found all recipes at its calculated doses exceeded
+the stored phosphate fit ceiling and returned `not_supported`. Five presets
+were subsequently retired (#202); this historical count is not the current catalogue. Earlier estimates and their
 reported interval widths relied on extrapolation and do not establish applicability.
 
 **Phosphate (M2b).** H2PO4- and HPO4-2 are covered at 25 C by coefficients

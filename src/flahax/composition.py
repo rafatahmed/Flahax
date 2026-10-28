@@ -76,8 +76,8 @@ ATOMIC = {
 
 _TOKEN = re.compile(r"[A-Z][a-z]?|\(|\)|\d+")
 
-# Ion form and charge of each target symbol for a formula's charge balance (Dutch
-# convention: P as H2PO4-, S as SO4 2-). Urea and Si are neutral; micronutrients are
+# Declared bookkeeping convention for the target nutrient-subset charge balance:
+# P as H2PO4-, S as SO4 2-. Urea and Si are neutral; micronutrients are
 # excluded as negligible at mg/L levels.
 BALANCE_IONS = {
     "N_NO3": ("N", -1),

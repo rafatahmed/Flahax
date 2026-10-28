@@ -1,5 +1,11 @@
 # Benchmark results: Windows (local supplement)
 
+> Historical record: the five Florida formula presets and embedded agronomic
+> pH/bicarbonate advice have been retired under #202. Recorded benchmark
+> results describe the old inputs, not current catalogue coverage or scientific
+> validation of those recommendations. The captures below are preserved unchanged.
+
+
 **Measured snapshot: 2026-10-20-windows-6373d23.** This page reports one clean-checkout development
 baseline, including failures. It is not a release certification, a comparison
 against another product, or physical validation.

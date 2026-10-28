@@ -13,10 +13,10 @@ LIBRARY = load_library()
 
 
 class LibrarySuite(unittest.TestCase):
-    def test_tables_match_the_database_export(self):
+    def test_tables_match_the_curated_catalogue(self):
         self.assertEqual(len(LIBRARY["salts"]), 32)
         self.assertEqual(len(LIBRARY["waters"]), 3)
-        self.assertEqual(len(LIBRARY["formulas"]), 26)
+        self.assertEqual(len(LIBRARY["formulas"]), 21)
         self.assertIn("WC1", [water["name"] for water in LIBRARY["waters"]])
 
     def test_each_crop_formula_is_solved_from_the_whole_library(self):

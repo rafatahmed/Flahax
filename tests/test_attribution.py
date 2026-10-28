@@ -84,10 +84,9 @@ class AttributionTests(unittest.TestCase):
             for f in library['formulas']
             if '(' in f['name']
         }
-        aliases = {'u of florida': 'university of florida'}
         for source in named:
             with self.subTest(source=source):
-                credit = aliases.get(source, source)
+                credit = source
                 self.assertTrue(
                     credit in NOTICE.lower(),
                     f'NOTICE does not credit the formula source {credit!r}',

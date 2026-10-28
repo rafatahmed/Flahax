@@ -68,7 +68,7 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
         self.assertEqual(plan.audit['analyticalWaterTotalsMolal'], water)
         self.assertEqual(plan.audit['waterTotalsMolal'], balanced.totals)
 
-    def test_low_residual_bicarbonate_is_an_explicit_warning(self):
+    def test_low_residual_bicarbonate_is_reported_without_crop_advice(self):
         from flahax.aqueous_model import solve
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -86,7 +86,11 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
             **(self.args | {'water_totals': water, 'maximum_concentrations': {'N_NO3': 100}})
         )
         self.assertLess(plan.audit['residualBicarbonateMmolPerKg'], 0.5)
-        self.assertTrue(any('Residual bicarbonate' in warning for warning in plan.warnings))
+        self.assertFalse(any('Residual bicarbonate' in warning for warning in plan.warnings))
+        self.assertAlmostEqual(
+            plan.audit['residualBicarbonateMmolPerKg'],
+            1000 * plan.equilibrium.target.species.get('HCO3-', 0.0),
+        )
 
 
 class DeliveryRecordBoundaryTests(unittest.TestCase):

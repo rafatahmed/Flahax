@@ -42,11 +42,11 @@ class EmittedDoseTests(unittest.TestCase):
                     batch = final_solution_recipe(result, VolumeLitres(volume))
                     self.assertEqual(batch.salts[0].mass.value, emitted * volume)
 
-    def test_all_26_formulas_reconstruct_from_published_quantities(self):
+    def test_all_shipped_formulas_reconstruct_from_published_quantities(self):
         library = load_library()
         products = [p for p in library['salts'] if assay_conflict(p) is None]
         by_id = {p['id']: p for p in products}
-        self.assertEqual(len(library['formulas']), 26)
+        self.assertEqual(len(library['formulas']), 21)
         for formula in library['formulas']:
             with self.subTest(formula=formula['name']):
                 result = recommend(products, formula['targets'], formula['water'])

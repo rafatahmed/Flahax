@@ -33,9 +33,7 @@ class UnmetTargetTests(unittest.TestCase):
         self.assertAlmostEqual(si["deltaPct"], -100.0)
 
     def test_calcium_nitrate_conflict_names_partner_and_chloride_route(self):
-        result = recommend(
-            SALTS, formula("Tomatoes - till First Cluster (U of Florida)")["targets"], {}
-        )
+        result = recommend(SALTS, {"N_NO3": 60, "Ca": 160}, {})
         ca = unmet(result)["Ca"]
         self.assertEqual(ca["reason"], "conflicting_targets")
         self.assertIn("N_NO3", ca["conflictsWith"])

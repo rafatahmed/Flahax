@@ -9,10 +9,8 @@ import unittest
 from flahax import load_library, recommend
 
 LIBRARY = load_library()
-# Florida till-first-cluster: Ca 150 with N_NO3 70 cannot be met from calcium nitrate alone.
-FORMULA = next(
-    f for f in LIBRARY["formulas"] if f["name"] == "Tomatoes - till First Cluster (U of Florida)"
-)
+# Synthetic conflicting Ca/nitrate requirements; not a crop recommendation.
+FORMULA = {'targets': {'N_NO3': 60, 'Ca': 160}}
 
 
 def final(result, symbol):
