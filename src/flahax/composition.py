@@ -14,8 +14,9 @@ from __future__ import annotations
 import math
 import re
 
-# Ions the mass balance knows. Total "N" is absent on purpose: nitrate and
-# ammonium are different rows, and a single N figure cannot be split safely.
+# Ions the mass balance knows. Aggregate elemental total N is the optional key
+# "N" on targets/limits (see nutrient_ledger); it is not an ion and is not in
+# this set. Water ion maps must not use bare N as NO3- mass.
 IONS = frozenset(
     {
         "N_NO3",
@@ -144,22 +145,48 @@ def _finite(value) -> float:
 
 
 def validate_profile(profile: dict, label: str) -> dict[str, float]:
-    """Return a copy of a ppm map, or raise InputError."""
+    """Return a copy of a ppm map, or raise InputError.
+
+    Optional aggregate key ``N`` is elemental total N on targets, maxima, and
+    achieved maps. It does not invent a nitrate/ammonium/urea split. When ``N``
+    appears with one or more form keys, the stated forms must sum to ``N``.
+    Water ion maps reject bare ``N`` (unsupported as NO3- mass; use form keys).
+    """
+    from .nutrient_ledger import (
+        N_AGGREGATE,
+        forms_agree_with_aggregate,
+        is_water_ion_profile,
+        nitrogen_form_sum,
+    )
+
     if not isinstance(profile, dict):
         raise InputError(f"{label} must be a map of ion symbol to ppm")
     clean: dict[str, float] = {}
     for symbol, raw in profile.items():
-        if symbol == "N":
-            raise InputError(
-                f"{label} uses N. Nitrate and ammonium are N_NO3 and N_NH4; "
-                "a total-N figure is not split automatically."
-            )
+        if symbol == N_AGGREGATE:
+            if is_water_ion_profile(label):
+                raise InputError(
+                    f"{label} uses unsupported ion N. Water must state N_NO3, "
+                    "N_NH4 and/or N_UREA; bare N is not NO3- mass."
+                )
+            number = _finite(raw)
+            if number < 0:
+                raise InputError(f"{label} {symbol} is {number}, which is below 0 ppm")
+            clean[symbol] = number
+            continue
         if symbol not in IONS:
             raise InputError(f"{label} has unknown ion {symbol}")
         number = _finite(raw)
         if number < 0:
             raise InputError(f"{label} {symbol} is {number}, which is below 0 ppm")
         clean[symbol] = number
+    if N_AGGREGATE in clean and not forms_agree_with_aggregate(clean):
+        forms_total = nitrogen_form_sum(clean)
+        raise InputError(
+            f"{label} has inconsistent nitrogen: aggregate N={clean[N_AGGREGATE]} "
+            f"but stated forms sum to {forms_total} "
+            "(N_NO3 + N_NH4 + N_UREA present on the profile)"
+        )
     return clean
 
 

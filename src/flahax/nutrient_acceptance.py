@@ -5,22 +5,30 @@
 """Keep nutrient targets, incidental contributions and hard limits distinct."""
 
 from .composition import validate_profile
+from .nutrient_ledger import N_AGGREGATE, elemental_nitrogen
 
 
 def assess_incidental(rows, maximum_concentrations=None):
     """Untargeted nutrients present in the solution and the limits exceeded; an incidental nutrient
     without a limit requires review. Explicit zero targets are hard zero limits,
     not incidental nutrients. Limits are compared directly without an absolute slack.
+    Aggregate ``N`` maxima use elemental N (form sum), not a missing ion row.
     """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
     )
     maximums.update({row['symbol']: 0.0 for row in rows if row['target'] == 0})
     final = {row['symbol']: row['final'] for row in rows}
+
+    def _ppm(ion):
+        if ion == N_AGGREGATE:
+            return elemental_nitrogen(final)
+        return final.get(ion, 0.0)
+
     violations = [
-        {'symbol': ion, 'ppm': final.get(ion, 0.0), 'maximumPpm': limit}
+        {'symbol': ion, 'ppm': _ppm(ion), 'maximumPpm': limit}
         for ion, limit in maximums.items()
-        if final.get(ion, 0.0) > limit
+        if _ppm(ion) > limit
     ]
     incidental = []
     for row in rows:

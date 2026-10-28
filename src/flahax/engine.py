@@ -31,6 +31,7 @@ from .composition import (
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
+from .nutrient_ledger import N_AGGREGATE, N_FORMS, elemental_nitrogen
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
 
 # Rank and feasibility threshold, relative to the problem's column scale.
@@ -87,6 +88,9 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
     for symbol in dict.fromkeys([*targets, *water]):
         if symbol not in targets:
             gap[symbol] = None
+            continue
+        if symbol == N_AGGREGATE:
+            gap[symbol] = targets[symbol] - elemental_nitrogen(water)
             continue
         gap[symbol] = targets[symbol] - water.get(symbol, 0.0)
     return gap
@@ -360,13 +364,19 @@ def nnls(
 def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
     """The squared-relative-error loss and one row per nutrient (target, final and percent
     difference). Only strictly positive targets contribute to the loss.
+
+    Aggregate ``N`` is scored against elemental N (N_NO3 + N_NH4 + N_UREA), not as a
+    separate ion row invented from a form split.
     """
     loss = 0.0
     rows = []
     symbols = list(dict.fromkeys([*targets.keys(), *achieved.keys()]))
     for symbol in symbols:
         target = targets.get(symbol)
-        final = float(achieved.get(symbol) or 0.0)
+        if symbol == N_AGGREGATE:
+            final = elemental_nitrogen(achieved)
+        else:
+            final = float(achieved.get(symbol) or 0.0)
         delta = None
         if target is not None and target > 0:
             delta = ((final - target) / target) * 100.0
@@ -390,8 +400,27 @@ def _nutrients(product):
     ]
 
 
+def _delivery_rate(salt: dict, symbol: str) -> float:
+    """mg/L per g/L of salt for a nutrient key, including aggregate elemental N."""
+    nutrients = _nutrients(salt)
+    if symbol == N_AGGREGATE:
+        return sum(ppm_per_gram(nutrients.get(form, 0.0)) for form in N_FORMS)
+    return ppm_per_gram(nutrients.get(symbol, 0.0))
+
+
+def _concentration(profile: dict, symbol: str) -> float:
+    """mg/L of a nutrient key on a form map; aggregate N is the form sum."""
+    if symbol == N_AGGREGATE:
+        return elemental_nitrogen(profile)
+    return float(profile.get(symbol) or 0.0)
+
+
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
-    """Nutrient concentrations (mg/L) from the water plus each salt's grams per litre."""
+    """Nutrient concentrations (mg/L) from the water plus each salt's grams per litre.
+
+    Returns form keys only. Aggregate elemental N is
+    ``elemental_nitrogen(forward(...))``, never a duplicated ion invented here.
+    """
     water = water or {}
     achieved = {symbol: float(value) for symbol, value in water.items()}
     for salt, gram in zip(salts, grams):
@@ -434,8 +463,11 @@ def _fit(
     rhs = []
     for symbol in symbols:
         target = targets.get(symbol)
-        rates = [ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) for salt in salts]
-        background = float(water.get(symbol) or 0.0)
+        rates = [_delivery_rate(salt, symbol) for salt in salts]
+        if symbol == N_AGGREGATE:
+            background = elemental_nitrogen(water)
+        else:
+            background = float(water.get(symbol) or 0.0)
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
@@ -487,13 +519,13 @@ def _fit_within(
     unreachable = {
         symbol
         for symbol, limit in maxima.items()
-        if limit == 0 or float(water.get(symbol) or 0.0) >= limit
+        if limit == 0 or _concentration(water, symbol) >= limit
     }
     if unreachable:
         keep = [
             i
             for i, salt in enumerate(salts)
-            if not any(_nutrients(salt).get(s, 0.0) for s in unreachable)
+            if not any(_delivery_rate(salt, s) > 0 for s in unreachable)
         ]
         solved = _fit_within(
             [salts[i] for i in keep],
@@ -518,7 +550,7 @@ def _fit_within(
         converged = True
         for symbol, limit in maxima.items():
             # Nonpositive ceilings were eliminated by the unreachable-supply recursion.
-            value = final.get(symbol, 0.0)
+            value = _concentration(final, symbol)
             if symbol not in search:
                 if value <= limit:
                     continue
@@ -630,6 +662,8 @@ def _still_within(new_rows: list[dict], old_rows: list[dict]) -> bool:
 
 
 def _supplies(salt: dict, symbol: str) -> bool:
+    if symbol == N_AGGREGATE:
+        return any(float(salt["elements"].get(form) or 0.0) > 0 for form in N_FORMS)
     return float(salt["elements"].get(symbol) or 0.0) > 0
 
 
@@ -839,13 +873,13 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         return set(kept)
     matrix, rhs = [], []
     for symbol, target in kept.items():
-        matrix.append([ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) / target for salt in salts])
-        rhs.append((target - float(water.get(symbol) or 0.0)) / target)
+        matrix.append([_delivery_rate(salt, symbol) / target for salt in salts])
+        rhs.append((target - _concentration(water, symbol)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
     return {
         symbol
         for symbol, target in kept.items()
-        if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT
+        if abs(_concentration(achieved, symbol) - target) / target * 100.0 > TOLERANCE_PCT
     }
 
 
@@ -873,7 +907,8 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     binding = sorted(
         ion
         for ion, limit in maxima.items()
-        if limit > 0 and final.get(ion, 0.0) >= limit * (1 - CEILING_MARGIN - CEILING_TOLERANCE)
+        if limit > 0
+        and _concentration(final, ion) >= limit * (1 - CEILING_MARGIN - CEILING_TOLERANCE)
     )
     base = _target_misses(engine_pool, targets, water)
     with_chloride = None
@@ -901,20 +936,20 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
         zero_limits = {s for s, v in (maxima | targets).items() if v == 0}
         zero_limits.update(s for s, v in maxima.items() if v == 0)
         blocked_sources = [
-            salt for salt in sources if any(_nutrients(salt).get(s, 0.0) > 0 for s in zero_limits)
+            salt for salt in sources if any(_delivery_rate(salt, s) > 0 for s in zero_limits)
         ]
-        if water.get(symbol, 0.0) > targets[symbol]:
+        if _concentration(water, symbol) > targets[symbol]:
             item["reason"] = "water_exceeds_target"
-            item["waterPpm"] = water[symbol]
+            item["waterPpm"] = _concentration(water, symbol)
         elif symbol in maxima and targets[symbol] > maxima[symbol]:
             item["reason"] = "target_above_maximum"
             item["maximumPpm"] = maxima[symbol]
         elif not sources:
             item["reason"] = "no_source"
-        elif len(blocked_sources) == len(sources) and water.get(symbol, 0.0) < targets[symbol]:
+        elif len(blocked_sources) == len(sources) and _concentration(water, symbol) < targets[symbol]:
             item["reason"] = "prohibited_by_zero_requirement"
             item["zeroRequirements"] = sorted(
-                s for s in zero_limits if any(_nutrients(salt).get(s, 0.0) > 0 for salt in sources)
+                s for s in zero_limits if any(_delivery_rate(salt, s) > 0 for salt in sources)
             )
             item["blockedProducts"] = [salt.get("id") for salt in sources]
         elif not base:
@@ -1060,10 +1095,13 @@ def recommend(
     Args:
         library: Product records with id, name, formula and elemental mass
             percentages in elements. Use load_library()['salts'] deliberately.
-        targets: Required nonempty elemental mg/L map; nitrogen forms are
-            separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
+        targets: Required nonempty elemental mg/L map. Nitrogen forms are
+            separate N_NO3, N_NH4 and N_UREA keys; optional aggregate ``N`` is
+            elemental total N (sum of those forms) without inventing a form
+            split. Stated forms plus ``N`` must agree or validate_profile errors.
             An explicit zero prohibits positive contribution, unlike a missing key.
         water: Source-water elemental mg/L; omitted entries default to zero.
+            Bare ``N`` is not a water ion (use form keys).
         allow_ions: Explicit exceptions to the default restricted-ion filter.
         allow_carbonates: Permit carbonate products in nutrient fitting only;
             this does not establish dissolution or stock compatibility.
@@ -1078,9 +1116,10 @@ def recommend(
             feasible False. Omitted keeps the default.
         max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
             none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-            the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
-            caller policy, with no additional absolute cap. Default None adds
-            no ammonium maximum. Untargeted nutrients do not enter the objective.
+            the total target N (form keys, or aggregate ``N`` when forms are omitted).
+            This is an explicit caller policy, with no additional absolute cap.
+            Default None adds no ammonium maximum. Untargeted nutrients do not
+            enter the objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1123,7 +1162,9 @@ def recommend(
             or not 0 <= max_ammonium_fraction <= 1
         ):
             raise InputError("max_ammonium_fraction must be a number in [0, 1]")
-        total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
+        total_n = sum(targets.get(key, 0.0) for key in N_FORMS)
+        if total_n <= 0 and N_AGGREGATE in targets:
+            total_n = float(targets[N_AGGREGATE])
         # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
         if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
             limit = max_ammonium_fraction * total_n
@@ -1208,11 +1249,11 @@ def recommend(
         {
             "symbol": symbol,
             "reason": "water_above_maximum",
-            "waterPpm": water[symbol],
+            "waterPpm": _concentration(water, symbol),
             "maximumPpm": limit,
         }
         for symbol, limit in (maxima | {s: 0.0 for s, t in targets.items() if t == 0}).items()
-        if water.get(symbol, 0.0) > limit
+        if _concentration(water, symbol) > limit
     ]
     if solved["requirementConflicts"]:
         solved["feasible"] = False
