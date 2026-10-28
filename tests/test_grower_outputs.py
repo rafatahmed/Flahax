@@ -303,11 +303,15 @@ class ReportTests(unittest.TestCase):
             workflow('Chilli (maximumyield)'), PRODUCTS, title='Chilli', water_label='RO'
         )
 
-    def test_phase_block_keeps_unadjusted_recipe_and_quantity_outputs(self):
+    def test_review_at_target_selects_reagent_and_keeps_quantity_outputs(self):
+        # Tomato at target: REVIEW-class SI only → selected acid with requires_review.
+        # Overall stays blocked because stock assignment still needs 3 tanks.
         s = self.tomato
         self.assertEqual(s['status'], 'blocked')
-        self.assertIsNone(s['ph']['selected'])
-        self.assertTrue(s['chemistry']['phase_assessment']['blocks'])
+        self.assertIsNotNone(s['ph']['selected'])
+        self.assertEqual(s['ph']['status'], 'requires_review')
+        self.assertEqual(s['ph']['selected']['status'], 'requires_review')
+        self.assertFalse(s['chemistry']['phase_assessment']['blocks'])
         self.assertFalse(s['chemistry']['phase_assessment']['mixing_approved'])
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
@@ -362,7 +366,8 @@ class ReportTests(unittest.TestCase):
             ('requires_review', 'y 2 mg/L'),
         )
         self.assertIn('formulation: y 2 mg/L', s['warnings'])
-        self.assertEqual(s['status'], 'blocked')  # phase block survives incidental review
+        # Stock tank count still blocks; incidental review must not clear that.
+        self.assertEqual(s['status'], 'blocked')
         # a block is never downgraded
         with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
             wf = copy.copy(base)
@@ -477,9 +482,10 @@ class IncidentalAssessmentTests(unittest.TestCase):
             maximum_concentrations=limits,
         )
         stage = flow.stages['ph_adjustment']
-        self.assertIsNone(stage.value.selected)
-        self.assertEqual(stage.status, 'blocked')
-        chosen = next(c for c in stage.value.candidates if c.target is not None)
+        # REVIEW-class SI at target → selected with requires_review; NH4 max still within_limit.
+        self.assertIsNotNone(stage.value.selected)
+        self.assertEqual(stage.status, 'requires_review')
+        chosen = stage.value.selected
         self.assertEqual(self.row(chosen.recommendation)['assessment'], 'within_limit')
         for candidate in stage.value.candidates:
             self.assertNotIn('N_NH4', candidate.message or '')

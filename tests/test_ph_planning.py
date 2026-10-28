@@ -6,6 +6,7 @@
 
 import copy
 import unittest
+from types import SimpleNamespace
 
 from flahax import (
     DeliveryError,
@@ -14,6 +15,8 @@ from flahax import (
     alkalinity_meq_per_litre,
     plan_ph,
 )
+from flahax.nutrient_ledger import elemental_nitrogen, merge_nutrient_totals
+from flahax.saturation_policy import REVIEW, assess_saturation
 
 
 def record(record_id, **fields):
@@ -109,6 +112,41 @@ class PhPlanning(unittest.TestCase):
         with self.assertRaises(DeliveryError) as caught:
             plan_ph(water, curve, reagent, 6.7, VolumeLitres(100), VolumeLitres(0.001), {}, {})
         self.assertEqual(caught.exception.code, "dose_limit_exceeded")
+
+
+class TargetStatePhaseAndLedgerWitness(unittest.TestCase):
+    """Core-contract-spine Task 6: REVIEW at target pH; reagent N counted once."""
+
+    def test_review_class_si_at_target_does_not_hard_block(self):
+        state = SimpleNamespace(
+            saturation_indices={'Hydroxylapatite': 4.0, 'MnHPO4': 3.0, 'CaHPO4': -0.5},
+            precipitated={},
+            totals={},
+        )
+        assessed = assess_saturation(state)
+        self.assertFalse(assessed['blocks'])
+        self.assertEqual(
+            {p for p, *_ in assessed['review']}, {'Hydroxylapatite', 'MnHPO4'}
+        )
+        self.assertTrue({'Hydroxylapatite', 'MnHPO4'} <= set(REVIEW))
+
+    def test_hard_blocker_at_target_still_blocks(self):
+        state = SimpleNamespace(
+            saturation_indices={'CaHPO4': 0.2, 'Hydroxylapatite': 1.0},
+            precipitated={},
+            totals={},
+        )
+        assessed = assess_saturation(state)
+        self.assertTrue(assessed['blocks'])
+        self.assertIn('CaHPO4', [p for p, _ in assessed['blocking']])
+
+    def test_reagent_n_merged_once_on_ledger(self):
+        water = {'N_NO3': 100.0, 'Ca': 50.0}
+        reagent = {'N_NO3': 12.0, 'N': 999.0}  # aggregate N must not double-count
+        merged = merge_nutrient_totals(water, reagent)
+        self.assertAlmostEqual(merged['N_NO3'], 112.0)
+        self.assertNotIn('N', merged)
+        self.assertAlmostEqual(elemental_nitrogen(merged), 112.0)
 
 
 if __name__ == "__main__":

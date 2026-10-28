@@ -180,17 +180,33 @@ class CoupledWorkflowTests(unittest.TestCase):
             all(not c.recommendation['feasible'] for c in computed)
         )  # reported, not hidden
 
-    def test_phase_names_cannot_authorize_a_plan_without_applicable_evidence(self):
+    def test_review_class_at_target_yields_requires_review(self):
+        # Alkaline tomato at target pH: only REVIEW-class SI (HAP / MnHPO4 / …).
         stage = self.alkaline.stages['ph_adjustment']
-        self.assertEqual(stage.status, 'blocked')
-        self.assertIsNone(stage.value.selected)
+        self.assertEqual(stage.status, 'requires_review')
+        self.assertIsNotNone(stage.value.selected)
         calculated = [c for c in stage.value.candidates if c.target is not None]
         self.assertTrue(calculated)
         for candidate in calculated:
-            self.assertTrue(candidate.saturation['blocks'])
+            self.assertAlmostEqual(candidate.target.ph, 5.8, places=9)
+            self.assertFalse(candidate.saturation['blocks'])
             self.assertFalse(candidate.saturation['mixing_approved'])
+            self.assertEqual(candidate.status, 'requires_review')
             self.assertIn('Hydroxylapatite', candidate.message)
             self.assertTrue(math.isfinite(candidate.reagent_mass_g))
+
+    def test_reagent_nitrogen_is_counted_once_via_ledger(self):
+        from flahax.nutrient_ledger import elemental_nitrogen, merge_nutrient_totals
+
+        plan = self.alkaline.stages['ph_adjustment'].value
+        nitric = next(c for c in plan.candidates if c.formula == 'HNO3' and c.dose_molal)
+        # Supply to the refit is water + reagent forms once (no double-count of acid N).
+        supply = merge_nutrient_totals({}, nitric.nutrient_contribution)
+        self.assertAlmostEqual(supply['N_NO3'], nitric.nutrient_contribution['N_NO3'])
+        self.assertAlmostEqual(elemental_nitrogen(supply), nitric.nutrient_contribution['N_NO3'])
+        # Achieved row final equals the single ledger total for nitrate from the refit.
+        row = next(r for r in nitric.recommendation['rows'] if r['symbol'] == 'N_NO3')
+        self.assertAlmostEqual(row['final'], elemental_nitrogen({'N_NO3': row['final']}))
 
     def test_readily_forming_phases_still_block_and_keep_the_dose(self):
         # Chilli with a base: monetite (CaHPO4) is supersaturated, a hard phase.

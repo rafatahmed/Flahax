@@ -2,7 +2,7 @@
   "metadata": {
     "tip_sha": "12afceece3585be783f7bee86afa2eca468c7afa",
     "formula": "Cucumber (Howard Resh)",
-    "note": "Cucumber RO witness for core-contract-spine; statuses reflect post-rollup honesty (batch cannot outrank blocked formulation), not readiness."
+    "note": "Cucumber RO witness for core-contract-spine; Task 6: REVIEW-class SI at target pH → phase requires_review and acid candidate selected; formulation/ph stage remain blocked via dependency rollup; statuses reflect post-rollup honesty (batch cannot outrank blocked formulation), not readiness."
   },
   "inputs": {
     "water": "ro",
@@ -42,7 +42,7 @@
       "numerical": "not_validated",
       "formulation": "blocked",
       "chemistry": "blocked",
-      "phase": "blocked",
+      "phase": "requires_review",
       "ph": "blocked",
       "ec": "not_supported",
       "stock": "blocked",
@@ -64,28 +64,26 @@
     "target_ph": 5.9,
     "ph_status": "blocked",
     "ph_unadjusted": 7.8456782549619675,
-    "ph_selected": null,
+    "ph_selected": {
+      "product_id": "HNO3-0.65-1.3",
+      "status": "requires_review",
+      "formula": "HNO3"
+    },
     "ec_status": "not_supported",
     "ec_reason": "ionic_strength_outside_phosphate_fit",
-    "n_no3_final": 145.33038386467146,
-    "n_nh4_final": 11.10162654521796,
+    "n_no3_final": 154.4905799810121,
+    "n_nh4_final": 10.281356849458804,
     "n_nh4_target": null,
     "n_no3_target": 140.0,
-    "total_n_sum": 156.43201040988941,
-    "n_no3_delta_pct": 3.8074170461939003,
-    "unmet_symbols": [
-      "N_NO3",
-      "Ca"
-    ],
-    "unmet_reasons": {
-      "N_NO3": "conflicting_targets",
-      "Ca": "conflicting_targets"
-    },
+    "total_n_sum": 164.7719368304709,
+    "n_no3_delta_pct": 10.350414272151502,
+    "unmet_symbols": [],
+    "unmet_reasons": {},
     "batch_litres": 10000.0,
     "acid_candidates": [
       [
         "HNO3 65%",
-        "rejected"
+        "requires_review"
       ]
     ]
   }

@@ -34,6 +34,7 @@ from .engine import (
     _charge_report,
 )
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
+from .nutrient_ledger import merge_nutrient_totals
 from .root_finding import shrink_bracket
 from .product_conversion import component_nutrient_masses, material_inventory
 from .saturation_policy import assess_saturation, describe
@@ -583,9 +584,8 @@ def _couple(
 
     def evaluate(assumed):
         if assumed not in cache:
-            supply = dict(water)
-            for ion, mg in contribution(assumed).items():
-                supply[ion] = supply.get(ion, 0.0) + mg
+            # Water + reagent forms once via the shared ledger (no double-count).
+            supply = merge_nutrient_totals(water, contribution(assumed))
             recommendation = recommend(
                 pool, targets, supply, maximum_concentrations=maximum_concentrations
             )
@@ -652,9 +652,7 @@ def _couple(
         def at(weight):
             if weight not in blended:
                 assumed_dose = low * (1 - weight) + high * weight
-                supply = dict(water)
-                for ion, mg in contribution(assumed_dose).items():
-                    supply[ion] = supply.get(ion, 0.0) + mg
+                supply = merge_nutrient_totals(water, contribution(assumed_dose))
                 recipe = _blend_recipe(pool, targets, supply, ends, weight, maximum_concentrations)
                 state = mix(recipe)
                 amended = dict(state.totals)
@@ -679,9 +677,7 @@ def _couple(
         if abs(dose - assumed_dose) > DOSE_TOLERANCE * max(dose, 1e-12):
             raise DeliveryError('nonconvergent', 'blended recipe and reagent dose disagree')
         # Recompute every assessment at the actual dose, including diagnostic rows.
-        supply = dict(water)
-        for ion, mg in contribution(dose).items():
-            supply[ion] = supply.get(ion, 0.0) + mg
+        supply = merge_nutrient_totals(water, contribution(dose))
         recommendation = _blend_recipe(
             pool, targets, supply, [recommendation] * 2, 0.0, maximum_concentrations
         )

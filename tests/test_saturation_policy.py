@@ -22,14 +22,18 @@ class SaturationPolicyTests(unittest.TestCase):
         for phase, (reason, sources) in REVIEW.items():
             self.assertTrue(reason and sources, phase)
 
-    def test_phase_names_do_not_exempt_missing_evidence(self):
+    def test_review_class_at_target_is_requires_review_not_hard_block(self):
+        # Owner decision Task 6 / #78: HAP, MnHPO4 and kin stay REVIEW qualifications,
+        # not hard blocks, when they are the only positive SI findings.
         result = assess_saturation(
             state({'Hydroxylapatite': 2.0, 'MnHPO4': 3.1, 'Goethite': 0.1, 'Gypsum': -0.5})
         )
-        self.assertTrue(result['blocks'])
+        self.assertFalse(result['blocks'])
+        self.assertFalse(result['mixing_approved'])
         self.assertEqual(
             [p for p, *_ in result['review']], ['Goethite', 'Hydroxylapatite', 'MnHPO4']
         )
+        self.assertEqual(result['blocking'], [])
 
     def test_readily_forming_phases_and_solids_still_block(self):
         for indices in (
@@ -41,9 +45,10 @@ class SaturationPolicyTests(unittest.TestCase):
             {'Calcite': 0.4},
         ):
             with self.subTest(indices):
-                self.assertTrue(
-                    assess_saturation(state(indices | {'Hydroxylapatite': 1.0}))['blocks']
-                )
+                assessed = assess_saturation(state(indices | {'Hydroxylapatite': 1.0}))
+                self.assertTrue(assessed['blocks'])
+                hard = [p for p, _ in assessed['blocking'] if p not in REVIEW]
+                self.assertTrue(hard)
         solid = assess_saturation(state({'Hydroxylapatite': 1.0}, precipitated={'Gypsum': 1e-4}))
         self.assertTrue(solid['blocks'])
         self.assertIn('solid Gypsum allocated', describe(solid))

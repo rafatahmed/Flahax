@@ -51,12 +51,18 @@ CONDITIONS = {
 
 
 class ApplicabilityTests(unittest.TestCase):
-    def test_every_model_phase_requires_matching_evidence(self):
+    def test_review_vs_hard_phases_without_and_with_evidence(self):
+        from flahax.saturation_policy import REVIEW
+
         for row in chemistry()['phases']:
             phase = row['name']
             with self.subTest(phase=phase):
                 missing = assess_saturation(sample(phase))
-                self.assertTrue(missing['blocks'])
+                if phase in REVIEW:
+                    self.assertFalse(missing['blocks'])
+                    self.assertTrue(missing['review'])
+                else:
+                    self.assertTrue(missing['blocks'])
                 matching = assess_saturation(
                     sample(phase), conditions=CONDITIONS, evidence={phase: record(phase)}
                 )
@@ -67,7 +73,8 @@ class ApplicabilityTests(unittest.TestCase):
                 )
                 self.assertTrue(matching['review'])
 
-    def test_missing_outside_and_wrong_phase_evidence_still_blocks(self):
+    def test_missing_outside_and_wrong_phase_evidence_keeps_review_only_for_mn_hpo4(self):
+        # MnHPO4 stays REVIEW-class (#78): missing/out-of-envelope evidence does not hard-block.
         phase = 'MnHPO4'
         variants = [
             (None, CONDITIONS),
@@ -77,27 +84,29 @@ class ApplicabilityTests(unittest.TestCase):
         ]
         for evidence, conditions in variants:
             with self.subTest(evidence=evidence, conditions=conditions):
-                self.assertTrue(
-                    assess_saturation(sample(), conditions=conditions, evidence=evidence)['blocks']
-                )
+                result = assess_saturation(sample(), conditions=conditions, evidence=evidence)
+                self.assertFalse(result['blocks'])
+                self.assertFalse(result['mixing_approved'])
+                self.assertTrue(result['review'])
 
     def test_state_conditions_override_caller_and_boundaries_are_inclusive(self):
-        evidence = {'MnHPO4': record('MnHPO4')}
-        state = sample()
+        # Hard phase: out-of-envelope evidence cannot demote CaHPO4 off the block list.
+        evidence = {'CaHPO4': record('CaHPO4')}
+        state = sample(phase='CaHPO4')
         state.ph = 8
         result = assess_saturation(state, conditions={**CONDITIONS, 'ph': 6}, evidence=evidence)
         self.assertTrue(result['blocks'])
         for value in (0, 1):
             self.assertFalse(
                 assess_saturation(
-                    sample(),
+                    sample(phase='CaHPO4'),
                     conditions={**CONDITIONS, 'holding_time_hours': value},
                     evidence=evidence,
                 )['blocks']
             )
         self.assertTrue(
             assess_saturation(
-                sample(),
+                sample(phase='CaHPO4'),
                 conditions={**CONDITIONS, 'holding_time_hours': math.nextafter(1.0, math.inf)},
                 evidence=evidence,
             )['blocks']
@@ -141,7 +150,8 @@ class ApplicabilityTests(unittest.TestCase):
             with self.assertRaises(DeliveryError):
                 assess_saturation(sample(), **kw)
 
-    def test_malformed_or_unreviewed_envelopes_cannot_exempt(self):
+    def test_malformed_or_unreviewed_envelopes_cannot_exempt_hard_phases(self):
+        phase = 'CaHPO4'
         for field, value in (
             ('reviewed', False),
             ('source', ''),
@@ -149,32 +159,35 @@ class ApplicabilityTests(unittest.TestCase):
             ('decision', 'approve'),
             ('conditions', {}),
         ):
-            item = record('MnHPO4')
+            item = record(phase)
             item[field] = value
             self.assertTrue(
-                assess_saturation(sample(), conditions=CONDITIONS, evidence={'MnHPO4': item})[
-                    'blocks'
-                ]
+                assess_saturation(
+                    sample(phase=phase), conditions=CONDITIONS, evidence={phase: item}
+                )['blocks']
             )
         for constraint in ([2, 1], [0], [0, math.inf], None):
-            item = deepcopy(record('MnHPO4'))
+            item = deepcopy(record(phase))
             item['conditions']['holding_time_hours'] = constraint
             self.assertTrue(
-                assess_saturation(sample(), conditions=CONDITIONS, evidence={'MnHPO4': item})[
-                    'blocks'
-                ]
+                assess_saturation(
+                    sample(phase=phase), conditions=CONDITIONS, evidence={phase: item}
+                )['blocks']
             )
 
     def test_unknown_conditions_and_interval_overflow_cannot_qualify(self):
+        phase = 'CaHPO4'
         for key, value in (
             ('temperature_c', '25'),
             ('redox', 'unknown'),
             ('matrix_id', 'unspecified'),
         ):
-            item = record('MnHPO4')
+            item = record(phase)
             item['conditions'][key] = value
             result = assess_saturation(
-                sample(), conditions={**CONDITIONS, key: value}, evidence={'MnHPO4': item}
+                sample(phase=phase),
+                conditions={**CONDITIONS, key: value},
+                evidence={phase: item},
             )
             self.assertTrue(result['blocks'])
         result = assess_saturation(sample(si=1e308), si_uncertainty={'MnHPO4': 1e308})

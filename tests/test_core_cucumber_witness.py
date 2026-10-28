@@ -97,6 +97,7 @@ class CucumberRoWitnessTests(unittest.TestCase):
         self.assertEqual(self.summary['statuses'], observed['statuses'])
         self.assertEqual(self.summary['statuses']['formulation'], 'blocked')
         self.assertEqual(self.summary['statuses']['ph'], 'blocked')
+        self.assertEqual(self.summary['statuses']['phase'], 'requires_review')
         self.assertEqual(self.summary['statuses']['ec'], 'not_supported')
         self.assertEqual(self.summary['statuses']['overall'], 'blocked')
         self.assertFalse(self.summary['formulation']['feasible'])
@@ -108,6 +109,11 @@ class CucumberRoWitnessTests(unittest.TestCase):
         # Status contract: batch cannot outrank blocked formulation.
         self.assertEqual(stages['batch'], 'blocked')
         self.assertEqual(stages['formulation'], 'blocked')
+        # Task 6: target-state REVIEW selects the acid; stage stays blocked via rollup.
+        selected = self.summary['ph']['selected']
+        self.assertIsNotNone(selected)
+        self.assertEqual(selected['status'], 'requires_review')
+        self.assertEqual(selected['formula'], 'HNO3')
 
 
 if __name__ == '__main__':

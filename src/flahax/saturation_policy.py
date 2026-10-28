@@ -4,9 +4,11 @@
 # its results are calculations, not dosing instructions.
 """Condition-qualified saturation findings; thermodynamics is not precipitation rate.
 
-No phase name grants an exemption. Sources retained in REVIEW are pointers for
-review, not proof of applicability or absence of measurements. No kinetic or
-redox applicability envelopes are shipped. Allocation is reported independently.
+REVIEW-named phases (HAP, MnHPO4, Goethite, Vivianite) are qualifications at the
+assessed state (#78): they yield review findings, not hard blocks, unless the SI
+sign is unresolved or allocation is positive. Other positive SI still blocks.
+Caller evidence envelopes can demote a hard phase to review-only when they match;
+mixing is never approved here. No kinetic envelopes ship with the package.
 """
 
 from collections.abc import Mapping
@@ -113,15 +115,13 @@ def _applicability(phase, conditions, evidence):
 def assess_saturation(state, *, conditions=None, evidence=None, si_uncertainty=None):
     """Return separate thermodynamic, applicability and allocation findings.
 
-    Positive SI blocks unless a caller-reviewed phase-specific envelope matches
-    every condition. Such evidence permits review only, never mixing approval.
-    No envelopes are supplied by default. Conditions must explicitly identify
-    temperature, pH, ionic strength, holding time, redox and solution matrix;
-    state pH/ionic strength override conflicting caller values when available.
-    SI intervals touching zero remain unresolved and block. Caller SI uncertainty
-    is a nonnegative half-width in log10 units; the existing numerical guard is
-    always retained. This interval is not a kinetic allowance or certified error.
-    Every positive allocated solid blocks independently of evidence or SI sign.
+    Assess the supplied state (coupled plans pass the **target** pH state). Positive
+    SI on a non-REVIEW phase blocks unless a caller-reviewed envelope matches every
+    condition (review only; never mixing approval). REVIEW-named phases stay
+    qualifications (#78 / Task 6): they populate ``review`` without hard-blocking.
+    Unresolved SI sign, invalid indices, and every positive allocated solid still
+    block. No envelopes ship by default. State pH/ionic strength override caller
+    values when available. SI uncertainty is a nonnegative half-width in log10 units.
     """
     for value in (conditions, evidence, si_uncertainty):
         if value is not None and not isinstance(value, Mapping):
@@ -176,7 +176,13 @@ def assess_saturation(state, *, conditions=None, evidence=None, si_uncertainty=N
             else REVIEW.get(phase, ('', ''))[1]
         )
         review.append((phase, si, reason, sources))
-        if sign == 'uncertain_sign' or status != 'applicable_for_review':
+        # Unresolved sign always blocks. REVIEW-class supersaturation is review-only
+        # (#78). Matching evidence demotes other phases to review-only; otherwise block.
+        if sign == 'uncertain_sign':
+            blocking.append((phase, si))
+        elif status == 'applicable_for_review' or phase in REVIEW:
+            continue
+        else:
             blocking.append((phase, si))
     solids = {}
     invalid_solids = []
