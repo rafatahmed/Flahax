@@ -150,3 +150,44 @@ Discard older measurements for changed support files before combining data,
 just as for runtime files. Inspect missing statement and branch counts for tools,
 examples, benchmarks and documentation configuration individually. Preserve
 non-Python executable contract checks separately from Python coverage.
+
+## Candidate-bound CI coverage
+
+The Test workflow checks out the pull-request head revision (or event SHA for a
+push/manual run). Preserve the existing `test (3.11)` through `test (3.14)` and
+`phreeqc-live` check names. The `coverage-gate` job requires successful style,
+Python/platform tests, live reference replay and documentation jobs before it
+accepts coverage. A failed prerequisite makes the gate fail explicitly.
+
+Python 3.13 on native Linux, Windows and macOS records a clean candidate, all
+tracked input hashes, Python/platform and workflow run/attempt before measurement.
+Support-test dependencies are installed explicitly. After tests, the input hashes
+are checked again and the test outcome, raw branch data and JSON report are sealed
+into a checksum bundle. These hashes detect changed artifacts; they are not a
+signature or protection against a malicious workflow.
+
+The aggregation job downloads only this workflow run's artifacts. It rejects
+missing/duplicate platforms, stale revisions or attempts, changed inputs, failed
+or empty tests, skipped optional support dependencies and statement-only data.
+It combines the raw branch data and reports every inventoried Python source,
+including unimported files. Zero missing statements and zero missing branch
+destinations are required; rounded percentages cannot pass this gate. Synthetic
+cross-platform labels in unit tests validate the protocol, not native execution.
+
+Only the passing aggregate XML is uploaded to Codecov, with its candidate revision
+explicitly supplied. XML statement/branch totals must match the exact local gate.
+Upload errors fail CI, report auto-discovery and file fixes are disabled, and
+project/patch targets are 100% with zero threshold and no informational bypass or
+flag carryforward. The hosted Codecov result still needs verification against the
+same candidate; local XML checks do not establish what Codecov received.
+
+Run `python -m unittest tests.test_ci_coverage tests.test_coverage_gate -v` with
+coverage 7.17.0 and PyYAML 6.0.3 available. `python -m tools.ci_coverage --help`
+describes the record/run/report/aggregate commands. CI uses a fresh output folder
+and GITHUB_RUN_ID/GITHUB_RUN_ATTEMPT; it refuses to overwrite prior evidence.
+
+Repository branch protection is separate from workflow configuration. Activation
+requires an approved push/PR, passing native jobs and verification of the uploaded
+Codecov result, then a separately approved settings change to require
+`coverage-gate` (and any agreed Codecov statuses). Do not describe local changes
+or simulated bundles as hosted enforcement or merge readiness.
