@@ -6,8 +6,9 @@
 
 import unittest
 
+from flahax import recommend
 from flahax.composition import InputError, validate_profile
-from flahax.engine import forward, gap_for, score
+from flahax.engine import CEILING_MARGIN, CEILING_TOLERANCE, forward, gap_for, score
 from flahax.nutrient_ledger import (
     N_FORMS,
     assess_nitrogen_constraints,
@@ -122,5 +123,30 @@ class EngineNitrogenAccounting(unittest.TestCase):
         self.assertAlmostEqual(elemental_nitrogen(achieved), 115.0)
 
 
+class AggregateNitrogenCeiling(unittest.TestCase):
+    def test_aggregate_n_maximum_binds_without_n_target(self):
+        # Forms-only K target: 10 g/L KNO3 meets K and delivers ~138.5 mg/L N.
+        # maxima N=50 must constrain the NNLS ceiling search, not only post-hoc flag.
+        salts = [
+            {
+                "id": "kno3-ledger",
+                "name": "Potassium Nitrate",
+                "formula": "KNO3",
+                "elements": {"K": 38.67, "N_NO3": 13.856},
+            }
+        ]
+        limit = 50.0
+        result = recommend(salts, {"K": 386.7}, {}, maximum_concentrations={"N": limit})
+        finals = {row["symbol"]: row["final"] for row in result["rows"]}
+        total_n = elemental_nitrogen(finals)
+        self.assertLessEqual(total_n, limit + 1e-9)
+        self.assertAlmostEqual(
+            total_n,
+            limit * (1 - CEILING_MARGIN),
+            delta=2 * CEILING_TOLERANCE * limit + 1e-6,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
+

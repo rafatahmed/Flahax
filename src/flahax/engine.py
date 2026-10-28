@@ -451,11 +451,14 @@ def _fit(
     _validate_ridge(ridge)
     maxima = maxima or {}
     ceilings = ceilings or {}
+    # Include ceiling keys so aggregate N maxima (absent from salt assays) get a
+    # matrix row; form ions already appear via nutrient_percent.
     symbols = list(
         dict.fromkeys(
             [
                 *targets.keys(),
                 *(symbol for salt in salts for symbol in _nutrients(salt)),
+                *ceilings.keys(),
             ]
         )
     )
