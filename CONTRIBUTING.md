@@ -93,3 +93,36 @@ Preparation is not publication: do not set a release date until release,
 reuse a published version for changed artifacts, or carry a prior CI exception
 forward automatically. Obtain review, hosted evidence and explicit publication
 approval under [the publishing checklist](docs/publishing.md).
+
+## Runtime coverage evidence
+
+Coverage is a control-flow check, not independent numerical verification. Retain
+analytical or independently implemented numerical witnesses alongside regression
+tests, and label synthetic states and fault injection explicitly. Never interpret
+a passing rendering or refusal test as a physically validated recipe.
+
+Measure statements and branches with the configuration in pyproject.toml. Keep
+all runtime modules in the denominator, including modules not imported by a test.
+A rounded percentage is insufficient: completion requires zero missing statements
+and zero missing branches for every runtime Python file. Tool, example, benchmark
+and documentation Python coverage remains a separate package-wide obligation.
+
+Record the Git revision, exact source hashes, Python/platform versions, coverage
+configuration and commands before measuring. Use tools/check_coverage.py to
+inventory and validate the evidence; see its --help for manifest and report
+options. Preserve failed test logs as failures, then retain the passing regression
+rerun separately. Coverage accumulated during a failed run does not establish that
+the test suite passed.
+
+Combine native-platform coverage only for identical source contents and preserve
+the raw data files. If any runtime file changes, discard its earlier measurements
+and measure that file again; line-number unions across changed source are invalid.
+Platform-specific tests must report actual executed tests and skips. Cygwin
+evidence identifies the Cygwin interpreter and does not establish a Linux or macOS
+result.
+
+Executable documentation may create synthetic filenames such as a Markdown path
+with a line-number suffix. Generate the final JSON report using the complete
+inventoried Python source list, with paths normalized for the measurement host.
+Check that report files match that inventory. Do not omit real Python sources to
+work around synthetic snippet filenames or silently ignore missing source.

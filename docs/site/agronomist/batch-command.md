@@ -153,7 +153,15 @@ Take a whole percent below the chloride figure, 8 %, and blend the rest with
 RO water. The products add a little sodium (the molybdate), so check the final
 value on the sheet rather than relying on this arithmetic alone.
 
-**Run** the command from step 3. FlahaX 0.6.0 gives this sheet:
+### Historical 0.6.0 figures
+
+The following table and quoted doses are retained publication history, not current mixing instructions.
+A current run of step 3 is blocked: no reagent is selected, the phosphate EC fit does not
+cover the resulting ionic strength, and stock assignment retains three separated tanks.
+Product chloride can contribute up to the explicit final chloride limit; the water-only
+chloride value below is not necessarily the current final concentration.
+
+FlahaX 0.6.0 reported the following figures:
 
 | Tank | Product | g per 1000 L | Concentrate g/L at 1:100 |
 |---|---|---:|---:|
@@ -209,14 +217,16 @@ Without an `--acid` the sheet is blocked: no base can lower the pH. A full,
 scripted version of the brackish-well example, with charts, is in the
 repository (`python -m examples.tomato_report --output tomato-report`).
 
-## Concentration basis
+## Current input contracts
+
+### Concentration basis
 
 Water JSON can declare final solvent mass/volume or final solution density and
 complete nonwater mass. See [concentration and solvent mass](../models/concentration-basis.md)
 for input examples, carrier/hydrate accounting and blend assumptions. Legacy
 inputs retain a reported 1 kg solvent/L assumption with unquantified uncertainty.
 
-## Titrated total alkalinity
+### Titrated total alkalinity
 
 Use `alkalinity_meq_per_litre` in water JSON for a signed total-alkalinity
 measurement, separately from `mg_per_litre`. Do not combine it with `HCO3`,

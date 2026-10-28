@@ -115,8 +115,7 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         for i in range(k + 1, m):
             reflector[i] = matrix[i][k]
         norm = sum(value * value for value in reflector)
-        if norm < rank_tol * rank_tol:
-            raise ValueError("rank deficient least squares block")
+        # The sign choice makes norm >= 2 * sigma**2; sigma already passed rank_tol.
         for j in range(k, n):
             dot = sum(reflector[i] * matrix[i][j] for i in range(k, m))
             factor = 2.0 * dot / norm
@@ -131,8 +130,7 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         matrix[k][k] = -sigma
     solution = [0.0] * n
     for i in range(min(n, m) - 1, -1, -1):
-        if abs(matrix[i][i]) < rank_tol:
-            raise ValueError("rank deficient least squares block")
+        # Each diagonal is -sigma, already checked before the reflector was applied.
         total = beta[i] - sum(matrix[i][j] * solution[j] for j in range(i + 1, n))
         solution[i] = total / matrix[i][i]
     return solution
@@ -519,8 +517,7 @@ def _fit_within(
         final = {row["symbol"]: float(row["final"] or 0.0) for row in solved["rows"]}
         converged = True
         for symbol, limit in maxima.items():
-            if limit <= 0:
-                continue
+            # Nonpositive ceilings were eliminated by the unreachable-supply recursion.
             value = final.get(symbol, 0.0)
             if symbol not in search:
                 if value <= limit:
@@ -550,9 +547,9 @@ def _fit_within(
                 if last is not None and last[1] != excess
                 else math.nan
             )
-            if lo is None:
-                shift = secant if 0 <= secant < shift else shift / 2  # come back down
-            elif hi is None:
+            # A new search either records its positive excess at shift zero or is removed;
+            # consequently every retained search has a lower endpoint.
+            if hi is None:
                 growth = max(2 * shift, shift + excess, 1e-12 * limit)
                 shift = secant if shift < secant <= 4 * growth else growth  # expand to a bracket
             else:

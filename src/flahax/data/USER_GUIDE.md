@@ -377,6 +377,30 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_ph_input` / `invalid_phase_policy` / `incomplete_prediction` / `invalid_audit_inputs` | Calculated-EC options conflict. | Follow the option rules in the message. |
 | `invalid_fixture` | A PHREEQC reference fixture is unreadable or of an unsupported schema (verification tooling). | Recapture the fixture with the pinned PHREEQC. |
 
+**Current calculation and saved-result errors**
+
+| Code | Meaning and action |
+|---|---|
+| `canonical_result_mismatch` | Output content no longer matches its canonical calculation. Recalculate; do not mix fields from different runs. |
+| `invalid_acceptance`, `stale_acceptance` | Acceptance evidence is malformed or belongs to different result content. Review the current result and record new acceptance. |
+| `invalid_saved_result`, `stale_session` | Saved data is malformed or its source inputs/results changed. Load valid data or recalculate before reuse. |
+| `invalid_remedy` | The requested remedy is not a valid scoped change. Inspect the permitted remedy and its inputs. |
+| `ionic_strength_outside_phosphate_fit` | The phosphate conductivity fit does not cover this ionic strength. No supported total EC is available from that fit. |
+| `invalid_ec_scenarios` | EC sensitivity scenarios are malformed. Supply the required explicit scenario inputs. |
+| `unknown_component`, `duplicate_product` | A component is not supported or a product ID is repeated. Correct the analytical inventory or unique product IDs. |
+| `missing_density` | A volume-based reagent calculation lacks density. Supply sourced density or use a supported mass-based input. |
+| `numerical_failure`, `unresolved_sensitivity`, `unusable_trial` | A numerical trial or derivative could not be qualified. Inspect diagnostics; do not accept an unverified solution. |
+| `missing_chemistry`, `inconsistent_basis` | Joint fitting lacks chemical inventory or uses inconsistent solvent bases. Supply complete, consistent inputs. |
+| `joint_search_incomplete`, `joint_verification_failed` | The joint search or independent verification did not qualify a solution. Retain the diagnostics and resolve the reported constraints or numerical failure. |
+| `invalid_role` | A reagent role is inconsistent with the supported request. Correct the role; do not infer it from a display name. |
+| `duplicate_field` | A request repeats a field. Supply each field once so the intended value is unambiguous. |
+| `future_calibration` | A calibration is dated after the evaluation time. Correct the timestamps before evaluating equipment. |
+| `invalid_phase_evidence`, `invalid_si_uncertainty` | Phase applicability evidence or saturation-index uncertainty is invalid. Supply qualified evidence; do not suppress the phase finding. |
+| `invalid_mixture_result`, `unqualified_stock_mixture` | The stock-mixture assessment is invalid or lacks applicable qualification. The proposed stock cannot be approved on that evidence. |
+| `stock_search_limit` | Stock assignment search exhausted its budget. This is not proof that no arrangement exists. Review constraints and search diagnostics. |
+| `invalid_solubility_input`, `invalid_solubility_basis`, `invalid_solubility_table` | Solubility data has invalid values, units/basis or table structure. Correct the sourced record before screening. |
+| `unqualified_solubility_limit` | The solubility limit lacks applicable conditions or evidence. A screening floor is not a qualified maximum. |
+
 ## 9. Verification and reproducibility
 
 From an installed development checkout, run `python -m unittest discover -s tests -t .` and `python -m compileall -q src tools`. Use `PYTHONPATH=src` if the checkout is not installed. Reference acceptance also requires the pinned external PHREEQC run with `FLAHAX_REQUIRE_PHREEQC=1`; the executable is never a runtime package dependency.
