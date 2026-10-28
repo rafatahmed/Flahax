@@ -105,9 +105,29 @@ class ReleaseHygieneTests(unittest.TestCase):
         self.assertIn('Dutch incidental NH4-N', manual)
         self.assertIn('1.5 mmol/L', manual)
         self.assertNotIn('adds no ammonium maximum by default', manual)
+        self.assertNotIn('No ammonium fraction is supplied by default', manual)
+        self.assertIn('max_ammonium_fraction=None` opts out', manual)
         api = files('flahax').joinpath('data/API_REFERENCE.md').read_text(encoding='utf-8')
         self.assertIn('Default 0.10', api)
         self.assertIn('Dutch soilless practice', api)
         self.assertNotIn('Default None adds\n        no ammonium maximum', api)
         migration = (ROOT / 'docs' / 'site' / 'start' / 'migration.md').read_text(encoding='utf-8')
         self.assertIn('Dutch incidental ceiling', migration)
+
+    def test_aggregate_n_tip_semantics_are_documented(self):
+        from importlib.resources import files
+
+        manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
+        self.assertIn('optional aggregate `N` is elemental total N on targets and maxima', manual)
+        self.assertIn('Water ion maps still reject bare `N`', manual)
+        self.assertNotIn('generic total `N` is not accepted', manual)
+        migration = (ROOT / 'docs' / 'site' / 'start' / 'migration.md').read_text(encoding='utf-8')
+        self.assertIn('Targets and maxima may use aggregate `N`', migration)
+        self.assertIn('water bare `N`', migration)
+        self.assertNotIn('Reject total N and unknown fields', migration)
+        python_api = (ROOT / 'docs' / 'site' / 'developer' / 'python-api.md').read_text(
+            encoding='utf-8'
+        )
+        self.assertIn('optional aggregate `N` (targets and maxima only', python_api)
+        self.assertIn('Water bare `N` is rejected', python_api)
+        self.assertNotIn('Unknown ions, total `N`, negative ppm', python_api)

@@ -79,7 +79,7 @@ This is a numerical demonstration, not a universal crop prescription. Review eve
 | Acid density | kg/L; nitrate-N assay is elemental N percent, not HNO3 percent |
 | `InjectionRatio` | Final litres per litre of stock |
 
-Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
+Use separate `N_NO3`, `N_NH4` and supported `N_UREA` form keys; optional aggregate `N` is elemental total N on targets and maxima (forms plus `N` must agree; no form split is invented). Water ion maps still reject bare `N` — state the form keys. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
 
 `result['salts']` contains selected products and doses. `result['rows']` contains
 `symbol`, `target`, `final` and `deltaPct`. Use identity-bearing `salts` records
@@ -421,8 +421,10 @@ Recalculate saved recipes from their original inputs; do not reuse an old accept
 or relabel a historical result as a new calculation. Package, schema, model/source
 hashes and result identity are distinct identifiers.
 
-- Target zero is a hard zero; omitted targets are incidental. Declare nutrient
-  maximums explicitly. No ammonium fraction is supplied by default.
+- Target zero is a hard zero; omitted targets are incidental. When `N_NH4` is
+  omitted, Dutch incidental NH4-N applies (`min(10% of total target N, 1.5 mmol/L)`);
+  `max_ammonium_fraction=None` opts out; an explicit `N_NH4` of 0 is a hard zero.
+  Declare other nutrient maximums explicitly.
 - Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
   Keep product IDs with doses rather than zipping a filtered result to the catalogue.
 - Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input

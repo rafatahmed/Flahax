@@ -50,7 +50,7 @@ The same solve is available as a program. It requires an explicit nonempty `salt
 py -c "import json; from flahax import load_library; print(json.dumps({'salts': load_library()['salts'], 'targets': {'N_NO3': 128, 'P': 58, 'K': 211, 'Ca': 104, 'Mg': 40, 'S': 54}, 'water': {'Ca': 20}}))" | python -m flahax
 ```
 
-After installation, `flahax` is the same program. A missing or empty `targets` object exits with status 1 and a message on standard error. `water` may be omitted. A `water` value that is present and is not a JSON object exits with status 1. Unknown ions, total `N`, negative ppm, and non-finite ppm exit with status 1. Optional `allowIons` is a list such as `["Cl"]`. Optional `allowCarbonates` is true or false.
+After installation, `flahax` is the same program. A missing or empty `targets` object exits with status 1 and a message on standard error. `water` may be omitted. A `water` value that is present and is not a JSON object exits with status 1. Unknown ions, negative ppm, and non-finite ppm exit with status 1. Water bare `N` is rejected; targets and maxima may carry aggregate `N` with agreeing form keys. Optional `allowIons` is a list such as `["Cl"]`. Optional `allowCarbonates` is true or false.
 
 ## Public functions
 
@@ -74,9 +74,9 @@ solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 
 Targets and water are maps of element symbol to ppm. Use the database symbols:
 
-`N_NO3`, `N_NH4`, `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
+`N_NO3`, `N_NH4`, `N_UREA`, optional aggregate `N` (targets and maxima only; water rejects bare `N`), `P`, `K`, `Ca`, `Mg`, `S`, `Fe`, `Mn`, `Zn`, `B`, `Cu`, `Mo`, `Na`, `Cl`, `Si`.
 
-A missing target means the formula does not ask for that element. That is different from a target of zero. Untargeted contributions are reported without a fitting penalty; explicit maxima remain hard constraints (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
+Nitrogen forms are separate keys; optional aggregate `N` is elemental total N without inventing a form split, and stated forms plus `N` must agree. A missing target means the formula does not ask for that element. That is different from a target of zero. Untargeted contributions are reported without a fitting penalty; explicit maxima remain hard constraints (see [Incidental ions and ceilings](#incidental-ions-and-ceilings)).
 
 A salt is a dictionary:
 
