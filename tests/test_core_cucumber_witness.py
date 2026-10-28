@@ -66,12 +66,20 @@ class CucumberRoWitnessTests(unittest.TestCase):
         self.assertEqual(self.witness['inputs']['limit'], [])
 
     def test_formula_targets_nitrate_only_nitrogen(self):
+        # Audit docs/audit/2026-10-28-resh-nitrogen-provenance: GO for remap to
+        # aggregate N, but library stays N_NO3-only until the owner flips that gate.
         self.assertEqual(self.targets['N_NO3'], 140)
         self.assertNotIn('N', self.targets)
         self.assertNotIn('N_NH4', self.targets)
+        self.assertNotIn('N_UREA', self.targets)
+        self.assertEqual(
+            {k for k in self.targets if k.startswith('N') or k == 'N'},
+            {'N_NO3'},
+        )
         self.assertEqual(self.witness['formula_targets']['N_NO3'], 140)
         self.assertNotIn('N', self.witness['formula_targets'])
         self.assertNotIn('N_NH4', self.witness['formula_targets'])
+        self.assertNotIn('N_UREA', self.witness['formula_targets'])
 
     def test_summary_exposes_nitrate_ammonium_and_total_n(self):
         no3 = nutrient_row(self.summary, 'N_NO3')
