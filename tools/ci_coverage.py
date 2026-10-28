@@ -6,6 +6,7 @@
 """Bind native CI coverage to one clean candidate and fail on any exact coverage gap."""
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import os
@@ -162,10 +163,13 @@ def aggregate(root, inputs, output, expected):
     write(output / 'gate.json', result)
     if not result['passed']:
         raise ValueError('exact coverage gate failed; inspect gate.json')
+    # Reporting only: source roots shorten names and can collide across directories.
+    c.set_option('run:source', [])
     c.xml_report(
         morfs=[str(Path(p)) for p in current['files']], outfile=str(output / 'coverage.xml')
     )
     xml = ET.parse(output / 'coverage.xml').getroot()
+    validate_xml_files(xml, read(output / 'coverage.json'))
     totals = result['totals'].values()
     statements = sum(t['statements'] for t in totals)
     branches = sum(t['branches'] for t in result['totals'].values())
@@ -192,6 +196,38 @@ def aggregate(root, inputs, output, expected):
     )
 
 
+def validate_xml_files(xml, report):
+    """Require exact repository paths, statement hits and branch counts for every file."""
+    files = {name.replace('\\', '/'): data for name, data in report['files'].items()}
+    classes = xml.findall('.//class')
+    names = [item.attrib['filename'] for item in classes]
+    if len(names) != len(set(names)) or set(names) != set(files):
+        raise ValueError('XML file inventory differs from JSON or contains duplicate paths')
+    for item in classes:
+        name = item.attrib['filename']
+        data = files[name]
+        lines = item.findall('./lines/line')
+        numbers = [int(line.attrib['number']) for line in lines]
+        executed = set(data['executed_lines'])
+        if len(numbers) != len(set(numbers)) or set(numbers) != executed | set(
+            data['missing_lines']
+        ):
+            raise ValueError('XML statement inventory differs from JSON: ' + name)
+        covered = Counter(start for start, end in data['executed_branches'])
+        missed = Counter(start for start, end in data['missing_branches'])
+        for line in lines:
+            number = int(line.attrib['number'])
+            if (int(line.attrib['hits']) > 0) != (number in executed):
+                raise ValueError('XML statement hits differ from JSON: ' + name)
+            total = covered[number] + missed[number]
+            if (line.get('branch') == 'true') != bool(total):
+                raise ValueError('XML branch locations differ from JSON: ' + name)
+            if total:
+                expected = f'{100 * covered[number] // total}% ({covered[number]}/{total})'
+                if line.get('condition-coverage') != expected:
+                    raise ValueError('XML branch coverage differs from JSON: ' + name)
+
+
 def verify_upload(root, output, expected):
     """Reject report mutation before or after the uploader runs."""
     provenance = read(output / 'provenance.json')
@@ -201,6 +237,7 @@ def verify_upload(root, output, expected):
         if digest(output / name) != provenance[key]:
             raise ValueError('validated upload report changed: ' + name)
     xml = ET.parse(output / 'coverage.xml').getroot()
+    validate_xml_files(xml, read(output / 'coverage.json'))
     wanted = {
         'lines-valid': provenance['statements'],
         'lines-covered': provenance['statements'],
