@@ -411,6 +411,9 @@ def _ec_from_state(
             'Conductivity of missing species is unknown; no total EC or bound is available.',
         )
     if outside_fit:
+        # Domain refuse: never emit an unqualified midpoint/total outside the
+        # phosphate-fit I envelope (bounded+qualifier would also be allowed;
+        # this path chooses not_supported with no estimate).
         status, reason = 'not_supported', 'ionic_strength_outside_phosphate_fit'
         warnings += ('Supplementary phosphate conductivity exceeds its recorded fit domain.',)
     if status == 'not_supported':
@@ -442,6 +445,7 @@ def _ec_from_state(
         ionic_strength=strength,
         precipitated_molal={p: v for p, v in state.precipitated.items() if v > 0},
         warnings=warnings,
+        qualifier=QUALIFIER,
         audit=_audit(
             ph_mode=ph_mode,
             ph=state.ph,

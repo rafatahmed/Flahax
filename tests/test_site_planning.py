@@ -25,13 +25,13 @@ from flahax.planning_cli import interactive, execute
 
 class SitePlanningTests(unittest.TestCase):
     def test_brochure_anchor_transcription(self):
+        # Usable screening anchors only. Magsul 1.2 is transcribed but quarantined.
         anchors = {
             'Ultrasol K Plus': 1.3,
             'Ultrasol SOP': 1.5,
             'Ultrasol MKP': 0.7,
             'Ultrasol MAP': 0.9,
             'Ultrasol Calcium': 1.2,
-            'Ultrasol Magsul': 1.2,
             'Ultrasol Magnit': 0.9,
         }
         for product, ec in anchors.items():
@@ -39,6 +39,26 @@ class SitePlanningTests(unittest.TestCase):
             self.assertEqual(result['ec_ms_cm'], ec)
             self.assertEqual(result['status'], 'screening_estimate')
             self.assertIsNone(result['uncertainty_ms_cm'])
+
+    def test_magsul_brochure_anchor_is_quarantined(self):
+        # Brochure prints 1.2; physically impossible for MgSO4·7H2O (ceiling ~1.08).
+        # Must not enter mixture totals or be treated as an accuracy anchor.
+        from flahax.calculated_ec import UNUSABLE_BROCHURE_ANCHORS
+
+        self.assertEqual(UNUSABLE_BROCHURE_ANCHORS['Ultrasol Magsul'], 1.2)
+        alone = estimate_manufacturer_ec({'Ultrasol Magsul': 1}, water_ec_ms_cm=0)
+        self.assertEqual(alone['status'], 'not_supported')
+        self.assertEqual(alone['error_code'], 'unusable_brochure_anchor')
+        self.assertIsNone(alone['ec_ms_cm'])
+        self.assertNotIn('contributions_ms_cm', alone)
+        self.assertEqual(alone['unusable_products'], ['Ultrasol Magsul'])
+        mixed = estimate_manufacturer_ec(
+            {'Ultrasol K Plus': 0.5, 'Ultrasol Magsul': 0.5}, water_ec_ms_cm=0
+        )
+        self.assertEqual(mixed['status'], 'not_supported')
+        self.assertEqual(mixed['error_code'], 'unusable_brochure_anchor')
+        self.assertIsNone(mixed['ec_ms_cm'])
+        self.assertEqual(mixed['unusable_products'], ['Ultrasol Magsul'])
 
     def test_pre_acid_mixture_math_and_tds(self):
         result = estimate_manufacturer_ec(

@@ -7,6 +7,8 @@
 Source: SQM Ultrasol Macronutrients brochure, 165357805552.pdf, page 2.
 Values are EC at 1 g/L and 25 C. Exact commercial names are intentional:
 these coefficients must not silently replace generic catalogue identities.
+Physically impossible brochure figures are transcribed for audit only and
+never enter mixture totals (Ultrasol Magsul 1.2).
 """
 
 from collections.abc import Mapping
@@ -22,14 +24,19 @@ SOURCE = {
     'reference_g_per_litre': 1.0,
     'reference_temperature_c': 25.0,
 }
-# Reviewed against the rendered table, not OCR. Magsul is 1.2, not 0.9.
+# Reviewed against the rendered table, not OCR. Magsul prints 1.2, not 0.9;
+# that figure is physically impossible for MgSO4·7H2O (full-dissociation
+# ceiling ~1.08 mS/cm) and is quarantined below — never a mixture accuracy
+# or screening total contribution.
+UNUSABLE_BROCHURE_ANCHORS = {
+    'Ultrasol Magsul': 1.2,
+}
 _ANCHORS = {
     'Ultrasol K Plus': 1.3,
     'Ultrasol SOP': 1.5,
     'Ultrasol MKP': 0.7,
     'Ultrasol MAP': 0.9,
     'Ultrasol Calcium': 1.2,
-    'Ultrasol Magsul': 1.2,
     'Ultrasol Magnit': 0.9,
 }
 
@@ -65,7 +72,14 @@ def estimate_manufacturer_ec(
         isinstance(channel, str) and channel.startswith('tank:') and len(channel) > 5
     ):
         raise DeliveryError('unknown_channel', 'expected irrigation or tank:<id>')
-    missing = sorted(k for k, v in doses.items() if v > 0 and k not in _ANCHORS)
+    unusable = sorted(
+        k for k, v in doses.items() if v > 0 and k in UNUSABLE_BROCHURE_ANCHORS
+    )
+    missing = sorted(
+        k
+        for k, v in doses.items()
+        if v > 0 and k not in _ANCHORS and k not in UNUSABLE_BROCHURE_ANCHORS
+    )
     result = dict(
         status='screening_estimate',
         ec_ms_cm=None,
@@ -81,11 +95,13 @@ def estimate_manufacturer_ec(
         model='manufacturer-anchor-additive-screening-v1',
         doses_g_per_litre=doses,
         missing_products=missing,
+        unusable_products=unusable,
         assumptions=[
             'Pre-acid; no precipitation or speciation corrections.',
             'Linear dose scaling and additive EC; unvalidated mixture approximation.',
             'Water EC represents this source at 25 C; its composition is not inferred.',
             'No numerical accuracy guarantee; not an equipment-control setpoint.',
+            'Quarantined brochure anchors never enter totals (Ultrasol Magsul 1.2).',
         ],
     )
     reason = None
@@ -95,6 +111,8 @@ def estimate_manufacturer_ec(
         reason = 'concentrated_stock_model_unavailable'
     elif acid_added:
         reason = 'acid_reaction_model_unavailable'
+    elif unusable:
+        reason = 'unusable_brochure_anchor'
     elif missing:
         reason = 'missing_product_ec_evidence'
     elif sum(doses.values()) > 1:

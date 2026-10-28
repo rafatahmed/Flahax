@@ -344,6 +344,35 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.uncovered_bound_ms_cm)
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
+    def test_outside_phosphate_fit_never_silent_fake_total(self):
+        # Domain honesty: I above the phosphate fit max is refuse-or-bound, never
+        # an unqualified midpoint presented as a total.
+        limit = load_conductivity_coefficients()['supplementary']['fit']['max_ionic_strength']
+        for mode, extra in (('calculated', {}), ('supplied', {'ph': 6.0})):
+            r = calculate_ec_from_totals(
+                {'Na+': 0.02, 'PO4-3': 0.02},
+                solution_id='domain-honesty',
+                ph_mode=mode,
+                phase_policy='dissolved',
+                **extra,
+            )
+            with self.subTest(ph_mode=mode):
+                self.assertGreater(r.ionic_strength, limit)
+                self.assertEqual(r.status, 'not_supported')
+                self.assertEqual(r.reason, 'ionic_strength_outside_phosphate_fit')
+                self.assertIsNone(r.ec25_ms_cm)
+                self.assertIsNone(r.ec25_range_ms_cm)
+                self.assertIsNone(r.known_species_subtotal_ms_cm)
+                self.assertIsNone(r.uncertainty_ms_cm)
+                self.assertFalse(r.bounded)
+                self.assertEqual(r.contributions_ms_cm, {})
+                self.assertEqual(r.transport_numbers, {})
+                self.assertEqual(r.qualifier, QUALIFIER)
+                self.assertTrue(r.audit['supplementaryCoefficients'])
+                self.assertEqual(
+                    r.audit['phosphate_fit_max_ionic_strength'], limit
+                )
+
     def test_all_shipped_formulas_respect_phosphate_fit_domain(self):
         # Historical raw failures are retained in conductivity-qualification/tests.log.
         # F08's independent oracle forbids an unqualified out-of-fit prediction.
