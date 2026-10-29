@@ -829,6 +829,30 @@
       },
       "status": "identity_consistent",
       "notes": "Added 2026-10-22 as a pH-up reagent (#75). Sigma-Aldrich 237205, ACS reagent, assay 99.7 % (ACS 99.7-100.5 %)."
+    },
+    {
+      "id": "idn-nitric-acid",
+      "products": [
+        "Nitric Acid (65% solution)"
+      ],
+      "name": "Nitric acid",
+      "formula": "HNO3",
+      "hydration": "aqueous product; identity is pure HNO3",
+      "molecular_weight": 63.011540000000004,
+      "cas": "7697-37-2",
+      "ion_forms": {
+        "HNO3": 1
+      },
+      "theoretical_analysis": {
+        "N_NO3": 22.228785393913558
+      },
+      "comparator": {
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner-supplied 65% w/w solution)",
+        "url": null,
+        "accessed": "2026-10-29"
+      },
+      "status": "aqueous_solution",
+      "notes": "Identity-level HNO3; protons are implicit in the aqueous charge balance, nitrate comes from the elemental assay. Solution concentration is on the product record. No density or measured lot assay supplied."
     }
   ]
 }
