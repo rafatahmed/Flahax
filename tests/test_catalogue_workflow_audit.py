@@ -17,6 +17,8 @@ import tempfile
 
 from tools.catalogue_workflow_audit import phase_screen, audit, fit, inspect_recipe
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 class PhaseAuditTests(unittest.TestCase):
     def test_failures_remain_visible_instead_of_becoming_passes(self):
@@ -42,7 +44,9 @@ class PhaseAuditTests(unittest.TestCase):
                 'argv',
                 ['audit', '--catalogue', str(catalogue), '--output', str(output), '--edta-only'],
             ):
-                runpy.run_path('tools/catalogue_workflow_audit.py', run_name='__main__')
+                runpy.run_path(
+                    str(ROOT / 'tools' / 'catalogue_workflow_audit.py'), run_name='__main__'
+                )
             result = json.loads(output.read_text(encoding='utf-8'))
         self.assertEqual(result['catalogue_sha256'], hashlib.sha256(raw).hexdigest())
         self.assertEqual(result['results'], [])
@@ -51,7 +55,7 @@ class PhaseAuditTests(unittest.TestCase):
         self.assertEqual(len(result['runtime_revision']), 40)
         self.assertEqual(
             result['chemistry_sha256'],
-            hashlib.sha256(Path('src/flahax/data/chemistry_25c.json').read_bytes()).hexdigest(),
+            hashlib.sha256((ROOT / 'src/flahax/data/chemistry_25c.json').read_bytes()).hexdigest(),
         )
 
     @unittest.skipUnless(
