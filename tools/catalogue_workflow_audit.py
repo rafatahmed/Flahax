@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
@@ -23,6 +22,7 @@ from flahax.irrigation_ec import calculate_irrigation_ec, DeclaredPureWater
 from flahax.stock_solubility import check_stock_solubility
 from flahax.tank_grouping import group_tanks
 
+ROOT = Path(__file__).resolve().parents[1]
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 
 
@@ -205,7 +205,7 @@ def audit(library, edta_only=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--catalogue', type=Path, default=Path('src/flahax/data/library.json'))
+    parser.add_argument('--catalogue', type=Path, default=ROOT / 'src/flahax/data/library.json')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--edta-only', action='store_true')
     args = parser.parse_args()
@@ -224,10 +224,10 @@ def main():
     import subprocess
 
     result['runtime_revision'] = subprocess.check_output(
-        ['git', 'rev-parse', 'HEAD'], text=True
+        ['git', 'rev-parse', 'HEAD'], text=True, cwd=ROOT
     ).strip()
     result['chemistry_sha256'] = hashlib.sha256(
-        Path('src/flahax/data/chemistry_25c.json').read_bytes()
+        (ROOT / 'src/flahax/data/chemistry_25c.json').read_bytes()
     ).hexdigest()
     args.output.write_text(json.dumps(result, indent=2), encoding='utf-8')
 
