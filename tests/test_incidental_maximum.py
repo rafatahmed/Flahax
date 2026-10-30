@@ -7,8 +7,11 @@
 import unittest
 
 from flahax import load_library, recommend
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# The pre-owner products, which include Calcium Chloride (Dihydrate).
+with historical_catalogue():
+    LIBRARY = load_library()
 # Synthetic conflicting Ca/nitrate requirements; not a crop recommendation.
 FORMULA = {'targets': {'N_NO3': 60, 'Ca': 160}}
 

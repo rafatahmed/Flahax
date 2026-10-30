@@ -17,6 +17,7 @@ from flahax import (
 )
 from flahax.product_conversion import MOLAR_MASS
 from tests.test_water_workflow import products, TARGETS
+from tests.catalogue_history import historical_catalogue
 
 # Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, Table S1, station 104
 # (mg/L; IC is inorganic carbon as C). Measured pH 7.80.
@@ -140,8 +141,10 @@ class MeasuredWaterTests(unittest.TestCase):
 
 
 class MeasuredWaterWorkflowTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_workflow_chemistry_starts_from_the_measured_water(self):
         # A quarter of station 104, as a 1:3 blend with ion-free water.
+        self.enterContext(historical_catalogue())
         quarter = {k: v / 4 for k, v in STATION_104.items()}
         ppm = {
             'Ca': quarter['Ca+2'] * MOLAR_MASS['Ca'] * 1000,

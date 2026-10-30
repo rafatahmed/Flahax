@@ -13,14 +13,17 @@ import tempfile
 import unittest
 
 import flahax
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / 'docs/site'
 
 
 class DocumentationMigrationTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_current_site_python_examples(self):
         """Every current executable fence runs independently without caller globals."""
+        self.enterContext(historical_catalogue())
         count = 0
         for page in sorted(SITE.rglob('*.md')):
             if any(part in page.parts for part in ('_static', 'audit', 'evidence')):

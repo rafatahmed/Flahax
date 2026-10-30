@@ -8,8 +8,11 @@ import unittest
 
 from flahax import load_library, recommend
 from flahax.engine import CEILING_MARGIN, CEILING_TOLERANCE, _fit_within, nnls
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# Generic Grow (maximumyield) is a pre-owner formula.
+with historical_catalogue():
+    LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
 # Generic Grow needs more ammonium than this explicitly requested fraction permits.
 GROW = next(f for f in LIBRARY["formulas"] if f["name"] == "Generic Grow (maximumyield)")

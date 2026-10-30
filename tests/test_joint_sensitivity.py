@@ -14,6 +14,7 @@ from flahax.joint_solver import solve_joint_problem
 from tests.test_joint_fit import controls
 from tests import test_joint_problem_contract as contract
 from tools.verify_joint_sensitivity import independent_charge_gradient
+from tests.catalogue_history import historical_catalogue
 
 
 class JointSensitivityTests(unittest.TestCase):
@@ -192,7 +193,9 @@ class JointSensitivityTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             solve_joint_problem(p, {}, 0, **controls(p, curvature_block=True))
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_cold_charge_correction_rechecks_actual_melon_candidate(self):
+        self.enterContext(historical_catalogue())
         from flahax import load_library, make_joint_problem, balance_water_analysis
         from flahax.ph_adjustment import nutrient_salts
         from flahax.measured_water import nutrient_mg_per_litre
@@ -401,7 +404,9 @@ class JointSensitivityTests(unittest.TestCase):
         self.assertLessEqual(result['reagentDose'], 1e-12)
         self.assertFalse(result['accepted'])
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_full_catalogue_chelate_derivatives(self):
+        self.enterContext(historical_catalogue())
         from flahax import load_library, make_joint_problem, recommend
         from flahax.ph_adjustment import nutrient_salts
 

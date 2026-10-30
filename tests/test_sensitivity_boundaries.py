@@ -12,6 +12,7 @@ from flahax import DeliveryError
 from flahax import joint_sensitivity as sensitivity
 from flahax.joint_workflow import joint_candidate
 from tests import test_joint_problem_contract as contract
+from tests.catalogue_history import historical_catalogue
 
 
 class SensitivityBoundaryTests(unittest.TestCase):
@@ -80,14 +81,18 @@ class JointInputBoundaryTests(unittest.TestCase):
 
 
 class JointAcceptanceBoundaryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_missing_optional_start_uses_recipe_seed(self):
+        self.enterContext(historical_catalogue())
         from tests import test_joint_workflow as fixtures
 
         stage = fixtures.JointWorkflowTests().positive_case(config_change={'starting_points': {}})
         self.assertIsNotNone(stage.value.selected)
         self.assertAlmostEqual(stage.value.selected.target.ph, 5.8, delta=0.001)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_nutrient_failure_cannot_be_promoted_by_a_clear_chemical_judgement(self):
+        self.enterContext(historical_catalogue())
         from tests import test_joint_workflow as fixtures
         from flahax import ph_adjustment
 

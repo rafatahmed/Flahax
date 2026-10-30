@@ -16,6 +16,7 @@ from flahax.delivery_contracts import DeliveryError
 from flahax.material_chemistry import ions_from_formula, material_chemistry
 from flahax.materials import load_identities
 from flahax.product_conversion import catalogue_dose_totals
+from tests.catalogue_history import historical_catalogue
 
 PINNED_BASIS = {
     'Ammonium Dibasic Phosphate': [('NH4+', 0.01514775071929862), ('PO4-3', 0.007571246915373082)],
@@ -151,7 +152,9 @@ TODAY = {
 }
 
 
-LIBRARY = load_library()
+# The pre-owner catalogue: every product here has an identity record and a family above.
+with historical_catalogue():
+    LIBRARY = load_library()
 CATALOGUE = {s['name']: s for s in LIBRARY['salts']}
 TOMATO = {f['name']: f['targets'] for f in LIBRARY['formulas']}['Tomato (Howard Resh)']
 NITRIC = dict(
@@ -242,6 +245,7 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertEqual(set(TODAY), set(CATALOGUE))
 
     def test_every_catalogue_product_converts_bit_for_bit(self):
+        self.enterContext(historical_catalogue())
         for name, expected in PINNED_BASIS.items():
             self.assertEqual(list(catalogue_dose_totals({name: 1.0}).items()), expected, name)
 
@@ -297,6 +301,7 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_composition')
 
     def test_user_materials_without_catalogue_names_give_the_catalogue_result(self):
+        self.enterContext(historical_catalogue())
         records, names = user_list()
         self.assertFalse({r['name'] for r in records} & set(CATALOGUE))
         mine, shipped = workflow(records), workflow(LIBRARY['salts'])
@@ -334,6 +339,7 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertAlmostEqual(a.target.ph, b.target.ph, delta=1e-9)
 
     def test_a_name_only_material_stops_chemistry_with_what_to_give(self):
+        self.enterContext(historical_catalogue())
         records, _ = user_list()
         mkp = next(r for r in records if r['name'] == 'My MKP')
         del mkp['formula']

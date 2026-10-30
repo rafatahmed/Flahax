@@ -10,11 +10,14 @@ import unittest
 from flahax import DeliveryError, MassGrams, plan_equilibrium_delivery
 from flahax.measured_water import balance_water_analysis
 from tests.test_equilibrium_delivery import arguments
+from tests.catalogue_history import historical_catalogue
 
 
 class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.args = arguments()
 
     def rejected(self, code, **changes):
@@ -199,7 +202,9 @@ class PublicCalculationBoundaryTests(unittest.TestCase):
         for key in (' ', 1):
             self.assert_code('invalid_value', estimate_manufacturer_ec, {key: 1})
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_catalogue_chemistry_identity_and_inventory_boundaries(self):
+        self.enterContext(historical_catalogue())
         from flahax import load_library
         from flahax.catalogue_chemistry import (
             PRODUCT_CHEMISTRY,

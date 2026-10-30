@@ -18,6 +18,7 @@ from flahax.product_conversion import (
     convert_catalogue_product_dose,
     solve_catalogue_product_doses,
 )
+from tests.catalogue_history import historical_catalogue
 
 
 class ChemistryAcceptanceTests(unittest.TestCase):
@@ -113,6 +114,7 @@ class ChemistryAcceptanceTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
     def test_chloride_salts_keep_chloride_and_add_no_nitrate(self):
+        self.enterContext(historical_catalogue())
         calcium = catalogue_dose_totals({'Calcium Chloride (Dihydrate)': 1.0})
         self.assertNotIn('NO3-', calcium)
         self.assertAlmostEqual(calcium['Cl-'], 2 * calcium['Ca+2'], places=12)

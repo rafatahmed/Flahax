@@ -13,6 +13,7 @@ import tempfile
 import unittest
 
 from flahax.batch_cli import main as batch
+from tests.catalogue_history import historical_catalogue
 
 PAGE = Path(__file__).resolve().parents[1] / 'docs/site/agronomist/batch-command.md'
 WELL = dict(
@@ -43,8 +44,10 @@ def run(tmp, *argv):
 
 
 class GrowersPageTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 3 (G24)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.page = PAGE.read_text(encoding='utf-8')
         with tempfile.TemporaryDirectory() as tmp:
             water = Path(tmp) / 'well.json'
@@ -59,7 +62,9 @@ class GrowersPageTests(unittest.TestCase):
         block = re.search(r'```json\n(\{"id": "station-104".*?)```', self.page, re.S).group(1)
         self.assertEqual(json.loads(block), WELL)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_historical_table_is_not_current_delivery_authorization(self):
+        self.enterContext(historical_catalogue())
         code, summary = self.eight
         self.assertEqual((code, summary['status']), (3, 'blocked'))
         self.assertIn('Historical 0.6.0 figures', self.page)
@@ -71,7 +76,9 @@ class GrowersPageTests(unittest.TestCase):
             tanks['Magnesium Sulfate (Heptahydrate)'], tanks['Potassium Monobasic Phosphate']
         )
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_current_eight_percent_output_preserves_limits_and_blocks_reagent(self):
+        self.enterContext(historical_catalogue())
         _, s = self.eight
         self.assertFalse(s['formulation']['unmet'])
         self.assertIsNone(s['ph']['selected'])
@@ -89,7 +96,9 @@ class GrowersPageTests(unittest.TestCase):
         self.assertEqual(s['ec']['reason'], 'ionic_strength_outside_phosphate_fit')
         self.assertIsNone(s['ec']['ec25_ms_cm'])
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_nine_percent_and_ro_cases_remain_blocked(self):
+        self.enterContext(historical_catalogue())
         code, nine = self.nine
         self.assertEqual((code, nine['status']), (3, 'blocked'))
         self.assertEqual(

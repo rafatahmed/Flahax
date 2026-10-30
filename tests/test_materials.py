@@ -23,6 +23,7 @@ from flahax.materials import (
     make_lot,
     resolve_material,
 )
+from tests.catalogue_history import historical_catalogue
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 
@@ -168,7 +169,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_identities_file_is_pinned(self):
         self.assertEqual(
-            IDENTITIES_SHA256, '7c3526334f77e4fb9879b2aebbeebd6810aa354ed417c4d03059f373e9f85a22'
+            IDENTITIES_SHA256, 'c28b07fc3d9988653b710ec960286d8de2120db38550b84916ed6265d833582c'
         )
 
 
@@ -584,6 +585,7 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_value')
 
     def test_assumed_blend_is_labelled(self):
+        self.enterContext(historical_catalogue())
         shipped = resolve_material('CH - micro')
         self.assertIn('assumed_composition', shipped.flags)
         self.assertIs(shipped.provenance['assumed'], True)
@@ -604,6 +606,7 @@ class GradeLotTests(unittest.TestCase):
         self.assertIs(plain.provenance['assumed'], False)
 
     def test_disclosed_blend_fractions_validated(self):
+        self.enterContext(historical_catalogue())
         components = [
             {'identity_id': 'idn-sodium-iron-edta', 'mass_fraction': 0.6},
             {'identity_id': 'idn-borax-decahydrate', 'mass_fraction': 0.3},
@@ -647,6 +650,7 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_composition')
 
     def test_undisclosed_blend_has_composition_undisclosed(self):
+        self.enterContext(historical_catalogue())
         g = grade(
             grade_id='grd-secret',
             identity_id=None,
@@ -670,6 +674,7 @@ class GradeLotTests(unittest.TestCase):
 
     def test_undisclosed_blend_record_doses_in_recommend(self):
         # Mass balance works from the declared analysis; the record carries no host formula.
+        self.enterContext(historical_catalogue())
         from flahax.engine import recommend
 
         secret = resolve_material(
@@ -720,7 +725,7 @@ class CatalogueMigrationTests(unittest.TestCase):
 
     def test_every_salt_links_to_identity(self):
         salts = self.salts()
-        self.assertEqual(len(salts), 32)
+        self.assertEqual(len(salts), 29)
         for name, salt in salts.items():
             with self.subTest(name=name):
                 self.assertEqual(salt['identityId'], identity_for_product(name)['id'])
@@ -757,8 +762,16 @@ class CatalogueMigrationTests(unittest.TestCase):
             self.assertAlmostEqual(salt['elements']['K'], potassium, places=5, msg=name)
             self.assertTrue(salt['source']['url'].endswith(code), name)
         self.assertEqual(salts['Potassium Hydroxide (45% solution)']['densityKgPerL'], 1.456)
+        # The owner catalogue also marks phosphoric and nitric acid as pH reagents.
         self.assertEqual(
-            [s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'], sorted(expected)
+            [s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'],
+            [
+                'Potassium Hydroxide (45% solution)',
+                'Phosphoric Acid (75%)',
+                'Nitric Acid (65% solution)',
+                'Potassium Bicarbonate',
+                'Potassium Carbonate',
+            ],
         )
 
     def test_phosphoric_acid_is_75_percent_basis(self):
@@ -813,6 +826,7 @@ class CatalogueMigrationTests(unittest.TestCase):
         )
 
     def test_metadata_fixes(self):
+        self.enterContext(historical_catalogue())
         salts = self.salts()
         self.assertEqual(salts['Urea']['formula'], 'CO(NH2)2')
         self.assertEqual(
@@ -919,6 +933,7 @@ class ChemistryUseTests(unittest.TestCase):
             self.assertAlmostEqual(user[basis], shipped[basis], places=15)
 
     def test_undisclosed_blend_refuses_chemistry(self):
+        self.enterContext(historical_catalogue())
         from flahax.irrigation_ec import assay_charge_residual
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -951,6 +966,7 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_ph_input')
 
     def test_disclosed_blend_converts_components(self):
+        self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
 
         blend = resolve_material(
@@ -996,7 +1012,9 @@ class ChemistryUseTests(unittest.TestCase):
             _old_totals({'CH - micro': 2.0}),
         )
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_irrigation_ec_reports_material_provenance(self):
+        self.enterContext(historical_catalogue())
         from flahax.materials import IDENTITIES_SHA256 as SHA
 
         name = 'Calcium Nitrate (ag grade)'
@@ -1055,6 +1073,7 @@ class ChemistryUseTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_no_materials_is_unchanged(self):
+        self.enterContext(historical_catalogue())
         from flahax.irrigation_ec import assay_charge_residual
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -1107,7 +1126,9 @@ class ChemistryUseTests(unittest.TestCase):
         shipped = self.ec({'Mg Nitrate': 1.0})
         self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_equilibrium_plan_audits_materials(self):
+        self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery
         from flahax.materials import IDENTITIES_SHA256 as SHA
         from tests.test_equilibrium_delivery import arguments
@@ -1204,6 +1225,7 @@ class BandTests(unittest.TestCase):
             )
 
     def test_band_accepts_undisclosed_blend_chemistry_refuses_it(self):
+        self.enterContext(historical_catalogue())
         from flahax.materials import nutrient_band
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -1378,6 +1400,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
         return library['salts'], formula['targets']
 
     def test_chelate_sodium_fitted_independently_of_warning(self):
+        self.enterContext(historical_catalogue())
         from unittest import mock
         from flahax import engine
 
@@ -1462,6 +1485,7 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertAlmostEqual(got, expected, places=6)
 
     def test_helper_counts_all_counterion_sodium_of_micro_blend(self):
+        self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals, counterion_sodium_mg_per_l
 
         by_name = {s['name']: s for s in load_library()['salts']}
@@ -1561,7 +1585,9 @@ class WorkflowGradeTests(unittest.TestCase):
     def doses(recommendation):
         return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_label_grade_enters_chemistry_and_ph(self):
+        self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
 
         product, material = self.graded(0.97)
@@ -1706,7 +1732,9 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertFalse(1.0 <= check.protons_per_phosphate <= 2.0)
         self.assertIn('phosphate balance', check.reason)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_store_with_unmodellable_product_plans_no_acid(self):
+        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.grower_report import render_batch_sheet, summarize_batch
 
@@ -1742,6 +1770,7 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertIn(self.NAME, render_batch_sheet(summary))
 
     def test_chloride_may_be_stated(self):
+        self.enterContext(historical_catalogue())
         from flahax.materials import declared_ions_check
 
         shipped = {s['name']: s['elements'] for s in load_library()['salts']}
@@ -1791,7 +1820,9 @@ class DeclaredCompoundTests(unittest.TestCase):
                 }
             )
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_chelate_sodium_of_declared_compound_reaches_the_na_row(self):
+        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -1838,7 +1869,9 @@ class DeclaredCompoundTests(unittest.TestCase):
             )
         )
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_declared_compound_matches_equivalent_salts(self):
+        self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph
         from flahax.product_conversion import catalogue_dose_totals
 

@@ -19,8 +19,11 @@ from flahax import (
 )
 from flahax.delivery_contracts import DeliveryError
 from flahax.ph_adjustment import REAGENTS
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# Pre-owner products and formulas (Chilli (maximumyield) is not in the owner catalogue).
+with historical_catalogue():
+    LIBRARY = load_library()
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
 ACIDS = [
     dict(
@@ -101,7 +104,8 @@ class ReagentDoseTests(unittest.TestCase):
 class CatalogueTests(unittest.TestCase):
     def test_catalogue_offers_three_sourced_bases(self):
         records = {r['chemicalFormula']: r for r in catalogue_ph_reagents()}
-        self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3'})
+        # The owner catalogue adds phosphoric and nitric acid as pH reagents.
+        self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3', 'H3PO4', 'HNO3'})
         self.assertEqual(
             (records['KOH']['massFraction'], records['KOH']['densityKgPerL']), (0.45, 1.456)
         )
@@ -122,6 +126,7 @@ class CoupledWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Preserve this reaction-accounting fixture's historical, now explicit allowance.
+        cls.enterClassContext(historical_catalogue())
         cls.alkaline = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
         cls.acidic = coupled(
             'Chilli (maximumyield)'
