@@ -125,7 +125,7 @@ def inspect_recipe(recipe, products):
                 band_maximum={k: None for k in records[name]['elements']},
                 composition='single',
                 provenance={
-                    'sourceStatus': 'owner_supplied',
+                    'sourceStatus': 'supplier_supplied',
                     'analysisReview': records[name].get('analysisReview'),
                 },
             )
