@@ -104,7 +104,11 @@ _IMPLICIT = frozenset({'OH-'})
 _MICRO_CATIONS = frozenset({'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'})
 _CHELATE_FAMILY = {'EDTA': 'edta_chelate', 'DTPA': 'dtpa_chelate', 'o,o-EDDHA': 'eddha_chelate'}
 # A chelate blend names the sodium salts beside its complexes (D2: borax, sodium molybdate).
-_BLEND_SALTS = {'B(OH)4-': ('borax', 'borax'), 'MoO4-2': ('molybdate', 'sodium molybdate')}
+_BLEND_SALTS = {
+    'B(OH)4-': ('borax', 'borax'),
+    'B(OH)3': ('boric_acid', 'boric acid'),
+    'MoO4-2': ('molybdate', 'sodium molybdate'),
+}
 _AGENT_SOURCE = {
     'DTPA': 'Martell/Smith stability profile; Fe(III)-DTPA log beta 28.6 at 25 C',
     'o,o-EDDHA': 'Yunta et al. 2003 o,o-EDDHA profile; Fe(III) log beta 35.1 at 25 C',
@@ -266,7 +270,12 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
     complexes = [ion for ion in ions if ion in COMPLEXES]
     agents = list(dict.fromkeys(COMPLEXES[ion][0] for ion in complexes))
     if complexes:
-        others = [ion for ion in ions if ion not in COMPLEXES and ion != 'Na+' and ion != 'B(OH)3']
+        # B(OH)3 beside B(OH)4- is borax's own acid half; alone it is boric acid.
+        others = [
+            ion
+            for ion in ions
+            if ion not in COMPLEXES and ion != 'Na+' and (ion != 'B(OH)3' or 'B(OH)4-' not in ions)
+        ]
         if others or len(agents) > 1:
             parts = [_BLEND_SALTS.get(ion, (ion, ion)) for ion in others]
             family = '_'.join(
