@@ -8,6 +8,7 @@ import unittest
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
 from tests.test_ph_planning import inputs
 from tests.test_ph_adjustment import RO, ACIDS
+from tests.catalogue_history import historical_catalogue
 
 
 class WorkflowBoundaryTests(unittest.TestCase):
@@ -196,11 +197,15 @@ class BalancedConfigurationBoundaryTests(unittest.TestCase):
 
 
 class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def setUp(self):
+        self.enterContext(historical_catalogue())
         self.pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
         self.config = RO | {'water_mass_kg': 100}
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_no_acceptable_acid_and_infeasible_nutrients_stay_blocked(self):
+        self.enterContext(historical_catalogue())
         config = dict(
             products=ACIDS, maximum_nutrient_error_percent=1, maximum_reagent_volume_litres=1e-20
         )
@@ -217,7 +222,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
             )
             self.assertEqual(flow.stages['acid_selection'].error_code, expected)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_nitric_incidental_nutrients_are_not_automatically_accepted(self):
+        self.enterContext(historical_catalogue())
         from tests.test_ph_planning import record
 
         config = dict(
@@ -245,7 +252,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         self.assertEqual(flow.stages['nitric'].status, 'requires_review')
         self.assertTrue(flow.stages['nitric'].value.incidental_assessment['requiresReview'])
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_coupled_solver_failure_remains_blocked(self):
+        self.enterContext(historical_catalogue())
         from unittest.mock import patch
 
         with patch(
@@ -266,7 +275,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
 
 
 class AssumedWaterReviewBoundaryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_accepted_reagent_on_assumed_water_closure_still_requires_review(self):
+        self.enterContext(historical_catalogue())
         from flahax.measured_water import nutrient_mg_per_litre
         from tests.test_ph_planning import record
 
@@ -331,7 +342,9 @@ class FinalWorkflowVerificationTests(unittest.TestCase):
             )
         self.assertEqual(result.stages['chemistry'].error_code, 'product_chemistry_mismatch')
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_selected_plan_is_rechecked_for_hard_limits(self):
+        self.enterContext(historical_catalogue())
         from copy import deepcopy
         from dataclasses import replace
         from unittest.mock import patch

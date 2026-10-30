@@ -17,6 +17,7 @@ from flahax.irrigation_ec import (
     calculate_irrigation_ec_band,
 )
 from tests import test_irrigation_ec as reference
+from tests.catalogue_history import historical_catalogue
 
 
 class CoverageTests(unittest.TestCase):
@@ -104,7 +105,9 @@ class CoverageTests(unittest.TestCase):
                 )
             self.assertEqual(caught.exception.code, 'invalid_ec_scenarios')
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_grower_outputs_retain_qualifications(self):
+        self.enterContext(historical_catalogue())
         from flahax.grower_report import summarize_batch, render_report, render_batch_sheet
         from tests.test_grower_outputs import workflow, PRODUCTS
 

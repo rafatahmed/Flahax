@@ -100,7 +100,7 @@ To retain only artifacts that passed clean-install checks, use `python tools/ver
 
 ## Installed distributions
 
-Run `python -m pip install build` in a development virtual environment, then `python tools/verify_distribution.py`. The tool builds wheel and sdist (wheel from sdist), installs each non-editably in a separate temporary virtual environment, runs from outside the checkout with `-I` and without `PYTHONPATH`, and asserts the imported package is inside that environment. It verifies zero runtime dependencies, 32 catalogue products, the exact chemistry resource hash, catalogue solve, nitric target, equilibrium delivery adapter, and both `python -m flahax` and `flahax` CLI entry points. A JSON report containing distribution hashes and observed numerical values is written to `build/distribution-verification.json`. Nothing is published.
+Run `python -m pip install build` in a development virtual environment, then `python tools/verify_distribution.py`. The tool builds wheel and sdist (wheel from sdist), installs each non-editably in a separate temporary virtual environment, runs from outside the checkout with `-I` and without `PYTHONPATH`, and asserts the imported package is inside that environment. It verifies zero runtime dependencies, the catalogue product count (29 in the packaged catalogue), the exact chemistry resource hash, catalogue solve, nitric target, equilibrium delivery adapter, and both `python -m flahax` and `flahax` CLI entry points. A JSON report containing distribution hashes and observed numerical values is written to `build/distribution-verification.json`. Nothing is published.
 
 The source distribution now includes offline fixture inputs/outputs, extensions and reproduction tools as well as tests; the wheel includes runtime Python and JSON resources only. Neither contains PHREEQC binaries. Python 3.11–3.13 CI runs source regression and clean distribution smoke checks. Local Python 3.14 testing is additional evidence, not a substitute for that matrix.
 
@@ -186,7 +186,7 @@ from flahax import (load_library, final_solution_recipe, VolumeLitres,
                     plan_equilibrium_delivery)
 
 products = {p['name']: p for p in load_library()['salts']}
-doses = {'Potassium Carbonate': 0.01, 'Potassium Nitrate': 0.02}  # g/kg water
+doses = {'Potassium Carbonate': 0.01, 'Potassium Sulfate': 0.02}  # g/kg water
 recipe = final_solution_recipe({'feasible': True, 'salts': [
     {'id': products[name]['id'], 'name': name, 'gramsPerLitre': dose * 95 / 100}
     for name, dose in doses.items()
@@ -202,7 +202,7 @@ plan = plan_equilibrium_delivery(
              'revision': '1', 'recordedAt': '2026-09-27T00:00:00Z',
              'name': 'Nitric acid', 'kind': 'acid', 'chemicalFormula': 'HNO3',
              'elements': {'N_NO3': 13.8}, 'densityKgPerL': 1.4},
-    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 12.72},
+    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 13.9},
     maximum_nutrient_error_percent=1,
 )
 print(plan.reagent_volume_litres, plan.nutrient_contribution, plan.warnings)

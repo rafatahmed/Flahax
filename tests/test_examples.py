@@ -12,11 +12,14 @@ from examples.common import serializable
 from examples.visual_report import render_html, bars
 import xml.etree.ElementTree as ET
 import re
+from tests.catalogue_history import historical_catalogue
 
 
 class CapabilityExamplesTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.results = {name: serializable(run()) for name, run in SCENARIOS.items()}
 
     def test_pepper_preserves_water_and_zero_requirements(self):

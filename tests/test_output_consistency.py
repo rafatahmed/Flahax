@@ -24,6 +24,7 @@ from unittest import mock
 from flahax.grower_report import grams, number
 from flahax.grower_sheet import render_mix_sheet
 from flahax.mix_cli import main
+from tests.catalogue_history import historical_catalogue
 
 ANSWERS = [
     '100',
@@ -60,6 +61,7 @@ def text_of(page):
 class OwnerSessionConsistency(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.tmp = tempfile.TemporaryDirectory()
         out, answers, lines = Path(cls.tmp.name) / 'out', list(ANSWERS), []
         from flahax import batch_cli
@@ -199,7 +201,9 @@ class ReagentQuantityRendering(unittest.TestCase):
 
 
 class SelectedStateIdentity(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_selected_recipe_uses_its_own_mixed_and_target_states(self):
+        self.enterContext(historical_catalogue())
         from flahax import load_library, plan_fertilizer_workflow, VolumeLitres, summarize_batch
         from flahax.irrigation_ec import calculate_ec_from_totals
         from tests.test_joint_workflow import configuration

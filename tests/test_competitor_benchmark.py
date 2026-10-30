@@ -18,6 +18,7 @@ from tools.competitors.irriblend_adapter import (
     validate_translation,
 )
 from flahax import load_library
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -100,6 +101,7 @@ class IrriblendTranslationTests(unittest.TestCase):
     """The catalogue in Irriblend-DSW's 'ferts' convention (mmol/g, phosphate as H2PO4-)."""
 
     def setUp(self):
+        self.enterContext(historical_catalogue())
         self.products = [s for s in load_library()["salts"] if s.get("role") != "ph_reagent"]
         self.rows, self.excluded = translate(self.products)
 

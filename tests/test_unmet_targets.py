@@ -7,8 +7,11 @@
 import unittest
 
 from flahax import load_library, recommend
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# Pre-owner formulas (Rice, Generic Grow) and products (Calcium Chloride (Dihydrate)).
+with historical_catalogue():
+    LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
 
 
@@ -21,6 +24,8 @@ def unmet(result):
 
 
 class UnmetTargetTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 3 (G25)
     def test_feasible_recipe_has_no_unmet_targets(self):
         result = recommend(SALTS, formula("Hoagland solution")["targets"], {})
         self.assertTrue(result["feasible"])

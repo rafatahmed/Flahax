@@ -12,11 +12,13 @@ from flahax.engine import forward, recommend
 from flahax.measured_water import nutrient_mg_per_litre
 from flahax.ph_adjustment import REAGENTS
 from flahax.product_conversion import catalogue_dose_totals
+from tests.catalogue_history import historical_catalogue
 
 
 class MaterialInventoryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.products = {p['name']: p for p in load_library()['salts']}
 
     def test_counterion_changes_selection_before_fit(self):
@@ -98,6 +100,7 @@ class MaterialInventoryTests(unittest.TestCase):
         self.assertEqual(set(masses), {'Fe', 'N_UREA'})
 
     def test_product_and_assay_order_do_not_change_inventory(self):
+        self.enterContext(historical_catalogue())
         doses = {'Iron EDTA': 0.04, 'Potassium Nitrate': 0.8, 'CH - micro': 0.02}
         products = [deepcopy(self.products[n]) for n in doses]
         baseline = catalogue_dose_totals(doses, products=products)
@@ -127,6 +130,7 @@ class MaterialInventoryTests(unittest.TestCase):
         self.assertEqual(nutrient_mg_per_litre({'Na+': None}), {})
 
     def test_disclosed_blend_reports_both_observations(self):
+        self.enterContext(historical_catalogue())
         from tests.test_materials import grade
         from flahax.materials import resolve_material
 

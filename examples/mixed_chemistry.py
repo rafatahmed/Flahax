@@ -22,7 +22,9 @@ def run():
         'Potassium Nitrate': 0.10,
         'Iron DTPA': 0.004,
         'Iron EDDHA': 0.003,
-        'CH - micro': 0.005,
+        'Mn EDTA': 0.002,
+        'Boric Acid': 0.002,
+        'Sodium Molybdate (Dihydrate)': 0.0001,
         'Urea': 0.005,
     }
     # Fixed pH is an imposed boundary, not a predicted pH of this recipe.

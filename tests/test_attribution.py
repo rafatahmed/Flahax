@@ -38,6 +38,7 @@ CREDITS = {
     'Haifa Group': 'Haifa Group',
     'Sigma-Aldrich': 'Sigma-Aldrich',
     'ChemicalBook': 'ChemicalBook',
+    'Flaha Agri Tech': 'Flaha Agri Tech Analysis Ver 0.0',
 }
 
 

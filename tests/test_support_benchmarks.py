@@ -16,6 +16,7 @@ import unittest
 from unittest.mock import patch
 
 from benchmarks import cases, performance
+from tests.catalogue_history import historical_catalogue
 from tools import benchmark_baseline as baseline
 
 
@@ -135,20 +136,23 @@ class BenchmarkHarnessTests(unittest.TestCase):
         obj.result = SimpleNamespace(status='unavailable', ec25_ms_cm=None)
         with self.assertRaisesRegex(ValueError, 'regression'):
             obj.teardown()
-        obj = performance.Delivery()
-        for present in (False, True):
-            paths = [p for p in sys.path if p != str(cases.ROOT)]
-            if present:
-                paths.append(str(cases.ROOT))
-            with patch.object(sys, 'path', paths):
-                obj.setup()
-        obj.time_composed_delivery_example()
-        obj.teardown()
-        obj.result = {
-            'workflow': SimpleNamespace(stages={'nitric': SimpleNamespace(status='blocked')})
-        }
-        with self.assertRaisesRegex(ValueError, 'did not complete'):
+        # Owner catalogue: re-enable in PR 4 (G5)
+        # The delivery example doses the owner Potassium Nitrate, which stops at the label gate.
+        with historical_catalogue():
+            obj = performance.Delivery()
+            for present in (False, True):
+                paths = [p for p in sys.path if p != str(cases.ROOT)]
+                if present:
+                    paths.append(str(cases.ROOT))
+                with patch.object(sys, 'path', paths):
+                    obj.setup()
+            obj.time_composed_delivery_example()
             obj.teardown()
+            obj.result = {
+                'workflow': SimpleNamespace(stages={'nitric': SimpleNamespace(status='blocked')})
+            }
+            with self.assertRaisesRegex(ValueError, 'did not complete'):
+                obj.teardown()
 
     def test_cli_records_errors_and_manifest_mismatch(self):
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()):

@@ -25,6 +25,7 @@ from flahax.measured_water import _carbon_for_alkalinity
 from flahax.saturation_policy import assess_saturation
 from flahax.tank_grouping import group_tanks
 from tests.audit_oracles import competition_is_explicitly_qualified
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -115,7 +116,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             'the empirical-fit domain is narrower than the speciation domain',
         )
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_f09_grower_summary_preserves_ec_qualification(self):
+        self.enterContext(historical_catalogue())
         from tests.test_grower_outputs import PRODUCTS, workflow
 
         result = workflow('Tomato (Howard Resh)', products=[])
