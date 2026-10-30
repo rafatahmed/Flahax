@@ -204,7 +204,7 @@ The example below is an explicitly synthetic electrolyte, not site-measured wate
 from flahax import load_library, final_solution_recipe, VolumeLitres, plan_equilibrium_delivery
 
 products = {p['name']: p for p in load_library()['salts']}
-doses = {'Potassium Carbonate': 0.01, 'Potassium Nitrate': 0.02}
+doses = {'Potassium Carbonate': 0.01, 'Potassium Sulfate': 0.02}
 recipe = final_solution_recipe({'feasible': True, 'salts': [
     {'id': products[name]['id'], 'name': name, 'gramsPerLitre': dose * 95 / 100}
     for name, dose in doses.items()
@@ -218,7 +218,7 @@ plan = plan_equilibrium_delivery(
              'revision': '1', 'recordedAt': '2026-09-27T00:00:00Z',
              'name': 'Nitric acid', 'kind': 'acid', 'chemicalFormula': 'HNO3',
              'elements': {'N_NO3': 13.8}, 'densityKgPerL': 1.4},
-    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 12.72},
+    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 13.9},
     maximum_nutrient_error_percent=1,
 )
 assert plan.post_mix_measurement_required
