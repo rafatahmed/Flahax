@@ -444,6 +444,9 @@ FinalSolutionRecipe(final_volume: 'VolumeLitres', feasible: 'bool', salts: 'tupl
 
 A recommendation expressed for a concrete final batch volume.
 
+``feasible`` is True when the recipe can be planned: it breaks no declared maximum. A
+recipe that misses a target is still a recipe; its deviations are reported (G25).
+
 Record fields: `final_volume`, `feasible`, `salts`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import FinalSolutionRecipe`.
@@ -578,8 +581,11 @@ final_solution_recipe(recommendation: 'Mapping[str, Any]', final_volume: 'Volume
 
 Adapt a FlahaX recommendation to exact salt masses for a final batch.
 
-The function consumes only ``result['salts']`` and retains its feasibility
-flag. It does not reinterpret the solver's nutrient balance or round doses.
+The function consumes ``result['salts']``, ``feasible`` and ``limitViolations``.
+The recipe can be planned unless it breaks a declared maximum: a missed target is a
+reported deviation, not a block (G25). Without a ``limitViolations`` list the
+``feasible`` flag is kept as given. It does not reinterpret the solver's nutrient
+balance or round doses.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import final_solution_recipe`.
 
@@ -687,8 +693,10 @@ Returns:
     eligibility policy still uses the declared assay and explicit permissions.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
-    product-to-dose mapping. Feasible requires positive-target fit within 1%,
-    satisfied zero requirements and maxima, and no requirement conflicts.
+    product-to-dose mapping. Feasible requires every positive target met within
+    the numerical tolerance (requirement_fit.met: 1e-5 relative), satisfied zero
+    requirements and maxima, and no requirement conflicts; a missed target is a
+    deviation reported in rows and unmetTargets.
     requirementConflicts identifies targets above maxima and water above limits.
     substitutionSearch records supplied and attempted product IDs and whether
     a nutrient-feasible candidate was found. Recovery never expands the supplied

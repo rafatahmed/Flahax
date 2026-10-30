@@ -35,6 +35,7 @@ from .composition import (
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
+from .requirement_fit import met
 
 # Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
@@ -49,8 +50,6 @@ GRAM_REFINE_BELOW = 1e-4
 ROUNDOFF = 2.220446049250313e-16
 # Only exact zero doses are omitted; every positive binary64 dose is authoritative.
 KEEP_GRAMS = 0.0
-# A recipe is feasible when every requested ion is inside this Δ%.
-TOLERANCE_PCT = 1.0
 # A binding ceiling is met as a constraint (#68): a row of moderate weight whose aim is
 # shifted by the Lagrange multiplier, searched until the ion sits on its aim (see
 # _fit_within). A huge penalty weight instead (1024, #56) left the objective so flat in
@@ -795,17 +794,16 @@ def _eligible(
 
 
 def _short(rows: list[dict], targets: dict) -> list[str]:
-    """Requested ions that finished more than the tolerance below target.
+    """Requested ions that finished below target, beyond the numerical tolerance (G25).
 
     An overshoot is not a reason to add another salt. A chloride or sodium
     salt can only add its ions. It cannot pull an element back down.
     """
     final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
-    floor = 1.0 - TOLERANCE_PCT / 100.0
     return [
         symbol
         for symbol, ppm in targets.items()
-        if ppm > 0 and final.get(symbol, 0.0) < ppm * floor
+        if ppm > 0 and final.get(symbol, 0.0) < ppm and not met(ppm, final.get(symbol, 0.0))
     ]
 
 
@@ -838,8 +836,8 @@ def _recover(library, ready, excluded, targets, short):
             extra = f" It also carries {', '.join(carried)}." if carried else ""
             if already:
                 warnings.append(
-                    f"{salt['name']} is included because {symbol} stayed more than "
-                    f"{TOLERANCE_PCT:g}% short without it.{extra}"
+                    f"{salt['name']} is included because {symbol} stayed short of its "
+                    f"target without it.{extra}"
                 )
             else:
                 warnings.append(
@@ -896,9 +894,7 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         rhs.append((target - float(water.get(symbol) or 0.0)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
     return {
-        symbol
-        for symbol, target in kept.items()
-        if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT
+        symbol for symbol, target in kept.items() if not met(target, achieved.get(symbol, 0.0))
     }
 
 
@@ -908,7 +904,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     missed = [
         row
         for row in rows
-        if (row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT)
+        if (row["target"] and not met(row["target"], row["final"]))
         or (row["target"] == 0 and row["final"] > 0)
     ]
     if not missed:
@@ -1102,7 +1098,7 @@ def _report(
     incidental = assess_incidental(rows, maxima)
     return {
         "feasible": any(row["target"] is not None for row in rows)
-        and (not deltas or max(deltas) <= TOLERANCE_PCT)
+        and all(met(row["target"], row["final"]) for row in rows if row["target"])
         and not incidental["limitViolations"],
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
@@ -1169,8 +1165,10 @@ def recommend(
         eligibility policy still uses the declared assay and explicit permissions.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
-        product-to-dose mapping. Feasible requires positive-target fit within 1%,
-        satisfied zero requirements and maxima, and no requirement conflicts.
+        product-to-dose mapping. Feasible requires every positive target met within
+        the numerical tolerance (requirement_fit.met: 1e-5 relative), satisfied zero
+        requirements and maxima, and no requirement conflicts; a missed target is a
+        deviation reported in rows and unmetTargets.
         requirementConflicts identifies targets above maxima and water above limits.
         substitutionSearch records supplied and attempted product IDs and whether
         a nutrient-feasible candidate was found. Recovery never expands the supplied

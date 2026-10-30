@@ -21,6 +21,7 @@ from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION
 from flahax.grower_report import nitrogen_notes, number, render_batch_sheet, render_report
 from flahax.grower_sheet import render_mix_sheet
 from flahax.ph_adjustment import _blend_recipe, nutrient_salts
+from flahax.requirement_fit import RELATIVE_TOLERANCE, met
 from tests.catalogue_history import historical_catalogue
 from tests.test_joint_workflow import configuration
 from tests.test_ph_adjustment import ACIDS, RO
@@ -30,9 +31,6 @@ SALTS = LIBRARY['salts']
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
 CALCIUM_NITRATE = 'Calcium Nitrate (ag grade)'
 BASIS = 'Dutch soilless practice (De Kreij, Voogt et al.)'
-# Literal tolerances until Task 3.2 introduces met() (ledger ruling, PR 3).
-RELATIVE = 1e-5
-ZERO_MG_PER_L = 1e-6
 
 
 def row(result, symbol):
@@ -139,8 +137,8 @@ class AmmoniumDeviationTests(unittest.TestCase):
         result = recommend([calcium], targets, {})
         self.assertEqual([item['name'] for item in result['salts']], [CALCIUM_NITRATE])
         ammonium = row(result, 'N_NH4')
-        self.assertAlmostEqual(ammonium['final'], 16, delta=16 * RELATIVE)
-        self.assertAlmostEqual(ammonium['deltaPct'], 100 / 15, delta=RELATIVE * 100)
+        self.assertTrue(met(16, ammonium['final']))
+        self.assertAlmostEqual(ammonium['deltaPct'], 100 / 15, delta=RELATIVE_TOLERANCE * 100)
         self.assertEqual(round(ammonium['deltaPct'], 1), 6.7)
         self.assertEqual(result['excluded'], [])
         self.assertEqual(result['limitViolations'], [])
@@ -151,7 +149,8 @@ class Lettuce2Tests(unittest.TestCase):
     """Lettuce 2 (Howard Resh), packaged catalogue, empty water: each form has its own row.
 
     The formula is 4 % charge-imbalanced, so the least-squares fit cannot meet every target;
-    the deviations below are those the fit reports.
+    the deviations below are those the fit reports. Mo is met by sodium molybdate, which
+    recovery admits because Mo is short of its target under the numerical tolerance (G25).
     """
 
     @classmethod
@@ -162,17 +161,17 @@ class Lettuce2Tests(unittest.TestCase):
     def test_each_nitrogen_form_is_its_own_row_with_its_declared_target(self):
         self.assertEqual((self.targets['N_NO3'], self.targets['N_NH4']), (165, 15))
         self.assertNotIn('N_UREA', self.targets)
-        expected = {'N_NO3': (165, -2.4525), 'N_NH4': (15, 0.2272)}
+        expected = {'N_NO3': (165, -2.3550), 'N_NH4': (15, 0.2182)}
         for symbol, (declared, delta) in expected.items():
             with self.subTest(symbol=symbol):
                 r = row(self.result, symbol)
                 self.assertEqual(r['target'], declared)
                 self.assertAlmostEqual(r['deltaPct'], delta, places=4)
-        self.assertAlmostEqual(row(self.result, 'N_NO3')['final'], 160.9533, places=4)
-        self.assertAlmostEqual(row(self.result, 'N_NH4')['final'], 15.0341, places=4)
+        self.assertAlmostEqual(row(self.result, 'N_NO3')['final'], 161.1143, places=4)
+        self.assertAlmostEqual(row(self.result, 'N_NH4')['final'], 15.0327, places=4)
         urea = row(self.result, 'N_UREA')
         self.assertEqual(urea['target'], 0)
-        self.assertLessEqual(abs(urea['final']), ZERO_MG_PER_L)
+        self.assertTrue(met(0, urea['final']))
 
     def test_no_ph_reagent_is_in_the_recipe(self):
         reagents = {s['id'] for s in SALTS if s.get('role') == 'ph_reagent'}
@@ -184,7 +183,7 @@ class Lettuce2Tests(unittest.TestCase):
         finals = [row(self.result, s)['final'] for s in ('N_NO3', 'N_NH4', 'N_UREA')]
         self.assertEqual(total['target'], 165 + 15 + 0)
         self.assertEqual(total['final'], math.fsum(finals))
-        self.assertAlmostEqual(total['final'], 175.9874, places=4)
+        self.assertAlmostEqual(total['final'], 176.1470, places=4)
         self.assertFalse(total['fitted'])
         self.assertNotIn('N', [r['symbol'] for r in self.result['rows']])
 

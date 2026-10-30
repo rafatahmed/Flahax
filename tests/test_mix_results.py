@@ -248,17 +248,17 @@ class ResultViewTests(unittest.TestCase):
         summary = unbound_summary(self.summary)
         summary['warnings'] = [
             'None of the available products supplies N_NO3.',
-            'ph_adjustment: targets missed: N_NO3 -65.5% (no_source), '
-            'P -44.7% (conflicting_targets)',
-            'formulation: targets missed by more than 1 %: N_NH4 -86.0 %',
+            'ph_adjustment: targets missed: N_NO3 -65.5 % (no_source), '
+            'P -44.7 % (conflicting_targets)',
+            'formulation: targets missed: N_NH4 -86 %',
         ]
         notes = ' '.join(' '.join(screen(summary, 2)).split())
         self.assertIn('None of the available products supplies NO3-N.', notes)
         self.assertIn(
-            'pH adjustment: targets missed: NO3-N -65.5% (no product supplies it)', notes
+            'pH adjustment: targets missed: NO3-N -65.5 % (no product supplies it)', notes
         )
         self.assertIn('(conflicts with other targets)', notes)
-        self.assertIn('Formulation: targets missed by more than 1 %: NH4-N -86.0 %', notes)
+        self.assertIn('Formulation: targets missed: NH4-N -86 %', notes)
         sheet = sheet_text(summary, 2)
         self.assertIn('None of the available products supplies NO3-N.', sheet)
         self.assertNotIn('N_NO3', sheet.split('Nutrients')[0] + notes)

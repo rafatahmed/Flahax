@@ -85,7 +85,14 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(result.target_ph, 6.5)
         self.assertEqual(result.water['Ca'], 20)
         self.assertFalse(result.recommendation['feasible'])
-        self.assertEqual(result.stages['formulation'].status, 'blocked')
+        # G25: missed targets are reported deviations; only a broken maximum blocks.
+        self.assertEqual(result.stages['formulation'].status, 'requires_review')
+        self.assertIsNone(result.stages['formulation'].error_code)
+        self.assertEqual(
+            result.stages['formulation'].message,
+            'targets missed: N_NO3 -5.37 %, P -1.05 %, K +3.01 %, Ca +3.31 %, Mg +1.94 %, '
+            'S -1.88 %, Fe +0.1 %, Mn -100 %, Zn +0.00512 %, Cu +0.00176 %, Mo -100 %',
+        )
         # G23/G24: N_NH4 0 is no requirement; calcium nitrate's NH4-N is within the allowance
         # min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
         self.assertEqual(result.recommendation['ammoniumLimit']['mgPerL'], 12.8)

@@ -28,6 +28,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
+from .requirement_fit import met
 from .nutrient_acceptance import (
     assess_incidental,
     assess_water_basis,
@@ -178,9 +179,25 @@ def unreviewed_reason(recommendation):
     )
 
 
+def blocks(recommendation):
+    """True when a recipe cannot be used at all: it breaks a declared maximum. A missed target
+    is not a block; it is a reported deviation (G25)."""
+    return bool(recommendation['limitViolations'])
+
+
+def missed_message(recommendation):
+    """The targets a recipe misses beyond the numerical tolerance, in plain words, or None."""
+    missed = [
+        f'{r["symbol"]} {r["deltaPct"]:+.3g} %'
+        for r in recommendation['rows']
+        if r['target'] and r['deltaPct'] is not None and not met(r['target'], r['final'])
+    ]
+    return ('targets missed: ' + ', '.join(missed)) if missed else None
+
+
 def limit_message(recommendation):
     """Why a recipe is not feasible, in plain words: a declared maximum it breaks, else the
-    targets it misses by >1 %."""
+    targets it misses beyond the numerical tolerance."""
     broken = [
         f'{v["symbol"]} would be {v["ppm"]:.3g} mg/L, above the declared maximum '
         f'{v["maximumPpm"]:.3g} mg/L'
@@ -188,16 +205,7 @@ def limit_message(recommendation):
     ]
     if broken:
         return '; '.join(broken)
-    missed = [
-        f'{r["symbol"]} {r["deltaPct"]:+.1f} %'
-        for r in recommendation['rows']
-        if r['target'] and r['deltaPct'] is not None and abs(r['deltaPct']) > 1
-    ]
-    return (
-        ('targets missed by more than 1 %: ' + ', '.join(missed))
-        if missed
-        else 'no recipe meets the targets'
-    )
+    return missed_message(recommendation) or 'no recipe meets the targets'
 
 
 def no_reagent_message(plan):
@@ -316,15 +324,25 @@ def plan_fertilizer_workflow(
             stages[name] = WorkflowStage('needs_input', required_inputs=absent)
         return bool(absent)
 
+    # Only a broken declared maximum blocks; a missed target is a reported deviation (G25).
     stages['formulation'] = WorkflowStage(
-        'calculated' if recommendation['feasible'] else 'blocked',
+        'blocked' if blocks(recommendation) else 'calculated',
         value=recommendation,
-        error_code=None if recommendation['feasible'] else 'infeasible_recipe',
-        message=None if recommendation['feasible'] else limit_message(recommendation),
+        error_code='infeasible_recipe' if blocks(recommendation) else None,
+        message=limit_message(recommendation) if blocks(recommendation) else None,
     )
-    if recommendation['feasible'] and recommendation['requiresReview']:
-        stages['formulation'].status = 'requires_review'
-        stages['formulation'].message = unreviewed_reason(recommendation)
+    if not blocks(recommendation):
+        reasons = [
+            reason
+            for reason in (
+                missed_message(recommendation),
+                unreviewed_reason(recommendation) if recommendation['requiresReview'] else None,
+            )
+            if reason
+        ]
+        if reasons:
+            stages['formulation'].status = 'requires_review'
+            stages['formulation'].message = '; '.join(reasons)
     recipe = None
     if final_volume is None:
         stages['batch'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
@@ -572,7 +590,7 @@ def plan_fertilizer_workflow(
     ):
         if recipe is None:
             stages['titration'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
-        elif not recommendation['feasible']:
+        elif blocks(recommendation):
             stages['titration'] = WorkflowStage(
                 'blocked', error_code='infeasible_recipe', message=limit_message(recommendation)
             )
@@ -642,7 +660,7 @@ def plan_fertilizer_workflow(
             )
         elif stages['chemistry'].status not in USABLE:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='chemistry_required')
-        elif not recommendation['feasible']:
+        elif blocks(recommendation):
             stages['acid_selection'] = WorkflowStage(
                 'blocked', error_code='infeasible_recipe', message=limit_message(recommendation)
             )
@@ -747,7 +765,7 @@ def plan_fertilizer_workflow(
                 elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
                     stages['ph_adjustment'].status = 'requires_review'
                     missed = ', '.join(
-                        f'{u["symbol"]} {u["deltaPct"]:+.1f}% ({u["reason"]})'
+                        f'{u["symbol"]} {u["deltaPct"]:+.3g} % ({u["reason"]})'
                         for u in chosen.recommendation.get('unmetTargets', [])
                     )
                     stages['ph_adjustment'].message = '; '.join(

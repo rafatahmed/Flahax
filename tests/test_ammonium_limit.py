@@ -52,7 +52,8 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertEqual(result["ammoniumLimit"]["absoluteCapMgPerL"], CAP)
         self.assertLessEqual(final(result, "N_NH4"), CAP)
 
-    # Owner catalogue: re-enable in PR 3 (G25)
+    # Runs on the frozen pre-2026-10-29 catalogue: the packaged one has no Chilli
+    # (maximumyield), and its Tomato (Howard Resh) cannot be met exactly (N_NO3 +1.86 %).
     def test_target_exact_recipes_now_pass_within_the_limit(self):
         for name in ("Chilli (maximumyield)", "Tomato (Howard Resh)"):
             with self.subTest(formula=name):

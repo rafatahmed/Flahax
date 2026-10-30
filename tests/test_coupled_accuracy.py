@@ -12,6 +12,7 @@ from flahax.delivery_contracts import DeliveryError
 
 from flahax import recommend
 from flahax.ph_adjustment import _blend_recipe, _couple
+from flahax.requirement_fit import met
 from tests.test_ph_adjustment import coupled, amended_ph
 from tests.catalogue_history import historical_catalogue
 
@@ -131,8 +132,8 @@ class CoupledAccuracyTests(unittest.TestCase):
         self.assertEqual(candidate.recommendation['limitViolations'], [])
         self.assertAlmostEqual(amended_ph(candidate), 5.8, places=4)
         for row in candidate.recommendation['rows']:
-            if row['deltaPct'] is not None:
-                self.assertLessEqual(abs(row['deltaPct']), 1)
+            if row['target']:
+                self.assertTrue(met(row['target'], row['final']), row['symbol'])
 
     # Owner catalogue: re-enable in PR 4 (G5)
     def test_initial_direction_and_numerical_failures_are_not_used_as_bounds(self):

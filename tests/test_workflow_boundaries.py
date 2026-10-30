@@ -94,8 +94,26 @@ class WorkflowBoundaryTests(unittest.TestCase):
         for supplied, code in [([], 'invalid_type'), (water, 'inconsistent_water_analysis')]:
             result = self.workflow(titration=config | {'water_analysis': supplied})
             self.assertEqual(result.stages['titration'].error_code, code)
+        # G25: a K maximum of 0 forces a K shortfall, a reported deviation, not a block.
         result = self.workflow(titration=config, maximum_concentrations={'K': 0})
+        self.assertEqual(result.stages['formulation'].status, 'requires_review')
+        self.assertEqual(result.stages['formulation'].message, 'targets missed: K -100 %')
+        self.assertEqual(result.stages['titration'].error_code, 'inconsistent_water_analysis')
+        # Only a broken declared maximum blocks: water sodium 5 mg/L above a 1 mg/L maximum.
+        result = plan_fertilizer_workflow(
+            self.salts,
+            {'K': 10},
+            {'Na': 5},
+            6.5,
+            final_volume=VolumeLitres(100),
+            titration=config,
+            maximum_concentrations={'Na': 1},
+        )
         self.assertEqual(result.stages['titration'].error_code, 'infeasible_recipe')
+        self.assertEqual(
+            result.stages['titration'].message,
+            'Na would be 5 mg/L, above the declared maximum 1 mg/L',
+        )
 
     def test_titration_nutrient_tolerance_and_maximum_are_checked_after_dosing(self):
         water, curve, reagent = inputs()
@@ -209,14 +227,22 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         config = dict(
             products=ACIDS, maximum_nutrient_error_percent=1, maximum_reagent_volume_litres=1e-20
         )
-        for maxima, expected in [(None, 'no_acceptable_acid'), ({'K': 0}, 'infeasible_recipe')]:
+        # G25: a K maximum of 0 forces a K shortfall, a reported deviation, so acid selection
+        # runs; only a broken declared maximum (water sodium 46 mg/L above 10 mg/L) blocks it.
+        sodium = 0.002 * 22.98977 * 1000  # Na+ 0.002 mol/kg, as in the chemistry water
+        salty = self.config | dict(water_totals={'Na+': 0.002, 'CO3-2': 0.001})
+        for water, equilibrium, maxima, expected in [
+            ({}, self.config, None, 'no_acceptable_acid'),
+            ({}, self.config, {'K': 0}, 'no_acceptable_acid'),
+            ({'Na': sodium}, salty, {'Na': 10}, 'infeasible_recipe'),
+        ]:
             flow = plan_fertilizer_workflow(
                 self.pool,
                 {'K': 10},
-                {},
+                water,
                 6.5,
                 final_volume=VolumeLitres(100),
-                equilibrium=self.config,
+                equilibrium=equilibrium,
                 acids=config,
                 maximum_concentrations=maxima,
             )

@@ -11,6 +11,7 @@ from examples import tomato_advanced, tomato_simple
 from examples.common import serializable
 from examples.tomato_report import build
 from flahax import load_library
+from flahax.requirement_fit import met
 from flahax.tank_grouping import _class_conflict, product_classes
 from tests.catalogue_history import historical_catalogue
 
@@ -27,7 +28,6 @@ def compatible(tank):
 
 class SimpleTomatoTests(unittest.TestCase):
     # Owner catalogue: re-enable in PR 4 (G5)
-    # Owner catalogue: re-enable in PR 3 (G25)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -36,7 +36,7 @@ class SimpleTomatoTests(unittest.TestCase):
     def test_recipe_meets_every_target_and_scales_to_the_batch(self):
         self.assertTrue(self.r['feasible'])
         for row in self.r['nutrients']:
-            self.assertLessEqual(abs(row['deltaPct']), 1.0, row['symbol'])
+            self.assertTrue(met(row['target'], row['final']), row['symbol'])
         for item in self.r['recipe']:
             self.assertAlmostEqual(
                 item['grams_in_batch'], item['grams_per_litre'] * self.r['batch_litres'], places=6
