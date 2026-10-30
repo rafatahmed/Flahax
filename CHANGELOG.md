@@ -41,7 +41,8 @@ each release, with numbers, sources and decisions, are in
 - Fit N_NO3, N_NH4 and N_UREA each as its own target and report total N as their sum; an
   absent N_UREA is a declared zero; N_NH4 0 is no requirement, not a ban, and incidental NH4-N
   is held within min(10 % of total N, 1.5 mmol/L), Dutch soilless practice, shown in
-  `ammoniumLimit` and the batch summary (#209, #201).
+  `ammoniumLimit`, the batch summary, the report and the sheets; `solve_weights` applies the
+  same allowance (#209, #201).
 
 - The packaged catalogue is the owner's Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
 

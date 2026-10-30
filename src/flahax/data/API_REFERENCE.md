@@ -704,13 +704,15 @@ Source module: `flahax.engine`. Import with `from flahax import recommend`.
 ### `solve_weights`
 
 ```text
-solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0) -> 'dict'
+solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0, *, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
 ```
 
 Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
 
-Nitrogen forms are fitted as in ``recommend`` (each its own row; a zero N_NH4 sets no row
-and no ban). No ammonium allowance is applied here: incidental NH4-N is reported only.
+Nitrogen forms and the ammonium allowance follow ``recommend``: each form is its own row,
+a zero N_NH4 sets no row and no ban, and incidental NH4-N is held within
+min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in ammoniumLimit with
+its basis. totalN reports the sum of the forms.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 
