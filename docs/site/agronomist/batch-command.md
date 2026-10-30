@@ -82,11 +82,13 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 
 - `--acid` takes the formula, mass fraction and density (kg/L) from your
   certificate, plus an optional name. Repeat it to offer more than one acid.
-- If the feed needs raising instead, FlahaX also tries the packaged bases:
-  potassium hydroxide 45 %, potassium bicarbonate and potassium carbonate.
+- FlahaX also tries the packaged pH products: potassium hydroxide 45 %,
+  potassium bicarbonate and potassium carbonate to raise the pH, and phosphoric
+  acid 75 % and nitric acid 65 % to lower it.
 - `--limit` sets each maximum in the final solution. A maximum also allows that
   ion in the recipe up to the limit. For example, `--limit Cl=...` lets FlahaX
-  use a chloride fertilizer if it helps, while staying under the limit.
+  use a chloride fertilizer you supply with `--products` if it helps, while
+  staying under the limit (the packaged catalogue has no chloride product).
 - `--volume` sets the batch size (default 1000 L), `--ph` the target pH
   (default 5.8) and `--ratio` the injection ratio (default 1:100).
 
@@ -98,7 +100,8 @@ FlahaX writes three files into the new folder:
 - `summary.json`: the same numbers, for your records or other software.
 
 The command's exit code is 0 for a ready plan or one that needs review, and 3
-for a blocked plan.
+for a blocked plan. A run whose formulation cannot meet a target, with no other
+stage blocking it, ends **Requires review** (exit 0) and reports each shortfall.
 
 ## Step 4. Read the batch sheet
 
@@ -156,8 +159,8 @@ value on the sheet rather than relying on this arithmetic alone.
 ### Historical 0.6.0 figures
 
 The following table and quoted doses are retained publication history, not current mixing instructions.
-A current run of step 3 is blocked: no reagent is selected, the phosphate EC fit does not
-cover the resulting ionic strength, and stock assignment retains three separated tanks.
+A current run of step 3 on the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0) is
+blocked; read the reasons on its sheet rather than the figures below.
 Product chloride can contribute up to the explicit final chloride limit; the water-only
 chloride value below is not necessarily the current final concentration.
 
@@ -213,7 +216,8 @@ fertilizers do.
 
 **On RO water only** (`--water ro`), the same formula needs 47 mL of nitric
 acid per 1000 L: RO water has no bicarbonate, and the mix sits at pH 6.9.
-Without an `--acid` the sheet is blocked: no base can lower the pH. A full,
+Historically, without an `--acid` the sheet was blocked: no base can lower the pH;
+the packaged catalogue now includes phosphoric and nitric acid. A full,
 scripted version of the brackish-well example, with charts, is in the
 repository (`python -m examples.tomato_report --output tomato-report`).
 

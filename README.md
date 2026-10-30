@@ -143,7 +143,7 @@ exit 3 for a blocked result. Always inspect the returned qualifications and limi
 | Layer | Capability | Boundary |
 |---|---|---|
 | Formulation | Chooses salts and grams from the full shipped library to meet a fixed crop formula after subtracting the source water | Non-negative least squares; the formula is not altered |
-| Equilibrium chemistry | One mixed aqueous model for all 32 catalogue products: 197 aqueous species, 28 solid phases, ion pairs, chelates and saturation indices | 25 °C, Davies activities up to ionic strength 0.1 mol/kg, fixed oxidation states, closed inorganic carbon |
+| Equilibrium chemistry | One mixed aqueous model for all 29 catalogue products: 197 aqueous species, 28 solid phases, ion pairs, chelates and saturation indices | 25 °C, Davies activities up to ionic strength 0.1 mol/kg, fixed oxidation states, closed inorganic carbon |
 | pH and acid | Calculated initial pH; nitric-acid dose to a target pH; standard workflow with nitric and phosphoric acid, using supplied assay and density | An initial dose estimate; measure after mixing |
 | Delivery planning | Stock-tank grouping with compatibility and solubility checks, reagent volumes, pump and injector flow sizing, composed delivery plans | Uses caller-supplied product, compatibility and equipment records; no equipment model selection |
 | Conductivity | Approximate EC screening for supported products; EC from a measured calibration profile | Dilute, pre-acid screening with unknown accuracy; no validated concentrated-stock model yet |
@@ -258,7 +258,9 @@ for FlahaX; conductivity from McCleskey et al. (2012) and Pethybridge et al.
 (2006); stock solubility from the CRC Handbook of Chemistry and Physics, Yara
 and the U.S. Coast Guard CHRIS database; supplier assays from Haifa,
 Sigma-Aldrich and ChemicalBook; concentrate-tank rules from Yara; and crop
-formulas from the authors named in the library. The full list, the
+formulas from the authors named in the library. The packaged catalogue is Flaha
+Agri Tech Analysis Ver 0.0 (owner-supplied, not independent laboratory
+verification): 24 fertilizers, 5 pH products and 13 crop formulas. The full list, the
 modifications and the USGS User Rights Notice are in
 [`NOTICE`](https://github.com/rafatahmed/Flahax/blob/main/NOTICE); the
 references are also in `CITATION.cff`.
