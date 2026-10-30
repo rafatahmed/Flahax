@@ -102,7 +102,7 @@ class ReagentDoseTests(unittest.TestCase):
 
 
 class CatalogueTests(unittest.TestCase):
-    def test_catalogue_offers_three_sourced_bases(self):
+    def test_catalogue_offers_five_sourced_reagents(self):
         records = {r['chemicalFormula']: r for r in catalogue_ph_reagents()}
         # The owner catalogue adds phosphoric and nitric acid as pH reagents.
         self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3', 'H3PO4', 'HNO3'})
@@ -120,6 +120,27 @@ class CatalogueTests(unittest.TestCase):
                 'Potassium Carbonate',
             }
         )
+
+    def test_recommend_never_selects_a_ph_reagent_for_an_owner_formula(self):
+        # The owner catalogue (Flaha Agri Tech Analysis Ver 0.0), loaded at test time.
+        owner = load_library()
+        reagents = {s['name'] for s in owner['salts'] if s.get('role') == 'ph_reagent'}
+        self.assertEqual(
+            reagents,
+            {
+                'Potassium Hydroxide (45% solution)',
+                'Phosphoric Acid (75%)',
+                'Nitric Acid (65% solution)',
+                'Potassium Bicarbonate',
+                'Potassium Carbonate',
+            },
+        )
+        self.assertEqual(len(owner['formulas']), 13)
+        for formula in owner['formulas']:
+            with self.subTest(formula=formula['name']):
+                result = recommend(owner['salts'], formula['targets'], {}, allow_carbonates=True)
+                self.assertTrue(result['salts'])
+                self.assertFalse({s['name'] for s in result['salts']} & reagents)
 
 
 class CoupledWorkflowTests(unittest.TestCase):
