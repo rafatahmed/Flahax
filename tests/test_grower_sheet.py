@@ -17,6 +17,7 @@ from flahax.canonical_result import seal_summary
 from flahax.mix_results import _nutrient_rows
 from flahax.grower_sheet import agronomist_rows, render_mix_sheet
 from tests.test_growers_page import WELL
+from tests.catalogue_history import historical_catalogue
 
 NITRIC = ['HNO3:0.60:1.37:Nitric acid 60%']
 TANKS = {'A': 20, 'B': 20, 'acid': 20}
@@ -35,8 +36,10 @@ def tomato_ro():
 
 
 class SheetTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.ro = tomato_ro()
         cls.tmp = tempfile.TemporaryDirectory()
         well = Path(cls.tmp.name) / 'well.json'
@@ -56,7 +59,9 @@ class SheetTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_sheet_weighs_for_prepared_volume(self):
+        self.enterContext(historical_catalogue())
         a = next(t for t in self.ro['tanks']['tanks'] if t['name'] == 'A')
         calcium = next(p for p in a['products'] if p['name'] == 'Calcium Nitrate (ag grade)')
         recipe = next(p for p in self.ro['formulation']['salts'] if p['name'] == calcium['name'])
@@ -92,7 +97,9 @@ class SheetTests(unittest.TestCase):
         listed = [r['target'] is None for r in agronomist_rows(self.well)]
         self.assertEqual(listed, sorted(listed))  # formula nutrients first, then the others
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_depth_one_has_no_nutrient_table(self):
+        self.enterContext(historical_catalogue())
         self.assertNotIn('Nutrients, mg/L', render_mix_sheet(self.ro, 1))
         two = render_mix_sheet(self.ro, 2)
         self.assertIn('Nutrients, mg/L', two)
@@ -131,7 +138,9 @@ class SheetTests(unittest.TestCase):
             self.assertIn('undefined (zero target)', render_mix_sheet(summary, 2))
             self.assertIn('undefined (zero target)', str(_nutrient_rows(summary)))
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_offline_evidence_roundtrips_with_escaped_text_and_partial_ec(self):
+        self.enterContext(historical_catalogue())
         summary = copy.deepcopy(self.ro)
         summary.pop('export_identity', None)
         summary.pop('calculation_identity', None)
@@ -161,7 +170,9 @@ class SheetTests(unittest.TestCase):
             self.assertNotIn('Direct batch: dissolve', page)
             self.assertNotIn('class="tick"', page)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_blocked_selected_reagent_remains_diagnostic(self):
+        self.enterContext(historical_catalogue())
         summary = copy.deepcopy(self.ro)
         summary.pop('export_identity', None)
         summary.pop('calculation_identity', None)

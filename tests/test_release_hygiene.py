@@ -13,6 +13,7 @@ import unittest
 from urllib.parse import unquote
 
 import flahax
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,6 +30,7 @@ class ReleaseHygieneTests(unittest.TestCase):
                 )
 
     def test_shipped_manual_examples(self):
+        self.enterContext(historical_catalogue())
         from importlib.resources import files
 
         manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')

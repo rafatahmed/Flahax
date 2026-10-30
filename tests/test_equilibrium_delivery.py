@@ -30,6 +30,7 @@ from flahax.product_conversion import catalogue_dose_totals
 from tests.test_ph_planning import record
 from tests.test_stock_assignments import synthetic_model
 from tests.test_pump_planning import calibration
+from tests.catalogue_history import historical_catalogue
 
 
 def recipe_for(doses, water_mass=95.0, volume=100.0):
@@ -78,8 +79,10 @@ def arguments():
 
 
 class EquilibriumDeliveryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.args = arguments()
         cls.plan = plan_equilibrium_delivery(**cls.args)
 

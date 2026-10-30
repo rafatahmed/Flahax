@@ -11,10 +11,13 @@ This consistency test does not certify global optimality or physical mixability.
 import unittest
 
 from flahax import VolumeLitres, load_library, plan_fertilizer_workflow
+from tests.catalogue_history import historical_catalogue
 
 
 class JointAuditRegressionTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_product_switch_diagnosis_matches_final_nutrient_rows(self):
+        self.enterContext(historical_catalogue())
         library = load_library()
         formula = next(
             row

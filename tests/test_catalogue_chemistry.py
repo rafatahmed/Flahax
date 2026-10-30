@@ -8,6 +8,7 @@ import unittest
 
 from flahax import assert_catalogue_coverage, chemistry_for_product, load_library
 from flahax.catalogue_chemistry import LIGAND_PROFILES
+from tests.catalogue_history import historical_catalogue
 
 
 class CatalogueChemistryTests(unittest.TestCase):
@@ -15,6 +16,7 @@ class CatalogueChemistryTests(unittest.TestCase):
         assert_catalogue_coverage(load_library()["salts"])
 
     def test_trace_blend_uses_declared_chelate_sources(self):
+        self.enterContext(historical_catalogue())
         record = chemistry_for_product("CH - micro")
         self.assertEqual(record.family, "edta_borax_molybdate_blend")
         self.assertIn("Fe(III)-EDTA", record.components)

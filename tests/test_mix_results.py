@@ -20,6 +20,7 @@ from flahax.mix_cli import main
 from flahax.mix_results import first_view, handle_results, results_lines
 from flahax.terminal import glyphs
 from tests.test_output_consistency import ANSWERS
+from tests.catalogue_history import historical_catalogue
 
 UTF8 = glyphs('utf-8')
 ANSI = re.compile(r'\x1b\[[0-9;?]*[A-Za-z]')
@@ -63,8 +64,10 @@ def presentation_summary(actual):
 
 
 class ResultViewTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             answers = list(ANSWERS)
             with mock.patch.dict(os.environ, {'FLAHAX_HOME': str(Path(tmp) / 'home')}):
@@ -93,7 +96,9 @@ class ResultViewTests(unittest.TestCase):
             self.assertIn(expected, text)
             self.assertNotIn('all dissolve', text)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_real_workflow_remains_phase_blocked_without_reagent(self):
+        self.enterContext(historical_catalogue())
         self.assertEqual(self.summary['status'], 'blocked')
         self.assertTrue(self.summary['chemistry']['phase_assessment']['blocks'])
         self.assertIsNone(self.summary['ph']['selected'])
@@ -103,7 +108,9 @@ class ResultViewTests(unittest.TestCase):
         self.assertNotIn('sets the batch', tanks)
         self.assertNotIn('Synthetic rendering reagent', tanks)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_tanks_match_sheet(self):
+        self.enterContext(historical_catalogue())
         summary = presentation_summary(self.summary)
         tanks, sheet = '\n'.join(screen(summary, 0)), sheet_text(summary, 1)
         for tank in summary['tanks']['tanks']:
@@ -117,7 +124,9 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn(f'{acid} mL', sheet)
         self.assertIn('no acid in this tank', tanks)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_nutrients_match_sheet(self):
+        self.enterContext(historical_catalogue())
         nutrients, sheet = '\n'.join(screen(self.summary, 1)), sheet_text(self.summary, 2)
         self.assertIn('From water', nutrients)
         for row in agronomist_rows(self.summary):
@@ -161,7 +170,9 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn(grams(product['gramsPerBatch']), row)
         self.assertLessEqual(len(row), 79)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_base_reagent_is_not_called_acid(self):
+        self.enterContext(historical_catalogue())
         summary = presentation_summary(self.summary)
         summary['ph']['selected']['direction'] = 'base'
         tanks = '\n'.join(screen(summary, 0))
@@ -180,7 +191,10 @@ class ResultViewTests(unittest.TestCase):
         summary['ph'] = None
         self.assertFalse(any(line.strip().startswith('pH:') for line in screen(summary, 1)))
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_status_colour_follows_the_status(self):  # 132
+        self.enterContext(historical_catalogue())
+
         def status_line(summary):
             lines = results_lines(summary, 0, 100, 40, 0, UTF8, 'out')
             return lines[2]
@@ -219,7 +233,9 @@ class ResultViewTests(unittest.TestCase):
         self.assertFalse(any(re.search(r'[0-9][-+][0-9]', line) for line in table), table)
         self.assertTrue(any(' -200.00 (-100.0 %)' in line for line in lines))
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_tank_cards_keep_their_border_at_80_columns(self):  # 141
+        self.enterContext(historical_catalogue())
         lines = screen(presentation_summary(self.summary), 0, 80, 60)
         cards = [line for line in lines if line.strip().startswith('│')]
         self.assertTrue(cards)

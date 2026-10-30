@@ -16,6 +16,7 @@ import unittest
 from unittest.mock import patch
 
 from tools import phreeqc_evidence as evidence
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,6 +51,7 @@ class CaptureOrchestrationTests(unittest.TestCase):
         ]
 
     def test_product_capture_branches_preserve_identity_and_refuse_bad_acid(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()):
             root = Path(folder)
             install = self.setup_install(root)
@@ -97,6 +99,7 @@ class CaptureOrchestrationTests(unittest.TestCase):
                 evidence.generate(exe, base, ['mixed_target_ph_nitric'], destination=root / 'base')
 
     def test_acid_phase_and_historical_capture_scripts_use_temporary_destinations(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()):
             root = Path(folder)
             install = self.setup_install(root)
@@ -130,6 +133,7 @@ class CaptureOrchestrationTests(unittest.TestCase):
                 self.assertTrue(all(json.loads(p.read_text())['exit_code'] == 1 for p in reports))
 
     def test_merge_requires_terminal_end_and_optional_gamma_is_optional(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             base = root / 'bad.dat'

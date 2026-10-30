@@ -10,6 +10,7 @@ import unittest
 from flahax import InputError, gap_for, load_library, recommend
 from flahax.composition import assay_conflict, assay_drift, theoretical_assay
 from flahax.engine import _lstsq, nnls
+from tests.catalogue_history import historical_catalogue
 
 TARGETS = {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}
 
@@ -92,6 +93,7 @@ class CompositionGuards(unittest.TestCase):
         self.assertIn("P assay 23.706% vs formula 31.61%", notes["Phosphoric Acid (75%)"])
 
     def test_chloride_salts_are_used_only_with_consent(self):
+        self.enterContext(historical_catalogue())
         library = load_library()
         chloride = sorted(
             salt["name"] for salt in library["salts"] if float(salt["elements"].get("Cl") or 0) > 0

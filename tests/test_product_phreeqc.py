@@ -26,6 +26,7 @@ from tools.phreeqc_evidence import (
     verify_reference_inventory,
     verify_reference_installation,
 )
+from tests.catalogue_history import historical_catalogue
 
 
 def cases():
@@ -49,6 +50,7 @@ class ProductGoldenTests(unittest.TestCase):
                 self.assertLessEqual(abs(row['pct_err']), 0.1)
 
     def test_runtime_equivalence_conservation_and_convergence(self):
+        self.enterContext(historical_catalogue())
         for path in cases():
             with self.subTest(case=path.parent.name):
                 data = json.loads(path.read_text())

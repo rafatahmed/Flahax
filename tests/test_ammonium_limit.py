@@ -7,8 +7,12 @@
 import unittest
 
 from flahax import load_library, recommend
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# Formulas and products of the pre-owner catalogue: Chilli (maximumyield) is not in the owner
+# catalogue, and the owner Tomato (Howard Resh) declares N_NH4 = 0.
+with historical_catalogue():
+    LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
 
 
@@ -25,6 +29,7 @@ def total_n(targets):
 
 
 class AmmoniumLimitTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_fraction_is_explicit_and_default_adds_no_limit(self):
         targets = formula("Tomato (Howard Resh)")["targets"]  # total N 140 -> 14 mg/L
         self.assertIsNone(recommend(SALTS, targets, {})['ammoniumLimit'])
@@ -40,6 +45,8 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertIsNone(result["ammoniumLimit"]["absoluteCapMgPerL"])
         self.assertLessEqual(final(result, "N_NH4"), 32)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 3 (G25)
     def test_target_exact_recipes_now_pass_within_the_limit(self):
         for name in ("Chilli (maximumyield)", "Tomato (Howard Resh)"):
             with self.subTest(formula=name):

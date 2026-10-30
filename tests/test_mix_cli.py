@@ -19,6 +19,7 @@ from flahax.mix_cli import WATER_IONS, Prompts, main, number_answer, use_tui
 from flahax import __version__
 from flahax.mix_store import Store
 from tests.test_output_consistency import ANSWERS
+from tests.catalogue_history import historical_catalogue
 
 FIXTURES = Path(__file__).resolve().parent / 'fixtures' / 'mix'
 
@@ -87,6 +88,7 @@ class MixTests(unittest.TestCase):
         return code, lines, target
 
     def test_first_run_tomato_ro_fill_mode(self):
+        self.enterContext(historical_catalogue())
         code, lines, target = self.full()
         self.assertEqual(code, 3, '\n'.join(lines))
         sheet = (target / 'batch-sheet.html').read_text(encoding='utf-8')
@@ -221,9 +223,11 @@ class MixTests(unittest.TestCase):
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_do_not_mix_always_says_why(self):
         # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
         # empty.
+        self.enterContext(historical_catalogue())
         code, lines, _ = self.run_mix(
             SPEC + RO + TOMATO + CATALOGUE + ['2'] + END,
             '--output',
@@ -329,6 +333,7 @@ class MixTests(unittest.TestCase):
     def test_sweep_findings_acid_title_repeats(self):
         # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113
         # repeated notes.
+        self.enterContext(historical_catalogue())
         bad = ['1', '1', 'hno3', '60', '1.37', '', '']  # '1' refused, 'hno3' accepted as HNO3
         changed = (
             ['2', 'lettuce general', '180'] + [''] * 12 + ['']
@@ -383,6 +388,7 @@ class MixTests(unittest.TestCase):
         self.assertFalse(self.home.exists() and any(p.is_file() for p in self.home.rglob('*')))
 
     def test_formula_imbalance_warned_at_entry(self):
+        self.enterContext(historical_catalogue())
         code, lines, _ = self.run_mix(SPEC + RO + changed_tomato(K='600'))
         self.assertEqual(code, 1)
         warning = next(
@@ -406,7 +412,9 @@ class MixTests(unittest.TestCase):
             [(r['symbol'], r['maximumPpm']) for r in summary['limits']], [('Na', 69.0)]
         )
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_batch_reads_saved_items(self):
+        self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
             water_answers=water('well', BALANCED, alkalinity='2'), formula=changed_tomato(Ca='190')
         )
@@ -430,8 +438,10 @@ class MixTests(unittest.TestCase):
             )
         self.assertIn(code, (0, 3), out.getvalue())
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_blocked_result_says_do_not_mix_with_the_reason(self):
         # Source-water Na cannot be removed by selecting sodium-free products.
+        self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
             water_answers=water(
                 'sodium-over-limit',
@@ -515,7 +525,9 @@ class MixTests(unittest.TestCase):
         self.assertEqual(script.prompts[-3], script.prompts[-2])  # Ca asked again after 'x'
         self.assertTrue(script.prompts[-1].startswith('Mg, mg/L'), script.prompts[-1])
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_added_products_keep_notes_and_run_through_batch(self):
+        self.enterContext(historical_catalogue())
         single = [
             '2',
             'iron ii sulfate',
@@ -632,6 +644,7 @@ class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_with_explicit_only_ammonium_policy(self):
         # Historical numerical transcripts stay unchanged. This separate prefix
         # captures the current menu after preset retirement (#202).
+        self.enterContext(historical_catalogue())
         expected = json.loads(
             (FIXTURES / 'current-interview-prefix.json').read_text(encoding='utf-8')
         )

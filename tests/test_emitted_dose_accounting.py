@@ -46,7 +46,7 @@ class EmittedDoseTests(unittest.TestCase):
         library = load_library()
         products = [p for p in library['salts'] if assay_conflict(p) is None]
         by_id = {p['id']: p for p in products}
-        self.assertEqual(len(library['formulas']), 21)
+        self.assertEqual(len(library['formulas']), 13)
         for formula in library['formulas']:
             with self.subTest(formula=formula['name']):
                 result = recommend(products, formula['targets'], formula['water'])

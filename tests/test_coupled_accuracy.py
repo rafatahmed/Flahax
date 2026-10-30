@@ -13,6 +13,7 @@ from flahax.delivery_contracts import DeliveryError
 from flahax import recommend
 from flahax.ph_adjustment import _blend_recipe, _couple
 from tests.test_ph_adjustment import coupled, amended_ph
+from tests.catalogue_history import historical_catalogue
 
 
 class RecipeBlendTests(unittest.TestCase):
@@ -117,7 +118,9 @@ class CoupledFailureTests(unittest.TestCase):
 
 
 class CoupledAccuracyTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_direction_crossing_returns_a_real_phosphoric_plan(self):
+        self.enterContext(historical_catalogue())
         flow = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
         candidate = next(
             c for c in flow.stages['ph_adjustment'].value.candidates if c.formula == 'H3PO4'
@@ -131,7 +134,9 @@ class CoupledAccuracyTests(unittest.TestCase):
             if row['deltaPct'] is not None:
                 self.assertLessEqual(abs(row['deltaPct']), 1)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_initial_direction_and_numerical_failures_are_not_used_as_bounds(self):
+        self.enterContext(historical_catalogue())
         for code in ('wrong_reagent_direction', 'nonconvergent'):
             with patch(
                 'flahax.ph_adjustment.reagent_dose',
@@ -145,7 +150,9 @@ class CoupledAccuracyTests(unittest.TestCase):
                     self.assertEqual(candidate.error_code, code)
                     self.assertIsNone(candidate.target)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_only_acid_is_not_applicable_when_accuracy_fit_needs_base(self):
+        self.enterContext(historical_catalogue())
         flow = coupled('Tomato Stage.2 - first cluster (Howard Resh)')
         plan = flow.stages['ph_adjustment'].value
         self.assertLess(plan.unadjusted_ph, 5.8)
