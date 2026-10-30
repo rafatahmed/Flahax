@@ -51,6 +51,8 @@ ION_TABLE = {
     'B(OH)4-': ({'B': 1, 'O': 4, 'H': 4}, -1, 'B'),
     'B(OH)3': ({'B': 1, 'O': 3, 'H': 3}, 0, 'B'),
     'H3PO4': ({'H': 3, 'P': 1, 'O': 4}, 0, 'P'),
+    # A strong acid, fully dissociated in water (H+ + NO3-); its proton is implicit, as H3PO4's.
+    'HNO3': ({'H': 1, 'N': 1, 'O': 3}, 0, 'N_NO3'),
     'CO(NH2)2': ({'C': 1, 'O': 1, 'N': 2, 'H': 4}, 0, 'N_UREA'),
     'citrate': ({'C': 6, 'H': 5, 'O': 7}, -3, None),
 }
@@ -279,7 +281,7 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
             family = 'neutral_urea'
         elif 'citrate' in ions:
             family = 'citrate_salt'
-        elif 'H3PO4' in ions:
+        elif 'H3PO4' in ions or 'HNO3' in ions:
             family = 'macro_acid'
         elif 'OH-' in ions:
             family = 'strong_base'
@@ -298,6 +300,8 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
             if 'CO(NH2)2' in ions
             else f'project-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
             if status == 'assumed_blend'
+            else f'owner-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
+            if status == 'declared_blend'
             else PHREEQC_MINTEQ_V4
         )
     return ProductChemistry(name, family, components, source, ions=tuple(ions.items()))

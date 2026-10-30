@@ -23,7 +23,7 @@ from flahax.materials import (
     make_lot,
     resolve_material,
 )
-from tests.catalogue_history import historical_catalogue
+from tests.catalogue_history import historical_catalogue, historical_library
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 
@@ -55,6 +55,7 @@ CHARGES = {
     'Fe(III)-DTPA': -2,
     'Fe(III)-o,o-EDDHA': -1,
     'H3PO4': 0,
+    'HNO3': 0,
     'B(OH)3': 0,
     'CO(NH2)2': 0,
 }
@@ -77,9 +78,11 @@ REQUIRED_KEYS = {
 
 class IdentityTests(unittest.TestCase):
     def test_every_catalogue_product_has_exactly_one_identity(self):
+        # Retired pre-owner products keep their records: the frozen catalogue still uses them.
         names = [s['name'] for s in load_library()['salts']]
+        frozen = [s['name'] for s in historical_library()['salts']]
         covered = [p for i in load_identities().values() for p in i['products']]
-        self.assertEqual(sorted(names), sorted(covered))
+        self.assertEqual(sorted(covered), sorted(set(names) | set(frozen)))
 
     def test_theoretical_analysis_matches_independent_audit_values(self):
         audit = json.loads((FIXTURES / 'audit_theory.json').read_text(encoding='utf-8'))
@@ -169,7 +172,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_identities_file_is_pinned(self):
         self.assertEqual(
-            IDENTITIES_SHA256, 'c28b07fc3d9988653b710ec960286d8de2120db38550b84916ed6265d833582c'
+            IDENTITIES_SHA256, '1be83c01af94e283170dc2d971007e04bd7b62033befc1bd7d24380216eebe1a'
         )
 
 

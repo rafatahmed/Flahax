@@ -39,6 +39,8 @@ IDENTITY_STATUSES = frozenset(
         'commercial_double_salt',
         'aqueous_solution',
         'assumed_blend',
+        # Owner-declared blend composition, not independently verified (2026-10-30).
+        'declared_blend',
     }
 )
 _REQUIRED = (
@@ -56,6 +58,8 @@ _REQUIRED = (
     'notes',
 )
 _THEORY_TOLERANCE = 1e-9
+# Blends dosed as one catalogue product; only the assumed one carries 'assumed_composition'.
+_BLEND_STATUSES = frozenset({'assumed_blend', 'declared_blend'})
 
 
 def _invalid(identity_id: str, message: str) -> None:
@@ -204,6 +208,7 @@ _ION_NUTRIENT_CHARGE = {
     'H2PO4-': ('P', -1),
     'HPO4-2': ('P', -2),
     'H3PO4': ('P', 0),
+    'HNO3': ('N_NO3', 0),
     'MoO4-2': ('Mo', -2),
     'B(OH)4-': ('B', -1),
     'B(OH)3': ('B', 0),
@@ -882,7 +887,7 @@ def resolve_material(
         band_minimum = {key: None for key in elements}
         band_maximum = {key: None for key in elements}
         composition = salt.get('composition') or (
-            'disclosed' if identity['status'] == 'assumed_blend' else 'single'
+            'disclosed' if identity['status'] in _BLEND_STATUSES else 'single'
         )
         flags: tuple = ()
         components: tuple = ()  # the shipped assumed blend keeps its own chemistry profile

@@ -17,7 +17,9 @@ from tests.catalogue_history import historical_catalogue
 
 
 class ProductConversionTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_every_catalogue_product_has_explicit_non_name_equilibrium_profile(self):
+        self.enterContext(historical_catalogue())
         for product in load_library()["salts"]:
             converted = convert_catalogue_product_dose(product, 1.0)
             self.assertIs(converted.chemistry, chemistry_for_product(product["name"]))
