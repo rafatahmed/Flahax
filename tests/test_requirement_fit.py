@@ -252,6 +252,76 @@ class NoReagentMessageTests(unittest.TestCase):
         )
 
 
+class StageMessageTests(unittest.TestCase):
+    """Exact wording of the stage messages growers read (G25)."""
+
+    def test_a_declared_zero_miss_names_its_amount(self):
+        from flahax.fertilizer_workflow import _miss
+
+        row = {'symbol': 'N_UREA', 'target': 0, 'final': 2e-6, 'deltaPct': None}
+        self.assertEqual(_miss(row), 'N_UREA 2e-06 mg/L for a declared 0')
+
+    def test_a_broken_maximum_is_named_before_any_miss(self):
+        from flahax.fertilizer_workflow import limit_message
+
+        violation = {'symbol': 'Na', 'ppm': 12.345, 'maximumPpm': 10}
+        self.assertEqual(
+            limit_message({'limitViolations': [violation], 'rows': []}),
+            'Na would be 12.3 mg/L, above the declared maximum 10 mg/L',
+        )
+        self.assertEqual(
+            limit_message({'limitViolations': [], 'rows': []}), 'no recipe meets the targets'
+        )
+
+    def test_no_reagent_offered_in_the_needed_direction(self):
+        from types import SimpleNamespace
+
+        plan = SimpleNamespace(direction='acid', unadjusted_ph=7.4, target_ph=6.0, candidates=[])
+        self.assertEqual(
+            no_reagent_message(plan),
+            'the feed mixes at pH 7.40 and needs an acid to reach pH 6.00; '
+            'none was offered: add an acid',
+        )
+
+    def test_the_water_mass_must_be_positive(self):
+        from flahax.delivery_contracts import DeliveryError
+        from flahax.fertilizer_workflow import _positive
+
+        for value in (0, -1.0, float('nan'), True, '1'):
+            with self.subTest(value=value), self.assertRaises(DeliveryError) as caught:
+                _positive(value, 'water_mass_kg')
+            self.assertEqual(caught.exception.code, 'invalid_value')
+            self.assertEqual(str(caught.exception), 'water_mass_kg must be finite and positive')
+
+    def test_joint_problem_targets_must_be_an_object(self):
+        from flahax import make_joint_problem
+        from flahax.delivery_contracts import DeliveryError
+
+        reagent = dict(
+            id='nitric',
+            chemicalFormula='HNO3',
+            massFraction=0.65,
+            densityKgPerL=1.3,
+            source='test',
+            revision='1',
+            recordedAt='2026-10-26',
+        )
+        inputs = dict(
+            water_components={},
+            final_volume_litres=100,
+            solvent_mass_kg=80,
+            target_ph=7,
+            reference_charge_mol_per_kg=0,
+            maximum_reagent_mass_g=20,
+        )
+        with self.assertRaises(DeliveryError) as caught:
+            make_joint_problem(
+                [], reagent, [('K', 1)], {}, reagent_solvent_fraction=0.35, **inputs
+            )
+        self.assertEqual(caught.exception.code, 'invalid_type')
+        self.assertEqual(str(caught.exception), 'targets must be an object')
+
+
 class PhBandTests(unittest.TestCase):
     """Potassium sulfate alone in RO water mixes at pH 6.5447: a target 5e-4 away plans a
     reagent whose dose converges on the target; 5e-5 away is met and plans none (G25)."""
