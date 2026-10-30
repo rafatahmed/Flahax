@@ -246,7 +246,7 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(final.ph, data['selected_rows'][-1]['pH'], delta=0.01)
         self.assertLess(abs(final.charge_balance), 1e-12)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_full_calculated_ph_acid_and_stock_path(self):
         self.enterContext(historical_catalogue())
         salt = products()[5]

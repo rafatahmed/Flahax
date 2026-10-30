@@ -262,6 +262,7 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
         self.assertEqual((ammonium['maximumPpm'], ammonium['assessment']), (14.0, 'within_limit'))
         self.assertEqual(blended['ammoniumLimit']['mgPerL'], 14.0)
 
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_legacy_nitric_candidate_has_no_ammonium_review(self):
         # The frozen pre-packaged catalogue: the packaged KNO3 is blocked by the label/charge
         # gate (G5) before any pH candidate is planned.

@@ -10,7 +10,7 @@ from flahax import load_library, recommend
 from flahax.engine import CEILING_MARGIN, CEILING_TOLERANCE, _fit_within, nnls
 from tests.catalogue_history import historical_catalogue
 
-# Generic Grow (maximumyield) is a pre-owner formula.
+# Generic Grow (maximumyield) is a formula of the 33c5df2 catalogue.
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]

@@ -81,7 +81,7 @@ class JointInputBoundaryTests(unittest.TestCase):
 
 
 class JointAcceptanceBoundaryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_missing_optional_start_uses_recipe_seed(self):
         self.enterContext(historical_catalogue())
         from tests import test_joint_workflow as fixtures
@@ -90,7 +90,7 @@ class JointAcceptanceBoundaryTests(unittest.TestCase):
         self.assertIsNotNone(stage.value.selected)
         self.assertAlmostEqual(stage.value.selected.target.ph, 5.8, delta=0.001)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_nutrient_failure_cannot_be_promoted_by_a_clear_chemical_judgement(self):
         self.enterContext(historical_catalogue())
         from tests import test_joint_workflow as fixtures

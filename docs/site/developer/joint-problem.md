@@ -58,7 +58,7 @@ R_charge = equilibrium.charge_balance - reference_charge_mol_per_kg
 The reference charge is a mandatory explicit input on the same W basis, never
 inferred from a nutrient subtotal. Protons/hydroxide are implicit in the reagent's
 conserved-component representation. Do not separately add a second acid equivalent
-or alkalinity correction. The data owner must establish the water/proton inventory;
+or alkalinity correction. Whoever supplies the data must establish the water/proton inventory;
 a declared empty water-component map means known absence, not unknown chemistry.
 
 `nutrientComponentDifference` discloses differences between analytical nutrient

@@ -173,7 +173,7 @@ If a legacy manually constructed pH plan has no retained state for the weighed
 recipe, chemistry is unavailable and EC is `not_supported` with reason
 `weighed_recipe_state_unavailable`; a rejected state is never substituted.
 
-The unchanged owner-session regression previously combined weighed pH 5.32 with
+The unchanged field-session regression previously combined weighed pH 5.32 with
 rejected-candidate mixed pH 5.20. It now consistently presents 5.32 for the weighed
 recipe and retains 5.20 only in the rejected-candidate diagnostic. This corrects
 state identity, not equilibrium parameters or acceptance tolerances.

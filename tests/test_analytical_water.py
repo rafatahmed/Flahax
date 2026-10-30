@@ -34,7 +34,7 @@ from tests.catalogue_history import historical_catalogue
 from tests.test_equilibrium_delivery import arguments
 from tests.test_measured_water import STATION_104
 
-# The pre-owner products and formulas these workflow tests were written against.
+# The 33c5df2 catalogue products and formulas these workflow tests were written against.
 with historical_catalogue():
     LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
@@ -117,8 +117,8 @@ class BalanceBeforeAdjustingTests(unittest.TestCase):
         self.assertEqual(b.carbon_source, 'none')
 
     def test_fixed_zero_chloride_is_never_adjusted_and_closes_on_the_alkalinity(self):
-        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100, owner
-        # 2026-10-23).
+        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100,
+        # decision 2026-10-23).
         water = {'K+': 0.00505, 'NO3-': 0.005, 'CO3-2': 0.0002, 'Cl-': 0.0}
         closed = balance_water_analysis(water, measured_ph=7)
         self.assertEqual(
@@ -167,7 +167,7 @@ class WorkflowLimitTests(unittest.TestCase):
             **extra,
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_a_laboratory_exceedance_blocks_even_when_the_model_passes(self):
         self.enterContext(historical_catalogue())
         nine = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(
@@ -181,7 +181,7 @@ class WorkflowLimitTests(unittest.TestCase):
         self.assertEqual(summary['limits'][0]['decision'], 'exceeds_limit')
         self.assertTrue(summary['limits'][0]['balancingChangesDecision'])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_a_laboratory_pass_is_not_rejected_by_the_model_but_asks_for_review(self):
         # Balanced on sodium: the model raises Na from 54.4 to 60.7 mg/L at 8%.
         self.enterContext(historical_catalogue())
@@ -222,7 +222,7 @@ class WorkflowLimitTests(unittest.TestCase):
         )
         self.assertEqual(workflow.stages['chemistry'].error_code, 'inconsistent_water_analysis')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_a_chloride_free_recipe_keeps_chloride_zero_throughout(self):
         self.enterContext(historical_catalogue())
         water = {'K+': 0.0005, 'NO3-': 0.0005, 'Cl-': 0.0, 'CO3-2': 0.0}
@@ -242,7 +242,7 @@ class WorkflowLimitTests(unittest.TestCase):
         self.assertIn('no adjustment was needed', render_report(summary))
         self.assertEqual([row['analyticalPpm'] for row in summary['limits']], [0.0])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_no_reagent_needed_still_gets_the_final_limit_check(self):
         # Salty water already over its own declared chloride maximum; target pH = the mix's own pH.
         self.enterContext(historical_catalogue())
@@ -273,7 +273,7 @@ class WorkflowLimitTests(unittest.TestCase):
 
 
 class NitricDeliveryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_rows_and_limits_use_the_analysis_and_the_dose_uses_the_chemistry(self):
         self.enterContext(historical_catalogue())
         args = arguments()
@@ -296,7 +296,7 @@ class NitricDeliveryTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.code, 'nutrient_limit_exceeded')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_a_balanced_record_brings_its_own_analysis(self):
         self.enterContext(historical_catalogue())
         args = arguments()
@@ -383,7 +383,7 @@ class BatchCommandTests(unittest.TestCase):
                     str(out) + '2',
                 )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_water_share_blends_the_analysis_with_ion_free_water(self):
         # The grower walkthrough (#80): the station 104 well as 8% and 9% of the batch water.
         self.enterContext(historical_catalogue())
@@ -462,7 +462,7 @@ class BatchCommandTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn('--water-share needs a measured water analysis', err)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chloride_free_water_does_not_fail_on_the_default_balance_ion(self):
         self.enterContext(historical_catalogue())
         water_totals = {'K+': 0.0005, 'NO3-': 0.0005, 'CO3-2': 0.0, 'Cl-': 0.0}

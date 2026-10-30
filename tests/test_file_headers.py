@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Every Python file starts with the FlahaX header in PEP 8 order (owner template, 2026-10-23)."""
+"""Every Python file starts with the FlahaX header in PEP 8 order (template of 2026-10-23)."""
 
 import ast
 from pathlib import Path

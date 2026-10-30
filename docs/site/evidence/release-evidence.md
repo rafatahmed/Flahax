@@ -43,7 +43,7 @@ workflow ([run 40032809873](https://github.com/rafatahmed/Flahax/actions/runs/40
 |---|---|
 | Release guard | Tag `v0.6.0` matched `pyproject.toml`; 0.6.0 was new on PyPI |
 | Workflow tests | Python 3.11, 3.12, 3.13 and 3.14 and the live PHREEQC replay passed on the tagged commit |
-| Approval | The owner approved the `pypi` deployment after the gates passed |
+| Approval | The maintainer approved the `pypi` deployment after the gates passed |
 | PyPI upload | Wheel 22:24:31 UTC (288,855 bytes); sdist 22:24:33 UTC (5,437,125 bytes). PyPI reports 0.6.0 with licence `Apache-2.0`, `Requires-Python >=3.11`, Development Status 4 - Beta, no runtime dependency, not yanked |
 | Fresh install from PyPI | New Python 3.14 virtual environment outside the checkout, `pip install flahax==0.6.0`: `flahax --version` prints FlahaX 0.6.0; 135 public names; the README example meets every target within 1 %; the packaged manual is the 0.6.0 manual; `flahax batch` writes the sheet, report and summary; `flahax mix --help` lists `--plain` |
 | Documentation | Read the Docs `stable` serves the restructured site (#155); old addresses such as `growers.html` redirect |
@@ -62,7 +62,7 @@ workflow (run [`39517327774`](https://github.com/rafatahmed/Flahax/actions/runs/
 triggered by the GitHub Release for tag `v0.5.0` on `main` at `692108b` (merge of
 [PR #70](https://github.com/rafatahmed/Flahax/pull/70)). Hosted CI had passed on `692108b`
 ([run 39517146974](https://github.com/rafatahmed/Flahax/actions/runs/39517146974): Python
-3.11, 3.12 and 3.13, live PHREEQC replay, docs). The owner authorized publication
+3.11, 3.12 and 3.13, live PHREEQC replay, docs). The maintainer authorized publication
 and instructed approval of the `pypi` deployment, which was then approved through
 the GitHub API after the review below.
 
@@ -135,7 +135,7 @@ What 0.5.0 changes scientifically:
 
 Remaining before publication, per the [publishing checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md):
 - hosted CI on the release revision;
-- explicit owner authorization;
+- explicit maintainer authorization;
 - the `v0.5.0` GitHub Release, the workflow's own build and gates, and approval of the `pypi` deployment;
 - PyPI metadata, hash identity and fresh-install verification;
 - the publication date in the changelog and the manual;
@@ -147,7 +147,7 @@ Remaining before publication, per the [publishing checklist](https://github.com/
 (run [`39043172800`](https://github.com/rafatahmed/Flahax/actions/runs/39043172800)),
 triggered by the GitHub Release for tag `v0.4.0` on `main` at `3610a59`
 (merge of [PR #18](https://github.com/rafatahmed/Flahax/pull/18)). It is the first release under the Apache License 2.0 and the
-first published through PyPI Trusted Publishing. The owner authorized
+first published through PyPI Trusted Publishing. The maintainer authorized
 publication and approved the `pypi` environment deployment.
 
 | Check | Result |
@@ -218,15 +218,15 @@ and two unreferenced 0.2.0 images were removed from `docs/`, so the sdist
 shrinks. No runtime code or packaged resource changed.
 
 Remaining before publication, per the [publishing checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md):
-hosted CI and the pinned live replay on the final revision; explicit owner
+hosted CI and the pinned live replay on the final revision; explicit maintainer
 authorization; a final build of the exact approved artifacts with recorded
 hashes; upload through the approved route; PyPI metadata and fresh-install
 verification; and the publication date and `v0.4.0` tag.
 
 ## 0.3.1 publication (2026-10-17)
 
-The owner authorized publication of 0.3.1 on 2026-10-17. Released revision: `main` at `586eddb` (merge of [PR #10](https://github.com/rafatahmed/Flahax/pull/10)), tagged
-`v0.3.1`. Route: manual Twine upload by the owner. No
+The maintainer authorized publication of 0.3.1 on 2026-10-17. Released revision: `main` at `586eddb` (merge of [PR #10](https://github.com/rafatahmed/Flahax/pull/10)), tagged
+`v0.3.1`. Route: manual Twine upload by the maintainer. No
 GitHub Release was created, so the automatic publish workflow did not run.
 
 | Step | Result |
@@ -247,7 +247,7 @@ GitHub Release was created, so the automatic publish workflow did not run.
 The audit-candidate hashes in the next section came from an earlier revision
 and are superseded by these.
 
-**0.3.0 yanked on 2026-10-17** by the owner in the PyPI web interface, after
+**0.3.0 yanked on 2026-10-17** by the maintainer in the PyPI web interface, after
 0.3.1 was live, with the public reason "Superseded by 0.3.1". The project's
 management page lists 0.3.0 under yanked releases. The yank was made because
 the 0.3.0 sdist contains the YaraVita PDF; yanked files stay downloadable by
@@ -283,7 +283,7 @@ and hashed again):
 | `flahax-0.3.1.tar.gz` | `45c2a729602456ba6ece6007c8b0095d69df15342d4630b8230cb1cae4106731` |
 
 Remaining before publication, per the [publishing checklist](https://github.com/rafatahmed/Flahax/blob/main/docs/publishing.md):
-explicit owner authorization; a final build of the exact approved artifacts
+explicit maintainer authorization; a final build of the exact approved artifacts
 with recorded hashes; upload through the approved route; PyPI metadata and
 fresh-install verification; and the publication date and `v0.3.1` tag. Hosted
 CI must also pass on the final revision that includes this audit.
@@ -367,7 +367,7 @@ historical evidence below is retained, not reclassified as a 0.3.1 result.
 
 ## 0.3.0 authorized publication exception (2026-09-27)
 
-On 2026-09-27 the owner explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the [post-release audit](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md); candidate-sdist evidence remains separate.
+On 2026-09-27 the maintainer explicitly approved manual PyPI publication using the verified local evidence despite the GitHub Actions billing blocker. This exception applies to the hosted publication gate for 0.3.0; it does not convert blocked checks into passes or imply independent/experimental validation. The release candidate passed clean-install/manual/metadata checks. On 2026-09-28, PyPI metadata confirmed both artifacts were uploaded on 2026-09-27. A fresh isolated Python 3.13 installation of the published wheel passed version/import checks, all four manual examples and both CLI entry points. See the [post-release audit](https://github.com/rafatahmed/Flahax/blob/main/docs/release-readiness.md); candidate-sdist evidence remains separate.
 
 ## 0.3.0 automated evidence
 
@@ -402,11 +402,11 @@ git status
 
 The complete unittest run passes **100 tests with zero failures/errors/skips**, including installed-PHREEQC live execution. Compilation and whitespace validation pass. Numerical tolerances and regeneration commands are in [PHREEQC reference fixtures](../models/reference-fixtures.md); executable/base/extension and output hashes are in each fixture's JSON.
 
-This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in the [chelate extension](../models/flahax-chelate-thermodynamic-profile.md). The original closure left independent review and lot-specific experimental validation to G6. The owner-amended [computational scope](computational-review.md) supersedes that release requirement without claiming experimental validation.
+This accepts the explicitly selected project parameterization, not universal chemical accuracy. In particular the inherited literature-derived Dtp/Edd profile and its activity/concentration and stereoisomer assumptions are disclosed in the [chelate extension](../models/flahax-chelate-thermodynamic-profile.md). The original closure left independent review and lot-specific experimental validation to G6. The amended [computational scope](computational-review.md) supersedes that release requirement without claiming experimental validation.
 
 ## Package and delivery continuation (2026-09-27)
 
-Package-verification work was based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the project owner. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
+Package-verification work was based on merged main `33febd41e1f2854c99275994cc98eaeaf1f0cc41`. No chemistry database, golden fixture or failure reproducer was changed. Assessor: **Rafat Al Khashan**, as designated by the maintainer. The [computational assessment](computational-review.md) separates that designation from automated evidence and does not fabricate a personal signature.
 
 | Requirement | Observed evidence | Acceptance |
 |---|---|---|
@@ -439,7 +439,7 @@ Result: **PASS: isolated wheel and sdist installs, resources, public APIs and bo
 
 `tools/provision_phreeqc.ps1` was tested both against the existing installation and with a fresh destination under TEMP. It downloads the official pinned MSI, administratively extracts outside the checkout and verifies all three hashes without modifying the base database. This is reference tooling, not a package runtime dependency.
 
-The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run [`36322890741`](https://github.com/rafatahmed/Flahax/actions/runs/36322890741)). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the account owner.
+The hosted GitHub run inspected during this increment did not execute because of the account billing lock (run [`36322890741`](https://github.com/rafatahmed/Flahax/actions/runs/36322890741)). Python 3.11/3.12 and the new hosted jobs have not been observed passing. No local result substitutes for that gate; account billing changes require the GitHub account holder.
 
 ## 0.3.0 release-readiness cleanup
 
@@ -449,7 +449,7 @@ Hosted [PR #3](https://github.com/rafatahmed/Flahax/pull/3) run [`36345628921`](
 
 ## 0.3.0 preparation
 
-Version metadata and citation now identify the owner-requested **0.3.0** candidate; no publication date is asserted. The user manual is a bundled package resource, and all four Python examples execute in source tests and both clean installed distributions. The build report includes the manual SHA-256, version, example count and distribution hashes. The documentation index and changelog distinguish current guidance from historical provenance.
+Version metadata and citation now identify the requested **0.3.0** candidate; no publication date is asserted. The user manual is a bundled package resource, and all four Python examples execute in source tests and both clean installed distributions. The build report includes the manual SHA-256, version, example count and distribution hashes. The documentation index and changelog distinguish current guidance from historical provenance.
 
 Final candidate source run: `$env:PYTHONPATH='src'; $env:FLAHAX_REQUIRE_PHREEQC='1'; py -3.13 -m unittest discover -s tests -t .` — **110 tests in 127.103 seconds, OK, zero skips**. Compilation and whitespace checks pass. `tools/verify_distribution.py --python <Python-3.13-executable> --artifacts-dir <new-empty-output-directory>` passes independent wheel/sdist installation, all manual examples and numerical/resource checks. `python -m twine check dist/0.3.0/*` passes for both first candidate archives. These are local build/metadata checks, not a PyPI upload or hosted-CI pass.
 
@@ -469,9 +469,9 @@ this evidence because their ligand data are not present.
 These still apply to every release:
 
 - **G2/G3:** the bounded mixed-product reference and model choices are implemented and numerically verified above; their declared conditions and source-profile limits must be kept.
-- **G6:** for the planning package, the owner asked for computational evidence without laboratory work; see the [computational assessment](computational-review.md). Independent and physical validation are not claimed.
+- **G6:** for the planning package, the maintainer asked for computational evidence without laboratory work; see the [computational assessment](computational-review.md). Independent and physical validation are not claimed.
 - **P7:** a separate, read-only FlahaFAST interface contract; it is not implemented in the package.
 
-The package remains a dependency-free **planning and verification prototype**. P2/P3 and the owner-amended G6 computational acceptance do not authorize autonomous dosing, pump control, deployment or universal chemical certification. P7 integration remains unimplemented.
+The package remains a dependency-free **planning and verification prototype**. P2/P3 and the amended G6 computational acceptance do not authorize autonomous dosing, pump control, deployment or universal chemical certification. P7 integration remains unimplemented.
 
 When 0.3.0 was prepared, hosted verification on the supported Python versions was still outstanding because of the billing lock. It has since passed: see [0.4.0 publication](#040-publication-2026-10-17).

@@ -78,7 +78,7 @@ REQUIRED_KEYS = {
 
 class IdentityTests(unittest.TestCase):
     def test_every_catalogue_product_has_exactly_one_identity(self):
-        # Retired pre-owner products keep their records: the frozen catalogue still uses them.
+        # Retired 33c5df2 catalogue products keep their records: the frozen catalogue uses them.
         names = [s['name'] for s in load_library()['salts']]
         frozen = [s['name'] for s in historical_library()['salts']]
         covered = [p for i in load_identities().values() for p in i['products']]
@@ -172,7 +172,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_identities_file_is_pinned(self):
         self.assertEqual(
-            IDENTITIES_SHA256, '1be83c01af94e283170dc2d971007e04bd7b62033befc1bd7d24380216eebe1a'
+            IDENTITIES_SHA256, '886ad53887c594e62b3e733f7fa5424f2262778673ef3b809b873fedc6ade5be'
         )
 
 
@@ -456,7 +456,7 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
-        # 0.553 % is within the 1 % label limit (#93, owner 2026-10-23); a one-point Mg error is
+        # 0.553 % is within the 1 % label limit (#93 decision 2026-10-23); a one-point Mg error is
         # not.
         old = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
@@ -744,7 +744,7 @@ class CatalogueMigrationTests(unittest.TestCase):
             'Calcium Nitrate (ag grade)': 'grade_typical',
             'Calcium Chloride (Dihydrate)': 'identity_theoretical',
             'Potassium Chloride': 'identity_theoretical',
-            # pH-up reagents (#75, owner decisions 2026-10-22)
+            # pH-up reagents (#75 decisions 2026-10-22)
             'Potassium Carbonate': 'identity_theoretical',
             'Potassium Bicarbonate': 'identity_theoretical',
             'Potassium Hydroxide (45% solution)': 'grade_typical',
@@ -765,7 +765,7 @@ class CatalogueMigrationTests(unittest.TestCase):
             self.assertAlmostEqual(salt['elements']['K'], potassium, places=5, msg=name)
             self.assertTrue(salt['source']['url'].endswith(code), name)
         self.assertEqual(salts['Potassium Hydroxide (45% solution)']['densityKgPerL'], 1.456)
-        # The owner catalogue also marks phosphoric and nitric acid as pH reagents.
+        # The packaged catalogue also marks phosphoric and nitric acid as pH reagents.
         self.assertEqual(
             [s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'],
             [
@@ -1015,7 +1015,7 @@ class ChemistryUseTests(unittest.TestCase):
             _old_totals({'CH - micro': 2.0}),
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_irrigation_ec_reports_material_provenance(self):
         self.enterContext(historical_catalogue())
         from flahax.materials import IDENTITIES_SHA256 as SHA
@@ -1129,7 +1129,7 @@ class ChemistryUseTests(unittest.TestCase):
         shipped = self.ec({'Mg Nitrate': 1.0})
         self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_equilibrium_plan_audits_materials(self):
         self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery
@@ -1589,7 +1589,7 @@ class WorkflowGradeTests(unittest.TestCase):
     def doses(recommendation):
         return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_label_grade_enters_chemistry_and_ph(self):
         self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
@@ -1903,7 +1903,7 @@ class DeclaredCompoundTests(unittest.TestCase):
             )
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_declared_compound_matches_equivalent_salts(self):
         self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph
@@ -1943,8 +1943,8 @@ class DeclaredCompoundTests(unittest.TestCase):
 
 
 class LabelToleranceTests(unittest.TestCase):
-    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (owner,
-    2026-10-23)."""
+    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (#93
+    decision 2026-10-23)."""
 
     def calcinit(self, cao):
         return grade(

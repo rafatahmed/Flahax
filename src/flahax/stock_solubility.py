@@ -19,7 +19,7 @@ from pathlib import Path
 from .delivery_contracts import DeliveryError
 
 TABLE_PATH = Path(__file__).with_name('data') / 'solubility.json'
-_HISTORICAL_SHA256 = 'f7ec32a6b04c76825c89a37cb38cb18ad45c33daa7f193635ed83528ae18d59e'
+_HISTORICAL_SHA256 = '857c6f7b4aa7c73209b25b8848b5da4f66436c8b22814d650fd64a52cb0bf001'
 SINGLE_SALT = (
     'single-product screening only; mixture solubility, common-ion effects, '
     'grade equivalence and preparation conditions require separate evidence'

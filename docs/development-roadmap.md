@@ -32,14 +32,14 @@ hold-out validation; synthetic interpolation tests are not physical accuracy
 evidence. Automatic EC-setpoint dosing and a universal concentrated-stock
 conductivity model are not claimed.
 
-Version labels below are proposals. Assign an owner before starting each milestone; publish only after review and explicit release authorization.
+Version labels below are proposals. Assign a responsible maintainer before starting each milestone; publish only after review and explicit release authorization.
 
 | Order / candidate | Work and code anchors | Acceptance before completion | Suggested accountable role |
 |---|---|---|---|
-| M1 / 0.3.1 — done | Close P6.6/P6.7; `.github/workflows/test.yml`, `tools/verify_distribution.py`; reconcile release records | Successful Python 3.11–3.13 hosted distribution jobs and required pinned PHREEQC replay for the reviewed revision; retain run URLs, artifact hashes and actual skip counts; fresh PyPI install verification recorded | Maintainer; account owner for billing |
+| M1 / 0.3.1 — done | Close P6.6/P6.7; `.github/workflows/test.yml`, `tools/verify_distribution.py`; reconcile release records | Successful Python 3.11–3.13 hosted distribution jobs and required pinned PHREEQC replay for the reviewed revision; retain run URLs, artifact hashes and actual skip counts; fresh PyPI install verification recorded | Maintainer; GitHub account holder for billing |
 | M2 / 0.3.x | Expand input and numerical robustness in `aqueous_model.py`, `product_conversion.py`, `equilibrium_delivery.py` and planning contracts | Reproducible edge-case corpus; finite-input rejection, conservation, phase complementarity and convergence checks; failure cases return documented errors; existing golden tolerances and source provenance preserved | Numerical/model maintainer |
 | M3 / 0.5.0 candidate | Stabilize consumer contracts, diagnostics and repeatable reports; `delivery_contracts.py`, `delivery_plan.py`, public exports | Documented serialization/version policy, round-trip and invalid-record tests, stable error codes and migration notes; compatibility tests for existing API/CLI examples | API maintainer |
-| M4 / later minor releases | Choose one validated capability extension from the opportunity table | Approved scope and source data first; independent reference cases and rejection boundaries; documented compatibility and performance impact | Product owner with model reviewer |
+| M4 / later minor releases | Choose one validated capability extension from the opportunity table | Approved scope and source data first; independent reference cases and rejection boundaries; documented compatibility and performance impact | Maintainer with model reviewer |
 
 M1 is complete: hosted checks passed on `main` at `2e257d5` (run `38967066279`; see the [0.3.1 release audit](site/evidence/release-evidence.md#031-release-audit---2026-10-17)) and 0.3.1 was verified by a fresh PyPI installation. 0.4.0 added measured-pH balancing outside these milestones. M2 can progress in parallel. M3 depends on agreed contracts; M4 chemistry changes depend on M2 regression coverage and their own scientific evidence. No future release inherits the 0.3.0 CI exception automatically.
 
@@ -80,7 +80,7 @@ for the release in preparation.
 
 Keep one focused branch per increment. Delete merged branches only after checking for unique commits and active worktrees. Preserve source-backed scientific captures, failed-reference reproducers and released-artifact evidence; ignored build outputs and environments are not automatically disposable.
 
-For each increment, record its owner, acceptance cases, dependency, compatibility impact and validation outcome. Run relevant tests plus the full suite for numerical/contract changes. Run isolated wheel/sdist checks when packaging, exported APIs or shipped assets change. Preserve real skipped-test counts and distinguish local results from hosted results.
+For each increment, record who is responsible, its acceptance cases, dependency, compatibility impact and validation outcome. Run relevant tests plus the full suite for numerical/contract changes. Run isolated wheel/sdist checks when packaging, exported APIs or shipped assets change. Preserve real skipped-test counts and distinguish local results from hosted results.
 
 Before the next release, require the [publishing checklist](publishing.md), reviewed changelog, supported-version evidence and explicit publication approval. Keep package, record-schema and chemistry-model versions independent. Broader operational claims require separately authorized measurement evidence.
 

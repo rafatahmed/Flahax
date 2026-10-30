@@ -119,7 +119,7 @@ class CoupledFailureTests(unittest.TestCase):
 
 
 class CoupledAccuracyTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_direction_crossing_returns_a_real_phosphoric_plan(self):
         self.enterContext(historical_catalogue())
         flow = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
@@ -135,7 +135,7 @@ class CoupledAccuracyTests(unittest.TestCase):
             if row['target']:
                 self.assertTrue(met(row['target'], row['final']), row['symbol'])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_initial_direction_and_numerical_failures_are_not_used_as_bounds(self):
         self.enterContext(historical_catalogue())
         for code in ('wrong_reagent_direction', 'nonconvergent'):
@@ -151,7 +151,7 @@ class CoupledAccuracyTests(unittest.TestCase):
                     self.assertEqual(candidate.error_code, code)
                     self.assertIsNone(candidate.target)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_only_acid_is_not_applicable_when_accuracy_fit_needs_base(self):
         self.enterContext(historical_catalogue())
         flow = coupled('Tomato Stage.2 - first cluster (Howard Resh)')

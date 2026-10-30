@@ -104,7 +104,7 @@ class PublicContractTests(unittest.TestCase):
         summary = flahax.summarize_batch(
             workflow, [self.product], title='Witness', water_label='Zero'
         )
-        consent = flahax.accept_result(summary, actor='Owner', reason='Proposal reviewed')
+        consent = flahax.accept_result(summary, actor='Reviewer', reason='Proposal reviewed')
         payload = flahax.load_result(flahax.save_result(summary, consent))
         flahax.verify_acceptance(payload['summary'], payload['acceptance'])
         self.assertEqual(summary, payload['summary'])
@@ -129,7 +129,7 @@ class PublicContractTests(unittest.TestCase):
                 '--output',
                 str(root / 'out'),
             )
-            # Owner decision 2026-10-30: with the owner catalogue's acid reagents the run ends
+            # Decision 2026-10-30: with the packaged catalogue's acid reagents the run ends
             # "requires review" (exit 0) and reports the K shortfall the zero maximum forces.
             self.assertEqual(result.returncode, 0, result.stderr)
             summary = json.loads((root / 'out/summary.json').read_text(encoding='utf-8'))
@@ -190,7 +190,7 @@ class PublicContractTests(unittest.TestCase):
                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src'), FLAHAX_HOME=tmp),
                 timeout=90,
             )
-            # Owner decision 2026-10-30: "requires review" (exit 0) with the forced K shortfall.
+            # Decision 2026-10-30: "requires review" (exit 0) with the forced K shortfall.
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
             verify_summary(summary)

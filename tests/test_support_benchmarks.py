@@ -136,8 +136,8 @@ class BenchmarkHarnessTests(unittest.TestCase):
         obj.result = SimpleNamespace(status='unavailable', ec25_ms_cm=None)
         with self.assertRaisesRegex(ValueError, 'regression'):
             obj.teardown()
-        # Owner catalogue: re-enable in PR 4 (G5)
-        # The delivery example doses the owner Potassium Nitrate, which stops at the label gate.
+        # Catalogue v0.0: re-enable in PR 4 (G5)
+        # The delivery example doses the packaged Potassium Nitrate, which stops at the label gate.
         with historical_catalogue():
             obj = performance.Delivery()
             for present in (False, True):

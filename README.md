@@ -193,7 +193,7 @@ with tables, charts, provenance and their limitations.
 
 This is computational evidence. FlahaX has not been validated in the laboratory or in the field
 (a [validation protocol](https://github.com/rafatahmed/Flahax/issues/41) is in draft), and its
-owner's [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
+author's [computational assessment](https://github.com/rafatahmed/Flahax/blob/main/docs/computational-review.md)
 is not an independent review. Results are calculations for planning, not dosing instructions:
 measure pH and EC after mixing. No recipe, pH or EC value is an authorization to operate
 equipment.
@@ -259,7 +259,7 @@ for FlahaX; conductivity from McCleskey et al. (2012) and Pethybridge et al.
 and the U.S. Coast Guard CHRIS database; supplier assays from Haifa,
 Sigma-Aldrich and ChemicalBook; concentrate-tank rules from Yara; and crop
 formulas from the authors named in the library. The packaged catalogue is Flaha
-Agri Tech Analysis Ver 0.0 (owner-supplied, not independent laboratory
+Agri Tech Analysis Ver 0.0 (supplied by Flaha Agri Tech, not independent laboratory
 verification): 24 fertilizers, 5 pH products and 13 crop formulas. The full list, the
 modifications and the USGS User Rights Notice are in
 [`NOTICE`](https://github.com/rafatahmed/Flahax/blob/main/NOTICE); the
