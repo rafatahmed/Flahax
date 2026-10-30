@@ -44,6 +44,11 @@ each release, with numbers, sources and decisions, are in
   `ammoniumLimit`, the batch summary, the report and the sheets; `solve_weights` applies the
   same allowance (#209, #201).
 
+- A target is met only within the numerical tolerance (1e-5 relative, 1e-6 mg/L for a declared
+  zero, 1e-4 pH), which replaces the ±1 % band. Every deviation is reported; a missed target
+  makes the formulation stage "requires review" ("targets missed: …"), and only a broken
+  declared maximum blocks (#210).
+
 - The packaged catalogue is the owner's Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
 
 ### Fixed

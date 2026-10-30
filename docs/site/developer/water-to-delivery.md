@@ -30,7 +30,8 @@ that every alternative recipe is infeasible.
 
 With the supplied pepper targets, twelve selected catalogue products and
 water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
-and 0.047919 mg/L Na. Positive targets fit within 1%; the NH4-N is assessed
+and 0.047919 mg/L Na. Each positive target missed beyond the numerical tolerance
+(1e-5 relative) is a reported deviation; the NH4-N is assessed
 against the ammonium allowance (min(10% of total N, 1.5 mmol/L), Dutch soilless
 practice (De Kreij, Voogt et al.)) and the Na requires review. These are catalogue-assay calculations, not a dosing
 authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`

@@ -78,6 +78,43 @@ Selection follows the table, per nutrient. Other flags:
   CH - micro. The packaged Micro Combi Mix 1 and 2 are owner-declared blends and do
   not carry it.
 
+## Nitrogen forms in a formula
+
+A formula declares nitrogen by form: `N_NO3` (nitrate-N), `N_NH4` (ammonium-N) and
+`N_UREA` (urea-N), each in mg/L as N. Each declared form is its own target and is fitted
+on its own (decision D1). Total N is the sum of the three forms; it is reported as
+`totalN` (target, final and difference), never fitted.
+
+- `N_NO3` is fitted to its declared value.
+- `N_UREA` absent means 0: a declared zero, met within 1e-6 mg/L. A urea-bearing
+  product is then not used.
+- `N_NH4` above 0 is fitted to its declared value. `N_NH4` absent or 0 is no
+  ammonium requirement: there is no ammonium row and no ban, so products such as
+  calcium nitrate, which carries a little ammonium, stay usable.
+
+**Ammonium allowance.** When the formula declares no ammonium (`N_NH4` absent or 0)
+and no ammonium maximum is given, the ammonium the products bring with them may reach
+min(10 % of the total target N, 1.5 mmol/L NH4 = 21.01 mg/L N). The basis is Dutch
+soilless practice (De Kreij, Voogt et al.): ammonium at 5–15 % of total N, at most
+1–1.5 mmol/L. The allowance is shown with that basis in `ammoniumLimit`, on the batch
+summary, the report and the sheets. For Cucumber (Howard Resh), N_NO3 140 and N_NH4 0,
+the allowance is min(14, 21.01) = 14 mg/L. A declared `N_NH4` maximum replaces it.
+
+## When a target is met
+
+A target is met only within the precision of the calculation (decision G25): the final
+value must be within 1e-5 of the target, relative (0.001 %), for a positive target, and
+within 1e-6 mg/L for a declared zero; a pH is met within 1e-4 pH units. These are
+numerical tolerances, validated on 2026-10-24, not agronomic ranges. They replace the
+former ±1 % band.
+
+Anything beyond them is a deviation, and every deviation is reported: the row's
+difference, `unmetTargets` with its reason, and the formulation stage, which then
+reads "targets missed: …" and asks for review. A missed target does not block the
+recipe; only a broken declared maximum does. For Lettuce 2 (Howard Resh) with water
+free of nutrients, P finishes at 49.84 mg/L for 50 (-0.323 %): under the former band
+that counted as met, now it is listed.
+
 ## Using materials in calculations
 
 `catalogue_dose_totals(..., materials=)` and `calculate_irrigation_ec(...,

@@ -53,7 +53,8 @@ After the primary fit, a product can be removed only when every positive-target
 absolute percentage error is no worse than in that original fit, primary loss does
 not increase from the best accepted result, and all zero requirements and maxima
 remain satisfied. Every attempt uses the same original accuracy reference, even
-after several removals. The 1% feasibility band is not permission to degrade a fit.
+after several removals. The numerical tolerance that decides whether a target is
+met (1e-5 relative) is not permission to degrade a fit.
 
 These are conservative binary64 comparisons with no added error allowance.
 Numerically unequal representations of equivalent optima may retain more products;
@@ -61,7 +62,7 @@ this greedy pass does not promise a globally minimal product count. All positive
 internal doses participate; published dose precision remains separately tracked.
 
 
-`recommend` does not dose every row in the file. A salt whose formula cannot contain an assayed element is left out. Carbonate formulas are left out of a default recipe. Sodium and chloride are left out unless the formula asks for them, the caller allows them, or a requested ion stays outside 1% without the salt that carries them. The result then says whether the recipe is feasible, the largest absolute Δ%, the unrequested ions added, the total grams per litre, and any warnings.
+`recommend` does not dose every row in the file. A salt whose formula cannot contain an assayed element is left out. Carbonate formulas are left out of a default recipe. Sodium and chloride are left out unless the formula asks for them, the caller allows them, or a requested ion stays short of its target, beyond the numerical tolerance (1e-5 relative), without the salt that carries them. The result then says whether the recipe is feasible, the largest absolute Δ%, the unrequested ions added, the total grams per litre, and any warnings.
 
 ## Library file
 
