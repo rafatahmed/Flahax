@@ -8,7 +8,7 @@ A compound has a fixed structure, so its formula or its stated ions define it (M
 KH2PO4, Fe-EDTA is Na+ and the Fe(III)-EDTA complex). A blend has none, so its analysis by
 nutrient form defines it (a declared-ions grade, materials.py). The catalogue's products are
 pre-filled materials: their ions are their identities' ``ion_forms``. Nothing here reads a
-product name (owner decision 2026-10-22).
+product name (decision 2026-10-22).
 """
 
 from __future__ import annotations
@@ -309,7 +309,7 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
             if 'CO(NH2)2' in ions
             else f'project-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
             if status == 'assumed_blend'
-            else f'owner-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
+            else f'declared composition of {name}; {PHREEQC_MINTEQ_V4}'
             if status == 'declared_blend'
             else PHREEQC_MINTEQ_V4
         )

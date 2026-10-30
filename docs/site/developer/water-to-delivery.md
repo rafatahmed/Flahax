@@ -21,16 +21,19 @@ their positive-target fit calculation and report additional fields:
 
 Percentage deviation from zero remains `None`, not infinity or a fabricated
 percentage. An explicit `maximum_concentrations={'N_NH4': 0}` does prohibit
-ammonium. Without that maximum, incidental ammonium is reported for separate
-assessment; the package does not invent a safe threshold or call it harmless.
+ammonium. Without a declared maximum, incidental ammonium is assessed against
+the ammonium allowance that `recommend` reports in `ammoniumLimit`
+(min(10% of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.)).
 The optimizer's existing objective is unchanged; maxima are post-solve checks,
 not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
 
 With the supplied pepper targets, twelve selected catalogue products and
 water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
-and 0.047919 mg/L Na. Positive targets fit within 1%, but these incidental
-amounts require review. These are catalogue-assay calculations, not a dosing
+and 0.047919 mg/L Na. Each positive target missed beyond the numerical tolerance
+(1e-5 relative) is a reported deviation; the NH4-N is assessed
+against the ammonium allowance (min(10% of total N, 1.5 mmol/L), Dutch soilless
+practice (De Kreij, Voogt et al.)) and the Na requires review. These are catalogue-assay calculations, not a dosing
 authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`
 lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
 Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
@@ -49,7 +52,12 @@ result = plan_fertilizer_workflow(
     water={'Ca': 20}, target_ph=6.5,
 )
 assert result.nutrient_gap['Ca'] == 84
-assert result.stages['formulation'].status == 'blocked'
+# N_NH4 0 is no ammonium requirement: calcium nitrate stays eligible, and its NH4-N is held
+# within min(10 % of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.).
+assert result.stages['formulation'].status == 'calculated'
+(ammonium,) = result.recommendation['incidentalContributions']
+assert ammonium['symbol'] == 'N_NH4' and ammonium['assessment'] == 'within_limit'
+assert ammonium['ppm'] <= result.recommendation['ammoniumLimit']['mgPerL']
 assert result.stages['chemistry'].status == 'needs_input'
 ```
 
@@ -64,10 +72,10 @@ configurations are mappings:
 | Configuration | Required entries | Meaning |
 |---|---|---|
 | `equilibrium` | `water_totals`, `water_mass_kg`, `water_analysis_id`, `complete_analysis`, `carbon_boundary`, `temperature_c`, `phases` | Complete fixed-valence analytical component totals in mol/kg-water; explicit final solvent inventory, 25 C, closed carbon, explicit phase list ; optional `measured_ph` (with `alkalinity_eq_per_kg`, `balance_ion`, `maximum_imbalance_percent`) speciates the water at its measured pH and closes the charge on one ion instead of solving pH from charge balance |
-| `acids` | `products`, `maximum_nutrient_error_percent`, `maximum_reagent_volume_litres` | Evaluate single-acid candidates; optional `preferred_product_id` forbids automatic fallback |
+| `acids` | `products`, `maximum_reagent_volume_litres` | Evaluate single-acid candidates; optional `preferred_product_id` forbids automatic fallback; optional `maximum_nutrient_error_percent` limits the acid's own change to each target (no default) |
 | `ph_adjustment` | `products`, `maximum_reagent_volume_litres` | Plan the recipe and its pH reagent together, acid or base, with the reagent's nutrients counted as supply (see below); optional `preferred_product_id` |
-| `nitric` | `reagent`, `reagent_channel_id`, `maximum_reagent_volume`, `maximum_nutrient_error_percent` | Existing assay-qualified HNO3 delivery adapter; volume is `VolumeLitres` |
-| `titration` | `water_analysis`, `curve`, `reagent`, `maximum_reagent_volume` | Existing matched-record measured-curve API; optional positive-target tolerance defaults to 1% |
+| `nitric` | `reagent`, `reagent_channel_id`, `maximum_reagent_volume` | Existing assay-qualified HNO3 delivery adapter; volume is `VolumeLitres`; optional `maximum_nutrient_error_percent` limits the acid's own change to each target (no default) |
+| `titration` | `water_analysis`, `curve`, `reagent`, `maximum_reagent_volume` | Existing matched-record measured-curve API; optional `maximum_nutrient_error_percent` limits the reagent's own change to each target (no default) |
 | `stocks` | `injection_ratio`, `tanks`, `compatibility_rules`, `solubility_limits`, `temperature` | Existing typed stock planner, with sourced records and temperature-qualified limits |
 
 `maximum_concentrations` is a separate top-level mapping of nutrient symbol to

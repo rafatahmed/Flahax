@@ -133,6 +133,47 @@ class InputError(ValueError):
     """The caller passed a profile or a salt the balance cannot use."""
 
 
+NITROGEN_FORMS = ("N_NO3", "N_NH4", "N_UREA")
+
+
+def nitrogen_rows(targets) -> dict:
+    """The nitrogen requirements fitted for a formula (decision D1, gates G23 and G24).
+
+    Each form is its own requirement on the elemental-N basis: N_NO3 as declared, N_UREA as
+    declared or 0 when absent (a declared zero, with no allowance), and N_NH4 only when it is
+    declared above 0. An absent or zero N_NH4 is no ammonium requirement at all: no row and
+    no ban, and the ammonium allowance applies to incidental NH4-N. Total N, the sum of
+    the three forms, is reported, never fitted as a row of its own. A formula that declares no
+    nitrogen form has no nitrogen rows.
+    """
+    if not any(form in targets for form in NITROGEN_FORMS):
+        return {}
+    rows = {}
+    if "N_NO3" in targets:
+        rows["N_NO3"] = targets["N_NO3"]
+    if targets.get("N_NH4", 0) > 0:
+        rows["N_NH4"] = targets["N_NH4"]
+    rows["N_UREA"] = targets.get("N_UREA", 0)
+    return rows
+
+
+def fitted_targets(targets) -> dict:
+    """The targets as fitted: other nutrients unchanged, nitrogen as ``nitrogen_rows``.
+
+    A zero N_NH4 is dropped (no requirement, no ban) and an absent N_UREA becomes a declared
+    zero whenever any nitrogen form is declared.
+    """
+    nitrogen = nitrogen_rows(targets)
+    fitted = {s: v for s, v in targets.items() if s not in NITROGEN_FORMS or s in nitrogen}
+    fitted.update(nitrogen)
+    return fitted
+
+
+def total_nitrogen(profile) -> float:
+    """Elemental N summed over the three forms (N_NO3 + N_NH4 + N_UREA), in the profile's units."""
+    return math.fsum(float(profile.get(form) or 0.0) for form in NITROGEN_FORMS)
+
+
 def _finite(value) -> float:
     try:
         number = float(value)

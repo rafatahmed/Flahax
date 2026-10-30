@@ -7,9 +7,10 @@
 import unittest
 
 from flahax import load_library, recommend
+from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
-# The pre-owner products, which include Calcium Chloride (Dihydrate).
+# The 33c5df2 catalogue products, which include Calcium Chloride (Dihydrate).
 with historical_catalogue():
     LIBRARY = load_library()
 # Synthetic conflicting Ca/nitrate requirements; not a crop recommendation.
@@ -36,7 +37,7 @@ class IncidentalMaximumTests(unittest.TestCase):
         allowed = recommend(
             LIBRARY["salts"], FORMULA["targets"], {}, maximum_concentrations={"Cl": 150}
         )
-        self.assertLess(abs(delta(allowed, "Ca")), 1.0)
+        self.assertTrue(met(160, final(allowed, "Ca")))
         self.assertLess(abs(delta(allowed, "Ca")), abs(delta(base, "Ca")))
         self.assertIn("Calcium Chloride (Dihydrate)", [s["name"] for s in allowed["salts"]])
         self.assertLessEqual(final(allowed, "Cl"), 150 + 1e-9)
@@ -94,8 +95,14 @@ class IncidentalMaximumTests(unittest.TestCase):
         tomato = next(
             f["targets"] for f in LIBRARY["formulas"] if f["name"] == "Tomato (Howard Resh)"
         )
+        # The Cl mechanism is compared without the G23 ammonium allowance: with it, Tomato has
+        # several exact optima (loss ~1e-30) and the two fits may pick different ones.
         result = recommend(
-            LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
+            LIBRARY["salts"],
+            tomato,
+            water,
+            maximum_concentrations={"Na": 68.97, "Cl": 106.35},
+            max_ammonium_fraction=None,
         )
         self.assertFalse(result["feasible"])
         self.assertEqual([v["symbol"] for v in result["limitViolations"]], ["Cl"])
@@ -108,9 +115,19 @@ class IncidentalMaximumTests(unittest.TestCase):
             tomato,
             water,
             maximum_concentrations={"Na": 68.97, "Cl": 1e9},
+            max_ammonium_fraction=None,
         )
         self.assertEqual(result["salts"], reference["salts"])
         self.assertEqual(result["loss"], reference["loss"])
+        # With the default allowance (Tomato total N 140 -> 14.0 mg/L) the water's chloride is
+        # still reported, not a solver failure, and incidental NH4-N stays within 14.0 mg/L.
+        allowed = recommend(
+            LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
+        )
+        self.assertEqual(allowed["ammoniumLimit"]["mgPerL"], 14.0)
+        self.assertEqual([v["symbol"] for v in allowed["limitViolations"]], ["Cl"])
+        self.assertLessEqual(final(allowed, "N_NH4"), 14.0)
+        self.assertAlmostEqual(final(allowed, "Cl"), 1280.4 * 0.09, places=9)
 
     def test_invalid_maximum_is_rejected(self):
         with self.assertRaises(Exception):

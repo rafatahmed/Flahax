@@ -1,6 +1,6 @@
 # FlahaX consumer boundary
 
-FlahaFAST integration is owned by the separate **FlahaFAST project**, by project-owner decision. This repository supplies the Python package, public API, CLI, tests and release evidence. It does not establish the current FlahaFAST deployment, feature flags, paths or database behavior.
+FlahaFAST integration is owned by the separate **FlahaFAST project**, by maintainer decision. This repository supplies the Python package, public API, CLI, tests and release evidence. It does not establish the current FlahaFAST deployment, feature flags, paths or database behavior.
 
 ## Supported package interfaces
 

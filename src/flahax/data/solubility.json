@@ -28,7 +28,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row (NH4)2HPO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Ammonium Monobasic Phosphate",
@@ -59,7 +59,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row NH4H2PO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Ammonium Nitrate",
@@ -90,7 +90,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row NH4NO3",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Ammonium Sulfate",
@@ -121,7 +121,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row (NH4)2SO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Boric Acid",
@@ -152,7 +152,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row H3BO3",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Calcium Chloride (Dihydrate)",
@@ -183,7 +183,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row CaCl2",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Calcium Nitrate (ag grade)",
@@ -198,7 +198,7 @@
    ]
   ],
   "source": "Yara, YaraTera CALCINIT product sheet, \"Solubility (20 °C) 1200g/l water\"",
-  "notes": "1200 g product + 998.2 g water at 20 °C = 54.59 % product; at density 1 g/cm3, 545.9 g/L (lower bound). Solubility rises with temperature, so the 20 °C value is a floor from 20 to 40 °C; below 20 °C not checked (owner decision 2026-10-23)"
+  "notes": "1200 g product + 998.2 g water at 20 °C = 54.59 % product; at density 1 g/cm3, 545.9 g/L (lower bound). Solubility rises with temperature, so the 20 °C value is a floor from 20 to 40 °C; below 20 °C not checked (decision 2026-10-23)"
  },
  {
   "product": "Copper Sulfate (pentahydrate)",
@@ -229,7 +229,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row CuSO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Iron II Sulfate (Hepahydrate)",
@@ -260,7 +260,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row FeSO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Magnesium Sulfate (Heptahydrate)",
@@ -291,7 +291,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row MgSO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Mg Nitrate",
@@ -322,7 +322,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row Mg(NO3)2",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Potassium Chloride",
@@ -353,7 +353,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row KCl",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Potassium Dibasic Phosphate",
@@ -384,7 +384,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row K2HPO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Potassium Monobasic Phosphate",
@@ -415,7 +415,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row KH2PO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Potassium Nitrate",
@@ -446,7 +446,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row KNO3",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Potassium Sulfate",
@@ -477,7 +477,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row K2SO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Sodium Borate (Decahydrate) (borax)",
@@ -508,7 +508,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row Na2B4O7",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Sodium Molybdate (Dihydrate)",
@@ -539,7 +539,7 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row Na2MoO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  },
  {
   "product": "Urea",
@@ -593,6 +593,6 @@
    ]
   ],
   "source": "CRC Handbook of Chemistry and Physics (ed. D. R. Lide), Aqueous Solubility of Inorganic Compounds at Various Temperatures, pp. 8-112 to 8-117, row ZnSO4",
-  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (owner decision 2026-10-23)"
+  "notes": "g of product as sold (hydrate water included) per L of solution = 10 x CRC mass % (anhydrous) x M(product)/M(anhydrous) at density 1 g/cm3: a lower bound, so a stock that would not dissolve is never passed (decision 2026-10-23)"
  }
 ]

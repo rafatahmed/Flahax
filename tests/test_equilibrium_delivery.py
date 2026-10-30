@@ -79,7 +79,7 @@ def arguments():
 
 
 class EquilibriumDeliveryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -162,6 +162,14 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         self.assertEqual(plan.state, 'operator-approved')
         self.assertTrue(plan.commands[0].requires_operator_verification)
 
+    def test_a_recipe_deviation_is_not_the_acid_s_doing(self):
+        # K 1 against a 12.72 mg/L K recipe: the deviation is the recipe's, reported by the
+        # formulation stage; the nitric acid adds no K, so the plan stands (G25).
+        plan = plan_equilibrium_delivery(**(self.args | {'targets': {'K': 1.0}}))
+        k = next(row for row in plan.rows if row['symbol'] == 'K')
+        self.assertEqual(k['target'], 1.0)
+        self.assertGreater(k['deltaPct'], 1)
+
     def test_missing_bad_units_assay_and_domain_fail_closed(self):
         mutations = [
             {'water_mass_kg': None},
@@ -179,7 +187,11 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             {'target_ph': 8.0},
             {'water_totals': {'Na+': 0.01, 'Cl-': 0.001}},
             {'targets': {'K': 0.0}, 'maximum_concentrations': {'K': 0.0}},
-            {'targets': {'K': 1.0}},
+            # The nitric acid's own nitrate moves N_NO3 by more than a declared 1e-6 % (G25).
+            {
+                'targets': {'K': 12.72, 'N_NO3': 0.02 * 0.95 * 13.856 * 10},
+                'maximum_nutrient_error_percent': 1e-6,
+            },
             {'maximum_reagent_volume': VolumeLitres(1e-9)},
         ]
         for mutation in mutations:

@@ -155,6 +155,32 @@ def bars(title, labels, series, unit):
     )
 
 
+def nitrogen_notes(summary):
+    """Plain lines for the nutrient table: the ammonium allowance when it applies (G23) and total
+    N when the formula declares nitrogen (D1)."""
+    formulation = summary['formulation']
+    notes = []
+    allowance = formulation.get('ammonium_allowance')
+    if allowance:
+        notes.append(
+            f'Incidental NH4-N allowed up to {number(allowance["mgPerL"], 2)} mg/L '
+            f'({number(allowance["fractionOfTotalN"] * 100, 2)} % of total N, cap '
+            f'{number(allowance["absoluteCapMgPerL"], 2)} mg/L): {allowance["basis"]}'
+        )
+    total = formulation.get('total_n')
+    if total and total['target'] is not None:
+        notes.append(
+            f'Total N: {number(total["final"], 2)} mg/L '
+            '(sum of NO3-N, NH4-N and urea-N; reported, not a target)'
+        )
+    return notes
+
+
+def nitrogen_paragraphs(summary):
+    """``nitrogen_notes`` as small HTML paragraphs."""
+    return ''.join(f'<p class="small">{text(note)}</p>' for note in nitrogen_notes(summary))
+
+
 def _stage(stage):
     return dict(
         status=stage.status,
@@ -587,6 +613,10 @@ def summarize_batch(
             ],
             unmet=recipe['unmetTargets'],
             ion_balance=recipe['targetIonBalance'],
+            # The ammonium allowance (G23), shown with its basis, and total N as the
+            # reported sum of the three forms (D1).
+            ammonium_allowance=recipe.get('ammoniumLimit'),
+            total_n=recipe.get('totalN'),
         ),
         ph=ph,
         chemistry=chemistry,
@@ -901,6 +931,7 @@ def render_report(summary):
             ],
             'Nutrient fit, including what the water and the pH reagent bring',
         )
+        + nitrogen_paragraphs(s)
         + (
             (
                 '<p>Missed targets:</p><ul>'
@@ -1304,6 +1335,7 @@ def render_batch_sheet(summary):
         + '<h2>Limits</h2><p class="small">'
         + text(_limits_text(s))
         + '</p>'
+        + nitrogen_paragraphs(s)
         + (
             (
                 '<table><thead><tr><th>Nutrient</th><th class="num">Maximum mg/L</th><th '

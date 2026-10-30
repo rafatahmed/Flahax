@@ -141,7 +141,7 @@ class MeasuredWaterTests(unittest.TestCase):
 
 
 class MeasuredWaterWorkflowTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_workflow_chemistry_starts_from_the_measured_water(self):
         # A quarter of station 104, as a 1:3 blend with ion-free water.
         self.enterContext(historical_catalogue())

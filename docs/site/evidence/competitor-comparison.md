@@ -3,7 +3,7 @@
 > Historical benchmark inputs include five presets retired under #202. Their
 > inclusion tested numerical behavior; it did not validate crop recommendations.
 > Raw captures are preserved. The current catalogue, Flaha Agri Tech Analysis Ver 0.0
-> (owner-supplied, not independent laboratory verification), contains 13 formulas.
+> (supplied by Flaha Agri Tech, not independent laboratory verification), contains 13 formulas.
 
 
 **Measured snapshot: 2026-10-22-competitors-1ade5b6.** One run on one Windows

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The changelog follows Keep a Changelog 1.1.0 (owner decision 2026-10-23, every release).
+"""The changelog follows Keep a Changelog 1.1.0 (decision 2026-10-23, every release).
 
 Headings ``## [X.Y.Z] - YYYY-MM-DD`` (``[YANKED]`` for a yanked release), ``## [Unreleased]``
 first, only the six change types, short bullets, and a comparison link for every version. The

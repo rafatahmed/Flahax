@@ -49,7 +49,7 @@ P5.5 now provides the explicit catalogue-equilibrium delivery adapter. The compl
 
 P6.6/P6.7 remain active until the supported Python 3.11–3.13 hosted jobs actually pass; the previously observed GitHub account billing lock prevented execution. Local success is not hosted-CI acceptance.
 
-At the project owner's request, G6 for this **planning-package release** uses computational evidence without laboratory work. **Assessor: Rafat Al Khashan.** The [computational assessment](site/evidence/computational-review.md) records passing numerical evidence and its limits, not an independent human review, fabricated signature or operational certification. Physical validation is not a prerequisite for this bounded computational assessment. No hardware or external integration is authorized by this amendment.
+At the maintainer's request, G6 for this **planning-package release** uses computational evidence without laboratory work. **Assessor: Rafat Al Khashan.** The [computational assessment](site/evidence/computational-review.md) records passing numerical evidence and its limits, not an independent human review, fabricated signature or operational certification. Physical validation is not a prerequisite for this bounded computational assessment. No hardware or external integration is authorized by this amendment.
 
 1. FlahaX remains a Python package with no required third-party runtime dependencies.
 2. The current `recommend` output—grams per litre of final working solution—remains the canonical nutrient recipe.
@@ -188,13 +188,13 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 | P6.5 | Release checklist `[x]` | In-repo release evidence and outstanding hosted-CI gate; G6 scope amendment is explicit |
 | P6.6 | Installed-distribution and public API verification `[-]` | `tools/verify_distribution.py` passes isolated wheel/sdist imports, data hashes, exports, CLI and numerical delivery checks on Python 3.13; earlier Python 3.14 checks also pass. Supported-version hosted matrix still unverified. |
 | P6.7 | Reproducible live-reference validation job `[-]` | `tools/provision_phreeqc.ps1` fresh pinned extraction passes; full local suite runs live with zero skips. Workflow retains logs and requires reference availability; `tests/test_live_reference_policy.py` tests fail-not-skip policy. Hosted job still unverified. |
-| P6.8 | Computational assessment under owner-amended scope `[x]` | `docs/computational-review.md`, `docs/release-evidence.md`; named assessor Rafat Al Khashan; numerical conservation, convergence, reference equivalence, units and guards pass. No laboratory or independent-review claim. This status records numerical acceptance, not a fabricated personal signature. |
+| P6.8 | Computational assessment under amended scope `[x]` | `docs/computational-review.md`, `docs/release-evidence.md`; named assessor Rafat Al Khashan; numerical conservation, convergence, reference equivalence, units and guards pass. No laboratory or independent-review claim. This status records numerical acceptance, not a fabricated personal signature. |
 
-**Decision gate G6 (owner-amended 2026-09-27):** computational evidence assesses the bounded planning package without laboratory work. Assessor: **Rafat Al Khashan**. The assessment is not independent scientific certification or permission for operational dosing. Hosted release checks remain a separate, open gate.
+**Decision gate G6 (amended 2026-09-27):** computational evidence assesses the bounded planning package without laboratory work. Assessor: **Rafat Al Khashan**. The assessment is not independent scientific certification or permission for operational dosing. Hosted release checks remain a separate, open gate.
 
 ### P7 — FlahaFAST integration (external project; not a package release gate)
 
-**Ownership:** the project owner assigns this work to the separate FlahaFAST project. The following requirements are a handoff outline, not in-repository implementation or a prerequisite for FlahaX release.
+**Responsibility:** the maintainer assigns this work to the separate FlahaFAST project. The following requirements are a handoff outline, not in-repository implementation or a prerequisite for FlahaX release.
 
 **Objective:** expose an already-validated plan without changing the existing user flow by default.
 
@@ -213,7 +213,7 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 |---|---|---|
 | Preserve / regression protect | P0–P5, P6.1–P6.5, P6.8 | Accepted bounded capabilities and computational assessment; retain core formulation behavior and all chemistry evidence |
 | Outstanding package verification | P6.6, P6.7 | Observe successful supported-version and live-reference hosted jobs; implementations and local evidence are present |
-| Separate operational boundary | Physical validation | Not required for the owner-amended computational release; numerical agreement still cannot establish site safety |
+| Separate operational boundary | Physical validation | Not required for the amended computational release; numerical agreement still cannot establish site safety |
 | Later / optional | P7 | Begin only after the package interface and relevant release gates are accepted; no implicit FlahaFAST writes |
 | Explicitly deferred | Full PHREEQC runtime integration; autonomous recirculating ion correction; cost optimization; pump actuation | The reference-equivalence harness comes first; runtime coupling needs a separate dependency and architecture decision |
 
@@ -234,15 +234,15 @@ P5.1–P5.4 remain accepted for the measured-curve path. P5.5 closes the integra
 
 ## Risk register
 
-| Risk | Early warning | Mitigation | Owner required |
+| Risk | Early warning | Mitigation | Responsible role |
 |---|---|---|---|
 | Incomplete model input | Missing alkalinity, temperature, ions, gas boundary, or thermodynamic database | Block equilibrium solve; request the missing referenced input | Agronomy/operations |
 | Product data differs from assay | Unverified label, lot change, oxide/element ambiguity | Versioned certificate/assay record; reject ambiguous units | Procurement/agronomy |
-| Stock precipitation | Positive saturation index or phase constraint breach | Activity/speciation solve and named phase constraints | Chemistry/model owner |
+| Stock precipitation | Positive saturation index or phase constraint breach | Activity/speciation solve and named phase constraints | Chemistry/model maintainer |
 | Pump drift | Delivered-volume deviation | Scheduled calibration and command bounds | Operations |
 | Sensor drift | pH/EC inconsistency or stale calibration | Calibration schedule; reject stale data; independent spot checks | Operations |
-| False confidence from EC | EC matches but modelled ion balance differs | Activity/speciation reference regression and elemental mass-balance review | Model owner |
-| Scope creep into actuator control | Requests to auto-dose before evidence exists | Keep package planning-only; require a separate safety authorization | Product owner |
+| False confidence from EC | EC matches but modelled ion balance differs | Activity/speciation reference regression and elemental mass-balance review | Model maintainer |
+| Scope creep into actuator control | Requests to auto-dose before evidence exists | Keep package planning-only; require a separate safety authorization | Maintainer |
 
 ## Next execution plan
 

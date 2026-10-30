@@ -105,7 +105,7 @@ class CoverageTests(unittest.TestCase):
                 )
             self.assertEqual(caught.exception.code, 'invalid_ec_scenarios')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_grower_outputs_retain_qualifications(self):
         self.enterContext(historical_catalogue())
         from flahax.grower_report import summarize_batch, render_report, render_batch_sheet

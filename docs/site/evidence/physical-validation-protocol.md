@@ -4,7 +4,7 @@
 **Status: draft for independent review. No samples have been prepared and no
 results exist.** This page fixes what will be measured, how, and what counts as
 agreement *before* any measurement, so the results cannot shape the criteria.
-Choosing a reviewer, a laboratory and a budget is the project owner's decision
+Choosing a reviewer, a laboratory and a budget is the maintainer's decision
 and has not been made. This page authorizes no spending, outreach or
 experiment.
 :::
@@ -195,7 +195,7 @@ solutions, other product grades or waters outside the tested range, and it
 does not certify FlahaX for dosing. A failure is published with the same
 prominence as a pass.
 
-## Decisions for the project owner
+## Decisions for the maintainer
 
 Nothing here starts until each of these is decided:
 

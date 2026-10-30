@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ExampleCommandTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_real_module_commands_complete_with_qualified_output(self):
         self.enterContext(historical_catalogue())
         for name in (
@@ -44,7 +44,7 @@ class ExampleCommandTests(unittest.TestCase):
                 self.assertIn('diagnostic only', out.getvalue())
                 self.assertIn('No accepted reagent plan', out.getvalue())
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_presentation_handles_available_missing_and_nonfinite_values(self):
         self.enterContext(historical_catalogue())
         self.assertEqual(common.serializable([float('inf'), float('-inf')]), ['inf', '-inf'])
@@ -75,7 +75,7 @@ class ExampleCommandTests(unittest.TestCase):
             tomato_advanced.main()
         self.assertNotIn('No accepted reagent plan', out.getvalue())
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_report_command_outputs_and_refuses_overwrite(self):
         self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as folder:
@@ -143,7 +143,7 @@ class ExampleCommandTests(unittest.TestCase):
             cfg['_rewrite_included_links'](app, Path(name), 'unused', content)
             self.assertEqual(content, [expected])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_remaining_empty_presentation_and_blend_boundaries(self):
         self.enterContext(historical_catalogue())
         from types import SimpleNamespace

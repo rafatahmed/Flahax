@@ -23,20 +23,20 @@ def final(result, symbol):
 
 class RequirementConstraintTests(unittest.TestCase):
     def test_zero_excludes_carriers_without_losing_clean_alternative(self):
-        products = [product('mixed', K=10, N_NH4=0.1), product('clean', K=10)]
+        products = [product('mixed', K=10, Na=0.1), product('clean', K=10)]
         for ordered in (products, list(reversed(products))):
-            result = recommend(ordered, {'K': 100, 'N_NH4': 0}, ridge=0)
+            result = recommend(ordered, {'K': 100, 'Na': 0}, ridge=0)
             self.assertTrue(result['feasible'])
-            self.assertEqual(final(result, 'N_NH4'), 0)
+            self.assertEqual(final(result, 'Na'), 0)
             self.assertEqual({s['id'] for s in result['salts']}, {'clean'})
             self.assertEqual(result['incidentalContributions'], [])
 
     def test_zero_is_structural_even_for_tiny_assay_and_low_level_solver(self):
-        products = [product('mixed', K=10, N_NH4=1e-20)]
+        products = [product('mixed', K=10, Na=1e-20)]
         for call in (recommend, solve_weights):
-            result = call(products, {'K': 100, 'N_NH4': 0}, ridge=0)
+            result = call(products, {'K': 100, 'Na': 0}, ridge=0)
             self.assertEqual(result['grams'], [0])
-            self.assertEqual(final(result, 'N_NH4'), 0)
+            self.assertEqual(final(result, 'Na'), 0)
             self.assertFalse(result['feasible'])
             if call is recommend:
                 self.assertEqual(
@@ -44,13 +44,17 @@ class RequirementConstraintTests(unittest.TestCase):
                 )
 
     def test_water_cannot_be_removed_to_satisfy_zero(self):
-        for value in (1e-20, 1):
+        # A declared zero is met within 1e-6 mg/L (G25): 2e-6 mg/L of water sodium breaks it.
+        for value in (2e-6, 1):
             result = recommend(
-                [product('clean', K=10)], {'K': 100, 'N_NH4': 0}, {'N_NH4': value}, ridge=0
+                [product('clean', K=10)], {'K': 100, 'Na': 0}, {'Na': value}, ridge=0
             )
             self.assertFalse(result['feasible'])
             self.assertEqual(result['limitViolations'][0]['maximumPpm'], 0)
             self.assertEqual(result['requirementConflicts'][0]['reason'], 'water_above_maximum')
+        met = recommend([product('clean', K=10)], {'K': 100, 'Na': 0}, {'Na': 1e-20}, ridge=0)
+        self.assertTrue(met['feasible'])
+        self.assertEqual((met['limitViolations'], met['requirementConflicts']), ([], []))
 
     def test_zero_maximum_cannot_be_overridden_by_positive_target_or_permission(self):
         result = recommend(
@@ -101,12 +105,12 @@ class RequirementConstraintTests(unittest.TestCase):
 
     def test_positive_maximum_cannot_relax_explicit_zero(self):
         result = recommend(
-            [product('a', K=10, N_NH4=1)],
-            {'K': 100, 'N_NH4': 0},
-            maximum_concentrations={'N_NH4': 10},
+            [product('a', K=10, Na=1)],
+            {'K': 100, 'Na': 0},
+            maximum_concentrations={'Na': 10},
             ridge=0,
         )
-        self.assertEqual(final(result, 'N_NH4'), 0)
+        self.assertEqual(final(result, 'Na'), 0)
         self.assertEqual(result['salts'], [])
 
     def test_exact_boundary_and_next_float_are_distinct(self):

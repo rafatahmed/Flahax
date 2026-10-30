@@ -27,7 +27,7 @@ class AcceptanceTests(unittest.TestCase):
             [product], {'K': 38.672}, {}, 6, final_volume=VolumeLitres(100)
         )
         self.summary = summarize_batch(workflow, [product], title='Witness', water_label='Zero')
-        self.acceptance = accept_result(self.summary, actor='Owner', reason='Review proposal')
+        self.acceptance = accept_result(self.summary, actor='Reviewer', reason='Review proposal')
 
     def test_roundtrip_preserves_all_guards_and_is_detached(self):
         import hashlib
@@ -82,7 +82,7 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(summary['status'], 'blocked')
         self.assertNotEqual(summary['statuses']['ec'], 'verified')
         before = deepcopy(summary)
-        verify_acceptance(summary, accept_result(summary, actor='Owner', reason='Reviewed'))
+        verify_acceptance(summary, accept_result(summary, actor='Reviewer', reason='Reviewed'))
         self.assertEqual(summary, before)
         self.assertEqual(summary['status'], 'blocked')
 
@@ -94,7 +94,7 @@ class AcceptanceTests(unittest.TestCase):
             {'calculation_identity': 'malformed'},
         ):
             with self.assertRaises(DeliveryError):
-                accept_result(summary, actor='Owner', reason='Reviewed')
+                accept_result(summary, actor='Reviewer', reason='Reviewed')
         for actor, reason in [('', 'x'), ('x', None), (False, 'x')]:
             with self.assertRaises(DeliveryError):
                 accept_result(self.summary, actor=actor, reason=reason)

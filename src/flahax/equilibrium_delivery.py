@@ -28,6 +28,7 @@ from .engine import load_library, forward
 from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
 from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
+from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 from .measured_water import BalancedWaterAnalysis, nutrient_mg_per_litre
 
 
@@ -76,7 +77,7 @@ def plan_equilibrium_delivery(
     reagent_channel_id,
     maximum_reagent_volume,
     targets,
-    maximum_nutrient_error_percent,
+    maximum_nutrient_error_percent=None,
     temperature_c=25.0,
     phases=(),
     maximum_concentrations=None,
@@ -95,15 +96,14 @@ def plan_equilibrium_delivery(
     a plain mapping without `analytical_water_totals` is taken as the analysis
     itself, as before.
     """
-    if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible or not recipe.salts:
-        raise DeliveryError(
-            'infeasible_recipe', 'a nonempty feasible FinalSolutionRecipe is required'
-        )
+    # An empty recipe the formulation stage accepted is planned on the water alone (G25).
+    if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible:
+        raise DeliveryError('infeasible_recipe', 'a feasible FinalSolutionRecipe is required')
     water_mass = _number(water_mass_kg, 'water_mass_kg', positive=True)
     initial_ph = _number(initial_ph, 'initial_ph')
     target_ph = _number(target_ph, 'target_ph')
     phases = tuple(phases)
-    tolerance = _number(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
+    tolerance = declared_error_percent(maximum_nutrient_error_percent)
     if isinstance(temperature_c, bool) or temperature_c != 25:
         raise DeliveryError('temperature_out_of_range', 'equilibrium delivery requires 25 C')
     if not isinstance(water_analysis_id, str) or not water_analysis_id.strip():
@@ -202,13 +202,14 @@ def plan_equilibrium_delivery(
     water_ppm = nutrient_mg_per_litre(analytical, water_mass, recipe.final_volume.value)
     achieved = forward(selected, grams_per_litre, water_ppm)
     loss, rows = rescore_with_reagent(achieved, targets, contribution)
-    for row in rows:
-        target = row['target']
-        if target is not None and row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance:
-            raise DeliveryError(
-                'nutrient_tolerance_exceeded',
-                f'final nutrient {row["symbol"]} exceeds the specified tolerance',
-            )
+    # Only the change the nitric acid makes is judged (G25), against the declared percent.
+    moved = reagent_shift_exceeds(achieved, rows, tolerance)
+    if moved:
+        raise DeliveryError(
+            'nutrient_tolerance_exceeded',
+            f'nitric acid moves {", ".join(moved)} by more than the declared {tolerance:g} % '
+            'of the target',
+        )
     assessment = assess_incidental(rows, maximum_concentrations)
     if assessment['limitViolations']:
         raise DeliveryError(

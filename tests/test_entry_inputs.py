@@ -105,7 +105,7 @@ class EntryInputTests(unittest.TestCase):
         code, text = run(flahax, [], '{bad')
         self.assertIn('Expected a JSON object on stdin: Expecting property name', text)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_valid_input_returns_the_current_blocked_result(self):
         self.enterContext(historical_catalogue())
         code, text = self.batch('--acid', 'HNO3:0.60:1.37:Nitric acid 60%')

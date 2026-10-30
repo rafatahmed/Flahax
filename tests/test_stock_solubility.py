@@ -15,8 +15,7 @@ from flahax.stock_solubility import (
     limit_at,
     load_solubility_table,
 )
-from tests.test_grower_outputs import PRODUCTS, rows, workflow
-from tests.catalogue_history import historical_catalogue
+from tests.test_grower_outputs import PACKAGED, PACKAGED_PRODUCTS, PRODUCTS, rows, workflow
 
 CRC = 'CRC Handbook of Chemistry and Physics, pp. 8-112 to 8-117'
 TABLE = [
@@ -203,15 +202,13 @@ class PackagedTableTests(unittest.TestCase):
         self.assertEqual([limit_at(points, t) for t in (20, 25, 40)], [545.9] * 3)
         self.assertIsNone(limit_at(points, 15))
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_packaged_floor_comparisons_are_inconclusive(self):
-        self.enterContext(historical_catalogue())
-        flow = workflow('Tomato (Howard Resh)')
+        flow = workflow('Tomato (Howard Resh)', library=PACKAGED)
 
         def packaged(ratio, temperature):  # the packaged table, not the test fixture
             return summarize_batch(
                 flow,
-                PRODUCTS,
+                PACKAGED_PRODUCTS,
                 title='Tomato',
                 water_label='RO',
                 injection_ratio=ratio,

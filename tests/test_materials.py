@@ -78,7 +78,7 @@ REQUIRED_KEYS = {
 
 class IdentityTests(unittest.TestCase):
     def test_every_catalogue_product_has_exactly_one_identity(self):
-        # Retired pre-owner products keep their records: the frozen catalogue still uses them.
+        # Retired 33c5df2 catalogue products keep their records: the frozen catalogue uses them.
         names = [s['name'] for s in load_library()['salts']]
         frozen = [s['name'] for s in historical_library()['salts']]
         covered = [p for i in load_identities().values() for p in i['products']]
@@ -172,7 +172,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_identities_file_is_pinned(self):
         self.assertEqual(
-            IDENTITIES_SHA256, '1be83c01af94e283170dc2d971007e04bd7b62033befc1bd7d24380216eebe1a'
+            IDENTITIES_SHA256, '886ad53887c594e62b3e733f7fa5424f2262778673ef3b809b873fedc6ade5be'
         )
 
 
@@ -456,7 +456,7 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
-        # 0.553 % is within the 1 % label limit (#93, owner 2026-10-23); a one-point Mg error is
+        # 0.553 % is within the 1 % label limit (#93 decision 2026-10-23); a one-point Mg error is
         # not.
         old = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
@@ -744,7 +744,7 @@ class CatalogueMigrationTests(unittest.TestCase):
             'Calcium Nitrate (ag grade)': 'grade_typical',
             'Calcium Chloride (Dihydrate)': 'identity_theoretical',
             'Potassium Chloride': 'identity_theoretical',
-            # pH-up reagents (#75, owner decisions 2026-10-22)
+            # pH-up reagents (#75 decisions 2026-10-22)
             'Potassium Carbonate': 'identity_theoretical',
             'Potassium Bicarbonate': 'identity_theoretical',
             'Potassium Hydroxide (45% solution)': 'grade_typical',
@@ -765,7 +765,7 @@ class CatalogueMigrationTests(unittest.TestCase):
             self.assertAlmostEqual(salt['elements']['K'], potassium, places=5, msg=name)
             self.assertTrue(salt['source']['url'].endswith(code), name)
         self.assertEqual(salts['Potassium Hydroxide (45% solution)']['densityKgPerL'], 1.456)
-        # The owner catalogue also marks phosphoric and nitric acid as pH reagents.
+        # The packaged catalogue also marks phosphoric and nitric acid as pH reagents.
         self.assertEqual(
             [s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'],
             [
@@ -1015,7 +1015,7 @@ class ChemistryUseTests(unittest.TestCase):
             _old_totals({'CH - micro': 2.0}),
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_irrigation_ec_reports_material_provenance(self):
         self.enterContext(historical_catalogue())
         from flahax.materials import IDENTITIES_SHA256 as SHA
@@ -1129,7 +1129,7 @@ class ChemistryUseTests(unittest.TestCase):
         shipped = self.ec({'Mg Nitrate': 1.0})
         self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_equilibrium_plan_audits_materials(self):
         self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery
@@ -1464,10 +1464,11 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertFalse(any(r['symbol'] == 'Na' and r['final'] > 0 for r in result['rows']))
         self.assertFalse(any('counterion sodium' in warning for warning in result['warnings']))
         # The earlier numeric snapshot above is historical: the primary objective
-        # no longer penalizes incidental sulfate or ammonium.
+        # no longer penalizes incidental sulfate or ammonium. An absent N_UREA is fitted as a
+        # declared zero (D1), so the echoed targets add N_UREA 0.
         self.assertEqual(
             {r['symbol']: r['target'] for r in result['rows'] if r['target'] is not None},
-            self.NO_CHELATE_TARGETS,
+            {**self.NO_CHELATE_TARGETS, 'N_UREA': 0},
         )
 
     def test_helper_matches_chemistry(self):
@@ -1588,7 +1589,7 @@ class WorkflowGradeTests(unittest.TestCase):
     def doses(recommendation):
         return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_label_grade_enters_chemistry_and_ph(self):
         self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
@@ -1662,6 +1663,19 @@ class DeclaredCompoundTests(unittest.TestCase):
         'entered': '2026-10-22',
     }
     NITRIC = WorkflowGradeTests.NITRIC
+    # Tomato (Howard Resh) on the packaged catalogue without the urea-bearing compound (with or
+    # without the Na-bearing products).
+    WITHOUT_UREA = [
+        'Ammonium Sulfate',
+        'Boric Acid',
+        'Calcium Nitrate (ag grade)',
+        'Copper Sulfate (pentahydrate)',
+        'Iron II Sulfate (Hepahydrate)',
+        'Magnesium Sulfate (Heptahydrate)',
+        'Micro Combi Mix 1',
+        'Mn EDTA',
+        'Zinc Sulfate (Monohydrate)',
+    ]
     RO = WorkflowGradeTests.RO
 
     def grade(self, k2o=20):
@@ -1735,9 +1749,7 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertFalse(1.0 <= check.protons_per_phosphate <= 2.0)
         self.assertIn('phosphate balance', check.reason)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_store_with_unmodellable_product_plans_no_acid(self):
-        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.grower_report import render_batch_sheet, summarize_batch
 
@@ -1745,7 +1757,20 @@ class DeclaredCompoundTests(unittest.TestCase):
         library = load_library()
         # The compound is the store's only P and K source, so the recipe must dose it.
         salts = [s for s in library['salts'] if not {'P', 'K'} & set(s['elements'])] + [product]
-        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
+        # compound (12 % N_UREA) is not selected.
+        undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
+        # G25: Mo, short with Micro Combi Mix 1 by less than 1 %, is short under the numerical
+        # tolerance; the only held-back Mo source, sodium molybdate, replaces the mix.
+        with_molybdate = sorted(
+            {*self.WITHOUT_UREA, 'Sodium Molybdate (Dihydrate)'} - {'Micro Combi Mix 1'}
+        )
+        self.assertEqual(
+            sorted(s['name'] for s in undeclared.recommendation['salts']), with_molybdate
+        )
+        # With a declared urea target the compound can be dosed.
+        targets = dict(tomato, N_UREA=12)
         workflow = plan_fertilizer_workflow(
             salts,
             targets,
@@ -1823,9 +1848,7 @@ class DeclaredCompoundTests(unittest.TestCase):
                 }
             )
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_chelate_sodium_of_declared_compound_reaches_the_na_row(self):
-        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -1835,7 +1858,15 @@ class DeclaredCompoundTests(unittest.TestCase):
         salts = [s for s in library['salts'] if not {'P', 'K', 'Na'} & set(s['elements'])] + [
             product
         ]
-        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
+        # compound (12 % N_UREA) is not selected.
+        undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
+        self.assertEqual(
+            sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
+        )
+        # With a declared urea target the compound can be dosed.
+        targets = dict(tomato, N_UREA=12)
         workflow = plan_fertilizer_workflow(
             salts, targets, {}, 5.8, final_volume=VolumeLitres(1000), equilibrium=self.RO
         )
@@ -1872,7 +1903,7 @@ class DeclaredCompoundTests(unittest.TestCase):
             )
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_declared_compound_matches_equivalent_salts(self):
         self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph
@@ -1912,8 +1943,8 @@ class DeclaredCompoundTests(unittest.TestCase):
 
 
 class LabelToleranceTests(unittest.TestCase):
-    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (owner,
-    2026-10-23)."""
+    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (#93
+    decision 2026-10-23)."""
 
     def calcinit(self, cao):
         return grade(

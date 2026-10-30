@@ -13,6 +13,7 @@ Every number comes from ``summarize_batch``, i.e. from the recipe that is weighe
 
 import re
 
+from .requirement_fit import met
 from .grower_report import (
     SHEET_STYLE,
     STATUS_WORDS,
@@ -22,6 +23,7 @@ from .grower_report import (
     grams,  # noqa: F401
     litres,
     millilitres,
+    nitrogen_paragraphs,
     number,
     percentage,
     text,
@@ -188,6 +190,12 @@ def _check_card(summary):
     )
 
 
+def missed_target(row):
+    """True when a row has a declared target (zero included) that its final value does not meet
+    within the numerical tolerance (G25); such rows are marked on the sheets."""
+    return row['target'] is not None and not met(row['target'], row['final'])
+
+
 def _agronomist_section(summary):
     def cell(v, digits=2):
         return '' if v is None else number(v, digits)
@@ -205,12 +213,7 @@ def _agronomist_section(summary):
                 f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
-        hi = (
-            ' class="num hi"'
-            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
-            or (r['target'] == 0 and r['diff_mg_l'] != 0)
-            else ' class="num"'
-        )
+        hi = ' class="num hi"' if missed_target(r) else ' class="num"'
         body += (
             f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
             f'class="num">{cell(r["water"])}</td>'
@@ -227,7 +230,8 @@ def _agronomist_section(summary):
         'class="num">Diff</th></tr></thead>'
         f'<tbody>{body}</tbody></table></div><p class="small">Required = target - water; '
         f'achieved = fertilizers '
-        '+ pH reagent; final = water + achieved; diff = final - target (beyond 1 % in red).</p>'
+        '+ pH reagent; final = water + achieved; diff = final - target (in red when the target is '
+        'not met within the numerical tolerance).</p>' + nitrogen_paragraphs(summary)
     )
     limits = ''.join(
         f'<li>{text(r[0])}: {r[2]} of {r[1]} mg/L ({text(r[4])})</li>'

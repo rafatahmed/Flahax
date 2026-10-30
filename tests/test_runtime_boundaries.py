@@ -14,7 +14,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -26,12 +26,11 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, code)
 
     def test_incomplete_or_invalid_delivery_inventory(self):
-        for recipe in (
-            None,
-            replace(self.args['recipe'], feasible=False),
-            replace(self.args['recipe'], salts=()),
-        ):
+        for recipe in (None, replace(self.args['recipe'], feasible=False)):
             self.rejected('infeasible_recipe', recipe=recipe)
+        # An empty recipe is no longer rejected as such (G25): it is planned on the water alone,
+        # and this synthetic water, balanced with the recipe's salts, is out of balance alone.
+        self.rejected('charge_imbalance', recipe=replace(self.args['recipe'], salts=()))
         self.rejected('missing_field', reagent_channel_id=' ')
         self.rejected('missing_field', water_totals=None)
         self.rejected('invalid_type', analytical_water_totals=[])
@@ -202,7 +201,7 @@ class PublicCalculationBoundaryTests(unittest.TestCase):
         for key in (' ', 1):
             self.assert_code('invalid_value', estimate_manufacturer_ec, {key: 1})
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_catalogue_chemistry_identity_and_inventory_boundaries(self):
         self.enterContext(historical_catalogue())
         from flahax import load_library

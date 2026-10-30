@@ -15,7 +15,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class JointAuditRegressionTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_product_switch_diagnosis_matches_final_nutrient_rows(self):
         self.enterContext(historical_catalogue())
         library = load_library()

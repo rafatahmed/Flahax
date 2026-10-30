@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The pre-owner catalogue, frozen for tests written against it.
+"""The 33c5df2 catalogue, frozen for tests written against it.
 
 The fixture is the byte copy of ``src/flahax/data/library.json`` at commit 33c5df2, the
-data the engine-mechanics tests were written against before the owner catalogue
+data the engine-mechanics tests were written against before the packaged catalogue
 (Flaha Agri Tech Analysis Ver 0.0) replaced it. ``historical_catalogue()`` makes the
 package load that library; ``historical_library()`` returns it parsed.
 """
@@ -18,14 +18,14 @@ import sys
 import flahax.engine
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / 'tests' / 'fixtures' / 'catalogue-pre-owner-33c5df2.json'
+FIXTURE = ROOT / 'tests' / 'fixtures' / 'catalogue-33c5df2.json'
 FIXTURE_GIT_BLOB = '82f48097c58983e8cb007cfd13bdee97f311b027'
 _TEXT = FIXTURE.read_text(encoding='utf-8')
 _LOAD_LIBRARY = flahax.engine.load_library
 
 
 def historical_library() -> dict:
-    """The pre-owner library, freshly parsed so no caller can change another's copy."""
+    """The 33c5df2 library, freshly parsed so no caller can change another's copy."""
     return json.loads(_TEXT)
 
 
@@ -85,7 +85,7 @@ _ACTIVE = []
 
 @contextmanager
 def historical_catalogue():
-    """Within the block, the package loads the pre-owner library.
+    """Within the block, the package loads the 33c5df2 library.
 
     Patches ``flahax.engine.load_library`` and every loaded module that imported it by name
     (the package itself, batch_cli, mix_cli, ph_adjustment, fertilizer_workflow, conductivity,

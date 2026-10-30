@@ -44,8 +44,8 @@ def entry(text):
     return typed(text) + ['ENTER']
 
 
-# The owner's session (tests/test_output_consistency.py ANSWERS) as keys on the wizard.
-OWNER_KEYS = (
+# The 2026-10-23 field-test session (tests/test_output_consistency.py ANSWERS) as wizard keys.
+FIELD_TEST_KEYS = (
     entry('100')
     + entry('100')
     + entry('10')
@@ -200,7 +200,7 @@ class FrameTests(unittest.TestCase):
         self.assertTrue(any(line.endswith('…') for line in lines))
 
     def test_no_faint_text(self):
-        # Owner's trial 2026-10-23: faint text (SGR 2) vanished on a translucent grey theme,
+        # Field trial 2026-10-23: faint text (SGR 2) vanished on a translucent grey theme,
         # hiding the key help, the inactive steps and the "Filter:" label.
         for width in (90, 120):
             for kind in ('choice', 'filter', 'ticks', 'field'):
@@ -228,7 +228,7 @@ class TuiPromptsTests(unittest.TestCase):
             Prompts(lambda prompt: answers.pop(0), lambda *a: None),
             Store(Path(self.tmp.name) / 'plain'),
         )
-        term = FakeTerm(OWNER_KEYS)
+        term = FakeTerm(FIELD_TEST_KEYS)
         tui_run = interview(TuiPrompts(term, UTF8), Store(Path(self.tmp.name) / 'tui'))
         self.assertEqual(term.keys, [])
         self.assertEqual(tui_run[:2], plain_run[:2])
@@ -431,7 +431,7 @@ class RunTuiTests(unittest.TestCase):
         return term, code, lines
 
     def test_run_tui_end_to_end(self):
-        term, code, lines = self.run_tui(OWNER_KEYS + ['TAB', 'TAB', 'q', 'y'], 'tui-home')
+        term, code, lines = self.run_tui(FIELD_TEST_KEYS + ['TAB', 'TAB', 'q', 'y'], 'tui-home')
         self.assertEqual((code, self.plain_code), (3, 3))
         self.assertTrue(term.exited)
         for name in ('batch-sheet.html', 'summary.json', 'report.html'):

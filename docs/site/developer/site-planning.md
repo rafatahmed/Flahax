@@ -47,8 +47,9 @@ existing [water-to-delivery contracts](water-to-delivery.md); no alkalinity
 mg/L-to-total-carbon conversion is silently assumed. Catalogue identity/assay
 and water nutrient-vs-molal agreement are checked before calculating pH.
 
-`acids` contains `products`, `maximum_nutrient_error_percent`,
-`maximum_reagent_volume_litres` and optional `preferred_product_id`. Each
+`acids` contains `products`, `maximum_reagent_volume_litres`, optional
+`preferred_product_id` and optional `maximum_nutrient_error_percent` (the acid's own
+change to each target; no default). Each
 product needs `id`, `source`, `revision`, timezone-qualified `recordedAt`,
 `chemicalFormula` (`HNO3` or `H3PO4` only), `massFraction` (0-1, not percent),
 and `densityKgPerL`. No industrial assay/density is assumed. Nitric adds N;
