@@ -129,11 +129,15 @@ class PublicContractTests(unittest.TestCase):
                 '--output',
                 str(root / 'out'),
             )
-            self.assertEqual(result.returncode, 3, result.stderr)
+            # Owner decision 2026-10-30: with the owner catalogue's acid reagents the run ends
+            # "requires review" (exit 0) and reports the K shortfall the zero maximum forces.
+            self.assertEqual(result.returncode, 0, result.stderr)
             summary = json.loads((root / 'out/summary.json').read_text(encoding='utf-8'))
             verify_summary(summary)
-            self.assertEqual(summary['status'], 'blocked')
+            self.assertEqual(summary['status'], 'requires_review')
             self.assertEqual(summary['formulation']['salts'], [])
+            k = next(r for r in summary['formulation']['rows'] if r['symbol'] == 'K')
+            self.assertEqual((k['target'], k['final'], k['deltaPct']), (100.0, 0.0, -100.0))
             reference = summary['calculation_identity']['result_id']
             for name in ('report.html', 'batch-sheet.html'):
                 self.assertIn(reference, (root / 'out' / name).read_text(encoding='utf-8'))
@@ -186,11 +190,14 @@ class PublicContractTests(unittest.TestCase):
                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src'), FLAHAX_HOME=tmp),
                 timeout=90,
             )
-            self.assertEqual(result.returncode, 3, result.stderr + result.stdout)
+            # Owner decision 2026-10-30: "requires review" (exit 0) with the forced K shortfall.
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
             verify_summary(summary)
             self.assertEqual(summary['formulation']['salts'], [])
-            self.assertEqual(summary['status'], 'blocked')
+            self.assertEqual(summary['status'], 'requires_review')
+            k = next(r for r in summary['formulation']['rows'] if r['symbol'] == 'K')
+            self.assertEqual((k['target'], k['final'], k['deltaPct']), (100.0, 0.0, -100.0))
             self.assertNotIn('  [ ] ', result.stdout)
             self.assertIn(summary['calculation_identity']['result_id'], result.stdout)
 

@@ -29,6 +29,12 @@ def historical_library() -> dict:
     return json.loads(_TEXT)
 
 
+def _load_library():
+    """The patched ``load_library``: a function of its own, so restoring it on exit never
+    touches a module that imported ``historical_library`` itself."""
+    return historical_library()
+
+
 def _formula_names_replacement():
     """``tools.publish_benchmark_report.formula_names`` reads library.json from a source tree;
     for this repository it reads the fixture instead."""
@@ -46,7 +52,7 @@ def _formula_names_replacement():
 
 def _replacements():
     """(original, replacement) for every catalogue reader bound by name somewhere."""
-    pairs = [(_LOAD_LIBRARY, historical_library)]
+    pairs = [(_LOAD_LIBRARY, _load_library)]
     if 'tools.publish_benchmark_report' in sys.modules:
         pairs.append(_formula_names_replacement())
     return pairs

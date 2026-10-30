@@ -853,6 +853,61 @@
       },
       "status": "aqueous_solution",
       "notes": "Identity-level HNO3; protons are implicit in the aqueous charge balance, nitrate comes from the elemental assay. Solution concentration is on the product record. No density or measured lot assay supplied."
+    },
+    {
+      "id": "idn-micro-combi-mix-1-declared-blend",
+      "products": [
+        "Micro Combi Mix 1"
+      ],
+      "name": "Micro Combi Mix 1 owner-declared micronutrient blend",
+      "formula": null,
+      "hydration": "not applicable (blend)",
+      "molecular_weight": null,
+      "cas": null,
+      "ion_forms": {
+        "Na+": 3.3752593100070953,
+        "Fe(III)-EDTA": 1.2892828360199928,
+        "Mn-EDTA": 0.6552836140617728,
+        "Zn-EDTA": 0.1835423680022359,
+        "Cu-EDTA": 0.14162968564778566,
+        "MoO4-2": 0.06253256928175688
+      },
+      "theoretical_analysis": {},
+      "comparator": {
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner declaration)",
+        "url": null,
+        "accessed": "2026-10-30"
+      },
+      "status": "declared_blend",
+      "notes": "Composition declared by the owner (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 7.2, Cu 0.9, Mn 3.6, Zn 1.2, Mo 0.6 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4. Not independently verified."
+    },
+    {
+      "id": "idn-micro-combi-mix-2-declared-blend",
+      "products": [
+        "Micro Combi Mix 2"
+      ],
+      "name": "Micro Combi Mix 2 owner-declared micronutrient blend",
+      "formula": null,
+      "hydration": "not applicable (blend)",
+      "molecular_weight": null,
+      "cas": null,
+      "ion_forms": {
+        "Na+": 2.099750434048474,
+        "Fe(III)-EDTA": 0.6625481238588691,
+        "Mn-EDTA": 0.43685574270784855,
+        "Zn-EDTA": 0.22942795976996422,
+        "Cu-EDTA": 0.031473263166844845,
+        "B(OH)3": 1.2950971322134137,
+        "MoO4-2": 0.020844189450144768
+      },
+      "theoretical_analysis": {},
+      "comparator": {
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner declaration)",
+        "url": null,
+        "accessed": "2026-10-30"
+      },
+      "status": "declared_blend",
+      "notes": "Composition declared by the owner (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 3.7, Cu 0.2, Mn 2.4, Zn 1.5, Mo 0.2, B 1.4 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4, B as boric acid (B(OH)3). Not independently verified."
     }
   ]
 }

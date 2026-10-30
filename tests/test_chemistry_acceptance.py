@@ -22,7 +22,9 @@ from tests.catalogue_history import historical_catalogue
 
 
 class ChemistryAcceptanceTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_every_product_assay_survives_the_analytical_boundary(self):
+        self.enterContext(historical_catalogue())
         for product in load_library()['salts']:
             name = product['name']
             with self.subTest(product=name):

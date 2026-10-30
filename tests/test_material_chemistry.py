@@ -256,6 +256,77 @@ class MaterialChemistryTests(unittest.TestCase):
                     ions_from_formula(identity['formula']), identity['ion_forms'], identity['id']
                 )
 
+    def test_nitric_acid_is_a_strong_acid_like_phosphoric(self):
+        # N1: HNO3 dissociates fully (H+ + NO3-); the proton is implicit, as for H3PO4.
+        self.assertEqual(ions_from_formula('HNO3'), {'HNO3': 1})
+        nitric = material_chemistry(
+            {'name': 'Nitric 65', 'formula': 'HNO3', 'elements': {'N_NO3': 14.4487}}
+        )
+        self.assertEqual((nitric.family, nitric.components), ('macro_acid', ('HNO3',)))
+        phosphoric = material_chemistry(
+            {'name': 'Phosphoric 75', 'formula': 'H3PO4', 'elements': {'P': 23.706035}}
+        )
+        self.assertEqual(phosphoric.family, nitric.family)
+        from flahax.product_conversion import convert_material_dose
+
+        converted = convert_material_dose(
+            {'name': 'Nitric 65', 'formula': 'HNO3', 'elements': {'N_NO3': 14.4487}}, 2.0
+        )
+        self.assertAlmostEqual(converted.totals['nitrate'], 2.0 * 0.144487 / 14.0067, places=15)
+        self.assertEqual((dict(converted.counterions), dict(converted.ligands)), ({}, {}))
+        with self.assertRaises(DeliveryError) as caught:
+            material_chemistry({'name': 'Bad', 'formula': 'HNO3', 'elements': {'K': 5}})
+        self.assertEqual(caught.exception.code, 'identity_inconsistent')
+
+    def test_owner_micro_combi_blends_use_their_declared_composition(self):
+        # N2 (owner, 2026-10-30): Fe, Mn, Zn, Cu as EDTA chelates with the catalogue's sodium
+        # counter-ions, Mo as sodium molybdate, B as boric acid; the label is the analysis.
+        from flahax.materials import load_identities, resolve_material
+
+        mass = {'Fe': 55.845, 'Cu': 63.546, 'Mn': 54.938044, 'Zn': 65.38, 'Mo': 95.95, 'B': 10.81}
+        form = {
+            'Fe': 'Fe(III)-EDTA',
+            'Mn': 'Mn-EDTA',
+            'Zn': 'Zn-EDTA',
+            'Cu': 'Cu-EDTA',
+            'Mo': 'MoO4-2',
+            'B': 'B(OH)3',
+        }
+        sodium = {'Fe': 1, 'Mn': 2, 'Zn': 2, 'Cu': 2, 'Mo': 2, 'B': 0}
+        owner = {s['name']: s for s in load_library()['salts']}
+        for name in ('Micro Combi Mix 1', 'Micro Combi Mix 2'):
+            with self.subTest(product=name):
+                salt = owner[name]
+                identity = load_identities()[salt['identityId']]
+                self.assertEqual(identity['status'], 'declared_blend')
+                self.assertIn(
+                    'Composition declared by the owner (2026-10-29/30); Na counter-ions follow '
+                    "the catalogue's chelate identities.",
+                    identity['notes'],
+                )
+                ions = identity['ion_forms']
+                for element, percent in salt['elements'].items():
+                    self.assertAlmostEqual(
+                        ions[form[element]], percent * 10 / mass[element], delta=1e-9
+                    )
+                self.assertAlmostEqual(
+                    ions['Na+'],
+                    sum(sodium[k] * v * 10 / mass[k] for k, v in salt['elements'].items()),
+                    delta=1e-8,
+                )
+                self.assertEqual(set(ions), {'Na+', *(form[k] for k in salt['elements'])})
+                chemistry = material_chemistry(salt)
+                self.assertEqual(chemistry.family, 'edta_molybdate_blend')
+                self.assertTrue(chemistry.source_profile.startswith('owner-declared composition'))
+                material = resolve_material(name)
+                self.assertEqual(material.composition, 'disclosed')
+                self.assertNotIn('assumed_composition', material.flags)
+                self.assertFalse(material.provenance['assumed'])
+                self.assertEqual(
+                    material.provenance['assumptionStatus'],
+                    'declared_composition_not_independently_verified',
+                )
+
     def test_a_name_alone_is_not_a_material(self):
         for record in (
             {'name': 'Mystery'},
