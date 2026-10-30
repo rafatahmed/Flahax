@@ -62,7 +62,7 @@ from flahax import gap_for, load_library, recommend, solve_weights
 load_library() -> dict
 gap_for(targets, water) -> dict
 recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
-          maximum_concentrations=None, max_ammonium_fraction=None) -> dict
+          maximum_concentrations=None, max_ammonium_fraction=0.1) -> dict
 solve_weights(salts, targets, water=None, ridge=0.0) -> dict
 ```
 
@@ -171,11 +171,15 @@ targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
-**Explicit ammonium policy.** `max_ammonium_fraction` defaults to `None`: no
-ammonium maximum is invented. When explicitly supplied and the targets omit
-`N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
-without an additional absolute cap. `result["ammoniumLimit"]` records it.
-An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
+**Nitrogen forms and the ammonium allowance.** `N_NO3`, `N_NH4` and `N_UREA` are
+each their own fitted target; `result["totalN"]` reports their sum and is never
+fitted. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no
+ammonium requirement (no row, no ban): incidental NH4-N is then held within
+min(`max_ammonium_fraction` × total target N, 1.5 mmol/L NH4 = 21.01 mg/L N).
+The default fraction 0.10 follows Dutch soilless practice (De Kreij, Voogt et
+al.); `result["ammoniumLimit"]` records the limit, fraction, cap and basis, and
+`None` adds no ammonium maximum. A positive `N_NH4` target or a
+`maximum_concentrations` entry takes precedence.
 Explicit zeros and targeted ceilings are enforced independently of the objective.
 `score` retains all nutrient rows but sums only positive-target squared relative errors.
 Binding-limit diagnostics use the same numerical aim and convergence tolerance as

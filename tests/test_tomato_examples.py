@@ -27,7 +27,6 @@ def compatible(tank):
 
 class SimpleTomatoTests(unittest.TestCase):
     # Owner catalogue: re-enable in PR 4 (G5)
-    # Owner catalogue: re-enable in PR 3 (G24)
     # Owner catalogue: re-enable in PR 3 (G25)
     @classmethod
     def setUpClass(cls):
@@ -53,7 +52,6 @@ class SimpleTomatoTests(unittest.TestCase):
 
 class AdvancedTomatoTests(unittest.TestCase):
     # Owner catalogue: re-enable in PR 4 (G5)
-    # Owner catalogue: re-enable in PR 3 (G24)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())

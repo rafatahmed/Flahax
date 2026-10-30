@@ -587,6 +587,10 @@ def summarize_batch(
             ],
             unmet=recipe['unmetTargets'],
             ion_balance=recipe['targetIonBalance'],
+            # The ammonium allowance (G23), shown with its basis, and total N as the
+            # reported sum of the three forms (D1).
+            ammonium_allowance=recipe.get('ammoniumLimit'),
+            total_n=recipe.get('totalN'),
         ),
         ph=ph,
         chemistry=chemistry,

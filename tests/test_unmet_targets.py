@@ -24,7 +24,6 @@ def unmet(result):
 
 
 class UnmetTargetTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 3 (G24)
     # Owner catalogue: re-enable in PR 3 (G25)
     def test_feasible_recipe_has_no_unmet_targets(self):
         result = recommend(SALTS, formula("Hoagland solution")["targets"], {})

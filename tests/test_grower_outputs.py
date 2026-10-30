@@ -50,6 +50,10 @@ with historical_catalogue():
 PRODUCTS = LIBRARY['salts']
 BY_NAME = {p['name']: p for p in PRODUCTS}
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
+# The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0), for tests re-enabled on it.
+PACKAGED = load_library()
+PACKAGED_PRODUCTS = PACKAGED['salts']
+PACKAGED_FORMULAS = {f['name']: f['targets'] for f in PACKAGED['formulas']}
 ACIDS = [
     dict(
         id=f'{f}-example',
@@ -96,10 +100,11 @@ def rows(*pairs):
     return [dict(id=BY_NAME[n]['id'], name=n, gramsPerLitre=g) for n, g in pairs]
 
 
-def workflow(formula, products=ACIDS):
+def workflow(formula, products=ACIDS, library=None):
+    library = library or LIBRARY
     return plan_fertilizer_workflow(
-        PRODUCTS,
-        FORMULAS[formula],
+        library['salts'],
+        {f['name']: f['targets'] for f in library['formulas']}[formula],
         {},
         5.8,
         final_volume=VolumeLitres(1000),
@@ -156,11 +161,9 @@ class TankGroupingTests(unittest.TestCase):
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_tomato_reports_required_equipment_without_waivers(self):
-        self.enterContext(historical_catalogue())
-        recipe = workflow('Tomato (Howard Resh)').recommendation
-        grouping = group_tanks(recipe['salts'], PRODUCTS)
+        recipe = workflow('Tomato (Howard Resh)', library=PACKAGED).recommendation
+        grouping = group_tanks(recipe['salts'], PACKAGED_PRODUCTS)
         self.assertEqual(len(grouping.tanks), 3)
         self.assertFalse(grouping.waived)
         self.assertNotEqual(
@@ -168,7 +171,7 @@ class TankGroupingTests(unittest.TestCase):
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
         with self.assertRaises(DeliveryError):
-            group_tanks(recipe['salts'], PRODUCTS, max_tanks=2)
+            group_tanks(recipe['salts'], PACKAGED_PRODUCTS, max_tanks=2)
 
     def test_calcium_separations_still_hold(self):
         grouping = group_tanks(
@@ -412,7 +415,7 @@ class IncidentalAssessmentTests(unittest.TestCase):
     def row(recommendation, symbol='N_NH4'):
         return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_first_fit_and_refit_rate_ammonium_alike(self):
         self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
@@ -434,27 +437,30 @@ class IncidentalAssessmentTests(unittest.TestCase):
                 )
             ),
         )
-        self.assertEqual(first['assessment'], 'requires_review')
+        # G23: no NH4-N target, so both fits are judged against the same ammonium allowance,
+        # min(10 % of 140 mg/L total N, 21.01) = 14.0 mg/L.
+        self.assertEqual(first['assessment'], 'within_limit')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
-        self.assertIsNone(first['maximumPpm'])
-        self.assertEqual(refit['assessment'], 'requires_review')
+        self.assertEqual(first['maximumPpm'], 14.0)
+        self.assertEqual(refit['assessment'], 'within_limit')
         self.assertEqual(
             [
                 r['symbol']
                 for r in flow.recommendation['incidentalContributions']
                 if r['assessment'] == 'requires_review'
             ],
-            ['N_NH4', 'Na'],
-        )  # neither maximum was declared
+            ['Na'],
+        )  # no Na maximum was declared
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
-        self.assertIn('N_NH4', summary['stages']['formulation'].get('message') or '')
+        message = summary['stages']['formulation'].get('message') or ''
+        self.assertIn('Na', message)
+        self.assertNotIn('N_NH4', message)
+        self.assertEqual(summary['formulation']['ammonium_allowance']['mgPerL'], 14.0)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_each_incidental_names_the_products_that_supply_it(self):
-        self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
-            PRODUCTS,
-            FORMULAS[self.TOMATO],
+            PACKAGED_PRODUCTS,
+            PACKAGED_FORMULAS[self.TOMATO],
             {},
             5.8,
             final_volume=VolumeLitres(1000),
@@ -464,17 +470,17 @@ class IncidentalAssessmentTests(unittest.TestCase):
         selected = {s['name'] for s in flow.recommendation['salts']}
         sources = {
             p['name']
-            for p in PRODUCTS
+            for p in PACKAGED_PRODUCTS
             if p['name'] in selected and p['elements'].get('N_NH4', 0) > 0
         }
         self.assertTrue(sources)
         self.assertEqual(set(self.row(flow.recommendation)['source']), sources)
-        summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
+        summary = summarize_batch(flow, PACKAGED_PRODUCTS, title='Tomato', water_label='RO')
         rows = {r['symbol']: r for r in summary['formulation']['rows']}
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
         self.enterContext(historical_catalogue())
         limits = {'Na': 50, 'N_NH4': 14}
@@ -526,11 +532,13 @@ class IncidentalAssessmentTests(unittest.TestCase):
         )
         self.assertEqual(status, chosen.status)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_declared_ammonium_maximum_wins_over_the_allowance(self):
-        self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
-            PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, maximum_concentrations={'N_NH4': 5}
+            PACKAGED_PRODUCTS,
+            PACKAGED_FORMULAS[self.TOMATO],
+            {},
+            5.8,
+            maximum_concentrations={'N_NH4': 5},
         )
         row = self.row(flow.recommendation)
         self.assertEqual(row['maximumPpm'], 5)
@@ -550,9 +558,7 @@ class BatchCommandTests(unittest.TestCase):
             code = batch(list(argv))
         return code, out.getvalue(), err.getvalue()
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_writes_report_sheet_and_summary(self):
-        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'sheet'
             code, out, _ = self.run_batch(
@@ -584,7 +590,7 @@ class BatchCommandTests(unittest.TestCase):
                     '--crop', 'tomato (howard', '--water', 'ro', '--output', str(target)
                 )
 
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 3 (G25)
     def test_review_reason_quotes_the_weighed_recipe(self):
         self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:

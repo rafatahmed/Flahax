@@ -118,7 +118,7 @@ class CoupledFailureTests(unittest.TestCase):
 
 
 class CoupledAccuracyTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_direction_crossing_returns_a_real_phosphoric_plan(self):
         self.enterContext(historical_catalogue())
         flow = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
@@ -134,7 +134,7 @@ class CoupledAccuracyTests(unittest.TestCase):
             if row['deltaPct'] is not None:
                 self.assertLessEqual(abs(row['deltaPct']), 1)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_initial_direction_and_numerical_failures_are_not_used_as_bounds(self):
         self.enterContext(historical_catalogue())
         for code in ('wrong_reagent_direction', 'nonconvergent'):

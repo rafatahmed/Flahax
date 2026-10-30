@@ -79,7 +79,7 @@ This is a numerical demonstration, not a universal crop prescription. Review eve
 | Acid density | kg/L; nitrate-N assay is elemental N percent, not HNO3 percent |
 | `InjectionRatio` | Final litres per litre of stock |
 
-Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
+Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Each form is its own fitted target; `totalN` reports their sum and is never fitted. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no ammonium requirement: incidental NH4-N is held within the ammonium allowance described in section 11. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
 
 `result['salts']` contains selected products and doses. `result['rows']` contains
 `symbol`, `target`, `final` and `deltaPct`. Use identity-bearing `salts` records
@@ -421,8 +421,9 @@ Recalculate saved recipes from their original inputs; do not reuse an old accept
 or relabel a historical result as a new calculation. Package, schema, model/source
 hashes and result identity are distinct identifiers.
 
-- Target zero is a hard zero; omitted targets are incidental. Declare nutrient
-  maximums explicitly. No ammonium fraction is supplied by default.
+- Target zero is a hard zero, except `N_NH4` (no ammonium requirement); omitted
+  targets are incidental. Declare nutrient maximums explicitly. The ammonium
+  allowance min(10% of total N, 1.5 mmol/L) applies by default (`ammoniumLimit`).
 - Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
   Keep product IDs with doses rather than zipping a filtered result to the catalogue.
 - Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input
@@ -490,15 +491,17 @@ Supply the complete `equilibrium` record to proceed. Read all stages, not only
 | `requires_review` | Incidental nutrient contribution needs assessment | Review absolute mg/L and hard caps |
 | `blocked` | That stage was rejected | Read `error_code` and `message`; correct inputs |
 
-A zero NH4 target has no meaningful percentage deviation. Real products may
-add NH4: report the absolute addition separately; never relabel it as zero.
+A zero NH4 target is no ammonium requirement: it sets no row, and products that
+carry NH4 (calcium nitrate) stay eligible. The NH4 they add is reported as an
+incidental contribution in absolute mg/L, never relabelled as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
-When targets omit NH4 entirely, `recommend` adds no ammonium maximum by default.
-Supply `max_ammonium_fraction` explicitly to set a fraction of total target N;
-`ammoniumLimit` records that caller policy, without an additional absolute cap.
-The default `None` retains the existing incidental-ion objective. An explicit
-NH4 target or absolute maximum takes precedence over the fraction.
+When targets declare no NH4-N requirement (N_NH4 absent or 0), `recommend` holds
+incidental NH4-N within min(`max_ammonium_fraction` × total target N, 1.5 mmol/L
+NH4 = 21.01 mg/L N). The default fraction is 0.10, following Dutch soilless
+practice (De Kreij, Voogt et al.); `ammoniumLimit` records the limit, the
+fraction, the cap and that basis. `None` adds no ammonium maximum. A positive
+NH4 target or an explicit N_NH4 maximum takes precedence over the allowance.
 
 ### Reading misses, limits and provenance
 

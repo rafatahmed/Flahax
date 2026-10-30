@@ -21,7 +21,7 @@ import math
 from collections.abc import Callable, Mapping, Sequence
 
 from .aqueous_model import AqueousResult, solve
-from .composition import ATOMIC
+from .composition import ATOMIC, fitted_targets
 from .delivery_contracts import DeliveryError
 from .engine import (
     PH_REAGENT,
@@ -241,6 +241,10 @@ def plan_coupled_ph(
     phases = tuple(phases)
     pool = nutrient_salts(salts)
     unadjusted = recommend(pool, targets, water, maximum_concentrations=maximum_concentrations)
+    # Every refit uses the nitrogen rows recommend fitted (D1, G24); the joint search holds the
+    # ammonium allowance recommend applied as a declared maximum (G23).
+    targets = fitted_targets(targets)
+    joint_maxima = assessed_limits(maximum_concentrations, unadjusted)
     base_state = mix(unadjusted)
     if abs(base_state.ph - target_ph) <= PH_TOLERANCE:
         direction = 'none'
@@ -270,7 +274,7 @@ def plan_coupled_ph(
                         volume,
                         cap,
                         phases,
-                        maximum_concentrations,
+                        joint_maxima,
                         water_components,
                         joint,
                     )
@@ -327,7 +331,7 @@ def plan_coupled_ph(
                                 volume,
                                 cap,
                                 phases,
-                                maximum_concentrations,
+                                joint_maxima,
                                 water_components,
                             )
                         )
@@ -776,4 +780,6 @@ def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fracti
         solvent_fraction=reagent_solvent_fraction,
         density_kg_per_litre=density,
     )
+    if isinstance(targets, Mapping):
+        targets = fitted_targets(targets)  # nitrogen rows as recommend fits them (D1, G24)
     return JointProblem(tuple(sources), active, targets, water, **conditions)

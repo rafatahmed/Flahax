@@ -94,8 +94,14 @@ class IncidentalMaximumTests(unittest.TestCase):
         tomato = next(
             f["targets"] for f in LIBRARY["formulas"] if f["name"] == "Tomato (Howard Resh)"
         )
+        # The Cl mechanism is compared without the G23 ammonium allowance: with it, Tomato has
+        # several exact optima (loss ~1e-30) and the two fits may pick different ones.
         result = recommend(
-            LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
+            LIBRARY["salts"],
+            tomato,
+            water,
+            maximum_concentrations={"Na": 68.97, "Cl": 106.35},
+            max_ammonium_fraction=None,
         )
         self.assertFalse(result["feasible"])
         self.assertEqual([v["symbol"] for v in result["limitViolations"]], ["Cl"])
@@ -108,9 +114,19 @@ class IncidentalMaximumTests(unittest.TestCase):
             tomato,
             water,
             maximum_concentrations={"Na": 68.97, "Cl": 1e9},
+            max_ammonium_fraction=None,
         )
         self.assertEqual(result["salts"], reference["salts"])
         self.assertEqual(result["loss"], reference["loss"])
+        # With the default allowance (Tomato total N 140 -> 14.0 mg/L) the water's chloride is
+        # still reported, not a solver failure, and incidental NH4-N stays within 14.0 mg/L.
+        allowed = recommend(
+            LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
+        )
+        self.assertEqual(allowed["ammoniumLimit"]["mgPerL"], 14.0)
+        self.assertEqual([v["symbol"] for v in allowed["limitViolations"]], ["Cl"])
+        self.assertLessEqual(final(allowed, "N_NH4"), 14.0)
+        self.assertAlmostEqual(final(allowed, "Cl"), 1280.4 * 0.09, places=9)
 
     def test_invalid_maximum_is_rejected(self):
         with self.assertRaises(Exception):

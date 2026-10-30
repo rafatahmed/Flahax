@@ -638,7 +638,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -647,8 +647,13 @@ Args:
     library: Product records with id, name, formula and elemental mass
         percentages in elements. Use load_library()['salts'] deliberately.
     targets: Required nonempty elemental mg/L map; nitrogen forms are
-        separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
-        An explicit zero prohibits positive contribution, unlike a missing key.
+        separate N_NO3, N_NH4 and N_UREA keys, not generic total N. Each
+        form is its own requirement (decision D1): N_NO3 as declared,
+        N_UREA as declared or 0 when absent, and N_NH4 only when above 0.
+        An absent or zero N_NH4 sets no row and no ban; the ammonium
+        allowance below applies instead. Total N is reported in totalN as
+        the sum of the forms, never fitted. For other nutrients an explicit
+        zero prohibits positive contribution, unlike a missing key.
     water: Source-water elemental mg/L; omitted entries default to zero.
     allow_ions: Explicit exceptions to the default restricted-ion filter.
     allow_carbonates: Permit carbonate products in nutrient fitting only;
@@ -662,11 +667,14 @@ Args:
         constraint, and any
         excess that cannot be removed is reported in limitViolations with
         feasible False. Omitted keeps the default.
-    max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
-        none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-        the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
-        caller policy, with no additional absolute cap. Default None adds
-        no ammonium maximum. Untargeted nutrients do not enter the objective.
+    max_ammonium_fraction: When targets declare no NH4-N requirement
+        (N_NH4 absent or 0) and no N_NH4 maximum is given, incidental NH4-N
+        may reach this share of the total target N (N_NO3 + N_NH4 + N_UREA),
+        capped at 1.5 mmol/L NH4 (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The
+        default AMMONIUM_FRACTION (0.10) follows Dutch soilless
+        practice (G23); ammoniumLimit reports it with its basis.
+        None adds no ammonium maximum. Untargeted nutrients do not enter
+        the objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -700,6 +708,9 @@ solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None,
 ```
 
 Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
+
+Nitrogen forms are fitted as in ``recommend`` (each its own row; a zero N_NH4 sets no row
+and no ban). No ammonium allowance is applied here: incidental NH4-N is reported only.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 
