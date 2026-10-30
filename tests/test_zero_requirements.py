@@ -44,13 +44,17 @@ class RequirementConstraintTests(unittest.TestCase):
                 )
 
     def test_water_cannot_be_removed_to_satisfy_zero(self):
-        for value in (1e-20, 1):
+        # A declared zero is met within 1e-6 mg/L (G25): 2e-6 mg/L of water sodium breaks it.
+        for value in (2e-6, 1):
             result = recommend(
                 [product('clean', K=10)], {'K': 100, 'Na': 0}, {'Na': value}, ridge=0
             )
             self.assertFalse(result['feasible'])
             self.assertEqual(result['limitViolations'][0]['maximumPpm'], 0)
             self.assertEqual(result['requirementConflicts'][0]['reason'], 'water_above_maximum')
+        met = recommend([product('clean', K=10)], {'K': 100, 'Na': 0}, {'Na': 1e-20}, ridge=0)
+        self.assertTrue(met['feasible'])
+        self.assertEqual((met['limitViolations'], met['requirementConflicts']), ([], []))
 
     def test_zero_maximum_cannot_be_overridden_by_positive_target_or_permission(self):
         result = recommend(

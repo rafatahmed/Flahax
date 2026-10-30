@@ -35,6 +35,7 @@ from .engine import (
     total_n_report,
 )
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
+from .requirement_fit import PH_TOLERANCE, met  # a pH within 1e-4 is met (G25)
 from .root_finding import shrink_bracket
 from .product_conversion import component_nutrient_masses, material_inventory
 from .saturation_policy import assess_saturation, describe
@@ -52,8 +53,6 @@ REAGENTS = {
     'KHCO3': ('base', {'K+': 1, 'CO3-2': 1}, _K + _H + _C + 3 * _O, {'K': _K}),
     'K2CO3': ('base', {'K+': 2, 'CO3-2': 1}, 2 * _K + _C + 3 * _O, {'K': 2 * _K}),
 }
-# Change in pH below which no reagent is planned.
-PH_TOLERANCE = 1e-3
 # The recipe and its reagent dose agree when they differ by less than this fraction.
 DOSE_TOLERANCE = 1e-4
 
@@ -543,7 +542,7 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     ] + [
         dict(symbol=s, reason='water_above_maximum', waterPpm=supply[s], maximumPpm=limit)
         for s, limit in (maxima | {s: 0 for s, t in targets.items() if t == 0}).items()
-        if supply.get(s, 0) > limit
+        if (not met(0.0, supply.get(s, 0)) if targets.get(s) == 0 else supply.get(s, 0) > limit)
     ]
     if result['requirementConflicts']:
         result['feasible'] = False

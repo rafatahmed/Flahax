@@ -5,6 +5,7 @@
 """Explicit, inspectable water-to-recipe-to-chemistry planning orchestration."""
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 import math
 from collections.abc import Mapping
 
@@ -28,7 +29,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .requirement_fit import met
+from .requirement_fit import met, reagent_shift_exceeds
 from .nutrient_acceptance import (
     assess_incidental,
     assess_water_basis,
@@ -185,10 +186,22 @@ def blocks(recommendation):
     return bool(recommendation['limitViolations'])
 
 
+def signed_percent(value):
+    """A signed percentage to three significant figures in fixed notation: +1400, -0.323."""
+    return format(Decimal(f'{value:.3g}'), '+f')
+
+
+def _miss(row):
+    """One missed target in plain words; a declared zero has no relative difference."""
+    if row['deltaPct'] is None:
+        return f'{row["symbol"]} {row["final"]:.3g} mg/L for a declared 0'
+    return f'{row["symbol"]} {signed_percent(row["deltaPct"])} %'
+
+
 def missed_message(recommendation):
     """The targets a recipe misses beyond the numerical tolerance, in plain words, or None."""
     missed = [
-        f'{r["symbol"]} {r["deltaPct"]:+.3g} %'
+        _miss(r)
         for r in recommendation['rows']
         if r['target'] and r['deltaPct'] is not None and not met(r['target'], r['final'])
     ]
@@ -540,12 +553,7 @@ def plan_fertilizer_workflow(
     if not missing(
         'nitric',
         nitric,
-        (
-            'reagent',
-            'reagent_channel_id',
-            'maximum_reagent_volume',
-            'maximum_nutrient_error_percent',
-        ),
+        ('reagent', 'reagent_channel_id', 'maximum_reagent_volume'),
     ):
         if stages['chemistry'].status not in USABLE:
             stages['nitric'] = WorkflowStage(
@@ -568,14 +576,10 @@ def plan_fertilizer_workflow(
                     temperature_c=equilibrium['temperature_c'],
                     phases=equilibrium['phases'],
                     maximum_concentrations=limits,
+                    maximum_nutrient_error_percent=nitric.get('maximum_nutrient_error_percent'),
                     **{
                         key: nitric[key]
-                        for key in (
-                            'reagent',
-                            'reagent_channel_id',
-                            'maximum_reagent_volume',
-                            'maximum_nutrient_error_percent',
-                        )
+                        for key in ('reagent', 'reagent_channel_id', 'maximum_reagent_volume')
                     },
                 ),
             )
@@ -616,17 +620,18 @@ def plan_fertilizer_workflow(
                     {row['symbol']: row['final'] for row in recommendation['rows']},
                     targets,
                 )
-                tolerance = _positive(
-                    titration.get('maximum_nutrient_error_percent', 1),
-                    'maximum_nutrient_error_percent',
-                )
-                if any(
-                    row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance
-                    for row in plan.rows
-                ):
+                # Only the change the reagent makes is judged (G25), and only against a percent
+                # the caller declares: no default.
+                percent = titration.get('maximum_nutrient_error_percent')
+                if percent is not None:
+                    percent = _positive(percent, 'maximum_nutrient_error_percent')
+                before = {row['symbol']: row['final'] for row in recommendation['rows']}
+                moved = reagent_shift_exceeds(before, plan.rows, percent)
+                if moved:
                     raise DeliveryError(
                         'nutrient_tolerance_exceeded',
-                        'titration dose violates a positive nutrient target',
+                        f'titration dose moves {", ".join(moved)} by more than the declared '
+                        f'{percent:g} % of the target',
                     )
                 if assess_incidental(plan.rows, limits)['limitViolations']:
                     raise DeliveryError(
@@ -642,7 +647,7 @@ def plan_fertilizer_workflow(
     if not missing(
         'acid_selection',
         acids,
-        ('products', 'maximum_nutrient_error_percent', 'maximum_reagent_volume_litres'),
+        ('products', 'maximum_reagent_volume_litres'),
     ):
         if (
             not isinstance(acids['products'], (list, tuple))
@@ -677,7 +682,7 @@ def plan_fertilizer_workflow(
                     final_volume_litres=final_volume.value,
                     achieved={row['symbol']: row['final'] for row in recommendation['rows']},
                     targets=targets,
-                    maximum_nutrient_error_percent=acids['maximum_nutrient_error_percent'],
+                    maximum_nutrient_error_percent=acids.get('maximum_nutrient_error_percent'),
                     maximum_reagent_volume_litres=acids['maximum_reagent_volume_litres'],
                     preferred_product_id=acids.get('preferred_product_id'),
                     phases=equilibrium['phases'],
@@ -765,7 +770,7 @@ def plan_fertilizer_workflow(
                 elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
                     stages['ph_adjustment'].status = 'requires_review'
                     missed = ', '.join(
-                        f'{u["symbol"]} {u["deltaPct"]:+.3g} % ({u["reason"]})'
+                        f'{_miss(u)} ({u["reason"]})'
                         for u in chosen.recommendation.get('unmetTargets', [])
                     )
                     stages['ph_adjustment'].message = '; '.join(

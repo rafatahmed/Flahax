@@ -421,8 +421,11 @@ Recalculate saved recipes from their original inputs; do not reuse an old accept
 or relabel a historical result as a new calculation. Package, schema, model/source
 hashes and result identity are distinct identifiers.
 
-- Target zero is a hard zero, except `N_NH4` (no ammonium requirement); omitted
-  targets are incidental. Declare nutrient maximums explicitly. The ammonium
+- Target zero is a hard zero, met within 1e-6 mg/L, except `N_NH4` (no ammonium
+  requirement); omitted targets are incidental. A missed target is a reported
+  deviation, not a block; only a broken declared maximum blocks. Reagent stages judge
+  only their reagent's own change; `maximum_nutrient_error_percent` is optional, with
+  no default. Declare nutrient maximums explicitly. The ammonium
   allowance min(10% of total N, 1.5 mmol/L) applies by default (`ammoniumLimit`).
 - Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
   Keep product IDs with doses rather than zipping a filtered result to the catalogue.

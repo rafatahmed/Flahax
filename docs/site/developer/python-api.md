@@ -130,14 +130,28 @@ not agronomic ranges; they replace the former ±1 % band. (The benchmark evaluat
 keeps its own published max(0.01 mg/L, 1 %) scoring rule.)
 
 `feasible` means every declared requirement is met and no declared maximum is
-exceeded. A declared zero is also a hard zero limit: any positive amount is reported
-in `limitViolations` (see [Zero requirements and hard maxima](#zero-requirements-and-hard-maxima)). A result that misses a target is still a recipe: every deviation is
-reported in `rows` and `unmetTargets`. In `plan_fertilizer_workflow` the formulation
-stage blocks (`infeasible_recipe`) only on a broken declared maximum; a missed target
-makes it `requires_review` with the message "targets missed: N_NO3 -2.35 %, …"
-(the difference to three significant figures), and the batch, stock, titration and
-acid stages continue. `FinalSolutionRecipe.feasible` is likewise true unless the
-recipe breaks a declared maximum.
+exceeded. A declared zero is a hard zero limit met within 1e-6 mg/L everywhere
+(`limitViolations`, `requirementConflicts`, `unmetTargets` and the sheets): 5e-7 mg/L
+of urea from the water meets an absent or zero `N_UREA`, 2e-6 mg/L breaks it (see
+[Zero requirements and hard maxima](#zero-requirements-and-hard-maxima)). A result that
+misses a target is still a recipe: every deviation is reported in `rows` and
+`unmetTargets`. In `plan_fertilizer_workflow` the formulation stage blocks
+(`infeasible_recipe`) only on a broken declared maximum; a missed target makes it
+`requires_review` with the message "targets missed: N_NO3 -2.35 %, …" (each
+difference to three significant figures in fixed notation, for example +1400 %), and
+the batch, stock, titration, nitric and acid stages continue.
+`FinalSolutionRecipe.feasible` is likewise true unless the recipe breaks a declared
+maximum.
+
+A deviation the formulation stage accepts never blocks a later stage. The titration,
+nitric (`plan_equilibrium_delivery`) and acid-selection (`plan_acid_options`) stages
+judge only the change their reagent makes. `maximum_nutrient_error_percent` is
+optional and has no default: when given, it is a declared requirement on the
+reagent's own contribution, so a stage fails with `nutrient_tolerance_exceeded` when
+the reagent moves a positive target's final value, from the recipe before the reagent,
+by more than that percent of the target. The stage also blocks when the reagent pushes
+a nutrient past a declared maximum (`nutrient_limit_exceeded`). Whether a pH is met
+uses `PH_TOLERANCE` (1e-4) in the pH plan and the joint workflow.
 
 `targetIonBalance` is a conventional charge check on requested nutrient entries,
 not the whole solution. `recipeIonBalance` applies the same convention to all
@@ -289,7 +303,7 @@ charge neutrality, and equilibrium phase amounts do not predict kinetics.
 ## Zero requirements and hard maxima
 
 A missing target leaves a nutrient unspecified. A target of `0` prohibits its
-positive contribution. Because product contributions are nonnegative, fitting
+positive contribution; the final value meets it within 1e-6 mg/L. Because product contributions are nonnegative, fitting
 excludes every product carrying that nutrient, including formula counterions and
 arbitrarily small positive assays. This also applies to `solve_weights`.
 A positive maximum or `allow_ions` permission cannot override an explicit zero.
