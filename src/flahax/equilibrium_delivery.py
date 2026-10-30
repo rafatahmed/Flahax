@@ -28,7 +28,7 @@ from .engine import load_library, forward
 from .materials import IDENTITIES_SHA256, material_audit_entry, resolve_material
 from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
-from .requirement_fit import reagent_shift_exceeds
+from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 from .measured_water import BalancedWaterAnalysis, nutrient_mg_per_litre
 
 
@@ -96,19 +96,14 @@ def plan_equilibrium_delivery(
     a plain mapping without `analytical_water_totals` is taken as the analysis
     itself, as before.
     """
-    if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible or not recipe.salts:
-        raise DeliveryError(
-            'infeasible_recipe', 'a nonempty feasible FinalSolutionRecipe is required'
-        )
+    # An empty recipe the formulation stage accepted is planned on the water alone (G25).
+    if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible:
+        raise DeliveryError('infeasible_recipe', 'a feasible FinalSolutionRecipe is required')
     water_mass = _number(water_mass_kg, 'water_mass_kg', positive=True)
     initial_ph = _number(initial_ph, 'initial_ph')
     target_ph = _number(target_ph, 'target_ph')
     phases = tuple(phases)
-    tolerance = (
-        None
-        if maximum_nutrient_error_percent is None
-        else _number(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
-    )
+    tolerance = declared_error_percent(maximum_nutrient_error_percent)
     if isinstance(temperature_c, bool) or temperature_c != 25:
         raise DeliveryError('temperature_out_of_range', 'equilibrium delivery requires 25 C')
     if not isinstance(water_analysis_id, str) or not water_analysis_id.strip():

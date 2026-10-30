@@ -14,7 +14,7 @@ from flahax import (
     plan_fertilizer_workflow,
     recommend,
 )
-from flahax.fertilizer_workflow import missed_message, signed_percent
+from flahax.fertilizer_workflow import missed_message, no_reagent_message, signed_percent
 from flahax.grower_sheet import missed_target
 from flahax.requirement_fit import (
     PH_TOLERANCE,
@@ -151,10 +151,6 @@ class WorkflowDeviationTests(unittest.TestCase):
         self.assertFalse(final_solution_recipe(bare, VolumeLitres(10)).feasible)
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class DeclaredZeroTests(unittest.TestCase):
     """A declared zero is met within 1e-6 mg/L everywhere (G25): urea from the water."""
 
@@ -223,3 +219,96 @@ class SharedPhToleranceTests(unittest.TestCase):
         self.assertEqual(PH_TOLERANCE, 1e-4)
         self.assertIs(ph_adjustment.PH_TOLERANCE, PH_TOLERANCE)
         self.assertIs(joint_workflow.PH_TOLERANCE, PH_TOLERANCE)
+
+
+class NoReagentMessageTests(unittest.TestCase):
+    def test_a_feed_already_at_its_target_ph_needs_no_reagent(self):
+        # Issue #212: direction 'none' never asks for a base.
+        from types import SimpleNamespace
+
+        rejected = SimpleNamespace(
+            joint_result=None,
+            direction='base',
+            status='rejected',
+            product_record={'name': 'Potassium Hydroxide (45% solution)'},
+            product_id='koh',
+            message='precipitation risk at the target pH',
+            error_code='precipitation_risk',
+        )
+        plan = SimpleNamespace(
+            direction='none', unadjusted_ph=7.19749, target_ph=7.19754, candidates=[rejected]
+        )
+        self.assertEqual(
+            no_reagent_message(plan),
+            'the feed mixes at pH 7.20, within 0.0001 of the target pH 7.20: no pH reagent is '
+            'needed; the plan without a reagent is not acceptable: Potassium Hydroxide (45% '
+            'solution): precipitation risk at the target pH',
+        )
+        plan.candidates = []
+        self.assertEqual(
+            no_reagent_message(plan),
+            'the feed mixes at pH 7.20, within 0.0001 of the target pH 7.20: no pH reagent is '
+            'needed',
+        )
+
+
+class PhBandTests(unittest.TestCase):
+    """Potassium sulfate alone in RO water mixes at pH 6.5447: a target 5e-4 away plans a
+    reagent whose dose converges on the target; 5e-5 away is met and plans none (G25)."""
+
+    @classmethod
+    def setUpClass(cls):
+        from flahax import catalogue_ph_reagents
+        from tests.test_ph_adjustment import ACIDS, RO
+
+        cls.pool = [p for p in SALTS if p['name'] == 'Potassium Sulfate']
+        cls.targets = {'K': cls.pool[0]['elements']['K']}
+        cls.config = dict(
+            products=ACIDS + catalogue_ph_reagents(), maximum_reagent_volume_litres=5
+        )
+        cls.RO = RO
+        cls.mixed = cls.plan(cls, 6.0).unadjusted_ph
+
+    def plan(self, target_ph):
+        return (
+            plan_fertilizer_workflow(
+                self.pool,
+                self.targets,
+                {},
+                target_ph,
+                final_volume=VolumeLitres(1000),
+                equilibrium=self.RO,
+                ph_adjustment=self.config,
+            )
+            .stages['ph_adjustment']
+            .value
+        )
+
+    def test_the_mixed_ph(self):
+        self.assertAlmostEqual(self.mixed, 6.5447, places=4)
+
+    def test_five_ten_thousandths_away_plans_a_converged_reagent(self):
+        for offset, direction in ((5e-4, 'base'), (-5e-4, 'acid')):
+            with self.subTest(offset=offset):
+                target = self.mixed + offset
+                plan = self.plan(target)
+                self.assertEqual(plan.direction, direction)
+                dosed = [c for c in plan.candidates if c.direction == direction]
+                self.assertTrue(dosed)
+                for candidate in dosed:
+                    self.assertGreater(candidate.dose_molal, 0, candidate.formula)
+                    self.assertLessEqual(abs(candidate.target.ph - target), PH_TOLERANCE)
+
+    def test_five_hundred_thousandths_away_is_met_and_plans_none(self):
+        for offset in (5e-5, -5e-5):
+            with self.subTest(offset=offset):
+                plan = self.plan(self.mixed + offset)
+                self.assertEqual(plan.direction, 'none')
+                self.assertEqual(
+                    {c.dose_molal for c in plan.candidates if c.status != 'not_applicable'},
+                    {0.0},
+                )
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -18,7 +18,7 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
 from .ph_adjustment import reagent_dose
-from .requirement_fit import reagent_shift_exceeds
+from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 from .saturation_policy import assess_saturation, describe
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
@@ -101,11 +101,7 @@ def plan_acid_options(
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
-    tolerance = (
-        None
-        if maximum_nutrient_error_percent is None
-        else _positive(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
-    )
+    tolerance = declared_error_percent(maximum_nutrient_error_percent)
     for ph in (initial_ph, target_ph):
         if (
             isinstance(ph, bool)

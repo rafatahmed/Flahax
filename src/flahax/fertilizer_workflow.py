@@ -29,7 +29,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
-from .requirement_fit import met, reagent_shift_exceeds
+from .requirement_fit import PH_TOLERANCE, declared_error_percent, met, reagent_shift_exceeds
 from .nutrient_acceptance import (
     assess_incidental,
     assess_water_basis,
@@ -230,6 +230,20 @@ def no_reagent_message(plan):
             f'{c.message or (c.joint_result or {}).get("reason") or c.error_code or c.status}'
             for c in plan.candidates
         )
+    if plan.direction == 'none':
+        # Issue #212: a feed already at its target pH needs no reagent.
+        text = (
+            f'the feed mixes at pH {plan.unadjusted_ph:.2f}, within {PH_TOLERANCE:g} of the '
+            f'target pH {plan.target_ph:.2f}: no pH reagent is needed'
+        )
+        rejected = [c for c in plan.candidates if c.status == 'rejected']
+        if rejected:
+            text += '; the plan without a reagent is not acceptable: ' + '; '.join(
+                f'{(c.product_record or {}).get("name") or c.product_id}: '
+                f'{c.message or c.error_code or c.status}'
+                for c in rejected
+            )
+        return text
     need = 'an acid' if plan.direction == 'acid' else 'a base'
     tried = [
         c
@@ -622,9 +636,7 @@ def plan_fertilizer_workflow(
                 )
                 # Only the change the reagent makes is judged (G25), and only against a percent
                 # the caller declares: no default.
-                percent = titration.get('maximum_nutrient_error_percent')
-                if percent is not None:
-                    percent = _positive(percent, 'maximum_nutrient_error_percent')
+                percent = declared_error_percent(titration.get('maximum_nutrient_error_percent'))
                 before = {row['symbol']: row['final'] for row in recommendation['rows']}
                 moved = reagent_shift_exceeds(before, plan.rows, percent)
                 if moved:
