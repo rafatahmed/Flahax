@@ -1761,8 +1761,13 @@ class DeclaredCompoundTests(unittest.TestCase):
         # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
         # compound (12 % N_UREA) is not selected.
         undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
+        # G25: Mo, short with Micro Combi Mix 1 by less than 1 %, is short under the numerical
+        # tolerance; the only held-back Mo source, sodium molybdate, replaces the mix.
+        with_molybdate = sorted(
+            {*self.WITHOUT_UREA, 'Sodium Molybdate (Dihydrate)'} - {'Micro Combi Mix 1'}
+        )
         self.assertEqual(
-            sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
+            sorted(s['name'] for s in undeclared.recommendation['salts']), with_molybdate
         )
         # With a declared urea target the compound can be dosed.
         targets = dict(tomato, N_UREA=12)

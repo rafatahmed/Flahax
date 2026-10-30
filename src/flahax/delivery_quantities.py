@@ -217,7 +217,11 @@ class SaltDose:
 
 @dataclass(frozen=True, slots=True)
 class FinalSolutionRecipe:
-    """A recommendation expressed for a concrete final batch volume."""
+    """A recommendation expressed for a concrete final batch volume.
+
+    ``feasible`` is True when the recipe can be planned: it breaks no declared maximum. A
+    recipe that misses a target is still a recipe; its deviations are reported (G25).
+    """
 
     final_volume: VolumeLitres
     feasible: bool
@@ -234,8 +238,11 @@ def final_solution_recipe(
 ) -> FinalSolutionRecipe:
     """Adapt a FlahaX recommendation to exact salt masses for a final batch.
 
-    The function consumes only ``result['salts']`` and retains its feasibility
-    flag. It does not reinterpret the solver's nutrient balance or round doses.
+    The function consumes ``result['salts']``, ``feasible`` and ``limitViolations``.
+    The recipe can be planned unless it breaks a declared maximum: a missed target is a
+    reported deviation, not a block (G25). Without a ``limitViolations`` list the
+    ``feasible`` flag is kept as given. It does not reinterpret the solver's nutrient
+    balance or round doses.
     """
     if not isinstance(recommendation, Mapping):
         raise DeliveryError("invalid_type", "recommendation must be an object")
@@ -272,7 +279,8 @@ def final_solution_recipe(
     feasible = recommendation.get("feasible")
     if not isinstance(feasible, bool):
         raise DeliveryError("missing_field", "recommendation.feasible must be a boolean")
-    return FinalSolutionRecipe(final_volume, feasible, tuple(doses))
+    usable = feasible or recommendation.get("limitViolations") == []
+    return FinalSolutionRecipe(final_volume, usable, tuple(doses))
 
 
 def elemental_contribution(

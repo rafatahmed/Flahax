@@ -13,6 +13,7 @@ Every number comes from ``summarize_batch``, i.e. from the recipe that is weighe
 
 import re
 
+from .requirement_fit import met
 from .grower_report import (
     SHEET_STYLE,
     STATUS_WORDS,
@@ -208,7 +209,7 @@ def _agronomist_section(summary):
             continue
         hi = (
             ' class="num hi"'
-            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
+            if (r['target'] > 0 and not met(r['target'], r['final']))
             or (r['target'] == 0 and r['diff_mg_l'] != 0)
             else ' class="num"'
         )
@@ -228,8 +229,8 @@ def _agronomist_section(summary):
         'class="num">Diff</th></tr></thead>'
         f'<tbody>{body}</tbody></table></div><p class="small">Required = target - water; '
         f'achieved = fertilizers '
-        '+ pH reagent; final = water + achieved; diff = final - target (beyond 1 % in red).</p>'
-        + nitrogen_paragraphs(summary)
+        '+ pH reagent; final = water + achieved; diff = final - target (in red when the target is '
+        'not met within the numerical tolerance).</p>' + nitrogen_paragraphs(summary)
     )
     limits = ''.join(
         f'<li>{text(r[0])}: {r[2]} of {r[1]} mg/L ({text(r[4])})</li>'

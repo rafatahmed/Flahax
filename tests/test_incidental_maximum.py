@@ -7,6 +7,7 @@
 import unittest
 
 from flahax import load_library, recommend
+from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
 # The pre-owner products, which include Calcium Chloride (Dihydrate).
@@ -36,7 +37,7 @@ class IncidentalMaximumTests(unittest.TestCase):
         allowed = recommend(
             LIBRARY["salts"], FORMULA["targets"], {}, maximum_concentrations={"Cl": 150}
         )
-        self.assertLess(abs(delta(allowed, "Ca")), 1.0)
+        self.assertTrue(met(160, final(allowed, "Ca")))
         self.assertLess(abs(delta(allowed, "Ca")), abs(delta(base, "Ca")))
         self.assertIn("Calcium Chloride (Dihydrate)", [s["name"] for s in allowed["salts"]])
         self.assertLessEqual(final(allowed, "Cl"), 150 + 1e-9)

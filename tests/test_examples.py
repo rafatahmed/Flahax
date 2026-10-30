@@ -26,7 +26,11 @@ class CapabilityExamplesTests(unittest.TestCase):
         workflow = self.results['pepper']['workflow']
         self.assertEqual(workflow['nutrient_gap']['Ca'], 84)
         self.assertEqual(workflow['stages']['chemistry']['status'], 'needs_input')
-        self.assertEqual(workflow['stages']['formulation']['status'], 'blocked')
+        # G25: missed targets are reported deviations; only a broken maximum blocks.
+        self.assertEqual(workflow['stages']['formulation']['status'], 'requires_review')
+        self.assertEqual(
+            workflow['stages']['formulation']['message'], 'targets missed: Mn -100 %, Mo -100 %'
+        )
         rows = {r['symbol']: r['final'] for r in workflow['recommendation']['rows']}
         # G24: N_NH4 0 is no ammonium requirement; calcium nitrate's NH4-N stays within the
         # G23 allowance min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
@@ -127,7 +131,10 @@ class CapabilityExamplesTests(unittest.TestCase):
         for chart in charts:
             ET.fromstring(chart)
         self.assertIn('FICTIONAL CALIBRATION DATA', html)
-        self.assertIn('blocked', html)
+        self.assertIn(
+            '<td>formulation</td><td>requires_review</td><td>targets missed: Mn -100 %, Mo -100 %',
+            html,
+        )
         self.assertIn('Missing measured EC profiles', html)
         self.assertIn('id="tank-allocation"', html)
         self.assertIn('Not ready for mixing.', html)

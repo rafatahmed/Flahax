@@ -590,9 +590,7 @@ class BatchCommandTests(unittest.TestCase):
                     '--crop', 'tomato (howard', '--water', 'ro', '--output', str(target)
                 )
 
-    # Owner catalogue: re-enable in PR 3 (G25)
     def test_review_reason_quotes_the_weighed_recipe(self):
-        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'sheet'
             self.run_batch(

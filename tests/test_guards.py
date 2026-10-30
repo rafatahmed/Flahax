@@ -47,7 +47,8 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Calcium Carbonate", names)
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertTrue(result["feasible"])
-        self.assertLess(result["maxAbsDeltaPct"], 1)
+        # Every target met within 1e-5 relative, i.e. 1e-3 % (G25).
+        self.assertLessEqual(result["maxAbsDeltaPct"], 1e-3)
 
     def test_an_overshoot_does_not_admit_chloride_or_borax(self):
         formula = next(

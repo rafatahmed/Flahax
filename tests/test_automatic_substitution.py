@@ -68,17 +68,20 @@ class AutomaticSubstitutionTests(unittest.TestCase):
             product('mg', Mg=10, Na=0.01),
             product('ca', Ca=10, Na=0.01),
         ]
-        result = recommend(pool, {'K': 96, 'Ca': 100, 'Mg': 104})
+        # Mg 120: the base-only fit overshoots Ca (+3.4 %), so Ca is short only after the Mg
+        # substitution lowers the base dose (under the numerical tolerance, G25, a -0.21 %
+        # Ca miss at Mg 104 is already short at the first fit).
+        result = recommend(pool, {'K': 96, 'Ca': 100, 'Mg': 120})
         self.assertTrue(result['feasible'])
         self.assertEqual(
             result['substitutionSearch']['attemptedProductIds'],
             [['base'], ['base', 'mg'], ['base', 'mg', 'ca']],
         )
-        expected = {'base': 0.96, 'mg': 0.08, 'ca': 0.04}
+        expected = {'base': 0.96, 'mg': 0.24, 'ca': 0.04}
         for salt in result['salts']:
             self.assertAlmostEqual(salt['gramsPerLitre'], expected[salt['id']], places=12)
         # No available substitute: retain the residual, never draw from the catalogue.
-        restricted = recommend(pool[:2], {'K': 96, 'Ca': 100, 'Mg': 104})
+        restricted = recommend(pool[:2], {'K': 96, 'Ca': 100, 'Mg': 120})
         self.assertFalse(restricted['feasible'])
         self.assertEqual(restricted['substitutionSearch']['status'], 'search_incomplete')
         self.assertNotIn('ca', restricted['saltIds'])

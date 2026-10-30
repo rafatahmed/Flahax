@@ -7,6 +7,7 @@
 import unittest
 
 from flahax import load_library, recommend
+from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
 # Pre-owner formulas (Rice, Generic Grow) and products (Calcium Chloride (Dihydrate)).
@@ -24,7 +25,8 @@ def unmet(result):
 
 
 class UnmetTargetTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 3 (G25)
+    # Runs on the frozen pre-2026-10-29 catalogue: the packaged Hoagland solution cannot be
+    # met exactly (N_NO3 +2.32 %), so it has unmet targets.
     def test_feasible_recipe_has_no_unmet_targets(self):
         result = recommend(SALTS, formula("Hoagland solution")["targets"], {})
         self.assertTrue(result["feasible"])
@@ -73,7 +75,7 @@ class UnmetTargetTests(unittest.TestCase):
                     missed = {
                         row["symbol"]
                         for row in result["rows"]
-                        if row["deltaPct"] is not None and abs(row["deltaPct"]) > 1.0
+                        if row["target"] and not met(row["target"], row["final"])
                     }
                     self.assertEqual(missed, set(unmet(result)))
                     for item in result["unmetTargets"]:

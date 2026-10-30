@@ -12,6 +12,7 @@ from .grower_report import percentage, qualification_lines
 from . import __version__
 from .grower_report import _reagent_line, grams, litres, millilitres, number
 from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by, readable
+from .requirement_fit import met
 from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, cut, paint, wrap
 
 VIEWS = ('Tanks', 'Nutrients', 'Notes')
@@ -151,7 +152,7 @@ def _nutrient_rows(summary):
             'dim'
             if r['target'] is None
             else 'warn'
-            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
+            if (r['target'] > 0 and not met(r['target'], r['final']))
             or (r['target'] == 0 and r['diff_mg_l'] != 0)
             else None
         )
