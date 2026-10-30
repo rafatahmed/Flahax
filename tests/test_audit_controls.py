@@ -47,8 +47,8 @@ class IndependentOracleTests(unittest.TestCase):
 
 class AuditRegressionTests(unittest.TestCase):
     def test_f01_explicit_zero_is_not_feasible_with_positive_contribution(self):
-        result = recommend([product('a', {'K': 10, 'N_NH4': 0.1})], {'K': 100, 'N_NH4': 0}, {})
-        self.assertFalse(result['feasible'] and final(result, 'N_NH4') > 0)
+        result = recommend([product('a', {'K': 10, 'Na': 0.1})], {'K': 100, 'Na': 0}, {})
+        self.assertFalse(result['feasible'] and final(result, 'Na') > 0)
 
     def test_f02_targeted_maximum_is_enforced(self):
         result = recommend(

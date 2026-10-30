@@ -21,16 +21,18 @@ their positive-target fit calculation and report additional fields:
 
 Percentage deviation from zero remains `None`, not infinity or a fabricated
 percentage. An explicit `maximum_concentrations={'N_NH4': 0}` does prohibit
-ammonium. Without that maximum, incidental ammonium is reported for separate
-assessment; the package does not invent a safe threshold or call it harmless.
+ammonium. Without a declared maximum, incidental ammonium is assessed against
+the ammonium allowance that `recommend` reports in `ammoniumLimit`
+(min(10% of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.)).
 The optimizer's existing objective is unchanged; maxima are post-solve checks,
 not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
 
 With the supplied pepper targets, twelve selected catalogue products and
 water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
-and 0.047919 mg/L Na. Positive targets fit within 1%, but these incidental
-amounts require review. These are catalogue-assay calculations, not a dosing
+and 0.047919 mg/L Na. Positive targets fit within 1%; the NH4-N is assessed
+against the ammonium allowance (min(10% of total N, 1.5 mmol/L), Dutch soilless
+practice (De Kreij, Voogt et al.)) and the Na requires review. These are catalogue-assay calculations, not a dosing
 authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`
 lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
 Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
@@ -49,7 +51,12 @@ result = plan_fertilizer_workflow(
     water={'Ca': 20}, target_ph=6.5,
 )
 assert result.nutrient_gap['Ca'] == 84
-assert result.stages['formulation'].status == 'blocked'
+# N_NH4 0 is no ammonium requirement: calcium nitrate stays eligible, and its NH4-N is held
+# within min(10 % of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.).
+assert result.stages['formulation'].status == 'calculated'
+(ammonium,) = result.recommendation['incidentalContributions']
+assert ammonium['symbol'] == 'N_NH4' and ammonium['assessment'] == 'within_limit'
+assert ammonium['ppm'] <= result.recommendation['ammoniumLimit']['mgPerL']
 assert result.stages['chemistry'].status == 'needs_input'
 ```
 

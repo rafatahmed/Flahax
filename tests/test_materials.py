@@ -1464,10 +1464,11 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertFalse(any(r['symbol'] == 'Na' and r['final'] > 0 for r in result['rows']))
         self.assertFalse(any('counterion sodium' in warning for warning in result['warnings']))
         # The earlier numeric snapshot above is historical: the primary objective
-        # no longer penalizes incidental sulfate or ammonium.
+        # no longer penalizes incidental sulfate or ammonium. An absent N_UREA is fitted as a
+        # declared zero (D1), so the echoed targets add N_UREA 0.
         self.assertEqual(
             {r['symbol']: r['target'] for r in result['rows'] if r['target'] is not None},
-            self.NO_CHELATE_TARGETS,
+            {**self.NO_CHELATE_TARGETS, 'N_UREA': 0},
         )
 
     def test_helper_matches_chemistry(self):
@@ -1662,6 +1663,19 @@ class DeclaredCompoundTests(unittest.TestCase):
         'entered': '2026-10-22',
     }
     NITRIC = WorkflowGradeTests.NITRIC
+    # Tomato (Howard Resh) on the packaged catalogue without the urea-bearing compound (with or
+    # without the Na-bearing products).
+    WITHOUT_UREA = [
+        'Ammonium Sulfate',
+        'Boric Acid',
+        'Calcium Nitrate (ag grade)',
+        'Copper Sulfate (pentahydrate)',
+        'Iron II Sulfate (Hepahydrate)',
+        'Magnesium Sulfate (Heptahydrate)',
+        'Micro Combi Mix 1',
+        'Mn EDTA',
+        'Zinc Sulfate (Monohydrate)',
+    ]
     RO = WorkflowGradeTests.RO
 
     def grade(self, k2o=20):
@@ -1735,9 +1749,7 @@ class DeclaredCompoundTests(unittest.TestCase):
         self.assertFalse(1.0 <= check.protons_per_phosphate <= 2.0)
         self.assertIn('phosphate balance', check.reason)
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_store_with_unmodellable_product_plans_no_acid(self):
-        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.grower_report import render_batch_sheet, summarize_batch
 
@@ -1745,7 +1757,15 @@ class DeclaredCompoundTests(unittest.TestCase):
         library = load_library()
         # The compound is the store's only P and K source, so the recipe must dose it.
         salts = [s for s in library['salts'] if not {'P', 'K'} & set(s['elements'])] + [product]
-        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
+        # compound (12 % N_UREA) is not selected.
+        undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
+        self.assertEqual(
+            sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
+        )
+        # With a declared urea target the compound can be dosed.
+        targets = dict(tomato, N_UREA=12)
         workflow = plan_fertilizer_workflow(
             salts,
             targets,
@@ -1823,9 +1843,7 @@ class DeclaredCompoundTests(unittest.TestCase):
                 }
             )
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_chelate_sodium_of_declared_compound_reaches_the_na_row(self):
-        self.enterContext(historical_catalogue())
         from flahax import VolumeLitres, plan_fertilizer_workflow
         from flahax.product_conversion import catalogue_dose_totals
 
@@ -1835,7 +1853,15 @@ class DeclaredCompoundTests(unittest.TestCase):
         salts = [s for s in library['salts'] if not {'P', 'K', 'Na'} & set(s['elements'])] + [
             product
         ]
-        targets = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
+        # compound (12 % N_UREA) is not selected.
+        undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
+        self.assertEqual(
+            sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
+        )
+        # With a declared urea target the compound can be dosed.
+        targets = dict(tomato, N_UREA=12)
         workflow = plan_fertilizer_workflow(
             salts, targets, {}, 5.8, final_volume=VolumeLitres(1000), equilibrium=self.RO
         )

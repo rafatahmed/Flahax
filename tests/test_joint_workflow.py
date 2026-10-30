@@ -35,7 +35,7 @@ def configuration(pool, product, **changes):
 
 
 class JointWorkflowTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_explicit_joint_rebuilds_actual_recipe_and_zero_reagent(self):
         self.enterContext(historical_catalogue())
         pool = nutrient_salts(LIBRARY['salts'])

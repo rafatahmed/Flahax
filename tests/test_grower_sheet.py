@@ -59,9 +59,7 @@ class SheetTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_sheet_weighs_for_prepared_volume(self):
-        self.enterContext(historical_catalogue())
         a = next(t for t in self.ro['tanks']['tanks'] if t['name'] == 'A')
         calcium = next(p for p in a['products'] if p['name'] == 'Calcium Nitrate (ag grade)')
         recipe = next(p for p in self.ro['formulation']['salts'] if p['name'] == calcium['name'])
@@ -97,7 +95,7 @@ class SheetTests(unittest.TestCase):
         listed = [r['target'] is None for r in agronomist_rows(self.well)]
         self.assertEqual(listed, sorted(listed))  # formula nutrients first, then the others
 
-    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_depth_one_has_no_nutrient_table(self):
         self.enterContext(historical_catalogue())
         self.assertNotIn('Nutrients, mg/L', render_mix_sheet(self.ro, 1))

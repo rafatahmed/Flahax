@@ -86,9 +86,18 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(result.water['Ca'], 20)
         self.assertFalse(result.recommendation['feasible'])
         self.assertEqual(result.stages['formulation'].status, 'blocked')
-        self.assertEqual(result.recommendation['incidentalContributions'], [])
+        # G23/G24: N_NH4 0 is no requirement; calcium nitrate's NH4-N is within the allowance
+        # min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
+        self.assertEqual(result.recommendation['ammoniumLimit']['mgPerL'], 12.8)
+        (incidental,) = result.recommendation['incidentalContributions']
+        self.assertEqual(
+            (incidental['symbol'], incidental['maximumPpm'], incidental['assessment']),
+            ('N_NH4', 12.8, 'within_limit'),
+        )
+        self.assertEqual(incidental['source'], ['Calcium Nitrate (ag grade)'])
         finals = {r['symbol']: r['final'] for r in result.recommendation['rows']}
-        self.assertEqual(finals['N_NH4'], 0)
+        self.assertAlmostEqual(finals['N_NH4'], 5.0624, places=4)
+        self.assertEqual(incidental['ppm'], finals['N_NH4'])
         self.assertEqual(finals['Na'], 0)
         # Independent Na inventory: assayed sodium plus two Na per Mn-EDTA.
         # Fit changes may change doses; a historical recipe's Na is not an oracle.
@@ -115,14 +124,32 @@ class WaterWorkflowTests(unittest.TestCase):
     def test_explicit_water_required_and_incidental_additions_are_separate(self):
         with self.assertRaises(DeliveryError):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
+        # G24: an explicit N_NH4 0 is no ammonium requirement, the same as an omitted one;
+        # calcium nitrate (1.1 % NH4-N) stays eligible. recommend holds incidental NH4-N within
+        # the G23 allowance (10 % of total N); solve_weights applies no allowance.
+        nitrate = 84 * 14.4 / 19
+        allowance = {recommend: 0.1 * nitrate, solve_weights: None}
         for function in (recommend, solve_weights):
-            result = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19, 'N_NH4': 0}, {})
-            self.assertFalse(result['feasible'])
-            self.assertEqual(result['grams'], [0])
-            self.assertEqual(result['incidentalContributions'], [])
-            unspecified = function([products()[1]], {'Ca': 84, 'N_NO3': 84 * 14.4 / 19}, {})
-            self.assertTrue(unspecified['incidentalContributions'])
-            self.assertTrue(unspecified['requiresReview'])
+            result = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate, 'N_NH4': 0}, {})
+            unspecified = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate}, {})
+            self.assertTrue(result['feasible'])
+            self.assertAlmostEqual(result['grams'][0], 84 / 190, places=12)
+            self.assertEqual(result['grams'], unspecified['grams'])
+            self.assertEqual(result['rows'], unspecified['rows'])
+            self.assertEqual(
+                result['incidentalContributions'], unspecified['incidentalContributions']
+            )
+            (row,) = result['incidentalContributions']
+            self.assertEqual(row['symbol'], 'N_NH4')
+            self.assertAlmostEqual(row['ppm'], 84 / 190 * 11, places=12)
+            if allowance[function] is None:
+                self.assertIsNone(row['maximumPpm'])
+                self.assertEqual(row['assessment'], 'requires_review')
+                self.assertTrue(result['requiresReview'])
+            else:
+                self.assertAlmostEqual(row['maximumPpm'], allowance[function], places=12)
+                self.assertEqual(row['assessment'], 'within_limit')
+                self.assertFalse(result['requiresReview'])
         result = recommend([products()[5]], {'K': 10, 'N_NH4': 0}, {})
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})

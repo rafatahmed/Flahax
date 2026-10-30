@@ -166,7 +166,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         reasons = ' '.join(row[2] for row in assessment['review'])
         self.assertNotIn('no measurement behind it', reasons)
 
-    def test_f12_unspecified_ammonium_maximum_is_not_invented(self):
+    def test_f12_ammonium_maximum_is_declared_with_its_basis(self):
+        # G23: with no NH4-N requirement the allowance min(10 % of total N, 1.5 mmol/L) applies
+        # and is reported with its basis; None leaves no ammonium maximum.
         products = [
             dict(
                 id='synthetic',
@@ -175,7 +177,17 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             )
         ]
         result = recommend(products, {'K': 100, 'N_NO3': 100}, {})
-        self.assertIsNone(result.get('ammoniumLimit'))
+        self.assertEqual(
+            result['ammoniumLimit'],
+            {
+                'mgPerL': 10.0,
+                'fractionOfTotalN': 0.1,
+                'absoluteCapMgPerL': 1.5 * 14.0067,
+                'basis': 'Dutch soilless practice (De Kreij, Voogt et al.)',
+            },
+        )
+        none = recommend(products, {'K': 100, 'N_NO3': 100}, {}, max_ammonium_fraction=None)
+        self.assertIsNone(none['ammoniumLimit'])
 
     def test_f13_omitted_ligand_competition_is_not_silently_qualified(self):
         # The pinned model has DTPA protonation and Fe-DTPA, but no Cu-DTPA reaction.

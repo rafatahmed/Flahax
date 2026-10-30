@@ -88,7 +88,6 @@ class MixTests(unittest.TestCase):
         return code, lines, target
 
     # Owner catalogue: re-enable in PR 4 (G5)
-    # Owner catalogue: re-enable in PR 3 (G24)
     def test_first_run_tomato_ro_fill_mode(self):
         self.enterContext(historical_catalogue())
         code, lines, target = self.full()
