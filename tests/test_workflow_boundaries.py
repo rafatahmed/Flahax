@@ -363,6 +363,30 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         stage = self.nitric({'K': 10}, None, {'N_NO3': 3.5833})
         self.assertEqual((stage.status, stage.error_code), ('blocked', 'nutrient_limit_exceeded'))
 
+    def test_nitric_plans_on_water_alone_when_the_accepted_recipe_is_empty(self):
+        # K maximum 0: no product may be dosed, the formulation stage accepts the empty recipe
+        # with K -100 % reported, and the nitric stage plans on the water alone (G25).
+        stage = self.nitric({'K': 10}, None, {'K': 0})
+        self.assertIn(stage.status, ('calculated', 'requires_review'), stage.message)
+        self.assertIsNone(stage.error_code)
+        self.assertEqual(stage.value.audit['productDosesGPerKgWater'], {})
+        self.assertGreater(stage.value.reagent_mass.value, 0)
+        self.assertLessEqual(abs(stage.value.equilibrium.target.ph - 6.5), 1e-4)
+
+    def test_a_declared_error_percent_must_be_positive_in_every_stage(self):
+        for percent in (0, -1, float('nan'), True):
+            with self.subTest(percent=percent):
+                for stage in (
+                    self.candidates({'K': 10}, percent),
+                    self.nitric({'K': 10}, percent),
+                ):
+                    self.assertEqual(
+                        (stage.status, stage.error_code), ('blocked', 'invalid_value')
+                    )
+                    self.assertEqual(
+                        stage.message, 'maximum_nutrient_error_percent must be finite and positive'
+                    )
+
     # Owner catalogue: re-enable in PR 4 (G5)
     def test_nitric_incidental_nutrients_are_not_automatically_accepted(self):
         self.enterContext(historical_catalogue())

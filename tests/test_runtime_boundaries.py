@@ -26,12 +26,11 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, code)
 
     def test_incomplete_or_invalid_delivery_inventory(self):
-        for recipe in (
-            None,
-            replace(self.args['recipe'], feasible=False),
-            replace(self.args['recipe'], salts=()),
-        ):
+        for recipe in (None, replace(self.args['recipe'], feasible=False)):
             self.rejected('infeasible_recipe', recipe=recipe)
+        # An empty recipe is no longer rejected as such (G25): it is planned on the water alone,
+        # and this synthetic water, balanced with the recipe's salts, is out of balance alone.
+        self.rejected('charge_imbalance', recipe=replace(self.args['recipe'], salts=()))
         self.rejected('missing_field', reagent_channel_id=' ')
         self.rejected('missing_field', water_totals=None)
         self.rejected('invalid_type', analytical_water_totals=[])

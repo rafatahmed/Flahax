@@ -11,6 +11,8 @@ ranges and never widened to absorb a result. Anything beyond them is a deviation
 reported. They replace the former 1 % band.
 """
 
+import math
+
 RELATIVE_TOLERANCE = 1e-5
 ZERO_TARGET_TOLERANCE_MG_PER_L = 1e-6
 PH_TOLERANCE = 1e-4
@@ -41,3 +43,22 @@ def reagent_shift_exceeds(before, rows, percent):
         and abs(row['final'] - float(before.get(row['symbol']) or 0.0))
         > percent / 100.0 * row['target']
     ]
+
+
+def declared_error_percent(value):
+    """A caller's ``maximum_nutrient_error_percent``: None (none declared) or a finite positive
+    number, checked the same way by every pH reagent stage."""
+    if value is None:
+        return None
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        from .delivery_contracts import DeliveryError
+
+        raise DeliveryError(
+            'invalid_value', 'maximum_nutrient_error_percent must be finite and positive'
+        )
+    return float(value)

@@ -143,7 +143,9 @@ the batch, stock, titration, nitric and acid stages continue.
 `FinalSolutionRecipe.feasible` is likewise true unless the recipe breaks a declared
 maximum.
 
-A deviation the formulation stage accepts never blocks a later stage. The titration,
+A deviation the formulation stage accepts never blocks a later stage; an empty recipe it
+accepted (for example when a zero maximum forbids every product) is planned on the water
+alone, as acid selection already did. The titration,
 nitric (`plan_equilibrium_delivery`) and acid-selection (`plan_acid_options`) stages
 judge only the change their reagent makes. `maximum_nutrient_error_percent` is
 optional and has no default: when given, it is a declared requirement on the
