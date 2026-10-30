@@ -190,6 +190,12 @@ def _check_card(summary):
     )
 
 
+def missed_target(row):
+    """True when a row has a declared target (zero included) that its final value does not meet
+    within the numerical tolerance (G25); such rows are marked on the sheets."""
+    return row['target'] is not None and not met(row['target'], row['final'])
+
+
 def _agronomist_section(summary):
     def cell(v, digits=2):
         return '' if v is None else number(v, digits)
@@ -207,12 +213,7 @@ def _agronomist_section(summary):
                 f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
-        hi = (
-            ' class="num hi"'
-            if (r['target'] > 0 and not met(r['target'], r['final']))
-            or (r['target'] == 0 and r['diff_mg_l'] != 0)
-            else ' class="num"'
-        )
+        hi = ' class="num hi"' if missed_target(r) else ' class="num"'
         body += (
             f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
             f'class="num">{cell(r["water"])}</td>'

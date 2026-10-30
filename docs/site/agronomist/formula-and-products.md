@@ -104,7 +104,9 @@ the allowance is min(14, 21.01) = 14 mg/L. A declared `N_NH4` maximum replaces i
 
 A target is met only within the precision of the calculation (decision G25): the final
 value must be within 1e-5 of the target, relative (0.001 %), for a positive target, and
-within 1e-6 mg/L for a declared zero; a pH is met within 1e-4 pH units. These are
+within 1e-6 mg/L for a declared zero; a pH is met within 1e-4 pH units. A declared zero
+is a hard limit judged by the same 1e-6 mg/L everywhere: 5e-7 mg/L of urea from the
+water meets it, 2e-6 mg/L breaks it and blocks the recipe. These are
 numerical tolerances, validated on 2026-10-24, not agronomic ranges. They replace the
 former ±1 % band.
 
@@ -114,6 +116,12 @@ reads "targets missed: …" and asks for review. A missed target does not block 
 recipe; only a broken declared maximum does. For Lettuce 2 (Howard Resh) with water
 free of nutrients, P finishes at 49.84 mg/L for 50 (-0.323 %): under the former band
 that counted as met, now it is listed.
+
+A deviation the formulation stage accepts never stops a later stage. The pH stages
+(titration, nitric acid and acid selection) judge only what their own reagent changes:
+they stop when the reagent pushes a nutrient past a declared maximum, or moves a
+target by more than a percent you declare (`maximum_nutrient_error_percent`, no
+default).
 
 ## Using materials in calculations
 

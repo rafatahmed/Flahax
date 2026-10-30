@@ -99,7 +99,8 @@ class SecondaryFitTests(unittest.TestCase):
 
     def test_zero_and_maximum_are_checked_after_secondary_refit(self):
         for targets, maxima, achieved in [
-            ({'K': 100, 'S': 0}, {}, {'K': 100, 'S': 1e-20}),
+            # A declared zero is met within 1e-6 mg/L (G25): 2e-6 breaks it.
+            ({'K': 100, 'S': 0}, {}, {'K': 100, 'S': 2e-6}),
             ({'K': 100}, {'Ca': 10}, {'K': 100, 'Ca': 11}),
         ]:
             products = [product('a', K=10), product('b', K=10)]

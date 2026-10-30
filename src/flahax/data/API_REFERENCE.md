@@ -68,7 +68,7 @@ Source module: `flahax.acid_selection`. Import with `from flahax import AcidSele
 ### `plan_acid_options`
 
 ```text
-plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg, final_volume_litres, achieved, targets, maximum_nutrient_error_percent, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None)
+plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg, final_volume_litres, achieved, targets, maximum_reagent_volume_litres, maximum_nutrient_error_percent=None, preferred_product_id=None, phases=(), maximum_concentrations=None)
 ```
 
 Rank accepted single-acid plans by nutrient loss, or respect an explicit ID.
@@ -836,7 +836,7 @@ Source module: `flahax.equilibrium_delivery`. Import with `from flahax import Eq
 ### `plan_equilibrium_delivery`
 
 ```text
-plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent, temperature_c=25.0, phases=(), maximum_concentrations=None, analytical_water_totals=None)
+plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent=None, temperature_c=25.0, phases=(), maximum_concentrations=None, analytical_water_totals=None)
 ```
 
 Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.

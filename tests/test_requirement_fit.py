@@ -14,6 +14,8 @@ from flahax import (
     plan_fertilizer_workflow,
     recommend,
 )
+from flahax.fertilizer_workflow import missed_message, signed_percent
+from flahax.grower_sheet import missed_target
 from flahax.requirement_fit import (
     PH_TOLERANCE,
     RELATIVE_TOLERANCE,
@@ -151,3 +153,73 @@ class WorkflowDeviationTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class DeclaredZeroTests(unittest.TestCase):
+    """A declared zero is met within 1e-6 mg/L everywhere (G25): urea from the water."""
+
+    def flow(self, targets, urea):
+        return plan_fertilizer_workflow(
+            SALTS, targets, {'N_UREA': urea}, 5.8, final_volume=VolumeLitres(100)
+        )
+
+    def test_half_a_microgram_of_urea_is_met(self):
+        cucumber = FORMULAS['Cucumber (Howard Resh)']
+        self.assertNotIn('N_UREA', cucumber)
+        for targets in (cucumber, dict(cucumber, N_UREA=0)):
+            with self.subTest(declared='N_UREA' in targets):
+                flow = self.flow(targets, 5e-7)
+                result = flow.recommendation
+                self.assertEqual(row(result, 'N_UREA')['final'], 5e-7)
+                self.assertEqual(result['limitViolations'], [])
+                self.assertEqual(result['requirementConflicts'], [])
+                self.assertNotIn('N_UREA', [u['symbol'] for u in result['unmetTargets']])
+                self.assertNotEqual(flow.stages['formulation'].status, 'blocked')
+                self.assertTrue(missed_target({'target': 0, 'final': 5e-7}) is False)
+
+    def test_two_micrograms_of_urea_break_the_declared_zero(self):
+        cucumber = FORMULAS['Cucumber (Howard Resh)']
+        for targets in (cucumber, dict(cucumber, N_UREA=0)):
+            with self.subTest(declared='N_UREA' in targets):
+                flow = self.flow(targets, 2e-6)
+                result = flow.recommendation
+                self.assertEqual(
+                    result['limitViolations'],
+                    [{'symbol': 'N_UREA', 'ppm': 2e-6, 'maximumPpm': 0.0}],
+                )
+                self.assertEqual(
+                    [(c['symbol'], c['reason']) for c in result['requirementConflicts']],
+                    [('N_UREA', 'water_above_maximum')],
+                )
+                self.assertIn('N_UREA', [u['symbol'] for u in result['unmetTargets']])
+                self.assertEqual(flow.stages['formulation'].status, 'blocked')
+                self.assertTrue(missed_target({'target': 0, 'final': 2e-6}))
+
+    def test_sheet_marks_only_targets_not_met(self):
+        self.assertFalse(missed_target({'target': 50, 'final': 50.0004}))
+        self.assertTrue(missed_target({'target': 50, 'final': 50.0006}))
+        self.assertFalse(missed_target({'target': None, 'final': 3.0}))
+
+
+class MissedMessageTests(unittest.TestCase):
+    def test_misses_print_three_significant_figures_in_fixed_notation(self):
+        rows = [
+            {'symbol': 'K', 'target': 10.0, 'final': 150.0, 'deltaPct': 1400.0},
+            {'symbol': 'P', 'target': 50.0, 'final': 49.8384, 'deltaPct': -0.3232046},
+            {'symbol': 'Zn', 'target': 0.1, 'final': 0.1000051, 'deltaPct': 0.0051234},
+            {'symbol': 'B', 'target': 0.5, 'final': 0.5, 'deltaPct': 0.0},
+        ]
+        self.assertEqual(
+            missed_message({'rows': rows}), 'targets missed: K +1400 %, P -0.323 %, Zn +0.00512 %'
+        )
+        self.assertEqual(signed_percent(-123456.0), '-123000')
+        self.assertEqual(signed_percent(0.000012345), '+0.0000123')
+
+
+class SharedPhToleranceTests(unittest.TestCase):
+    def test_every_ph_check_uses_the_numerical_tolerance(self):
+        from flahax import joint_workflow, ph_adjustment
+
+        self.assertEqual(PH_TOLERANCE, 1e-4)
+        self.assertIs(ph_adjustment.PH_TOLERANCE, PH_TOLERANCE)
+        self.assertIs(joint_workflow.PH_TOLERANCE, PH_TOLERANCE)

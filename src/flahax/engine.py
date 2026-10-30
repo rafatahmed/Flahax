@@ -905,7 +905,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
         row
         for row in rows
         if (row["target"] and not met(row["target"], row["final"]))
-        or (row["target"] == 0 and row["final"] > 0)
+        or (row["target"] == 0 and not met(0.0, row["final"]))
     ]
     if not missed:
         return []
@@ -1271,7 +1271,11 @@ def recommend(
             "maximumPpm": limit,
         }
         for symbol, limit in (maxima | {s: 0.0 for s, t in targets.items() if t == 0}).items()
-        if water.get(symbol, 0.0) > limit
+        if (
+            not met(0.0, water.get(symbol, 0.0))
+            if targets.get(symbol) == 0
+            else water.get(symbol, 0.0) > limit
+        )
     ]
     if solved["requirementConflicts"]:
         solved["feasible"] = False

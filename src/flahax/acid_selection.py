@@ -18,6 +18,7 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
 from .ph_adjustment import reagent_dose
+from .requirement_fit import reagent_shift_exceeds
 from .saturation_policy import assess_saturation, describe
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
@@ -85,8 +86,8 @@ def plan_acid_options(
     final_volume_litres,
     achieved,
     targets,
-    maximum_nutrient_error_percent,
     maximum_reagent_volume_litres,
+    maximum_nutrient_error_percent=None,
     preferred_product_id=None,
     phases=(),
     maximum_concentrations=None,
@@ -100,7 +101,11 @@ def plan_acid_options(
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
-    tolerance = _positive(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
+    tolerance = (
+        None
+        if maximum_nutrient_error_percent is None
+        else _positive(maximum_nutrient_error_percent, 'maximum_nutrient_error_percent')
+    )
     for ph in (initial_ph, target_ph):
         if (
             isinstance(ph, bool)
@@ -172,11 +177,14 @@ def plan_acid_options(
                 targets,
                 {ion: MilligramsPerLitre(value) for ion, value in contribution.items()},
             )
-            for row in rows:
-                if row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance:
-                    raise DeliveryError(
-                        'nutrient_tolerance_exceeded', f'acid plan violates {row["symbol"]} target'
-                    )
+            # Only the change the acid makes is judged (G25), against the declared percent.
+            moved = reagent_shift_exceeds(achieved, rows, tolerance)
+            if moved:
+                raise DeliveryError(
+                    'nutrient_tolerance_exceeded',
+                    f'acid plan moves {", ".join(moved)} by more than the declared '
+                    f'{tolerance:g} % of the target',
+                )
             assessment = assess_incidental(rows, maximum_concentrations)
             if assessment['limitViolations']:
                 raise DeliveryError(

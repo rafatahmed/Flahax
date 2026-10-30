@@ -5,22 +5,25 @@
 """Keep nutrient targets, incidental contributions and hard limits distinct."""
 
 from .composition import validate_profile
+from .requirement_fit import met
 
 
 def assess_incidental(rows, maximum_concentrations=None):
     """Untargeted nutrients present in the solution and the limits exceeded; an incidental nutrient
     without a limit requires review. Explicit zero targets are hard zero limits,
-    not incidental nutrients. Limits are compared directly without an absolute slack.
+    not incidental nutrients, met within 1e-6 mg/L (requirement_fit.met, G25). Declared maxima
+    are compared directly without an absolute slack.
     """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
     )
-    maximums.update({row['symbol']: 0.0 for row in rows if row['target'] == 0})
+    zeros = {row['symbol'] for row in rows if row['target'] == 0}
+    maximums.update({symbol: 0.0 for symbol in zeros})
     final = {row['symbol']: row['final'] for row in rows}
     violations = [
         {'symbol': ion, 'ppm': final.get(ion, 0.0), 'maximumPpm': limit}
         for ion, limit in maximums.items()
-        if final.get(ion, 0.0) > limit
+        if (not met(0.0, final.get(ion, 0.0)) if ion in zeros else final.get(ion, 0.0) > limit)
     ]
     incidental = []
     for row in rows:
