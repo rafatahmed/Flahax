@@ -160,7 +160,7 @@ class IrrigationConductivityBoundaryTests(unittest.TestCase):
                     ec.assay_charge_residual({'Synthetic': 1})
             self.assertEqual(caught.exception.code, 'unsupported_product_chemistry')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_plan_temperature_is_not_extrapolated(self):
         self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery

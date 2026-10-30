@@ -33,7 +33,7 @@ class TraceabilityTests(unittest.TestCase):
         self.ledger = {
             'schema_version': 2,
             'policy': {
-                'required_assignee': 'owner',
+                'required_assignee': 'maintainer',
                 'issue_gate': 'tracking',
                 'acceptance_task': 'accept',
                 'reproduction_task': 'reproduce',
@@ -100,8 +100,8 @@ class TraceabilityTests(unittest.TestCase):
         control = self.reproduced()
         task = self.complete('fix')
         task['issue'] = {
-            'url': 'https://github.com/owner/example/issues/1',
-            'assignee': 'owner',
+            'url': 'https://github.com/maintainer/example/issues/1',
+            'assignee': 'maintainer',
             'labels': ['bug'],
             'state': 'OPEN',
             'verified_at': '2026-10-25',

@@ -38,7 +38,18 @@ each release, with numbers, sources and decisions, are in
 
 ### Changed
 
-- The packaged catalogue is the owner's Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
+- Fit N_NO3, N_NH4 and N_UREA each as its own target; total N is their reported sum. Absent
+  N_UREA is a declared zero; N_NH4 0 is no requirement, not a ban, and incidental NH4-N is held
+  within min(10 % of total N, 1.5 mmol/L), basis Dutch soilless practice (De Kreij, Voogt et
+  al.), shown in `ammoniumLimit`, the summary, report and sheets; `solve_weights` too (#209,
+  #201).
+
+- A target is met only within the numerical tolerance (1e-5 relative, 1e-6 mg/L for a declared
+  zero, 1e-4 pH), which replaces the ±1 % band. Every deviation is reported ("targets missed:
+  …", review); only a broken declared maximum blocks. pH reagent stages judge only their
+  reagent's change; `maximum_nutrient_error_percent` is optional, no default (#210).
+
+- The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
 
 ### Fixed
 
@@ -266,7 +277,7 @@ single-salt lower bounds, and there is no physical validation yet (#41).
 - Bad input at any entry point, or a damaged session file, gives a plain message instead of a traceback (#117, #149).
 - First field tests of `flahax mix`: the formula list (#98), the start screen and `--version` (#102), saved sessions and small weights (#105), unknown acid formulas (#112), repeated notes (#113) and titles (#114).
 - Every output of one batch agrees: pH path, weights, acid volume and notes on the terminal, sheet and report (#107-#110).
-- The owner's trial of the full-screen mode: Windows arrow keys (#135), readable key help (#137), confirm before leaving (#138), filter and tick keys (#139), number display (#140), wrapping (#141), grower words (#142), and #125-#132, #143-#147.
+- The maintainer's trial of the full-screen mode: Windows arrow keys (#135), readable key help (#137), confirm before leaving (#138), filter and tick keys (#139), number display (#140), wrapping (#141), grower words (#142), and #125-#132, #143-#147.
 - The 0.5.0 manual and changelog kept the release-candidate wording; publishing now has a finalize step before tagging (#71).
 
 ## [0.5.0] - 2026-10-20
@@ -358,7 +369,7 @@ Yanked on PyPI on 2026-10-17, after 0.3.1 was published: its source distribution
 third-party PDF. Use 0.3.1. Core `recommend` and CLI input contracts are unchanged, with no
 third-party runtime dependencies; the chemistry boundary is 25 Â°C, Davies I â‰¤ 0.1 mol/kg water,
 fixed product oxidation states and closed analytical inorganic carbon. Hosted checks were blocked
-by account billing; the owner approved publication on verified local evidence.
+by account billing; the maintainer approved publication on verified local evidence.
 [Release record](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.3.0.md).
 
 ### Added

@@ -345,7 +345,7 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.uncovered_bound_ms_cm)
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_all_shipped_formulas_respect_phosphate_fit_domain(self):
         # Historical raw failures are retained in conductivity-qualification/tests.log.
         # F08's independent oracle forbids an unqualified out-of-fit prediction.
@@ -623,7 +623,7 @@ class CatalogueTests(unittest.TestCase):
                 )
             self.assertEqual(c.exception.code, 'missing_field')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_reagent_additions_recorded_as_copy(self):
         self.enterContext(historical_catalogue())
         additions = {'NO3-': 1e-4}
@@ -644,7 +644,7 @@ class CatalogueTests(unittest.TestCase):
         )
         self.assertEqual(none.audit['reagent_additions_molal'], {})
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chelate_residual_reported_not_crash(self):
         # 2026-10-18 chelate sodium counterions (D2): was not_supported /
         # assay_charge_residual_too_large (declared percent < -0.1) because the
@@ -712,7 +712,7 @@ class CatalogueTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             DeclaredPureWater('')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_balanced_water_and_reagent_recorded(self):
         self.enterContext(historical_catalogue())
         bw = balance_water_analysis(
@@ -752,7 +752,7 @@ class CatalogueTests(unittest.TestCase):
 
 
 class PlanTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -947,7 +947,7 @@ class BandChemistryTests(unittest.TestCase):
             ),
         }
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_shipped_only_band_ends_open(self):
         self.enterContext(historical_catalogue())
         result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)
@@ -973,7 +973,7 @@ class BandChemistryTests(unittest.TestCase):
             self.assertIsNone(r.ec25_ms_cm)
             self.assertEqual(r.audit['band_end'], end)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_open_end_still_validates_inputs(self):
         self.enterContext(historical_catalogue())
         with self.assertRaises(DeliveryError) as caught:
@@ -1034,7 +1034,7 @@ class BandChemistryTests(unittest.TestCase):
         self.assertIsNone(high.ec25_ms_cm)
         self.assertEqual(high.audit['band_end'], 'maximum')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_note_text(self):
         self.enterContext(historical_catalogue())
         result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)

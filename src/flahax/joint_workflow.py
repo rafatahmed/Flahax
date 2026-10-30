@@ -9,6 +9,7 @@ from .delivery_contracts import DeliveryError
 from .joint_solver import solve_joint_problem
 from .calculated_ph import calculate_equilibrium_ph
 from .engine import _provenance
+from .requirement_fit import PH_TOLERANCE
 
 
 def zero_reagent_controls(problem):
@@ -50,7 +51,6 @@ def joint_candidate(
         make_joint_problem,
         PhCandidate,
         REAGENTS,
-        PH_TOLERANCE,
         _blend_recipe,
         _judge,
     )

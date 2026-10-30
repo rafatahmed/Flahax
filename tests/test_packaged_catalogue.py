@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The packaged data is the owner catalogue Flaha Agri Tech Analysis Ver 0.0."""
+"""The packaged data is the catalogue Flaha Agri Tech Analysis Ver 0.0."""
 
 import json
 from pathlib import Path
@@ -13,7 +13,7 @@ from flahax import load_library
 LIBRARY_FILE = Path(__file__).resolve().parents[1] / 'src' / 'flahax' / 'data' / 'library.json'
 TITLE = 'Flaha Agri Tech Analysis Ver 0.0'
 
-# Every target of the 13 owner formulas, in catalogue order; explicit zeros included.
+# Every target of the 13 packaged formulas, in catalogue order; explicit zeros included.
 FORMULAS = [
     (
         'Cucumber (Howard Resh)',
@@ -276,7 +276,7 @@ ASSAYS = {
     'Micro Combi Mix 2': {'Fe': 3.7, 'Cu': 0.2, 'Mn': 2.4, 'Zn': 1.5, 'Mo': 0.2, 'B': 1.4},
 }
 
-# product -> (g/L water, temperature in the data; None where the owner gave none)
+# product -> (g/L water, temperature in the data; None where the catalogue gives none)
 SOLUBILITY = {
     'Copper EDTA': (400, 20),
     'Mn EDTA': (400, 20),
@@ -298,7 +298,7 @@ PH_PRODUCTS = [
 ]
 
 
-class OwnerCatalogueTests(unittest.TestCase):
+class PackagedCatalogueTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.library = load_library()

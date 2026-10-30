@@ -26,12 +26,16 @@ from .composition import (
     InputError,
     assay_conflict,
     assay_drift,
+    fitted_targets,
     is_carbonate,
+    total_nitrogen,
+    NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
+from .requirement_fit import met
 
 # Rank and feasibility threshold, relative to the problem's column scale.
 EPS = 1e-10
@@ -46,8 +50,6 @@ GRAM_REFINE_BELOW = 1e-4
 ROUNDOFF = 2.220446049250313e-16
 # Only exact zero doses are omitted; every positive binary64 dose is authoritative.
 KEEP_GRAMS = 0.0
-# A recipe is feasible when every requested ion is inside this Δ%.
-TOLERANCE_PCT = 1.0
 # A binding ceiling is met as a constraint (#68): a row of moderate weight whose aim is
 # shifted by the Lagrange multiplier, searched until the ion sits on its aim (see
 # _fit_within). A huge penalty weight instead (1024, #56) left the objective so flat in
@@ -60,6 +62,13 @@ CEILING_TOLERANCE = 1e-9
 PH_REAGENT = "ph_reagent"
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
+# Ammonium allowance (G23): when a formula declares no NH4-N requirement (absent or 0),
+# incidental NH4-N may reach min(10% of total target N, 1.5 mmol/L NH4 = 21.01 mg/L N).
+# Dutch soilless practice: NH4 at 5-15% of total N with at most 1-1.5 mmol/L (Van der Lugt
+# et al. 2016 handbook, after De Kreij, Voogt et al.).
+AMMONIUM_FRACTION = 0.10
+AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
+AMMONIUM_BASIS = "Dutch soilless practice (De Kreij, Voogt et al.)"
 
 
 def load_library() -> dict:
@@ -586,21 +595,64 @@ def _validate_ridge(ridge: float) -> None:
 
 
 def solve_weights(
-    salts: list[dict], targets: dict, water: dict | None = None, ridge: float = 0.0
+    salts: list[dict],
+    targets: dict,
+    water: dict | None = None,
+    ridge: float = 0.0,
+    *,
+    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
-    """Fit nonnegative g/L by positive-target squared relative error. ridge must be zero."""
+    """Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
+
+    Nitrogen forms and the ammonium allowance follow ``recommend``: each form is its own row,
+    a zero N_NH4 sets no row and no ban, and incidental NH4-N is held within
+    min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in ammoniumLimit with
+    its basis. totalN reports the sum of the forms.
+    """
     _validate_ridge(ridge)
-    targets = validate_profile(targets, "targets")
+    targets = fitted_targets(validate_profile(targets, "targets"))
     water = validate_profile(water or {}, "water")
     for salt in salts:
         conflict = assay_conflict(salt)
         if conflict is not None:
             raise InputError(conflict)
-    solved = _fit_within(salts, targets, water, ridge, {})
+    maxima: dict = {}
+    ammonium_limit = ammonium_allowance(targets, maxima, max_ammonium_fraction)
+    solved = _fit_within(salts, targets, water, ridge, maxima)
     chosen = _chosen(salts, solved["grams"])
-    solved.update(_report(solved["rows"], solved["grams"], []))
+    solved.update(_report(solved["rows"], solved["grams"], [], maxima))
     solved["salts"] = chosen
+    solved["ammoniumLimit"] = ammonium_limit
+    solved["totalN"] = total_n_report(solved["rows"], targets)
     return solved
+
+
+def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> dict | None:
+    """The ammonium allowance (G23) for fitted targets, added to maxima as N_NH4.
+
+    It applies when the targets have no NH4-N requirement and no N_NH4 maximum is stated:
+    min(fraction x total target N, AMMONIUM_CAP_MG_PER_L). None adds no maximum.
+    """
+    if fraction is None:
+        return None
+    if (
+        isinstance(fraction, bool)
+        or not isinstance(fraction, (int, float))
+        or not 0 <= fraction <= 1
+    ):
+        raise InputError("max_ammonium_fraction must be a number in [0, 1]")
+    total_n = total_nitrogen(targets)
+    # A positive N_NH4 target keeps its own row; absent or 0 gets the allowance (G23).
+    if total_n <= 0 or "N_NH4" in targets or "N_NH4" in maxima:
+        return None
+    limit = min(fraction * total_n, AMMONIUM_CAP_MG_PER_L)
+    maxima["N_NH4"] = limit
+    return {
+        "mgPerL": limit,
+        "fractionOfTotalN": fraction,
+        "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L,
+        "basis": AMMONIUM_BASIS,
+    }
 
 
 def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
@@ -742,17 +794,16 @@ def _eligible(
 
 
 def _short(rows: list[dict], targets: dict) -> list[str]:
-    """Requested ions that finished more than the tolerance below target.
+    """Requested ions that finished below target, beyond the numerical tolerance (G25).
 
     An overshoot is not a reason to add another salt. A chloride or sodium
     salt can only add its ions. It cannot pull an element back down.
     """
     final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
-    floor = 1.0 - TOLERANCE_PCT / 100.0
     return [
         symbol
         for symbol, ppm in targets.items()
-        if ppm > 0 and final.get(symbol, 0.0) < ppm * floor
+        if ppm > 0 and final.get(symbol, 0.0) < ppm and not met(ppm, final.get(symbol, 0.0))
     ]
 
 
@@ -785,8 +836,8 @@ def _recover(library, ready, excluded, targets, short):
             extra = f" It also carries {', '.join(carried)}." if carried else ""
             if already:
                 warnings.append(
-                    f"{salt['name']} is included because {symbol} stayed more than "
-                    f"{TOLERANCE_PCT:g}% short without it.{extra}"
+                    f"{salt['name']} is included because {symbol} stayed short of its "
+                    f"target without it.{extra}"
                 )
             else:
                 warnings.append(
@@ -843,9 +894,7 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         rhs.append((target - float(water.get(symbol) or 0.0)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
     return {
-        symbol
-        for symbol, target in kept.items()
-        if abs(achieved.get(symbol, 0.0) - target) / target * 100.0 > TOLERANCE_PCT
+        symbol for symbol, target in kept.items() if not met(target, achieved.get(symbol, 0.0))
     }
 
 
@@ -855,8 +904,8 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     missed = [
         row
         for row in rows
-        if (row["deltaPct"] is not None and abs(row["deltaPct"]) > TOLERANCE_PCT)
-        or (row["target"] == 0 and row["final"] > 0)
+        if (row["target"] and not met(row["target"], row["final"]))
+        or (row["target"] == 0 and not met(0.0, row["final"]))
     ]
     if not missed:
         return []
@@ -1022,6 +1071,21 @@ def _provenance(record: dict) -> dict:
     }
 
 
+def total_n_report(rows: list[dict], targets: dict) -> dict:
+    """Total N reported as the sum of the three forms in the final rows (water, products and
+    any reagent); it is never a fitted row (D1). The target is None when no form is declared."""
+    target = total_nitrogen(targets) if any(form in targets for form in NITROGEN_FORMS) else None
+    final = total_nitrogen({row["symbol"]: row["final"] for row in rows})
+    return {
+        "target": target,
+        "final": final,
+        "deltaPct": 100.0 * (final - target) / target if target else None,
+        "unit": "mg/L as N",
+        "forms": list(NITROGEN_FORMS),
+        "fitted": False,
+    }
+
+
 def _report(
     rows: list[dict], grams: list[float], warnings: list[str], maxima: dict | None = None
 ) -> dict:
@@ -1034,7 +1098,7 @@ def _report(
     incidental = assess_incidental(rows, maxima)
     return {
         "feasible": any(row["target"] is not None for row in rows)
-        and (not deltas or max(deltas) <= TOLERANCE_PCT)
+        and all(met(row["target"], row["final"]) for row in rows if row["target"])
         and not incidental["limitViolations"],
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
@@ -1053,7 +1117,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
-    max_ammonium_fraction: float | None = None,
+    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -1061,8 +1125,13 @@ def recommend(
         library: Product records with id, name, formula and elemental mass
             percentages in elements. Use load_library()['salts'] deliberately.
         targets: Required nonempty elemental mg/L map; nitrogen forms are
-            separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
-            An explicit zero prohibits positive contribution, unlike a missing key.
+            separate N_NO3, N_NH4 and N_UREA keys, not generic total N. Each
+            form is its own requirement (decision D1): N_NO3 as declared,
+            N_UREA as declared or 0 when absent, and N_NH4 only when above 0.
+            An absent or zero N_NH4 sets no row and no ban; the ammonium
+            allowance below applies instead. Total N is reported in totalN as
+            the sum of the forms, never fitted. For other nutrients an explicit
+            zero prohibits positive contribution, unlike a missing key.
         water: Source-water elemental mg/L; omitted entries default to zero.
         allow_ions: Explicit exceptions to the default restricted-ion filter.
         allow_carbonates: Permit carbonate products in nutrient fitting only;
@@ -1076,11 +1145,14 @@ def recommend(
             constraint, and any
             excess that cannot be removed is reported in limitViolations with
             feasible False. Omitted keeps the default.
-        max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
-            none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-            the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
-            caller policy, with no additional absolute cap. Default None adds
-            no ammonium maximum. Untargeted nutrients do not enter the objective.
+        max_ammonium_fraction: When targets declare no NH4-N requirement
+            (N_NH4 absent or 0) and no N_NH4 maximum is given, incidental NH4-N
+            may reach this share of the total target N (N_NO3 + N_NH4 + N_UREA),
+            capped at 1.5 mmol/L NH4 (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The
+            default AMMONIUM_FRACTION (0.10) follows Dutch soilless
+            practice (G23); ammoniumLimit reports it with its basis.
+            None adds no ammonium maximum. Untargeted nutrients do not enter
+            the objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1093,8 +1165,10 @@ def recommend(
         eligibility policy still uses the declared assay and explicit permissions.
         The raw grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
-        product-to-dose mapping. Feasible requires positive-target fit within 1%,
-        satisfied zero requirements and maxima, and no requirement conflicts.
+        product-to-dose mapping. Feasible requires every positive target met within
+        the numerical tolerance (requirement_fit.met: 1e-5 relative), satisfied zero
+        requirements and maxima, and no requirement conflicts; a missed target is a
+        deviation reported in rows and unmetTargets.
         requirementConflicts identifies targets above maxima and water above limits.
         substitutionSearch records supplied and attempted product IDs and whether
         a nutrient-feasible candidate was found. Recovery never expands the supplied
@@ -1109,31 +1183,15 @@ def recommend(
     targets = validate_profile(targets, "targets")
     if not targets:
         raise InputError("targets are required")
+    # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is no row and no ban (G24).
+    targets = fitted_targets(targets)
     water = validate_profile(water or {}, "water")
     allowed = frozenset(allow_ions or ())
     if allowed:
         validate_profile({ion: 0.0 for ion in allowed}, "allow_ions")
     maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
-    ammonium_limit = None
-    if max_ammonium_fraction is not None:
-        if (
-            isinstance(max_ammonium_fraction, bool)
-            or not isinstance(max_ammonium_fraction, (int, float))
-            or not 0 <= max_ammonium_fraction <= 1
-        ):
-            raise InputError("max_ammonium_fraction must be a number in [0, 1]")
-        total_n = sum(targets.get(key, 0.0) for key in ("N_NO3", "N_NH4", "N_UREA"))
-        # An explicit N_NH4 target (including 0, "none wanted") keeps its own row.
-        if total_n > 0 and "N_NH4" not in targets and "N_NH4" not in maxima:
-            limit = max_ammonium_fraction * total_n
-            maxima["N_NH4"] = limit
-            ammonium_limit = {
-                "mgPerL": limit,
-                "fractionOfTotalN": max_ammonium_fraction,
-                "absoluteCapMgPerL": None,
-                "basis": "explicit caller fraction of total target N; no additional cap",
-            }
+    ammonium_limit = ammonium_allowance(targets, maxima, max_ammonium_fraction)
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     warnings: list[str] = []
     balance = target_ion_balance(targets)
@@ -1193,6 +1251,7 @@ def recommend(
     solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
     name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
+    solved["totalN"] = total_n_report(solved["rows"], targets)
     solved["targetIonBalance"] = balance
     _charge_report(solved)
     solved["requirementConflicts"] = [
@@ -1212,7 +1271,11 @@ def recommend(
             "maximumPpm": limit,
         }
         for symbol, limit in (maxima | {s: 0.0 for s, t in targets.items() if t == 0}).items()
-        if water.get(symbol, 0.0) > limit
+        if (
+            not met(0.0, water.get(symbol, 0.0))
+            if targets.get(symbol) == 0
+            else water.get(symbol, 0.0) > limit
+        )
     ]
     if solved["requirementConflicts"]:
         solved["feasible"] = False

@@ -11,7 +11,15 @@ the sheet's rounding, so the screen and the sheet always agree.
 from .grower_report import percentage, qualification_lines
 from . import __version__
 from .grower_report import _reagent_line, grams, litres, millilitres, number
-from .grower_sheet import LABEL, STATUS_WORDS, agronomist_rows, key_reasons, limited_by, readable
+from .grower_sheet import (
+    LABEL,
+    STATUS_WORDS,
+    agronomist_rows,
+    key_reasons,
+    limited_by,
+    missed_target,
+    readable,
+)
 from .mix_tui import MIN_HEIGHT, MIN_WIDTH, SMALL, cut, paint, wrap
 
 VIEWS = ('Tanks', 'Nutrients', 'Notes')
@@ -147,14 +155,7 @@ def _nutrient_rows(summary):
         line = ' '.join(
             c.rjust(w) if i else c.ljust(w) for i, (c, (_, w)) in enumerate(zip(cells, COLUMNS))
         )
-        style = (
-            'dim'
-            if r['target'] is None
-            else 'warn'
-            if (r['diff_pct'] is not None and abs(r['diff_pct']) > 1)
-            or (r['target'] == 0 and r['diff_mg_l'] != 0)
-            else None
-        )
+        style = 'dim' if r['target'] is None else 'warn' if missed_target(r) else None
         rows.append([(line, style)])
     ph, chemistry = summary['ph'], summary.get('chemistry')
     path = [f'water {number(chemistry["water_ph"], 2)}'] if chemistry else []

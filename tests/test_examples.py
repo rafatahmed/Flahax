@@ -16,7 +16,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class CapabilityExamplesTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -26,11 +26,22 @@ class CapabilityExamplesTests(unittest.TestCase):
         workflow = self.results['pepper']['workflow']
         self.assertEqual(workflow['nutrient_gap']['Ca'], 84)
         self.assertEqual(workflow['stages']['chemistry']['status'], 'needs_input')
-        self.assertEqual(workflow['stages']['formulation']['status'], 'blocked')
+        # G25: missed targets are reported deviations; only a broken maximum blocks.
+        self.assertEqual(workflow['stages']['formulation']['status'], 'requires_review')
+        self.assertEqual(
+            workflow['stages']['formulation']['message'], 'targets missed: Mn -100 %, Mo -100 %'
+        )
         rows = {r['symbol']: r['final'] for r in workflow['recommendation']['rows']}
-        self.assertEqual(rows['N_NH4'], 0)
+        # G24: N_NH4 0 is no ammonium requirement; calcium nitrate's NH4-N stays within the
+        # G23 allowance min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
+        self.assertAlmostEqual(rows['N_NH4'], 4.8632, places=4)
         self.assertEqual(rows['Na'], 0)
-        self.assertEqual(workflow['recommendation']['incidentalContributions'], [])
+        self.assertEqual(workflow['recommendation']['ammoniumLimit']['mgPerL'], 12.8)
+        incidental = workflow['recommendation']['incidentalContributions']
+        self.assertEqual(
+            [(r['symbol'], r['maximumPpm'], r['assessment'], r['source']) for r in incidental],
+            [('N_NH4', 12.8, 'within_limit', ['Calcium Nitrate (ag grade)'])],
+        )
 
     def test_pepper_tank_review_keeps_all_products_and_acid_accounting(self):
         pepper = self.results['pepper']
@@ -43,7 +54,7 @@ class CapabilityExamplesTests(unittest.TestCase):
             row = rows[salt['name']]
             self.assertAlmostEqual(row['recipe_mass_g'], salt['gramsPerLitre'] * 1000)
             self.assertIsNone(row['stock_concentration_g_per_litre'])
-        self.assertNotIn('Calcium Nitrate (ag grade)', rows)
+        self.assertEqual(rows['Calcium Nitrate (ag grade)']['proposed_channel'], 'A')
         self.assertEqual(rows['Mg Nitrate']['proposed_channel'], 'A')
         self.assertNotIn('Mn EDTA', rows)
         if 'Potassium Monobasic Phosphate' in rows:
@@ -120,7 +131,10 @@ class CapabilityExamplesTests(unittest.TestCase):
         for chart in charts:
             ET.fromstring(chart)
         self.assertIn('FICTIONAL CALIBRATION DATA', html)
-        self.assertIn('blocked', html)
+        self.assertIn(
+            '<td>formulation</td><td>requires_review</td><td>targets missed: Mn -100 %, Mo -100 %',
+            html,
+        )
         self.assertIn('Missing measured EC profiles', html)
         self.assertIn('id="tank-allocation"', html)
         self.assertIn('Not ready for mixing.', html)

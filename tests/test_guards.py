@@ -10,6 +10,7 @@ import unittest
 from flahax import InputError, gap_for, load_library, recommend
 from flahax.composition import assay_conflict, assay_drift, theoretical_assay
 from flahax.engine import _lstsq, nnls
+from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
 TARGETS = {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}
@@ -47,7 +48,10 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Calcium Carbonate", names)
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertTrue(result["feasible"])
-        self.assertLess(result["maxAbsDeltaPct"], 1)
+        # Every target met within the numerical tolerance (G25), on the unrounded values.
+        for row in result["rows"]:
+            if row["target"] is not None:
+                self.assertTrue(met(row["target"], row["final"]), row["symbol"])
 
     def test_an_overshoot_does_not_admit_chloride_or_borax(self):
         formula = next(

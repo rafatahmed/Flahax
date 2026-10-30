@@ -1,6 +1,6 @@
 {
   "schema": "flahax.material_identities/1",
-  "source": "docs/audit/2026-10-18-materials-identity (materials-audit.csv, review.md); owner decisions D1, D2",
+  "source": "docs/audit/2026-10-18-materials-identity (materials-audit.csv, review.md); decisions D1, D2",
   "identities": [
     {
       "id": "idn-ammonium-calcium-nitrate",
@@ -420,7 +420,7 @@
         "accessed": "2026-10-18"
       },
       "status": "identity_consistent",
-      "notes": "Owner decision D1: pure Mg(NO3)2.6H2O. The catalogue formula Mg(NO3)2 and analysis N 11 / Mg 9.65 fit neither the anhydrous nor the hydrated salt (audit: formula/assay conflict)."
+      "notes": "Decision D1: pure Mg(NO3)2.6H2O. The catalogue formula Mg(NO3)2 and analysis N 11 / Mg 9.65 fit neither the anhydrous nor the hydrated salt (audit: formula/assay conflict)."
     },
     {
       "id": "idn-magnesium-sulfate-heptahydrate",
@@ -847,7 +847,7 @@
         "N_NO3": 22.228785393913558
       },
       "comparator": {
-        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner-supplied 65% w/w solution)",
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (65% w/w solution supplied by Flaha Agri Tech)",
         "url": null,
         "accessed": "2026-10-29"
       },
@@ -859,7 +859,7 @@
       "products": [
         "Micro Combi Mix 1"
       ],
-      "name": "Micro Combi Mix 1 owner-declared micronutrient blend",
+      "name": "Micro Combi Mix 1 declared micronutrient blend",
       "formula": null,
       "hydration": "not applicable (blend)",
       "molecular_weight": null,
@@ -874,19 +874,19 @@
       },
       "theoretical_analysis": {},
       "comparator": {
-        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner declaration)",
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (declared composition)",
         "url": null,
         "accessed": "2026-10-30"
       },
       "status": "declared_blend",
-      "notes": "Composition declared by the owner (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 7.2, Cu 0.9, Mn 3.6, Zn 1.2, Mo 0.6 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4. Not independently verified."
+      "notes": "Declared composition (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 7.2, Cu 0.9, Mn 3.6, Zn 1.2, Mo 0.6 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4. Not independently verified."
     },
     {
       "id": "idn-micro-combi-mix-2-declared-blend",
       "products": [
         "Micro Combi Mix 2"
       ],
-      "name": "Micro Combi Mix 2 owner-declared micronutrient blend",
+      "name": "Micro Combi Mix 2 declared micronutrient blend",
       "formula": null,
       "hydration": "not applicable (blend)",
       "molecular_weight": null,
@@ -902,12 +902,12 @@
       },
       "theoretical_analysis": {},
       "comparator": {
-        "product": "Flaha Agri Tech Analysis Ver 0.0 (owner declaration)",
+        "product": "Flaha Agri Tech Analysis Ver 0.0 (declared composition)",
         "url": null,
         "accessed": "2026-10-30"
       },
       "status": "declared_blend",
-      "notes": "Composition declared by the owner (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 3.7, Cu 0.2, Mn 2.4, Zn 1.5, Mo 0.2, B 1.4 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4, B as boric acid (B(OH)3). Not independently verified."
+      "notes": "Declared composition (2026-10-29/30); Na counter-ions follow the catalogue's chelate identities. ion_forms are mol per kg of product (not per formula unit), derived from the catalogue analysis (Fe 3.7, Cu 0.2, Mn 2.4, Zn 1.5, Mo 0.2, B 1.4 %) with standard atomic weights (amounts rounded to multiples of 2^-30 mol so the charge balance is exact): Fe as NaFeEDTA, Mn/Zn/Cu as Na2-EDTA salts, Mo as Na2MoO4, B as boric acid (B(OH)3). Not independently verified."
     }
   ]
 }

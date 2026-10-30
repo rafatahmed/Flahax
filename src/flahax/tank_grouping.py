@@ -34,8 +34,8 @@ CLASS_RULES = (
     ('calcium', 'sulfate', 'calcium and sulfate precipitate as gypsum in a concentrate'),
 )
 
-# Retained historical name for import compatibility, not an active policy.
-OWNER_TWO_TANKS = 'Retired two-tank waiver; equipment cannot establish compatibility'
+# Retained historical text of the retired waiver, not an active policy.
+RETIRED_TWO_TANKS = 'Retired two-tank waiver; equipment cannot establish compatibility'
 CLASS_RULES += (
     (
         'magnesium',
@@ -70,7 +70,7 @@ FOOTNOTES = {
     frozenset({'KRISTA-MgS', 'KRISTA-K'}): 'mixture solubility as potassium sulfate (p. 65 *)',
     frozenset({'KRISTA-MgS', 'KRISTA-MOP'}): 'mixture solubility as potassium sulfate (p. 65 *)',
 }
-FLAHAX_RULE = 'FlahaX rule (owner decision, rafatahmed/Flahax#79)'
+FLAHAX_RULE = 'FlahaX rule (decision rafatahmed/Flahax#79)'
 MICRO_PHOSPHATE = (
     'micronutrients stay out of phosphate concentrates, where manganese and iron phosphates can '
     'form '

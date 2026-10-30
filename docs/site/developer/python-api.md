@@ -62,8 +62,8 @@ from flahax import gap_for, load_library, recommend, solve_weights
 load_library() -> dict
 gap_for(targets, water) -> dict
 recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
-          maximum_concentrations=None, max_ammonium_fraction=None) -> dict
-solve_weights(salts, targets, water=None, ridge=0.0) -> dict
+          maximum_concentrations=None, max_ammonium_fraction=0.1) -> dict
+solve_weights(salts, targets, water=None, ridge=0.0, *, max_ammonium_fraction=0.1) -> dict
 ```
 
 `solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then fits positive targets by squared relative error. Both APIs retain `ridge` for compatibility but require zero; nonzero or invalid values raise `InputError`. Remove an old explicit `ridge=0.02` argument to migrate. Dose magnitude and untargeted nutrient concentrations do not enter the primary objective. Equivalent best-fit allocations need not use identical products.
@@ -121,10 +121,39 @@ See [water-to-delivery](water-to-delivery.md).
 
 ## Tolerance, formula balance and unmet targets
 
-`feasible` means every positive target is within 1% of the formula value (an
-absolute 0.01 mg/L floor applies in the benchmark evaluator). The 1% is a FlahaX
-assumption: no published standard gives a per-ion tolerance for preparing a feed
-solution. It is a numerical recipe-fit criterion, not a crop-response threshold.
+A target is met only within the numerical tolerance (decision G25), in
+`flahax.requirement_fit`: `met(target, final)` is true when `final` is within
+`RELATIVE_TOLERANCE` (1e-5) of a positive target, relative, or within
+`ZERO_TARGET_TOLERANCE_MG_PER_L` (1e-6 mg/L) of a declared zero; `PH_TOLERANCE` is
+1e-4 pH units. These are the precision of the calculation, validated on 2026-10-24,
+not agronomic ranges; they replace the former ±1 % band. (The benchmark evaluator
+keeps its own published max(0.01 mg/L, 1 %) scoring rule.)
+
+`feasible` means every declared requirement is met and no declared maximum is
+exceeded. A declared zero is a hard zero limit met within 1e-6 mg/L everywhere
+(`limitViolations`, `requirementConflicts`, `unmetTargets` and the sheets): 5e-7 mg/L
+of urea from the water meets an absent or zero `N_UREA`, 2e-6 mg/L breaks it (see
+[Zero requirements and hard maxima](#zero-requirements-and-hard-maxima)). A result that
+misses a target is still a recipe: every deviation is reported in `rows` and
+`unmetTargets`. In `plan_fertilizer_workflow` the formulation stage blocks
+(`infeasible_recipe`) only on a broken declared maximum; a missed target makes it
+`requires_review` with the message "targets missed: N_NO3 -2.35 %, …" (each
+difference to three significant figures in fixed notation, for example +1400 %), and
+the batch, stock, titration, nitric and acid stages continue.
+`FinalSolutionRecipe.feasible` is likewise true unless the recipe breaks a declared
+maximum.
+
+A deviation the formulation stage accepts never blocks a later stage; an empty recipe it
+accepted (for example when a zero maximum forbids every product) is planned on the water
+alone, as acid selection already did. The titration,
+nitric (`plan_equilibrium_delivery`) and acid-selection (`plan_acid_options`) stages
+judge only the change their reagent makes. `maximum_nutrient_error_percent` is
+optional and has no default: when given, it is a declared requirement on the
+reagent's own contribution, so a stage fails with `nutrient_tolerance_exceeded` when
+the reagent moves a positive target's final value, from the recipe before the reagent,
+by more than that percent of the target. The stage also blocks when the reagent pushes
+a nutrient past a declared maximum (`nutrient_limit_exceeded`). Whether a pH is met
+uses `PH_TOLERANCE` (1e-4) in the pH plan and the joint workflow.
 
 `targetIonBalance` is a conventional charge check on requested nutrient entries,
 not the whole solution. `recipeIonBalance` applies the same convention to all
@@ -141,8 +170,8 @@ ligands; even supported components do not establish full water chemistry or the
 pH-dependent species charge. A balanced nutrient subtotal is not proof of a
 chemically complete solution.
 
-Every positive target missed by more than 1%, and every violated zero target,
-appears in `unmetTargets`. Relative error remains null for zero targets.
+Every positive target not met within the numerical tolerance, and every violated
+zero target, appears in `unmetTargets`. Relative error remains null for zero targets.
 
 | Reason | Meaning |
 |---|---|
@@ -171,11 +200,16 @@ targets with the ion held on its limit (less one part per million). Any excess
 that cannot be removed is reported in `limitViolations` with `feasible` false. A ceiling on `Cl` or `Na` also admits
 the products that carry it; chloride products are never used without one.
 
-**Explicit ammonium policy.** `max_ammonium_fraction` defaults to `None`: no
-ammonium maximum is invented. When explicitly supplied and the targets omit
-`N_NH4`, the fraction applies to total target N (`N_NO3 + N_NH4 + N_UREA`),
-without an additional absolute cap. `result["ammoniumLimit"]` records it.
-An explicit `N_NH4` target or `maximum_concentrations` entry takes precedence.
+**Nitrogen forms and the ammonium allowance.** `N_NO3`, `N_NH4` and `N_UREA` are
+each their own fitted target; `result["totalN"]` reports their sum and is never
+fitted. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no
+ammonium requirement (no row, no ban): incidental NH4-N is then held within
+min(`max_ammonium_fraction` × total target N, 1.5 mmol/L NH4 = 21.01 mg/L N).
+The default fraction 0.10 follows Dutch soilless practice (De Kreij, Voogt et
+al.); `result["ammoniumLimit"]` records the limit, fraction, cap and basis, and
+`None` adds no ammonium maximum. A positive `N_NH4` target or a
+`maximum_concentrations` entry takes precedence. `solve_weights` applies the
+same allowance and reports `ammoniumLimit` and `totalN` the same way.
 Explicit zeros and targeted ceilings are enforced independently of the objective.
 `score` retains all nutrient rows but sums only positive-target squared relative errors.
 Binding-limit diagnostics use the same numerical aim and convergence tolerance as
@@ -251,7 +285,7 @@ From the repository root, after the package is installed:
 python -m unittest discover -s tests -t .
 ```
 
-`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0, owner-supplied, not independent laboratory verification) has 29 products (24 fertilizers and 5 pH products), 3 waters, and 13 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
+`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0, supplied by Flaha Agri Tech, not independent laboratory verification) has 29 products (24 fertilizers and 5 pH products), 3 waters, and 13 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
 
 ### Chemistry failure and compatibility contract
 
@@ -271,7 +305,7 @@ charge neutrality, and equilibrium phase amounts do not predict kinetics.
 ## Zero requirements and hard maxima
 
 A missing target leaves a nutrient unspecified. A target of `0` prohibits its
-positive contribution. Because product contributions are nonnegative, fitting
+positive contribution; the final value meets it within 1e-6 mg/L. Because product contributions are nonnegative, fitting
 excludes every product carrying that nutrient, including formula counterions and
 arbitrarily small positive assays. This also applies to `solve_weights`.
 A positive maximum or `allow_ions` permission cannot override an explicit zero.
@@ -288,8 +322,8 @@ reported concentration and maximum directly, without an absolute slack.
 are not feasible. Water already at a maximum permits no further addition of
 that nutrient; water above it cannot be corrected by adding fertilizer. Review
 `limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
-empty recipe when water complies. The positive-target feasibility tolerance and trace-dose reporting remain
-separately tracked solver work.
+empty recipe when water complies. Trace-dose reporting remains separately tracked
+solver work.
 
 ## Automatic search within available products
 

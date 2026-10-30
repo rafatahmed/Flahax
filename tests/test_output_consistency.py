@@ -5,7 +5,7 @@
 """One batch, every output: terminal, batch sheet (each depth), full report and summary must agree
 (#107-#110).
 
-The owner's session of 2026-10-23: RO water, Tomato Stage.1, 100 L tanks with a 10 L acid
+The field-test session of 2026-10-23: RO water, Tomato Stage.1, 100 L tanks with a 10 L acid
 container,
 nitric 65 % (1.3 kg/L), pH 6, answered once and written at the full depth.
 """
@@ -58,7 +58,7 @@ def text_of(page):
     return html.unescape(re.sub(r'<[^>]+>', ' ', page))
 
 
-class OwnerSessionConsistency(unittest.TestCase):
+class FieldSessionConsistency(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -201,7 +201,7 @@ class ReagentQuantityRendering(unittest.TestCase):
 
 
 class SelectedStateIdentity(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_selected_recipe_uses_its_own_mixed_and_target_states(self):
         self.enterContext(historical_catalogue())
         from flahax import load_library, plan_fertilizer_workflow, VolumeLitres, summarize_batch

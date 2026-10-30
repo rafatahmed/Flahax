@@ -310,7 +310,7 @@ class DeliveryBalanceTests(unittest.TestCase):
 
 
 class EquilibriumChannelTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())

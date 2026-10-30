@@ -175,7 +175,7 @@ class CompositionBoundaryTests(unittest.TestCase):
         # Oxygen and hydrogen do not create missing nutrient-assay alarms.
         self.assertIsNone(assay_drift({'formula': 'H2O', 'elements': {'K': 0}}))
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_product_conversion_rejects_bad_doses_and_preserves_declared_sodium(self):
         self.enterContext(historical_catalogue())
         from flahax import load_library

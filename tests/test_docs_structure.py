@@ -3,7 +3,7 @@
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
 """The documentation site keeps its structure: every page in the menu once, moved pages
-redirected, and the command-line reference current (owner-approved restructure, 2026-10-23)."""
+redirected, and the command-line reference current (approved restructure, 2026-10-23)."""
 
 from pathlib import Path
 import ast

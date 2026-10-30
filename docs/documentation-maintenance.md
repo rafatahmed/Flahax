@@ -9,7 +9,7 @@
 | Public signatures and result fields | Shipped `API_REFERENCE.md` | Generated from `flahax.__all__`; exact-content regression |
 | Nested input schemas | Focused pages linked from `docs/index.md` | Workflow/CLI contract tests |
 | Scientific acceptance | Coverage, fixtures and release evidence | Offline regressions and required live PHREEQC replay |
-| Version changes and publication | Changelog and publishing checklist | Release metadata tests; explicit owner authorization |
+| Version changes and publication | Changelog and publishing checklist | Release metadata tests; explicit maintainer authorization |
 
 Do not copy historical test counts into current product claims. Keep dated
 verification evidence separate from instructions. The PyPI release, checkout

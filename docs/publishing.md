@@ -14,12 +14,12 @@ pushing a tag.
 | Full test suite and clean wheel/sdist installs on Python 3.11, 3.12, 3.13 and 3.14 | `test` | Runs on the tagged commit |
 | Pinned live PHREEQC replay | `phreeqc-live` | Hash-pinned PHREEQC 3.8.6 on Windows |
 | One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Artifact SHA-256 values appear in the run summary |
-| Owner approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
+| Maintainer approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
 | Upload | `publish` | PyPI Trusted Publishing (OIDC). No API token is stored in GitHub |
 
 ## One-time setup
 
-1. **Trusted Publishing on PyPI** (owner, on pypi.org). `flahax` already
+1. **Trusted Publishing on PyPI** (maintainer, on pypi.org). `flahax` already
    exists, so the publisher is added on the project: open
    [Manage projects](https://pypi.org/manage/projects/), choose `flahax`, then
    Publishing, and add a GitHub Actions publisher:
@@ -36,7 +36,7 @@ pushing a tag.
    deployment restricted to tags matching `v*`.
 3. **Branch protection on `main`**: changes arrive by pull request, and the
    `Test` workflow's checks must pass before merging.
-4. **Zenodo DOI** (owner, on zenodo.org; approved 2026-10-23). Sign in to
+4. **Zenodo DOI** (maintainer, on zenodo.org; approved 2026-10-23). Sign in to
    [Zenodo](https://zenodo.org/) with GitHub, open
    [GitHub settings](https://zenodo.org/account/settings/github/) and switch
    on `rafatahmed/Flahax`. From then on every published GitHub Release is
@@ -51,7 +51,7 @@ pushing a tag.
    `flahax.__version__`, `CITATION.cff`, README, user manual and API
    reference; write the changelog section; record readiness and evidence.
    Merge it by pull request after CI passes.
-2. Confirm the publication decision with the owner. Merging is not approval.
+2. Confirm the publication decision with the maintainer. Merging is not approval.
 3. **Finalize the wording before tagging** (#71): on a short branch, date the
    changelog section and change the manual's version line from "release
    candidate ... not yet published" to "released <date>"; merge it after CI
@@ -140,7 +140,7 @@ Completed 2026-10-17. Copy this checklist for the next release.
 
 ## Fallback: manual Twine upload
 
-Use only if the workflow route is unavailable, and only with the owner's
+Use only if the workflow route is unavailable, and only with the maintainer's
 explicit approval for that version. Build in a clean checkout of the tagged
 commit, run `tools/verify_distribution.py --artifacts-dir <new empty dir>`,
 `twine check --strict`, then upload only those two files:
@@ -164,17 +164,17 @@ package was uploaded.
 ## Release history
 
 - **0.6.0**, 2026-10-24: published through the hardened workflow (run `40032809873`) from
-  `03e03ef`, after the finalize step (#156); the deployment was approved by the owner, verified by
+  `03e03ef`, after the finalize step (#156); the deployment was approved by the maintainer, verified by
   a fresh installation from PyPI, and archived on Zenodo (10.5281/zenodo.23605679). See the
   [0.6.0 publication evidence](site/evidence/release-evidence.md).
 - **0.5.0**, 2026-10-20: published through the hardened workflow (run
-  `39517327774`) from `692108b`; the deployment was approved at the owner's
+  `39517327774`) from `692108b`; the deployment was approved at the maintainer's
   instruction after artifact review, and verified by a fresh installation from
   PyPI. The packaged manual and changelog still say "not yet published" (#71).
   See the [0.5.0 publication evidence](site/evidence/release-evidence.md#050-publication---2026-10-20).
 - **0.4.0**, 2026-10-17: first Apache-2.0 release and first upload through the
   hardened workflow with Trusted Publishing (run `39043172800`), approved by
-  the owner, verified by a fresh installation from PyPI. See the
+  the maintainer, verified by a fresh installation from PyPI. See the
   [0.4.0 publication evidence](site/evidence/release-evidence.md#040-publication---2026-10-17).
 - **0.3.1**, 2026-10-17: uploaded manually with Twine from `main` at
   `586eddb`, tagged `v0.3.1`, verified by a fresh installation from PyPI;
@@ -182,7 +182,7 @@ package was uploaded.
   [0.3.1 publication evidence](site/evidence/release-evidence.md#031-publication---2026-10-17).
   Its GitHub Release note was added on 2026-10-17; the old-workflow run it
   started was cancelled before approval.
-- **0.3.0**, 2026-09-27: uploaded manually with Twine under an owner exception
+- **0.3.0**, 2026-09-27: uploaded manually with Twine under a maintainer exception
   for local-only verification while hosted CI was blocked by billing.
   **Yanked on 2026-10-17** because its sdist contained a third-party PDF. The
   [GitHub release v0.3.0](https://github.com/rafatahmed/Flahax/releases/tag/v0.3.0)

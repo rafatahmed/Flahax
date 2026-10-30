@@ -21,7 +21,7 @@ import math
 from collections.abc import Callable, Mapping, Sequence
 
 from .aqueous_model import AqueousResult, solve
-from .composition import ATOMIC
+from .composition import ATOMIC, fitted_targets
 from .delivery_contracts import DeliveryError
 from .engine import (
     PH_REAGENT,
@@ -32,8 +32,10 @@ from .engine import (
     _report,
     _diagnose,
     _charge_report,
+    total_n_report,
 )
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
+from .requirement_fit import PH_TOLERANCE, met  # a pH within 1e-4 is met (G25)
 from .root_finding import shrink_bracket
 from .product_conversion import component_nutrient_masses, material_inventory
 from .saturation_policy import assess_saturation, describe
@@ -51,8 +53,6 @@ REAGENTS = {
     'KHCO3': ('base', {'K+': 1, 'CO3-2': 1}, _K + _H + _C + 3 * _O, {'K': _K}),
     'K2CO3': ('base', {'K+': 2, 'CO3-2': 1}, 2 * _K + _C + 3 * _O, {'K': 2 * _K}),
 }
-# Change in pH below which no reagent is planned.
-PH_TOLERANCE = 1e-3
 # The recipe and its reagent dose agree when they differ by less than this fraction.
 DOSE_TOLERANCE = 1e-4
 
@@ -241,6 +241,10 @@ def plan_coupled_ph(
     phases = tuple(phases)
     pool = nutrient_salts(salts)
     unadjusted = recommend(pool, targets, water, maximum_concentrations=maximum_concentrations)
+    # Every refit uses the nitrogen rows recommend fitted (D1, G24); the joint search holds the
+    # ammonium allowance recommend applied as a declared maximum (G23).
+    targets = fitted_targets(targets)
+    joint_maxima = assessed_limits(maximum_concentrations, unadjusted)
     base_state = mix(unadjusted)
     if abs(base_state.ph - target_ph) <= PH_TOLERANCE:
         direction = 'none'
@@ -270,7 +274,7 @@ def plan_coupled_ph(
                         volume,
                         cap,
                         phases,
-                        maximum_concentrations,
+                        joint_maxima,
                         water_components,
                         joint,
                     )
@@ -327,7 +331,7 @@ def plan_coupled_ph(
                                 volume,
                                 cap,
                                 phases,
-                                maximum_concentrations,
+                                joint_maxima,
                                 water_components,
                             )
                         )
@@ -480,8 +484,13 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
 
 
 def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
-    """Conserve product doses and rebuild assessments for a convex recipe blend."""
-    maxima = maxima or {}
+    """Conserve product doses and rebuild assessments for a convex recipe blend.
+
+    Incidental nutrients are assessed against the same limits as the endpoint recipes,
+    including the ammonium allowance they report (G23), and total N is recomputed from the
+    rebuilt rows (water, products and the reagent's supply).
+    """
+    maxima = assessed_limits(maxima, endpoints[0])
     by_id = {p['id']: p for p in pool}
     entries = {s['id']: s for r in endpoints for s in r['salts']}
     doses = {}
@@ -503,6 +512,7 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
         w for w in result['warnings'] if not w.startswith('Fit includes formula counterion')
     ]
     result.update(_report(rows, grams, warnings, maxima))
+    result['totalN'] = total_n_report(rows, targets)
     name_sources(result, salts, pool, supply)
     result['unmetTargets'] = _diagnose(
         pool,
@@ -532,7 +542,7 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     ] + [
         dict(symbol=s, reason='water_above_maximum', waterPpm=supply[s], maximumPpm=limit)
         for s, limit in (maxima | {s: 0 for s, t in targets.items() if t == 0}).items()
-        if supply.get(s, 0) > limit
+        if (not met(0.0, supply.get(s, 0)) if targets.get(s) == 0 else supply.get(s, 0) > limit)
     ]
     if result['requirementConflicts']:
         result['feasible'] = False
@@ -776,4 +786,6 @@ def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fracti
         solvent_fraction=reagent_solvent_fraction,
         density_kg_per_litre=density,
     )
+    if isinstance(targets, Mapping):
+        targets = fitted_targets(targets)  # nitrogen rows as recommend fits them (D1, G24)
     return JointProblem(tuple(sources), active, targets, water, **conditions)

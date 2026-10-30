@@ -28,9 +28,9 @@ FlahaX selects fertilizer salts and their grams per litre for fixed nutrient tar
 
 Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
-The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (owner-supplied, not independent laboratory verification): 13 crop formulas and 29 products, 24 fertilizers and 5 pH products. The mixed model has 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
+The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (supplied by Flaha Agri Tech, not independent laboratory verification): 13 crop formulas and 29 products, 24 fertilizers and 5 pH products. The mixed model has 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
-Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. Micro Combi Mix 1 and 2 are owner-declared blends of those EDTA forms and sodium molybdate; Mix 2 also declares its boron as boric acid. Do not substitute arbitrary product chemistry based on a similar name.
+Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. Micro Combi Mix 1 and 2 are declared blends of those EDTA forms and sodium molybdate; Mix 2 also declares its boron as boric acid. Do not substitute arbitrary product chemistry based on a similar name.
 
 ## 2. Installation and first recipe
 
@@ -79,7 +79,7 @@ This is a numerical demonstration, not a universal crop prescription. Review eve
 | Acid density | kg/L; nitrate-N assay is elemental N percent, not HNO3 percent |
 | `InjectionRatio` | Final litres per litre of stock |
 
-Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
+Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Each form is its own fitted target; `totalN` reports their sum and is never fitted. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no ammonium requirement: incidental NH4-N is held within the ammonium allowance described in section 11. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
 
 `result['salts']` contains selected products and doses. `result['rows']` contains
 `symbol`, `target`, `final` and `deltaPct`. Use identity-bearing `salts` records
@@ -89,8 +89,8 @@ fitting. Do not zip its `grams` with the original catalogue. `feasible` reports
 positive-target fit; it is not stock or delivery approval. Avoid additional
 rounding before constraint checks.
 
-`recommend` also returns `unmetTargets` (each target missed by more than 1%,
-with a reason), `targetIonBalance` (the formula's own cation and anion meq/L),
+`recommend` also returns `unmetTargets` (each target not met within the
+numerical tolerance, 1e-5 relative or 1e-6 mg/L for a declared zero, with a reason), `targetIonBalance` (the formula's own cation and anion meq/L),
 `ammoniumLimit`, `limitViolations` (incidental ions above a stated maximum) and,
 for every selected product, `provenance` (record, chemical identity, analysis
 basis and source documents). Section 11 shows how to read them.
@@ -338,7 +338,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 
 | Code | Meaning | What to do |
 |---|---|---|
-| `infeasible_recipe` | A stage needs a recipe that meets its targets, and this one misses them or breaks a declared maximum. | Read the formulation reason; adjust targets, products or limits. |
+| `infeasible_recipe` | The recipe breaks a declared maximum, so no later stage can use it. A missed target is not this error: it is a reported deviation and the stage asks for review. | Read the formulation reason; adjust products, water or limits. |
 | `nutrient_limit_exceeded` | A plan exceeds a maximum you declared. | Lower the source of that nutrient or the water share; the limit is never relaxed for you. |
 | `incidental_review_required` | Nutrients the formula did not ask for have no declared maximum, so the plan cannot be validated. | Declare maxima for them, or accept the review. |
 | `unsupported_reagent` | The pH reagent is not one FlahaX models. | Use HNO3, H3PO4, H2SO4 or C6H8O7 (acids) or the packaged bases. |
@@ -421,8 +421,12 @@ Recalculate saved recipes from their original inputs; do not reuse an old accept
 or relabel a historical result as a new calculation. Package, schema, model/source
 hashes and result identity are distinct identifiers.
 
-- Target zero is a hard zero; omitted targets are incidental. Declare nutrient
-  maximums explicitly. No ammonium fraction is supplied by default.
+- Target zero is a hard zero, met within 1e-6 mg/L, except `N_NH4` (no ammonium
+  requirement); omitted targets are incidental. A missed target is a reported
+  deviation, not a block; only a broken declared maximum blocks. Reagent stages judge
+  only their reagent's own change; `maximum_nutrient_error_percent` is optional, with
+  no default. Declare nutrient maximums explicitly. The ammonium
+  allowance min(10% of total N, 1.5 mmol/L) applies by default (`ammoniumLimit`).
 - Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
   Keep product IDs with doses rather than zipping a filtered result to the catalogue.
 - Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input
@@ -490,15 +494,17 @@ Supply the complete `equilibrium` record to proceed. Read all stages, not only
 | `requires_review` | Incidental nutrient contribution needs assessment | Review absolute mg/L and hard caps |
 | `blocked` | That stage was rejected | Read `error_code` and `message`; correct inputs |
 
-A zero NH4 target has no meaningful percentage deviation. Real products may
-add NH4: report the absolute addition separately; never relabel it as zero.
+A zero NH4 target is no ammonium requirement: it sets no row, and products that
+carry NH4 (calcium nitrate) stay eligible. The NH4 they add is reported as an
+incidental contribution in absolute mg/L, never relabelled as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
-When targets omit NH4 entirely, `recommend` adds no ammonium maximum by default.
-Supply `max_ammonium_fraction` explicitly to set a fraction of total target N;
-`ammoniumLimit` records that caller policy, without an additional absolute cap.
-The default `None` retains the existing incidental-ion objective. An explicit
-NH4 target or absolute maximum takes precedence over the fraction.
+When targets declare no NH4-N requirement (N_NH4 absent or 0), `recommend` holds
+incidental NH4-N within min(`max_ammonium_fraction` × total target N, 1.5 mmol/L
+NH4 = 21.01 mg/L N). The default fraction is 0.10, following Dutch soilless
+practice (De Kreij, Voogt et al.); `ammoniumLimit` records the limit, the
+fraction, the cap and that basis. `None` adds no ammonium maximum. A positive
+NH4 target or an explicit N_NH4 maximum takes precedence over the allowance.
 
 ### Reading misses, limits and provenance
 
@@ -526,8 +532,10 @@ allowance and `ammoniumLimit` is `None`. Other reasons are `no_source` (no
 product supplies the element), `incidental_tradeoff` (reachable, but the
 penalty on an unrequested ion chose otherwise) and `limited_by_ceiling` (a
 declared maximum binds, and `bindingLimits` names it); `reachableWithChloride`
-says whether chloride products would reach a conflicting target. Misses within
-1% are not listed.
+says whether chloride products would reach a conflicting target. A target is met
+only within the numerical tolerance (1e-5 relative, `flahax.requirement_fit.met`),
+so small misses such as Zn +0.017 % and Cu +0.0027 % here are listed too; the
+former 1 % band is gone.
 
 A binding ceiling is held exactly on its limit, less one part per million.
 The packaged catalogue has no chloride product. A chloride product you add is

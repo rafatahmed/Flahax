@@ -68,7 +68,7 @@ Source module: `flahax.acid_selection`. Import with `from flahax import AcidSele
 ### `plan_acid_options`
 
 ```text
-plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg, final_volume_litres, achieved, targets, maximum_nutrient_error_percent, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None)
+plan_acid_options(totals, initial_ph, target_ph, *, products, water_mass_kg, final_volume_litres, achieved, targets, maximum_reagent_volume_litres, maximum_nutrient_error_percent=None, preferred_product_id=None, phases=(), maximum_concentrations=None)
 ```
 
 Rank accepted single-acid plans by nutrient loss, or respect an explicit ID.
@@ -444,6 +444,9 @@ FinalSolutionRecipe(final_volume: 'VolumeLitres', feasible: 'bool', salts: 'tupl
 
 A recommendation expressed for a concrete final batch volume.
 
+``feasible`` is True when the recipe can be planned: it breaks no declared maximum. A
+recipe that misses a target is still a recipe; its deviations are reported (G25).
+
 Record fields: `final_volume`, `feasible`, `salts`.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import FinalSolutionRecipe`.
@@ -578,8 +581,11 @@ final_solution_recipe(recommendation: 'Mapping[str, Any]', final_volume: 'Volume
 
 Adapt a FlahaX recommendation to exact salt masses for a final batch.
 
-The function consumes only ``result['salts']`` and retains its feasibility
-flag. It does not reinterpret the solver's nutrient balance or round doses.
+The function consumes ``result['salts']``, ``feasible`` and ``limitViolations``.
+The recipe can be planned unless it breaks a declared maximum: a missed target is a
+reported deviation, not a block (G25). Without a ``limitViolations`` list the
+``feasible`` flag is kept as given. It does not reinterpret the solver's nutrient
+balance or round doses.
 
 Source module: `flahax.delivery_quantities`. Import with `from flahax import final_solution_recipe`.
 
@@ -638,7 +644,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -647,8 +653,13 @@ Args:
     library: Product records with id, name, formula and elemental mass
         percentages in elements. Use load_library()['salts'] deliberately.
     targets: Required nonempty elemental mg/L map; nitrogen forms are
-        separate N_NO3, N_NH4 and N_UREA keys, not generic total N.
-        An explicit zero prohibits positive contribution, unlike a missing key.
+        separate N_NO3, N_NH4 and N_UREA keys, not generic total N. Each
+        form is its own requirement (decision D1): N_NO3 as declared,
+        N_UREA as declared or 0 when absent, and N_NH4 only when above 0.
+        An absent or zero N_NH4 sets no row and no ban; the ammonium
+        allowance below applies instead. Total N is reported in totalN as
+        the sum of the forms, never fitted. For other nutrients an explicit
+        zero prohibits positive contribution, unlike a missing key.
     water: Source-water elemental mg/L; omitted entries default to zero.
     allow_ions: Explicit exceptions to the default restricted-ion filter.
     allow_carbonates: Permit carbonate products in nutrient fitting only;
@@ -662,11 +673,14 @@ Args:
         constraint, and any
         excess that cannot be removed is reported in limitViolations with
         feasible False. Omitted keeps the default.
-    max_ammonium_fraction: When targets omit N_NH4 (an explicit 0 means
-        none wanted) and no N_NH4 maximum is given, incidental NH4-N may reach this share of
-        the total target N (N_NO3 + N_NH4 + N_UREA). This is an explicit
-        caller policy, with no additional absolute cap. Default None adds
-        no ammonium maximum. Untargeted nutrients do not enter the objective.
+    max_ammonium_fraction: When targets declare no NH4-N requirement
+        (N_NH4 absent or 0) and no N_NH4 maximum is given, incidental NH4-N
+        may reach this share of the total target N (N_NO3 + N_NH4 + N_UREA),
+        capped at 1.5 mmol/L NH4 (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The
+        default AMMONIUM_FRACTION (0.10) follows Dutch soilless
+        practice (G23); ammoniumLimit reports it with its basis.
+        None adds no ammonium maximum. Untargeted nutrients do not enter
+        the objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -679,8 +693,10 @@ Returns:
     eligibility policy still uses the declared assay and explicit permissions.
     The raw grams vector follows the internal eligible/recovered product
     order, NOT necessarily the original library order. Use salts for
-    product-to-dose mapping. Feasible requires positive-target fit within 1%,
-    satisfied zero requirements and maxima, and no requirement conflicts.
+    product-to-dose mapping. Feasible requires every positive target met within
+    the numerical tolerance (requirement_fit.met: 1e-5 relative), satisfied zero
+    requirements and maxima, and no requirement conflicts; a missed target is a
+    deviation reported in rows and unmetTargets.
     requirementConflicts identifies targets above maxima and water above limits.
     substitutionSearch records supplied and attempted product IDs and whether
     a nutrient-feasible candidate was found. Recovery never expands the supplied
@@ -696,10 +712,15 @@ Source module: `flahax.engine`. Import with `from flahax import recommend`.
 ### `solve_weights`
 
 ```text
-solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0) -> 'dict'
+solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0, *, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
 ```
 
 Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
+
+Nitrogen forms and the ammonium allowance follow ``recommend``: each form is its own row,
+a zero N_NH4 sets no row and no ban, and incidental NH4-N is held within
+min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in ammoniumLimit with
+its basis. totalN reports the sum of the forms.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 
@@ -815,7 +836,7 @@ Source module: `flahax.equilibrium_delivery`. Import with `from flahax import Eq
 ### `plan_equilibrium_delivery`
 
 ```text
-plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent, temperature_c=25.0, phases=(), maximum_concentrations=None, analytical_water_totals=None)
+plan_equilibrium_delivery(recipe, *, water_mass_kg, water_totals, water_analysis_id, initial_ph, target_ph, reagent, reagent_channel_id, maximum_reagent_volume, targets, maximum_nutrient_error_percent=None, temperature_c=25.0, phases=(), maximum_concentrations=None, analytical_water_totals=None)
 ```
 
 Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
@@ -2097,7 +2118,7 @@ ChMicroProductDose(product_g_per_kg_water: 'float') -> None
 
 Declared CH-micro assay converted from g product per kg water.
 
-Product identity (declared by the project owner): Fe-EDTA, Mn-EDTA,
+Product identity (project-declared): Fe-EDTA, Mn-EDTA,
 Zn-EDTA, Cu-EDTA, borax, and sodium molybdate.  One EDTA ligand per
 chelated metal is an exact stoichiometric consequence of those names.
 

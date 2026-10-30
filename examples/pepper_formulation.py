@@ -55,8 +55,11 @@ def run():
             '1000 L illustrative final batch; targets and water in mg/L.',
             'No invented chloride, alkalinity, acid density or measured titration curve.',
             'Catalogue Phosphoric Acid (75%) P assay needs commercial-grade confirmation.',
-            'Explicit zero NH4/Na targets prohibit contributing products; '
+            'The explicit zero Na target prohibits sodium-carrying products; '
             'unavailable clean sources block the formulation.',
+            'N_NH4 0 sets no ammonium requirement: incidental NH4-N from calcium nitrate '
+            'is held within min(10 % of total N, 1.5 mmol/L), Dutch soilless practice '
+            '(De Kreij, Voogt et al.).',
         ],
         targets_mg_per_l=TARGETS,
         water_mg_per_l=water,

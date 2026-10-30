@@ -116,7 +116,7 @@ Local copy: `docs/sources/mccleskey_nordstrom_etal_2012.pdf`, SHA-256
 versioned or distributed (publisher copyright), under the same rule as the
 other files in `docs/sources/`.
 
-## Owner sign-off
+## Maintainer sign-off
 
 Table 1 transcription: checked 2026-10-19 against the local paper
 `docs/sources/mccleskey_nordstrom_etal_2012.pdf`, SHA-256

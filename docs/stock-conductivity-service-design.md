@@ -1,6 +1,6 @@
 # Stock conductivity service (design, not implemented)
 
-Status: proposal for owner review. No code in this repository implements it. Nothing here is a measured result, an independent scientific review or an approval to ship; every accuracy figure below is either quoted from a stated source, marked as a placeholder for the owner to decide, or marked as unknown.
+Status: proposal for maintainer review. No code in this repository implements it. Nothing here is a measured result, an independent scientific review or an approval to ship; every accuracy figure below is either quoted from a stated source, marked as a placeholder for the maintainer to decide, or marked as unknown.
 
 ## 1. Purpose
 
@@ -118,7 +118,7 @@ The model is built in layers so that each layer can be validated and, if necessa
 
 Design rules carried over from the existing EC work: never multiply a dilute EC by a concentration ratio, never add A and B conductivities, never report an estimate without a basis, and never let a missing product disappear into a falsely complete total.
 
-## 6. Decisions needed (owner)
+## 6. Decisions needed (maintainer)
 
 | Id | Decision | Why it matters |
 |---|---|---|
@@ -128,7 +128,7 @@ Design rules carried over from the existing EC work: never multiply a dilute EC 
 | D4 | First-version chemistry: chelates (EDTA) and trace mixes in or out | The pepper and tomato recipes in use contain iron and trace chelates |
 | D5 | Temperature range for the first version | Growers measure at greenhouse temperatures, not only 25 C |
 | D6 | Whether measurements may ever revise the model, and who reviews that | Keeps the service stateless and the evidence auditable |
-| D7 | Reference data owner and measurement protocol for real stocks | Real measurements are the long pole under any model |
+| D7 | Who supplies reference data, and the measurement protocol for real stocks | Real measurements are the long pole under any model |
 
 ## 7. Consumer integration (FlahaFAST), for information
 
@@ -147,7 +147,7 @@ Evidence tiers, in the order they are needed:
 |---|---|---|---|
 | E1 | Single-salt conductivity vs concentration to saturation (KCl, KNO3, Ca(NO3)2, MgSO4, KH2PO4, K2SO4, NH4NO3, (NH4)2SO4, others as supported) from handbook or primary literature, with citations and temperature | Mobility law, high-strength route, `reference_check` | To be sourced and cited; the KCl values in section 2 are provisional |
 | E2 | Binary and ternary mixtures of E1 salts | Mixing behaviour, ion pairing | To be sourced |
-| E3 | Measured real stocks (the owner's A/B recipes) at several dilutions and temperatures, with meter calibration records | Final acceptance, uncertainty by region | Not available; protocol is decision D7 |
+| E3 | Measured real stocks (the maintainer's A/B recipes) at several dilutions and temperatures, with meter calibration records | Final acceptance, uncertainty by region | Not available; protocol is decision D7 |
 | E4 | Measurements collected by consumers (via `evaluate_measurements`) | Monitoring drift and finding gaps; never silent recalibration | Optional, later |
 
 Rules:
@@ -173,7 +173,7 @@ Model tests (stage C1 onward):
 8. Property tests inside the validated range: EC increases with added salt; EC at dilution N is consistent with the model at the corresponding concentration (no scaling of a dilute EC by N); charge balance holds; zero salts give water only.
 9. Boundary tests: just inside and just outside the validated ionic strength and temperature return `estimated` and `not_supported` respectively, with the documented `reason`; `minimum_trusted_dilution` is the smallest whole dilution that qualifies (and `null` when none does).
 10. Failure injection: unknown ion, incomplete composition, precipitation expected, water EC inconsistent with supplied composition.
-11. Regression fixtures for the owner's real recipes once E3 exists, recorded with provenance.
+11. Regression fixtures for the maintainer's real recipes once E3 exists, recorded with provenance.
 12. `evaluate_measurements`: statistics are computed only over points the model supports; nothing is stored; calling it twice gives the same result.
 
 Repository checks (existing practice): the `API_REFERENCE.md` generation check, release hygiene tests, `compileall`, `git diff --check`, the PHREEQC-required test run, and the distribution verification described in [documentation maintenance](documentation-maintenance.md) and [CONTRIBUTING](../CONTRIBUTING.md).

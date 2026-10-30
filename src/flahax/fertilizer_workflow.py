@@ -5,6 +5,7 @@
 """Explicit, inspectable water-to-recipe-to-chemistry planning orchestration."""
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 import math
 from collections.abc import Mapping
 
@@ -28,6 +29,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .ph_adjustment import plan_coupled_ph
+from .requirement_fit import PH_TOLERANCE, declared_error_percent, met, reagent_shift_exceeds
 from .nutrient_acceptance import (
     assess_incidental,
     assess_water_basis,
@@ -178,9 +180,37 @@ def unreviewed_reason(recommendation):
     )
 
 
+def blocks(recommendation):
+    """True when a recipe cannot be used at all: it breaks a declared maximum. A missed target
+    is not a block; it is a reported deviation (G25)."""
+    return bool(recommendation['limitViolations'])
+
+
+def signed_percent(value):
+    """A signed percentage to three significant figures in fixed notation: +1400, -0.323."""
+    return format(Decimal(f'{value:.3g}'), '+f')
+
+
+def _miss(row):
+    """One missed target in plain words; a declared zero has no relative difference."""
+    if row['deltaPct'] is None:
+        return f'{row["symbol"]} {row["final"]:.3g} mg/L for a declared 0'
+    return f'{row["symbol"]} {signed_percent(row["deltaPct"])} %'
+
+
+def missed_message(recommendation):
+    """The targets a recipe misses beyond the numerical tolerance, in plain words, or None."""
+    missed = [
+        _miss(r)
+        for r in recommendation['rows']
+        if r['target'] and r['deltaPct'] is not None and not met(r['target'], r['final'])
+    ]
+    return ('targets missed: ' + ', '.join(missed)) if missed else None
+
+
 def limit_message(recommendation):
     """Why a recipe is not feasible, in plain words: a declared maximum it breaks, else the
-    targets it misses by >1 %."""
+    targets it misses beyond the numerical tolerance."""
     broken = [
         f'{v["symbol"]} would be {v["ppm"]:.3g} mg/L, above the declared maximum '
         f'{v["maximumPpm"]:.3g} mg/L'
@@ -188,16 +218,7 @@ def limit_message(recommendation):
     ]
     if broken:
         return '; '.join(broken)
-    missed = [
-        f'{r["symbol"]} {r["deltaPct"]:+.1f} %'
-        for r in recommendation['rows']
-        if r['target'] and r['deltaPct'] is not None and abs(r['deltaPct']) > 1
-    ]
-    return (
-        ('targets missed by more than 1 %: ' + ', '.join(missed))
-        if missed
-        else 'no recipe meets the targets'
-    )
+    return missed_message(recommendation) or 'no recipe meets the targets'
 
 
 def no_reagent_message(plan):
@@ -209,6 +230,20 @@ def no_reagent_message(plan):
             f'{c.message or (c.joint_result or {}).get("reason") or c.error_code or c.status}'
             for c in plan.candidates
         )
+    if plan.direction == 'none':
+        # Issue #212: a feed already at its target pH needs no reagent.
+        text = (
+            f'the feed mixes at pH {plan.unadjusted_ph:.2f}, within {PH_TOLERANCE:g} of the '
+            f'target pH {plan.target_ph:.2f}: no pH reagent is needed'
+        )
+        rejected = [c for c in plan.candidates if c.status == 'rejected']
+        if rejected:
+            text += '; the plan without a reagent is not acceptable: ' + '; '.join(
+                f'{(c.product_record or {}).get("name") or c.product_id}: '
+                f'{c.message or c.error_code or c.status}'
+                for c in rejected
+            )
+        return text
     need = 'an acid' if plan.direction == 'acid' else 'a base'
     tried = [
         c
@@ -316,15 +351,25 @@ def plan_fertilizer_workflow(
             stages[name] = WorkflowStage('needs_input', required_inputs=absent)
         return bool(absent)
 
+    # Only a broken declared maximum blocks; a missed target is a reported deviation (G25).
     stages['formulation'] = WorkflowStage(
-        'calculated' if recommendation['feasible'] else 'blocked',
+        'blocked' if blocks(recommendation) else 'calculated',
         value=recommendation,
-        error_code=None if recommendation['feasible'] else 'infeasible_recipe',
-        message=None if recommendation['feasible'] else limit_message(recommendation),
+        error_code='infeasible_recipe' if blocks(recommendation) else None,
+        message=limit_message(recommendation) if blocks(recommendation) else None,
     )
-    if recommendation['feasible'] and recommendation['requiresReview']:
-        stages['formulation'].status = 'requires_review'
-        stages['formulation'].message = unreviewed_reason(recommendation)
+    if not blocks(recommendation):
+        reasons = [
+            reason
+            for reason in (
+                missed_message(recommendation),
+                unreviewed_reason(recommendation) if recommendation['requiresReview'] else None,
+            )
+            if reason
+        ]
+        if reasons:
+            stages['formulation'].status = 'requires_review'
+            stages['formulation'].message = '; '.join(reasons)
     recipe = None
     if final_volume is None:
         stages['batch'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
@@ -522,12 +567,7 @@ def plan_fertilizer_workflow(
     if not missing(
         'nitric',
         nitric,
-        (
-            'reagent',
-            'reagent_channel_id',
-            'maximum_reagent_volume',
-            'maximum_nutrient_error_percent',
-        ),
+        ('reagent', 'reagent_channel_id', 'maximum_reagent_volume'),
     ):
         if stages['chemistry'].status not in USABLE:
             stages['nitric'] = WorkflowStage(
@@ -550,14 +590,10 @@ def plan_fertilizer_workflow(
                     temperature_c=equilibrium['temperature_c'],
                     phases=equilibrium['phases'],
                     maximum_concentrations=limits,
+                    maximum_nutrient_error_percent=nitric.get('maximum_nutrient_error_percent'),
                     **{
                         key: nitric[key]
-                        for key in (
-                            'reagent',
-                            'reagent_channel_id',
-                            'maximum_reagent_volume',
-                            'maximum_nutrient_error_percent',
-                        )
+                        for key in ('reagent', 'reagent_channel_id', 'maximum_reagent_volume')
                     },
                 ),
             )
@@ -572,7 +608,7 @@ def plan_fertilizer_workflow(
     ):
         if recipe is None:
             stages['titration'] = WorkflowStage('needs_input', required_inputs=('final_volume',))
-        elif not recommendation['feasible']:
+        elif blocks(recommendation):
             stages['titration'] = WorkflowStage(
                 'blocked', error_code='infeasible_recipe', message=limit_message(recommendation)
             )
@@ -598,17 +634,16 @@ def plan_fertilizer_workflow(
                     {row['symbol']: row['final'] for row in recommendation['rows']},
                     targets,
                 )
-                tolerance = _positive(
-                    titration.get('maximum_nutrient_error_percent', 1),
-                    'maximum_nutrient_error_percent',
-                )
-                if any(
-                    row['deltaPct'] is not None and abs(row['deltaPct']) > tolerance
-                    for row in plan.rows
-                ):
+                # Only the change the reagent makes is judged (G25), and only against a percent
+                # the caller declares: no default.
+                percent = declared_error_percent(titration.get('maximum_nutrient_error_percent'))
+                before = {row['symbol']: row['final'] for row in recommendation['rows']}
+                moved = reagent_shift_exceeds(before, plan.rows, percent)
+                if moved:
                     raise DeliveryError(
                         'nutrient_tolerance_exceeded',
-                        'titration dose violates a positive nutrient target',
+                        f'titration dose moves {", ".join(moved)} by more than the declared '
+                        f'{percent:g} % of the target',
                     )
                 if assess_incidental(plan.rows, limits)['limitViolations']:
                     raise DeliveryError(
@@ -624,7 +659,7 @@ def plan_fertilizer_workflow(
     if not missing(
         'acid_selection',
         acids,
-        ('products', 'maximum_nutrient_error_percent', 'maximum_reagent_volume_litres'),
+        ('products', 'maximum_reagent_volume_litres'),
     ):
         if (
             not isinstance(acids['products'], (list, tuple))
@@ -642,7 +677,7 @@ def plan_fertilizer_workflow(
             )
         elif stages['chemistry'].status not in USABLE:
             stages['acid_selection'] = WorkflowStage('blocked', error_code='chemistry_required')
-        elif not recommendation['feasible']:
+        elif blocks(recommendation):
             stages['acid_selection'] = WorkflowStage(
                 'blocked', error_code='infeasible_recipe', message=limit_message(recommendation)
             )
@@ -659,7 +694,7 @@ def plan_fertilizer_workflow(
                     final_volume_litres=final_volume.value,
                     achieved={row['symbol']: row['final'] for row in recommendation['rows']},
                     targets=targets,
-                    maximum_nutrient_error_percent=acids['maximum_nutrient_error_percent'],
+                    maximum_nutrient_error_percent=acids.get('maximum_nutrient_error_percent'),
                     maximum_reagent_volume_litres=acids['maximum_reagent_volume_litres'],
                     preferred_product_id=acids.get('preferred_product_id'),
                     phases=equilibrium['phases'],
@@ -747,7 +782,7 @@ def plan_fertilizer_workflow(
                 elif not chosen.recommendation['feasible'] or chosen.status == 'requires_review':
                     stages['ph_adjustment'].status = 'requires_review'
                     missed = ', '.join(
-                        f'{u["symbol"]} {u["deltaPct"]:+.1f}% ({u["reason"]})'
+                        f'{_miss(u)} ({u["reason"]})'
                         for u in chosen.recommendation.get('unmetTargets', [])
                     )
                     stages['ph_adjustment'].message = '; '.join(

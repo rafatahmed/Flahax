@@ -9,6 +9,7 @@ import unittest
 from flahax import gap_for, load_library, recommend
 from flahax.composition import assay_conflict
 from flahax.engine import forward, score
+from flahax.requirement_fit import met
 
 SALTS = [salt for salt in load_library()["salts"] if assay_conflict(salt) is None]
 
@@ -37,7 +38,7 @@ class PepperProof(unittest.TestCase):
     def test_recommendation_hits_phosphorus_and_potassium(self):
         result = recommend(SALTS, TARGETS, WATER)
         for symbol in ("P", "K", "Ca", "Mg", "S", "N_NO3"):
-            self.assertLess(abs(row(result, symbol)["deltaPct"]), 1, symbol)
+            self.assertTrue(met(TARGETS[symbol], row(result, symbol)["final"]), symbol)
 
     def test_zinc_copper_and_molybdenum_stay_in_the_combination(self):
         targets = {
@@ -56,7 +57,7 @@ class PepperProof(unittest.TestCase):
             covered.update(elements)
         for symbol in ("Zn", "Cu", "Mo"):
             self.assertIn(symbol, covered, symbol)
-            self.assertLess(abs(row(result, symbol)["deltaPct"]), 1, symbol)
+            self.assertTrue(met(targets[symbol], row(result, symbol)["final"]), symbol)
 
     def test_forced_map_and_mkp_is_the_pepper_miss(self):
         """The published run stacked both phosphorus salts. That is not the optimum."""

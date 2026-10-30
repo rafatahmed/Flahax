@@ -71,7 +71,7 @@ Davies-versus-ion-association activity comparison.
 ## CH-micro trace blend
 
 The checked-in `CH - micro` product is now a defined chemical record, based on
-the project-owner's declared composition rather than an inferred trade name:
+the project-declared composition rather than an inferred trade name:
 
 ```text
 Fe 7.00%  as Fe(III)-EDTA     Mn 2.00%  as Mn-EDTA

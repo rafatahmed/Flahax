@@ -49,7 +49,7 @@ See [site planning](site/developer/site-planning.md), [water-to-delivery](site/d
 1. 0.3.1 is published and 0.3.0 is yanked (both 2026-10-17). A yank stops
    unpinned installs from choosing 0.3.0 but leaves its files, including the
    YaraVita PDF in its sdist, downloadable by exact pin. Deleting the release
-   would be permanent and remains an owner decision.
+   would be permanent and remains the maintainer's decision.
 2. Resolve exact commercial product assays and trace co-storage evidence for
    the pepper recipe; define volumes, ratios, temperature and acid hardware
    layout before promoting the candidate grouping to an approved stock plan.

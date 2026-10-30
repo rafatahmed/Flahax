@@ -10,7 +10,7 @@ The audit now calculates dissolved chemistry with no enabled solid phases and ca
 
 ## Inputs and method
 
-Frozen owner-approved catalogue: tests/fixtures/catalogue-audit-2026-10-29.json. All 13 formulas; pure ion-free water, closed carbon, 25 C, no pH reagent and no pH/EC target bands. Each 100 L finished stock is diluted 1:100. Chemistry approximates 1 L final solution by 1 kg water. Total N replaces the separate nitrate target; positive ammonium targets remain, otherwise min(10% target N,21.01005 mg/L) is the ceiling.
+Frozen approved catalogue (Flaha Agri Tech Analysis Ver 0.0): tests/fixtures/catalogue-audit-2026-10-29.json. All 13 formulas; pure ion-free water, closed carbon, 25 C, no pH reagent and no pH/EC target bands. Each 100 L finished stock is diluted 1:100. Chemistry approximates 1 L final solution by 1 kg water. Total N replaces the separate nitrate target; positive ammonium targets remain, otherwise min(10% target N,21.01005 mg/L) is the ceiling.
 
 Minimize worst relative nutrient error, then total product mass. This tie-break differs from the earlier minimum-ammonium audit; equally feasible doses can produce different pH. The production engine is not modified. Full-catalogue and EDTA-only runs are separate.
 

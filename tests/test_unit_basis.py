@@ -25,7 +25,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class UnitBasisTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_workflow_normalizes_fertilizer_against_declared_solvent(self):
         self.enterContext(historical_catalogue())
         products = [p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate']
