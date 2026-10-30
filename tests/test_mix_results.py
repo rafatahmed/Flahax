@@ -64,7 +64,7 @@ def presentation_summary(actual):
 
 
 class ResultViewTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -96,7 +96,7 @@ class ResultViewTests(unittest.TestCase):
             self.assertIn(expected, text)
             self.assertNotIn('all dissolve', text)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_real_workflow_remains_phase_blocked_without_reagent(self):
         self.enterContext(historical_catalogue())
         self.assertEqual(self.summary['status'], 'blocked')
@@ -108,7 +108,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertNotIn('sets the batch', tanks)
         self.assertNotIn('Synthetic rendering reagent', tanks)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_tanks_match_sheet(self):
         self.enterContext(historical_catalogue())
         summary = presentation_summary(self.summary)
@@ -124,7 +124,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn(f'{acid} mL', sheet)
         self.assertIn('no acid in this tank', tanks)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_nutrients_match_sheet(self):
         self.enterContext(historical_catalogue())
         nutrients, sheet = '\n'.join(screen(self.summary, 1)), sheet_text(self.summary, 2)
@@ -170,7 +170,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn(grams(product['gramsPerBatch']), row)
         self.assertLessEqual(len(row), 79)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_base_reagent_is_not_called_acid(self):
         self.enterContext(historical_catalogue())
         summary = presentation_summary(self.summary)
@@ -191,7 +191,7 @@ class ResultViewTests(unittest.TestCase):
         summary['ph'] = None
         self.assertFalse(any(line.strip().startswith('pH:') for line in screen(summary, 1)))
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_status_colour_follows_the_status(self):  # 132
         self.enterContext(historical_catalogue())
 
@@ -206,7 +206,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('\x1b[93m', status_line(presentation_summary(self.summary)))
 
     def test_no_faint_text(self):
-        # The key help ("Q Quit") and the inactive tab names must stay readable (owner's trial).
+        # The key help ("Q Quit") and the inactive tab names must stay readable (field trial).
         for view in range(3):
             lines = results_lines(self.summary, view, 100, 40, 0, UTF8, 'out')
             self.assertFalse(any('\x1b[2m' in line for line in lines), view)
@@ -233,7 +233,7 @@ class ResultViewTests(unittest.TestCase):
         self.assertFalse(any(re.search(r'[0-9][-+][0-9]', line) for line in table), table)
         self.assertTrue(any(' -200.00 (-100.0 %)' in line for line in lines))
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_tank_cards_keep_their_border_at_80_columns(self):  # 141
         self.enterContext(historical_catalogue())
         lines = screen(presentation_summary(self.summary), 0, 80, 60)

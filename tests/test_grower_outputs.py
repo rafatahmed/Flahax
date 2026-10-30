@@ -44,7 +44,7 @@ from flahax.tank_grouping import (
 )
 from tests.catalogue_history import historical_catalogue
 
-# The pre-owner products and formulas (Chilli (maximumyield), Potassium Chloride, ...).
+# The 33c5df2 catalogue products and formulas (Chilli (maximumyield), Potassium Chloride, ...).
 with historical_catalogue():
     LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
@@ -415,7 +415,7 @@ class IncidentalAssessmentTests(unittest.TestCase):
     def row(recommendation, symbol='N_NH4'):
         return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_first_fit_and_refit_rate_ammonium_alike(self):
         self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
@@ -480,7 +480,7 @@ class IncidentalAssessmentTests(unittest.TestCase):
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
         self.enterContext(historical_catalogue())
         limits = {'Na': 50, 'N_NH4': 14}
@@ -626,7 +626,7 @@ class BatchCommandTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn('Tomato Stage.1', err)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_measured_water_is_closed_and_used_consistently(self):
         self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:

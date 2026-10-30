@@ -35,7 +35,7 @@ def configuration(pool, product, **changes):
 
 
 class JointWorkflowTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_explicit_joint_rebuilds_actual_recipe_and_zero_reagent(self):
         self.enterContext(historical_catalogue())
         pool = nutrient_salts(LIBRARY['salts'])
@@ -86,7 +86,7 @@ class JointWorkflowTests(unittest.TestCase):
             ph_adjustment=dict(products=[product], maximum_reagent_volume_litres=5, joint=config),
         ).stages['ph_adjustment']
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_positive_reagent_is_counted_once_and_quantity_units_agree(self):
         self.enterContext(historical_catalogue())
         stage = self.positive_case()
@@ -105,7 +105,7 @@ class JointWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(c.recommendation['limitViolations'], [])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_missing_solvent_and_mismatched_basis_do_not_select_a_candidate(self):
         self.enterContext(historical_catalogue())
         for change, expected in [
@@ -118,7 +118,7 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertIsNone(stage.value.selected)
                 self.assertEqual(stage.value.candidates[0].error_code, expected)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_exhaustion_and_hard_limits_cannot_be_accepted(self):
         self.enterContext(historical_catalogue())
         for changes in [
@@ -131,7 +131,7 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertEqual(stage.status, 'blocked')
                 self.assertIsNone(stage.value.selected)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_proportional_volume_and_solvent_scale_actual_reagent_mass(self):
         self.enterContext(historical_catalogue())
         full = self.positive_case().value.selected
@@ -144,7 +144,7 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(half.dose_molal, full.dose_molal, places=12)
         self.assertAlmostEqual(half.target.ph, full.target.ph, places=8)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_invalid_controls_and_starts_are_reported_without_fallback(self):
         self.enterContext(historical_catalogue())
         for change in [
@@ -166,7 +166,7 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertEqual(stage.status, 'blocked')
                 self.assertFalse(stage.value.candidates[0].joint_result['accepted'])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_per_reagent_controls_and_preferred_selection(self):
         self.enterContext(historical_catalogue())
         pool = [next(p for p in LIBRARY['salts'] if p['formula'] == 'KNO3')]
@@ -199,7 +199,7 @@ class JointWorkflowTests(unittest.TestCase):
             self.assertIsNotNone(candidate.target)
             self.assertAlmostEqual(candidate.target.ph, 5.8, delta=0.001)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_fresh_charge_rejects_a_false_solver_certificate(self):
         self.enterContext(historical_catalogue())
         fake = dict(status='numerical_candidate', fertilizerDoses={}, reagentDose=0)
@@ -208,7 +208,7 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertIsNone(stage.value.selected)
         self.assertEqual(stage.value.candidates[0].error_code, 'joint_verification_failed')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_fresh_public_ph_rejects_false_numerical_success(self):
         self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph

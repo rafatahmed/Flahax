@@ -74,8 +74,8 @@ Selection follows the table, per nutrient. Other flags:
   band end is widened to include it (grade N-NO3 13.5–13.9 % with a lot at
   14.3 % gives the band 13.5–14.3 %).
 - `blend_analysis_unreconciled`: see disclosed blends below.
-- `assumed_composition`: a project-assumed blend, such as the pre-owner catalogue's
-  CH - micro. The packaged Micro Combi Mix 1 and 2 are owner-declared blends and do
+- `assumed_composition`: a project-assumed blend, such as the 33c5df2 catalogue's
+  CH - micro. The packaged Micro Combi Mix 1 and 2 are declared blends and do
   not carry it.
 
 ## Nitrogen forms in a formula
@@ -187,7 +187,7 @@ ingredients and counterions.
 - **D2:** Chelates are their defined sodium salts (Fe-EDTA 1, Mn/Zn/Cu-EDTA 2,
   Fe-DTPA 2, Fe-o,o-EDDHA 1 sodium per formula unit). Sodium enters chemistry
   totals only; it is not added to formulation `elements`, because Na is a
-  restricted ion there. The owner-declared Micro Combi Mix 1 and 2 chelates carry
+  restricted ion there. The declared Micro Combi Mix 1 and 2 chelates carry
   the same sodium.
 - **D3:** Reference grades may name commercial products with attribution and a
   document reference.

@@ -9,8 +9,8 @@ import unittest
 from flahax import load_library, recommend
 from tests.catalogue_history import historical_catalogue
 
-# Formulas and products of the pre-owner catalogue: Chilli (maximumyield) is not in the owner
-# catalogue.
+# Formulas and products of the 33c5df2 catalogue: Chilli (maximumyield) is not in the packaged
+# catalogue (Flaha Agri Tech Analysis Ver 0.0).
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]

@@ -47,7 +47,7 @@ class KeyDecodingTests(unittest.TestCase):
             decode_windows('\x03')
 
     def test_windows_arrows_without_kbhit(self):
-        # Owner's trial in Windows Terminal (2026-10-23): after the prefix, kbhit() is False
+        # Field trial in Windows Terminal (2026-10-23): after the prefix, kbhit() is False
         # although the second code follows; reading it only when kbhit() was True typed letters.
         for first, second, key in (
             ('\xe0', 'H', 'UP'),

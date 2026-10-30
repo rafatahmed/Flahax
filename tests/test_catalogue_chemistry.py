@@ -12,7 +12,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class CatalogueChemistryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_every_shipped_fertilizer_has_one_explicit_chemistry_record(self):
         self.enterContext(historical_catalogue())
         assert_catalogue_coverage(load_library()["salts"])

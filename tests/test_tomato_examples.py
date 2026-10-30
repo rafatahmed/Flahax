@@ -27,7 +27,7 @@ def compatible(tank):
 
 
 class SimpleTomatoTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -51,7 +51,7 @@ class SimpleTomatoTests(unittest.TestCase):
 
 
 class AdvancedTomatoTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -117,7 +117,7 @@ class AdvancedTomatoTests(unittest.TestCase):
 
 
 class TomatoReportTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_report_and_sheets_are_complete_and_offline(self):
         self.enterContext(historical_catalogue())
         files = build()

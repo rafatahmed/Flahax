@@ -21,7 +21,7 @@ from flahax.delivery_contracts import DeliveryError
 from flahax.ph_adjustment import REAGENTS
 from tests.catalogue_history import historical_catalogue
 
-# Pre-owner products and formulas (Chilli (maximumyield) is not in the owner catalogue).
+# 33c5df2 catalogue products and formulas (Chilli (maximumyield) is not in the packaged catalogue).
 with historical_catalogue():
     LIBRARY = load_library()
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
@@ -104,7 +104,7 @@ class ReagentDoseTests(unittest.TestCase):
 class CatalogueTests(unittest.TestCase):
     def test_catalogue_offers_five_sourced_reagents(self):
         records = {r['chemicalFormula']: r for r in catalogue_ph_reagents()}
-        # The owner catalogue adds phosphoric and nitric acid as pH reagents.
+        # The packaged catalogue adds phosphoric and nitric acid as pH reagents.
         self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3', 'H3PO4', 'HNO3'})
         self.assertEqual(
             (records['KOH']['massFraction'], records['KOH']['densityKgPerL']), (0.45, 1.456)
@@ -121,10 +121,10 @@ class CatalogueTests(unittest.TestCase):
             }
         )
 
-    def test_recommend_never_selects_a_ph_reagent_for_an_owner_formula(self):
-        # The owner catalogue (Flaha Agri Tech Analysis Ver 0.0), loaded at test time.
-        owner = load_library()
-        reagents = {s['name'] for s in owner['salts'] if s.get('role') == 'ph_reagent'}
+    def test_recommend_never_selects_a_ph_reagent_for_a_packaged_formula(self):
+        # The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0), loaded at test time.
+        library = load_library()
+        reagents = {s['name'] for s in library['salts'] if s.get('role') == 'ph_reagent'}
         self.assertEqual(
             reagents,
             {
@@ -135,10 +135,10 @@ class CatalogueTests(unittest.TestCase):
                 'Potassium Carbonate',
             },
         )
-        self.assertEqual(len(owner['formulas']), 13)
-        for formula in owner['formulas']:
+        self.assertEqual(len(library['formulas']), 13)
+        for formula in library['formulas']:
             with self.subTest(formula=formula['name']):
-                result = recommend(owner['salts'], formula['targets'], {}, allow_carbonates=True)
+                result = recommend(library['salts'], formula['targets'], {}, allow_carbonates=True)
                 self.assertTrue(result['salts'])
                 self.assertFalse({s['name'] for s in result['salts']} & reagents)
 

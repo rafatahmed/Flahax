@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A material is what it puts in the water (interactive mix Task 11, owner decision 2026-10-22).
+"""A material is what it puts in the water (interactive mix Task 11, decision 2026-10-22).
 
 Compounds are defined by their formula or ions, blends by their analysis; the catalogue's
 records are pre-filled materials. Pinned values are the pre-Task-11 conversion of every
@@ -152,7 +152,7 @@ TODAY = {
 }
 
 
-# The pre-owner catalogue: every product here has an identity record and a family above.
+# The 33c5df2 catalogue: every product here has an identity record and a family above.
 with historical_catalogue():
     LIBRARY = load_library()
 CATALOGUE = {s['name']: s for s in LIBRARY['salts']}
@@ -278,9 +278,10 @@ class MaterialChemistryTests(unittest.TestCase):
             material_chemistry({'name': 'Bad', 'formula': 'HNO3', 'elements': {'K': 5}})
         self.assertEqual(caught.exception.code, 'identity_inconsistent')
 
-    def test_owner_micro_combi_blends_use_their_declared_composition(self):
-        # N2 (owner, 2026-10-30): Fe, Mn, Zn, Cu as EDTA chelates with the catalogue's sodium
-        # counter-ions, Mo as sodium molybdate, B as boric acid; the label is the analysis.
+    def test_micro_combi_blends_use_their_declared_composition(self):
+        # N2 (declared composition, 2026-10-30): Fe, Mn, Zn, Cu as EDTA chelates with the
+        # catalogue's sodium counter-ions, Mo as sodium molybdate, B as boric acid; the label
+        # is the analysis.
         from flahax.materials import load_identities, resolve_material
 
         mass = {'Fe': 55.845, 'Cu': 63.546, 'Mn': 54.938044, 'Zn': 65.38, 'Mo': 95.95, 'B': 10.81}
@@ -293,14 +294,14 @@ class MaterialChemistryTests(unittest.TestCase):
             'B': 'B(OH)3',
         }
         sodium = {'Fe': 1, 'Mn': 2, 'Zn': 2, 'Cu': 2, 'Mo': 2, 'B': 0}
-        owner = {s['name']: s for s in load_library()['salts']}
+        packaged = {s['name']: s for s in load_library()['salts']}
         for name in ('Micro Combi Mix 1', 'Micro Combi Mix 2'):
             with self.subTest(product=name):
-                salt = owner[name]
+                salt = packaged[name]
                 identity = load_identities()[salt['identityId']]
                 self.assertEqual(identity['status'], 'declared_blend')
                 self.assertIn(
-                    'Composition declared by the owner (2026-10-29/30); Na counter-ions follow '
+                    'Declared composition (2026-10-29/30); Na counter-ions follow '
                     "the catalogue's chelate identities.",
                     identity['notes'],
                 )
@@ -336,7 +337,7 @@ class MaterialChemistryTests(unittest.TestCase):
                     ),
                 }[name]
                 self.assertEqual((chemistry.family, chemistry.components), expected)
-                self.assertTrue(chemistry.source_profile.startswith('owner-declared composition'))
+                self.assertTrue(chemistry.source_profile.startswith('declared composition'))
                 material = resolve_material(name)
                 self.assertEqual(material.composition, 'disclosed')
                 self.assertNotIn('assumed_composition', material.flags)

@@ -10,7 +10,7 @@ from flahax import load_library, recommend
 from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
-# Pre-owner formulas (Rice, Generic Grow) and products (Calcium Chloride (Dihydrate)).
+# 33c5df2 catalogue formulas (Rice, Generic Grow) and products (Calcium Chloride (Dihydrate)).
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]

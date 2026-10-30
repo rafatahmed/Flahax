@@ -285,7 +285,7 @@ From the repository root, after the package is installed:
 python -m unittest discover -s tests -t .
 ```
 
-`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0, owner-supplied, not independent laboratory verification) has 29 products (24 fertilizers and 5 pH products), 3 waters, and 13 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
+`test_pepper.py` checks water subtraction, the edited pepper fit, and the forced double-phosphate miss. `test_library.py` checks that the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0, supplied by Flaha Agri Tech, not independent laboratory verification) has 29 products (24 fertilizers and 5 pH products), 3 waters, and 13 formulas, then calls `recommend` once per formula. `test_measured_water.py` checks measured-pH water balancing on a published Qatar well. Set `FLAHAX_REQUIRE_PHREEQC=1` to make the live PHREEQC replay fail rather than skip when the pinned executable is missing.
 
 ### Chemistry failure and compatibility contract
 

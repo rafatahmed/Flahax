@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""One-off data change for #75: sourced pH-up reagents in the catalogue (owner decisions
+"""One-off data change for #75: sourced pH-up reagents in the catalogue (decisions
 2026-10-22).
 
 Adds Potassium Hydroxide (45% solution) and Potassium Bicarbonate, links Potassium
@@ -48,8 +48,8 @@ def main():
             '209619', 'Potassium carbonate, ACS reagent >=99.0% (209619) product specification'
         ),
         role='ph_reagent',
-        notes='Pure K2CO3 theoretical analysis (replaces the unsourced 56.581 %, owner decision '
-        '2026-10-22, #75). '
+        notes='Pure K2CO3 theoretical analysis (replaces the unsourced 56.581 %, #75 decision '
+        '2026-10-22). '
         'pH-up reagent only; never a nutrient salt in formulation.',
     )
     if 'Potassium Hydroxide (45% solution)' not in names:

@@ -116,7 +116,7 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             'the empirical-fit domain is narrower than the speciation domain',
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_f09_grower_summary_preserves_ec_qualification(self):
         self.enterContext(historical_catalogue())
         from tests.test_grower_outputs import PRODUCTS, workflow

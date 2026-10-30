@@ -13,7 +13,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class ReportBoundaryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def setUp(self):
         self.enterContext(historical_catalogue())
         self.pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
@@ -42,7 +42,7 @@ class ReportBoundaryTests(unittest.TestCase):
             self.summary()
         self.assertEqual(caught.exception.code, 'missing_field')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_absent_ph_plan_preserves_review_or_block(self):
         self.enterContext(historical_catalogue())
         del self.flow.stages['ph_adjustment']
@@ -97,7 +97,7 @@ class ReportBoundaryTests(unittest.TestCase):
 
 
 class ReportCalculationFailureTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_ec_failure_keeps_a_partial_report_without_a_total_estimate(self):
         self.enterContext(historical_catalogue())
         from tests.test_ph_adjustment import RO

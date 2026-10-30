@@ -8,7 +8,7 @@ operates pumps, valves or other hardware.
 
 Results are calculations for planning, not dosing instructions. FlahaX has not been validated in
 the laboratory or in the field; a [physical validation protocol](../evidence/physical-validation-protocol.md)
-is in draft. Its owner's [computational assessment](../evidence/computational-review.md) is not an
+is in draft. Its author's [computational assessment](../evidence/computational-review.md) is not an
 independent review. Measure pH and EC after mixing, and keep the sheet with your measurements.
 
 ## Chemistry model boundary

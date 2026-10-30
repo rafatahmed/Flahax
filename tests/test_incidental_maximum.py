@@ -10,7 +10,7 @@ from flahax import load_library, recommend
 from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
-# The pre-owner products, which include Calcium Chloride (Dihydrate).
+# The 33c5df2 catalogue products, which include Calcium Chloride (Dihydrate).
 with historical_catalogue():
     LIBRARY = load_library()
 # Synthetic conflicting Ca/nitrate requirements; not a crop recommendation.

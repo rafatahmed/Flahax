@@ -49,7 +49,7 @@ class EntryTests(unittest.TestCase):
 
     def test_help_describes_every_command_with_examples_and_links(self):
         # Command Line Interface Guidelines (clig.dev): every command described, examples,
-        # where to read more and where to report a problem (owner request 2026-10-23).
+        # where to read more and where to report a problem (request 2026-10-23).
         _, out, _ = run('--help')
         for command in ('mix', 'batch', 'recommend', 'workflow', 'ec', 'size'):
             with self.subTest(command=command):

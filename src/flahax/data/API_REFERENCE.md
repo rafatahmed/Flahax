@@ -2118,7 +2118,7 @@ ChMicroProductDose(product_g_per_kg_water: 'float') -> None
 
 Declared CH-micro assay converted from g product per kg water.
 
-Product identity (declared by the project owner): Fe-EDTA, Mn-EDTA,
+Product identity (project-declared): Fe-EDTA, Mn-EDTA,
 Zn-EDTA, Cu-EDTA, borax, and sodium molybdate.  One EDTA ligand per
 chelated metal is an exact stoichiometric consequence of those names.
 

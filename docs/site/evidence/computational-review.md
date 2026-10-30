@@ -20,7 +20,7 @@ release records, not by this assessment.
 
 ## Scope
 
-The project owner asked for mathematical evidence with no laboratory work for
+The maintainer asked for mathematical evidence with no laboratory work for
 this release and named **Rafat Al Khashan** as assessor. This replaces the
 earlier gate requirement for independent scientific and bench or site sign-off,
 **for the planning package only**.
@@ -52,7 +52,7 @@ about stereoisomers are disclosed in the
 
 ## Assessment
 
-**Assessor:** Rafat Al Khashan, designated by the project owner.
+**Assessor:** Rafat Al Khashan, designated by the maintainer.
 
 **Result:** the automated evidence passes for the tested, bounded planning
 capabilities above, subject to the regression and distribution checks in the

@@ -17,7 +17,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class ProductConversionTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_every_catalogue_product_has_explicit_non_name_equilibrium_profile(self):
         self.enterContext(historical_catalogue())
         for product in load_library()["salts"]:
@@ -35,7 +35,7 @@ class ProductConversionTests(unittest.TestCase):
         )
         self.assertGreater(result.counterions["sodium"], 0.0)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chelate_sodium_counterions(self):
         # D2: sodium counterions per formula unit, in chemistry totals only.
         self.enterContext(historical_catalogue())
@@ -78,9 +78,9 @@ class ProductConversionTests(unittest.TestCase):
         self.assertAlmostEqual(totals["H3BO3"], 1.0 * 11.34 / 100 / 10.81, places=15)
         self.assertAlmostEqual(totals["Na+"], 1.0 * 12.06 / 100 / 22.989769, places=15)
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_profile_mismatch_fails_before_any_solver_can_use_label(self):
-        # On owner data the profile lookup stops at the Potassium Nitrate label gate,
+        # On the packaged catalogue the profile lookup stops at the Potassium Nitrate label gate,
         # so the mismatch itself would never be reached.
         self.enterContext(historical_catalogue())
         product = next(p for p in load_library()["salts"] if p["name"] == "Urea")

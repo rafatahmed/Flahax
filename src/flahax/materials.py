@@ -7,7 +7,7 @@
 An identity is what a material *is* (formula, hydration, molecular weight,
 CAS, dissolved ion forms, theoretical analysis), with the reference material
 that evidences it. It is not a supplier grade or a batch lot. Evidence:
-docs/audit/2026-10-18-materials-identity; owner decisions D1 (Mg nitrate
+docs/audit/2026-10-18-materials-identity; decisions D1 (Mg nitrate
 hexahydrate) and D2 (chelates as their sodium salts).
 
 Records are shipped in data/material_identities.json, pinned by SHA-256.
@@ -39,7 +39,7 @@ IDENTITY_STATUSES = frozenset(
         'commercial_double_salt',
         'aqueous_solution',
         'assumed_blend',
-        # Owner-declared blend composition, not independently verified (2026-10-30).
+        # Declared blend composition, not independently verified (2026-10-30).
         'declared_blend',
     }
 )
@@ -181,7 +181,7 @@ N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
 # Printed labels are rounded and commercial grades are not the pure salt (Yara Calcinit: -0.56 %);
 # a one-point
-# typing error moves the balance by about 2 % (#93, owner decision 2026-10-23).
+# typing error moves the balance by about 2 % (#93 decision 2026-10-23).
 _CHARGE_RESIDUAL_LIMIT_PERCENT = 1.0
 # Theory is the pure compound, not the commercial solution or the chelate product as sold,
 # so a grade range of these identities is not compared with it (the charge test still applies).

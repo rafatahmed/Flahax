@@ -87,7 +87,7 @@ class MixTests(unittest.TestCase):
         )
         return code, lines, target
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_first_run_tomato_ro_fill_mode(self):
         self.enterContext(historical_catalogue())
         code, lines, target = self.full()
@@ -203,8 +203,8 @@ class MixTests(unittest.TestCase):
         self.assertIn('Ca', warning)
 
     def test_formula_step_lists_every_formula_on_enter(self):
-        # The owner's first session: fertilizer names typed at the formula step, then Enter, which
-        # used to loop.
+        # The first field-test session: fertilizer names typed at the formula step, then Enter,
+        # which used to loop.
         from flahax import load_library
 
         names = [f['name'] for f in load_library()['formulas']]
@@ -224,7 +224,7 @@ class MixTests(unittest.TestCase):
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_do_not_mix_always_says_why(self):
         # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
         # empty.
@@ -299,7 +299,7 @@ class MixTests(unittest.TestCase):
         self.assertAlmostEqual(saved['alkalinity_meq_per_litre'], 100 / 50.0435)
         self.assertNotIn('HCO3', saved['mg_per_litre'])
 
-    def test_owners_second_session_by_name_and_readable_grams(self):
+    def test_second_field_session_by_name_and_readable_grams(self):
         # Field test 2026-10-23: 100 L tanks with a 10 L acid container, saved as 'tomato stage 1'.
         spec = ['100', '100', '10', '', '', '1']
         stage1 = ['1', 'tomato stage.1']
@@ -413,7 +413,7 @@ class MixTests(unittest.TestCase):
             [(r['symbol'], r['maximumPpm']) for r in summary['limits']], [('Na', 69.0)]
         )
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_batch_reads_saved_items(self):
         self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
@@ -439,7 +439,7 @@ class MixTests(unittest.TestCase):
             )
         self.assertIn(code, (0, 3), out.getvalue())
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_blocked_result_says_do_not_mix_with_the_reason(self):
         # Source-water Na cannot be removed by selecting sodium-free products.
         self.enterContext(historical_catalogue())
@@ -526,7 +526,7 @@ class MixTests(unittest.TestCase):
         self.assertEqual(script.prompts[-3], script.prompts[-2])  # Ca asked again after 'x'
         self.assertTrue(script.prompts[-1].startswith('Mg, mg/L'), script.prompts[-1])
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_added_products_keep_notes_and_run_through_batch(self):
         self.enterContext(historical_catalogue())
         single = [
@@ -618,8 +618,9 @@ class MixTests(unittest.TestCase):
         )
 
 
-def owner_transcript(*, with_summary=False):
-    """Every prompt and line of the owner's session (line mode), temp folder and version hidden."""
+def field_test_transcript(*, with_summary=False):
+    """Every prompt and line of the 2026-10-23 field-test session (line mode), temp folder and
+    version hidden."""
     with tempfile.TemporaryDirectory() as tmp:
         answers, lines = list(ANSWERS), []
 
@@ -649,7 +650,7 @@ class LineModeTranscriptTests(unittest.TestCase):
         expected = json.loads(
             (FIXTURES / 'current-interview-prefix.json').read_text(encoding='utf-8')
         )
-        transcript, summary = owner_transcript(with_summary=True)
+        transcript, summary = field_test_transcript(with_summary=True)
         actual = transcript.splitlines()
         stop = next(i for i, line in enumerate(expected) if line.startswith('Saved the answers'))
         self.assertEqual(actual[: stop + 1], expected[: stop + 1])

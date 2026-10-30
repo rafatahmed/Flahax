@@ -14,7 +14,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -201,7 +201,7 @@ class PublicCalculationBoundaryTests(unittest.TestCase):
         for key in (' ', 1):
             self.assert_code('invalid_value', estimate_manufacturer_ec, {key: 1})
 
-    # Owner catalogue: re-enable in PR 4 (G5)
+    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_catalogue_chemistry_identity_and_inventory_boundaries(self):
         self.enterContext(historical_catalogue())
         from flahax import load_library

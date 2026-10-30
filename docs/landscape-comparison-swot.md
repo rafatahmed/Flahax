@@ -1,7 +1,7 @@
 # FlahaX landscape comparison and SWOT
 
 Prepared 2026-10-17 as input for a FlahaX introduction article. Status:
-**draft for owner review**. This is a desk review of public material, not a
+**draft for maintainer review**. This is a desk review of public material, not a
 hands-on benchmark. Where a tool's behaviour could not be confirmed from its
 public documentation it is marked *not documented*, which is not evidence
 that the feature is absent.
@@ -120,7 +120,7 @@ Candidate claim wording, strongest defensible first:
 - **No grower-friendly interface yet.** CLI and reports only until FlahaFAST
   integration happens.
 - **Single maintainer and self-assessment.** The G6 assessment is by the
-  owner, not an independent reviewer.
+  maintainer, not an independent reviewer.
 - **No closed-system (drain recycling) readjustment.**
 
 ### Opportunities
@@ -170,7 +170,7 @@ accuracy, and no concentrated-stock model is validated
 reach the accuracy the scope actually needs, building on the open decisions
 D1–D3 and D7 in the [stock conductivity service
 design](stock-conductivity-service-design.md). Accuracy targets below are
-**proposals for the owner's decision D1**, not agreed criteria.
+**proposals for decision D1**, not agreed criteria.
 
 ### What "optimum" means here
 
