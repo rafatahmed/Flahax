@@ -121,10 +121,23 @@ See [water-to-delivery](water-to-delivery.md).
 
 ## Tolerance, formula balance and unmet targets
 
-`feasible` means every positive target is within 1% of the formula value (an
-absolute 0.01 mg/L floor applies in the benchmark evaluator). The 1% is a FlahaX
-assumption: no published standard gives a per-ion tolerance for preparing a feed
-solution. It is a numerical recipe-fit criterion, not a crop-response threshold.
+A target is met only within the numerical tolerance (decision G25), in
+`flahax.requirement_fit`: `met(target, final)` is true when `final` is within
+`RELATIVE_TOLERANCE` (1e-5) of a positive target, relative, or within
+`ZERO_TARGET_TOLERANCE_MG_PER_L` (1e-6 mg/L) of a declared zero; `PH_TOLERANCE` is
+1e-4 pH units. These are the precision of the calculation, validated on 2026-10-24,
+not agronomic ranges; they replace the former ±1 % band. (The benchmark evaluator
+keeps its own published max(0.01 mg/L, 1 %) scoring rule.)
+
+`feasible` means every declared requirement is met and no declared maximum is
+exceeded. A declared zero is also a hard zero limit: any positive amount is reported
+in `limitViolations` (see [Zero requirements and hard maxima](#zero-requirements-and-hard-maxima)). A result that misses a target is still a recipe: every deviation is
+reported in `rows` and `unmetTargets`. In `plan_fertilizer_workflow` the formulation
+stage blocks (`infeasible_recipe`) only on a broken declared maximum; a missed target
+makes it `requires_review` with the message "targets missed: N_NO3 -2.35 %, …"
+(the difference to three significant figures), and the batch, stock, titration and
+acid stages continue. `FinalSolutionRecipe.feasible` is likewise true unless the
+recipe breaks a declared maximum.
 
 `targetIonBalance` is a conventional charge check on requested nutrient entries,
 not the whole solution. `recipeIonBalance` applies the same convention to all
@@ -141,8 +154,8 @@ ligands; even supported components do not establish full water chemistry or the
 pH-dependent species charge. A balanced nutrient subtotal is not proof of a
 chemically complete solution.
 
-Every positive target missed by more than 1%, and every violated zero target,
-appears in `unmetTargets`. Relative error remains null for zero targets.
+Every positive target not met within the numerical tolerance, and every violated
+zero target, appears in `unmetTargets`. Relative error remains null for zero targets.
 
 | Reason | Meaning |
 |---|---|
@@ -293,8 +306,8 @@ reported concentration and maximum directly, without an absolute slack.
 are not feasible. Water already at a maximum permits no further addition of
 that nutrient; water above it cannot be corrected by adding fertilizer. Review
 `limitViolations` as well as `feasible`. All-zero targets can be satisfied by an
-empty recipe when water complies. The positive-target feasibility tolerance and trace-dose reporting remain
-separately tracked solver work.
+empty recipe when water complies. Trace-dose reporting remains separately tracked
+solver work.
 
 ## Automatic search within available products
 

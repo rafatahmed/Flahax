@@ -89,8 +89,8 @@ fitting. Do not zip its `grams` with the original catalogue. `feasible` reports
 positive-target fit; it is not stock or delivery approval. Avoid additional
 rounding before constraint checks.
 
-`recommend` also returns `unmetTargets` (each target missed by more than 1%,
-with a reason), `targetIonBalance` (the formula's own cation and anion meq/L),
+`recommend` also returns `unmetTargets` (each target not met within the
+numerical tolerance, 1e-5 relative or 1e-6 mg/L for a declared zero, with a reason), `targetIonBalance` (the formula's own cation and anion meq/L),
 `ammoniumLimit`, `limitViolations` (incidental ions above a stated maximum) and,
 for every selected product, `provenance` (record, chemical identity, analysis
 basis and source documents). Section 11 shows how to read them.
@@ -338,7 +338,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 
 | Code | Meaning | What to do |
 |---|---|---|
-| `infeasible_recipe` | A stage needs a recipe that meets its targets, and this one misses them or breaks a declared maximum. | Read the formulation reason; adjust targets, products or limits. |
+| `infeasible_recipe` | The recipe breaks a declared maximum, so no later stage can use it. A missed target is not this error: it is a reported deviation and the stage asks for review. | Read the formulation reason; adjust products, water or limits. |
 | `nutrient_limit_exceeded` | A plan exceeds a maximum you declared. | Lower the source of that nutrient or the water share; the limit is never relaxed for you. |
 | `incidental_review_required` | Nutrients the formula did not ask for have no declared maximum, so the plan cannot be validated. | Declare maxima for them, or accept the review. |
 | `unsupported_reagent` | The pH reagent is not one FlahaX models. | Use HNO3, H3PO4, H2SO4 or C6H8O7 (acids) or the packaged bases. |
@@ -529,8 +529,10 @@ allowance and `ammoniumLimit` is `None`. Other reasons are `no_source` (no
 product supplies the element), `incidental_tradeoff` (reachable, but the
 penalty on an unrequested ion chose otherwise) and `limited_by_ceiling` (a
 declared maximum binds, and `bindingLimits` names it); `reachableWithChloride`
-says whether chloride products would reach a conflicting target. Misses within
-1% are not listed.
+says whether chloride products would reach a conflicting target. A target is met
+only within the numerical tolerance (1e-5 relative, `flahax.requirement_fit.met`),
+so small misses such as Zn +0.017 % and Cu +0.0027 % here are listed too; the
+former 1 % band is gone.
 
 A binding ceiling is held exactly on its limit, less one part per million.
 The packaged catalogue has no chloride product. A chloride product you add is
