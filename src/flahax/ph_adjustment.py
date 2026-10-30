@@ -32,6 +32,7 @@ from .engine import (
     _report,
     _diagnose,
     _charge_report,
+    total_n_report,
 )
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
 from .root_finding import shrink_bracket
@@ -484,8 +485,13 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
 
 
 def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
-    """Conserve product doses and rebuild assessments for a convex recipe blend."""
-    maxima = maxima or {}
+    """Conserve product doses and rebuild assessments for a convex recipe blend.
+
+    Incidental nutrients are assessed against the same limits as the endpoint recipes,
+    including the ammonium allowance they report (G23), and total N is recomputed from the
+    rebuilt rows (water, products and the reagent's supply).
+    """
+    maxima = assessed_limits(maxima, endpoints[0])
     by_id = {p['id']: p for p in pool}
     entries = {s['id']: s for r in endpoints for s in r['salts']}
     doses = {}
@@ -507,6 +513,7 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
         w for w in result['warnings'] if not w.startswith('Fit includes formula counterion')
     ]
     result.update(_report(rows, grams, warnings, maxima))
+    result['totalN'] = total_n_report(rows, targets)
     name_sources(result, salts, pool, supply)
     result['unmetTargets'] = _diagnose(
         pool,

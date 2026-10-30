@@ -63,7 +63,7 @@ load_library() -> dict
 gap_for(targets, water) -> dict
 recommend(salts, targets, water=None, *, allow_ions=None, allow_carbonates=False, ridge=0.0,
           maximum_concentrations=None, max_ammonium_fraction=0.1) -> dict
-solve_weights(salts, targets, water=None, ridge=0.0) -> dict
+solve_weights(salts, targets, water=None, ridge=0.0, *, max_ammonium_fraction=0.1) -> dict
 ```
 
 `solve_weights` fits a set of salts you already chose and raises `InputError` when an assay disagrees with a formula that cannot contain that element. `recommend` applies the default exclusions, then fits positive targets by squared relative error. Both APIs retain `ridge` for compatibility but require zero; nonzero or invalid values raise `InputError`. Remove an old explicit `ridge=0.02` argument to migrate. Dose magnitude and untargeted nutrient concentrations do not enter the primary objective. Equivalent best-fit allocations need not use identical products.
@@ -179,7 +179,8 @@ min(`max_ammonium_fraction` × total target N, 1.5 mmol/L NH4 = 21.01 mg/L N).
 The default fraction 0.10 follows Dutch soilless practice (De Kreij, Voogt et
 al.); `result["ammoniumLimit"]` records the limit, fraction, cap and basis, and
 `None` adds no ammonium maximum. A positive `N_NH4` target or a
-`maximum_concentrations` entry takes precedence.
+`maximum_concentrations` entry takes precedence. `solve_weights` applies the
+same allowance and reports `ammoniumLimit` and `totalN` the same way.
 Explicit zeros and targeted ceilings are enforced independently of the objective.
 `score` retains all nutrient rows but sums only positive-target squared relative errors.
 Binding-limit diagnostics use the same numerical aim and convergence tolerance as

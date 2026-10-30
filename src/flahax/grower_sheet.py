@@ -22,6 +22,7 @@ from .grower_report import (
     grams,  # noqa: F401
     litres,
     millilitres,
+    nitrogen_paragraphs,
     number,
     percentage,
     text,
@@ -228,6 +229,7 @@ def _agronomist_section(summary):
         f'<tbody>{body}</tbody></table></div><p class="small">Required = target - water; '
         f'achieved = fertilizers '
         '+ pH reagent; final = water + achieved; diff = final - target (beyond 1 % in red).</p>'
+        + nitrogen_paragraphs(summary)
     )
     limits = ''.join(
         f'<li>{text(r[0])}: {r[2]} of {r[1]} mg/L ({text(r[4])})</li>'

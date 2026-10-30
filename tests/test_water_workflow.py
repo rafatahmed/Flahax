@@ -125,10 +125,9 @@ class WaterWorkflowTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
         # G24: an explicit N_NH4 0 is no ammonium requirement, the same as an omitted one;
-        # calcium nitrate (1.1 % NH4-N) stays eligible. recommend holds incidental NH4-N within
-        # the G23 allowance (10 % of total N); solve_weights applies no allowance.
+        # calcium nitrate (1.1 % NH4-N) stays eligible. recommend and solve_weights hold
+        # incidental NH4-N within the same G23 allowance (10 % of total N).
         nitrate = 84 * 14.4 / 19
-        allowance = {recommend: 0.1 * nitrate, solve_weights: None}
         for function in (recommend, solve_weights):
             result = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate, 'N_NH4': 0}, {})
             unspecified = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate}, {})
@@ -142,14 +141,9 @@ class WaterWorkflowTests(unittest.TestCase):
             (row,) = result['incidentalContributions']
             self.assertEqual(row['symbol'], 'N_NH4')
             self.assertAlmostEqual(row['ppm'], 84 / 190 * 11, places=12)
-            if allowance[function] is None:
-                self.assertIsNone(row['maximumPpm'])
-                self.assertEqual(row['assessment'], 'requires_review')
-                self.assertTrue(result['requiresReview'])
-            else:
-                self.assertAlmostEqual(row['maximumPpm'], allowance[function], places=12)
-                self.assertEqual(row['assessment'], 'within_limit')
-                self.assertFalse(result['requiresReview'])
+            self.assertAlmostEqual(row['maximumPpm'], 0.1 * nitrate, places=12)
+            self.assertEqual(row['assessment'], 'within_limit')
+            self.assertFalse(result['requiresReview'])
         result = recommend([products()[5]], {'K': 10, 'N_NH4': 0}, {})
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})
