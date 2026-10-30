@@ -12,8 +12,10 @@ from examples.common import serializable
 from examples.tomato_report import build
 from flahax import load_library
 from flahax.tank_grouping import _class_conflict, product_classes
+from tests.catalogue_history import historical_catalogue
 
-PRODUCTS = {p['name']: p for p in load_library()['salts']}
+with historical_catalogue():
+    PRODUCTS = {p['name']: p for p in load_library()['salts']}
 
 
 def compatible(tank):
@@ -24,8 +26,12 @@ def compatible(tank):
 
 
 class SimpleTomatoTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
+    # Owner catalogue: re-enable in PR 3 (G24)
+    # Owner catalogue: re-enable in PR 3 (G25)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.r = serializable(tomato_simple.run())
 
     def test_recipe_meets_every_target_and_scales_to_the_batch(self):
@@ -46,8 +52,11 @@ class SimpleTomatoTests(unittest.TestCase):
 
 
 class AdvancedTomatoTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
+    # Owner catalogue: re-enable in PR 3 (G24)
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.r = serializable(tomato_advanced.run())
 
     def test_blend_is_the_largest_share_within_the_sodium_and_chloride_limits(self):
@@ -110,7 +119,9 @@ class AdvancedTomatoTests(unittest.TestCase):
 
 
 class TomatoReportTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_report_and_sheets_are_complete_and_offline(self):
+        self.enterContext(historical_catalogue())
         files = build()
         self.assertEqual(
             set(files),

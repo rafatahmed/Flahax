@@ -42,8 +42,8 @@ Used by `flahax batch --products FILE` and saved by `flahax mix` under `stores/`
 product records, in the same form as the packaged catalogue.
 
 ```json
-[{"id": "cmbpfudkh00n5q8z9rvo5siqe", "name": "Ammonium Dibasic Phosphate",
-  "formula": "(NH4)2HPO4", "elements": {"N_NH4": 21.217, "P": 23.451}}]
+[{"id": "cmbpfudkn00naq8z9kd4qsr60", "name": "Ammonium Monobasic Phosphate",
+  "formula": "(NH4)H2PO4", "elements": {"N_NH4": 12, "P": 27}}]
 ```
 
 `elements` is % w/w of each nutrient in the product as sold. A product can also be defined by its

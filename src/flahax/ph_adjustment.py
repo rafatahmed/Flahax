@@ -715,10 +715,11 @@ def _couple(
 
 
 def catalogue_ph_reagents():
-    """Reagent records for the catalogue's sourced pH-up products (#75), ready for plan_coupled_ph.
+    """Reagent records for the catalogue's sourced pH products (#75), ready for plan_coupled_ph.
 
-    Acids are not in the catalogue as reagent grades: supply your own nitric or
-    phosphoric acid record (assay and density from the supplier certificate).
+    The packaged catalogue lists potassium hydroxide, bicarbonate and carbonate to raise
+    the pH and phosphoric and nitric acid to lower it. A record you supply from your own
+    supplier certificate (assay and density) is evaluated beside them.
     """
     records = []
     for salt in load_library()['salts']:

@@ -36,6 +36,10 @@ each release, with numbers, sources and decisions, are in
   equipment alternatives under unchanged targets and limits. Retain candidate
   evidence, remaining requirements and honest conditional/budget outcomes (#178).
 
+### Changed
+
+- The packaged catalogue is the owner's Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
+
 ### Fixed
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

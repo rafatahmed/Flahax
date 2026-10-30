@@ -73,7 +73,7 @@ The merger removes only the terminal END from a temporary copy, appends `databas
 - Nitric dose: 3% + 2e-6 mol/kgw against both independent target methods. Expected titration is 0.0006712882238301735 and Fix_H+ is 0.0006712943408644 mol/kgw.
 - Internal component conservation: 1e-9 relative + 1e-15 mol/kgw; phase complementarity SI <= 1e-7; present-phase SI = 0 within 1e-7; finite iteration bounds and explicit domain/nonconvergence errors.
 
-`tests/test_product_phreeqc.py` verifies hashes, every product conversion path, full species/activity/SI comparisons, acid equivalence, phase allocation, conservation and live replay. `tests/test_chemistry_acceptance.py` independently checks all 32 products, ligand mass action/order independence, frozen product boundaries, zero/dilute cases, Davies/temperature limits and nitrate conservation. `tests/test_preserved_chemistry_evidence.py` protects successes and diagnostic reproducers.
+`tests/test_product_phreeqc.py` verifies hashes, every product conversion path, full species/activity/SI comparisons, acid equivalence, phase allocation, conservation and live replay. `tests/test_chemistry_acceptance.py` independently checks every catalogue product, ligand mass action/order independence, frozen product boundaries, zero/dilute cases, Davies/temperature limits and nitrate conservation. `tests/test_preserved_chemistry_evidence.py` protects successes and diagnostic reproducers.
 
 ## Historical reduced fixture contract
 

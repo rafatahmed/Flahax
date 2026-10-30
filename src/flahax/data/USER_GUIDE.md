@@ -28,9 +28,9 @@ FlahaX selects fertilizer salts and their grams per litre for fixed nutrient tar
 
 Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
-The mixed model covers 32 catalogue products, 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
+The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (owner-supplied, not independent laboratory verification): 13 crop formulas and 29 products, 24 fertilizers and 5 pH products. The mixed model has 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
 
-Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. CH-micro includes those EDTA forms, borax and sodium molybdate. Do not substitute arbitrary product chemistry based on a similar name.
+Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. Micro Combi Mix 1 and 2 are owner-declared blends of those EDTA forms and sodium molybdate; Mix 2 also declares its boron as boric acid. Do not substitute arbitrary product chemistry based on a similar name.
 
 ## 2. Installation and first recipe
 
@@ -204,7 +204,7 @@ The example below is an explicitly synthetic electrolyte, not site-measured wate
 from flahax import load_library, final_solution_recipe, VolumeLitres, plan_equilibrium_delivery
 
 products = {p['name']: p for p in load_library()['salts']}
-doses = {'Potassium Carbonate': 0.01, 'Potassium Nitrate': 0.02}
+doses = {'Potassium Carbonate': 0.01, 'Potassium Sulfate': 0.02}
 recipe = final_solution_recipe({'feasible': True, 'salts': [
     {'id': products[name]['id'], 'name': name, 'gramsPerLitre': dose * 95 / 100}
     for name, dose in doses.items()
@@ -218,7 +218,7 @@ plan = plan_equilibrium_delivery(
              'revision': '1', 'recordedAt': '2026-09-27T00:00:00Z',
              'name': 'Nitric acid', 'kind': 'acid', 'chemicalFormula': 'HNO3',
              'elements': {'N_NO3': 13.8}, 'densityKgPerL': 1.4},
-    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 12.72},
+    maximum_reagent_volume=VolumeLitres(0.1), targets={'K': 13.9},
     maximum_nutrient_error_percent=1,
 )
 assert plan.post_mix_measurement_required
@@ -507,28 +507,30 @@ import math
 from flahax import load_library, recommend
 
 library = load_library()
-grow = next(f for f in library['formulas'] if f['name'] == 'Generic Grow (maximumyield)')
-result = recommend(library['salts'], grow['targets'], max_ammonium_fraction=0.10)
-assert result['targetIonBalance']['exceedsWarning']        # anions exceed cations by 17%
-assert math.isclose(result['ammoniumLimit']['mgPerL'], 16)  # 10% of the 160 mg/L target N
+pepper = next(f for f in library['formulas'] if f['name'] == 'Pepper (Howard Resh)')
+result = recommend(library['salts'], pepper['targets'], max_ammonium_fraction=0.10)
+assert result['targetIonBalance']['exceedsWarning']   # anions exceed cations by 39%
+assert result['ammoniumLimit'] is None  # the explicit 18 mg/L NH4 target takes precedence
 assert not result['limitViolations']
-assert {miss['reason'] for miss in result['unmetTargets']} == {'limited_by_ceiling'}
+assert {miss['reason'] for miss in result['unmetTargets']} == {'conflicting_targets'}
 for miss in result['unmetTargets']:
-    print(miss['symbol'], round(miss['deltaPct'], 2), miss['bindingLimits'])
+    print(miss['symbol'], round(miss['deltaPct'], 2), miss['conflictsWith'])
 print(result['salts'][0]['name'], result['salts'][0]['provenance']['identityId'])
 ```
 
-Generic Grow lists 17% more anion than cation charge, so no salt combination
-meets every target; its warning says so. Its N_NO3, K, Ca and S misses are all
-`limited_by_ceiling`: meeting them would need more ammonium than the explicit
-limit allows, and `bindingLimits` names it. Other reasons are `no_source` (no
+Pepper (Howard Resh) lists 39% more anion than cation charge, so no salt
+combination meets every target; its warning says so. Its misses are all
+`conflicting_targets`, and `conflictsWith` names the targets each one competes
+with. Because the formula states an NH4 target, `max_ammonium_fraction` sets no
+allowance and `ammoniumLimit` is `None`. Other reasons are `no_source` (no
 product supplies the element), `incidental_tradeoff` (reachable, but the
-penalty on an unrequested ion chose otherwise) and `conflicting_targets` (with
-`conflictsWith`, and `reachableWithChloride` when chloride products would
-reach it). Misses within 1% are not listed.
+penalty on an unrequested ion chose otherwise) and `limited_by_ceiling` (a
+declared maximum binds, and `bindingLimits` names it); `reachableWithChloride`
+says whether chloride products would reach a conflicting target. Misses within
+1% are not listed.
 
 A binding ceiling is held exactly on its limit, less one part per million.
-Potassium chloride and calcium chloride dihydrate are in the catalogue but are
+The packaged catalogue has no chloride product. A chloride product you add is
 never used unless the formula targets Cl or a Cl ceiling is given, for example
 `maximum_concentrations={'Cl': 106.35}` (3 mmol/L, a common raw-water limit for
 open systems). Each product's `provenance` names its catalogue record, chemical

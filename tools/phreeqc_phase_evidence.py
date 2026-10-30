@@ -53,11 +53,8 @@ CASES = {
         7.0,
         ['Vivianite', 'Siderite', 'Fe(OH)2'],
     ),
-    'mixed_product_phases': (
-        catalogue_dose_totals(PRODUCTS['mixed_products']),
-        6.0,
-        [r['name'] for r in chemistry()['phases']],
-    ),
+    # Product doses; converted inside generate() so the destination guard runs first.
+    'mixed_product_phases': (PRODUCTS['mixed_products'], 6.0, None),
 }
 
 
@@ -70,6 +67,9 @@ def generate(destination):
         merge(base, db)
         for name, (totals, ph, phases) in CASES.items():
             folder = destination / name
+            if name == 'mixed_product_phases':
+                totals = catalogue_dose_totals(totals)
+                phases = [r['name'] for r in chemistry()['phases']]
             totals = totals | {'Na+': 0.01, 'Cl-': 0.01}
             definitions = {r['name']: r for r in chemistry()['phases']}
             phases = [

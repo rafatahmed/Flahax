@@ -13,10 +13,13 @@ from flahax import (
     chemistry_for_product,
     load_library,
 )
+from tests.catalogue_history import historical_catalogue
 
 
 class ProductConversionTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_every_catalogue_product_has_explicit_non_name_equilibrium_profile(self):
+        self.enterContext(historical_catalogue())
         for product in load_library()["salts"]:
             converted = convert_catalogue_product_dose(product, 1.0)
             self.assertIs(converted.chemistry, chemistry_for_product(product["name"]))
@@ -24,6 +27,7 @@ class ProductConversionTests(unittest.TestCase):
             self.assertTrue(converted.totals or converted.counterions or converted.ligands)
 
     def test_ch_micro_declares_edta_and_borax_molybdate_sodium(self):
+        self.enterContext(historical_catalogue())
         product = next(p for p in load_library()["salts"] if p["name"] == "CH - micro")
         result = convert_catalogue_product_dose(product, 1.0)
         self.assertAlmostEqual(
@@ -31,8 +35,10 @@ class ProductConversionTests(unittest.TestCase):
         )
         self.assertGreater(result.counterions["sodium"], 0.0)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_chelate_sodium_counterions(self):
         # D2: sodium counterions per formula unit, in chemistry totals only.
+        self.enterContext(historical_catalogue())
         library = {p["name"]: p for p in load_library()["salts"]}
 
         def convert(name):
@@ -72,12 +78,19 @@ class ProductConversionTests(unittest.TestCase):
         self.assertAlmostEqual(totals["H3BO3"], 1.0 * 11.34 / 100 / 10.81, places=15)
         self.assertAlmostEqual(totals["Na+"], 1.0 * 12.06 / 100 / 22.989769, places=15)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_profile_mismatch_fails_before_any_solver_can_use_label(self):
+        # On owner data the profile lookup stops at the Potassium Nitrate label gate,
+        # so the mismatch itself would never be reached.
+        self.enterContext(historical_catalogue())
         product = next(p for p in load_library()["salts"] if p["name"] == "Urea")
-        with self.assertRaises(Exception):
-            convert_product_dose(product, chemistry_for_product("Iron EDTA"), 1.0)
+        profile = chemistry_for_product("Iron EDTA")
+        with self.assertRaises(Exception) as caught:
+            convert_product_dose(product, profile, 1.0)
+        self.assertEqual(caught.exception.code, "product_chemistry_mismatch")
 
     def test_actual_catalogue_chelate_doses_share_one_mixed_solver(self):
+        self.enterContext(historical_catalogue())
         result = solve_catalogue_product_doses(
             {"Iron DTPA": 0.01, "Iron EDDHA": 0.01, "CH - micro": 0.01}, 6.0
         )

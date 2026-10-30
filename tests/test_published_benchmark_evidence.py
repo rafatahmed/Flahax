@@ -14,6 +14,7 @@ import unittest
 import zipfile
 
 from tools.publish_benchmark_report import formula_names, miss_summary, scorecard_notice
+from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "docs/site/_static/benchmarks"
@@ -65,6 +66,7 @@ class PublishedEvidenceTests(unittest.TestCase):
         self.assertIn(f"| Completed timing workloads | {measured}/{len(timing)} ", page)
 
     def test_pages_name_misses_from_their_own_snapshot(self):
+        self.enterContext(historical_catalogue())
         names = formula_names(ROOT)
         for page_path in (ROOT / "docs/site/evidence").glob("benchmark-results*.md"):
             page = page_path.read_text(encoding="utf-8")

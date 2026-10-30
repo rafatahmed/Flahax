@@ -42,8 +42,11 @@ from flahax.tank_grouping import (
     _class_conflict,
     product_classes,
 )
+from tests.catalogue_history import historical_catalogue
 
-LIBRARY = load_library()
+# The pre-owner products and formulas (Chilli (maximumyield), Potassium Chloride, ...).
+with historical_catalogue():
+    LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
 BY_NAME = {p['name']: p for p in PRODUCTS}
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
@@ -153,7 +156,9 @@ class TankGroupingTests(unittest.TestCase):
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_tomato_reports_required_equipment_without_waivers(self):
+        self.enterContext(historical_catalogue())
         recipe = workflow('Tomato (Howard Resh)').recommendation
         grouping = group_tanks(recipe['salts'], PRODUCTS)
         self.assertEqual(len(grouping.tanks), 3)
@@ -296,6 +301,7 @@ class TankGroupingTests(unittest.TestCase):
 class ReportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.enterClassContext(historical_catalogue())
         cls.tomato = summarize_batch(
             workflow('Tomato (Howard Resh)'), PRODUCTS, title='Tomato', water_label='RO'
         )
@@ -406,7 +412,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
     def row(recommendation, symbol='N_NH4'):
         return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_first_fit_and_refit_rate_ammonium_alike(self):
+        self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
             PRODUCTS,
             FORMULAS[self.TOMATO],
@@ -441,7 +449,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
         self.assertIn('N_NH4', summary['stages']['formulation'].get('message') or '')
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_each_incidental_names_the_products_that_supply_it(self):
+        self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
             PRODUCTS,
             FORMULAS[self.TOMATO],
@@ -464,7 +474,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
+        self.enterContext(historical_catalogue())
         limits = {'Na': 50, 'N_NH4': 14}
         flow = plan_fertilizer_workflow(
             PRODUCTS,
@@ -514,7 +526,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
         )
         self.assertEqual(status, chosen.status)
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_declared_ammonium_maximum_wins_over_the_allowance(self):
+        self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
             PRODUCTS, FORMULAS[self.TOMATO], {}, 5.8, maximum_concentrations={'N_NH4': 5}
         )
@@ -536,7 +550,9 @@ class BatchCommandTests(unittest.TestCase):
             code = batch(list(argv))
         return code, out.getvalue(), err.getvalue()
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_writes_report_sheet_and_summary(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'sheet'
             code, out, _ = self.run_batch(
@@ -568,7 +584,9 @@ class BatchCommandTests(unittest.TestCase):
                     '--crop', 'tomato (howard', '--water', 'ro', '--output', str(target)
                 )
 
+    # Owner catalogue: re-enable in PR 3 (G24)
     def test_review_reason_quotes_the_weighed_recipe(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'sheet'
             self.run_batch(
@@ -604,7 +622,9 @@ class BatchCommandTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn('Tomato Stage.1', err)
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_measured_water_is_closed_and_used_consistently(self):
+        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as tmp:
             water = Path(tmp) / 'well.json'
             # Shomar et al. (2024) station 104, as in examples/tomato_advanced.py.

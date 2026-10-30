@@ -32,9 +32,9 @@ flagged for review. The report shows both and never lets that balancing pass or
 fail a limit (#84).
 
 Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
-the final solution); unspecified limits are not checked. Acids are never assumed
-either: pass your certificate values with ``--acid``. The packaged bases (KOH 45%,
-KHCO3, K2CO3) are always evaluated.
+the final solution); unspecified limits are not checked. The packaged pH products
+(KOH 45%, KHCO3, K2CO3, H3PO4 75%, HNO3 65%) are always evaluated; pass your own
+acid's certificate values with ``--acid``.
 """
 
 import argparse

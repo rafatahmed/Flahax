@@ -9,10 +9,13 @@ from unittest.mock import patch
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
 from flahax import grower_report as report
 from flahax.stock_solubility import SolubilityRow
+from tests.catalogue_history import historical_catalogue
 
 
 class ReportBoundaryTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def setUp(self):
+        self.enterContext(historical_catalogue())
         self.pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
         self.flow = plan_fertilizer_workflow(
             self.pool,
@@ -39,7 +42,9 @@ class ReportBoundaryTests(unittest.TestCase):
             self.summary()
         self.assertEqual(caught.exception.code, 'missing_field')
 
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_absent_ph_plan_preserves_review_or_block(self):
+        self.enterContext(historical_catalogue())
         del self.flow.stages['ph_adjustment']
         self.assertEqual(self.summary()['status'], 'requires_review')
         self.flow.stages['formulation'].status = 'blocked'
@@ -92,7 +97,9 @@ class ReportBoundaryTests(unittest.TestCase):
 
 
 class ReportCalculationFailureTests(unittest.TestCase):
+    # Owner catalogue: re-enable in PR 4 (G5)
     def test_ec_failure_keeps_a_partial_report_without_a_total_estimate(self):
+        self.enterContext(historical_catalogue())
         from tests.test_ph_adjustment import RO
 
         pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']

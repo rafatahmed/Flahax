@@ -51,6 +51,8 @@ ION_TABLE = {
     'B(OH)4-': ({'B': 1, 'O': 4, 'H': 4}, -1, 'B'),
     'B(OH)3': ({'B': 1, 'O': 3, 'H': 3}, 0, 'B'),
     'H3PO4': ({'H': 3, 'P': 1, 'O': 4}, 0, 'P'),
+    # A strong acid, fully dissociated in water (H+ + NO3-); its proton is implicit, as H3PO4's.
+    'HNO3': ({'H': 1, 'N': 1, 'O': 3}, 0, 'N_NO3'),
     'CO(NH2)2': ({'C': 1, 'O': 1, 'N': 2, 'H': 4}, 0, 'N_UREA'),
     'citrate': ({'C': 6, 'H': 5, 'O': 7}, -3, None),
 }
@@ -102,7 +104,11 @@ _IMPLICIT = frozenset({'OH-'})
 _MICRO_CATIONS = frozenset({'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'})
 _CHELATE_FAMILY = {'EDTA': 'edta_chelate', 'DTPA': 'dtpa_chelate', 'o,o-EDDHA': 'eddha_chelate'}
 # A chelate blend names the sodium salts beside its complexes (D2: borax, sodium molybdate).
-_BLEND_SALTS = {'B(OH)4-': ('borax', 'borax'), 'MoO4-2': ('molybdate', 'sodium molybdate')}
+_BLEND_SALTS = {
+    'B(OH)4-': ('borax', 'borax'),
+    'B(OH)3': ('boric_acid', 'boric acid'),
+    'MoO4-2': ('molybdate', 'sodium molybdate'),
+}
 _AGENT_SOURCE = {
     'DTPA': 'Martell/Smith stability profile; Fe(III)-DTPA log beta 28.6 at 25 C',
     'o,o-EDDHA': 'Yunta et al. 2003 o,o-EDDHA profile; Fe(III) log beta 35.1 at 25 C',
@@ -264,7 +270,12 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
     complexes = [ion for ion in ions if ion in COMPLEXES]
     agents = list(dict.fromkeys(COMPLEXES[ion][0] for ion in complexes))
     if complexes:
-        others = [ion for ion in ions if ion not in COMPLEXES and ion != 'Na+' and ion != 'B(OH)3']
+        # B(OH)3 beside B(OH)4- is borax's own acid half; alone it is boric acid.
+        others = [
+            ion
+            for ion in ions
+            if ion not in COMPLEXES and ion != 'Na+' and (ion != 'B(OH)3' or 'B(OH)4-' not in ions)
+        ]
         if others or len(agents) > 1:
             parts = [_BLEND_SALTS.get(ion, (ion, ion)) for ion in others]
             family = '_'.join(
@@ -279,7 +290,7 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
             family = 'neutral_urea'
         elif 'citrate' in ions:
             family = 'citrate_salt'
-        elif 'H3PO4' in ions:
+        elif 'H3PO4' in ions or 'HNO3' in ions:
             family = 'macro_acid'
         elif 'OH-' in ions:
             family = 'strong_base'
@@ -298,6 +309,8 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
             if 'CO(NH2)2' in ions
             else f'project-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
             if status == 'assumed_blend'
+            else f'owner-declared composition of {name}; {PHREEQC_MINTEQ_V4}'
+            if status == 'declared_blend'
             else PHREEQC_MINTEQ_V4
         )
     return ProductChemistry(name, family, components, source, ions=tuple(ions.items()))

@@ -42,9 +42,10 @@ that matches exactly one formula name and lists the matches otherwise. Use
 | `--rules` | JSON array of extra `compatibilityRule` records | none |
 | `--output` | a new directory; existing paths are never overwritten | required |
 
-The packaged bases (potassium hydroxide 45 %, potassium bicarbonate, potassium
-carbonate) are always evaluated, so a feed that mixes below the target pH gets a
-base. The exit code is 0 for a ready or review plan, 3 for a blocked plan and 1
+The packaged pH products (potassium hydroxide 45 %, potassium bicarbonate and
+potassium carbonate to raise the pH; phosphoric acid 75 % and nitric acid 65 % to
+lower it) are always evaluated, so a feed that mixes off the target pH gets a
+reagent in the needed direction. The exit code is 0 for a ready or review plan, 3 for a blocked plan and 1
 for an input error.
 
 ### Water analysis file
