@@ -50,14 +50,14 @@ assert hasattr(flahax, 'plan_equilibrium_delivery')
 products={p['name']:p for p in library['salts']}
 recipe=flahax.final_solution_recipe({'feasible':True,'salts':[
  {'id':products[n]['id'],'name':n,'gramsPerLitre':g*.95}
- for n,g in {'Potassium Carbonate':.01,'Potassium Nitrate':.02}.items()]},flahax.VolumeLitres(100))
+ for n,g in {'Potassium Carbonate':.01,'Potassium Sulfate':.02}.items()]},flahax.VolumeLitres(100))
 delivery=flahax.plan_equilibrium_delivery(recipe,water_mass_kg=95.,
  water_totals={'Na+':.002,'Cl-':.0020776451648549022},water_analysis_id='synthetic-example-v1',
  initial_ph=7.4,target_ph=6.,reagent_channel_id='acid',
  reagent={'schemaVersion':'0.1','id':'nitric','source':'synthetic-example','revision':'1',
  'recordedAt':'2026-09-27T00:00:00Z','name':'Nitric acid','kind':'acid','chemicalFormula':'HNO3',
  'elements':{'N_NO3':13.8},'densityKgPerL':1.4},
- maximum_reagent_volume=flahax.VolumeLitres(.1),targets={'K':12.72},maximum_nutrient_error_percent=1.)
+ maximum_reagent_volume=flahax.VolumeLitres(.1),targets={'K':13.9},maximum_nutrient_error_percent=1.)
 assert delivery.reagent_volume_litres>0 and delivery.post_mix_measurement_required
 salt = next(p for p in library['salts'] if p['name'] == 'Potassium Nitrate')
 payload=json.dumps({'salts':[salt],'targets':{'K':100},'water':{}})
