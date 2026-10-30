@@ -316,7 +316,26 @@ class MaterialChemistryTests(unittest.TestCase):
                 )
                 self.assertEqual(set(ions), {'Na+', *(form[k] for k in salt['elements'])})
                 chemistry = material_chemistry(salt)
-                self.assertEqual(chemistry.family, 'edta_molybdate_blend')
+                # Mix 2 declares B as boric acid, so its profile names it as CH-micro names
+                # borax; Mix 1 has no boron.
+                expected = {
+                    'Micro Combi Mix 1': (
+                        'edta_molybdate_blend',
+                        ('Fe(III)-EDTA', 'Mn-EDTA', 'Zn-EDTA', 'Cu-EDTA', 'sodium molybdate'),
+                    ),
+                    'Micro Combi Mix 2': (
+                        'edta_boric_acid_molybdate_blend',
+                        (
+                            'Fe(III)-EDTA',
+                            'Mn-EDTA',
+                            'Zn-EDTA',
+                            'Cu-EDTA',
+                            'boric acid',
+                            'sodium molybdate',
+                        ),
+                    ),
+                }[name]
+                self.assertEqual((chemistry.family, chemistry.components), expected)
                 self.assertTrue(chemistry.source_profile.startswith('owner-declared composition'))
                 material = resolve_material(name)
                 self.assertEqual(material.composition, 'disclosed')
