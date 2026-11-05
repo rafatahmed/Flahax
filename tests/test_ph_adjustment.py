@@ -205,26 +205,29 @@ class CoupledWorkflowTests(unittest.TestCase):
             all(not c.recommendation['feasible'] for c in computed)
         )  # reported, not hidden
 
-    def test_phase_names_cannot_authorize_a_plan_without_applicable_evidence(self):
+    def test_supersaturated_phases_are_reported_and_reject_no_candidate(self):
         stage = self.alkaline.stages['ph_adjustment']
-        self.assertEqual(stage.status, 'blocked')
-        self.assertIsNone(stage.value.selected)
+        self.assertNotEqual(stage.status, 'blocked')
+        self.assertIsNotNone(stage.value.selected)
         calculated = [c for c in stage.value.candidates if c.target is not None]
         self.assertTrue(calculated)
         for candidate in calculated:
-            self.assertTrue(candidate.saturation['blocks'])
-            self.assertFalse(candidate.saturation['mixing_approved'])
-            self.assertIn('Hydroxylapatite', candidate.message)
+            self.assertNotIn('blocks', candidate.saturation)
+            self.assertNotEqual(candidate.error_code, 'precipitation_risk')
+            self.assertIn(
+                'Hydroxylapatite', [row[0] for row in candidate.saturation['information']]
+            )
             self.assertTrue(math.isfinite(candidate.reagent_mass_g))
 
-    def test_readily_forming_phases_still_block_and_keep_the_dose(self):
-        # Chilli with a base: monetite (CaHPO4) is supersaturated, a hard phase.
+    def test_monetite_is_information_and_the_base_dose_is_kept(self):
+        # Chilli with a base: monetite (CaHPO4) is supersaturated; only the dihydrate is a risk.
         stage = self.acidic.stages['ph_adjustment']
-        self.assertEqual(stage.status, 'blocked')
+        self.assertNotEqual(stage.status, 'blocked')
         for c in stage.value.candidates:
             if c.direction == 'base':
-                self.assertEqual(c.error_code, 'precipitation_risk')
-                self.assertIn('CaHPO4', [p for p, _ in c.saturation['blocking']])
+                self.assertNotEqual(c.error_code, 'precipitation_risk')
+                self.assertIn('CaHPO4', [row[0] for row in c.saturation['information']])
+                self.assertNotIn('CaHPO4', [p for p, _ in c.saturation['risk']])
                 self.assertTrue(math.isfinite(c.reagent_mass_g))
 
 

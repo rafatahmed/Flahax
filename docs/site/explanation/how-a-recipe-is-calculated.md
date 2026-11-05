@@ -46,9 +46,10 @@ search alternative fertilizer allocations in its documented domain. See the
 
 ## 3. Assess phase risk
 
-Saturation indices describe thermodynamic driving force, not precipitation speed. Decisions
-use condition-qualified phase evidence: missing or unsupported evidence stays explicit.
-A phase name alone is not a universal exemption or a prediction of field behavior.
+Saturation indices describe thermodynamic driving force, not precipitation speed. A phase
+that forms readily (brushite, gypsum, calcite) above saturation marks the recipe with a
+precipitation risk; every other supersaturated phase is information with the basis of its
+constant. Nothing is refused for it, and none of it predicts field behavior.
 See [water-to-delivery](../developer/water-to-delivery.md#saturation-indices-and-acceptance).
 
 ## 4. Assign concentrate tanks

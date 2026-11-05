@@ -94,7 +94,7 @@ class MixTests(unittest.TestCase):
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B', 'C'])
         self.assertEqual(summary['status'], 'blocked')
-        self.assertIsNone(summary['ph']['selected'])
+        self.assertEqual(summary['ph']['selected']['direction'], 'base')  # tanks block it
         self.assertIn('do not mix', sheet.lower())
         self.assertIn('2,000 L of irrigation', sheet)
         self.assertEqual(
@@ -111,7 +111,7 @@ class MixTests(unittest.TestCase):
         head = [line for line in lines if line.startswith('FlahaX') and ' - ' in line][-1]
         self.assertTrue(head.endswith('do not mix'), head)
         self.assertFalse(any(line.startswith('  [ ] ') for line in lines), lines)
-        self.assertTrue(any('precipitation risk' in line for line in lines), lines)
+        self.assertFalse(any('precipitation risk' in line for line in lines), lines)
         self.assertFalse(any(line.startswith('Acid container:') for line in lines), lines)
         store = Store(self.home)
         self.assertEqual(store.list('sessions'), ['tomato-howard-resh-ro'])
@@ -649,11 +649,11 @@ class LineModeTranscriptTests(unittest.TestCase):
         stop = next(i for i, line in enumerate(expected) if line.startswith('Saved the answers'))
         self.assertEqual(actual[: stop + 1], expected[: stop + 1])
         self.assertEqual(summary['status'], 'blocked')
-        self.assertIsNone(summary['ph']['selected'])
+        self.assertEqual(summary['ph']['selected']['direction'], 'base')
         self.assertIn(
             'Calculation reference: ' + summary['calculation_identity']['result_id'], actual
         )
-        self.assertTrue(any('precipitation risk' in line for line in actual))
+        self.assertFalse(any('precipitation risk' in line for line in actual))
         for tank in summary['tanks']['tanks']:
             self.assertIn(f'Tank {tank["name"]}: not to be prepared (do not mix)', actual)
         self.assertFalse(any(line.startswith(('  [ ] ', 'Acid container:')) for line in actual))

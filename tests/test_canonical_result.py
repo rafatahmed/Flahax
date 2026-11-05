@@ -104,12 +104,11 @@ class CanonicalResultTests(unittest.TestCase):
 
     def test_phase_qualification_and_stock_limit_statuses(self):
         s = self.summary()
-        for blocks, review, expected in (
-            (True, [], 'blocked'),
-            (False, ['condition-qualified'], 'requires_review'),
-            (False, [], 'assessed'),
+        for risk, expected in (
+            ([('CaHPO4:2H2O', 0.16)], 'requires_review'),
+            ([], 'assessed'),
         ):
-            s['chemistry'] = {'phase_assessment': {'blocks': blocks, 'review': review}}
+            s['chemistry'] = {'phase_assessment': {'risk': risk}}
             self.assertEqual(result_statuses(s)['phase'], expected)
         s['solubility'] = [{'status': 'exceeds'}]
         self.assertEqual(result_statuses(s)['stock'], 'blocked')

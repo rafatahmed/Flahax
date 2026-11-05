@@ -38,7 +38,7 @@ from .nutrient_acceptance import assess_incidental, assessed_limits, name_source
 from .requirement_fit import PH_TOLERANCE, met  # a pH within 1e-4 is met (G25)
 from .root_finding import shrink_bracket
 from .product_conversion import component_nutrient_masses, material_inventory
-from .saturation_policy import assess_saturation, describe
+from .saturation_policy import assess_saturation
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
 
@@ -450,8 +450,8 @@ def _loss(recommendation):
 
 
 def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
-    """Final acceptance of one candidate: dose, hard limits, then saturation; review never
-    outranks a rejection."""
+    """Final acceptance of one candidate: dose, then hard limits. A precipitation risk is
+    returned with the candidate and never rejects it (decision G12)."""
     incidental = assess_incidental(
         recommendation['rows'], assessed_limits(maximum_concentrations, recommendation)
     )
@@ -470,19 +470,11 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
             'the plan exceeds an explicit nutrient maximum',
             saturation,
         )
-    if saturation['blocks']:
-        return (
-            'rejected',
-            'precipitation_risk',
-            'precipitation risk at the target pH: ' + '; '.join(describe(saturation)),
-            saturation,
-        )
-    if incidental['requiresReview'] or saturation['review'] or saturation['advisories']:
-        findings = describe(saturation) + saturation['advisories']
+    if incidental['requiresReview']:
         return (
             'requires_review',
             None,
-            '; '.join(findings) if findings else 'incidental nutrient contributions need review',
+            'incidental nutrient contributions need review',
             saturation,
         )
     return accepted, None, None, saturation

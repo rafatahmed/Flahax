@@ -19,7 +19,6 @@ from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
 from .ph_adjustment import reagent_dose
 from .requirement_fit import declared_error_percent, reagent_shift_exceeds
-from .saturation_policy import assess_saturation, describe
 
 # Pure, anhydrous acid identities; commercial aqueous products supply their own
 # mass fraction/density. Hydrated citric solids require a separately defined stock.
@@ -182,16 +181,7 @@ def plan_acid_options(
                 raise DeliveryError(
                     'nutrient_limit_exceeded', 'acid plan exceeds an explicit nutrient maximum'
                 )
-            saturation = assess_saturation(target)
-            if saturation['blocks']:
-                raise DeliveryError(
-                    'precipitation_risk',
-                    'target solids or positive SI prohibit acid-plan acceptance: '
-                    + '; '.join(describe(saturation)),
-                )
-            review = assessment['requiresReview'] or bool(
-                saturation['review'] or saturation['advisories']
-            )
+            review = assessment['requiresReview']
             candidates.append(
                 AcidCandidate(
                     identity,

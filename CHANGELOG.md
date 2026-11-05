@@ -66,6 +66,11 @@ each release, with numbers, sources and decisions, are in
   (carbon from a titrated alkalinity stays), `balance_ion` water-file keys, the 0.1 % charge
   gates of the acid and delivery planners, and the formula-imbalance flag (G10, G11, #216).
 
+- Precipitation is reported by evidence, never a refusal. Brushite (`CaHPO4:2H2O`), gypsum and
+  calcite above saturation, or an allocated solid, label the recipe "precipitation risk";
+  every other supersaturated phase is information with the basis of its constant. Removed:
+  saturation blocking, the evidence and applicability inputs, `blocks` (G12–G14, #221).
+
 ### Fixed
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

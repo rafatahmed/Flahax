@@ -20,7 +20,7 @@ from . import __version__
 from .delivery_contracts import DeliveryError
 from .fertilizer_workflow import PH_NOT_PLANNED, unreviewed_reason
 from .irrigation_ec import calculate_ec_from_totals
-from .saturation_policy import assess_saturation
+from .saturation_policy import assess_saturation, risk_warnings
 from .stock_solubility import (
     SINGLE_SALT,
     check_stock_solubility,
@@ -399,9 +399,9 @@ def summarize_batch(
             final_ph=state.ph,
             phase_assessment=assessment,
             ionic_strength=state.ionic_strength,
-            blocking=[dict(phase=p, si=si) for p, si in assessment['blocking']],
-            review=[
-                dict(phase=p, si=si, reason=r, sources=s) for p, si, r, s in assessment['review']
+            risk=[dict(phase=p, si=si) for p, si in assessment['risk']],
+            information=[
+                dict(phase=p, si=si, basis=basis) for p, si, basis in assessment['information']
             ],
             advisories=assessment['advisories'],
             solids=assessment['solids'],
@@ -508,11 +508,7 @@ def summarize_batch(
         def said(text):
             return any(text in w for w in warnings)
 
-        warnings += [
-            f'Review: {r["phase"]} SI {r["si"]:.2f}. {r["reason"]}'
-            for r in chemistry['review']
-            if not said(r['reason'])
-        ]
+        warnings += risk_warnings(chemistry['phase_assessment'])
         warnings += [a for a in chemistry['advisories'] if not said(a)]
     warnings = list(dict.fromkeys(warnings))
     if ph_stage is not None and ph_stage.error_code in PH_NOT_PLANNED:
@@ -755,8 +751,9 @@ def qualification_lines(summary):
     if not ec:
         return lines + ['EC: not evaluated; no estimate or uncertainty interval available.']
     lines.append(f"EC status: {ec.get('status', 'not reported')}")
+    said = summary.get('warnings') or ()
     for key in ('reason', 'qualifier'):
-        if ec.get(key):
+        if ec.get(key) and ec[key] not in said:  # a warning already states it once
             lines.append(f"EC {key}: {ec[key]}")
     if ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None:
         lines.append(f"EC25 calculated estimate: {ec['ec25_ms_cm']} mS/cm.")
@@ -981,8 +978,8 @@ def render_report(summary):
             + '</section>'
         )
     if chem is not None:
-        reading = {r['phase']: 'review' for r in chem['review']} | {
-            b['phase']: 'blocks' for b in chem['blocking']
+        reading = {r['phase']: 'information' for r in chem['information']} | {
+            r['phase']: 'precipitation risk' for r in chem['risk']
         }
         body += (
             '<section><h2>Chemistry of the final feed</h2>'
@@ -1009,9 +1006,9 @@ def render_report(summary):
                 'Saturation indices above -1',
             )
             + ''.join(
-                f'<p class="small"><b>{text(r["phase"])}</b>: {text(r["reason"])} Sources: '
-                f'{text(r["sources"])}</p>'
-                for r in chem['review']
+                f'<p class="small"><b>{text(r["phase"])}</b>: supersaturated; '
+                f'{text(r["basis"])}.</p>'
+                for r in chem['information']
             )
             + '</section>'
         )
