@@ -88,9 +88,13 @@ class PhaseAuditTests(unittest.TestCase):
         )
         library['formulas'] = [f for f in library['formulas'] if f['name'] == 'DEFAULT']
         self.assertEqual(len(library['formulas']), 1)
+        # A label off its compound's proportions is reconciled, so it no longer makes a product
+        # unsupported; an analysis that states a nutrient the product's ions do not carry does.
+        potassium_nitrate = next(s for s in library['salts'] if s['name'] == 'Potassium Nitrate')
+        potassium_nitrate['elements'] = {**potassium_nitrate['elements'], 'Zn': 0.1}
         report = audit(library)
         row = report['results'][0]
-        self.assertIn('chemistry_error', row['all_available'])
+        self.assertEqual(row['all_available']['chemistry_error']['code'], 'identity_inconsistent')
         self.assertIn('chemistry', row['chemistry_supported_alternative'])
         self.assertGreater(
             row['chemistry_supported_alternative']['minimum_error_pct'],
