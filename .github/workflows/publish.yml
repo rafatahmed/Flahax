@@ -106,9 +106,20 @@ jobs:
           python -m unittest tests.test_product_phreeqc tests.test_acid_reference -v
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+  # The full tier of the Test workflow on the tagged commit: Python 3.11-3.14, Windows, macOS and
+  # the exact three-OS coverage gate. Nothing is built or published unless it passes.
+  full-gate:
+    name: Full gate
+    needs: guard
+    if: needs.guard.outputs.publish == 'true'
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+    permissions:
+      contents: read
+
   build:
     name: Build distribution
-    needs: [guard, test, phreeqc-live]
+    needs: [guard, test, phreeqc-live, full-gate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

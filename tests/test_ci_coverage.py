@@ -387,7 +387,9 @@ class WorkflowEnforcementTests(unittest.TestCase):
             (root / '.github/workflows/test.yml').read_text(encoding='utf-8'),
             Loader=yaml.BaseLoader,
         )
-        self.assertEqual(set(workflow['on']), {'push', 'pull_request', 'workflow_dispatch'})
+        self.assertEqual(
+            set(workflow['on']), {'push', 'pull_request', 'workflow_dispatch', 'workflow_call'}
+        )
         candidate = '${{ github.event.pull_request.head.sha || github.sha }}'
         self.assertEqual(workflow['env']['CANDIDATE_SHA'], candidate)
         for job in workflow['jobs'].values():
@@ -396,7 +398,7 @@ class WorkflowEnforcementTests(unittest.TestCase):
             )
             self.assertEqual(checkout['with']['ref'], candidate)
         gate = workflow['jobs']['coverage-gate']
-        self.assertEqual(set(gate['needs']), {'style', 'test', 'phreeqc-live', 'docs'})
+        self.assertEqual(set(gate['needs']), {'scope', 'style', 'test', 'phreeqc-live', 'docs'})
         self.assertEqual(gate['if'], 'always() && !cancelled()')
         self.assertIn('all(v["result"] == "success"', gate['steps'][0]['run'])
         steps = gate['steps']
@@ -427,13 +429,13 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertNotIn('merge-multiple', download['with'])
         test = workflow['jobs']['test']
         self.assertIn("format('test ({0})'", test['name'])
-        self.assertEqual(len(test['strategy']['matrix']['include']), 2)
+        self.assertEqual(test['strategy']['matrix'], '${{ fromJSON(needs.scope.outputs.matrix) }}')
         measure = next(
             s for s in test['steps'] if s.get('name') == 'Candidate-bound native coverage'
         )
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
-        self.assertEqual(measure['if'], "matrix.python-version == '3.13'")
+        self.assertEqual(measure['if'], "env.COVERAGE_RUN == 'true'")
         self.assertFalse(any(s.get('uses', '').startswith('codecov/') for s in test['steps']))
         config = yaml.load(
             (root / 'codecov.yml').read_text(encoding='utf-8'), Loader=yaml.BaseLoader

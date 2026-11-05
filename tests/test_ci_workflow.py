@@ -10,7 +10,9 @@ from pathlib import Path
 import re
 import unittest
 
-WORKFLOW = Path(__file__).resolve().parent.parent / '.github' / 'workflows' / 'test.yml'
+WORKFLOWS = Path(__file__).resolve().parent.parent / '.github' / 'workflows'
+WORKFLOW = WORKFLOWS / 'test.yml'
+PUBLISH = WORKFLOWS / 'publish.yml'
 REQUIRED_CHECKS = {'test (3.11)', 'test (3.12)', 'test (3.13)', 'phreeqc-live', 'coverage-gate'}
 
 
@@ -68,6 +70,21 @@ class WorkflowTests(unittest.TestCase):
         ]
         self.assertEqual(len(guarded), len(steps) - 1)
         self.assertNotIn('if', steps[0])  # the prerequisites are required in both tiers
+
+    def test_a_release_cannot_publish_without_the_full_gate(self):
+        import yaml
+
+        publish = yaml.safe_load(PUBLISH.read_text(encoding='utf-8'))['jobs']
+        gate = publish['full-gate']
+        self.assertEqual(gate['uses'], './.github/workflows/test.yml')
+        self.assertIn('full-gate', publish['build']['needs'])
+        script = next(s['run'] for s in self.jobs['scope']['steps'] if s.get('id') == 'scope')
+        self.assertIn('"$EVENT" = release', script)
+
+    def test_documentation_only_changes_skip_the_live_reference_replay(self):
+        steps = self.jobs['phreeqc-live']['steps']
+        for step in steps:
+            self.assertIn("needs.scope.outputs.code == 'true'", step['if'])
 
     def test_a_pull_request_is_replaced_by_its_next_push(self):
         text = WORKFLOW.read_text(encoding='utf-8')

@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # The release workflow calls this one: a release is the full tier.
+  workflow_call:
 
 permissions:
   contents: read
@@ -19,7 +21,7 @@ concurrency:
 
 # Two tiers (docs/adr/0002). Pull requests and pushes to main run the light tier: Linux on
 # Python 3.11-3.13 and one clean wheel/sdist check. A manual run of this workflow (Actions >
-# Test > Run workflow) is the full tier, run before a release: Python 3.14, Windows and macOS,
+# Test > Run workflow) and the release workflow are the full tier: Python 3.14, Windows and macOS,
 # the exact three-OS coverage gate and the Codecov upload.
 jobs:
   scope:
@@ -44,7 +46,7 @@ jobs:
           light='{"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"}]}'
           all='{"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-latest","python-version":"3.13"},{"os":"macos-latest","python-version":"3.13"}]}'
           matrix=$light
-          if [ "$EVENT" = workflow_dispatch ]; then
+          if [ "$EVENT" = workflow_dispatch ] || [ "$EVENT" = release ]; then
             full=true; matrix=$all
           elif [ "$EVENT" = pull_request ]; then
             # Only documentation (docs/ and top-level .md files) changed: no code to test.
@@ -137,27 +139,33 @@ jobs:
           path: build/distribution-verification.json
 
   phreeqc-live:
+    needs: scope
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: needs.scope.outputs.code == 'true'
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        if: needs.scope.outputs.code == 'true'
         with:
           python-version: "3.13"
       - name: Install package
+        if: needs.scope.outputs.code == 'true'
         run: python -m pip install .
       - name: Provision hash-pinned external PHREEQC
+        if: needs.scope.outputs.code == 'true'
         shell: pwsh
         run: ./tools/provision_phreeqc.ps1
       - name: Required live reference replay and runtime equivalence
+        if: needs.scope.outputs.code == 'true'
         shell: pwsh
         run: |
           python -m unittest tests.test_product_phreeqc tests.test_acid_reference tests.test_preserved_chemistry_evidence tests.test_live_reference_policy tests.test_reference_integrity -v 2>&1 | Tee-Object -FilePath phreeqc-validation.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: always() && needs.scope.outputs.code == 'true'
         with:
           name: phreeqc-live-evidence
           path: phreeqc-validation.log
