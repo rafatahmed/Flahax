@@ -183,13 +183,6 @@ def plan_equilibrium_delivery(
     result = plan_catalogue_nitric_target(
         doses, initial_ph, target_ph, water_totals=water, phases=tuple(phases)
     )
-    records = {r['name']: r for r in chemistry()['aqueous']}
-    total_charge = sum(m * abs(records[n]['charge']) for n, m in result.initial.species.items())
-    if abs(result.initial.charge_balance) > max(1e-12, 0.001 * total_charge):
-        raise DeliveryError(
-            'charge_imbalance',
-            'initial complete solution exceeds 0.1% charge error; supply missing analytical ions',
-        )
     moles = result.nitric_acid_molal * water_mass
     mass = MassGrams(moles * MOLAR_MASS['N'] / fraction)
     volume = mass.value / (density * 1000.0)

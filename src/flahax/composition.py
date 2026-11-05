@@ -90,9 +90,6 @@ BALANCE_IONS = {
     "Mg": ("Mg", 2),
     "Na": ("Na", 1),
 }
-# Warn when the formula's cation and anion sums differ by more than this share of the
-# larger sum (about the +/-10% window used by Steiner-type software, Martinez-Corral 2009).
-ION_BALANCE_WARNING_PCT = 10.0
 
 
 def target_ion_balance(targets: dict) -> dict:
@@ -119,7 +116,6 @@ def target_ion_balance(targets: dict) -> dict:
         "cationsMeqPerL": cations,
         "anionsMeqPerL": anions,
         "imbalancePercent": imbalance,
-        "exceedsWarning": abs(imbalance) > ION_BALANCE_WARNING_PCT,
         "assumptions": "P as H2PO4-, S as SO4 2-; urea, Si and micronutrients excluded",
         "scope": "nutrient_subset_convention",
         "provesInfeasibility": False,
@@ -127,6 +123,21 @@ def target_ion_balance(targets: dict) -> dict:
             symbol for symbol, ppm in targets.items() if ppm > 0 and symbol not in BALANCE_IONS
         ),
     }
+
+
+def imbalance_note(balance: dict) -> str | None:
+    """The formula's imbalance as information (decision G10); None when it shows as zero.
+
+    The imbalance never limits the fit: untargeted counterions and other species may balance
+    the subset, and no threshold decides when it matters.
+    """
+    if round(balance["imbalancePercent"], 1) == 0:
+        return None
+    return (
+        "The formula's declared ions are not balanced: "
+        f"cations {balance['cationsMeqPerL']:.2f} vs anions {balance['anionsMeqPerL']:.2f} "
+        f"meq/L ({balance['imbalancePercent']:+.1f} %)."
+    )
 
 
 class InputError(ValueError):

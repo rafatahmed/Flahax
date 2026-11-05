@@ -63,8 +63,7 @@ aerated water. One litre of water is taken as one kilogram.
 A value of 0 is a measured zero and stays zero (`"Cl": 0` for chloride-free
 water, `"HCO3": 0` for carbon-free water); an omitted ion is not measured.
 Optional keys: `"below_detection": {"Mn": 0.01}` (detection limits in mg/L;
-taken as zero, never adjusted), `"balance_ion": "Cl"` or `"Na"`, and
-`"balance_ion_uncertainty_percent": 10`, the stated uncertainty of that ion.
+taken as zero, never adjusted).
 
 Targets and `--limit` maximums use these laboratory values. For the chemistry
 only (pH, saturation, EC, reagent dose) the analysis is speciated at its
@@ -147,8 +146,8 @@ nitric = dict(id='my-nitric', name='Nitric acid 60%', source='supplier certifica
               recordedAt='2026-10-22T00:00:00Z', chemicalFormula='HNO3', massFraction=.60, densityKgPerL=1.37)
 workflow = plan_fertilizer_workflow(
     products, targets, {}, 5.8, final_volume=VolumeLitres(1000),
-    equilibrium=dict(water_totals={}, water_mass_kg=1000, water_analysis_id='RO', complete_analysis=True,
-                     carbon_boundary='closed', temperature_c=25, phases=[]),
+    equilibrium=dict(water_totals={}, water_mass_kg=1000, water_analysis_id='RO',
+                     temperature_c=25, phases=[]),
     ph_adjustment=dict(products=[nitric] + catalogue_ph_reagents(), maximum_reagent_volume_litres=5))
 summary = summarize_batch(workflow, products, title='Tomato', water_label='RO water')
 from pathlib import Path

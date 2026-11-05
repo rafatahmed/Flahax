@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import math
 from collections.abc import Mapping, Sequence
 
-from .aqueous_model import solve, chemistry
+from .aqueous_model import solve
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import rescore_with_reagent, MilligramsPerLitre
 from .nutrient_acceptance import assess_incidental
@@ -127,13 +127,9 @@ def plan_acid_options(
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
         raise DeliveryError('invalid_type', 'phases must be an explicit sequence')
     phases = tuple(phases)
+    # The dose is found from charge differences, so a residual charge in the water is carried,
+    # not refused (decision G11).
     initial = solve(totals, initial_ph, phases=phases)
-    records = {r['name']: r for r in chemistry()['aqueous']}
-    absolute_charge = sum(
-        abs(records[n]['charge']) * value for n, value in initial.species.items()
-    )
-    if abs(initial.charge_balance) > max(1e-12, 0.001 * absolute_charge):
-        raise DeliveryError('charge_imbalance', 'initial mixed solution must be charge balanced')
     candidates = []
     for product in products:
         identity = product['id']

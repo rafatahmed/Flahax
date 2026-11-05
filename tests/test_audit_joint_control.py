@@ -15,7 +15,9 @@ from tests.catalogue_history import historical_catalogue
 
 
 class JointAuditRegressionTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
+    # workflow plans no nitric candidate with a target state, so the case this test reproduces
+    # cannot be staged.
     def test_product_switch_diagnosis_matches_final_nutrient_rows(self):
         self.enterContext(historical_catalogue())
         library = load_library()
@@ -44,7 +46,6 @@ class JointAuditRegressionTests(unittest.TestCase):
                 water_totals={},
                 water_mass_kg=1000,
                 water_analysis_id='RO',
-                complete_analysis=True,
                 carbon_boundary='closed',
                 temperature_c=25,
                 phases=[],

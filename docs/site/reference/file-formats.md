@@ -19,7 +19,6 @@ Used by `flahax batch --water FILE`, saved by `flahax mix` under `waters/`.
 | `measured_ph` | The pH the laboratory measured |
 | `mg_per_litre` | mg/L of each element: `S` as S, `N_NO3` and `N_NH4` as N, `HCO3` as bicarbonate |
 | `below_detection` | Optional: detection limits in mg/L, for example `{"Mn": 0.01}` |
-| `balance_ion`, `balance_ion_uncertainty_percent` | Optional: the ion that closes the charge balance (`Cl` or `Na`) and its stated uncertainty |
 
 A value of 0 is a measured zero; an ion left out is not measured. `HCO3` is required with a
 measured pH (0 if none). The conversion factors from ions as printed (NO3, SO4, PO4, alkalinity as

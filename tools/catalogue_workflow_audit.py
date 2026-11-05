@@ -95,9 +95,7 @@ def fit(products, original):
 def phase_screen(totals):
     # Never turn reported supersaturation into automatic solid allocation.
     # The runtime policy owns missing-evidence blocking and review decisions.
-    state = calculate_equilibrium_ph(
-        totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-    )
+    state = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
     assessment = assess_saturation(state)
     return {
         'ph': state.ph,

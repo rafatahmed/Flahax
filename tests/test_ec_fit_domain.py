@@ -63,7 +63,6 @@ class FitDomainTests(unittest.TestCase):
     def test_state_boundary_and_reporting_cutoff(self):
         state = calculate_equilibrium_ph(
             {'K+': 0.001, 'PO4-3': 0.001},
-            complete_analysis=True,
             carbon_boundary='closed',
             phases=[],
         )

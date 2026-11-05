@@ -8,7 +8,6 @@ import unittest
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
 from tests.test_ph_planning import inputs
 from tests.test_ph_adjustment import RO, ACIDS
-from tests.catalogue_history import historical_catalogue
 
 
 class WorkflowBoundaryTests(unittest.TestCase):
@@ -76,7 +75,6 @@ class WorkflowBoundaryTests(unittest.TestCase):
         for change, code in [
             ({'water_analysis_id': ''}, 'missing_field'),
             ({'water_balance': {}}, 'invalid_type'),
-            ({'measured_ph': 7, 'complete_analysis': False}, 'incomplete_water_analysis'),
             ({'measured_ph': 7, 'carbon_boundary': 'open'}, 'unsupported_carbon_boundary'),
         ]:
             result = self.workflow(equilibrium=RO | {'water_mass_kg': 100} | change)
@@ -234,13 +232,13 @@ class GradeIdentityBoundaryTests(unittest.TestCase):
 
 
 class BalancedConfigurationBoundaryTests(unittest.TestCase):
-    def test_prepared_balance_cannot_be_relabelled_incomplete_or_open_carbon(self):
+    def test_prepared_balance_cannot_be_relabelled_open_carbon(self):
         from flahax.measured_water import balance_water_analysis
         from tests.test_measured_water import STATION_104
 
         balance = balance_water_analysis(STATION_104, measured_ph=7.8)
         pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
-        for change in ({'complete_analysis': False}, {'carbon_boundary': 'open'}):
+        for change in ({'carbon_boundary': 'open'},):
             config = RO | dict(water_balance=balance, water_totals=balance.analytical_totals)
             result = plan_fertilizer_workflow(
                 pool,
@@ -250,19 +248,15 @@ class BalancedConfigurationBoundaryTests(unittest.TestCase):
                 final_volume=VolumeLitres(1000),
                 equilibrium=config | change,
             )
-            self.assertEqual(result.stages['chemistry'].error_code, 'contradictory_water_inputs')
+            self.assertEqual(result.stages['chemistry'].error_code, 'unsupported_carbon_boundary')
 
 
 class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def setUp(self):
-        self.enterContext(historical_catalogue())
         self.pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
         self.config = RO | {'water_mass_kg': 100}
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_no_acceptable_acid_and_infeasible_nutrients_stay_blocked(self):
-        self.enterContext(historical_catalogue())
         config = dict(
             products=ACIDS, maximum_nutrient_error_percent=1, maximum_reagent_volume_litres=1e-20
         )
@@ -318,8 +312,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
             self.codes(stage),
             {'HNO3-example': 'nutrient_tolerance_exceeded', 'H3PO4-example': None},
         )
-        # Nitric pushes N_NO3 from 3.5831 past a declared 3.5833 mg/L maximum.
-        stage = self.candidates({'K': 10}, None, {'N_NO3': 3.5833})
+        # Nitric pushes N_NO3 from 3.4031 (K 10 x 13.0 / 38.2, the packaged Potassium Nitrate
+        # label) past a declared 3.4033 mg/L maximum.
+        stage = self.candidates({'K': 10}, None, {'N_NO3': 3.4033})
         self.assertEqual(self.codes(stage)['HNO3-example'], 'nutrient_limit_exceeded')
 
     def nitric(self, targets, percent, maxima=None):
@@ -360,7 +355,7 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         self.assertEqual(
             (stage.status, stage.error_code), ('blocked', 'nutrient_tolerance_exceeded')
         )
-        stage = self.nitric({'K': 10}, None, {'N_NO3': 3.5833})
+        stage = self.nitric({'K': 10}, None, {'N_NO3': 3.4033})
         self.assertEqual((stage.status, stage.error_code), ('blocked', 'nutrient_limit_exceeded'))
 
     def test_nitric_plans_on_water_alone_when_the_accepted_recipe_is_empty(self):
@@ -387,9 +382,7 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
                         stage.message, 'maximum_nutrient_error_percent must be finite and positive'
                     )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_nitric_incidental_nutrients_are_not_automatically_accepted(self):
-        self.enterContext(historical_catalogue())
         from tests.test_ph_planning import record
 
         config = dict(
@@ -417,9 +410,7 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         self.assertEqual(flow.stages['nitric'].status, 'requires_review')
         self.assertTrue(flow.stages['nitric'].value.incidental_assessment['requiresReview'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_coupled_solver_failure_remains_blocked(self):
-        self.enterContext(historical_catalogue())
         from unittest.mock import patch
 
         with patch(
@@ -440,9 +431,7 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
 
 
 class AssumedWaterReviewBoundaryTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
-    def test_accepted_reagent_on_assumed_water_closure_still_requires_review(self):
-        self.enterContext(historical_catalogue())
+    def test_accepted_reagent_on_an_imbalanced_water_uses_the_water_as_measured(self):
         from flahax.measured_water import nutrient_mg_per_litre
         from tests.test_ph_planning import record
 
@@ -475,11 +464,10 @@ class AssumedWaterReviewBoundaryTests(unittest.TestCase):
             ),
             maximum_concentrations={'N_NO3': 20, 'Na': 50, 'Cl': 50, 'P': 1},
         )
-        self.assertEqual(
-            flow.stages['chemistry'].status, 'requires_review', flow.stages['chemistry']
-        )
+        # No closure is assumed: the imbalance is carried, so nothing here asks for review.
+        self.assertEqual(flow.stages['chemistry'].status, 'calculated', flow.stages['chemistry'])
         for name in ('nitric', 'acid_selection'):
-            self.assertEqual(flow.stages[name].status, 'requires_review')
+            self.assertIn(flow.stages[name].status, ('calculated', 'requires_review'))
             self.assertIsNotNone(flow.stages[name].value)
 
 
@@ -507,9 +495,7 @@ class FinalWorkflowVerificationTests(unittest.TestCase):
             )
         self.assertEqual(result.stages['chemistry'].error_code, 'product_chemistry_mismatch')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_selected_plan_is_rechecked_for_hard_limits(self):
-        self.enterContext(historical_catalogue())
         from copy import deepcopy
         from dataclasses import replace
         from unittest.mock import patch

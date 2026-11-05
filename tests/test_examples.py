@@ -16,7 +16,9 @@ from tests.catalogue_history import historical_catalogue
 
 
 class CapabilityExamplesTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: examples/run_all.py's scenarios dose 33c5df2 products (Phosphoric Acid
+    # (75%) in the pepper tank review, CH - micro) and the packaged Pepper (Howard Resh) misses
+    # N_NO3, P, K and Ca.
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())

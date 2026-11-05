@@ -15,15 +15,12 @@ import unittest
 from unittest.mock import Mock, patch
 
 from examples import common, run_all, tomato_simple, tomato_advanced, tomato_report
-from tests.catalogue_history import historical_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class ExampleCommandTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_real_module_commands_complete_with_qualified_output(self):
-        self.enterContext(historical_catalogue())
         for name in (
             'calculated_site_planning',
             'cli_usage',
@@ -44,9 +41,7 @@ class ExampleCommandTests(unittest.TestCase):
                 self.assertIn('diagnostic only', out.getvalue())
                 self.assertIn('No accepted reagent plan', out.getvalue())
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_presentation_handles_available_missing_and_nonfinite_values(self):
-        self.enterContext(historical_catalogue())
         self.assertEqual(common.serializable([float('inf'), float('-inf')]), ['inf', '-inf'])
         with self.assertRaisesRegex(AssertionError, 'unexpectedly succeeded'):
             common.rejection(lambda: None)
@@ -75,9 +70,7 @@ class ExampleCommandTests(unittest.TestCase):
             tomato_advanced.main()
         self.assertNotIn('No accepted reagent plan', out.getvalue())
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_report_command_outputs_and_refuses_overwrite(self):
-        self.enterContext(historical_catalogue())
         with tempfile.TemporaryDirectory() as folder:
             target = Path(folder) / 'reports'
             with (
@@ -143,9 +136,7 @@ class ExampleCommandTests(unittest.TestCase):
             cfg['_rewrite_included_links'](app, Path(name), 'unused', content)
             self.assertEqual(content, [expected])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_remaining_empty_presentation_and_blend_boundaries(self):
-        self.enterContext(historical_catalogue())
         from types import SimpleNamespace
         from examples import visual_report
 

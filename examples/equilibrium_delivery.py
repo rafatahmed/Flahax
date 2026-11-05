@@ -46,7 +46,6 @@ def run():
             water_totals={},
             water_mass_kg=100,
             water_analysis_id='synthetic-pure-water',
-            complete_analysis=True,
             carbon_boundary='closed',
             temperature_c=25,
             phases=[],

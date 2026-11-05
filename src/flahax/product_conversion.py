@@ -18,6 +18,7 @@ from typing import Mapping
 
 from .catalogue_chemistry import ProductChemistry, chemistry_for_product
 from .delivery_contracts import DeliveryError
+from .label_reconciliation import chemistry_elements
 from .material_chemistry import chemistry_ions, material_chemistry, unstated_amounts
 
 MOLAR_MASS = {
@@ -63,10 +64,12 @@ def convert_product_dose(
 ) -> ProductAnalyticalTotals:
     """Convert a library assay using an explicit chemistry profile.
 
-    Assays are elemental mass fractions. Counterions and ligands the assay does not
-    state follow from the profile's ions (``unstated_amounts``): chelate ligands and
-    D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
-    is retained as inert carrier.
+    Assays are elemental mass fractions, used as declared except the charge the profile's
+    ions cannot balance: that surplus is not converted (decision G5, ``label_reconciliation``);
+    a blend's label is used as declared. Counterions and ligands the assay does not state
+    follow from the profile's ions (``unstated_amounts``): chelate ligands and D2 sodium,
+    carbonate, citrate, a salt's missing counterion. Unassayed remainder, the unassigned
+    surplus included, is retained as inert carrier.
     """
     dose = _finite_dose(dose_g_per_kg_water)
     if str(product.get("name", "")) != chemistry.name:
@@ -76,6 +79,8 @@ def convert_product_dose(
     assay = product.get("elements")
     if not isinstance(assay, Mapping):
         raise DeliveryError("missing_field", "product assay is required")
+    ions = chemistry_ions(chemistry)
+    assay = chemistry_elements(product, ions)
     totals = {
         key: dose * float(percent) / 100.0 / MOLAR_MASS[key.split("_")[0]]
         for key, percent in assay.items()
@@ -98,7 +103,7 @@ def convert_product_dose(
         totals["molybdate"] = totals.pop("Mo")
     # Assayed totals are authoritative; the ions fill only what the assay leaves out.
     # Hydroxide (potassium hydroxide) stays implicit, like the protons of the acids (#75).
-    counterions, ligands = unstated_amounts(chemistry_ions(chemistry), totals)
+    counterions, ligands = unstated_amounts(ions, totals)
     inert = max(0.0, 1.0 - sum(float(v) for v in assay.values()) / 100.0)
     return ProductAnalyticalTotals(chemistry, dose, totals, counterions, ligands, inert)
 
@@ -356,11 +361,9 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, 
         for product, amount, identity_id in parts:
             # A resolved grade or lot takes its identity's ions; its analysis was checked when
             # graded.
-            chemistry = (
-                material_chemistry({**product, 'identityId': identity_id}, check=False)
-                if identity_id
-                else material_chemistry(product)
-            )
+            if identity_id:
+                product = {**product, 'identityId': identity_id}
+            chemistry = material_chemistry(product, check=not identity_id)
             converted = convert_product_dose(product, chemistry, amount)
             ferrous = 'Fe+2' in chemistry_ions(chemistry)
             totals: dict = {}

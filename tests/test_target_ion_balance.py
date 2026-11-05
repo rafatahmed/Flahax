@@ -24,26 +24,38 @@ class TargetIonBalanceTests(unittest.TestCase):
         self.assertAlmostEqual(balance["cationsMeqPerL"], 3.0)
         self.assertAlmostEqual(balance["anionsMeqPerL"], 3.0)
         self.assertAlmostEqual(balance["imbalancePercent"], 0.0)
-        self.assertFalse(balance["exceedsWarning"])
+        self.assertNotIn("exceedsWarning", balance)
 
     def test_balanced_classic_formula(self):
         self.assertLess(
             abs(target_ion_balance(formula("Hoagland solution"))["imbalancePercent"]), 1.0
         )
 
-    def test_unbalanced_formulas_are_flagged(self):
+    def test_unbalanced_formulas_are_reported_as_numbers_only(self):
         pepper = target_ion_balance(formula("Pepper (Howard Resh)"))
         self.assertLess(pepper["imbalancePercent"], -10)
-        self.assertTrue(pepper["exceedsWarning"])
+        self.assertNotIn("exceedsWarning", pepper)
         synthetic = target_ion_balance({"N_NO3": 60, "Ca": 160})
         self.assertGreater(synthetic["imbalancePercent"], 10)
 
-    def test_recommend_reports_balance_and_warns(self):
+    def test_recommend_states_the_imbalance_without_claiming_infeasibility(self):
+        # Pepper (Howard Resh): cations 22.58, anions 37.31 meq/L, -39.5 % (hand-computed above).
         result = recommend(LIBRARY["salts"], formula("Pepper (Howard Resh)"), {})
-        self.assertTrue(result["targetIonBalance"]["exceedsWarning"])
-        self.assertTrue(any("not electrically balanced" in w for w in result["warnings"]))
-        balanced = recommend(LIBRARY["salts"], formula("Hoagland solution"), {})
-        self.assertFalse(any("not electrically balanced" in w for w in balanced["warnings"]))
+        self.assertIn(
+            "The formula's declared ions are not balanced: "
+            "cations 22.58 vs anions 37.31 meq/L (-39.5 %).",
+            result["warnings"],
+        )
+        self.assertFalse(any("No salt combination" in w for w in result["warnings"]))
+        self.assertNotIn("exceedsWarning", result["targetIonBalance"])
+
+    def test_a_balanced_formula_has_no_imbalance_note(self):
+        balanced = recommend(
+            [dict(id="kno3", name="kno3", elements={"N_NO3": 14.0067, "K": 39.0983})],
+            {"N_NO3": 14.0067, "K": 39.0983},
+            {},
+        )
+        self.assertFalse(any("not balanced" in w for w in balanced["warnings"]))
 
     def test_permitted_counterion_completes_target_subset(self):
         result = recommend(

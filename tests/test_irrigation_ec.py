@@ -345,11 +345,9 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.uncovered_bound_ms_cm)
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_all_shipped_formulas_respect_phosphate_fit_domain(self):
         # Historical raw failures are retained in conductivity-qualification/tests.log.
         # F08's independent oracle forbids an unqualified out-of-fit prediction.
-        self.enterContext(historical_catalogue())
         from flahax.engine import load_library, recommend
 
         library = load_library()
@@ -375,7 +373,7 @@ class BoundTests(unittest.TestCase):
                 self.assertFalse(r.bounded)
                 self.assertEqual(r.contributions_ms_cm, {})
                 checked += 1
-        self.assertEqual(checked, 21)
+        self.assertEqual(checked, 13)  # every formula of the packaged catalogue
 
 
 def _assert_close_tree(case, got, want, path='supplementary'):
@@ -623,9 +621,7 @@ class CatalogueTests(unittest.TestCase):
                 )
             self.assertEqual(c.exception.code, 'missing_field')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_reagent_additions_recorded_as_copy(self):
-        self.enterContext(historical_catalogue())
         additions = {'NO3-': 1e-4}
         r = calculate_irrigation_ec(
             {'Potassium Nitrate': 0.5},
@@ -644,12 +640,10 @@ class CatalogueTests(unittest.TestCase):
         )
         self.assertEqual(none.audit['reagent_additions_molal'], {})
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chelate_residual_reported_not_crash(self):
         # 2026-10-18 chelate sodium counterions (D2): was not_supported /
         # assay_charge_residual_too_large (declared percent < -0.1) because the
         # chelate sodium was missing; the residual is still reported in the audit.
-        self.enterContext(historical_catalogue())
         r = calculate_irrigation_ec(
             {'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5},
             recipe_id='r',
@@ -712,9 +706,7 @@ class CatalogueTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             DeclaredPureWater('')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_balanced_water_and_reagent_recorded(self):
-        self.enterContext(historical_catalogue())
         bw = balance_water_analysis(
             {'Na+': 0.002, 'Cl-': 0.002}, measured_ph=7.0, alkalinity_eq_per_kg=1e-4
         )
@@ -752,10 +744,8 @@ class CatalogueTests(unittest.TestCase):
 
 
 class PlanTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
-        cls.enterClassContext(historical_catalogue())
         from tests.test_equilibrium_delivery import arguments
 
         cls.plan = plan_equilibrium_delivery(**arguments())
@@ -947,9 +937,7 @@ class BandChemistryTests(unittest.TestCase):
             ),
         }
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_shipped_only_band_ends_open(self):
-        self.enterContext(historical_catalogue())
         result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)
         self.assertEqual(result['nominal'].status, 'estimated')
         for end in ('minimum', 'maximum'):
@@ -973,9 +961,7 @@ class BandChemistryTests(unittest.TestCase):
             self.assertIsNone(r.ec25_ms_cm)
             self.assertEqual(r.audit['band_end'], end)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_open_end_still_validates_inputs(self):
-        self.enterContext(historical_catalogue())
         with self.assertRaises(DeliveryError) as caught:
             calculate_irrigation_ec_band(
                 {'Potassium Nitrate': 1.0}, **{**self.PURE, 'ph_mode': 'bogus'}
@@ -1034,9 +1020,7 @@ class BandChemistryTests(unittest.TestCase):
         self.assertIsNone(high.ec25_ms_cm)
         self.assertEqual(high.audit['band_end'], 'maximum')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_note_text(self):
-        self.enterContext(historical_catalogue())
         result = calculate_irrigation_ec_band({'Potassium Nitrate': 1.0}, **self.PURE)
         self.assertEqual(
             result['note'],
