@@ -469,8 +469,12 @@ def calculate_ec_from_totals(
     assay_charge_residual_eq_per_kgw: float = 0.0,
     assay_charge_residual_percent: float | None = None,
     audit_inputs: Mapping | None = None,
+    residual_charge_eq_per_kgw: float = 0.0,
 ) -> IrrigationECResult:
     """EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+
+    In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
+    charge the measured water carries that no ion accounts for, instead of forcing zero.
 
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
     speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
@@ -515,7 +519,12 @@ def calculate_ec_from_totals(
         return _not_supported_unsolved(reason, ph=ph, carbon_boundary=carbon_boundary, **common)
     try:
         if ph_mode == 'calculated':
-            state = calculate_equilibrium_ph(totals_molal, carbon_boundary='closed', phases=phases)
+            state = calculate_equilibrium_ph(
+                totals_molal,
+                carbon_boundary='closed',
+                phases=phases,
+                residual_charge=residual_charge_eq_per_kgw,
+            )
         else:
             state = solve(totals_molal, ph, phases=phases)
     except DeliveryError as error:

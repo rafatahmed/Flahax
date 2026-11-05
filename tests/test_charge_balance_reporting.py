@@ -57,6 +57,30 @@ class WaterImbalanceTests(unittest.TestCase):
         self.assertAlmostEqual(state.charge_balance, half.residual_charge_eq, delta=1e-12)
 
 
+class EcResidualTests(unittest.TestCase):
+    def test_the_ec_ph_solve_carries_the_waters_residual_charge(self):
+        from flahax import calculate_ec_from_totals
+
+        water = balance_water_analysis(SEVEN_PERCENT, measured_ph=7.0)
+        forced = calculate_ec_from_totals(
+            water.totals, solution_id='w', ph_mode='calculated', phase_policy='dissolved'
+        )
+        carried = calculate_ec_from_totals(
+            water.totals,
+            solution_id='w',
+            ph_mode='calculated',
+            phase_policy='dissolved',
+            residual_charge_eq_per_kgw=water.residual_charge_eq,
+        )
+        expected = calculate_equilibrium_ph(
+            water.totals, phases=[], residual_charge=water.residual_charge_eq
+        )
+        self.assertAlmostEqual(carried.ph, expected.ph, places=6)
+        self.assertGreater(
+            forced.ph - carried.ph, 1
+        )  # forcing zero charge moves the pH by pH units
+
+
 class AcidDoseTests(unittest.TestCase):
     def test_the_nitric_dose_for_a_target_ph_is_planned_on_an_imbalanced_water(self):
         water = dict(

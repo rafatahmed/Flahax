@@ -1073,10 +1073,13 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_cha
 ### `calculate_ec_from_totals`
 
 ```text
-calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
+calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None, residual_charge_eq_per_kgw: float = 0.0) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
 EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+
+In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
+charge the measured water carries that no ion accounts for, instead of forcing zero.
 
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'

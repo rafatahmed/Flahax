@@ -152,7 +152,8 @@ NOT_MODELLABLE = 'ph_not_planned_for_product'
 # The pH stage names what it needs or what the model cannot reach; the recipe stands (G2, G3).
 ALKALINITY_NEEDED = 'measure alkalinity (HCO3) of the water'
 OUT_OF_RANGE = "ionic strength above 0.1 mol/kg: outside the activity model's range"
-PH_NOT_PLANNED = (NOT_MODELLABLE, 'missing_carbon', 'activity_model_out_of_range')
+OUT_OF_RANGE_CODE = 'activity_model_out_of_range'
+PH_NOT_PLANNED = (NOT_MODELLABLE, 'missing_carbon', OUT_OF_RANGE_CODE)
 
 
 def _not_planned(stage):
@@ -344,7 +345,7 @@ def plan_fertilizer_workflow(
                     error_code=exc.code,
                     message=ALKALINITY_NEEDED,
                 )
-            elif name == 'chemistry' and exc.code == 'activity_model_out_of_range':
+            elif name in ('chemistry', 'ph_adjustment') and exc.code == OUT_OF_RANGE_CODE:
                 stages[name] = WorkflowStage(
                     'not_calculated', error_code=exc.code, message=OUT_OF_RANGE
                 )
