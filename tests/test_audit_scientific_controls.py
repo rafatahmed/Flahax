@@ -165,8 +165,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
     def test_f11_unverified_source_chain_is_not_reported_as_proven_absence(self):
         state = SimpleNamespace(saturation_indices={'MnHPO4': 1.0}, precipitated={}, totals={})
         assessment = assess_saturation(state)
-        reasons = ' '.join(row[2] for row in assessment['review'])
-        self.assertNotIn('no measurement behind it', reasons)
+        bases = ' '.join(row[2] for row in assessment['information'])
+        self.assertIn('Plummer et al. 1976', bases)
+        self.assertNotIn('no measurement behind it', bases)
 
     def test_f12_ammonium_maximum_is_declared_with_its_basis(self):
         # G23: with no NH4-N requirement the allowance min(10 % of total N, 1.5 mmol/L) applies

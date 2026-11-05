@@ -95,14 +95,13 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertEqual(
             {c['product'] for c in acid['candidates']}, {'HNO3-example', 'H3PO4-example'}
         )
-        self.assertIsNone(acid['selected'])  # phase-blocked nitric; phosphoric misses P
+        self.assertIsNone(acid['selected'])  # nitric needs review; phosphoric misses P
         self.assertEqual(
             {c['product']: c['status'] for c in acid['candidates']}['HNO3-example'],
-            'rejected',
+            'requires_review',
         )
         nitric = next(c for c in acid['candidates'] if c['product'] == 'HNO3-example')
-        self.assertIn('Hydroxylapatite', nitric['message'])
-        self.assertIsNone(nitric['volume_litres'])
+        self.assertGreater(nitric['volume_litres'], 0)
         self.assertTrue(acid['supersaturated_after_acid'])
         self.assertGreater(acid['nitric_ml_per_batch'], 0)
         miss = (

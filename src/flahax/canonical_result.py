@@ -150,10 +150,8 @@ def result_statuses(summary):
         numerical='not_reported',
         formulation='feasible' if summary['formulation']['feasible'] else 'infeasible',
         chemistry=stages.get('chemistry', {}).get('status', 'needs_input'),
-        phase='blocked'
-        if chemistry and chemistry['phase_assessment']['blocks']
-        else 'requires_review'
-        if chemistry and chemistry['phase_assessment']['review']
+        phase='requires_review'
+        if chemistry and chemistry['phase_assessment']['risk']
         else 'assessed'
         if chemistry
         else 'not_assessed',

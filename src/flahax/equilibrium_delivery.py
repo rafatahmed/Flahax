@@ -14,7 +14,7 @@ from importlib.resources import files
 import math
 from typing import Mapping
 
-from .saturation_policy import assess_saturation
+from .saturation_policy import assess_saturation, risk_warnings
 from .aqueous_model import AcidResult, chemistry
 from .delivery_contracts import DeliveryError, validate_product_assay
 from .delivery_quantities import (
@@ -215,15 +215,7 @@ def plan_equilibrium_delivery(
             'limits.'
         )
     saturation = assess_saturation(result.target)
-    if saturation['blocks']:
-        warnings.append(
-            'Precipitation risk: target has formed solids or positive saturation indices; not '
-            'valid for delivery approval.'
-        )
-    warnings += [
-        f'Review: {p} SI {si:.2f}. {reason} Sources: {sources}'
-        for p, si, reason, sources in saturation['review']
-    ]
+    warnings += risk_warnings(saturation)
     warnings += saturation['advisories']
     residual_bicarbonate = 1000 * result.target.species.get('HCO3-', 0.0)
     audit = {

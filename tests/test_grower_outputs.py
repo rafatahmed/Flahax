@@ -312,12 +312,11 @@ class ReportTests(unittest.TestCase):
             workflow('Chilli (maximumyield)'), PRODUCTS, title='Chilli', water_label='RO'
         )
 
-    def test_phase_block_keeps_unadjusted_recipe_and_quantity_outputs(self):
+    def test_supersaturated_phases_do_not_block_the_plan_or_its_quantity_outputs(self):
         s = self.tomato
-        self.assertEqual(s['status'], 'blocked')
-        self.assertIsNone(s['ph']['selected'])
-        self.assertTrue(s['chemistry']['phase_assessment']['blocks'])
-        self.assertFalse(s['chemistry']['phase_assessment']['mixing_approved'])
+        self.assertEqual(s['status'], 'blocked')  # three tanks are needed
+        self.assertIsNotNone(s['ph']['selected'])
+        self.assertNotIn('blocks', s['chemistry']['phase_assessment'])
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
@@ -325,7 +324,7 @@ class ReportTests(unittest.TestCase):
         self.assertFalse(s['tanks']['waived'])
         self.assertFalse(s['tanks']['mixture_approved'])
         self.assertIn('needs 3 tanks', render_report(s))
-        self.assertTrue(s['chemistry']['review'])
+        self.assertTrue(s['chemistry']['information'])
         json.dumps(s, allow_nan=False)
 
     def test_review_is_judged_on_the_weighed_recipe_both_ways(self):
@@ -381,15 +380,15 @@ class ReportTests(unittest.TestCase):
             s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
         self.assertEqual(s['stages']['formulation']['status'], 'blocked')
 
-    def test_blocked_plan_shows_the_reason_and_the_acid_free_recipe(self):
+    def test_three_tanks_block_the_plan_and_the_recipe_has_no_acid(self):
         s = self.chilli
         self.assertEqual(s['status'], 'blocked')
-        self.assertIsNone(s['ph']['selected'])
+        self.assertIsNotNone(s['ph']['selected'])
+        self.assertEqual(s['ph']['selected']['direction'], 'base')
         self.assertNotIn('Phosphoric Acid (75%)', [x['name'] for x in s['formulation']['salts']])
-        self.assertEqual(s['chemistry']['state_basis'], 'unadjusted_recipe')
-        rejected = s['chemistry']['rejected_candidate_diagnostics']
-        self.assertEqual(rejected['state_basis'], 'rejected_candidate_not_weighed')
-        self.assertIn('CaHPO4', [p for p, _ in rejected['phase_assessment']['blocking']])
+        self.assertEqual(s['chemistry']['state_basis'], 'selected_recipe')
+        self.assertIsNone(s['chemistry']['rejected_candidate_diagnostics'])
+        self.assertIn('CaHPO4', [row['phase'] for row in s['chemistry']['information']])
 
     def test_html_is_complete_and_offline(self):
         for s in (self.tomato, self.chilli):
@@ -508,8 +507,8 @@ class IncidentalAssessmentTests(unittest.TestCase):
             maximum_concentrations=limits,
         )
         stage = flow.stages['ph_adjustment']
-        self.assertIsNone(stage.value.selected)
-        self.assertEqual(stage.status, 'blocked')
+        self.assertIsNotNone(stage.value.selected)
+        self.assertNotEqual(stage.status, 'blocked')
         chosen = next(c for c in stage.value.candidates if c.target is not None)
         self.assertEqual(self.row(chosen.recommendation)['assessment'], 'within_limit')
         for candidate in stage.value.candidates:

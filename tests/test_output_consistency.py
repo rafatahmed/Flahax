@@ -112,13 +112,13 @@ class FieldSessionConsistency(unittest.TestCase):
             self.report, r'\(Monohydrate\)\s+[\d.e-]+\s+0\s'
         )  # no '0' weight in the report
 
-    def test_blocked_workflow_has_no_selected_reagent(self):
-        self.assertIsNone(self.selected)
+    def test_three_tanks_block_the_plan_although_a_reagent_is_selected(self):
+        self.assertIsNotNone(self.selected)
+        self.assertEqual(self.selected['direction'], 'base')
         self.assertEqual(self.summary['status'], 'blocked')
-        self.assertEqual(self.summary['chemistry']['state_basis'], 'unadjusted_recipe')
-        rejected = self.summary['chemistry']['rejected_candidate_diagnostics']
-        self.assertEqual(rejected['state_basis'], 'rejected_candidate_not_weighed')
-        self.assertTrue(rejected['phase_assessment']['blocks'])
+        self.assertEqual(self.summary['chemistry']['state_basis'], 'selected_recipe')
+        self.assertIsNone(self.summary['chemistry']['rejected_candidate_diagnostics'])
+        self.assertNotIn('blocks', self.summary['chemistry']['phase_assessment'])
         self.assertFalse(self.summary['tanks']['mixture_approved'])
         self.assertFalse(self.summary['tanks']['waived'])
         self.assertEqual(self.summary['tanks']['required_tanks'], 3)
@@ -130,8 +130,9 @@ class FieldSessionConsistency(unittest.TestCase):
     def test_one_ph_after_fertilizers_the_weighed_recipe(self):
         mixed = number(self.summary['chemistry']['mixed_ph'], 2)
         self.assertEqual(number(self.summary['ph']['mixed_ph'], 2), mixed)
-        # A rejected reagent leaves the unadjusted weighed recipe.
-        self.assertEqual(mixed, number(self.summary['ph']['unadjusted_ph'], 2))
+        # The weighed recipe includes the selected reagent's nutrients.
+        selected = self.workflow.stages['ph_adjustment'].value.selected
+        self.assertEqual(mixed, number(selected.mixed.ph, 2))
         for d in (2, 3):
             self.assertIn(f'after fertilizers {mixed}', self.sheets[d])
         self.assertIn(f'mixed {mixed}', self.report)
@@ -142,13 +143,12 @@ class FieldSessionConsistency(unittest.TestCase):
             self.assertNotIn('with calcium their small doses are harmless', page)
             self.assertEqual(page.count('Stock assignment needs 3 tanks'), 1)
 
-    def test_ec_uses_the_unadjusted_state_and_rejected_state_stays_separate(self):
+    def test_ec_uses_the_selected_final_state(self):
         from flahax.irrigation_ec import calculate_ec_from_totals
 
         plan = self.workflow.stages['ph_adjustment'].value
-        state = plan.unadjusted_state
+        state = plan.selected.target
         self.assertIsNotNone(state)
-        self.assertEqual(state.ph, plan.unadjusted_ph)
         expected = calculate_ec_from_totals(
             state.totals,
             solution_id='batch',
@@ -158,8 +158,7 @@ class FieldSessionConsistency(unittest.TestCase):
         )
         self.assertEqual(self.summary['ec'], json.loads(json.dumps(asdict(expected))))
         self.assertEqual(self.summary['chemistry']['ionic_strength'], state.ionic_strength)
-        rejected = self.summary['chemistry']['rejected_candidate_diagnostics']
-        self.assertNotEqual(rejected['mixed_ph'], state.ph)
+        self.assertEqual(self.summary['chemistry']['final_ph'], state.ph)
 
     def test_legacy_missing_state_does_not_substitute_rejected_chemistry(self):
         from flahax import summarize_batch, load_library
@@ -168,7 +167,7 @@ class FieldSessionConsistency(unittest.TestCase):
         workflow.canonical_result = None  # Explicit legacy unbound fixture.
         workflow.stages = dict(workflow.stages)
         stage = copy.copy(workflow.stages['ph_adjustment'])
-        stage.value = replace(stage.value, unadjusted_state=None)
+        stage.value = replace(stage.value, unadjusted_state=None, selected_product_id=None)
         workflow.stages['ph_adjustment'] = stage
         summary = summarize_batch(
             workflow, load_library()['salts'], title='Legacy', water_label='RO'

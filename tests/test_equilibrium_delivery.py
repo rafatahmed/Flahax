@@ -27,6 +27,7 @@ from flahax import (
 )
 from flahax.aqueous_model import solve
 from flahax.product_conversion import catalogue_dose_totals
+from flahax.saturation_policy import assess_saturation
 from tests.test_ph_planning import record
 from tests.test_stock_assignments import synthetic_model
 from tests.test_pump_planning import calibration
@@ -268,7 +269,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
 
     # 33c5df2 catalogue: its PHREEQC fixture (products/mixed_target_ph_nitric) doses CH - micro,
     # which the packaged catalogue does not hold.
-    def test_real_mixed_golden_dose_and_precipitation_guard(self):
+    def test_real_mixed_golden_dose_and_precipitation_screen(self):
         self.enterContext(historical_catalogue())
         fixture = (
             Path(__file__).parent
@@ -292,11 +293,13 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             data['nitric_acid_molal'],
             delta=2e-6 + 0.03 * data['nitric_acid_molal'],
         )
-        # Numerical dose is unchanged, but phase names no longer exempt this target.
-        # Missing applicability evidence prevents approval before incidental review.
-        review = [w for w in p.warnings if w.startswith('Review: ')]
-        self.assertEqual(sorted(w.split()[1] for w in review), ['Hydroxylapatite', 'MnHPO4'])
-        self.assertTrue(any(w.startswith('Precipitation risk') for w in p.warnings))
-        with self.assertRaises(DeliveryError) as caught:
+        # Numerical dose is unchanged. Hydroxylapatite and MnHPO4 are information, not warnings,
+        # and no readily forming phase is supersaturated, so the plan carries no risk label.
+        information = [row[0] for row in assess_saturation(p.equilibrium.target)['information']]
+        self.assertEqual(information, ['Hydroxylapatite', 'MnHPO4'])
+        self.assertFalse([w for w in p.warnings if 'precipitation risk' in w.lower()])
+        self.assertFalse([w for w in p.warnings if w.startswith('Review: ')])
+        try:
             transition_plan(self.compose(p), 'validated')
-        self.assertEqual(caught.exception.code, 'precipitation_risk')
+        except DeliveryError as caught:
+            self.assertNotEqual(caught.code, 'precipitation_risk')
