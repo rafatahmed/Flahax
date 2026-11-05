@@ -810,15 +810,6 @@ def plan_fertilizer_workflow(
 
     output.maximum_concentrations = dict(maximum_concentrations or {})
     chemistry_stage = stages.get('chemistry')
-    if chemistry_stage is not None and chemistry_stage.status == 'requires_review':
-        # A plan built on an assumed charge closure is usable only after review; a block stays a
-        # block.
-        for name in ('nitric', 'acid_selection', 'ph_adjustment'):
-            if name in stages and stages[name].status == 'calculated':
-                stages[name].status = 'requires_review'
-                stages[name].message = '; '.join(
-                    filter(None, [stages[name].message, chemistry_stage.message])
-                )
     if (
         chemistry_stage is not None
         and chemistry_stage.status in USABLE

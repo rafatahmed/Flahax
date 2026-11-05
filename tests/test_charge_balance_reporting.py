@@ -47,6 +47,10 @@ class WaterImbalanceTests(unittest.TestCase):
         self.assertGreater(water.inorganic_carbon_molal, 0)
         self.assertEqual(water.analytical_totals, totals)
 
+    def test_the_modelled_water_is_the_analysed_water(self):
+        water = balance_water_analysis(SEVEN_PERCENT, measured_ph=7.0)
+        self.assertEqual(water.modelled_mg_per_litre(), water.analytical_mg_per_litre())
+
     def test_the_diluted_water_keeps_its_residual_charge(self):
         water = balance_water_analysis(SEVEN_PERCENT, measured_ph=7.0)
         half = water.diluted(0.5)
