@@ -31,6 +31,7 @@ from flahax import (
     summarize_batch,
 )
 from flahax.batch_cli import main as batch
+from flahax.canonical_result import seal_summary
 from flahax.nutrient_acceptance import assess_incidental, assessed_limits
 from flahax.ph_adjustment import _judge
 from flahax.delivery_contracts import DeliveryError
@@ -401,6 +402,15 @@ class ReportTests(unittest.TestCase):
                     self.assertIn(salt['name'], html)
         self.assertIn('<svg', render_report(self.tomato))
         self.assertIn('never acidify', render_batch_sheet(self.tomato).lower())
+
+    def test_data_sheet_notes_of_weighed_products_are_in_the_report(self):
+        notes = {'Potassium Nitrate': ['keep dry', 'use fresh']}
+        html = render_report(seal_summary(dict(self.tomato, product_notes=notes)))
+        self.assertIn('Data-sheet notes', html)
+        self.assertIn('Potassium Nitrate: keep dry; use fresh', html)
+        self.assertNotIn(
+            'Data-sheet notes', render_report(seal_summary(dict(self.tomato, product_notes={})))
+        )
 
 
 class IncidentalAssessmentTests(unittest.TestCase):

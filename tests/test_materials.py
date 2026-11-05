@@ -490,6 +490,9 @@ class GradeLotTests(unittest.TestCase):
     def test_charge_residual_not_flagged_for_balanced_or_one_sided_grades(self):
         mkp = grade()
         self.assertIsNone(mkp.charge_residual_percent)  # P only: no cation stated
+        # Chloride carries no nutrient form, so only the cation is stated: no balance to report.
+        kcl = grade(identity_id='idn-potassium-chloride', analysis={'K': {'typical': 52.4}})
+        self.assertIsNone(kcl.charge_residual_percent)
         self.assertNotIn('identity_inconsistent', mkp.flags)
         can = grade(
             identity_id=CAN,

@@ -57,6 +57,14 @@ class PhInputTests(unittest.TestCase):
         # Charge the ions do not carry is an excess of cations: fewer anions are needed.
         self.assertLess(residual.ph, balanced.ph)
 
+    def test_a_residual_charge_must_be_a_finite_number(self):
+        from flahax import DeliveryError
+
+        for bad in (float('nan'), float('inf'), True, '1e-4'):
+            with self.subTest(bad=bad), self.assertRaises(DeliveryError) as raised:
+                calculate_equilibrium_ph({'K+': 1e-3, 'Cl-': 1e-3}, phases=[], residual_charge=bad)
+            self.assertEqual(raised.exception.code, 'invalid_value')
+
     def test_ro_water_calculates_the_ph_with_nothing_declared(self):
         summary = self.summary('ro')
         self.assertEqual(summary['stages']['chemistry']['status'], 'calculated')
