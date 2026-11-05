@@ -193,17 +193,17 @@ FlahaX 0.6.0 reported the following figures:
 - **Limits.** Cl is 102.4 mg/L and Na 55.1 mg/L, both within their limits.
 - **EC.** The estimate is about 2.6 mS/cm. It is experimental, so measure it.
 
-**Historical review findings.** The old sheet listed these reasons; unresolved
-phase applicability now blocks approval:
+**Historical review findings.** The old sheet listed these reasons; a
+supersaturated phase is now reported as information and never blocks:
 - **Ammonium.** The recipe carries 9.2 mg/L NH4-N, a nutrient you did not
   target and gave no maximum for. Check it, or declare a maximum.
 - **The well analysis is 3.5 % out of charge balance.** FlahaX used it as
   measured: the imbalance is reported and carried through the pH calculation,
   and no ion (chloride or any other) is added, removed or adjusted. Your limits
   were checked on the measured 1280.4 mg/L.
-- **Hydroxylapatite and MnHPO4 are supersaturated.** Their names do not prove that
-  precipitation is absent at these conditions. Without applicable reviewed evidence,
-  the phase assessment prevents approval. The sheet retains the findings ([saturation
+- **Hydroxylapatite and MnHPO4 are supersaturated.** They are reported as information
+  with the basis of their constants; only brushite, gypsum or calcite above saturation
+  marks the recipe with a precipitation risk ([saturation
   indices](../developer/water-to-delivery.md#saturation-indices-and-acceptance)).
 - **Iron(II) sulfate.** The recipe uses it, and in an aerated feed iron(II)
   oxidizes and settles out with some phosphate. A chelated iron is the safer

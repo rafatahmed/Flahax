@@ -31,7 +31,7 @@ remain separate; field evidence is not invented to complete software work.
 | Units | Distinguish final litres, solvent kg, analytical totals and species; reconcile measured water explicitly. | [Basis](../models/concentration-basis.md); tests.test_unit_basis |
 | Recipe/reagent | Choose joint mode with its controls or documented legacy mode. Count reagent nutrients once; search exhaustion is unresolved. | [Joint fitting](../developer/joint-problem.md); tests.test_joint_workflow |
 | EC | Preserve estimated/partial/unsupported status. A subtotal is not a total, bound or midpoint. | [Conductivity](../developer/conductivity.md); tests.test_irrigation_ec |
-| Phases | Replace phase-name exemptions with condition-qualified evidence; saturation is not kinetics. | [Phase decisions](../developer/water-to-delivery.md#saturation-indices-and-acceptance); tests.test_chemistry_acceptance |
+| Phases | Phase evidence inputs and `blocks` are gone: read `risk` and `information`; saturation is not kinetics. | [Phase decisions](../developer/water-to-delivery.md#saturation-indices-and-acceptance); tests.test_chemistry_acceptance |
 | Stocks | Respect separation and solubility applicability; equipment needs can exceed two tanks. | [Assignments](../agronomist/stock-assignments.md); tests.test_stock_planning |
 | Delivery/remedies | Structural layouts, missing commands and unevaluated alternatives remain pending. Re-evaluate chosen remedies. | [Delivery](../developer/water-to-delivery.md); tests.test_delivery_plan |
 | Acceptance | Recalculate after input/source/quantity changes; acceptance binds the exact result. | [Results](../agronomist/reading-results.md); tests.test_canonical_result |

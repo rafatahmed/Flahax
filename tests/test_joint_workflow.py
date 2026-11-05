@@ -58,10 +58,9 @@ class JointWorkflowTests(unittest.TestCase):
             ),
         )
         stage = result.stages['ph_adjustment']
-        self.assertEqual(stage.status, 'blocked')
-        self.assertIsNone(stage.value.selected)
+        self.assertEqual(stage.status, 'requires_review')
         c = next(c for c in stage.value.candidates if c.target is not None)
-        self.assertTrue(c.saturation['blocks'])
+        self.assertNotIn('blocks', c.saturation)
         self.assertEqual(c.reagent_mass_g, 0)
         self.assertAlmostEqual(amended_ph(c), 5.8, delta=0.001)
         self.assertFalse(c.joint_result['accepted'])
