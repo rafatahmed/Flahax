@@ -12,7 +12,48 @@ permissions:
 env:
   CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
+# A newer push to the same pull request replaces the run that is still going.
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Two tiers (docs/adr/0002). Pull requests and pushes to main run the light tier: Linux on
+# Python 3.11-3.13 and one clean wheel/sdist check. A manual run of this workflow (Actions >
+# Test > Run workflow) is the full tier, run before a release: Python 3.14, Windows and macOS,
+# the exact three-OS coverage gate and the Codecov upload.
 jobs:
+  scope:
+    name: scope
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
+      code: ${{ steps.scope.outputs.code }}
+      matrix: ${{ steps.scope.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - id: scope
+        name: Choose the tier and whether code changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          full=false; code=true
+          light='{"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"}]}'
+          all='{"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-latest","python-version":"3.13"},{"os":"macos-latest","python-version":"3.13"}]}'
+          matrix=$light
+          if [ "$EVENT" = workflow_dispatch ]; then
+            full=true; matrix=$all
+          elif [ "$EVENT" = pull_request ]; then
+            # Only documentation (docs/ and top-level .md files) changed: no code to test.
+            if ! git diff --name-only "$BASE...$CANDIDATE_SHA" | grep -qvE '^(docs/|[^/]+\.md$)'; then
+              code=false
+            fi
+          fi
+          { echo "full=$full"; echo "code=$code"; echo "matrix=$matrix"; } >> "$GITHUB_OUTPUT"
+
   style:
     runs-on: ubuntu-latest
     steps:
@@ -32,17 +73,18 @@ jobs:
   test:
     # Linux keeps the check names "test (3.11)" ... that branch protection requires.
     name: ${{ matrix.os == 'ubuntu-latest' && format('test ({0})', matrix.python-version) || format('test ({0}, {1})', matrix.os, matrix.python-version) }}
+    needs: scope
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
-        include:
-          - os: windows-latest
-            python-version: "3.13"
-          - os: macos-latest
-            python-version: "3.13"
+      matrix: ${{ fromJSON(needs.scope.outputs.matrix) }}
+    env:
+      # What this job does: the coverage run (full tier, 3.13), the plain run (the other light
+      # and full jobs), and the wheel/sdist check (every full job, one light job).
+      COVERAGE_RUN: ${{ needs.scope.outputs.code == 'true' && needs.scope.outputs.full == 'true' && matrix.python-version == '3.13' }}
+      PLAIN_RUN: ${{ needs.scope.outputs.code == 'true' && !(needs.scope.outputs.full == 'true' && matrix.python-version == '3.13') }}
+      DIST_RUN: ${{ needs.scope.outputs.code == 'true' && (needs.scope.outputs.full == 'true' || (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13')) }}
+      DOCS_ONLY_RUN: ${{ needs.scope.outputs.code != 'true' && matrix.python-version == '3.13' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,15 +93,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install
+        if: needs.scope.outputs.code == 'true' || env.DOCS_ONLY_RUN == 'true'
         run: python -m pip install -e . build
       - name: Unit tests
-        if: matrix.python-version != '3.13'
+        if: env.PLAIN_RUN == 'true' && matrix.python-version != '3.13'
         run: python -m unittest discover -s tests -t .
       - name: Install coverage and support-test dependencies
-        if: matrix.python-version == '3.13'
+        if: (env.PLAIN_RUN == 'true' || env.COVERAGE_RUN == 'true' || env.DOCS_ONLY_RUN == 'true') && matrix.python-version == '3.13'
         run: python -m pip install coverage==7.17.0 PyYAML==6.0.3 -r benchmarks/requirements.txt -r tools/requirements-benchmark-report.txt
+      - name: Unit tests (support dependencies installed)
+        if: env.PLAIN_RUN == 'true' && matrix.python-version == '3.13'
+        run: python -m unittest discover -s tests -t .
+      - name: Documentation tests (only documentation changed)
+        if: env.DOCS_ONLY_RUN == 'true'
+        run: python -m unittest tests.test_docs_site tests.test_docs_structure tests.test_documentation_migration tests.test_changelog tests.test_release_hygiene tests.test_file_headers
       - name: Candidate-bound native coverage
-        if: matrix.python-version == '3.13'
+        if: env.COVERAGE_RUN == 'true'
         shell: bash
         env:
           COVERAGE_FILE: build/coverage/.coverage
@@ -72,16 +121,17 @@ jobs:
           python -m tools.ci_coverage report --candidate "$CANDIDATE_SHA" --output build/coverage
           exit "$test_status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always() && matrix.python-version == '3.13'
+        if: always() && env.COVERAGE_RUN == 'true'
         with:
           name: coverage-evidence-${{ matrix.os }}-${{ matrix.python-version }}
           include-hidden-files: true
           if-no-files-found: error
           path: build/coverage/
       - name: Clean wheel and sdist verification
+        if: env.DIST_RUN == 'true'
         run: python tools/verify_distribution.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: always() && env.DIST_RUN == 'true'
         with:
           name: distribution-evidence-${{ matrix.os }}-${{ matrix.python-version }}
           path: build/distribution-verification.json
@@ -128,7 +178,8 @@ jobs:
 
   coverage-gate:
     name: coverage-gate
-    needs: [style, test, phreeqc-live, docs]
+    # Light tier: only the prerequisites must pass. Full tier: the exact three-OS coverage gate too.
+    needs: [scope, style, test, phreeqc-live, docs]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -138,23 +189,30 @@ jobs:
         run: |
           python -c 'import json, os; results = json.loads(os.environ["REQUIRED_RESULTS"]); assert results and all(v["result"] == "success" for v in results.values()), results'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: needs.scope.outputs.full == 'true'
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        if: needs.scope.outputs.full == 'true'
         with:
           python-version: "3.13"
       - name: Install exact coverage reporter
+        if: needs.scope.outputs.full == 'true'
         run: python -m pip install coverage==7.17.0
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: needs.scope.outputs.full == 'true'
         with:
           pattern: coverage-evidence-*
           path: build/native-coverage
       - name: Enforce revision, native shards and exact statement/branch counts
         id: aggregate
+        if: needs.scope.outputs.full == 'true'
         run: python -m tools.ci_coverage aggregate --candidate "$CANDIDATE_SHA" --inputs build/native-coverage --output build/coverage-gate
       - name: Verify validated upload input
+        if: needs.scope.outputs.full == 'true'
         run: python -m tools.ci_coverage verify-upload --candidate "$CANDIDATE_SHA" --output build/coverage-gate
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: needs.scope.outputs.full == 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/coverage-gate/coverage.xml
@@ -169,7 +227,7 @@ jobs:
         if: always() && steps.aggregate.outcome == 'success'
         run: python -m tools.ci_coverage verify-upload --candidate "$CANDIDATE_SHA" --output build/coverage-gate
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: always() && needs.scope.outputs.full == 'true'
         with:
           name: coverage-gate-${{ env.CANDIDATE_SHA }}
           include-hidden-files: true
