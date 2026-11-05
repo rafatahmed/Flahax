@@ -203,7 +203,7 @@ def interactive(command):
         payload['equilibrium'] = _json(
             'Complete water chemistry: water_totals mol/kg-water, water_mass_kg, '
             'water_analysis_id, '
-            'complete_analysis, carbon_boundary, temperature_c, phases (see '
+            'temperature_c, phases (see '
             'docs/site-planning.md)',
             optional=True,
         )

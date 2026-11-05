@@ -81,6 +81,19 @@ class PhInputTests(unittest.TestCase):
         self.assertEqual(chemistry['message'], RANGE_REASON)
         self.assertTrue(summary['formulation']['salts'])
 
+    def test_a_reagent_search_that_leaves_the_model_range_is_not_calculated(self):
+        from unittest import mock
+
+        from flahax import DeliveryError
+
+        out_of_range = DeliveryError('activity_model_out_of_range', 'Davies ionic strength 0.2')
+        with mock.patch('flahax.fertilizer_workflow.plan_coupled_ph', side_effect=out_of_range):
+            summary = self.summary('ro')
+        stage = summary['stages']['ph_adjustment']
+        self.assertEqual((stage['status'], stage['message']), ('not_calculated', RANGE_REASON))
+        self.assertTrue(summary['formulation']['salts'])
+        self.assertNotIn('blocked', {s['status'] for s in summary['stages'].values()})
+
     def test_the_stated_model_conditions_are_in_the_summary(self):
         assumptions = self.summary('ro')['assumptions']
         for text in (
