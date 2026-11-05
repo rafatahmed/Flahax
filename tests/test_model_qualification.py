@@ -107,9 +107,7 @@ class ModelDomainTests(unittest.TestCase):
         totals = {'Dtp-5': 0.001, 'Cu+2': 0.001, 'Na+': 0.003}
         for result in (
             solve(totals, 7),
-            calculate_equilibrium_ph(
-                totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-            ),
+            calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[]),
         ):
             self.assertIn(
                 ('Dtp-5', 'Cu+2'), [r.get('components') for r in result.model_limitations]

@@ -9,6 +9,8 @@ import unittest
 
 from flahax import component_nutrient_masses, load_library, material_inventory
 from flahax.engine import forward, recommend
+from flahax.label_reconciliation import reconcile_label
+from flahax.materials import load_identities
 from flahax.measured_water import nutrient_mg_per_litre
 from flahax.ph_adjustment import REAGENTS
 from flahax.product_conversion import catalogue_dose_totals
@@ -60,8 +62,14 @@ class MaterialInventoryTests(unittest.TestCase):
                 self.assertEqual(inv['status'], 'supported_components')
                 chemical = component_nutrient_masses(inv['components_moles_per_gram'])
                 fitted = forward([product], [1])
+                # Decision G5: the fit keeps the label; chemistry sets aside the label's
+                # unbalanced charge (label_reconciliation), so they differ by exactly that.
+                identity = load_identities()[product['identityId']]
+                result = reconcile_label(identity, product['elements'])
+                surplus = result.unassigned_percent if result else {}
                 for ion, grams in chemical.items():
-                    self.assertAlmostEqual(fitted[ion], grams * 1000, delta=1e-10)
+                    expected = grams * 1000 + surplus.get(ion, 0.0) * 10
+                    self.assertAlmostEqual(fitted[ion], expected, delta=1e-10)
 
     def test_water_products_and_reagents_add_on_same_basis(self):
         # 2 L final solution, 1.5 kg water; 0.4 g FeEDTA and 0.003 mol HNO3.

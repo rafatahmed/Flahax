@@ -196,6 +196,17 @@ class JointSensitivityTests(unittest.TestCase):
     def test_cold_charge_correction_rechecks_actual_melon_candidate(self):
         # The retained search point doses pre-packaged-catalogue product IDs.
         self.enterContext(historical_catalogue())
+        # It was found while a label's charge surplus entered chemistry as implicit H+/OH-
+        # (before decision G5); with labels balanced it is no longer a point that needs a cold
+        # charge correction, so the label chemistry it was found with is kept for this test.
+        from unittest import mock
+
+        self.enterContext(
+            mock.patch(
+                'flahax.product_conversion.chemistry_elements',
+                lambda record, ion_forms: dict(record['elements']),
+            )
+        )
         from flahax import load_library, make_joint_problem, balance_water_analysis
         from flahax.ph_adjustment import nutrient_salts
         from flahax.measured_water import nutrient_mg_per_litre
@@ -208,7 +219,15 @@ class JointSensitivityTests(unittest.TestCase):
             for f in library['formulas']
             if f['name'] == 'Melons (Douglas Peckenpaugh)'
         )
-        balanced = balance_water_analysis(STATION_104, measured_ph=7.8)
+        # The retained search point was found on station 104 with its charge closed on chloride,
+        # a fixture of this witness (the packaged workflow no longer closes a water on an ion).
+        from flahax.measured_water import solve
+
+        closed = dict(balance_water_analysis(STATION_104, measured_ph=7.8).totals)
+        state = solve(closed, 7.8)
+        while abs(state.charge_balance) > 1e-12:
+            closed['Cl-'] += state.charge_balance
+            state = solve(closed, 7.8, start=state)
         p = make_joint_problem(
             nutrient_salts(library['salts']),
             dict(
@@ -223,7 +242,7 @@ class JointSensitivityTests(unittest.TestCase):
             targets,
             nutrient_mg_per_litre({k: v * 0.2 for k, v in STATION_104.items()}, 1000, 1000),
             reagent_solvent_fraction=0.5,
-            water_components={k: v * 0.2 for k, v in balanced.totals.items()},
+            water_components={k: v * 0.2 for k, v in closed.items()},
             final_volume_litres=1000,
             solvent_mass_kg=1000,
             target_ph=5.8,
@@ -404,9 +423,7 @@ class JointSensitivityTests(unittest.TestCase):
         self.assertLessEqual(result['reagentDose'], 1e-12)
         self.assertFalse(result['accepted'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_full_catalogue_chelate_derivatives(self):
-        self.enterContext(historical_catalogue())
         from flahax import load_library, make_joint_problem, recommend
         from flahax.ph_adjustment import nutrient_salts
 

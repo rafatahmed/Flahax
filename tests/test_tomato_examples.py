@@ -27,7 +27,8 @@ def compatible(tank):
 
 
 class SimpleTomatoTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: examples/tomato_simple.py's recipe fails its every-target check on the
+    # packaged Tomato (Howard Resh) formula (a target missed by about 1.9 %).
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -51,7 +52,8 @@ class SimpleTomatoTests(unittest.TestCase):
 
 
 class AdvancedTomatoTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato feed mixes at pH 4.89, so phosphoric
+    # acid is never dosed and the over-acidification withdrawal this class follows does not arise.
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -64,12 +66,13 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertLessEqual(chosen['Cl'], limits['Cl'])
         self.assertGreater(blends[25]['Cl'], limits['Cl'])
         # Decided on the laboratory analysis (#84): 8% passes, 9% fails on its measured chloride
-        # (115.2 mg/L) although the charge-balanced model (104.3 mg/L) would pass it.
+        # (115.2 mg/L). The chemistry takes the analysis as measured (G11), so the model basis
+        # shows the same chloride.
         self.assertEqual(self.r['blend_percent'], 8)
         self.assertAlmostEqual(chosen['Na'], 54.4, places=1)
         self.assertAlmostEqual(chosen['Cl'], 102.4, places=1)
         self.assertGreater(blends[9]['Cl'], limits['Cl'])
-        self.assertLess(blends[9]['Cl_model'], limits['Cl'])
+        self.assertAlmostEqual(blends[9]['Cl_model'], blends[9]['Cl'], places=9)
         one_more = tomato_advanced.water_mg_l(
             {k: v * 0.09 for k, v in _balanced().analytical_totals.items()}
         )
@@ -117,9 +120,7 @@ class AdvancedTomatoTests(unittest.TestCase):
 
 
 class TomatoReportTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_report_and_sheets_are_complete_and_offline(self):
-        self.enterContext(historical_catalogue())
         files = build()
         self.assertEqual(
             set(files),

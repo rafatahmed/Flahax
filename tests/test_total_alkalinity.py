@@ -35,7 +35,10 @@ class TotalAlkalinityTests(unittest.TestCase):
         self.assertEqual(result.alkalinity_eq_per_kg, 0.002)
         self.assertNotIn('CO3-2', source)
         self.assertAlmostEqual(total_alkalinity(result.state), 0.002, places=12)
-        self.assertLess(abs(result.state.charge_balance), 1e-12)
+        # The imbalance is carried as measured, not closed with an ion (decision G11).
+        self.assertIsNone(result.balance_ion)
+        self.assertEqual(result.residual_charge_eq, result.state.charge_balance)
+        self.assertEqual({k: v for k, v in result.totals.items() if k != 'CO3-2'}, source)
 
     def test_prescribed_species_have_independent_proton_equivalents(self):
         # Relative to H2CO3, H2PO4-, H3BO3, NH4+ and SO4-2.
@@ -120,20 +123,19 @@ class TotalAlkalinityTests(unittest.TestCase):
     def test_titration_is_not_changed_when_chloride_is_missing(self):
         for chloride in ({}, {'Cl-': 0}):
             source = {'Ca+2': 0.0016, 'NO3-': 0.001, **chloride}
-            with self.assertRaises(DeliveryError) as caught:
-                balance_water_analysis(source, measured_ph=7.5, alkalinity_eq_per_kg=0.002)
-            self.assertIn(caught.exception.code, ('missing_balance_ion', 'fixed_balance_ion'))
+            result = balance_water_analysis(source, measured_ph=7.5, alkalinity_eq_per_kg=0.002)
+            self.assertIsNone(result.balance_ion)
+            self.assertEqual(result.alkalinity_eq_per_kg, 0.002)
+            self.assertAlmostEqual(total_alkalinity(result.state), 0.002, places=12)
+            self.assertEqual(result.analytical_totals, source)
             self.assertNotIn('CO3-2', source)
 
-    def test_explicit_fixed_carbon_is_not_adjusted_as_fallback(self):
-        with self.assertRaises(DeliveryError) as caught:
-            balance_water_analysis(
-                {'Ca+2': 0.0016, 'NO3-': 0.001, 'CO3-2': 0.002},
-                measured_ph=7.5,
-                fixed=('CO3-2',),
-                maximum_imbalance_percent=100,
-            )
-        self.assertEqual(caught.exception.code, 'missing_balance_ion')
+    def test_explicit_carbon_is_used_as_given_and_never_adjusted(self):
+        source = {'Ca+2': 0.0016, 'NO3-': 0.001, 'CO3-2': 0.002}
+        result = balance_water_analysis(source, measured_ph=7.5)
+        self.assertEqual(result.totals, source)
+        self.assertEqual(result.balance_adjustment_molal, 0.0)
+        self.assertEqual(result.residual_charge_eq, result.state.charge_balance)
 
     def test_lab_alkalinity_units_use_solvent_basis_without_inventing_carbon(self):
         with tempfile.TemporaryDirectory() as directory:

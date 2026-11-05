@@ -116,7 +116,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             'the empirical-fit domain is narrower than the speciation domain',
         )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
+    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
+    # candidate is planned.
     def test_f09_grower_summary_preserves_ec_qualification(self):
         self.enterContext(historical_catalogue())
         from tests.test_grower_outputs import PRODUCTS, workflow
@@ -196,7 +198,6 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         try:
             result = calculate_equilibrium_ph(
                 {'Dtp-5': 0.001, 'Cu+2': 0.001, 'Na+': 0.003},
-                complete_analysis=True,
                 carbon_boundary='closed',
                 phases=[],
             )

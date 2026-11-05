@@ -15,7 +15,6 @@ from unittest import mock
 
 from flahax.__main__ import main as flahax
 from flahax.batch_cli import main as batch
-from tests.catalogue_history import historical_catalogue
 
 TOMATO = ['--formula', 'Tomato (Howard Resh)']
 
@@ -105,9 +104,7 @@ class EntryInputTests(unittest.TestCase):
         code, text = run(flahax, [], '{bad')
         self.assertIn('Expected a JSON object on stdin: Expecting property name', text)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_valid_input_returns_the_current_blocked_result(self):
-        self.enterContext(historical_catalogue())
         code, text = self.batch('--acid', 'HNO3:0.60:1.37:Nitric acid 60%')
         self.assertEqual(code, 3, text)
         self.assertIn(' - blocked', text)

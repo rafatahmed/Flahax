@@ -79,10 +79,8 @@ def arguments():
 
 
 class EquilibriumDeliveryTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
-        cls.enterClassContext(historical_catalogue())
         cls.args = arguments()
         cls.plan = plan_equilibrium_delivery(**cls.args)
 
@@ -99,7 +97,8 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             next(row['final'] for row in p.rows if row['symbol'] == 'N_NO3')
             - p.nutrient_contribution['N_NO3'].value
         )
-        self.assertAlmostEqual(before, 0.02 * 0.95 * 13.856 * 10, places=10)
+        # The packaged Potassium Nitrate label states N 13.0 % (the 33c5df2 one 13.856 %).
+        self.assertAlmostEqual(before, 0.02 * 0.95 * 13.0 * 10, places=10)
         self.assertTrue(p.post_mix_measurement_required)
         self.assertEqual(len(p.audit['chemistrySha256']), 64)
         self.assertEqual(p.audit['waterTotalsMolal'], self.args['water_totals'])
@@ -267,7 +266,10 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         self.assertEqual(p.reagent_mass.value, 0)
         self.assertEqual(p.reagent_volume_litres, 0)
 
+    # 33c5df2 catalogue: its PHREEQC fixture (products/mixed_target_ph_nitric) doses CH - micro,
+    # which the packaged catalogue does not hold.
     def test_real_mixed_golden_dose_and_precipitation_guard(self):
+        self.enterContext(historical_catalogue())
         fixture = (
             Path(__file__).parent
             / 'fixtures/phreeqc/products/mixed_target_ph_nitric/expected.json'

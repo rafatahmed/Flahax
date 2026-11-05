@@ -39,7 +39,7 @@ with historical_catalogue():
     LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
-CLOSED = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
+CLOSED = dict(carbon_boundary='closed', phases=[])
 
 
 def measured_at_own_ph(totals):
@@ -64,13 +64,14 @@ class RecordTests(unittest.TestCase):
     def test_the_laboratory_analysis_is_kept_unchanged(self):
         b = self.balanced
         self.assertEqual(b.analytical_totals, STATION_104)
-        self.assertNotEqual(b.totals['Cl-'], STATION_104['Cl-'])
+        self.assertEqual(b.totals['Cl-'], STATION_104['Cl-'])  # nothing is adjusted
         self.source['Cl-'] = 0.0  # a later edit of the caller's dict
         self.assertEqual(b.analytical_totals['Cl-'], STATION_104['Cl-'])
         self.assertEqual(serializable(b)['analytical_totals'], STATION_104)
         self.assertEqual(b.analytical_mg_per_litre()['Cl'], STATION_104['Cl-'] * 35.45e3)
         self.assertEqual(
-            (b.analysis_id, b.units, b.reconciliation), ('station-104', 'mol/kg water', 'assumed')
+            (b.analysis_id, b.units, b.reconciliation),
+            ('station-104', 'mol/kg water', 'imbalance_reported'),
         )
 
     def test_dilution_scales_both_inventories_and_recomputes_chemistry(self):
@@ -116,28 +117,13 @@ class BalanceBeforeAdjustingTests(unittest.TestCase):
         )
         self.assertEqual(b.carbon_source, 'none')
 
-    def test_fixed_zero_chloride_is_never_adjusted_and_closes_on_the_alkalinity(self):
-        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100,
-        # decision 2026-10-23).
+    def test_fixed_zero_chloride_and_carbon_are_never_adjusted(self):
+        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100). The
+        # imbalance is reported; neither chloride nor the carbon is changed to close it (G11).
         water = {'K+': 0.00505, 'NO3-': 0.005, 'CO3-2': 0.0002, 'Cl-': 0.0}
-        closed = balance_water_analysis(water, measured_ph=7)
-        self.assertEqual(
-            (closed.balance_ion, closed.reconciliation), ('CO3-2', 'closed_on_alkalinity')
-        )
-        self.assertEqual(closed.totals['Cl-'], 0.0)
-        with self.assertRaises(DeliveryError) as raised:
-            balance_water_analysis(water, measured_ph=7, balance_ion='Na+')
-        self.assertEqual(raised.exception.code, 'missing_balance_ion')
-
-    def test_reconciliation_only_within_the_stated_uncertainty(self):
-        with self.assertRaises(DeliveryError) as raised:  # station 104 needs -9.5 % chloride
-            balance_water_analysis(STATION_104, measured_ph=7.8, balance_ion_uncertainty_percent=5)
-        self.assertEqual(raised.exception.code, 'reconciliation_out_of_bounds')
-        b = balance_water_analysis(
-            STATION_104, measured_ph=7.8, balance_ion_uncertainty_percent=10
-        )
-        self.assertEqual(b.reconciliation, 'reconciled')
-        self.assertEqual(b.analytical_totals, STATION_104)
+        kept = balance_water_analysis(water, measured_ph=7)
+        self.assertEqual((kept.balance_ion, kept.reconciliation), (None, 'imbalance_reported'))
+        self.assertEqual(kept.totals, water)
 
     def test_below_detection_is_recorded_and_held(self):
         water = dict(STATION_104, **{'Mn+2': 0.0})
@@ -167,7 +153,9 @@ class WorkflowLimitTests(unittest.TestCase):
             **extra,
         )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
+    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
+    # stages does not arise.
     def test_a_laboratory_exceedance_blocks_even_when_the_model_passes(self):
         self.enterContext(historical_catalogue())
         nine = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(
@@ -179,26 +167,23 @@ class WorkflowLimitTests(unittest.TestCase):
         summary = summarize_batch(workflow, PRODUCTS, title='t', water_label='w')
         self.assertEqual(summary['status'], 'blocked')
         self.assertEqual(summary['limits'][0]['decision'], 'exceeds_limit')
-        self.assertTrue(summary['limits'][0]['balancingChangesDecision'])
+        # The chemistry takes the analysis as measured: no balancing can change a decision.
+        self.assertFalse(summary['limits'][0]['balancingChangesDecision'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
-    def test_a_laboratory_pass_is_not_rejected_by_the_model_but_asks_for_review(self):
-        # Balanced on sodium: the model raises Na from 54.4 to 60.7 mg/L at 8%.
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS.
+    def test_a_laboratory_pass_is_a_pass_on_the_model_basis_too(self):
         self.enterContext(historical_catalogue())
-        eight = balance_water_analysis(STATION_104, measured_ph=7.8, balance_ion='Na+').diluted(
-            0.08
-        )
+        eight = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(0.08)
         workflow = self.plan(eight, {'Na': 58})
         self.assertTrue(workflow.recommendation['feasible'])
         self.assertFalse(workflow.recommendation['limitViolations'])
-        self.assertEqual(workflow.stages['formulation'].status, 'requires_review')
-        finding = workflow.water_basis['findings']['formulation'][0]
-        self.assertEqual((finding['symbol'], finding['decision']), ('Na', 'within_limit'))
-        self.assertGreater(finding['modelledPpm'], 58)
+        # Laboratory and model inventories agree, so no limit is flagged for the balancing.
+        self.assertNotIn('formulation', workflow.water_basis['findings'])
+        self.assertEqual(workflow.water_basis['adjustmentPpm'], {})
 
     def test_contradictory_water_inputs_are_rejected(self):
         eight = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(0.08)
-        for extra in ({'measured_ph': 7.8}, {'water_totals': eight.totals}):
+        for extra in ({'measured_ph': 7.8}, {'water_totals': dict(eight.totals, **{'Cl-': 1.0})}):
             with self.subTest(extra=list(extra)):
                 workflow = plan_fertilizer_workflow(
                     PRODUCTS,
@@ -211,18 +196,21 @@ class WorkflowLimitTests(unittest.TestCase):
                 self.assertEqual(
                     workflow.stages['chemistry'].error_code, 'contradictory_water_inputs'
                 )
-        # The model's mg/L in place of the laboratory's is caught by the consistency check.
+        # Nutrient mg/L that disagree with the laboratory analysis are caught by the consistency
+        # check.
         workflow = plan_fertilizer_workflow(
             PRODUCTS,
             FORMULAS['Tomato (Howard Resh)'],
-            eight.modelled_mg_per_litre(),
+            dict(eight.analytical_mg_per_litre(), Cl=eight.analytical_mg_per_litre()['Cl'] * 1.1),
             5.8,
             final_volume=VolumeLitres(1000),
             equilibrium=equilibrium(water_balance=eight),
         )
         self.assertEqual(workflow.stages['chemistry'].error_code, 'inconsistent_water_analysis')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
+    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
+    # stages does not arise.
     def test_a_chloride_free_recipe_keeps_chloride_zero_throughout(self):
         self.enterContext(historical_catalogue())
         water = {'K+': 0.0005, 'NO3-': 0.0005, 'Cl-': 0.0, 'CO3-2': 0.0}
@@ -242,10 +230,12 @@ class WorkflowLimitTests(unittest.TestCase):
         self.assertIn('no adjustment was needed', render_report(summary))
         self.assertEqual([row['analyticalPpm'] for row in summary['limits']], [0.0])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
+    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
+    # stages does not arise.
     def test_no_reagent_needed_still_gets_the_final_limit_check(self):
-        # Salty water already over its own declared chloride maximum; target pH = the mix's own pH.
         self.enterContext(historical_catalogue())
+        # Salty water already over its own declared chloride maximum; target pH = the mix's own pH.
         water = {'Cl': 50.0, 'Na': 50 * 22.98977 / 35.45}
         totals = {'Cl-': 50 / 35.45e3, 'Na+': 50 / 35.45e3}
 
@@ -273,9 +263,7 @@ class WorkflowLimitTests(unittest.TestCase):
 
 
 class NitricDeliveryTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_rows_and_limits_use_the_analysis_and_the_dose_uses_the_chemistry(self):
-        self.enterContext(historical_catalogue())
         args = arguments()
         plain = plan_equilibrium_delivery(**args)
         self.assertEqual(plain.audit['nutrientBasis'], 'supplied water totals')  # legacy meaning
@@ -296,14 +284,10 @@ class NitricDeliveryTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.code, 'nutrient_limit_exceeded')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_a_balanced_record_brings_its_own_analysis(self):
-        self.enterContext(historical_catalogue())
         args = arguments()
         source = copy.deepcopy(args['water_totals'])
-        record = balance_water_analysis(
-            source | {'CO3-2': 1e-4}, measured_ph=7.4, maximum_imbalance_percent=100
-        )
+        record = balance_water_analysis(source | {'CO3-2': 1e-4}, measured_ph=7.4)
         with self.assertRaises(DeliveryError) as raised:
             plan_equilibrium_delivery(
                 **args | {'water_totals': record},
@@ -383,10 +367,11 @@ class BatchCommandTests(unittest.TestCase):
                     str(out) + '2',
                 )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: the packaged Tomato (Howard Resh) fit leaves search_incomplete rows
+    # (conflicting targets N_NO3, P, K, Ca, Mg, S), which this test asserts are absent.
     def test_water_share_blends_the_analysis_with_ion_free_water(self):
-        # The grower walkthrough (#80): the station 104 well as 8% and 9% of the batch water.
         self.enterContext(historical_catalogue())
+        # The grower walkthrough (#80): the station 104 well as 8% and 9% of the batch water.
         with tempfile.TemporaryDirectory() as tmp:
             water = self.write(
                 tmp,
@@ -462,9 +447,7 @@ class BatchCommandTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn('--water-share needs a measured water analysis', err)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chloride_free_water_does_not_fail_on_the_default_balance_ion(self):
-        self.enterContext(historical_catalogue())
         water_totals = {'K+': 0.0005, 'NO3-': 0.0005, 'CO3-2': 0.0, 'Cl-': 0.0}
         ph = measured_at_own_ph(water_totals)
         with tempfile.TemporaryDirectory() as tmp:

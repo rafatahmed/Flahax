@@ -105,7 +105,9 @@ class CoverageTests(unittest.TestCase):
                 )
             self.assertEqual(caught.exception.code, 'invalid_ec_scenarios')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
+    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
+    # candidate is planned.
     def test_grower_outputs_retain_qualifications(self):
         self.enterContext(historical_catalogue())
         from flahax.grower_report import summarize_batch, render_report, render_batch_sheet

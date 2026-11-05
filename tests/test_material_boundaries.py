@@ -15,7 +15,6 @@ from flahax.material_chemistry import material_chemistry, chemistry_ions, chelat
 from flahax.catalogue_chemistry import ProductChemistry
 from tests.test_materials import grade, lot, DOC, MKP
 from tests import test_materials as fixtures
-from tests.catalogue_history import historical_catalogue
 
 
 class MaterialRecordBoundaryTests(unittest.TestCase):
@@ -175,9 +174,7 @@ class CompositionBoundaryTests(unittest.TestCase):
         # Oxygen and hydrogen do not create missing nutrient-assay alarms.
         self.assertIsNone(assay_drift({'formula': 'H2O', 'elements': {'K': 0}}))
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_product_conversion_rejects_bad_doses_and_preserves_declared_sodium(self):
-        self.enterContext(historical_catalogue())
         from flahax import load_library
         from flahax.product_conversion import (
             convert_material_dose,
@@ -255,9 +252,6 @@ class RemainingMaterialPaths(unittest.TestCase):
             with self.assertRaises(DeliveryError) as caught:
                 function(*args)
             self.assertEqual(caught.exception.code, 'unknown_product')
-        self.assertFalse(
-            m._range_excludes_theory({'theoretical_analysis': None}, {'K': 1}, {'K': 2})
-        )
         self.assertEqual(counterion_sodium_mg_per_l([({'name': 'Incomplete'}, 1)]), 0)
 
     def test_parser_helper_rejects_unbalanced_group_and_tiny_element_is_not_missing(self):

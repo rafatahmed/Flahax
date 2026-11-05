@@ -54,7 +54,6 @@ def run():
         expected_davies_rejection=rejection(
             lambda: calculate_equilibrium_ph(
                 {'Na+': 0.2, 'Cl-': 0.2},
-                complete_analysis=True,
                 carbon_boundary='closed',
                 phases=[],
             )

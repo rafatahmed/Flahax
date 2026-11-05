@@ -23,6 +23,7 @@ from flahax.materials import (
     make_lot,
     resolve_material,
 )
+from flahax.label_reconciliation import reconcile_label
 from tests.catalogue_history import historical_catalogue, historical_library
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
@@ -455,33 +456,43 @@ class GradeLotTests(unittest.TestCase):
             resolve_material('Potassium Nitrate', grade=grade())
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
-    def test_identity_inconsistent_flag_on_old_mg_nitrate_analysis(self):
-        # 0.553 % is within the 1 % label limit (#93 decision 2026-10-23); a one-point Mg error is
-        # not.
+    def test_off_label_mg_nitrate_is_reconciled_not_flagged(self):
+        # Decision G5: no label is flagged for its charge; the unbalanced part is reported.
         old = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
             analysis={'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}},
         )
         self.assertAlmostEqual(old.charge_residual_percent, 0.553, places=3)
-        self.assertNotIn('identity_inconsistent', old.flags)
+        self.assertEqual(old.flags, ())
+        identity = load_identities()['idn-magnesium-nitrate-hexahydrate']
+        self.assertAlmostEqual(
+            reconcile_label(identity, old.typical).unassigned_percent['Mg'],
+            0.10617454503915985,
+            places=14,
+        )
         wrong = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
             analysis={'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 10.65}},
         )
-        self.assertIn('identity_inconsistent', wrong.flags)
-        resolved = resolve_material('Mg Nitrate', grade=wrong)
-        self.assertIn('identity_inconsistent', resolved.flags)
-        theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
+        self.assertEqual(wrong.flags, ())
+        self.assertEqual(resolve_material('Mg Nitrate', grade=wrong).flags, ())
+        result = reconcile_label(identity, wrong.typical)
+        self.assertAlmostEqual(result.unassigned_percent['Mg'], 1.1061745450391602, places=14)
+        self.assertAlmostEqual(result.imbalance_percent, 5.477786006947069, places=12)
+        theory = identity['theoretical_analysis']
         exact = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
             analysis={'N_NO3': {'typical': theory['N_NO3']}, 'Mg': {'typical': theory['Mg']}},
         )
         self.assertAlmostEqual(exact.charge_residual_percent, 0.0, places=9)
-        self.assertNotIn('identity_inconsistent', exact.flags)
+        self.assertEqual(exact.flags, ())
 
     def test_charge_residual_not_flagged_for_balanced_or_one_sided_grades(self):
         mkp = grade()
         self.assertIsNone(mkp.charge_residual_percent)  # P only: no cation stated
+        # Chloride carries no nutrient form, so only the cation is stated: no balance to report.
+        kcl = grade(identity_id='idn-potassium-chloride', analysis={'K': {'typical': 52.4}})
+        self.assertIsNone(kcl.charge_residual_percent)
         self.assertNotIn('identity_inconsistent', mkp.flags)
         can = grade(
             identity_id=CAN,
@@ -503,56 +514,26 @@ class GradeLotTests(unittest.TestCase):
             ).charge_residual_percent
         )
 
-    def test_identity_inconsistent_when_range_excludes_theory(self):
+    def test_a_range_excluding_theory_is_not_flagged(self):
+        # Decision G5: a label states guaranteed minimums, not stoichiometry; a grade range off
+        # the pure compound (Mg nitrate above it, a 75 % acid or a chelate below it) is used.
         theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
-        excluded = grade(
-            identity_id='idn-magnesium-nitrate-hexahydrate',
-            analysis={
-                'Mg': {
-                    'typical': theory['Mg'] * 1.03,
-                    'minimum': theory['Mg'] * 1.02,
-                    'maximum': theory['Mg'] * 1.04,
-                }
-            },
-        )
-        self.assertIsNone(excluded.charge_residual_percent)
-        self.assertIn('identity_inconsistent', excluded.flags)
-        # A minimum alone above theory is not a range: not flagged.
-        open_ended = grade(
-            identity_id='idn-magnesium-nitrate-hexahydrate',
-            analysis={'Mg': {'minimum': theory['Mg'] * 1.02}},
-        )
-        self.assertNotIn('identity_inconsistent', open_ended.flags)
-        inside = grade(
-            identity_id='idn-magnesium-nitrate-hexahydrate',
-            analysis={'Mg': {'minimum': theory['Mg'] * 0.99, 'maximum': theory['Mg'] * 1.01}},
-        )
-        self.assertNotIn('identity_inconsistent', inside.flags)
-
-    def test_range_test_skipped_for_solution_and_chelate_identities(self):
-        # Theory is the pure compound; a commercial 75 % acid or a chelate as sold sits below it.
-        acid = grade(
-            identity_id='idn-phosphoric-acid',
-            analysis={'P2O5': {'typical': 54.3, 'minimum': 54.0, 'maximum': 54.6}},
-        )
-        self.assertNotIn('identity_inconsistent', acid.flags)
-        chelate = grade(
-            identity_id='idn-sodium-iron-edta',
-            analysis={'Fe': {'typical': 13.0, 'minimum': 12.8, 'maximum': 13.2}},
-        )
-        self.assertNotIn('identity_inconsistent', chelate.flags)
-        theory = load_identities()[KNO3]['theoretical_analysis']
-        kno3 = grade(
-            identity_id=KNO3,
-            analysis={
-                'N_NO3': {
-                    'typical': theory['N_NO3'] * 1.03,
-                    'minimum': theory['N_NO3'] * 1.02,
-                    'maximum': theory['N_NO3'] * 1.04,
-                }
-            },
-        )
-        self.assertIn('identity_inconsistent', kno3.flags)
+        for identity_id, analysis in (
+            (
+                'idn-magnesium-nitrate-hexahydrate',
+                {
+                    'Mg': {
+                        'typical': theory['Mg'] * 1.03,
+                        'minimum': theory['Mg'] * 1.02,
+                        'maximum': theory['Mg'] * 1.04,
+                    }
+                },
+            ),
+            ('idn-phosphoric-acid', {'P2O5': {'typical': 54.3, 'minimum': 54.0, 'maximum': 54.6}}),
+            ('idn-sodium-iron-edta', {'Fe': {'typical': 13.0, 'minimum': 12.8, 'maximum': 13.2}}),
+        ):
+            with self.subTest(identity=identity_id):
+                self.assertEqual(grade(identity_id=identity_id, analysis=analysis).flags, ())
 
     def test_total_n_split_by_identity_ratio(self):
         theory = load_identities()[CAN]['theoretical_analysis']
@@ -932,8 +913,15 @@ class ChemistryUseTests(unittest.TestCase):
         user = catalogue_dose_totals({name: 1.0}, materials={name: material})
         self.assertAlmostEqual(user['Ca+2'], shipped['Ca+2'] * 18.5 / 19.0, places=15)
         self.assertNotEqual(user['Ca+2'], shipped['Ca+2'])
-        for basis in ('NO3-', 'NH4+'):
-            self.assertAlmostEqual(user[basis], shipped[basis], places=15)
+        self.assertAlmostEqual(user['NH4+'], shipped['NH4+'], places=15)
+        # Decision G5: less Ca leaves more of the label's nitrate unbalanced; it is set aside.
+        elements = material.record['elements']
+        surplus = reconcile_label(load_identities()[CAN], elements).unassigned_percent
+        self.assertEqual(set(surplus), {'N_NO3'})
+        self.assertAlmostEqual(
+            user['NO3-'], (elements['N_NO3'] - surplus['N_NO3']) / 100 / 14.0067, places=15
+        )
+        self.assertLess(user['NO3-'], shipped['NO3-'])
 
     def test_undisclosed_blend_refuses_chemistry(self):
         self.enterContext(historical_catalogue())
@@ -1015,9 +1003,7 @@ class ChemistryUseTests(unittest.TestCase):
             _old_totals({'CH - micro': 2.0}),
         )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_irrigation_ec_reports_material_provenance(self):
-        self.enterContext(historical_catalogue())
         from flahax.materials import IDENTITIES_SHA256 as SHA
 
         name = 'Calcium Nitrate (ag grade)'
@@ -1106,8 +1092,9 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertEqual((plain.status, plain.ec25_ms_cm), (explicit.status, explicit.ec25_ms_cm))
         self.assertEqual(plain.audit['materials'], explicit.audit['materials'])
 
-    def test_user_grade_drives_o5_gate(self):
-        # Controller ruling (Task 3): the retired Mg Nitrate analysis as a user grade.
+    def test_user_grade_reaches_ec_with_its_charge_balanced(self):
+        # Controller ruling (Task 3): the retired Mg Nitrate analysis as a user grade. Decision
+        # G5: its unbalanced Mg is set aside before EC, so the 0.1 % assay screen sees none.
         from flahax.irrigation_ec import assay_charge_residual
 
         retired = resolve_material(
@@ -1119,19 +1106,15 @@ class ChemistryUseTests(unittest.TestCase):
             ),
         )
         residual = assay_charge_residual({'Mg Nitrate': 1.0}, materials={'Mg Nitrate': retired})
-        self.assertAlmostEqual(residual['percent'], 0.5532, places=3)
+        self.assertAlmostEqual(residual['percent'], 0.0, places=12)
         r = self.ec({'Mg Nitrate': 1.0}, materials={'Mg Nitrate': retired})
-        self.assertEqual(
-            (r.status, r.reason), ('not_supported', 'assay_charge_residual_too_large')
-        )
-        # The label itself is within the 1 % limit (#93); the EC screen keeps its own 0.1 % gate.
-        self.assertNotIn('identity_inconsistent', r.audit['materials']['Mg Nitrate']['flags'])
+        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertEqual(r.audit['materials']['Mg Nitrate']['flags'], [])
         shipped = self.ec({'Mg Nitrate': 1.0})
         self.assertNotEqual(shipped.reason, 'assay_charge_residual_too_large')
+        self.assertNotEqual(r.ionic_strength, shipped.ionic_strength)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_equilibrium_plan_audits_materials(self):
-        self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery
         from flahax.materials import IDENTITIES_SHA256 as SHA
         from tests.test_equilibrium_delivery import arguments
@@ -1543,7 +1526,6 @@ class WorkflowGradeTests(unittest.TestCase):
         water_totals={},
         water_mass_kg=1000,
         water_analysis_id='RO',
-        complete_analysis=True,
         carbon_boundary='closed',
         temperature_c=25,
         phases=[],
@@ -1589,7 +1571,9 @@ class WorkflowGradeTests(unittest.TestCase):
     def doses(recommendation):
         return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato (Howard Resh) feed mixes at pH 4.89
+    # and must be raised to 5.8, so the nitric candidate rejected for Hydroxylapatite that this
+    # test follows does not arise.
     def test_label_grade_enters_chemistry_and_ph(self):
         self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
@@ -1637,12 +1621,20 @@ class WorkflowGradeTests(unittest.TestCase):
         resolved_id = self.workflow(dict(product, id=material.record['id']))
         self.assertEqual(resolved_id.stages['chemistry'].status, 'calculated')
 
-    def test_inconsistent_label_is_refused(self):
+    def test_off_label_grade_enters_chemistry_with_its_charge_balanced(self):
+        # Decision G5: a label 10 % Fe-rich is used; the Fe its sulfate cannot balance is set
+        # aside (Fe+2 = SO4-2 for FeSO4), never refused.
+        from flahax.product_conversion import catalogue_dose_totals
+
         product, material = self.graded(0.97, fe=1.10)
-        self.assertIn('identity_inconsistent', material.flags)
+        self.assertEqual(material.flags, ())
         stage = self.workflow(product).stages['chemistry']
-        self.assertEqual((stage.status, stage.error_code), ('blocked', 'identity_inconsistent'))
-        self.assertIn(self.NAME, stage.message)
+        self.assertEqual((stage.status, stage.error_code), ('calculated', None))
+        totals = catalogue_dose_totals({self.NAME: 1.0}, materials={self.NAME: material})
+        sulfate = material.record['elements']['S'] / 100 / 32.06
+        self.assertEqual(set(totals), {'Fe+2', 'SO4-2'})
+        self.assertAlmostEqual(totals['SO4-2'], sulfate, delta=1e-18)
+        self.assertAlmostEqual(totals['Fe+2'], sulfate, delta=1e-17)
 
     def test_changed_assay_without_grade_is_still_refused(self):
         product, _ = self.graded(0.97)
@@ -1903,14 +1895,16 @@ class DeclaredCompoundTests(unittest.TestCase):
             )
         )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_declared_compound_matches_equivalent_salts(self):
-        self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph
+        from flahax.label_reconciliation import chemistry_elements
         from flahax.product_conversion import catalogue_dose_totals
 
-        shipped = {s['name']: s['elements'] for s in load_library()['salts']}
-        kno3, mkp = shipped['Potassium Nitrate'], shipped['Potassium Monobasic Phosphate']
+        # The salts enter chemistry with their labels' unbalanced charge set aside (decision
+        # G5); the compound declares what they put in the water.
+        shipped = {s['name']: s for s in load_library()['salts']}
+        kno3 = chemistry_elements(shipped['Potassium Nitrate'], {'K+': 1, 'NO3-': 1})
+        mkp = chemistry_elements(shipped['Potassium Monobasic Phosphate'], {'K+': 1, 'H2PO4-': 1})
         label = {
             'N_NO3': kno3['N_NO3'] / 2,
             'N_NH4': 0,
@@ -1929,7 +1923,7 @@ class DeclaredCompoundTests(unittest.TestCase):
             }
         )
         material = resolve_material('NK-P 1:1', grade=grade)
-        kwargs = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
+        kwargs = dict(carbon_boundary='closed', phases=[])
         compound = calculate_equilibrium_ph(
             catalogue_dose_totals({'NK-P 1:1': 2.0}, materials={'NK-P 1:1': material}), **kwargs
         )
@@ -1943,8 +1937,8 @@ class DeclaredCompoundTests(unittest.TestCase):
 
 
 class LabelToleranceTests(unittest.TestCase):
-    """#93: printed labels are rounded and commercial grades are not the pure salt; 1 % (#93
-    decision 2026-10-23)."""
+    """#93: printed labels are rounded and commercial grades are not the pure salt. Decision G5
+    replaced the 1 % limit: the unbalanced charge is reported, never refused."""
 
     def calcinit(self, cao):
         return grade(
@@ -1968,10 +1962,14 @@ class LabelToleranceTests(unittest.TestCase):
             resolve_material('Calcium Nitrate (ag grade)', grade=label).flags,
         )
 
-    def test_a_one_point_calcium_error_is_refused(self):
+    def test_a_one_point_calcium_error_is_reported_not_refused(self):
         typo = self.calcinit(26.3 * 19.8 / 18.8)  # Ca 19.8 % typed for 18.8 %
-        self.assertGreater(abs(typo.charge_residual_percent), 1.0)
-        self.assertIn('identity_inconsistent', typo.flags)
+        self.assertAlmostEqual(typo.charge_residual_percent, 1.8306874958425163, places=12)
+        self.assertEqual(typo.flags, ())
+        result = reconcile_label(load_identities()[CAN], typo.typical)
+        self.assertEqual(set(result.unassigned_percent), {'Ca', 'N_NH4'})
+        self.assertAlmostEqual(result.unassigned_percent['Ca'], 0.7117867407705648, places=14)
+        self.assertAlmostEqual(result.unassigned_percent['N_NH4'], 0.03955106844405786, places=14)
 
 
 if __name__ == '__main__':

@@ -99,15 +99,13 @@ A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
 water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
 measured-pH chemistry needs ``HCO3`` (0 if none). Optional keys:
 ``"below_detection": {"Mn": 0.01}`` (detection limits, mg/L; taken as zero, never
-adjusted), ``"balance_ion": "Cl"`` or ``"Na"`` and
-``"balance_ion_uncertainty_percent": 10`` (the stated uncertainty of that ion).
+adjusted).
 
 Nutrient targets and concentration limits use the analysis exactly as entered.
 For the chemistry only (pH, saturation, EC, reagent dose) the analysis is
-speciated at its measured pH: used unchanged if it already balances, otherwise
-closed on the balance ion, within its stated uncertainty, or as an assumption
-flagged for review. The report shows both and never lets that balancing pass or
-fail a limit (#84).
+speciated at its measured pH exactly as measured: its charge imbalance is
+reported, and no ion is added, removed or adjusted to close it. The report shows
+the imbalance and never lets it pass or fail a limit (#84).
 
 Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
 the final solution); unspecified limits are not checked. The packaged pH products

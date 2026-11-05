@@ -159,14 +159,16 @@ Source module: `flahax.calculated_ec`. Import with `from flahax import estimate_
 ### `calculate_equilibrium_ph`
 
 ```text
-calculate_equilibrium_ph(totals, *, complete_analysis, carbon_boundary, phases, temperature_c=25.0)
+calculate_equilibrium_ph(totals, *, phases, temperature_c=25.0, carbon_boundary='closed', residual_charge=0.0)
 ```
 
-Return AqueousResult at zero net charge within the existing Davies domain.
+Return AqueousResult at the net charge ``residual_charge`` within the Davies domain.
 
-Completeness is a caller declaration of analytical coverage, not a claim
-that the software can identify absent laboratory measurements. A nutrient
-table alone is not a complete analysis. Charge adjustment changes only pH.
+``residual_charge`` (eq/kg water) is the charge the measured water carried that no ion
+accounts for: the solve reproduces it instead of forcing zero, so a measured imbalance is
+neither hidden nor corrected with an invented ion (decision G11). Zero means a balanced
+solution. A nutrient table alone gives no carbon: the caller supplies the carbon inventory
+(``CO3-2``, zero for measured carbon-free water). Charge adjustment changes only pH.
 
 Source module: `flahax.calculated_ph`. Import with `from flahax import calculate_equilibrium_ph`.
 
@@ -1071,10 +1073,13 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import assay_cha
 ### `calculate_ec_from_totals`
 
 ```text
-calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None) -> flahax.irrigation_ec.IrrigationECResult
+calculate_ec_from_totals(totals_molal: collections.abc.Mapping[str, float], *, solution_id: str, ph_mode: str, ph: float | None = None, phase_policy: str, phases: collections.abc.Sequence[str] = (), carbon_boundary: str = 'closed', temperature_c: float = 25.0, assay_charge_residual_eq_per_kgw: float = 0.0, assay_charge_residual_percent: float | None = None, audit_inputs: collections.abc.Mapping | None = None, residual_charge_eq_per_kgw: float = 0.0) -> flahax.irrigation_ec.IrrigationECResult
 ```
 
 EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+
+In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
+charge the measured water carries that no ion accounts for, instead of forcing zero.
 
 kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
 speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
@@ -1386,7 +1391,7 @@ Source module: `flahax.materials`. Import with `from flahax import resolve_mater
 ### `BalancedWaterAnalysis`
 
 ```text
-BalancedWaterAnalysis(totals: dict, measured_ph: float, state: flahax.aqueous_model.AqueousResult, balance_ion: str, analysed_balance_ion_molal: float, balance_adjustment_molal: float, imbalance_percent: float, inorganic_carbon_molal: float, carbon_source: str, analytical_totals: dict = None, alkalinity_eq_per_kg: float | None = None, analysis_id: str | None = None, dilution_fraction: float = 1.0, phases: tuple = (), units: str = 'mol/kg water', reconciliation: str = 'assumed', fixed: tuple = (), below_detection: dict = None, balance_ion_uncertainty_percent: float | None = None) -> None
+BalancedWaterAnalysis(totals: dict, measured_ph: float, state: flahax.aqueous_model.AqueousResult, balance_ion: str | None, analysed_balance_ion_molal: float, balance_adjustment_molal: float, imbalance_percent: float, inorganic_carbon_molal: float, carbon_source: str, analytical_totals: dict = None, alkalinity_eq_per_kg: float | None = None, analysis_id: str | None = None, dilution_fraction: float = 1.0, phases: tuple = (), units: str = 'mol/kg water', reconciliation: str = 'unchanged', residual_charge_eq: float = 0.0, fixed: tuple = (), below_detection: dict = None, balance_ion_uncertainty_percent: float | None = None) -> None
 ```
 
 A water analysis closed at its measured pH: the laboratory record and the model, kept apart.
@@ -1396,18 +1401,20 @@ nutrient target and concentration limit. ``totals`` are the charge-balanced mode
 used for chemistry. ``measured_ph`` and ``alkalinity_eq_per_kg`` are source
 measurements; ``state`` is the computed state of this (possibly diluted) water.
 ``dilution_fraction`` is the share of the source water in ion-free water.
+``residual_charge_eq`` (eq/kg water) is the charge of the measured water at its measured
+pH that no ion accounts for; the pH solves that follow reproduce it (decision G11).
 
-Record fields: `totals`, `measured_ph`, `state`, `balance_ion`, `analysed_balance_ion_molal`, `balance_adjustment_molal`, `imbalance_percent`, `inorganic_carbon_molal`, `carbon_source`, `analytical_totals`, `alkalinity_eq_per_kg`, `analysis_id`, `dilution_fraction`, `phases`, `units`, `reconciliation`, `fixed`, `below_detection`, `balance_ion_uncertainty_percent`.
+Record fields: `totals`, `measured_ph`, `state`, `balance_ion`, `analysed_balance_ion_molal`, `balance_adjustment_molal`, `imbalance_percent`, `inorganic_carbon_molal`, `carbon_source`, `analytical_totals`, `alkalinity_eq_per_kg`, `analysis_id`, `dilution_fraction`, `phases`, `units`, `reconciliation`, `residual_charge_eq`, `fixed`, `below_detection`, `balance_ion_uncertainty_percent`.
 
 Source module: `flahax.measured_water`. Import with `from flahax import BalancedWaterAnalysis`.
 
 ### `balance_water_analysis`
 
 ```text
-balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, balance_ion='Cl-', maximum_imbalance_percent=5.0, phases=(), temperature_c=25.0, analysis_id=None, balance_ion_uncertainty_percent=None, fixed=(), below_detection=None)
+balance_water_analysis(totals, *, measured_ph, alkalinity_eq_per_kg=None, phases=(), temperature_c=25.0, analysis_id=None, below_detection=None)
 ```
 
-Close a complete water analysis at its measured pH.
+Speciate a water analysis at its measured pH, as measured.
 
 ``totals`` are analytical totals in mol/kg water. A component given as 0 is a
 measured zero and stays zero; an omitted component is not measured.
@@ -1419,16 +1426,10 @@ alkalinity on the supported inorganic proton reference), never both, including
 an explicitly zero carbon inventory. Organic/trace-metal alkalinity without
 a qualified proton reference is rejected rather than attributed to carbonate.
 
-The composition is first speciated at the measured pH. If its charge closes
-within ``CLOSURE_TOLERANCE`` it is returned unchanged (``reconciliation`` is
-'unchanged') and no balance ion is needed. Otherwise an imbalance above
-``maximum_imbalance_percent`` is rejected (fix the analysis, do not force it),
-and the rest is closed on ``balance_ion``, which must be measured, positive and
-not ``fixed``. With ``balance_ion_uncertainty_percent`` the adjustment must lie
-within that stated measurement uncertainty ('reconciled'); without it the
-closure is a modelling assumption ('assumed') that callers report for review.
-Nothing else is changed and no other ion is tried. The analysis itself is kept
-unchanged in ``analytical_totals`` (#84).
+The composition is speciated at the measured pH and taken as measured. Its charge
+imbalance is returned as ``imbalance_percent`` and carried as ``residual_charge_eq``;
+no ion is adjusted to close it and no imbalance size rejects it (decision G11).
+The analysis itself is kept unchanged in ``analytical_totals`` (#84).
 
 Source module: `flahax.measured_water`. Import with `from flahax import balance_water_analysis`.
 
@@ -1545,7 +1546,7 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import make_join
 ### `plan_coupled_ph`
 
 ```text
-plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, water_components=None)
+plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, water_components=None, residual_charge=0.0)
 ```
 
 Fit the recipe and its pH reagent together; one candidate per offered product.
@@ -1554,9 +1555,11 @@ mix(recommendation) returns the mixed state (water and products, before any
 reagent) at its calculated pH. Explicit joint configuration supplies controls,
 final solvent mass, reagent solvent fractions and mass caps; optional starting
 points are checked as search seeds. water_components supplies the declared
-final-basis water inventory. Joint mode evaluates every offered reagent and
-independently calculates final pH. Legacy mode retains directional fitting,
-with bounded zero-reagent recovery when no matching direction is offered.
+final-basis water inventory; residual_charge (eq/kg water) is the charge it
+carries uncancelled, the joint problem's reference charge (decision G11). Joint mode
+evaluates every offered reagent and independently calculates final pH. Legacy mode
+retains directional fitting, with bounded zero-reagent recovery when no matching direction
+is offered.
 A candidate's quantities and unresolved numerical status remain inspectable.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import plan_coupled_ph`.
@@ -1772,10 +1775,12 @@ convert_product_dose(product: 'Mapping[str, object]', chemistry: 'ProductChemist
 
 Convert a library assay using an explicit chemistry profile.
 
-Assays are elemental mass fractions. Counterions and ligands the assay does not
-state follow from the profile's ions (``unstated_amounts``): chelate ligands and
-D2 sodium, carbonate, citrate, a salt's missing counterion. Unassayed remainder
-is retained as inert carrier.
+Assays are elemental mass fractions, used as declared except the charge the profile's
+ions cannot balance: that surplus is not converted (decision G5, ``label_reconciliation``);
+a blend's label is used as declared. Counterions and ligands the assay does not state
+follow from the profile's ions (``unstated_amounts``): chelate ligands and D2 sodium,
+carbonate, citrate, a salt's missing counterion. Unassayed remainder, the unassigned
+surplus included, is retained as inert carrier.
 
 Source module: `flahax.product_conversion`. Import with `from flahax import convert_product_dose`.
 

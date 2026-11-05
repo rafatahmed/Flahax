@@ -210,6 +210,7 @@ def plan_coupled_ph(
     maximum_concentrations=None,
     joint=None,
     water_components=None,
+    residual_charge=0.0,
 ):
     """Fit the recipe and its pH reagent together; one candidate per offered product.
 
@@ -217,9 +218,11 @@ def plan_coupled_ph(
     reagent) at its calculated pH. Explicit joint configuration supplies controls,
     final solvent mass, reagent solvent fractions and mass caps; optional starting
     points are checked as search seeds. water_components supplies the declared
-    final-basis water inventory. Joint mode evaluates every offered reagent and
-    independently calculates final pH. Legacy mode retains directional fitting,
-    with bounded zero-reagent recovery when no matching direction is offered.
+    final-basis water inventory; residual_charge (eq/kg water) is the charge it
+    carries uncancelled, the joint problem's reference charge (decision G11). Joint mode
+    evaluates every offered reagent and independently calculates final pH. Legacy mode
+    retains directional fitting, with bounded zero-reagent recovery when no matching direction
+    is offered.
     A candidate's quantities and unresolved numerical status remain inspectable.
     """
     mass = _positive(water_mass_kg, 'water_mass_kg')
@@ -277,6 +280,7 @@ def plan_coupled_ph(
                         joint_maxima,
                         water_components,
                         joint,
+                        residual_charge,
                     )
                 )
                 continue
@@ -333,6 +337,7 @@ def plan_coupled_ph(
                                 phases,
                                 joint_maxima,
                                 water_components,
+                                residual_charge=residual_charge,
                             )
                         )
                     except DeliveryError as exc:

@@ -22,7 +22,6 @@ from functools import lru_cache
 from .catalogue_chemistry import PHREEQC_MINTEQ_V4, ProductChemistry
 from .composition import parse_formula
 from .delivery_contracts import DeliveryError
-from .materials import _CHARGE_RESIDUAL_LIMIT_PERCENT
 
 UNDEFINED = 'give its formula, its ions, or its analysis by nutrient form'
 
@@ -80,7 +79,7 @@ _CHELATED = {
     ('DTPA', 'Fe+3'): 'Fe(III)-DTPA',
     ('o,o-EDDHA', 'Fe+3'): 'Fe(III)-o,o-EDDHA',
 }
-# Charge per nutrient atom, for the charge-residual check (materials._charge_residual_percent).
+# Charge per nutrient atom of each ion and complex.
 NUTRIENT_CHARGES = {
     **{ion: (n, z) for ion, (_, z, n) in ION_TABLE.items() if n},
     **{ion: (metal, z) for ion, (_, metal, z) in COMPLEXES.items()},
@@ -317,11 +316,11 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
 
 
 def _check_analysis(name: str, ions: dict, elements) -> None:
-    """One rule for every material: its analysis agrees with its ions."""
-    from .materials import (
-        _charge_residual_percent,
-    )  # deferred: materials imports product_conversion lazily
+    """One rule for every material: its analysis states only nutrients its ions carry.
 
+    A label off its compound's proportions is reconciled, not refused (decision G5,
+    label_reconciliation).
+    """
     if not isinstance(elements, Mapping):
         return
     carried = {NUTRIENT_CHARGES[ion][0] for ion in ions if ion in NUTRIENT_CHARGES}
@@ -332,13 +331,6 @@ def _check_analysis(name: str, ions: dict, elements) -> None:
             'identity_inconsistent',
             f'{name}: the analysis states {", ".join(foreign)}, '
             f'which its ions ({", ".join(ions)}) do not carry',
-        )
-    residual = _charge_residual_percent({'ion_forms': ions}, dict(elements), NUTRIENT_CHARGES)
-    if residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT:
-        raise DeliveryError(
-            'identity_inconsistent',
-            f'{name}: the analysis does not fit its ions '
-            f'(charge residual {residual:.2f} %, limit {_CHARGE_RESIDUAL_LIMIT_PERCENT:g} %)',
         )
     stated = set(elements)
     unstated = [ion for ion in ions if _unstated(ion, stated)]

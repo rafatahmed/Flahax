@@ -41,6 +41,7 @@ def joint_candidate(
     maxima,
     water_components,
     config=None,
+    residual_charge=0.0,
 ):
     """Run a joint candidate, or the strictly zero-reagent legacy recovery.
 
@@ -93,7 +94,7 @@ def joint_candidate(
         final_volume_litres=volume,
         solvent_mass_kg=mass,
         target_ph=target_ph,
-        reference_charge_mol_per_kg=0,
+        reference_charge_mol_per_kg=residual_charge,
         maximum_reagent_mass_g=maximum_mass,
         maximum_reagent_volume_litres=cap,
         maximum_concentrations=maxima or {},
@@ -140,7 +141,6 @@ def joint_candidate(
         )
     target = calculate_equilibrium_ph(
         state['componentsMolPerKg'],
-        complete_analysis=True,
         carbon_boundary='closed',
         phases=phases,
     )
