@@ -36,7 +36,6 @@ def phosphate_refit():
                 m = d(concentration) / 1000 / d('0.997047')
                 state = calculate_equilibrium_ph(
                     {'K+': float(m), 'PO4-3': float(m / divisor)},
-                    complete_analysis=True,
                     carbon_boundary='closed',
                     phases=[],
                 )

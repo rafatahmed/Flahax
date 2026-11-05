@@ -27,6 +27,7 @@ from .composition import (
     assay_conflict,
     assay_drift,
     fitted_targets,
+    imbalance_note,
     is_carbonate,
     total_nitrogen,
     NITROGEN_FORMS,
@@ -1195,15 +1196,9 @@ def recommend(
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     warnings: list[str] = []
     balance = target_ion_balance(targets)
-    if balance["exceedsWarning"]:
-        warnings.append(
-            f"The requested nutrient subset is not electrically balanced under the stated "
-            f"ion convention: cations {balance['cationsMeqPerL']:.2f} "
-            f"vs "
-            f"anions {balance['anionsMeqPerL']:.2f} meq/L ({balance['imbalancePercent']:+.1f}%). "
-            "Untargeted counterions and other species may balance the subset; "
-            "this check does not prove nutrient infeasibility."
-        )
+    note = imbalance_note(balance)
+    if note:
+        warnings.append(note)
     salts, excluded, solved, recovered, attempts = _automatic_fit(
         library, salts, excluded, targets, water, ridge, maxima
     )

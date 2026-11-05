@@ -10,14 +10,11 @@ import unittest
 from flahax import DeliveryError, MassGrams, plan_equilibrium_delivery
 from flahax.measured_water import balance_water_analysis
 from tests.test_equilibrium_delivery import arguments
-from tests.catalogue_history import historical_catalogue
 
 
 class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
-        cls.enterClassContext(historical_catalogue())
         cls.args = arguments()
 
     def rejected(self, code, **changes):
@@ -28,9 +25,12 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
     def test_incomplete_or_invalid_delivery_inventory(self):
         for recipe in (None, replace(self.args['recipe'], feasible=False)):
             self.rejected('infeasible_recipe', recipe=recipe)
-        # An empty recipe is no longer rejected as such (G25): it is planned on the water alone,
-        # and this synthetic water, balanced with the recipe's salts, is out of balance alone.
-        self.rejected('charge_imbalance', recipe=replace(self.args['recipe'], salts=()))
+        # An empty recipe is not rejected (G25), and neither is the water's charge imbalance
+        # (G11): it is planned on the water alone.
+        empty = plan_equilibrium_delivery(
+            **(self.args | dict(recipe=replace(self.args['recipe'], salts=())))
+        )
+        self.assertGreater(empty.equilibrium.nitric_acid_molal, 0)
         self.rejected('missing_field', reagent_channel_id=' ')
         self.rejected('missing_field', water_totals=None)
         self.rejected('invalid_type', analytical_water_totals=[])
@@ -184,7 +184,7 @@ class PublicCalculationBoundaryTests(unittest.TestCase):
     def test_calculated_ph_rejects_malformed_analytical_values(self):
         from flahax.calculated_ph import calculate_equilibrium_ph
 
-        defaults = dict(totals={}, complete_analysis=True, carbon_boundary='closed', phases=[])
+        defaults = dict(totals={}, carbon_boundary='closed', phases=[])
         cases = [(dict(totals=[]), 'invalid_totals')]
         cases += [(dict(temperature_c=x), 'temperature_out_of_range') for x in (True, 24)]
         cases += [
@@ -201,9 +201,7 @@ class PublicCalculationBoundaryTests(unittest.TestCase):
         for key in (' ', 1):
             self.assert_code('invalid_value', estimate_manufacturer_ec, {key: 1})
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_catalogue_chemistry_identity_and_inventory_boundaries(self):
-        self.enterContext(historical_catalogue())
         from flahax import load_library
         from flahax.catalogue_chemistry import (
             PRODUCT_CHEMISTRY,
@@ -330,8 +328,6 @@ class MeasuredWaterBoundaryTests(unittest.TestCase):
             (dict(below_detection={'Na+': 0}), 'invalid_value'),
             (dict(below_detection={'unknown': 1}), 'invalid_value'),
             (dict(totals=WITHOUT_CARBON, alkalinity_eq_per_kg=float('nan')), 'invalid_value'),
-            (dict(balance_ion_uncertainty_percent=0), 'invalid_value'),
-            (dict(balance_ion='NO3-'), 'unsupported_balance_ion'),
         ]
         cases += [
             (dict(totals={'Na+': x}), 'invalid_totals') for x in (True, [], -1, float('inf'))
@@ -394,7 +390,7 @@ class TerminalWidgetBoundaryTests(unittest.TestCase):
 
 
 class AcidOptionBoundaryTests(unittest.TestCase):
-    def test_invalid_requests_and_unbalanced_inputs_fail_closed(self):
+    def test_invalid_requests_fail_closed_and_an_imbalanced_water_is_planned(self):
         from flahax import plan_acid_options
         from tests.test_water_workflow import AcidSelectionTests
 
@@ -406,13 +402,15 @@ class AcidOptionBoundaryTests(unittest.TestCase):
             (dict(products=[None]), 'invalid_value'),
             (dict(products=defaults['products'] * 2), 'invalid_value'),
             (dict(phases='Calcite'), 'invalid_type'),
-            (dict(totals={'Na+': 0.002}), 'charge_imbalance'),
         ]
         for override, code in cases:
             with self.subTest(override=override):
                 with self.assertRaises(DeliveryError) as caught:
                     plan_acid_options(**(defaults | override))
                 self.assertEqual(caught.exception.code, code)
+        # A water whose charge no ion balances is planned from charge differences (G11).
+        planned = plan_acid_options(**(defaults | dict(totals={'Na+': 0.002})))
+        self.assertEqual(planned.selected_product_id, 'HNO3')
 
     def test_unsupported_reagent_and_explicit_dose_cap_return_rejected_candidates(self):
         from flahax import plan_acid_options

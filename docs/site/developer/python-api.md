@@ -268,11 +268,11 @@ from flahax import balance_water_analysis
 # Fully specified synthetic electrolyte; not a site prescription.
 analysis_totals = {"Na+": 0.002, "Cl-": 0.002, "CO3-2": 0.0}
 balanced = balance_water_analysis(analysis_totals, measured_ph=7.8)
-print(balanced.imbalance_percent, balanced.balance_ion, balanced.balance_adjustment_molal)
+print(balanced.imbalance_percent, balanced.residual_charge_eq)
 ```
 
-The remaining charge is closed on `Cl-` (or `Na+`) and reported. An imbalance
-above 5% is rejected. Titrated alkalinity can replace inorganic carbon via
+The analysis is taken as measured: its charge imbalance is reported and carried
+as `residual_charge_eq`, and no ion is added or adjusted to close it. Titrated alkalinity can replace inorganic carbon via
 `alkalinity_eq_per_kg`. In `plan_fertilizer_workflow`, add `measured_ph` to the
 `equilibrium` record. See the user manual, section 11, and
 [water-to-delivery](water-to-delivery.md#measured-ph-water-balancing).

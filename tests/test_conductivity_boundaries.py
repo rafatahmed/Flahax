@@ -9,7 +9,6 @@ from dataclasses import replace
 import unittest
 from flahax import DeliveryError, VolumeLitres, GramsPerLitre, ec_recipe_key, plan_ec_delivery
 from examples.ec_and_injection import inputs
-from tests.catalogue_history import historical_catalogue
 
 
 class CalibratedConductivityBoundaryTests(unittest.TestCase):
@@ -160,9 +159,7 @@ class IrrigationConductivityBoundaryTests(unittest.TestCase):
                     ec.assay_charge_residual({'Synthetic': 1})
             self.assertEqual(caught.exception.code, 'unsupported_product_chemistry')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_plan_temperature_is_not_extrapolated(self):
-        self.enterContext(historical_catalogue())
         from flahax import plan_equilibrium_delivery
         from flahax.irrigation_ec import calculate_irrigation_ec_from_plan
         from tests.test_equilibrium_delivery import arguments

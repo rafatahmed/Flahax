@@ -248,16 +248,12 @@ A plan or state label does not execute hardware or prove physical mixing occurre
 | `unknown_product` or identity mismatch | Use exact catalogue names and IDs for catalogue-only chemistry. |
 | `missing_file` or `invalid_json` | A file named on the command line (water, targets, products, rules, a saved item or session) is missing, unreadable or not valid JSON; the message names the file and the line and column. |
 | `material_undefined` | A product has only a name. Give its formula, its ions, or its analysis by nutrient form. |
-| `identity_inconsistent` | A label does not fit its chemical: its charges are more than 1 % out of balance (rounded labels and commercial grades stay well inside; a one-point typing error does not). Check the label. |
+| `identity_inconsistent` | A material's analysis states a nutrient its ions do not carry (for example phosphorus on potassium nitrate). Check the formula or the label. A label that only differs from its compound's proportions is not refused: chemistry uses the compound in the amount the limiting declared nutrient supplies, and the surplus is reported, as in "label analysis differs from KNO₃: 1.91 % K not assigned to an ion". |
 | `ph_not_planned_for_product` | A compound's data sheet is incomplete or does not balance: it is used for nutrients, but no pH reagent is planned. Complete the nitrogen forms, chelating agent and counter-ions. |
 | `too_many_tanks` | The products need more tanks than the supplied equipment limit; no separation is waived. |
 | `tank_too_small` | One irrigation needs more stock than a tank holds; the message names the tank. |
-| `charge_imbalance` | Investigate missing/incorrect measured ions and units; do not auto-add unmeasured salts. |
-| `charge_imbalance_exceeded` | The water analysis is more than 5% out of balance at its measured pH. Ask the laboratory to check it; raise `maximum_imbalance_percent` only as a recorded decision. |
 | `missing_carbon` or `ambiguous_carbon` | Measured-pH balancing needs inorganic carbon (`CO3-2`, 0 for water measured carbon-free) or titrated alkalinity, exactly one of them. |
 | `alkalinity_out_of_range` | The alkalinity is not consistent with the measured pH and ions, or needs carbon beyond the dilute model. Check units (eq/kg, not mg/L as CaCO3). |
-| `missing_balance_ion`, `balance_ion_exhausted` or `unsupported_balance_ion` | Balance on `Cl-` or `Na+`, which must be present in the analysis and large enough to absorb the imbalance. An analysis that already balances at its measured pH needs no balance ion. |
-| `fixed_balance_ion` or `reconciliation_out_of_bounds` | The analysis is out of balance and the balance ion is a measured zero, below detection or fixed, or the closure exceeds its stated uncertainty. Without chloride the default closes on the alkalinity instead; a named `Na+` is never switched. Review the analysis or state the uncertainty of a measured ion. Nutrient accounting is unaffected. |
 | `contradictory_water_inputs` | The water was given two ways that disagree (a `water_balance` record with `measured_ph`, or with other `water_totals`, or analytical totals that differ from the record's). Supply one. |
 | `activity_model_out_of_range` | The solution exceeds the accepted dilute model; do not extrapolate to concentrated stock. |
 | `wrong_reagent_direction` | Nitric acid cannot reach a target requiring base. |
@@ -515,7 +511,7 @@ from flahax import load_library, recommend
 library = load_library()
 pepper = next(f for f in library['formulas'] if f['name'] == 'Pepper (Howard Resh)')
 result = recommend(library['salts'], pepper['targets'], max_ammonium_fraction=0.10)
-assert result['targetIonBalance']['exceedsWarning']   # anions exceed cations by 39%
+assert result['targetIonBalance']['imbalancePercent'] < -39   # anions exceed cations by 39%
 assert result['ammoniumLimit'] is None  # the explicit 18 mg/L NH4 target takes precedence
 assert not result['limitViolations']
 assert {miss['reason'] for miss in result['unmetTargets']} == {'conflicting_targets'}
@@ -559,35 +555,30 @@ from flahax import balance_water_analysis, calculate_equilibrium_ph
 well = {'Na+': 680 / 22.98977e3, 'K+': 44.2 / 39.0983e3, 'Ca+2': 244 / 40.078e3,
         'Mg+2': 100.8 / 24.305e3, 'Cl-': 1280.4 / 35.45e3, 'SO4-2': 723.3 / 96.06e3,
         'NO3-': 15.38 / 62.004e3, 'CO3-2': 38.75 / 12.011e3}
-raw = calculate_equilibrium_ph(well, complete_analysis=True, carbon_boundary='closed', phases=[])
+raw = calculate_equilibrium_ph(well, carbon_boundary='closed', phases=[])
 assert raw.ph < 4.5                      # charge balance alone: far from the measured 7.8
 
 balanced = balance_water_analysis(well, measured_ph=7.8)
 assert balanced.state.ph == 7.8
 assert abs(balanced.imbalance_percent + 3.52) < .01
-assert abs(balanced.balance_adjustment_molal / balanced.analysed_balance_ion_molal + .0953) < 1e-4
-print(f'{balanced.imbalance_percent:.2f}% imbalance closed on {balanced.balance_ion}')
+assert balanced.balance_ion is None and balanced.totals == well   # no ion is adjusted
+print(f'{balanced.imbalance_percent:.2f}% imbalance, used as measured')
 ```
 
-`balance_water_analysis` speciates the water at the measured pH. If it
-already balances (within 0.0001 % of its total charge) it is used unchanged and
-no balance ion is needed; otherwise the remaining charge is closed on one named
-ion (`'Cl-'` by default, or `'Na+'`), as PHREEQC's `charge` option does, within
-`balance_ion_uncertainty_percent` when you state it ('reconciled') or as an
-assumption for review ('assumed'). The analysis imbalance and the adjustment are
-returned for review. The analysis itself stays in `analytical_totals`: targets
-and maximum concentrations always use it, and the balanced `totals` only feed
-the chemistry (#84). An imbalance above `maximum_imbalance_percent` (default
-5%) is rejected with `charge_imbalance_exceeded`: correct the analysis rather
-than forcing it. Supply inorganic carbon as `CO3-2`, or titrated total
+`balance_water_analysis` speciates the water at the measured pH and takes it
+as measured. Its charge imbalance is returned as `imbalance_percent` and
+carried as `residual_charge_eq`: no ion is added, removed or adjusted to close
+it, and no imbalance size rejects the analysis. The analysis itself stays in
+`analytical_totals`: targets and maximum concentrations always use it, and
+`totals` (the same analysis plus any carbon taken from a titrated alkalinity)
+only feeds the chemistry (#84). Supply inorganic carbon as `CO3-2`, or titrated total
 alkalinity as `alkalinity_eq_per_kg` on the supported inorganic proton reference.
 Phosphate, borate, ammonia and sulfate protonation are included. Unqualified
 organic/trace-metal systems are rejected. Never supply both, even for zero carbon.
 
 In `plan_fertilizer_workflow`, add `measured_ph` to the `equilibrium` record
-(with optional `alkalinity_eq_per_kg`, `balance_ion` and
-`maximum_imbalance_percent`). The chemistry stage then starts from the
-balanced water and reports it as `water_balance`. The fertilizer doses add
+(with optional `alkalinity_eq_per_kg`). The chemistry stage then starts from the
+measured water and reports it as `water_balance`. The fertilizer doses add
 exact charge, so the mixed pH stays anchored to the measured water.
 
 ### Restricted calculated irrigation EC

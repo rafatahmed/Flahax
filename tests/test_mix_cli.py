@@ -87,9 +87,7 @@ class MixTests(unittest.TestCase):
         )
         return code, lines, target
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_first_run_tomato_ro_fill_mode(self):
-        self.enterContext(historical_catalogue())
         code, lines, target = self.full()
         self.assertEqual(code, 3, '\n'.join(lines))
         sheet = (target / 'batch-sheet.html').read_text(encoding='utf-8')
@@ -224,11 +222,12 @@ class MixTests(unittest.TestCase):
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes at pH 4.89 on the packaged
+    # catalogue, so it asks for base instead of the nitric acid it scripts.
     def test_do_not_mix_always_says_why(self):
+        self.enterContext(historical_catalogue())
         # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
         # empty.
-        self.enterContext(historical_catalogue())
         code, lines, _ = self.run_mix(
             SPEC + RO + TOMATO + CATALOGUE + ['2'] + END,
             '--output',
@@ -281,7 +280,7 @@ class MixTests(unittest.TestCase):
         saved = Store(self.home).load('waters', 'typo')
         self.assertAlmostEqual(saved['mg_per_litre']['N_NO3'], 14.0067, places=3)
 
-    def test_missing_chloride_does_not_force_a_different_titration(self):
+    def test_missing_chloride_does_not_change_the_titration(self):
         clean = water('no-cl', {'Ca': '60.12', 'NO3': '62.0049', 'Alk': '100'}, alkalinity='2')
         target = Path(self.tmp.name) / 'no-cl'
         code, lines, _ = self.run_mix(
@@ -290,11 +289,10 @@ class MixTests(unittest.TestCase):
         self.assertIn(code, (0, 3), '\n'.join(lines))
         report = (target / 'report.html').read_text(encoding='utf-8')
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
-        self.assertIn(
-            summary['stages']['chemistry']['error_code'],
-            ('missing_balance_ion', 'fixed_balance_ion'),
-        )
-        self.assertNotIn('has no chloride, so it is closed on the alkalinity', report)
+        # The titration is used as measured; the imbalance is reported, nothing is closed on it.
+        self.assertEqual(summary['stages']['chemistry']['status'], 'calculated')
+        self.assertIsNone(summary['water']['balance_ion'])
+        self.assertNotIn('closed on', report)
         saved = Store(self.home).load('waters', 'no-cl')
         self.assertAlmostEqual(saved['alkalinity_meq_per_litre'], 100 / 50.0435)
         self.assertNotIn('HCO3', saved['mg_per_litre'])
@@ -392,9 +390,8 @@ class MixTests(unittest.TestCase):
         self.enterContext(historical_catalogue())
         code, lines, _ = self.run_mix(SPEC + RO + changed_tomato(K='600'))
         self.assertEqual(code, 1)
-        warning = next(
-            i for i, line in enumerate(lines) if line.startswith('Warning: the formula is')
-        )
+        warning = next(i for i, line in enumerate(lines) if line.startswith('Formula balance:'))
+        self.assertNotIn('no set of salts', ' '.join(lines))
         step4 = next(i for i, line in enumerate(lines) if line.startswith('4/5'))
         self.assertLess(warning, step4)
 
@@ -413,7 +410,8 @@ class MixTests(unittest.TestCase):
             [(r['symbol'], r['maximumPpm']) for r in summary['limits']], [('Na', 69.0)]
         )
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes at pH 4.89 on the packaged
+    # catalogue, so it asks for base instead of the nitric acid it scripts.
     def test_batch_reads_saved_items(self):
         self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
@@ -439,10 +437,8 @@ class MixTests(unittest.TestCase):
             )
         self.assertIn(code, (0, 3), out.getvalue())
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_blocked_result_says_do_not_mix_with_the_reason(self):
         # Source-water Na cannot be removed by selecting sodium-free products.
-        self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
             water_answers=water(
                 'sodium-over-limit',
@@ -526,9 +522,7 @@ class MixTests(unittest.TestCase):
         self.assertEqual(script.prompts[-3], script.prompts[-2])  # Ca asked again after 'x'
         self.assertTrue(script.prompts[-1].startswith('Mg, mg/L'), script.prompts[-1])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_added_products_keep_notes_and_run_through_batch(self):
-        self.enterContext(historical_catalogue())
         single = [
             '2',
             'iron ii sulfate',

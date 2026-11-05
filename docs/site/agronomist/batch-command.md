@@ -42,11 +42,12 @@ and `Mo`.
 - **Bicarbonate is required with a measured pH.** Write `"HCO3": 0` only if
   the laboratory found none.
 
-FlahaX checks the analysis at its measured pH. If the charges already balance
-it is used as it is. If they are slightly off (up to 5 %), FlahaX closes the gap
-on chloride for its chemistry only. Your measured values are still what every
-target and limit is checked against, and the report shows both side by side. A
-gap above 5 % is refused: ask the laboratory to check the analysis.
+FlahaX uses the analysis as measured, at its measured pH. If the charges do not
+balance, the imbalance is shown in the report and carried through the pH
+calculation; no ion is added, removed or adjusted, and no imbalance size refuses
+the analysis. Every target and limit is checked against your measured values.
+Without `HCO3` (or an alkalinity) the pH shows "measure alkalinity (HCO3) of the
+water", and the recipe is still produced.
 
 **Blending with RO or desalinated water.** Add `--water-share 8` in step 3 to
 use your analysed water as 8 % of the batch water and ion-free water for the
@@ -196,13 +197,10 @@ FlahaX 0.6.0 reported the following figures:
 phase applicability now blocks approval:
 - **Ammonium.** The recipe carries 9.2 mg/L NH4-N, a nutrient you did not
   target and gave no maximum for. Check it, or declare a maximum.
-- **The well analysis is 3.5 % out of charge balance.** For the chemistry,
-  FlahaX closed it on chloride (−9.5 %). That step is a modelling assumption,
-  not a measurement, so the pH and precipitation results need your judgement.
-  Your limits were still checked on the measured 1280.4 mg/L. State the
-  laboratory's chloride uncertainty in the water file
-  (`"balance_ion_uncertainty_percent"`) and FlahaX will accept the closure if
-  it falls within it.
+- **The well analysis is 3.5 % out of charge balance.** FlahaX used it as
+  measured: the imbalance is reported and carried through the pH calculation,
+  and no ion (chloride or any other) is added, removed or adjusted. Your limits
+  were checked on the measured 1280.4 mg/L.
 - **Hydroxylapatite and MnHPO4 are supersaturated.** Their names do not prove that
   precipitation is absent at these conditions. Without applicable reviewed evidence,
   the phase assessment prevents approval. The sheet retains the findings ([saturation

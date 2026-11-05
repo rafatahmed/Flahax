@@ -51,6 +51,21 @@ each release, with numbers, sources and decisions, are in
 
 - The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
 
+- A product label is reconciled with its compound, not refused: the charge its ions cannot
+  balance is reported ("label analysis differs from KNO₃: 1.91 % K not assigned to an ion") and
+  left out of the chemistry, while the nutrient fit keeps the label (G5, #214).
+
+- The pH needs no completeness declaration. A water without `HCO3` or alkalinity shows "measure
+  alkalinity (HCO3) of the water"; ionic strength above 0.1 mol/kg shows "not calculated"; the
+  recipe is produced in both cases. Closed carbon, 25 °C and 1 L = 1 kg water are stated in the
+  summary. `calculate_equilibrium_ph` drops `complete_analysis` and takes `residual_charge`
+  (G1–G4, #215).
+
+- A water analysis is taken as measured: its charge imbalance is reported and carried, and no
+  ion is added, removed or adjusted. Removed: the 5 % rejection, closing on Cl, Na or carbonate
+  (carbon from a titrated alkalinity stays), `balance_ion` water-file keys, the 0.1 % charge
+  gates of the acid and delivery planners, and the formula-imbalance flag (G10, G11, #216).
+
 ### Fixed
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

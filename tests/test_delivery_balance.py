@@ -14,7 +14,6 @@ from flahax.delivery_plan import compose_delivery_plan, transition_plan
 from tests.test_delivery_plan import DeliveryPlanTests
 from tests.test_ph_planning import inputs
 from flahax.ph_planning import plan_ph
-from tests.catalogue_history import historical_catalogue
 
 
 class DeliveryBalanceTests(unittest.TestCase):
@@ -310,10 +309,8 @@ class DeliveryBalanceTests(unittest.TestCase):
 
 
 class EquilibriumChannelTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     @classmethod
     def setUpClass(cls):
-        cls.enterClassContext(historical_catalogue())
         from tests import test_equilibrium_delivery as fixtures
 
         fixtures.EquilibriumDeliveryTests.setUpClass()

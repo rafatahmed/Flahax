@@ -93,7 +93,7 @@ class InterviewBoundaryTests(unittest.TestCase):
         self.assertEqual(pending[0][2]['name'], 'New acid')
         self.assertTrue(any('cannot contain' in str(c) for c in p.say.call_args_list))
 
-    def test_single_grade_disagreement_and_invalid_compound_are_rejected(self):
+    def test_single_grade_disagreement_is_noted_and_invalid_compound_is_rejected(self):
         library = load_library()
         p = Mock()
         p.search.side_effect = lambda prompt, labels: labels[0]
@@ -103,8 +103,13 @@ class InterviewBoundaryTests(unittest.TestCase):
             supplier='Supplier', title='Sheet', issued='2026-10-27', entered='2026-10-27'
         )
         p.number.side_effect = lambda label, *a, **k: 100 if label.startswith('Ca,') else 0
-        self.assertIsNone(cli.add_single(p, library['salts']))
-        self.assertTrue(any('identity_inconsistent' in str(c) for c in p.say.call_args_list))
+        # Decision G5: a label off its compound is added; its unbalanced charge is noted.
+        added = cli.add_single(p, library['salts'])
+        self.assertEqual(added['elements'], {'N_NO3': 0.0, 'N_NH4': 0.0, 'Ca': 100.0})
+        p.say.assert_any_call(
+            'label analysis differs from 5Ca(NO₃)₂·NH₄NO₃·10H₂O: '
+            '100.00 % Ca not assigned to an ion'
+        )
         p.text.side_effect = ['Compound', 'Supplier', '']
         p.number.side_effect = None
         p.number.return_value = None
@@ -234,14 +239,14 @@ class TerminalSummaryBoundaryTests(unittest.TestCase):
             analysis_mg_per_litre={},
             modelled_mg_per_litre={},
             adjustment_mg_per_litre={},
-            reconciliation='closed_on_alkalinity',
+            reconciliation='imbalance_reported',
             imbalance_percent=1,
             measured_ph=7,
             below_detection=['Fe'],
         )
         s['limits'] = []
         rendered = _water_section(s)
-        self.assertIn('positive, nonfixed directly supplied carbon', rendered)
+        self.assertIn('It is used as measured', rendered)
         self.assertIn('not confirmed zero', rendered)
         self.assertIn('Fe', rendered)
 

@@ -40,8 +40,7 @@ JSON workflow fields:
 
 The `equilibrium` object uses `water_totals` (analytical basis mol/kg-water),
 `water_mass_kg` (final solvent inventory), `water_analysis_id`,
-`complete_analysis: true`, `carbon_boundary: "closed"`, `temperature_c: 25`,
-and explicit `phases` (empty array means aqueous-only). This is an advanced
+`temperature_c: 25` (closed carbon is the stated model condition), and explicit `phases` (empty array means aqueous-only). This is an advanced
 analytical input, not a claim that a nutrient table is complete. Use the
 existing [water-to-delivery contracts](water-to-delivery.md); no alkalinity
 mg/L-to-total-carbon conversion is silently assumed. Catalogue identity/assay

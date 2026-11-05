@@ -117,7 +117,15 @@ class BatchInputBoundaryTests(unittest.TestCase):
             ),
             (
                 {'mg_per_litre': {'HCO3': 0}, 'measured_ph': 7, 'balance_ion': 'K'},
-                'unsupported_balance_ion',
+                'unknown_field',
+            ),
+            (
+                {
+                    'mg_per_litre': {'HCO3': 0},
+                    'measured_ph': 7,
+                    'balance_ion_uncertainty_percent': 2,
+                },
+                'unknown_field',
             ),
         ]
         for payload, code in cases:
@@ -128,16 +136,10 @@ class BatchInputBoundaryTests(unittest.TestCase):
                 with self.assertRaises(DeliveryError) as caught:
                     batch.read_water('water.json')
                 self.assertEqual(caught.exception.code, code)
-        payload = dict(
-            mg_per_litre={'HCO3': 0},
-            measured_ph=7,
-            balance_ion='Na',
-            balance_ion_uncertainty_percent=2,
-        )
+        payload = dict(mg_per_litre={'HCO3': 0}, measured_ph=7)
         with patch.object(batch, 'read_json', return_value=payload):
             _, _, config = batch.read_water('water.json')
-        self.assertEqual(config['balance_ion'], 'Na+')
-        self.assertEqual(config['balance_ion_uncertainty_percent'], 2)
+        self.assertNotIn('balance_ion', config)
 
     def test_invalid_blends_do_not_modify_nutrient_inventory(self):
         for chemistry, percent in [({}, 10), ({'measured_ph': 7}, 0), ({'measured_ph': 7}, 101)]:

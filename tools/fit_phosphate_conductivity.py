@@ -73,9 +73,7 @@ def points(fixture):
 
 
 def _speciate(totals):
-    return calculate_equilibrium_ph(
-        totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-    )
+    return calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
 
 
 def _row(state):

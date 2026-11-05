@@ -17,9 +17,7 @@ from tests.catalogue_history import historical_catalogue
 
 
 class ProductConversionTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_every_catalogue_product_has_explicit_non_name_equilibrium_profile(self):
-        self.enterContext(historical_catalogue())
         for product in load_library()["salts"]:
             converted = convert_catalogue_product_dose(product, 1.0)
             self.assertIs(converted.chemistry, chemistry_for_product(product["name"]))
@@ -35,10 +33,8 @@ class ProductConversionTests(unittest.TestCase):
         )
         self.assertGreater(result.counterions["sodium"], 0.0)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_chelate_sodium_counterions(self):
         # D2: sodium counterions per formula unit, in chemistry totals only.
-        self.enterContext(historical_catalogue())
         library = {p["name"]: p for p in load_library()["salts"]}
 
         def convert(name):
@@ -55,11 +51,10 @@ class ProductConversionTests(unittest.TestCase):
         self.assertAlmostEqual(dtpa.counterions["sodium"], 2 * dtpa.totals["Fe"], places=15)
         eddha = convert("Iron EDDHA")
         self.assertAlmostEqual(eddha.counterions["sodium"], eddha.totals["Fe"], places=15)
-        micro = convert("CH - micro")
+        # The packaged blend carries boron as boric acid (neutral): no sodium for it.
+        micro = convert("Micro Combi Mix 2")
         t = micro.totals
-        expected = (
-            t["Fe"] + 2 * (t["Mn"] + t["Zn"] + t["Cu"]) + 0.5 * t["boron"] + 2 * t["molybdate"]
-        )
+        expected = t["Fe"] + 2 * (t["Mn"] + t["Zn"] + t["Cu"]) + 2 * t["molybdate"]
         self.assertAlmostEqual(micro.counterions["sodium"], expected, places=15)
         for name in ("Iron EDTA", "Zn EDTA", "Mn EDTA", "Copper EDTA", "Iron DTPA", "Iron EDDHA"):
             self.assertNotIn("Na", library[name]["elements"], name)  # never added to elements
@@ -76,13 +71,11 @@ class ProductConversionTests(unittest.TestCase):
         totals = catalogue_dose_totals({"Sodium Borate (Decahydrate) (borax)": 1.0})
         self.assertEqual(set(totals), {"Na+", "H3BO3"})
         self.assertAlmostEqual(totals["H3BO3"], 1.0 * 11.34 / 100 / 10.81, places=15)
-        self.assertAlmostEqual(totals["Na+"], 1.0 * 12.06 / 100 / 22.989769, places=15)
+        # Decision G5: the label's Na beyond borax's charge (Na2B4O7: one Na per two B) is set
+        # aside, so Na+ balances the borate exactly (was 12.06 % / 22.989769).
+        self.assertAlmostEqual(totals["Na+"], 0.5 * 11.34 / 100 / 10.81, places=15)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_profile_mismatch_fails_before_any_solver_can_use_label(self):
-        # On the packaged catalogue the profile lookup stops at the Potassium Nitrate label gate,
-        # so the mismatch itself would never be reached.
-        self.enterContext(historical_catalogue())
         product = next(p for p in load_library()["salts"] if p["name"] == "Urea")
         profile = chemistry_for_product("Iron EDTA")
         with self.assertRaises(Exception) as caught:
