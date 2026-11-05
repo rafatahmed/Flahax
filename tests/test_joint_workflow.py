@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 from flahax import load_library, plan_fertilizer_workflow, VolumeLitres
 from flahax.ph_adjustment import nutrient_salts
-from tests.test_ph_adjustment import ACIDS, RO, FORMULAS, LIBRARY, amended_ph
+from tests.test_ph_adjustment import ACIDS, RO, amended_ph
 from tests.catalogue_history import historical_catalogue
 
 
@@ -35,14 +35,18 @@ def configuration(pool, product, **changes):
 
 
 class JointWorkflowTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
+    # workflow plans no nitric candidate with a target state, so the case this test reproduces
+    # cannot be staged.
     def test_explicit_joint_rebuilds_actual_recipe_and_zero_reagent(self):
         self.enterContext(historical_catalogue())
-        pool = nutrient_salts(LIBRARY['salts'])
+        library = load_library()
+        pool = nutrient_salts(library['salts'])
         product = ACIDS[0]
+        targets = {f['name']: f['targets'] for f in library['formulas']}
         result = plan_fertilizer_workflow(
-            LIBRARY['salts'],
-            FORMULAS['Tomato Stage.2 - first cluster (Howard Resh)'],
+            library['salts'],
+            targets['Tomato Stage.2 - first cluster (Howard Resh)'],
             {},
             5.8,
             final_volume=VolumeLitres(1000),
@@ -86,9 +90,7 @@ class JointWorkflowTests(unittest.TestCase):
             ph_adjustment=dict(products=[product], maximum_reagent_volume_litres=5, joint=config),
         ).stages['ph_adjustment']
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_positive_reagent_is_counted_once_and_quantity_units_agree(self):
-        self.enterContext(historical_catalogue())
         stage = self.positive_case()
         c = stage.value.selected
         self.assertIsNotNone(c, stage)
@@ -97,17 +99,16 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(c.target.ph, 5.8, delta=0.001)
         rows = {r['symbol']: r for r in c.recommendation['rows']}
         self.assertAlmostEqual(rows['K']['final'], 100, places=5)
-        # One nitrate per potassium in KNO3, plus nitric-acid nitrogen.
+        # The fit keeps the label (packaged Potassium Nitrate: 13.0 % N per 38.2 % K), plus
+        # nitric-acid nitrogen.
         self.assertAlmostEqual(
             rows['N_NO3']['final'],
-            100 * 14.0067 / 39.0983 + c.nutrient_contribution['N_NO3'],
+            100 * 13.0 / 38.2 + c.nutrient_contribution['N_NO3'],
             delta=0.01,
         )
         self.assertEqual(c.recommendation['limitViolations'], [])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_missing_solvent_and_mismatched_basis_do_not_select_a_candidate(self):
-        self.enterContext(historical_catalogue())
         for change, expected in [
             ({'reagent_solvent_fractions': {}}, 'missing_field'),
             ({'solvent_mass_kg': 900}, 'inconsistent_basis'),
@@ -118,9 +119,7 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertIsNone(stage.value.selected)
                 self.assertEqual(stage.value.candidates[0].error_code, expected)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_exhaustion_and_hard_limits_cannot_be_accepted(self):
-        self.enterContext(historical_catalogue())
         for changes in [
             dict(controls_change={'max_iterations': 1}),
             dict(maxima={'K': 50}),
@@ -131,9 +130,7 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertEqual(stage.status, 'blocked')
                 self.assertIsNone(stage.value.selected)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_proportional_volume_and_solvent_scale_actual_reagent_mass(self):
-        self.enterContext(historical_catalogue())
         full = self.positive_case().value.selected
         half = self.positive_case(scale=0.5).value.selected
         self.assertIsNotNone(half)
@@ -144,9 +141,7 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(half.dose_molal, full.dose_molal, places=12)
         self.assertAlmostEqual(half.target.ph, full.target.ph, places=8)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_invalid_controls_and_starts_are_reported_without_fallback(self):
-        self.enterContext(historical_catalogue())
         for change in [
             {'controls': []},
             {'controls': {ACIDS[0]['id']: []}},
@@ -166,10 +161,8 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertEqual(stage.status, 'blocked')
                 self.assertFalse(stage.value.candidates[0].joint_result['accepted'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_per_reagent_controls_and_preferred_selection(self):
-        self.enterContext(historical_catalogue())
-        pool = [next(p for p in LIBRARY['salts'] if p['formula'] == 'KNO3')]
+        pool = [next(p for p in load_library()['salts'] if p['formula'] == 'KNO3')]
         products = [ACIDS[0], ACIDS[0] | {'id': 'second-grade'}]
         configs = {p['id']: configuration(pool, p) for p in products}
         config = dict(
@@ -199,18 +192,14 @@ class JointWorkflowTests(unittest.TestCase):
             self.assertIsNotNone(candidate.target)
             self.assertAlmostEqual(candidate.target.ph, 5.8, delta=0.001)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_fresh_charge_rejects_a_false_solver_certificate(self):
-        self.enterContext(historical_catalogue())
         fake = dict(status='numerical_candidate', fertilizerDoses={}, reagentDose=0)
         with patch('flahax.joint_workflow.solve_joint_problem', return_value=fake):
             stage = self.positive_case()
         self.assertIsNone(stage.value.selected)
         self.assertEqual(stage.value.candidates[0].error_code, 'joint_verification_failed')
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_fresh_public_ph_rejects_false_numerical_success(self):
-        self.enterContext(historical_catalogue())
         from flahax.calculated_ph import calculate_equilibrium_ph
         from dataclasses import replace
 

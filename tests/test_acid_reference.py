@@ -38,7 +38,7 @@ class AcidReferenceTests(unittest.TestCase):
                 for row in data['selected_rows']:
                     self.assertLessEqual(abs(row['pct_err']), tolerance['charge_error_percent'])
                 initial = calculate_equilibrium_ph(
-                    data['totals'], complete_analysis=True, carbon_boundary='closed', phases=[]
+                    data['totals'], carbon_boundary='closed', phases=[]
                 )
                 self.assertAlmostEqual(
                     initial.ph, data['selected_rows'][0]['pH'], delta=tolerance['ph_absolute']

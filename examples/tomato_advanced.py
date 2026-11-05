@@ -196,7 +196,6 @@ def run():
             equilibrium=dict(
                 water_balance=blend_water,
                 water_mass_kg=BATCH_LITRES,
-                complete_analysis=True,
                 water_analysis_id=f'station-104-{percent}pct',
                 carbon_boundary='closed',
                 temperature_c=25,
@@ -290,9 +289,6 @@ def run():
             analysis_mg_l=WELL_MG_L,
             measured_ph=WELL_PH,
             imbalance_percent=balanced.imbalance_percent,
-            chloride_adjustment_percent=100
-            * balanced.balance_adjustment_molal
-            / balanced.analysed_balance_ion_molal,
         ),
         limits_mg_l=LIMITS_MG_L,
         blend_percent=percent,
@@ -391,7 +387,7 @@ def main():
     w = r['well']
     print(
         f"Well: {w['imbalance_percent']:.2f}% charge imbalance at pH {w['measured_ph']}, "
-        f"closed by {w['chloride_adjustment_percent']:+.1f}% Cl"
+        'used as measured'
     )
     print('Blend check (mg/L):  well %   Na     Cl     Ca     S')
     for b in r['blends']:

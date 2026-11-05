@@ -262,10 +262,10 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
         self.assertEqual((ammonium['maximumPpm'], ammonium['assessment']), (14.0, 'within_limit'))
         self.assertEqual(blended['ammoniumLimit']['mgPerL'], 14.0)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
+    # workflow plans no nitric candidate with a target state, so the case this test reproduces
+    # cannot be staged.
     def test_legacy_nitric_candidate_has_no_ammonium_review(self):
-        # The frozen pre-packaged catalogue: the packaged KNO3 is blocked by the label/charge
-        # gate (G5) before any pH candidate is planned.
         self.enterContext(historical_catalogue())
         library = load_library()
         targets = next(

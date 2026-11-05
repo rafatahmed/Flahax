@@ -515,9 +515,7 @@ def calculate_ec_from_totals(
         return _not_supported_unsolved(reason, ph=ph, carbon_boundary=carbon_boundary, **common)
     try:
         if ph_mode == 'calculated':
-            state = calculate_equilibrium_ph(
-                totals_molal, complete_analysis=True, carbon_boundary='closed', phases=phases
-            )
+            state = calculate_equilibrium_ph(totals_molal, carbon_boundary='closed', phases=phases)
         else:
             state = solve(totals_molal, ph, phases=phases)
     except DeliveryError as error:

@@ -21,13 +21,10 @@ from flahax import (
 )
 from flahax.batch_cli import BatchOptions, blend, read_water, run_batch, water_basis
 from flahax.measured_water import nutrient_mg_per_litre
-from tests.catalogue_history import historical_catalogue
 
 
 class UnitBasisTests(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_workflow_normalizes_fertilizer_against_declared_solvent(self):
-        self.enterContext(historical_catalogue())
         products = [p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate']
         self.assertEqual(len(products), 1)
         result = plan_fertilizer_workflow(
@@ -40,7 +37,6 @@ class UnitBasisTests(unittest.TestCase):
                 water_totals={},
                 water_mass_kg=5,
                 water_analysis_id='pure',
-                complete_analysis=True,
                 carbon_boundary='closed',
                 temperature_c=25,
                 phases=[],

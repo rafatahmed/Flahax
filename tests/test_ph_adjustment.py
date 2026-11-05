@@ -41,12 +41,11 @@ RO = dict(
     water_totals={},
     water_mass_kg=1000,
     water_analysis_id='RO',
-    complete_analysis=True,
     carbon_boundary='closed',
     temperature_c=25,
     phases=[],
 )
-CLOSED = dict(complete_analysis=True, carbon_boundary='closed', phases=[])
+CLOSED = dict(carbon_boundary='closed', phases=[])
 
 
 def coupled(formula, target_ph=5.8, maxima=None):

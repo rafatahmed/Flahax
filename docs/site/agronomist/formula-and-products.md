@@ -62,13 +62,15 @@ maximum is not an assay.
 
 Selection follows the table, per nutrient. Other flags:
 
-- `identity_inconsistent`: the grade's charge residual exceeds 0.1 %, or its
-  range excludes the identity's theory. The range test is skipped for
-  `aqueous_solution` and `chelate_salt_defined` identities, whose theory is
-  the pure compound rather than the product as sold (a 75 % phosphoric acid
-  at P2O5 54.0–54.6 % or an Fe-EDTA at Fe 12.8–13.2 % is not flagged); the
-  charge-residual test still applies to them. Chemistry stages then apply the
-  existing assay-residual rule; nothing is rejected silently.
+- A label that differs from its compound's proportions is not flagged. A label
+  states guaranteed minimums, not exact stoichiometry: chemistry uses the
+  compound in the amount its limiting declared nutrient supplies, and every
+  other declared nutrient's surplus is reported as not assigned to an ion
+  (potassium nitrate at 13.0 % N and 38.2 % K: "label analysis differs from
+  KNO₃: 1.91 % K not assigned to an ion"). The nutrient fit keeps the label.
+  The grade's charge residual is recorded as information. A product without a
+  defined compound (a blend such as Micro Combi Mix 2) keeps its label as
+  declared.
 - `lot_outside_grade_range`: a lot measured outside the grade's minimum or
   maximum, with no uncertainty stated. The certificate value is used and the
   band end is widened to include it (grade N-NO3 13.5–13.9 % with a lot at

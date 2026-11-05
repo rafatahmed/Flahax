@@ -15,17 +15,20 @@ from flahax import VolumeLitres, load_library, plan_fertilizer_workflow
 from flahax.delivery_contracts import DeliveryError
 from flahax.material_chemistry import ions_from_formula, material_chemistry
 from flahax.materials import load_identities
-from flahax.product_conversion import catalogue_dose_totals
+from flahax.product_conversion import catalogue_dose_totals, convert_material_dose
 from tests.catalogue_history import historical_catalogue
 
 PINNED_BASIS = {
-    'Ammonium Dibasic Phosphate': [('NH4+', 0.01514775071929862), ('PO4-3', 0.007571246915373082)],
+    'Ammonium Dibasic Phosphate': [
+        ('NH4+', 0.015142493830746164),
+        ('PO4-3', 0.007571246915373082),
+    ],
     'Ammonium Monobasic Phosphate': [
-        ('NH4+', 0.008695838420184626),
+        ('NH4+', 0.008692518525841323),
         ('PO4-3', 0.008692518525841323),
     ],
     'Ammonium Nitrate': [('NO3-', 0.012493306774615003), ('NH4+', 0.012493306774615003)],
-    'Ammonium Sulfate': [('NH4+', 0.015137755502723695), ('SO4-2', 0.007569245165315034)],
+    'Ammonium Sulfate': [('NH4+', 0.015137755502723695), ('SO4-2', 0.007568877751361848)],
     'Boric Acid': [('H3BO3', 0.016172062904717854)],
     'CH - micro': [
         ('Fe+3', 0.0012534694242994002),
@@ -43,7 +46,7 @@ PINNED_BASIS = {
     ],
     'Calcium Nitrate (ag grade)': [
         ('Ca+2', 0.00474075552672289),
-        ('NO3-', 0.010280794191351283),
+        ('NO3-', 0.010266849498618448),
         ('NH4+', 0.0007853384451726674),
     ],
     'Copper EDTA': [
@@ -53,7 +56,7 @@ PINNED_BASIS = {
     ],
     'Copper Sulfate (pentahydrate)': [
         ('Cu+2', 0.004004972775627105),
-        ('SO4-2', 0.004004990642545227),
+        ('SO4-2', 0.004004972775627105),
     ],
     'Iron DTPA': [
         ('Fe+3', 0.0019697376667562),
@@ -71,14 +74,14 @@ PINNED_BASIS = {
         ('Edta-4', 0.0023278717879846003),
     ],
     'Iron II Sulfate (Hepahydrate)': [
-        ('Fe+2', 0.0035974572477392784),
+        ('Fe+2', 0.00359638178415471),
         ('SO4-2', 0.0035963817841547095),
     ],
     'Magnesium Sulfate (Heptahydrate)': [
         ('Mg+2', 0.004056778440650072),
-        ('SO4-2', 0.004058016219588271),
+        ('SO4-2', 0.004056778440650071),
     ],
-    'Mg Nitrate': [('Mg+2', 0.003900148117671261), ('NO3-', 0.007800295572833)],
+    'Mg Nitrate': [('Mg+2', 0.0039001477864165), ('NO3-', 0.007800295572833)],
     'Mn EDTA': [
         ('Mn+2', 0.0023663019382342775),
         ('Na+', 0.004732603876468555),
@@ -87,24 +90,27 @@ PINNED_BASIS = {
     'Phosphoric Acid (75%)': [('PO4-3', 0.007653585960917502)],
     'Potassium Bicarbonate': [('K+', 0.009988599013086462), ('CO3-2', 0.009988599013086462)],
     'Potassium Carbonate': [('K+', 0.014471298350416703), ('CO3-2', 0.0072356491752083515)],
-    'Potassium Chloride': [('K+', 0.013414122119484949), ('Cl-', 0.01341412211948495)],
+    'Potassium Chloride': [('K+', 0.013414122119484949), ('Cl-', 0.013414122119484949)],
     'Potassium Citrate': [('K+', 0.00979093505344222), ('Citrate-3', 0.0032636450178140735)],
-    'Potassium Dibasic Phosphate': [('K+', 0.011483107961215704), ('PO4-3', 0.005740665276629942)],
+    'Potassium Dibasic Phosphate': [('K+', 0.011481330553259884), ('PO4-3', 0.005740665276629942)],
     'Potassium Hydroxide (45% solution)': [('K+', 0.008020655505003641)],
     'Potassium Monobasic Phosphate': [
-        ('K+', 0.007348657102738482),
+        ('K+', 0.007347509159526699),
         ('PO4-3', 0.007347509159526699),
     ],
-    'Potassium Nitrate': [('K+', 0.00989045559525606), ('NO3-', 0.009892408633011343)],
-    'Potassium Sulfate': [('K+', 0.011476969586912985), ('SO4-2', 0.005739862757330006)],
+    'Potassium Nitrate': [('K+', 0.00989045559525606), ('NO3-', 0.00989045559525606)],
+    'Potassium Sulfate': [('K+', 0.011476969586912985), ('SO4-2', 0.005738484793456492)],
     'Sodium Borate (Decahydrate) (borax)': [
-        ('Na+', 0.005245811734776456),
+        ('Na+', 0.005245143385753931),
         ('H3BO3', 0.010490286771507863),
     ],
-    'Sodium Molybdate (Dihydrate)': [('Na+', 0.00826454585080868), ('MoO4-2', 0.0041323606044815)],
+    'Sodium Molybdate (Dihydrate)': [
+        ('Na+', 0.00826454585080868),
+        ('MoO4-2', 0.00413227292540434),
+    ],
     'Urea': [('Ure', 0.016651316869783744)],
     'Zinc Sulfate (Monohydrate)': [
-        ('Zn+2', 0.005573569899051698),
+        ('Zn+2', 0.005570804741110418),
         ('SO4-2', 0.005570804741110417),
     ],
     'Zn EDTA': [
@@ -170,7 +176,6 @@ RO = dict(
     water_totals={},
     water_mass_kg=1000,
     water_analysis_id='RO',
-    complete_analysis=True,
     carbon_boundary='closed',
     temperature_c=25,
     phases=[],
@@ -379,12 +384,12 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertEqual(set(totals), {'Fe+2', 'SO4-2'})
         self.assertEqual(totals['SO4-2'], totals['Fe+2'])
 
-    def test_a_label_that_contradicts_its_ions_is_refused(self):
-        with self.assertRaises(DeliveryError) as caught:
-            material_chemistry(
-                {'name': 'Odd nitrate', 'formula': 'KNO3', 'elements': {'K': 38.67, 'N_NO3': 20}}
-            )
-        self.assertEqual(caught.exception.code, 'identity_inconsistent')
+    def test_a_label_off_its_ions_is_balanced_and_a_bad_composition_refused(self):
+        # Decision G5: the nitrate the potassium cannot balance is set aside, never refused.
+        odd = {'name': 'Odd nitrate', 'formula': 'KNO3', 'elements': {'K': 38.67, 'N_NO3': 20}}
+        converted = convert_material_dose(odd, 1.0)
+        self.assertAlmostEqual(converted.totals['nitrate'], converted.totals['K'], delta=1e-17)
+        self.assertAlmostEqual(converted.totals['K'], 38.67 / 100 / 39.0983, delta=1e-18)
         with self.assertRaises(DeliveryError) as caught:
             material_chemistry(
                 {'name': 'Odd salt', 'ions': {'K+': 2, 'NO3-': 1}, 'elements': {'K': 10}}

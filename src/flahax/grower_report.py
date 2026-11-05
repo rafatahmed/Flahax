@@ -18,7 +18,7 @@ import math
 
 from . import __version__
 from .delivery_contracts import DeliveryError
-from .fertilizer_workflow import NOT_MODELLABLE, unreviewed_reason
+from .fertilizer_workflow import PH_NOT_PLANNED, unreviewed_reason
 from .irrigation_ec import calculate_ec_from_totals
 from .saturation_policy import assess_saturation
 from .stock_solubility import (
@@ -332,7 +332,7 @@ def summarize_batch(
             selected=candidate(chosen) if chosen is not None else None,
             candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'],
         )
-    elif ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
+    elif ph_stage is not None and ph_stage.error_code in PH_NOT_PLANNED:
         # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet
         # names it.
         ph = dict(
@@ -515,7 +515,7 @@ def summarize_batch(
         ]
         warnings += [a for a in chemistry['advisories'] if not said(a)]
     warnings = list(dict.fromkeys(warnings))
-    if ph_stage is not None and ph_stage.error_code == NOT_MODELLABLE:
+    if ph_stage is not None and ph_stage.error_code in PH_NOT_PLANNED:
         status = (
             'blocked' if workflow.stages['formulation'].status == 'blocked' else 'requires_review'
         )
@@ -637,6 +637,9 @@ def summarize_batch(
             'qualified limits from conditional floors; unresolved source, grade or temperature '
             'requires review and no comparison approves a mixed stock.',
             'A positive saturation index is a precipitation risk, not a predicted rate.',
+            'Closed carbon: the mixed tank does not exchange CO2 with air.',
+            'Chemistry at 25 °C only.',
+            '1 L of solution is taken as 1 kg of water.',
         ],
     )
 
@@ -1096,35 +1099,16 @@ def _water_section(s):
             f'{number(w["measured_ph"], 2)}: no adjustment '
             'was needed, and the chemistry uses it as measured.</p>'
         )
-    elif state == 'closed_on_alkalinity':
-        note = (
-            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out '
-            f'of charge balance '
-            f'at its measured pH {number(w["measured_ph"], 2)}) has no chloride, so it is '
-            f'closed on positive, nonfixed directly supplied carbon '
-            '(not a titration). That is a modelling step, not a '
-            'corrected measurement: '
-            'targets and limits use the laboratory values.</p>'
-        )
     else:
-        how = (
-            f'within its stated ±{number(w["balance_ion_uncertainty_percent"], 2)}% measurement '
-            f'uncertainty'
-            if state == 'reconciled'
-            else 'without a stated measurement uncertainty, so the chemistry needs review'
-        )
         note = (
-            f'<p>For the chemistry only, the analysis ({number(w["imbalance_percent"], 2)}% out '
-            f'of charge balance '
-            f'at its measured pH {number(w["measured_ph"], 2)}) is closed on '
-            f'{text(w["balance_ion"])}, {how}. That is '
-            'a modelling step, not a corrected measurement: targets and limits use the '
-            'laboratory values.</p>'
+            f'<p>The analysis is {number(abs(w["imbalance_percent"]), 2)}% out of charge balance '
+            f'at its measured pH {number(w["measured_ph"], 2)}. It is used as measured: '
+            'no ion is added, removed or adjusted, and the chemistry carries the imbalance. '
+            'Targets and limits use the laboratory values.</p>'
         )
     if state is not None:
         note += (
-            '<p class="small">Measured pH and charge balance constrain the chemistry model. '
-            'Reconciliation changes only the model inventory, never laboratory nutrient limits. '
+            '<p class="small">The measured pH sets the chemistry model. '
             'Measured zeros, fixed carbon and titrated alkalinity are preserved.</p>'
         )
     if w['below_detection']:

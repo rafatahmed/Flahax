@@ -167,9 +167,7 @@ class ChemistryTerminationTests(unittest.TestCase):
 
         with patch('flahax.calculated_ph.solve', side_effect=discontinuous):
             with self.assertRaisesRegex(DeliveryError, 'did not close charge'):
-                calculate_equilibrium_ph(
-                    {}, complete_analysis=True, carbon_boundary='closed', phases=[]
-                )
+                calculate_equilibrium_ph({}, carbon_boundary='closed', phases=[])
 
     def test_small_charge_alone_does_not_certify_ph(self):
         seen = []
@@ -179,9 +177,7 @@ class ChemistryTerminationTests(unittest.TestCase):
             return SimpleNamespace(ph=ph, charge_balance=1e-200 * (7.1 - ph))
 
         with patch('flahax.calculated_ph.solve', side_effect=at):
-            result = calculate_equilibrium_ph(
-                {}, complete_analysis=True, carbon_boundary='closed', phases=[]
-            )
+            result = calculate_equilibrium_ph({}, carbon_boundary='closed', phases=[])
         self.assertLessEqual(abs(result.ph - 7.1), 1e-7)
         self.assertGreater(len(seen), 2)
         self.assertLess(len(seen), 80)
@@ -194,17 +190,13 @@ class ChemistryTerminationTests(unittest.TestCase):
                     ph=ph, charge_balance=target - ph
                 ),
             ):
-                result = calculate_equilibrium_ph(
-                    {}, complete_analysis=True, carbon_boundary='closed', phases=[]
-                )
+                result = calculate_equilibrium_ph({}, carbon_boundary='closed', phases=[])
                 self.assertEqual(result.ph, target)
         with patch(
             'flahax.calculated_ph.solve', return_value=SimpleNamespace(ph=7, charge_balance=1)
         ):
             with self.assertRaisesRegex(DeliveryError, 'no charge-balanced'):
-                calculate_equilibrium_ph(
-                    {}, complete_analysis=True, carbon_boundary='closed', phases=[]
-                )
+                calculate_equilibrium_ph({}, carbon_boundary='closed', phases=[])
 
     def test_aqueous_diagnostics_record_existing_residual_limits(self):
         for totals in ({}, {'Na+': 1e-12, 'Cl-': 1e-12}, {'Na+': 0.01, 'Cl-': 0.01}):

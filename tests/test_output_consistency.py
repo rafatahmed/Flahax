@@ -201,9 +201,7 @@ class ReagentQuantityRendering(unittest.TestCase):
 
 
 class SelectedStateIdentity(unittest.TestCase):
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_selected_recipe_uses_its_own_mixed_and_target_states(self):
-        self.enterContext(historical_catalogue())
         from flahax import load_library, plan_fertilizer_workflow, VolumeLitres, summarize_batch
         from flahax.irrigation_ec import calculate_ec_from_totals
         from tests.test_joint_workflow import configuration

@@ -21,15 +21,13 @@ A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
 water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
 measured-pH chemistry needs ``HCO3`` (0 if none). Optional keys:
 ``"below_detection": {"Mn": 0.01}`` (detection limits, mg/L; taken as zero, never
-adjusted), ``"balance_ion": "Cl"`` or ``"Na"`` and
-``"balance_ion_uncertainty_percent": 10`` (the stated uncertainty of that ion).
+adjusted).
 
 Nutrient targets and concentration limits use the analysis exactly as entered.
 For the chemistry only (pH, saturation, EC, reagent dose) the analysis is
-speciated at its measured pH: used unchanged if it already balances, otherwise
-closed on the balance ion, within its stated uncertainty, or as an assumption
-flagged for review. The report shows both and never lets that balancing pass or
-fail a limit (#84).
+speciated at its measured pH exactly as measured: its charge imbalance is
+reported, and no ion is added, removed or adjusted to close it. The report shows
+the imbalance and never lets it pass or fail a limit (#84).
 
 Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
 the final solution); unspecified limits are not checked. The packaged pH products
@@ -205,6 +203,13 @@ def read_water(spec):
             + '; use '
             + ', '.join(WATER_KEYS),
         )
+    closing = sorted({'balance_ion', 'balance_ion_uncertainty_percent'} & set(data))
+    if closing:
+        raise DeliveryError(
+            'unknown_field',
+            f'{", ".join(closing)} is no longer used: the analysis is taken as measured, its '
+            'charge imbalance is reported, and no ion is adjusted to close it',
+        )
     below = data.get('below_detection') or {}
     if not isinstance(below, dict) or set(below) - set(WATER_KEYS):
         raise DeliveryError(
@@ -263,13 +268,6 @@ def read_water(spec):
             'This is not a bicarbonate speciation measurement or a titration; '
             'use alkalinity_meq_per_litre for measured total alkalinity.'
         ]
-    if 'balance_ion' in data:
-        ions = {'Cl': 'Cl-', 'Na': 'Na+'}
-        if data['balance_ion'] not in ions:
-            raise DeliveryError('unsupported_balance_ion', '"balance_ion" must be "Cl" or "Na"')
-        config['balance_ion'] = ions[data['balance_ion']]
-    if 'balance_ion_uncertainty_percent' in data:
-        config['balance_ion_uncertainty_percent'] = float(data['balance_ion_uncertainty_percent'])
     return label, nutrients, config
 
 
@@ -302,12 +300,7 @@ def blend(label, water, chemistry, percent):
         )
     options = {
         key: chemistry[key]
-        for key in (
-            'balance_ion',
-            'balance_ion_uncertainty_percent',
-            'below_detection',
-            'alkalinity_eq_per_kg',
-        )
+        for key in ('below_detection', 'alkalinity_eq_per_kg')
         if key in chemistry
     }
     label = f'{percent:g}% {label}, {100 - percent:g}% ion-free water'
@@ -477,7 +470,6 @@ def run_batch(options):
         else dict(
             chemistry,
             water_mass_kg=volume * chemistry['concentration_basis']['water_kg_per_litre'],
-            complete_analysis=True,
             carbon_boundary='closed',
             temperature_c=25,
             phases=[],

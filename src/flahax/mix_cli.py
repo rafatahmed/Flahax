@@ -24,7 +24,7 @@ import sys
 
 from . import __version__
 from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, render, run_batch
-from .composition import ION_BALANCE_WARNING_PCT, target_ion_balance
+from .composition import target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
 from .grower_report import _reagent_line, number, render_report
@@ -39,6 +39,7 @@ from .grower_sheet import (
     readable,
     render_mix_sheet,
 )  # noqa: F401 (STATUS_WORDS re-exported)
+from .label_reconciliation import label_note
 from .materials import declared_ions_check, load_identities, make_grade, resolve_material
 from .mix_store import Store, slug, check_saved_state, verify_session
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
@@ -335,14 +336,6 @@ def ask_formula(p, store, pending, library):
         f'{balance["anionsMeqPerL"]:.2f} '
         f'meq/L ({balance["imbalancePercent"]:+.1f} %).'
     )
-    if balance['exceedsWarning']:
-        p.say(
-            f'Warning: the formula is {abs(balance["imbalancePercent"]):.1f} '
-            f'% out of balance, '
-            f'beyond {ION_BALANCE_WARNING_PCT:g} %; no set of salts meets every target, and '
-            f'unlisted counter-ions '
-            'will make up the difference.'
-        )
     return ref, targets, title
 
 
@@ -354,8 +347,9 @@ def ask_notes(p):
 
 
 def add_single(p, catalogue):
-    """A single-compound fertilizer from its label, or None when the label does not match the
-    chemical.
+    """A single-compound fertilizer from its label, or None when the label cannot be graded.
+
+    A label off its compound is added with a note of the surplus no ion carries (decision G5).
     """
     names = {s['name']: s for s in catalogue}
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
@@ -390,14 +384,10 @@ def add_single(p, catalogue):
     except DeliveryError as exc:
         p.say(f'Not added: {exc}')
         return None
-    if 'identity_inconsistent' in material.flags:
-        p.say(
-            f'Not added (identity_inconsistent): the label of {brand} does not match '
-            f'{identity["name"]}. '
-            'Check the label values, or use the catalogue grade.'
-        )
-        return None
     p.say(f'Added {brand} as {product}.')
+    note = label_note(identity, material.record['elements'])
+    if note:
+        p.say(note)
     return dict(
         shipped, id=material.record['id'], elements=material.record['elements'], grade=grade
     )

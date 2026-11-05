@@ -48,7 +48,7 @@ def workflow(water, salts, label):
     return plan_fertilizer_workflow(
         salts, targets(), ppm(water.analytical_totals), TARGET_PH, final_volume=VolumeLitres(1000),
         equilibrium=dict(water_balance=water, water_mass_kg=1000, water_analysis_id=label,
-                         complete_analysis=True, carbon_boundary='closed', temperature_c=25, phases=[]))
+                         carbon_boundary='closed', temperature_c=25, phases=[]))
 
 
 def main():

@@ -22,7 +22,6 @@ from flahax import (
     plan_acid_options,
 )
 from tests.test_ph_planning import record, inputs
-from tests.catalogue_history import historical_catalogue
 
 
 NAMES = [
@@ -173,15 +172,9 @@ class WaterWorkflowTests(unittest.TestCase):
 
     def test_calculated_ph_requires_explicit_boundary_and_conserves_components(self):
         totals = {'Na+': 0.002, 'Cl-': 0.002}
-        for kwargs in (
-            {'complete_analysis': False, 'carbon_boundary': 'closed'},
-            {'complete_analysis': True, 'carbon_boundary': 'open'},
-        ):
-            with self.assertRaises(DeliveryError):
-                calculate_equilibrium_ph(totals, phases=[], **kwargs)
-        result = calculate_equilibrium_ph(
-            totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-        )
+        with self.assertRaises(DeliveryError):
+            calculate_equilibrium_ph(totals, phases=[], carbon_boundary='open')
+        result = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
         self.assertAlmostEqual(result.ph, 7, delta=0.01)
         self.assertLess(abs(result.charge_balance), 1e-12)
         self.assertEqual(result.totals, totals)
@@ -189,15 +182,12 @@ class WaterWorkflowTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             calculate_equilibrium_ph(
                 {'Na+': 0.2, 'Cl-': 0.2},
-                complete_analysis=True,
                 carbon_boundary='closed',
                 phases=[],
             )
         for phases in (None, 1, 'Calcite'):
             with self.assertRaises(DeliveryError):
-                calculate_equilibrium_ph(
-                    totals, complete_analysis=True, carbon_boundary='closed', phases=phases
-                )
+                calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=phases)
 
     def test_changed_catalogue_assay_cannot_be_used_as_unchanged_chemistry(self):
         salt = dict(products()[5])
@@ -212,7 +202,6 @@ class WaterWorkflowTests(unittest.TestCase):
                 water_totals={},
                 water_mass_kg=100,
                 water_analysis_id='synthetic',
-                complete_analysis=True,
                 carbon_boundary='closed',
                 temperature_c=25,
                 phases=[],
@@ -235,26 +224,19 @@ class WaterWorkflowTests(unittest.TestCase):
         )
         data = json.loads(fixture.read_text())
         totals = dict(data['runtime_totals'])
-        initial = calculate_equilibrium_ph(
-            totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-        )
+        initial = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
         self.assertAlmostEqual(initial.ph, data['initial_ph'], delta=0.01)
         totals['NO3-'] += data['nitric_acid_molal']
-        final = calculate_equilibrium_ph(
-            totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-        )
+        final = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
         self.assertAlmostEqual(final.ph, data['selected_rows'][-1]['pH'], delta=0.01)
         self.assertLess(abs(final.charge_balance), 1e-12)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
     def test_full_calculated_ph_acid_and_stock_path(self):
-        self.enterContext(historical_catalogue())
         salt = products()[5]
         config = dict(
             water_totals={},
             water_mass_kg=100,
             water_analysis_id='pure-synthetic-water',
-            complete_analysis=True,
             carbon_boundary='closed',
             temperature_c=25,
             phases=[],
@@ -345,9 +327,7 @@ class WaterWorkflowTests(unittest.TestCase):
 class AcidSelectionTests(unittest.TestCase):
     def arguments(self):
         totals = {'Na+': 0.002, 'Cl-': 0.002}
-        initial = calculate_equilibrium_ph(
-            totals, complete_analysis=True, carbon_boundary='closed', phases=[]
-        )
+        initial = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
         return dict(
             totals=totals,
             initial_ph=initial.ph,

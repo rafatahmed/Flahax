@@ -71,7 +71,6 @@ RO = dict(
     water_totals={},
     water_mass_kg=1000,
     water_analysis_id='RO',
-    complete_analysis=True,
     carbon_boundary='closed',
     temperature_c=25,
     phases=[],
@@ -415,7 +414,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
     def row(recommendation, symbol='N_NH4'):
         return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
+    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
+    # candidate is planned.
     def test_first_fit_and_refit_rate_ammonium_alike(self):
         self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
@@ -480,7 +481,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
+    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
+    # candidate is planned.
     def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
         self.enterContext(historical_catalogue())
         limits = {'Na': 50, 'N_NH4': 14}
@@ -626,9 +629,7 @@ class BatchCommandTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn('Tomato Stage.1', err)
 
-    # Catalogue v0.0: re-enable in PR 4 (G5)
-    def test_measured_water_is_closed_and_used_consistently(self):
-        self.enterContext(historical_catalogue())
+    def test_measured_water_is_used_as_measured_and_consistently(self):
         with tempfile.TemporaryDirectory() as tmp:
             water = Path(tmp) / 'well.json'
             # Shomar et al. (2024) station 104, as in examples/tomato_advanced.py.
@@ -663,7 +664,8 @@ class BatchCommandTests(unittest.TestCase):
             )
             self.assertIn(code, (0, 3), err)
             summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
-            self.assertEqual(summary['stages']['chemistry']['status'], 'requires_review')
-            self.assertEqual(summary['water']['reconciliation'], 'assumed')
+            self.assertEqual(summary['stages']['chemistry']['status'], 'calculated')
+            self.assertEqual(summary['water']['reconciliation'], 'imbalance_reported')
+            self.assertIsNone(summary['water']['balance_ion'])
             self.assertEqual(summary['water']['analysis_mg_per_litre']['Cl'], 1280.4)
             self.assertAlmostEqual(summary['chemistry']['water_ph'], 7.8, places=6)

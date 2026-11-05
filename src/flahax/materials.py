@@ -179,13 +179,6 @@ COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed', 'declared_ions'}
 CHELATING_AGENTS = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
-# Printed labels are rounded and commercial grades are not the pure salt (Yara Calcinit: -0.56 %);
-# a one-point
-# typing error moves the balance by about 2 % (#93 decision 2026-10-23).
-_CHARGE_RESIDUAL_LIMIT_PERCENT = 1.0
-# Theory is the pure compound, not the commercial solution or the chelate product as sold,
-# so a grade range of these identities is not compared with it (the charge test still applies).
-_RANGE_TEST_EXEMPT = frozenset({'aqueous_solution', 'chelate_salt_defined'})
 # Disclosed blend: declared vs component-implied analysis, relative and absolute (% points).
 _BLEND_RELATIVE_TOLERANCE = 0.05
 _BLEND_ABSOLUTE_TOLERANCE = 0.05
@@ -432,26 +425,23 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
     return tuple(pairs)
 
 
-def _nutrient_charges(identity: dict, table: Mapping | None = None) -> dict:
+def _nutrient_charges(identity: dict) -> dict:
     """Mean charge per nutrient atom, from the identity's dissolved ion forms."""
-    table = _ION_NUTRIENT_CHARGE if table is None else table
     totals: dict = {}
     for ion, count in identity['ion_forms'].items():
-        if ion in table:
-            nutrient, charge = table[ion]
+        if ion in _ION_NUTRIENT_CHARGE:
+            nutrient, charge = _ION_NUTRIENT_CHARGE[ion]
             weighted, atoms = totals.get(nutrient, (0.0, 0.0))
             totals[nutrient] = (weighted + charge * count, atoms + count)
     return {nutrient: weighted / atoms for nutrient, (weighted, atoms) in totals.items()}
 
 
-def _charge_residual_percent(
-    identity: dict, declared: dict, table: Mapping | None = None
-) -> float | None:
+def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
     """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion.
 
-    ``table`` maps ion -> (nutrient, charge per atom); material_chemistry passes its wider table.
+    Information on a grade (``Grade.charge_residual_percent``); it never blocks (decision G5).
     """
-    charges = _nutrient_charges(identity, table)
+    charges = _nutrient_charges(identity)
     signed = absolute = 0.0
     has_cation = has_anion = False
     for nutrient, percent in declared.items():
@@ -465,16 +455,6 @@ def _charge_residual_percent(
     if not (has_cation and has_anion) or absolute <= 0:
         return None
     return 100.0 * signed / absolute
-
-
-def _range_excludes_theory(identity: dict, minimum: dict, maximum: dict) -> bool:
-    theory = identity['theoretical_analysis']
-    if not theory:
-        return False
-    return any(
-        not minimum[key] <= theory.get(key, 0.0) <= maximum[key]
-        for key in set(minimum) & set(maximum)
-    )
 
 
 def _analysis_targets(
@@ -583,7 +563,9 @@ def make_grade(record: Mapping) -> Grade:
         for key, value in impurities.items()
     }
 
-    flags, residual = (), None
+    # A label off its compound is reconciled, never flagged (decision G5, label_reconciliation);
+    # the charge residual is information.
+    residual = None
     if composition == 'single':
         identity = load_identities()[identity_id]
         # Declared forms only: typical, else minimum; forms split from total N are inferred, not
@@ -595,11 +577,6 @@ def make_grade(record: Mapping) -> Grade:
             if key not in inferred
         }
         residual = _charge_residual_percent(identity, declared)
-        if (residual is not None and abs(residual) > _CHARGE_RESIDUAL_LIMIT_PERCENT) or (
-            identity['status'] not in _RANGE_TEST_EXEMPT
-            and _range_excludes_theory(identity, bands['minimum'], bands['maximum'])
-        ):
-            flags = ('identity_inconsistent',)
     return Grade(
         grade_id=grade_id,
         identity_id=identity_id,
@@ -613,7 +590,6 @@ def make_grade(record: Mapping) -> Grade:
         components=components,
         oxide_conversions=conversions,
         document=document,
-        flags=flags,
         form_split=split,
         charge_residual_percent=residual,
         chelating_agent=chelating_agent,

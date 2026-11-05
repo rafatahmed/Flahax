@@ -323,7 +323,7 @@ class StageMessageTests(unittest.TestCase):
 
 
 class PhBandTests(unittest.TestCase):
-    """Potassium sulfate alone in RO water mixes at pH 6.5447: a target 5e-4 away plans a
+    """Potassium sulfate alone in RO water mixes at pH 7.0083: a target 5e-4 away plans a
     reagent whose dose converges on the target; 5e-5 away is met and plans none (G25)."""
 
     @classmethod
@@ -355,7 +355,8 @@ class PhBandTests(unittest.TestCase):
         )
 
     def test_the_mixed_ph(self):
-        self.assertAlmostEqual(self.mixed, 6.5447, places=4)
+        # Was 6.5447 while the label's 0.0044 % sulfate surplus acted as implicit acid (G5).
+        self.assertAlmostEqual(self.mixed, 7.0083, places=4)
 
     def test_five_ten_thousandths_away_plans_a_converged_reagent(self):
         for offset, direction in ((5e-4, 'base'), (-5e-4, 'acid')):
