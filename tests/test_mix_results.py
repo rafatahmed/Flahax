@@ -93,10 +93,10 @@ class ResultViewTests(unittest.TestCase):
             self.assertIn(expected, text)
             self.assertNotIn('all dissolve', text)
 
-    def test_real_workflow_remains_phase_blocked_without_reagent(self):
+    def test_real_workflow_stays_blocked_by_three_tanks_with_a_reagent_selected(self):
         self.assertEqual(self.summary['status'], 'blocked')
-        self.assertTrue(self.summary['chemistry']['phase_assessment']['blocks'])
-        self.assertIsNone(self.summary['ph']['selected'])
+        self.assertNotIn('blocks', self.summary['chemistry']['phase_assessment'])
+        self.assertIsNotNone(self.summary['ph']['selected'])
         self.assertEqual(first_view(self.summary), 2)
         tanks = '\n'.join(screen(self.summary, 0))
         self.assertIn('not to be prepared', tanks)

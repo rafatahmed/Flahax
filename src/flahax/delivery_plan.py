@@ -8,7 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 import math
 from typing import Iterable, Mapping, Any
-from .saturation_policy import assess_saturation
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import FinalSolutionRecipe
 from .ph_planning import PhPlan
@@ -188,13 +187,6 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
             plan.recipe, plan.stocks, plan.ph_plan, plan.commands, complete=True
         )
     if target == 'validated' and isinstance(plan.ph_plan, EquilibriumPhPlan):
-        result = plan.ph_plan.equilibrium.target
-        # A phase name or operator acknowledgement cannot establish applicability.
-        if assess_saturation(result)['blocks']:
-            raise DeliveryError(
-                'precipitation_risk',
-                'equilibrium target cannot be approved with solids or positive SI',
-            )
         if (
             plan.ph_plan.incidental_assessment
             and plan.ph_plan.incidental_assessment['requiresReview']

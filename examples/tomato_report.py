@@ -21,7 +21,7 @@ import flahax
 from . import tomato_advanced, tomato_simple
 from .common import serializable
 from .visual_report import bars, number, table, text
-from flahax.saturation_policy import REVIEW
+from flahax.saturation_policy import RISK_PHASES
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
 
@@ -176,16 +176,16 @@ def advanced_section(a):
         for u in rec['unmet']
     )
     c, acid, pc = a['chemistry'], a['acid'], a['phosphoric_check']
-    review = set(REVIEW)
+    risk = set(RISK_PHASES)
     si_rows = [
         (
             p,
             number(si, 2),
             'undersaturated'
             if si <= 0
-            else 'supersaturated, review (#78)'
-            if p in review
-            else 'supersaturated, blocks',
+            else 'supersaturated, precipitation risk'
+            if p in risk
+            else 'supersaturated, information',
         )
         for p, si in c['saturation']
     ]
@@ -315,11 +315,10 @@ def advanced_section(a):
         f'{number(acid["added_nitrate_n_mg_l"], 1)} mg/L nitrate-N (nitrate-N '
         f'{number(acid["nitrate_before_mg_l"], 1)} '
         f'&rarr; {number(acid["nitrate_after_mg_l"], 1)}, target '
-        f'{number(acid["nitrate_target_mg_l"], 1)}). FlahaX asks '
-        'for review before accepting it, because these phases are supersaturated: '
+        f'{number(acid["nitrate_target_mg_l"], 1)}). These phases are supersaturated: '
         + text(', '.join(f'{p} {si:.2f}' for p, si in acid['supersaturated_after_acid']) or 'none')
-        + '. They are review-class phases (cited reasons in flahax.saturation_policy), not a '
-        'predicted '
+        + '. They are reported as information (the basis of each constant is in '
+        'flahax.saturation_policy), not a predicted '
         'precipitate: add the acid in steps and measure.</p>'
         + table(
             ['State', 'EC25 mS/cm', 'pH', 'Status'],
@@ -461,11 +460,10 @@ def sheets(simple, advanced):
         f'Add about <b>{number(acid["nitric_ml_per_batch"], 0)} mL</b> of '
         f'{text(acid["nitric_grade"])} per 1000 L to go '
         f'from pH {number(a["chemistry"]["mixed_ph"], 2)} to {a["target_ph"]}. Add in steps and '
-        f'measure: FlahaX asks for '
-        'review first ('
+        f'measure ('
         + text(', '.join(p for p, _ in acid['supersaturated_after_acid']))
-        + ' supersaturated, '
-        'review-class). The example acid grade must be replaced by your certificate values.',
+        + ' supersaturated, reported as information). The example acid grade must be replaced by '
+        'your certificate values.',
         [
             (
                 'EC25 (mS/cm)',

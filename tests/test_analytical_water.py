@@ -418,7 +418,7 @@ class BatchCommandTests(unittest.TestCase):
                 runs[share] = code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
             code, eight = runs['8']
             self.assertEqual((code, eight['status']), (3, 'blocked'))
-            self.assertEqual(eight['stages']['ph_adjustment']['status'], 'blocked')
+            self.assertEqual(eight['stages']['ph_adjustment']['status'], 'calculated')
             self.assertAlmostEqual(
                 eight['water']['analysis_mg_per_litre']['Cl'], 1280.4 * 0.08, places=9
             )
@@ -428,7 +428,7 @@ class BatchCommandTests(unittest.TestCase):
             self.assertEqual(
                 eight['stages']['formulation']['status'], 'calculated'
             )  # the weighed recipe has no unreviewed incidentals
-            self.assertIn('Hydroxylapatite', eight['stages']['ph_adjustment']['message'])
+            self.assertIsNone(eight['stages']['ph_adjustment']['error_code'])
             code, nine = runs['9']
             self.assertEqual((code, nine['status']), (3, 'blocked'))
             self.assertEqual(

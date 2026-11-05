@@ -102,7 +102,7 @@ class PhaseAuditTests(unittest.TestCase):
         )
         self.assertTrue(report['chemistry_exclusions_for_alternatives'])
 
-    def test_unqualified_phase_blocks_without_allocating_solids(self):
+    def test_unmeasured_constant_phase_is_information_without_allocating_solids(self):
         state = SimpleNamespace(
             ph=5,
             ionic_strength=0.02,
@@ -116,11 +116,11 @@ class PhaseAuditTests(unittest.TestCase):
         ) as solve:
             result = phase_screen({'Mn+2': 1e-5})
         self.assertEqual(solve.call_args.kwargs['phases'], [])
-        self.assertTrue(result['assessment']['blocks'])
-        self.assertEqual(result['assessment']['review'][0][0], 'MnHPO4')
+        self.assertEqual(result['assessment']['risk'], [])
+        self.assertEqual(result['assessment']['information'][0][0], 'MnHPO4')
         self.assertEqual(result['precipitated'], {})
 
-    def test_hard_phase_still_blocks(self):
+    def test_readily_forming_phase_is_a_risk_not_a_block(self):
         state = SimpleNamespace(
             ph=5,
             ionic_strength=0.02,
@@ -131,8 +131,8 @@ class PhaseAuditTests(unittest.TestCase):
         )
         with patch('tools.catalogue_workflow_audit.calculate_equilibrium_ph', return_value=state):
             result = phase_screen({})
-        self.assertTrue(result['assessment']['blocks'])
-        self.assertEqual(result['assessment']['blocking'], [('Gypsum', 0.5)])
+        self.assertNotIn('blocks', result['assessment'])
+        self.assertEqual(result['assessment']['risk'], [('Gypsum', 0.5)])
 
     @unittest.skipUnless(
         find_spec('numpy') and find_spec('scipy'),
@@ -149,8 +149,8 @@ class PhaseAuditTests(unittest.TestCase):
         ]
         result = audit(library, edta_only=True)['results'][0]['all_available']
         self.assertTrue(result['nutrient_pass'])
-        self.assertTrue(result['chemistry']['assessment']['blocks'])
-        self.assertIn('MnHPO4', [x[0] for x in result['chemistry']['assessment']['review']])
+        self.assertEqual(result['chemistry']['assessment']['risk'], [])
+        self.assertIn('MnHPO4', [x[0] for x in result['chemistry']['assessment']['information']])
         self.assertEqual(result['chemistry']['precipitated'], {})
         self.assertIn(result['ec']['status'], {'partial', 'not_supported'})
         self.assertIsNone(result['ec']['ec25_ms_cm'])

@@ -76,14 +76,13 @@ class GrowersPageTests(unittest.TestCase):
             tanks['Magnesium Sulfate (Heptahydrate)'], tanks['Potassium Monobasic Phosphate']
         )
 
-    def test_current_eight_percent_output_preserves_limits_and_blocks_reagent(self):
+    def test_current_eight_percent_output_preserves_limits_and_selects_a_reagent(self):
         _, s = self.eight
         self.assertFalse(s['formulation']['unmet'])
-        self.assertIsNone(s['ph']['selected'])
-        self.assertEqual(s['ph']['status'], 'blocked')
+        self.assertIsNotNone(s['ph']['selected'])
+        self.assertNotEqual(s['ph']['status'], 'blocked')
         self.assertTrue(s['ph']['candidates'])
-        self.assertTrue(all(c['status'] == 'rejected' for c in s['ph']['candidates']))
-        self.assertIn('Hydroxylapatite', s['ph']['candidates'][0]['message'])
+        self.assertFalse(any(c['status'] == 'rejected' for c in s['ph']['candidates']))
         limits = {row['symbol']: row['analyticalPpm'] for row in s['limits']}
         # Product chloride may add to the measured water, up to the explicit cap.
         self.assertGreaterEqual(limits['Cl'], WELL['mg_per_litre']['Cl'] * 0.08)
@@ -94,7 +93,7 @@ class GrowersPageTests(unittest.TestCase):
         self.assertEqual(s['ec']['reason'], 'ionic_strength_outside_phosphate_fit')
         self.assertIsNone(s['ec']['ec25_ms_cm'])
 
-    def test_nine_percent_and_ro_cases_remain_blocked(self):
+    def test_nine_percent_and_ro_cases_stay_blocked_by_tanks_and_a_missing_acid(self):
         code, nine = self.nine
         self.assertEqual((code, nine['status']), (3, 'blocked'))
         self.assertEqual(
@@ -104,5 +103,6 @@ class GrowersPageTests(unittest.TestCase):
         self.assertIn('115.2 mg/L chloride', self.page)
         for code, result in (self.ro, self.ro_no_acid):
             self.assertEqual((code, result['status']), (3, 'blocked'))
-            self.assertIsNone(result['ph']['selected'])
             self.assertGreater(result['ph']['unadjusted_ph'], result['ph']['target_ph'])
+        self.assertIsNotNone(self.ro[1]['ph']['selected'])
+        self.assertIsNone(self.ro_no_acid[1]['ph']['selected'])  # no acid was supplied

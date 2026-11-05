@@ -29,8 +29,12 @@ The incidental NH₄-N, capped at 10 % of total N and 1.5 mmol/L, permitted when
 _Avoid_: Ammonium ban, zero ammonium
 
 **Precipitation risk**:
-A warning label from a phase whose constant is measured and which is known to form readily.
+A warning label from a phase known to form readily (brushite, gypsum, calcite) above saturation, or from an allocated solid.
 _Avoid_: Saturation block, precipitation gate
+
+**Phase information**:
+A supersaturated phase that is not a precipitation risk, reported with the basis of its constant.
+_Avoid_: Review finding, saturation review
 
 **EC range**:
 The low–high conductivity estimate, with no midpoint.
