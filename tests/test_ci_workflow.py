@@ -81,6 +81,11 @@ class WorkflowTests(unittest.TestCase):
         script = next(s['run'] for s in self.jobs['scope']['steps'] if s.get('id') == 'scope')
         self.assertIn('"$EVENT" = release', script)
 
+    def test_the_scope_job_asks_the_tool_and_never_pipes_git_into_a_filter(self):
+        script = next(s['run'] for s in self.jobs['scope']['steps'] if s.get('id') == 'scope')
+        self.assertIn('tools/ci_scope.py', script)
+        self.assertNotIn('grep', script)
+
     def test_documentation_only_changes_skip_the_live_reference_replay(self):
         steps = self.jobs['phreeqc-live']['steps']
         for step in steps:

@@ -50,9 +50,9 @@ jobs:
             full=true; matrix=$all
           elif [ "$EVENT" = pull_request ]; then
             # Only documentation (docs/ and top-level .md files) changed: no code to test.
-            if ! git diff --name-only "$BASE...$CANDIDATE_SHA" | grep -qvE '^(docs/|[^/]+\.md$)'; then
-              code=false
-            fi
+            # A comparison that fails fails this job; it is never read as documentation only.
+            decision=$(python tools/ci_scope.py "$BASE" "$CANDIDATE_SHA")
+            code=${decision#code=}
           fi
           { echo "full=$full"; echo "code=$code"; echo "matrix=$matrix"; } >> "$GITHUB_OUTPUT"
 
