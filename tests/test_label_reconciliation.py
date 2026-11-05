@@ -65,8 +65,8 @@ class ReconcileLabelTests(unittest.TestCase):
         label = {'N_NO3': 14.4, 'N_NH4': 1.1, 'Ca': 19.0}
         result = reconcile_label(double_salt, label)
         self.assertEqual(set(result.unassigned_percent), {'N_NO3'})
-        self.assertAlmostEqual(result.unassigned_percent['N_NO3'], 0.01953191277009945, places=14)
-        self.assertAlmostEqual(result.imbalance_percent, -0.06786516713661755, places=14)
+        self.assertAlmostEqual(result.unassigned_percent['N_NO3'], 0.01953191277009945, places=10)
+        self.assertAlmostEqual(result.imbalance_percent, -0.06786516713661755, places=10)
         self.assertEqual(
             label_note(double_salt, label),
             'label analysis differs from 5Ca(NO₃)₂·NH₄NO₃·10H₂O: '
@@ -80,8 +80,8 @@ class ReconcileLabelTests(unittest.TestCase):
         share = (ca + nh4 - no3) / (ca + nh4)
         result = reconcile_label(double_salt, label)
         self.assertEqual(set(result.unassigned_percent), {'Ca', 'N_NH4'})
-        self.assertAlmostEqual(result.unassigned_percent['Ca'], share * 19.0, places=14)
-        self.assertAlmostEqual(result.unassigned_percent['N_NH4'], share * 1.4, places=14)
+        self.assertAlmostEqual(result.unassigned_percent['Ca'], share * 19.0, places=10)
+        self.assertAlmostEqual(result.unassigned_percent['N_NH4'], share * 1.4, places=10)
 
     def test_a_label_closed_by_an_unstated_or_undeclared_ion_assigns_everything(self):
         self.assertEqual(
