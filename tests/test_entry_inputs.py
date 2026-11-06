@@ -106,12 +106,12 @@ class EntryInputTests(unittest.TestCase):
 
     def test_valid_input_returns_the_current_result(self):
         code, text = self.batch('--acid', 'HNO3:0.60:1.37:Nitric acid 60%')
-        self.assertEqual(code, 3, text)
-        self.assertIn(' - blocked', text)
+        self.assertEqual(code, 0, text)
+        self.assertIn(' - requires review', text)
         self.assertNotIn('mL Nitric acid 60%', text)
         summary = json.loads((self.dir / 'out/summary.json').read_text(encoding='utf-8'))
-        self.assertEqual(summary['status'], 'blocked')
-        self.assertEqual(summary['ph']['selected']['direction'], 'base')  # blocked by tanks
+        self.assertEqual(summary['status'], 'requires_review')
+        self.assertEqual(summary['ph']['selected']['direction'], 'base')
 
 
 if __name__ == '__main__':

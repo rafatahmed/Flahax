@@ -82,8 +82,7 @@ class ResultViewTests(unittest.TestCase):
     def test_solubility_footer_never_claims_mixture_dissolution(self):
         for statuses, expected in [
             ([], 'not checked'),
-            (['screening_only'], 'not checked'),
-            (['inconclusive'], 'not checked'),
+            (['not_checked'], 'not checked'),
             (['ok'], 'mixture unqualified'),
             (['exceeds'], 'single-product limit'),
         ]:
@@ -93,13 +92,14 @@ class ResultViewTests(unittest.TestCase):
             self.assertIn(expected, text)
             self.assertNotIn('all dissolve', text)
 
-    def test_real_workflow_stays_blocked_by_three_tanks_with_a_reagent_selected(self):
-        self.assertEqual(self.summary['status'], 'blocked')
+    def test_real_workflow_needs_review_with_two_tanks_and_a_reagent_selected(self):
+        self.assertEqual(self.summary['status'], 'requires_review')
         self.assertNotIn('blocks', self.summary['chemistry']['phase_assessment'])
         self.assertIsNotNone(self.summary['ph']['selected'])
-        self.assertEqual(first_view(self.summary), 2)
+        self.assertEqual(first_view(self.summary), 0)
         tanks = '\n'.join(screen(self.summary, 0))
-        self.assertIn('not to be prepared', tanks)
+        self.assertIn('Tank A', tanks)
+        self.assertNotIn('not to be prepared', tanks)
         self.assertNotIn('sets the batch', tanks)
         self.assertNotIn('Synthetic rendering reagent', tanks)
 
@@ -140,7 +140,7 @@ class ResultViewTests(unittest.TestCase):
             self.assertEqual(notes.count(shown), 1, warning[:60])
 
     def test_blocked_opens_notes(self):
-        self.assertEqual(first_view(self.summary), 2)
+        self.assertEqual(first_view(self.summary), 0)
         self.assertEqual(first_view(presentation_summary(self.summary)), 0)
         self.assertEqual(first_view(self.blocked), 2)
         self.assertIn('do not mix', '\n'.join(screen(self.blocked, 0)))

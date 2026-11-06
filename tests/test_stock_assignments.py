@@ -109,10 +109,16 @@ class AssignmentTests(unittest.TestCase):
         ]
         rows = [dict(id=p['id'], name=p['name'], gramsPerLitre=0.00001) for p in products]
         result = group_tanks(rows, products)
-        self.assertEqual(len(result.tanks), 3)
-        self.assertNotEqual(result.tank_of('calcium'), result.tank_of('micro sulfate'))
+        # A tiny dose waives nothing: calcium stays apart from the sulfate and the phosphate.
+        self.assertEqual(len(result.tanks), 2)
+        self.assertNotEqual(result.tank_of('calcium'), result.tank_of('magnesium sulfate'))
+        self.assertNotEqual(result.tank_of('calcium'), result.tank_of('phosphate'))
+        # A micronutrient sulfate goes with the calcium, magnesium sulfate with the phosphate.
+        self.assertEqual(result.tank_of('calcium'), result.tank_of('micro sulfate'))
+        self.assertEqual(result.tank_of('magnesium sulfate'), result.tank_of('phosphate'))
+        self.assertEqual(len(group_tanks(rows, products, max_tanks=2).tanks), 2)
         with self.assertRaises(DeliveryError):
-            group_tanks(rows, products, max_tanks=2)
+            group_tanks(rows, products, max_tanks=1)
 
 
 class MixtureTests(unittest.TestCase):

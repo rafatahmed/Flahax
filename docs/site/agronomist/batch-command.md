@@ -1,6 +1,6 @@
-> Historical example: the two-tank magnesium/phosphate waiver below is retired.
-> Current assignments retain all separations, report required equipment, and do not
-> approve unqualified stock mixtures. See [stock assignments](stock-assignments.md).
+> The two-tank layout below is the current one: calcium and micronutrients in tank A,
+> phosphates and magnesium sulfate in tank B. Assignments report any extra tank they
+> need and do not approve a mixed stock. See [stock assignments](stock-assignments.md).
 
 # A batch from files: `flahax batch`
 
@@ -120,9 +120,10 @@ Read it from top to bottom before you weigh anything.
 
 2. **Quantities and assignments.** Product mass follows final batch volume. A blocked
    sheet labels these as diagnostic and offers no preparation boxes. Assignments respect
-   separation constraints and may require more than two tanks; no magnesium/phosphate
-   separation is waived to fit equipment. Qualified solubility limits and unresolved
-   stock-mixture evidence remain visible.
+   separation constraints: micronutrients and calcium in tank A, the phosphates and
+   magnesium sulfate in tank B. If more than two tanks would be needed, the sheet names
+   the pair and the rule. Each product's single-product solubility check and the
+   unassessed mixed tank remain visible.
 
 3. **pH.** Read the selected or rejected reagent diagnosis. Blocked quantities are not
    instructions to add a reagent.
@@ -162,8 +163,8 @@ value on the sheet rather than relying on this arithmetic alone.
 ### Historical 0.6.0 figures
 
 The following table and quoted doses are retained publication history, not current mixing instructions.
-A current run of step 3 on the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0) is
-blocked; read the reasons on its sheet rather than the figures below.
+A current run of step 3 on the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0)
+gives different figures; read the reasons on its sheet rather than the figures below.
 Product chloride can contribute up to the explicit final chloride limit; the water-only
 chloride value below is not necessarily the current final concentration.
 

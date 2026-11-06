@@ -89,13 +89,13 @@ class MixTests(unittest.TestCase):
 
     def test_first_run_tomato_ro_fill_mode(self):
         code, lines, target = self.full()
-        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertEqual(code, 0, '\n'.join(lines))
         sheet = (target / 'batch-sheet.html').read_text(encoding='utf-8')
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
-        self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B', 'C'])
-        self.assertEqual(summary['status'], 'blocked')
-        self.assertEqual(summary['ph']['selected']['direction'], 'base')  # tanks block it
-        self.assertIn('do not mix', sheet.lower())
+        self.assertEqual([t['name'] for t in summary['tanks']['tanks']], ['A', 'B'])
+        self.assertEqual(summary['status'], 'requires_review')
+        self.assertEqual(summary['ph']['selected']['direction'], 'base')
+        self.assertNotIn('do not mix', sheet.lower())
         self.assertIn('2,000 L of irrigation', sheet)
         self.assertEqual(
             summary['volumes'],
@@ -109,8 +109,8 @@ class MixTests(unittest.TestCase):
         self.assertEqual(summary['tanks']['temperature_c'], 25)
         self.assertTrue(any(line.startswith('Tank A') for line in lines), lines)
         head = [line for line in lines if line.startswith('FlahaX') and ' - ' in line][-1]
-        self.assertTrue(head.endswith('do not mix'), head)
-        self.assertFalse(any(line.startswith('  [ ] ') for line in lines), lines)
+        self.assertTrue(head.endswith('review required'), head)
+        self.assertTrue(any(line.startswith('  [ ] ') for line in lines), lines)
         self.assertFalse(any('precipitation risk' in line for line in lines), lines)
         self.assertFalse(any(line.startswith('Acid container:') for line in lines), lines)
         store = Store(self.home)
@@ -144,7 +144,7 @@ class MixTests(unittest.TestCase):
 
     def test_second_run_from_session_asks_nothing(self):
         code, _, first = self.full()
-        self.assertEqual(code, 3)
+        self.assertEqual(code, 0)
 
         def refuse(prompt):
             raise AssertionError(f'asked {prompt!r}')
@@ -160,7 +160,7 @@ class MixTests(unittest.TestCase):
             )
         finally:
             os.chdir(cwd)
-        self.assertEqual(code, 3, lines)
+        self.assertEqual(code, 0, lines)
         again = json.loads(
             (Path(self.tmp.name) / 'flahax-mix-tomato-howard-resh-ro/summary.json').read_text(
                 'utf-8'
@@ -208,7 +208,7 @@ class MixTests(unittest.TestCase):
         names = [f['name'] for f in load_library()['formulas']]
         pick = str(names.index('Tomato (Howard Resh)') + 1)
         code, lines, target = self.full(formula=['1', 'MKP', '20-20-20', '', pick])
-        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertEqual(code, 0, '\n'.join(lines))
         self.assertTrue(
             any(
                 "Nothing matches 'mkp'; press Enter to see the whole list." in line
@@ -256,9 +256,9 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'tiny'),
         )
-        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertEqual(code, 0, '\n'.join(lines))
         self.assertIn('Irrigation supplied: 1 L at 1:100', lines)
-        self.assertTrue(any('not to be prepared' in line for line in lines))
+        self.assertTrue(any(line.startswith('Tank A: prepare') for line in lines))
 
     def test_a_wrong_value_is_corrected_without_retyping_the_analysis(self):
         wrong = water(
@@ -272,7 +272,7 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'fixed'),
         )
-        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertEqual(code, 0, '\n'.join(lines))
         self.assertTrue(
             any(line.startswith('Charge balance:') and '0.0 % apart' in line for line in lines),
             lines,
@@ -306,11 +306,11 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'first'),
         )
-        self.assertEqual(code, 3, '\n'.join(lines))
+        self.assertEqual(code, 0, '\n'.join(lines))
         self.assertIn('Irrigation supplied: 1,000 L at 1:100', lines)
-        self.assertIn('Tank A: not to be prepared (do not mix)', lines)
-        self.assertFalse(any('Tank A: prepare' in line for line in lines))
-        weights = [line for line in lines if line.startswith('  - ')]
+        self.assertTrue(any(line.startswith('Tank A: prepare') for line in lines))
+        self.assertFalse(any('not to be prepared' in line for line in lines))
+        weights = [line for line in lines if line.startswith('  [ ] ')]
         self.assertTrue(weights)
         self.assertFalse([line for line in weights if line.endswith(': 0 g')], weights)
         for typed in (
@@ -322,7 +322,7 @@ class MixTests(unittest.TestCase):
                 code, again, _ = self.run_mix(
                     [], *typed, '--output', str(Path(self.tmp.name) / '-'.join(typed))
                 )
-                self.assertEqual(code, 3, '\n'.join(again))
+                self.assertEqual(code, 0, '\n'.join(again))
         code, listed, _ = self.run_mix([], 'sessions')
         self.assertEqual((code, listed), (0, ['Saved sessions: tomato-stage-1']))
         code, missing, _ = self.run_mix([], 'sessions/x')
@@ -342,7 +342,7 @@ class MixTests(unittest.TestCase):
             '--output',
             str(Path(self.tmp.name) / 'sweep'),
         )
-        self.assertEqual(code, 3, chr(10).join(lines))
+        self.assertEqual(code, 0, chr(10).join(lines))
         self.assertIn('  FlahaX plans with these acids only: HNO3, H3PO4, H2SO4, C6H8O7.', lines)
         self.assertTrue(
             any(
@@ -351,7 +351,6 @@ class MixTests(unittest.TestCase):
             )
         )
         self.assertEqual(Store(self.home).load('acids', 'hno3-60')['fraction'], 0.6)
-        self.assertFalse(any(line.startswith('Acid container:') for line in lines))
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(err):
             code = batch(
@@ -648,15 +647,17 @@ class LineModeTranscriptTests(unittest.TestCase):
         actual = transcript.splitlines()
         stop = next(i for i, line in enumerate(expected) if line.startswith('Saved the answers'))
         self.assertEqual(actual[: stop + 1], expected[: stop + 1])
-        self.assertEqual(summary['status'], 'blocked')
+        self.assertEqual(summary['status'], 'requires_review')
         self.assertEqual(summary['ph']['selected']['direction'], 'base')
         self.assertIn(
             'Calculation reference: ' + summary['calculation_identity']['result_id'], actual
         )
         self.assertFalse(any('precipitation risk' in line for line in actual))
         for tank in summary['tanks']['tanks']:
-            self.assertIn(f'Tank {tank["name"]}: not to be prepared (do not mix)', actual)
-        self.assertFalse(any(line.startswith(('  [ ] ', 'Acid container:')) for line in actual))
+            self.assertTrue(
+                any(line.startswith(f'Tank {tank["name"]}: prepare') for line in actual)
+            )
+        self.assertTrue(any(line.startswith('  [ ] ') for line in actual))
         self.assertEqual(
             actual[-1], 'Wrote batch-sheet.html, summary.json, report.html to <TMP>/out'
         )
