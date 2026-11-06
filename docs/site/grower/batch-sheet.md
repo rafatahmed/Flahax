@@ -36,8 +36,9 @@ flowchart LR
   reason and calculate a new result.
 
 Every depth retains **Scientific qualifications**: separate result statuses, EC applicability,
-uncovered species, uncertainty status and model/source identifiers. A known-species EC subtotal
-is not a total estimate, bound or midpoint. No uncertainty interval is invented.
+uncovered species, uncertainty status and model/source identifiers. When some species have no
+conductivity value the EC is a range: the low end counts the known species and the high end adds
+an upper limit for the rest. No uncertainty interval is invented.
 
 The expandable **Full calculation evidence** contains the exact summary as inert, escaped JSON,
 including calculation and export identities. It works offline without scripts or network access.

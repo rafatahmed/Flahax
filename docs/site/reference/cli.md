@@ -76,7 +76,7 @@ The same from files in one command, for scripts.
 ```text
 usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS] [--list-formulas]
                     [--water WATER] [--water-share PERCENT] [--volume VOLUME] [--ph PH]
-                    [--ratio RATIO] [--acid FORMULA:FRACTION:DENSITY[:NAME]]
+                    [--ratio RATIO] [--ec EC] [--acid FORMULA:FRACTION:DENSITY[:NAME]]
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
                     [--products PRODUCTS] [--rules RULES] [--output OUTPUT]
 
@@ -125,6 +125,8 @@ options:
   --volume VOLUME       final batch litres (default 1000)
   --ph PH               target feed pH (default 5.8)
   --ratio RATIO         final litres per litre of concentrate (default 100)
+  --ec EC               requested EC25 in mS/cm, compared with the estimated range (never
+                        enforced)
   --acid FORMULA:FRACTION:DENSITY[:NAME]
                         an acid from your certificate, e.g. HNO3:0.60:1.37; repeat for more
   --limit SYMBOL=MG_PER_L

@@ -268,7 +268,8 @@ to its band maximum.
 - The ends are corner cases (every product at its minimum, or every product at
   its maximum), not statistical bounds.
 - A non-proportional grade (nutrients that do not move together) can leave an
-  end charge-unbalanced, so that end returns `assay_charge_residual_too_large`.
+  end charge-unbalanced; the residual is reported with that end and does not change its EC
+  status.
 - Each end's `audit['materials']` shows the nominal provenance; `audit['band_end']`
   tells which end it is.
 - An end where any dosed product has an open band end (a shipped product has

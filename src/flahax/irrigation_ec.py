@@ -111,13 +111,16 @@ def ionic_molal_conductivity(
     return poly(row['lambda0']) - poly(row['A']) * root / (1 + row['B'] * root)
 
 
-QUALIFIER = 'Accuracy on this fertilizer mixture has not yet been established.'
+QUALIFIER = (
+    'Model: McCleskey et al. (2012); its reported accuracy (-0.7 ± 5 %) is for natural waters, '
+    'not fertilizer solutions. Measure EC after mixing.'
+)
 MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2b-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
-_ASSAY_LIMIT_PERCENT = 0.1
-# Retained only to reproduce the historical phosphate fit diagnostics. It is not
-# a proven universal bound and must never qualify a public EC prediction.
+# The physical bound (decision G7) on the molar conductivity per unit charge, mS kg cm-1 mol-1.
+# It sets the high end of the range for species without a coefficient, phosphate beyond its fit
+# domain and charge the recorded ions do not carry.
 LAMBDA_MAX_PER_CHARGE = 80.0
 _CORE_AUDIT_KEYS = frozenset(
     (
@@ -148,10 +151,10 @@ _CORE_AUDIT_KEYS = frozenset(
 class IrrigationECResult:
     """EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-    Missing material species produce a partial known-species subtotal, not a
-    total, midpoint or uncertainty interval. Legacy interval fields remain None.
-    Numerical, input and model uncertainty are separately reported as unquantified;
-    absence of a quantified uncertainty is never zero uncertainty.
+    ``ec25_range_ms_cm`` is (low, high): low sums the species with a coefficient and high adds
+    the bound of those without. ``ec25_ms_cm`` is the single estimate only when low equals
+    high; there is no midpoint. Numerical, input and model uncertainty are separately reported
+    as unquantified; absence of a quantified uncertainty is never zero uncertainty.
     """
 
     status: str
@@ -292,7 +295,7 @@ def _audit(
         'charge_balance': state.charge_balance if state is not None else None,
         'model': MODEL_VERSION,
         'uncovered_bound_ms_cm': uncovered_bound,
-        'lambda_max_per_charge': None,
+        'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE if uncovered_bound is not None else None,
         # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
         # the fit's data reach only this ionic strength.
         'supplementaryCoefficients': supplementary_used,
@@ -379,9 +382,7 @@ def _ec_from_state(
         molal, charge = state.species[name], charges.get(name, 0)
         if not charge or molal <= _REPORTING_TOLERANCE:
             continue
-        if name in species_map:
-            if outside_fit:
-                continue
+        if name in species_map and not (outside_fit and name in supplementary):
             contributions[name] = ionic_molal_conductivity(species_map[name], strength) * molal
         else:
             missing.append({'name': name, 'charge': charge, 'molal': molal})
@@ -392,48 +393,43 @@ def _ec_from_state(
             for phase, si in sorted(state.saturation_indices.items())
             if si > 0
         )
+    # Charge the recorded ions do not carry (a supplied pH leaves it unbalanced) conducts too.
     unrecorded = None
     excess = state.charge_balance - assay_residual_eq
-    if abs(percent) > _ASSAY_LIMIT_PERCENT:
-        if ph_mode == 'calculated':
-            status, reason = 'not_supported', 'assay_charge_residual_too_large'
-        else:
-            status, reason = 'partial', 'unrecorded_counterions'
-            unrecorded = state.charge_balance
-    elif ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
-        status, reason, unrecorded = 'partial', 'unrecorded_counterions', excess
-    else:
-        status, reason = (
-            ('partial', 'missing_species_contributions') if missing else ('estimated', None)
-        )
+    if ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
+        unrecorded = excess
+    low = sum(contributions.values())
+    bound = sum(LAMBDA_MAX_PER_CHARGE * abs(s['charge']) * s['molal'] for s in missing)
+    if unrecorded is not None:
+        bound += LAMBDA_MAX_PER_CHARGE * abs(unrecorded)
+    status, reason = ('range', None) if bound > 0 else ('estimated', None)
     if missing:
         warnings += (
-            'Conductivity of missing species is unknown; no total EC or bound is available.',
+            'Species without a conductivity coefficient are bounded at '
+            f'{LAMBDA_MAX_PER_CHARGE:g} per charge: the EC is a range.',
         )
     if outside_fit:
-        status, reason = 'not_supported', 'ionic_strength_outside_phosphate_fit'
-        warnings += ('Supplementary phosphate conductivity exceeds its recorded fit domain.',)
-    if status == 'not_supported':
-        contributions = {}
-    subtotal = sum(contributions.values())
-    bound = ec_range = uncertainty = None
+        warnings += (
+            'Phosphate conductivity is beyond its recorded fit domain; those species are bounded.',
+        )
+    if unrecorded is not None:
+        warnings += ('Charge the recorded ions do not carry is bounded the same way.',)
+    high = low + bound
     if status == 'estimated':
-        ec = subtotal
-        transport = {n: c / subtotal for n, c in contributions.items()} if ec else {}
+        ec = low
+        transport = {n: c / low for n, c in contributions.items()} if ec else {}
     else:
         ec, transport = None, {}
     return IrrigationECResult(
         status=status,
         ec25_ms_cm=ec,
-        known_species_subtotal_ms_cm=subtotal
-        if status == 'partial' or bound is not None
-        else None,
+        known_species_subtotal_ms_cm=low if status == 'range' else None,
         contributions_ms_cm=contributions,
         transport_numbers=transport,
-        bounded=bound is not None,
-        ec25_range_ms_cm=ec_range,
-        uncertainty_ms_cm=uncertainty,
-        uncovered_bound_ms_cm=bound,
+        bounded=status == 'range',
+        ec25_range_ms_cm=(low, high),
+        uncertainty_ms_cm=None,
+        uncovered_bound_ms_cm=bound if status == 'range' else None,
         missing_species=tuple(missing),
         unrecorded_counterions_eq_per_kgw=unrecorded,
         assay_charge_residual={'eq_per_kgw': assay_residual_eq, 'percent': percent},
@@ -450,7 +446,7 @@ def _ec_from_state(
             carbon_boundary='closed',
             state=state,
             audit_inputs=audit_inputs,
-            uncovered_bound=bound,
+            uncovered_bound=bound if status == 'range' else None,
             supplementary_used=supplementary_used,
         ),
     )
@@ -476,24 +472,19 @@ def calculate_ec_from_totals(
     In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
     charge the measured water carries that no ion accounts for, instead of forcing zero.
 
-    kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
-    speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
-    or 'not_supported'; invalid input raises DeliveryError. Charged species
-    without a coefficient (listed in missing_species) make the result partial:
-    only known_species_subtotal_ms_cm is available, with no total, interval,
-    uncertainty bound or transport numbers. The historical universal per-charge
-    bound is not used. H2PO4- and HPO4-2 use 25 C
-    coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
-    material supplementary species above the stored fit ceiling return
-    not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
-    The audit retains supplementaryCoefficients and
-    phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
-    partial predictions and is not a complete EC estimate. Unrecorded counterions stay
-    'partial' and the domain checks 'not_supported'. The 0.1 % O5
-    assay gate uses assay_charge_residual_percent when given (the declared-form
-    percent, as from assay_charge_residual()); when None (raw totals without
-    declared forms) it uses the residual over the speciated absolute
-    equivalents. Accuracy on fertilizer mixtures has not been established.
+    kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one speciation
+    (McCleskey 2012 Eq. 8) gives the low end. The high end adds |z| * 80 * m for each charged
+    species without a coefficient (``missing_species``), for H2PO4- / HPO4-2 beyond the
+    recorded fit ionic strength (Pethybridge et al. 2006 Table III, data to I = 0.014) and for
+    the charge a supplied pH leaves unbalanced. The result is never refused for these: status
+    'estimated' (low equals high, ``ec25_ms_cm`` is that value) or 'range'
+    (``ec25_ms_cm`` is None; ``ec25_range_ms_cm`` is (low, high); no midpoint). Only a state
+    the activity model cannot solve returns 'not_supported'; invalid input raises
+    DeliveryError. The assay residual is reported in ``assay_charge_residual`` (the
+    declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
+    residual over the speciated absolute equivalents) and never changes the status. The audit
+    retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
+    fertilizer mixtures has not been established.
     """
     _require_id(solution_id, 'solution_id')
     phases, reason = _validate_request(

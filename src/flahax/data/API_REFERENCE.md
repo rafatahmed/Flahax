@@ -993,7 +993,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2)
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2, requested_ec_ms_cm=None)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -1041,15 +1041,15 @@ Source module: `flahax.irrigation_ec`. Import with `from flahax import DeclaredP
 ### `IrrigationECResult`
 
 ```text
-IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Accuracy on this fertilizer mixture has not yet been established.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
+IrrigationECResult(status: str, ec25_ms_cm: float | None, known_species_subtotal_ms_cm: float | None, contributions_ms_cm: dict, transport_numbers: dict, missing_species: tuple, unrecorded_counterions_eq_per_kgw: float | None, assay_charge_residual: dict, reason: str | None, ph: float | None, ionic_strength: float | None, precipitated_molal: dict, warnings: tuple, audit: dict, qualifier: str = 'Model: McCleskey et al. (2012); its reported accuracy (-0.7 ± 5 %) is for natural waters, not fertilizer solutions. Measure EC after mixing.', bounded: bool = False, ec25_range_ms_cm: tuple | None = None, uncertainty_ms_cm: float | None = None, uncovered_bound_ms_cm: float | None = None, uncertainty_components: dict = <factory>) -> None
 ```
 
 EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
 
-Missing material species produce a partial known-species subtotal, not a
-total, midpoint or uncertainty interval. Legacy interval fields remain None.
-Numerical, input and model uncertainty are separately reported as unquantified;
-absence of a quantified uncertainty is never zero uncertainty.
+``ec25_range_ms_cm`` is (low, high): low sums the species with a coefficient and high adds
+the bound of those without. ``ec25_ms_cm`` is the single estimate only when low equals
+high; there is no midpoint. Numerical, input and model uncertainty are separately reported
+as unquantified; absence of a quantified uncertainty is never zero uncertainty.
 
 Record fields: `status`, `ec25_ms_cm`, `known_species_subtotal_ms_cm`, `contributions_ms_cm`, `transport_numbers`, `missing_species`, `unrecorded_counterions_eq_per_kgw`, `assay_charge_residual`, `reason`, `ph`, `ionic_strength`, `precipitated_molal`, `warnings`, `audit`, `qualifier`, `bounded`, `ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm`, `uncertainty_components`.
 
@@ -1081,24 +1081,19 @@ EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
 In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
 charge the measured water carries that no ion accounts for, instead of forcing zero.
 
-kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one
-speciation (McCleskey 2012 Eq. 8). Returns status 'estimated', 'partial'
-or 'not_supported'; invalid input raises DeliveryError. Charged species
-without a coefficient (listed in missing_species) make the result partial:
-only known_species_subtotal_ms_cm is available, with no total, interval,
-uncertainty bound or transport numbers. The historical universal per-charge
-bound is not used. H2PO4- and HPO4-2 use 25 C
-coefficients fitted to Pethybridge et al. (2006) Table III (data to I = 0.014);
-material supplementary species above the stored fit ceiling return
-not_supported / ionic_strength_outside_phosphate_fit with no EC estimate.
-The audit retains supplementaryCoefficients and
-phosphate_fit_max_ionic_strength. known_species_subtotal_ms_cm is populated for
-partial predictions and is not a complete EC estimate. Unrecorded counterions stay
-'partial' and the domain checks 'not_supported'. The 0.1 % O5
-assay gate uses assay_charge_residual_percent when given (the declared-form
-percent, as from assay_charge_residual()); when None (raw totals without
-declared forms) it uses the residual over the speciated absolute
-equivalents. Accuracy on fertilizer mixtures has not been established.
+kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one speciation
+(McCleskey 2012 Eq. 8) gives the low end. The high end adds |z| * 80 * m for each charged
+species without a coefficient (``missing_species``), for H2PO4- / HPO4-2 beyond the
+recorded fit ionic strength (Pethybridge et al. 2006 Table III, data to I = 0.014) and for
+the charge a supplied pH leaves unbalanced. The result is never refused for these: status
+'estimated' (low equals high, ``ec25_ms_cm`` is that value) or 'range'
+(``ec25_ms_cm`` is None; ``ec25_range_ms_cm`` is (low, high); no midpoint). Only a state
+the activity model cannot solve returns 'not_supported'; invalid input raises
+DeliveryError. The assay residual is reported in ``assay_charge_residual`` (the
+declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
+residual over the speciated absolute equivalents) and never changes the status. The audit
+retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
+fertilizer mixtures has not been established.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_ec_from_totals`.
 

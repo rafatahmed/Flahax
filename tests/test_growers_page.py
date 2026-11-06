@@ -89,9 +89,11 @@ class GrowersPageTests(unittest.TestCase):
         self.assertLessEqual(limits['Cl'], 106.35)
         self.assertLessEqual(limits['Na'], 68.97)
         self.assertLessEqual(limits['N_NH4'], 14)
-        self.assertEqual(s['ec']['status'], 'not_supported')
-        self.assertEqual(s['ec']['reason'], 'ionic_strength_outside_phosphate_fit')
+        self.assertEqual(s['ec']['status'], 'range')
+        self.assertIsNone(s['ec']['reason'])
         self.assertIsNone(s['ec']['ec25_ms_cm'])
+        low, high = s['ec']['ec25_range_ms_cm']
+        self.assertLess(low, high)
 
     def test_nine_percent_and_ro_cases_stay_blocked_by_tanks_and_a_missing_acid(self):
         code, nine = self.nine
