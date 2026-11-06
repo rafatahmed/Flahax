@@ -73,6 +73,9 @@ each release, with numbers, sources and decisions, are in
 
 - EC is a range, never refused. Its low end counts the species with a coefficient; its high end adds 80 per charge for those without, for phosphate beyond its fit domain and for unrecorded charge. `status` is `estimated` or `range`, with no midpoint. Removed: `partial`, the assay-residual and phosphate-fit refusals. `--ec` compares a requested EC (G6–G9, #224).
 
+- Stock solubility compares each product with its own measured value, in the value's basis, with the source and tank temperatures shown and nothing interpolated (decisions G15-G19, #226). Order: the catalogue's waterSolubility, the historical table, none. Statuses are `ok`, `exceeds` (blocks) and `not_checked`; `screening_only`, `inconclusive` and `assumed_density_floor` are removed.
+- Tanks follow the A/B layout (decisions G20-G22, #227): calcium and every micronutrient product in tank A, phosphates, magnesium sulfate and macro sulfates in tank B. The magnesium-phosphate rule is removed and the calcium-sulfate reason is reworded. A batch needing a third tank names the pair and the rule.
+
 ### Fixed
 
 - Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).

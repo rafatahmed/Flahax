@@ -97,9 +97,10 @@ warnings to read before mixing and blank lines for measured EC and pH.
 The default grouping (`group_tanks`) follows Yara, *Fertilizantes para
 fertirrigación*, page 65 mixing compatibility table, read with page 63. The
 table's twelve "No" pairs are exactly three rules, applied to every product from
-its elemental analysis. Calcium/phosphate, calcium/sulfate and
-magnesium/phosphate separations remain hard constraints. Neither equipment count
-nor a micronutrient's small dose waives them. These are conservative separation
+its elemental analysis. Calcium/phosphate and calcium/sulfate separations among macro
+products remain hard constraints, as does micronutrient/phosphate. Magnesium sulfate goes
+with the phosphates in tank B. Neither equipment count nor a micronutrient's small dose
+waives them. These are conservative separation
 screens, not predictions of precipitation at every concentration.
 
 `group_tanks` computes a minimum-tank layout under those constraints. Supply
@@ -115,20 +116,15 @@ interface, alternative search and approval boundary. Historical two-tank capture
 are retained as historical evidence; they are not current preparation instructions.
 
 The tank table states compatibility, not dissolution approval. The single-product
-screen in `summary['solubility']` distinguishes qualified limits from conditional
-screening floors. A floor exceedance is **inconclusive**, not proof that a product
-will not dissolve. A comparison below a floor does not approve a mixed stock.
-Unqualified comparisons keep the batch under review; other blocking findings
-remain blocking.
+check in `summary['solubility']` compares each stock with that product's own
+solubility value and states its basis and both temperatures. Above the value the batch
+is blocked; a product without data is not checked and keeps the batch under review. No
+comparison approves a mixed stock.
 
-The unchanged historical table contains 20 products, principally CRC-derived
-values, plus CALCINIT and urea source values. Its density-one conversions are
-conditional screening values, not measured limits. CALCINIT's source specifies
-20 °C; the historical extension through 40 °C is no longer applied. Intermediate
-temperatures require explicit interpolation review. Missing basis, grade, density
-or temperature evidence is never silently supplied. See the
-[qualification contract](solubility-qualification.md) for conversion equations,
-source provenance and the caller-reviewed limit interface.
+The catalogue's own solubility values come first, then the historical table of 20
+products (principally CRC-derived values, plus CALCINIT and urea). Nothing is
+interpolated and no missing value is supplied. See the
+[solubility check](solubility-qualification.md) for the sources, bases and conversions.
 
 Your own `compatibilityRule` records (`--rules`, or
 `rules=` in Python) separate further products and override the micronutrient

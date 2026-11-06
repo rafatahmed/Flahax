@@ -151,7 +151,7 @@ def inspect_recipe(recipe, products):
         result['minimum_tank_count'] = len(grouping.tanks)
         result['grouping'] = asdict(grouping)
         result['stock_solubility'] = [
-            asdict(r) for r in check_stock_solubility(grouping.tanks, 100, 25)
+            asdict(r) for r in check_stock_solubility(grouping.tanks, 100, 25, products=products)
         ]
         result['stock_kg_per_100_l'] = {
             t.name: {p.name: p.grams_per_litre * 10 for p in t.products} for t in grouping.tanks

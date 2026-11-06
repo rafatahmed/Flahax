@@ -44,8 +44,10 @@ A and tank B (prepared litres and grams to weigh, with tick boxes), the acid
 container and the checks after mixing. **Agronomist**: the same, plus the
 nutrient table (target, from water, required, achieved, final, difference),
 the limits and the pH path. **Developer or manager**: both, plus the full
-report and `summary.json`. Use the calculated tank assignments: additional tanks
-may be required, and equipment capacity never waives an incompatibility. A blocked
+report and `summary.json`. Use the calculated tank assignments: calcium and
+micronutrients in tank A, phosphates and magnesium sulfate in tank B. If a third tank is
+needed, the sheet names the pair and the rule, and capacity never waives an
+incompatibility. A blocked
 result shows diagnostic quantities without preparation instructions. Missing or
 condition-limited solubility evidence remains qualified in the result.
 

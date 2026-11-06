@@ -81,7 +81,7 @@ class FieldSessionConsistency(unittest.TestCase):
                 ask=lambda prompt: answers.pop(0),
                 say=lambda *a: lines.append(' '.join(map(str, a))),
             )
-        assert code == 3, lines
+        assert code == 0, lines
         cls.terminal = '\n'.join(lines)
         cls.summary = json.loads((out / 'summary.json').read_text(encoding='utf-8'))
         cls.report = text_of((out / 'report.html').read_text(encoding='utf-8'))
@@ -112,19 +112,18 @@ class FieldSessionConsistency(unittest.TestCase):
             self.report, r'\(Monohydrate\)\s+[\d.e-]+\s+0\s'
         )  # no '0' weight in the report
 
-    def test_three_tanks_block_the_plan_although_a_reagent_is_selected(self):
+    def test_two_tanks_fit_and_a_reagent_is_selected(self):
         self.assertIsNotNone(self.selected)
         self.assertEqual(self.selected['direction'], 'base')
-        self.assertEqual(self.summary['status'], 'blocked')
+        self.assertEqual(self.summary['status'], 'requires_review')
         self.assertEqual(self.summary['chemistry']['state_basis'], 'selected_recipe')
         self.assertIsNone(self.summary['chemistry']['rejected_candidate_diagnostics'])
         self.assertNotIn('blocks', self.summary['chemistry']['phase_assessment'])
         self.assertFalse(self.summary['tanks']['mixture_approved'])
         self.assertFalse(self.summary['tanks']['waived'])
-        self.assertEqual(self.summary['tanks']['required_tanks'], 3)
+        self.assertEqual(self.summary['tanks']['required_tanks'], 2)
         for name, page in self.outputs().items():
             with self.subTest(output=name):
-                self.assertIn('do not mix', page.lower())
                 self.assertNotIn('None mL', page)
 
     def test_one_ph_after_fertilizers_the_weighed_recipe(self):
@@ -141,7 +140,7 @@ class FieldSessionConsistency(unittest.TestCase):
         for page in (self.report, self.sheets[2]):
             self.assertNotIn('Hydroxylapatite does not form directly', page)
             self.assertNotIn('with calcium their small doses are harmless', page)
-            self.assertEqual(page.count('Stock assignment needs 3 tanks'), 1)
+            self.assertNotIn('Stock assignment needs', page)
 
     def test_ec_uses_the_selected_final_state(self):
         from flahax.irrigation_ec import calculate_ec_from_totals
@@ -180,7 +179,7 @@ class FieldSessionConsistency(unittest.TestCase):
     def test_report_formatting(self):
         self.assertNotIn('1:100.0', self.report)
         self.assertNotIn('ready / requires review / blocked', self.report)
-        self.assertIn('do not mix', self.report.lower())
+        self.assertNotIn('do not mix', self.report.lower())
 
 
 if __name__ == '__main__':

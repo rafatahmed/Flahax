@@ -77,6 +77,14 @@ RO = dict(
     phases=[],
 )
 # Yara p. 65: the twelve "No" pairs.
+MAGNESIUM_PHOSPHATE = {
+    frozenset({'Phos. acid', 'KRISTA-MgS'}),
+    frozenset({'KRISTA-MKP', 'KRISTA-MgS'}),
+    frozenset({'KRISTA-MAP', 'KRISTA-MAG'}),
+    frozenset({'KRISTA-MAP', 'KRISTA-MgS'}),
+    frozenset({'KRISTA-MKP', 'KRISTA-MAG'}),
+    frozenset({'Phos. acid', 'KRISTA-MAG'}),
+}
 PAGE_65_NO = {
     frozenset(pair)
     for pair in (
@@ -128,7 +136,8 @@ class TankGroupingTests(unittest.TestCase):
                 CLASS_RULES + WAIVED_RULES,
             )
         }
-        self.assertEqual(found, PAGE_65_NO)
+        # Page 65 also keeps magnesium products from phosphates; that separation is removed.
+        self.assertEqual(found, PAGE_65_NO - MAGNESIUM_PHOSPHATE)
         self.assertEqual(WAIVED_RULES, ())
 
     def test_micronutrients_join_calcium_in_tank_a_which_takes_no_acid(self):
@@ -146,13 +155,13 @@ class TankGroupingTests(unittest.TestCase):
         tanks = {t.name: t for t in grouping.tanks}
         self.assertEqual(
             [p.name for p in tanks['A'].products],
-            ['Calcium Nitrate (ag grade)', 'Iron EDTA'],
+            ['Calcium Nitrate (ag grade)', 'Iron EDTA', 'Zinc Sulfate (Monohydrate)'],
         )
         self.assertFalse(tanks['A'].acid_allowed)
         self.assertTrue(any('never acidify' in n.lower() for n in tanks['A'].notes))
-        # Equipment cannot waive the magnesium/phosphate separation.
-        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B', 'C'])
-        self.assertNotEqual(
+        # Magnesium sulfate goes with the phosphates in tank B.
+        self.assertEqual([t.name for t in grouping.tanks], ['A', 'B'])
+        self.assertEqual(
             grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
@@ -161,17 +170,18 @@ class TankGroupingTests(unittest.TestCase):
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
 
-    def test_tomato_reports_required_equipment_without_waivers(self):
+    def test_tomato_fits_the_two_tank_layout_without_waivers(self):
         recipe = workflow('Tomato (Howard Resh)', library=PACKAGED).recommendation
         grouping = group_tanks(recipe['salts'], PACKAGED_PRODUCTS)
-        self.assertEqual(len(grouping.tanks), 3)
+        self.assertEqual(len(grouping.tanks), 2)
         self.assertFalse(grouping.waived)
-        self.assertNotEqual(
+        self.assertEqual(
             grouping.tank_of('Magnesium Sulfate (Heptahydrate)'),
             grouping.tank_of('Potassium Monobasic Phosphate'),
         )
-        with self.assertRaises(DeliveryError):
-            group_tanks(recipe['salts'], PACKAGED_PRODUCTS, max_tanks=2)
+        self.assertEqual(
+            len(group_tanks(recipe['salts'], PACKAGED_PRODUCTS, max_tanks=2).tanks), 2
+        )
 
     def test_calcium_separations_still_hold(self):
         grouping = group_tanks(
@@ -314,16 +324,16 @@ class ReportTests(unittest.TestCase):
 
     def test_supersaturated_phases_do_not_block_the_plan_or_its_quantity_outputs(self):
         s = self.tomato
-        self.assertEqual(s['status'], 'blocked')  # three tanks are needed
+        self.assertEqual(s['status'], 'requires_review')  # two tanks fit; the mix is unassessed
         self.assertIsNotNone(s['ph']['selected'])
         self.assertNotIn('blocks', s['chemistry']['phase_assessment'])
         weighed = {x['name'] for x in s['formulation']['salts']}
         in_tanks = {p['name'] for t in s['tanks']['tanks'] for p in t['products']}
         self.assertEqual(weighed, in_tanks)
-        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B', 'C'])
+        self.assertEqual([t['name'] for t in s['tanks']['tanks']], ['A', 'B'])
         self.assertFalse(s['tanks']['waived'])
         self.assertFalse(s['tanks']['mixture_approved'])
-        self.assertIn('needs 3 tanks', render_report(s))
+        self.assertNotIn('needs a third tank', render_report(s))
         self.assertTrue(s['chemistry']['information'])
         json.dumps(s, allow_nan=False)
 
@@ -370,7 +380,7 @@ class ReportTests(unittest.TestCase):
             ('requires_review', 'y 2 mg/L'),
         )
         self.assertIn('formulation: y 2 mg/L', s['warnings'])
-        self.assertEqual(s['status'], 'blocked')  # phase block survives incidental review
+        self.assertEqual(s['status'], 'requires_review')  # incidental review keeps it under review
         # a block is never downgraded
         with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
             wf = copy.copy(base)
@@ -380,9 +390,9 @@ class ReportTests(unittest.TestCase):
             s = summarize_batch(wf, PRODUCTS, title='T', water_label='RO')
         self.assertEqual(s['stages']['formulation']['status'], 'blocked')
 
-    def test_three_tanks_block_the_plan_and_the_recipe_has_no_acid(self):
+    def test_the_chilli_recipe_has_no_acid(self):
         s = self.chilli
-        self.assertEqual(s['status'], 'blocked')
+        self.assertEqual(s['status'], 'requires_review')
         self.assertIsNotNone(s['ph']['selected'])
         self.assertEqual(s['ph']['selected']['direction'], 'base')
         self.assertNotIn('Phosphoric Acid (75%)', [x['name'] for x in s['formulation']['salts']])
@@ -583,7 +593,7 @@ class BatchCommandTests(unittest.TestCase):
                 '--output',
                 str(target),
             )
-            self.assertEqual(code, 3)  # reports are written, but phase applicability blocks
+            self.assertEqual(code, 0)  # reports are written; the batch stays under review
             self.assertEqual(
                 sorted(p.name for p in target.iterdir()),
                 ['batch-sheet.html', 'report.html', 'summary.json'],
@@ -591,12 +601,10 @@ class BatchCommandTests(unittest.TestCase):
             summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
             self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
             self.assertIn('Tank A', out)
-            # No two-tank waiver: #161 retains all required separated stocks.
-            self.assertIn('Tank C', out)
-            self.assertGreater(
-                summary['tanks']['required_tanks'], summary['tanks']['available_tanks']
-            )
-            self.assertEqual(summary['status'], 'blocked')
+            self.assertNotIn('Tank C', out)
+            self.assertEqual(summary['tanks']['required_tanks'], 2)
+            self.assertEqual(summary['tanks']['available_tanks'], 2)
+            self.assertEqual(summary['status'], 'requires_review')
             with self.assertRaises(SystemExit):  # never overwrites
                 self.run_batch(
                     '--crop', 'tomato (howard', '--water', 'ro', '--output', str(target)

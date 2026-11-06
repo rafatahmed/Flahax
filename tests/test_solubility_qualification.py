@@ -4,11 +4,7 @@
 # its results are calculations, not dosing instructions.
 """Exact arithmetic witnesses and adversarial source-qualification controls."""
 
-from copy import deepcopy
 from fractions import Fraction
-import json
-from pathlib import Path
-import tempfile
 from types import SimpleNamespace
 import unittest
 
@@ -26,18 +22,11 @@ def tanks(dose=6, name='X'):
     return [SimpleNamespace(name='A', products=[SimpleNamespace(name=name, grams_per_litre=dose)])]
 
 
-def record(kind='limit'):
+def record():
     return dict(
         product='X',
         source='synthetic exact arithmetic witness',
         points=[[10, 400], [20, 500]],
-        qualification=dict(
-            kind=kind,
-            basis='g_product_per_l_solution',
-            reviewed=True,
-            review_id='synthetic-only',
-            grade_id='synthetic-grade',
-        ),
     )
 
 
@@ -96,105 +85,66 @@ class ConversionTests(unittest.TestCase):
                 convert(value, basis, **kw)
 
 
-class QualificationTests(unittest.TestCase):
-    def test_limits_require_grade_and_review(self):
-        self.assertEqual(check().reason, 'grade_not_matched')
-        for dose, status in [(4, 'ok'), (5, 'ok'), (6, 'exceeds')]:
-            row = check(dose=dose, product_grades={'X': 'synthetic-grade'})
-            self.assertEqual(row.status, status)
-            self.assertEqual(row.limit_g_per_l, 500)
-            self.assertIsNone(row.screening_g_per_l)
-            self.assertFalse(row.mixture_approved)
-            if status == 'exceeds':
-                self.assertIn('single-product limit', exceeds_message(row, 20))
-            else:
-                with self.assertRaises(DeliveryError):
-                    exceeds_message(row, 20)
-        for key, value, reason in [
-            ('reviewed', False, 'unreviewed_source'),
-            ('review_id', ' ', 'unreviewed_source'),
-            ('review_id', 5, 'unreviewed_source'),
-            ('grade_id', '', 'grade_not_matched'),
-            ('kind', 'unknown', 'unknown_qualification'),
-            ('kind', [], 'unknown_qualification'),
-            ('basis', 'g_per_l_water', 'missing_or_unsupported_basis'),
-        ]:
-            r = record()
-            r['qualification'][key] = value
-            self.assertEqual(check(r).reason, reason)
-        r = record()
-        del r['qualification']
-        self.assertEqual(check(r).reason, 'missing_or_unsupported_basis')
-
-    def test_floor_never_proves_failure_or_mixture_success(self):
-        for kind in ('lower_bound', 'assumed_density_floor'):
-            for dose, status in [
-                (4, 'screening_only'),
-                (5, 'screening_only'),
-                (6, 'inconclusive'),
-            ]:
-                row = check(record(kind), dose=dose, product_grades={'X': 'synthetic-grade'})
-                self.assertEqual(row.status, status)
-                self.assertIsNone(row.limit_g_per_l)
-                self.assertEqual(row.screening_g_per_l, 500)
-                self.assertFalse(row.mixture_approved)
-                with self.assertRaises(DeliveryError):
-                    exceeds_message(row, 20)
-
-    def test_historical_false_failure_and_temperature_extension(self):
-        for temp, status in [(20, 'inconclusive'), (25, 'not_checked'), (40, 'not_checked')]:
-            row = check_stock_solubility(tanks(name='Calcium Nitrate (ag grade)'), 100, temp)[0]
-            self.assertEqual(row.status, status)
-            self.assertIsNone(row.limit_g_per_l)
-            if temp == 20:
-                self.assertEqual(row.screening_g_per_l, 545.9)
-                self.assertEqual(row.stock_g_per_l, 600)
-
-    def test_interpolation_requires_review_and_never_extrapolates(self):
-        r = record('assumed_density_floor')
-        self.assertEqual(check(r, 15).reason, 'interpolation_not_qualified')
-        r['qualification'].update(interpolation='linear', interpolation_review_id='synthetic')
-        self.assertEqual(check(r, 15).screening_g_per_l, 450)
-        self.assertEqual(check(r, 21).reason, 'temperature_outside_source')
-        r['qualification']['source_temperatures_c'] = [15]
-        self.assertEqual(check(r, 20).reason, 'temperature_not_qualified')
-        r['qualification']['source_temperatures_c'] = 15
-        with self.assertRaises(DeliveryError):
-            check(r)
-        r['qualification']['source_temperatures_c'] = [float('inf')]
-        with self.assertRaises(DeliveryError):
-            check(r)
-        del r['qualification']['source_temperatures_c']
-        for invalid in (None, 5, ' '):
-            r['qualification']['interpolation_review_id'] = invalid
-            self.assertEqual(check(r, 15).reason, 'interpolation_not_qualified')
-        self.assertIsNone(limit_at([], 20))
-
-    def test_invalid_records_and_inputs_fail_explicitly(self):
-        for points in (None, [1], [[1]], [[10, -1]], [[10, 1], [10, 2]], [[float('inf'), 1]]):
-            with self.subTest(points=points), self.assertRaises(DeliveryError):
-                limit_at(points, 20)
-        for table in ({}, [None], [{'product': 'X'}], [record(), record()]):
-            with self.subTest(table=table), self.assertRaises(DeliveryError):
-                check_stock_solubility(tanks(), 100, 20, table=table)
-        for ratio, temp, dose, grades in [
-            (0, 20, 1, None),
-            (100, float('inf'), 1, None),
-            (100, 20, -1, None),
-            (100, 20, 1e308, None),
-            (100, 20, 1, []),
-        ]:
-            with self.assertRaises(DeliveryError):
-                check_stock_solubility(tanks(dose), ratio, temp, product_grades=grades)
+class SourceTests(unittest.TestCase):
+    def test_a_table_value_is_compared_as_recorded_at_the_nearest_point(self):
+        row = check(temperature=20, dose=4.9)  # 490 g/L against 500
         self.assertEqual(
-            check_stock_solubility(tanks(), 100, 20, table=[])[0].reason, 'missing_source'
+            (row.status, row.limit_g_per_l, row.source_temperature_c), ('ok', 500, 20)
+        )
+        row = check(temperature=20, dose=5.1)
+        self.assertEqual((row.status, row.limit_g_per_l), ('exceeds', 500))
+        self.assertIn('510', exceeds_message(row, 20))
+        # 15 C lies between the points: no blending, the lower one on a tie.
+        row = check(temperature=15, dose=3.9)
+        self.assertEqual((row.limit_g_per_l, row.source_temperature_c), (400, 10))
+
+    def test_the_historical_calcium_value_is_the_same_at_every_recorded_temperature(self):
+        points = next(
+            r for r in load_solubility_table() if r['product'] == 'Calcium Nitrate (ag grade)'
+        )['points']
+        self.assertEqual([limit_at(points, t) for t in (20, 25, 40)], [545.9] * 3)
+        self.assertIsNone(limit_at(points, 15))
+        for temperature, nearest in ((15, 20), (20, 20), (25, 20), (40, 40)):
+            row = check_stock_solubility(
+                tanks(name='Calcium Nitrate (ag grade)'), 100, temperature
+            )[0]
+            self.assertEqual((row.limit_g_per_l, row.source_temperature_c), (545.9, nearest))
+
+    def test_interpolation_helper_never_extrapolates(self):
+        points = [[10, 400], [20, 500]]
+        self.assertEqual(limit_at(points, 15), 450)
+        self.assertIsNone(limit_at(points, 9.9))
+        self.assertIsNone(limit_at(points, 20.1))
+
+    def test_a_product_without_a_record_has_no_solubility_data(self):
+        self.assertEqual(
+            check_stock_solubility(tanks(), 100, 20, table=[])[0].status, 'not_checked'
+        )
+        self.assertEqual(
+            check_stock_solubility(tanks(), 100, 20, table=[])[0].reason, 'no solubility data'
         )
 
-    def test_custom_json_does_not_inherit_historical_qualification(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / 'table.json'
-            r = deepcopy(record())
-            del r['qualification']
-            path.write_text(json.dumps([r]), encoding='utf-8')
-            self.assertNotIn('qualification', load_solubility_table(path)[0])
-        self.assertEqual(load_solubility_table('missing.json'), [])
+    def test_invalid_records_and_inputs_fail_explicitly(self):
+        for points in ([], [[1]], [[1, -2]], [[1, 2], [1, 3]], 'x', [[True, 2]]):
+            table = [dict(record(), points=points)]
+            with self.subTest(points=points), self.assertRaises(DeliveryError):
+                check_stock_solubility(tanks(), 100, 20, table=table)
+        with self.assertRaises(DeliveryError):
+            limit_at('x', 20)
+        for table in ('x', [dict(record(), source=' ')], [record(), record()], [None]):
+            with self.subTest(table=table), self.assertRaises(DeliveryError):
+                check_stock_solubility(tanks(), 100, 20, table=table)
+        for dose, ratio, temp in (
+            (-1, 100, 20),
+            (6, 0, 20),
+            (6, 100, float('nan')),
+            (True, 100, 20),
+        ):
+            with self.subTest(dose=dose, ratio=ratio, temp=temp), self.assertRaises(DeliveryError):
+                check_stock_solubility(tanks(dose), ratio, temp, table=[record()])
+        with self.assertRaises(DeliveryError):
+            exceeds_message(check(dose=1), 20)
+
+
+if __name__ == '__main__':
+    unittest.main()

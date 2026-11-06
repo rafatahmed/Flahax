@@ -66,13 +66,13 @@ class GrowersPageTests(unittest.TestCase):
 
     def test_historical_table_is_not_current_delivery_authorization(self):
         code, summary = self.eight
-        self.assertEqual((code, summary['status']), (3, 'blocked'))
+        self.assertEqual((code, summary['status']), (0, 'requires_review'))
         self.assertIn('Historical 0.6.0 figures', self.page)
         self.assertIn('not current mixing instructions', self.page)
-        # Current equipment keeps the magnesium/phosphate separation.
-        self.assertEqual(len(summary['tanks']['tanks']), 3)
+        # The A/B layout: magnesium sulfate shares tank B with the phosphate.
+        self.assertEqual(len(summary['tanks']['tanks']), 2)
         tanks = {p['name']: t['name'] for t in summary['tanks']['tanks'] for p in t['products']}
-        self.assertNotEqual(
+        self.assertEqual(
             tanks['Magnesium Sulfate (Heptahydrate)'], tanks['Potassium Monobasic Phosphate']
         )
 
@@ -95,7 +95,7 @@ class GrowersPageTests(unittest.TestCase):
         low, high = s['ec']['ec25_range_ms_cm']
         self.assertLess(low, high)
 
-    def test_nine_percent_and_ro_cases_stay_blocked_by_tanks_and_a_missing_acid(self):
+    def test_nine_percent_stays_blocked_by_chloride_and_ro_reports_the_missing_acid(self):
         code, nine = self.nine
         self.assertEqual((code, nine['status']), (3, 'blocked'))
         self.assertEqual(
@@ -103,8 +103,11 @@ class GrowersPageTests(unittest.TestCase):
             115.2,
         )
         self.assertIn('115.2 mg/L chloride', self.page)
-        for code, result in (self.ro, self.ro_no_acid):
-            self.assertEqual((code, result['status']), (3, 'blocked'))
+        for (code, result), expected in (
+            (self.ro, (0, 'requires_review')),
+            (self.ro_no_acid, (3, 'blocked')),  # no acid was supplied
+        ):
+            self.assertEqual((code, result['status']), expected)
             self.assertGreater(result['ph']['unadjusted_ph'], result['ph']['target_ph'])
         self.assertIsNotNone(self.ro[1]['ph']['selected'])
         self.assertIsNone(self.ro_no_acid[1]['ph']['selected'])  # no acid was supplied

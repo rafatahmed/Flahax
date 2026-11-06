@@ -241,6 +241,25 @@ def _water_and_limits(workflow, recipe):
     return water, limits
 
 
+def _extra_tank_note(grouping, available):
+    """Say which pair, and which rule, needs a tank beyond the ``available`` ones."""
+    names = [[p.name for p in t.products] for t in grouping.tanks]
+    why = {frozenset((a, b)): reason for a, b, reason in grouping.separations}
+    extra = names[available][0]
+    ordinal = {1: 'second', 2: 'third', 3: 'fourth'}.get(available, f'{available + 1}th')
+    for earlier in names[:available]:
+        for name in earlier:
+            if frozenset((extra, name)) in why:
+                return (
+                    f'Stock assignment needs a {ordinal} tank: {extra} cannot share with '
+                    f'{name} ({why[frozenset((extra, name))]}). No separation is waived.'
+                )
+    return (
+        f'Stock assignment needs {len(names)} tanks; only {available} supplied. '
+        'No separation is waived.'
+    )
+
+
 def summarize_batch(
     workflow,
     products,
@@ -259,8 +278,9 @@ def summarize_batch(
     ``products`` are the product records it was planned with (they give the tank
     grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
     a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-    is the recipe to weigh. Each concentrate is compared with source-qualified
-    references at ``temperature_c``; conditional floors cannot prove dissolution failure.
+    is the recipe to weigh. Each concentrate is compared with that product's own
+    solubility value (catalogue data first, then the historical table), in the value's basis,
+    and a product without data is not checked.
     """
     if requested_ec_ms_cm is not None and (
         isinstance(requested_ec_ms_cm, bool)
@@ -438,7 +458,11 @@ def summarize_batch(
         raise DeliveryError('invalid_value', 'available_tanks must be a positive integer')
     grouping = group_tanks(recipe['salts'], products, rules=rules)
     solubility = check_stock_solubility(
-        grouping.tanks, injection_ratio, temperature_c, table=load_solubility_table()
+        grouping.tanks,
+        injection_ratio,
+        temperature_c,
+        table=load_solubility_table(),
+        products=products,
     )
     tanks = dict(
         source=grouping.source,
@@ -570,10 +594,7 @@ def summarize_batch(
     # (#84).
     if len(grouping.tanks) > available_tanks:
         status = 'blocked'
-        warnings.append(
-            f'Stock assignment needs {len(grouping.tanks)} tanks; '
-            f'only {available_tanks} supplied. No separation is waived.'
-        )
+        warnings.append(_extra_tank_note(grouping, available_tanks))
     elif status == 'ready':
         status = 'requires_review'
     warnings.append('Tank separation is a structural assignment, not qualified mixture approval.')
@@ -584,7 +605,7 @@ def summarize_batch(
         elif row.status != 'ok':
             if status != 'blocked':
                 status = 'requires_review'
-            warnings.append(f'{row.product}: solubility {row.reason.replace("_", " ")}.')
+            warnings.append(f'{row.product}: solubility not checked ({row.reason}).')
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
         remedies=workflow.remedies,
@@ -645,9 +666,9 @@ def summarize_batch(
             'Tanks follow '
             + grouping.source
             + '; no equipment or small-dose separation waiver is applied. '
-            f'Single-product solubility screening at {temperature_c:g} °C distinguishes '
-            'qualified limits from conditional floors; unresolved source, grade or temperature '
-            'requires review and no comparison approves a mixed stock.',
+            f'Each stock is compared with its own product solubility value at {temperature_c:g} '
+            '°C (basis and source temperature shown); a product without data is not checked '
+            'and no comparison approves a mixed stock.',
             'A positive saturation index is a precipitation risk, not a predicted rate.',
             'Closed carbon: the mixed tank does not exchange CO2 with air.',
             'Chemistry at 25 °C only.',
@@ -1220,12 +1241,12 @@ def _tank_section(s, tanks):
                 'Tank',
                 'Product',
                 'Stock g/L',
-                f'Reference g/L at {number(tanks["temperature_c"], 1)} °C',
+                'Limit g/L',
                 'Solubility',
                 'Source',
             ],
             _solubility_rows(s),
-            'Single-product solubility screening',
+            'Single-product solubility check',
         )
         + f'<p class="small">Solubility basis: {text(SINGLE_SALT)}.</p>'
         + (f'<ul>{notes}</ul>' if notes else '')
@@ -1242,10 +1263,19 @@ def _tank_section(s, tanks):
 SOLUBILITY_TEXT = {
     'ok': 'within single-product limit',
     'exceeds': 'above single-product limit',
-    'not_checked': 'not checked',
-    'screening_only': 'conditional screening only',
-    'inconclusive': 'above floor; inconclusive',
+    'not_checked': 'not checked: no solubility data',
 }
+
+
+def _solubility_source(row):
+    if row['limit_g_per_l'] is None:
+        return 'no solubility data'
+    source_t = row['source_temperature_c']
+    return (
+        f'{row["source"]}; {row["basis"]}; '
+        + ('source temperature not stated' if source_t is None else f'{source_t:g} °C source')
+        + f'; tank {row["tank_temperature_c"]:g} °C'
+    )
 
 
 def _solubility_rows(s):
@@ -1254,14 +1284,9 @@ def _solubility_rows(s):
             f'Tank {r["tank"]}',
             r['product'],
             number(r['stock_g_per_l'], 1),
-            number(
-                r['limit_g_per_l']
-                if r['limit_g_per_l'] is not None
-                else r.get('screening_g_per_l'),
-                1,
-            ),
+            number(r['limit_g_per_l'], 1),
             SOLUBILITY_TEXT[r['status']],
-            r['source'] or 'no sourced data',
+            _solubility_source(r),
         )
         for r in s['solubility']
     ]
@@ -1271,8 +1296,7 @@ def _unchecked_line(s):
     names = [r['product'] for r in s['solubility'] if r['status'] not in {'ok', 'exceeds'}]
     return (
         (
-            'Solubility not checked as a qualified limit '
-            '(basis, grade or temperature unresolved): ' + ', '.join(names) + '. '
+            'Solubility not checked (no solubility data): ' + ', '.join(names) + '. '
             'Confirm these dissolve with your supplier.'
         )
         if names
@@ -1379,7 +1403,7 @@ def render_batch_sheet(summary):
         )
         + '<p class="small">Planning calculation from FlahaX; not a dosing instruction. Stock '
         'solubility is checked '
-        'only where source basis, grade and temperature are qualified. Confirm assays against '
+        'only where a product has solubility data. Confirm assays against '
         'your supplier '
         'certificates.</p>'
     )
