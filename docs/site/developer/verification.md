@@ -113,8 +113,8 @@ rejects missing, changed or unregistered files. The manifest is reviewable sourc
 not a cryptographic signature; changing both a fixture and its inventory requires
 an explicit evidence review, not automatic regeneration to make a test pass.
 
-The current live families comprise 10 product cases, 11 phase cases and four acid
-cases (27 retained input programs including the additional nitric-acid stages).
+The current live families comprise 9 product cases, 11 phase cases and four acid
+cases (26 retained input programs including the additional nitric-acid stages).
 Every replay now checks the pinned executable, base database and temporary merged
 database. The phase captures' original metadata is preserved; the common pin
 qualifies the **current replay installation**, not an unrecorded historical binary.

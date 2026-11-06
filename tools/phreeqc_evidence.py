@@ -5,6 +5,9 @@
 # its results are calculations, not dosing instructions.
 """Reproducible PHREEQC product evidence; retain successes and failures.
 
+Every case doses products of the packaged catalogue, so the capture exercises the same label
+reconciliation as the engine. A product that leaves the catalogue must leave the cases.
+
 Run with PYTHONPATH=src. No executable or merged database enters the repository.
 Captures are generated artifacts, not hand-authored numerical expectations.
 """
@@ -71,8 +74,7 @@ CASES = {
     'cu_edta': {'Copper EDTA': 0.01},
     'fe_dtpa': {'Iron DTPA': 0.01},
     'fe_eddha': {'Iron EDDHA': 0.01},
-    'ch_micro': {'CH - micro': 0.01},
-    'citrate': {'Potassium Citrate': 0.02},
+    'micro_combi_mix_2': {'Micro Combi Mix 2': 0.01},
     'mixed_products': {
         'Calcium Nitrate (ag grade)': 0.15,
         'Magnesium Sulfate (Heptahydrate)': 0.10,
@@ -80,7 +82,7 @@ CASES = {
         'Potassium Nitrate': 0.10,
         'Iron DTPA': 0.004,
         'Iron EDDHA': 0.003,
-        'CH - micro': 0.005,
+        'Micro Combi Mix 2': 0.005,
         'Urea': 0.005,
     },
 }

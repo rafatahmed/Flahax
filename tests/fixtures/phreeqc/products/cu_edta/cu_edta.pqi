@@ -4,9 +4,9 @@ SOLUTION 1
  pH 6
  units mol/kgw
  -water 1
- Cu(2) 2.2031284423881917e-05
- Edta 2.2031284423881917e-05
- Na 0.002 charge
+ Cu(2) 2.3604947597016336e-05
+ Na 0.0020472098951940325 charge
+ Edta 2.3604947597016336e-05
  Cl 0.002
 SELECTED_OUTPUT
  -file cu_edta.sel
@@ -17,7 +17,7 @@ SELECTED_OUTPUT
  -charge_balance true
  -percent_error true
  -water true
- -totals Cu(2) Edta Na Cl
+ -totals Cu(2) Na Edta Cl
  -molalities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
  -activities Cl- Cu+2 H+ Na+ Edta-4 OH- CuOH+ Cu(OH)2 Cu(OH)3- Cu(OH)4-2 Cu2(OH)2+2 CuCl+ CuCl2 CuCl3- CuCl4-2 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Cu(Edta)-2 CuH(Edta)- CuH2(Edta) CuOH(Edta)-3 Na(Edta)-3
  -si Cu(OH)2 Tenorite Halite

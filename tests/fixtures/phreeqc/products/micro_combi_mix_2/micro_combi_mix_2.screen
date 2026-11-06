@@ -1,6 +1,6 @@
-Input file: citrate.pqi
+Input file: micro_combi_mix_2.pqi
 
-Output file: citrate.out
+Output file: micro_combi_mix_2.out
 
 Database file: reference/minteq-flahax.dat
 
@@ -19,4 +19,4 @@ Database file: reference/minteq-flahax.dat
 
 Initializing...                                                                 
 
-End of Run after 0.04 Seconds.
+End of Run after 0.035 Seconds.

@@ -105,10 +105,10 @@ class FixtureValidationTests(unittest.TestCase):
 class InventoryTests(unittest.TestCase):
     def test_every_retained_family_and_byte_is_pinned(self):
         inventory = evidence.verify_reference_inventory()
-        self.assertEqual(len(inventory['files']), 197)
+        self.assertEqual(len(inventory['files']), 192)
         self.assertEqual(
             {k: len(v['cases']) for k, v in inventory['families'].items()},
-            {'products': 10, 'phases': 11, 'acid_selection': 4},
+            {'products': 9, 'phases': 11, 'acid_selection': 4},
         )
         self.assertEqual(len(inventory['historical']['legacy_json']), 4)
         self.assertEqual(len(inventory['historical']['retained_successes']), 6)

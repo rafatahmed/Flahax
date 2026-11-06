@@ -75,6 +75,8 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).
+
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback
   after partial input-mode setup; validate the distinct native `termios.error`
   path as well as ordinary I/O failures (#183).
