@@ -21,10 +21,10 @@ from tests.catalogue_history import historical_catalogue
 
 
 class CoverageTests(unittest.TestCase):
-    def test_uncertainty_is_unknown_not_zero_for_complete_and_partial_cases(self):
+    def test_uncertainty_is_unknown_not_zero_for_estimated_and_range_cases(self):
         for totals, expected in (
             ({'K+': 0.01, 'Cl-': 0.01}, 'estimated'),
-            ({'Mg+2': 0.004, 'SO4-2': 0.004}, 'partial'),
+            ({'Mg+2': 0.004, 'SO4-2': 0.004}, 'range'),
         ):
             result = calculate_ec_from_totals(
                 totals, solution_id='coverage', ph_mode='calculated', phase_policy='dissolved'
@@ -35,8 +35,10 @@ class CoverageTests(unittest.TestCase):
                 all(c['bound_ms_cm'] is None for c in result.uncertainty_components.values())
             )
             self.assertIsNone(result.uncertainty_ms_cm)
-            if expected == 'partial':
+            if expected == 'range':
                 self.assertIsNone(result.ec25_ms_cm)
+                low, high = result.ec25_range_ms_cm
+                self.assertLess(low, high)
                 self.assertEqual(result.transport_numbers, {})
                 self.assertGreater(result.known_species_subtotal_ms_cm, 0)
                 self.assertTrue(result.missing_species)

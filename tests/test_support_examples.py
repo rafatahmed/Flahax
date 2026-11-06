@@ -36,7 +36,7 @@ class ExampleCommandTests(unittest.TestCase):
                 runpy.run_module('examples.' + name, run_name='__main__')
             self.assertTrue(out.getvalue().strip())
             if name.startswith('tomato_'):
-                self.assertIn('unavailable', out.getvalue())
+                self.assertRegex(out.getvalue(), r'EC25: \d+\.\d\d-\d+\.\d\d mS/cm')
             if name == 'tomato_advanced':
                 self.assertIn('diagnostic only', out.getvalue())
                 self.assertIn('No accepted reagent plan', out.getvalue())

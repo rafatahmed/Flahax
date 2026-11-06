@@ -152,7 +152,7 @@ class PhaseAuditTests(unittest.TestCase):
         self.assertEqual(result['chemistry']['assessment']['risk'], [])
         self.assertIn('MnHPO4', [x[0] for x in result['chemistry']['assessment']['information']])
         self.assertEqual(result['chemistry']['precipitated'], {})
-        self.assertIn(result['ec']['status'], {'partial', 'not_supported'})
+        self.assertEqual(result['ec']['status'], 'range')
         self.assertIsNone(result['ec']['ec25_ms_cm'])
         missing = {r['product'] for r in result['stock_solubility'] if r['limit_g_per_l'] is None}
         self.assertTrue({'Iron EDTA', 'Mn EDTA', 'Copper EDTA', 'Zn EDTA'} <= missing)

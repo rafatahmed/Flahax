@@ -131,16 +131,16 @@ class SheetTests(unittest.TestCase):
             self.assertIn('undefined (zero target)', render_mix_sheet(summary, 2))
             self.assertIn('undefined (zero target)', str(_nutrient_rows(summary)))
 
-    def test_offline_evidence_roundtrips_with_escaped_text_and_partial_ec(self):
+    def test_offline_evidence_roundtrips_with_escaped_text_and_range_ec(self):
         summary = copy.deepcopy(self.ro)
         summary.pop('export_identity', None)
         summary.pop('calculation_identity', None)
         summary['title'] = '</pre><script>alert("x")</script>'
         summary['ec'].update(
-            status='partial',
+            status='range',
             known_species_subtotal_ms_cm=0.123456789012345,
             ec25_ms_cm=None,
-            ec25_range_ms_cm=None,
+            ec25_range_ms_cm=(0.123456789012345, 0.3),
         )
         summary = seal_summary(summary)
         for render in (
@@ -155,8 +155,9 @@ class SheetTests(unittest.TestCase):
             parsed.feed(page)
             self.assertEqual(json.loads(''.join(parsed.payload)), json.loads(json.dumps(summary)))
             self.assertFalse(parsed.active)
-            self.assertIn('not a total EC estimate, bound or midpoint', page)
-            self.assertIn('EC uncertainty interval: not quantified', page)
+            self.assertIn('Reported EC range: 0.12 to 0.30 mS/cm', page)
+            self.assertNotIn('midpoint', page.lower())
+            self.assertIn('EC uncertainty components', page)
             self.assertIn('physical validation is not established', page)
             self.assertNotIn('Direct batch: dissolve', page)
             self.assertNotIn('class="tick"', page)
@@ -195,17 +196,22 @@ class QualificationTests(unittest.TestCase):
         estimated = dict(
             status='estimated',
             ec25_ms_cm=0,
-            ec25_range_ms_cm=[0, 0.2],
+            ec25_range_ms_cm=(0, 0),
             uncertainty_components={'model': {'status': 'not_validated'}},
         )
         lines = ' '.join(qualification_lines({'ec': estimated}))
         self.assertIn('calculated estimate: 0 mS/cm', lines)
-        self.assertIn('Reported EC range: [0, 0.2]', lines)
+        self.assertNotIn('Reported EC range', lines)  # one value is not a range
         self.assertIn('not_validated', lines)
-        for status in ('partial', 'not_supported'):
-            estimated['status'] = status
-            lines = ' '.join(qualification_lines({'ec': estimated}))
-            self.assertNotIn('calculated estimate', lines)
+        ranged = dict(estimated, status='range', ec25_ms_cm=None, ec25_range_ms_cm=(0, 0.2))
+        lines = ' '.join(qualification_lines({'ec': ranged}))
+        self.assertIn('Reported EC range: 0.00 to 0.20 mS/cm.', lines)
+        self.assertNotIn('calculated estimate', lines)
+        self.assertNotIn('midpoint', lines.lower())
+        ranged['status'] = 'not_supported'
+        lines = ' '.join(qualification_lines({'ec': ranged}))
+        self.assertNotIn('calculated estimate', lines)
+        self.assertNotIn('Reported EC range', lines)
 
     def test_independent_nutrient_arithmetic_and_incidental_distinction(self):
         # Independent fixture: 2 mg/L water + 3 fertilizer + 4 reagent = 9 final.

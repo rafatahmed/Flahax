@@ -39,7 +39,7 @@ class FitDomainTests(unittest.TestCase):
                 ionic_molal_conductivity(ion, math.nextafter(limit, math.inf))
             self.assertEqual(caught.exception.code, 'ionic_strength_outside_phosphate_fit')
 
-    def test_public_out_of_fit_has_no_estimate_or_interval(self):
+    def test_public_out_of_fit_is_a_range_and_the_covered_ions_still_count(self):
         for mode, extra in (('calculated', {}), ('supplied', {'ph': 6.0})):
             result = calculate_ec_from_totals(
                 {'Na+': 0.02, 'PO4-3': 0.02},
@@ -48,12 +48,14 @@ class FitDomainTests(unittest.TestCase):
                 phase_policy='dissolved',
                 **extra,
             )
-            self.assertEqual(result.status, 'not_supported')
-            self.assertEqual(result.reason, 'ionic_strength_outside_phosphate_fit')
+            self.assertEqual(result.status, 'range')
+            self.assertIsNone(result.reason)
             self.assertIsNone(result.ec25_ms_cm)
-            self.assertIsNone(result.ec25_range_ms_cm)
-            self.assertEqual(result.contributions_ms_cm, {})
-            self.assertFalse(result.bounded)
+            low, high = result.ec25_range_ms_cm
+            self.assertGreater(high, low)
+            self.assertIn('Na+', result.contributions_ms_cm)
+            self.assertFalse({'H2PO4-', 'HPO4-2'} & set(result.contributions_ms_cm))
+            self.assertTrue(result.bounded)
             self.assertTrue(result.audit['supplementaryCoefficients'])
             self.assertGreater(
                 result.ionic_strength, result.audit['phosphate_fit_max_ionic_strength']
@@ -67,12 +69,13 @@ class FitDomainTests(unittest.TestCase):
             phases=[],
         )
         limit = load_conductivity_coefficients()['supplementary']['fit']['max_ionic_strength']
+        covered = {'K+': 0.01, 'Cl-': 0.01, 'H2PO4-': 1e-3}
         for strength, expected in (
-            (limit, 'partial'),
-            (math.nextafter(limit, math.inf), 'not_supported'),
+            (limit, 'estimated'),
+            (math.nextafter(limit, math.inf), 'range'),
         ):
             result = _ec_from_state(
-                replace(state, ionic_strength=strength),
+                replace(state, species=covered, ionic_strength=strength),
                 ph_mode='calculated',
                 phase_policy='dissolved',
                 phases=[],
@@ -83,7 +86,7 @@ class FitDomainTests(unittest.TestCase):
             self.assertEqual(result.status, expected)
         for amount, expected in (
             (1e-12, 'estimated'),
-            (math.nextafter(1e-12, math.inf), 'not_supported'),
+            (math.nextafter(1e-12, math.inf), 'range'),
         ):
             species = {'K+': 0.02, 'Cl-': 0.02, 'H2PO4-': amount}
             result = _ec_from_state(

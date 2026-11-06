@@ -71,6 +71,8 @@ each release, with numbers, sources and decisions, are in
   every other supersaturated phase is information with the basis of its constant. Removed:
   saturation blocking, the evidence and applicability inputs, `blocks` (G12–G14, #221).
 
+- EC is a range, never refused. Its low end counts the species with a coefficient; its high end adds 80 per charge for those without, for phosphate beyond its fit domain and for unrecorded charge. `status` is `estimated` or `range`, with no midpoint. Removed: `partial`, the assay-residual and phosphate-fit refusals. `--ec` compares a requested EC (G6–G9, #224).
+
 ### Fixed
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

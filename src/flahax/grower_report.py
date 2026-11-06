@@ -19,7 +19,7 @@ import math
 from . import __version__
 from .delivery_contracts import DeliveryError
 from .fertilizer_workflow import PH_NOT_PLANNED, unreviewed_reason
-from .irrigation_ec import calculate_ec_from_totals
+from .irrigation_ec import QUALIFIER, calculate_ec_from_totals
 from .saturation_policy import assess_saturation, risk_warnings
 from .stock_solubility import (
     SINGLE_SALT,
@@ -251,6 +251,7 @@ def summarize_batch(
     rules=(),
     temperature_c=25,
     available_tanks=2,
+    requested_ec_ms_cm=None,
 ):
     """Plain data for a grower report and batch sheet.
 
@@ -261,6 +262,13 @@ def summarize_batch(
     is the recipe to weigh. Each concentrate is compared with source-qualified
     references at ``temperature_c``; conditional floors cannot prove dissolution failure.
     """
+    if requested_ec_ms_cm is not None and (
+        isinstance(requested_ec_ms_cm, bool)
+        or not isinstance(requested_ec_ms_cm, (int, float))
+        or not math.isfinite(requested_ec_ms_cm)
+        or requested_ec_ms_cm <= 0
+    ):
+        raise DeliveryError('invalid_value', 'requested_ec_ms_cm must be finite and positive')
     canonical = workflow.canonical_result
     if canonical is not None:
         canonical.verify(workflow, products)
@@ -471,7 +479,10 @@ def summarize_batch(
         warnings.extend(ec.get('warnings', ()))
         if ec.get('reason'):
             warnings.append('EC: ' + ec['reason'].replace('_', ' ') + '.')
-        warnings.append(ec.get('qualifier', 'EC accuracy is not established.'))
+        note = requested_ec_note(requested_ec_ms_cm, ec)
+        if note:
+            warnings.append(note)
+        warnings.append(ec.get('qualifier', QUALIFIER))
     chemistry_stage = workflow.stages.get('chemistry')
     concentration_basis = (
         chemistry_stage.value.get('concentration_basis')
@@ -617,6 +628,11 @@ def summarize_batch(
         ph=ph,
         chemistry=chemistry,
         ec=ec,
+        requested_ec=None
+        if requested_ec_ms_cm is None
+        else dict(
+            requested_ms_cm=requested_ec_ms_cm, note=requested_ec_note(requested_ec_ms_cm, ec)
+        ),
         tanks=tanks,
         stages=stages,
         warnings=warnings,
@@ -740,6 +756,31 @@ def dose_number(value, digits=2):
     return shown
 
 
+def ec_text(ec, *, about=False):
+    """The EC a result can state: one value for an estimate, 'low-high' for a range, else None."""
+    if not ec or ec.get('status') not in ('estimated', 'range') or not ec.get('ec25_range_ms_cm'):
+        return None
+    low, high = ec['ec25_range_ms_cm']
+    if ec['status'] == 'estimated':
+        return ('about ' if about else '') + number(low, 2)
+    return (
+        f'{number(low, 2)} to {number(high, 2)}'
+        if about
+        else f'{number(low, 2)}\u2013{number(high, 2)}'
+    )
+
+
+def requested_ec_note(requested, ec):
+    """How a requested EC (mS/cm) sits against the estimated range, or None without a request."""
+    if requested is None or not ec or not ec.get('ec25_range_ms_cm'):
+        return None
+    low, high = ec['ec25_range_ms_cm']
+    if low <= requested <= high:
+        return 'compatible with the estimated range; target attainment unverified'
+    distance = low - requested if requested < low else requested - high
+    return f'requested {requested:.2f} mS/cm is {distance:.2f} mS/cm from the estimated range'
+
+
 def qualification_lines(summary):
     """Keep model applicability and physical validation distinct from feasibility."""
     lines = [
@@ -757,13 +798,9 @@ def qualification_lines(summary):
             lines.append(f"EC {key}: {ec[key]}")
     if ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None:
         lines.append(f"EC25 calculated estimate: {ec['ec25_ms_cm']} mS/cm.")
-    if ec.get('known_species_subtotal_ms_cm') is not None:
-        lines.append(
-            f"Known-species subtotal: {ec['known_species_subtotal_ms_cm']} mS/cm; "
-            "not a total EC estimate, bound or midpoint."
-        )
-    if ec.get('ec25_range_ms_cm') is not None:
-        lines.append(f"Reported EC range: {ec['ec25_range_ms_cm']} mS/cm.")
+    if ec.get('status') == 'range':
+        low, high = ec['ec25_range_ms_cm']
+        lines.append(f'Reported EC range: {low:.2f} to {high:.2f} mS/cm.')
     else:
         lines.append('EC uncertainty interval: not quantified.')
     lines.append(f"EC uncertainty components: {ec.get('uncertainty_components', 'not reported')}")
@@ -880,9 +917,7 @@ def render_report(summary):
         )
         + _card(
             'EC25 estimate',
-            f'{number(ec["ec25_ms_cm"], 2)} mS/cm'
-            if ec and ec['status'] == 'estimated' and ec['ec25_ms_cm'] is not None
-            else 'n/a',
+            f'{ec_text(ec)} mS/cm' if ec_text(ec) else 'n/a',
             'experimental',
         )
         + '</div></header>'
@@ -1264,9 +1299,7 @@ def render_batch_sheet(summary):
     checks = [
         (
             'EC25 (mS/cm)',
-            f'about {number(ec["ec25_ms_cm"], 2)} (experimental)'
-            if ec and ec['status'] == 'estimated' and ec['ec25_ms_cm'] is not None
-            else 'measure',
+            f'{ec_text(ec, about=True)} (experimental)' if ec_text(ec) else 'measure',
         ),
         ('pH', number(s['target_ph'], 2)),
     ]

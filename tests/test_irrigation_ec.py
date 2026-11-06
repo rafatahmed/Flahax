@@ -99,23 +99,21 @@ class TotalsTests(unittest.TestCase):
     def test_neutral_pair_carries_no_current_and_hydroxo_pair_is_unknown(self):
         m = 1 / 246.47
         r = self.calc({'Mg+2': m, 'SO4-2': m})
-        # M2a O2 bound: was ('partial', 'missing_species_contributions').
-        self.assertEqual(
-            (r.status, r.reason, r.bounded), ('partial', 'missing_species_contributions', False)
-        )
+        # Was ('partial', 'missing_species_contributions'); now a range (decision G7).
+        self.assertEqual((r.status, r.reason, r.bounded), ('range', None, True))
         self.assertIn('MgOH+', [s['name'] for s in r.missing_species])
-        self.assertAlmostEqual(r.known_species_subtotal_ms_cm, 0.725, delta=0.001)
-        self.assertIsNone(r.ec25_range_ms_cm)
+        low, high = r.ec25_range_ms_cm
+        self.assertAlmostEqual(low, 0.725, delta=0.001)
+        self.assertEqual(r.known_species_subtotal_ms_cm, low)
+        self.assertGreater(high, low)
         self.assertNotIn('MgSO4', r.contributions_ms_cm)
 
-    def test_phosphate_is_partial_and_missing_species_named(self):
+    def test_phosphate_is_a_range_and_missing_species_named(self):
         m = 1 / 136.09
         r = self.calc({'K+': m, 'PO4-3': m})
-        # M2a O2 bound: was ('partial', 'missing_species_contributions') with ec25_ms_cm None.
-        # M2b: H2PO4- is now covered (subtotal was 0.524); the minor pair KHPO4- remains unknown.
-        self.assertEqual(
-            (r.status, r.reason, r.bounded), ('partial', 'missing_species_contributions', False)
-        )
+        # M2b: H2PO4- is covered (subtotal was 0.524); the minor pair KHPO4- remains unknown and
+        # is bounded, which gives the range.
+        self.assertEqual((r.status, r.reason, r.bounded), ('range', None, True))
         self.assertIsNone(r.ec25_ms_cm)
         self.assertIn(
             {'name': 'KHPO4-', 'charge': -1},
@@ -147,12 +145,12 @@ class TotalsTests(unittest.TestCase):
             'unsupported_carbon_boundary',
         )
 
-    def test_supplied_ph_with_unrecorded_acid_is_partial(self):
+    def test_supplied_ph_with_unrecorded_acid_is_a_range(self):
         self.assertEqual(
             self.calc({'K+': 0.01, 'Cl-': 0.01}, ph_mode='supplied', ph=7.0).status, 'estimated'
         )
         r = self.calc({'K+': 0.01, 'Cl-': 0.01}, ph_mode='supplied', ph=4.0)
-        self.assertEqual((r.status, r.reason), ('partial', 'unrecorded_counterions'))
+        self.assertEqual((r.status, r.reason), ('range', None))
         self.assertGreater(r.unrecorded_counterions_eq_per_kgw, 0)
         excess = r.audit['charge_balance'] - r.assay_charge_residual['eq_per_kgw']
         self.assertEqual(r.unrecorded_counterions_eq_per_kgw, excess)
@@ -163,30 +161,30 @@ class TotalsTests(unittest.TestCase):
         self.assertEqual(est.status, 'estimated')
         self.assertIsNone(est.unrecorded_counterions_eq_per_kgw)
         self.assertIsNone(self.calc(tot).unrecorded_counterions_eq_per_kgw)
-        # Supplied-mode O5 gate: the whole speciated imbalance is reported.
+        # Supplied pH: the charge the recorded ions and the assay residual do not explain is
+        # reported and bounded.
         o5 = self.calc(tot, ph_mode='supplied', ph=7.0, assay_charge_residual_eq_per_kgw=1e-4)
-        self.assertEqual((o5.status, o5.reason), ('partial', 'unrecorded_counterions'))
-        self.assertEqual(o5.unrecorded_counterions_eq_per_kgw, o5.audit['charge_balance'])
+        self.assertEqual((o5.status, o5.reason), ('range', None))
+        self.assertEqual(
+            o5.unrecorded_counterions_eq_per_kgw,
+            o5.audit['charge_balance'] - o5.assay_charge_residual['eq_per_kgw'],
+        )
         self.assertTrue(o5.contributions_ms_cm)
 
-    def test_assay_residual_gate(self):
+    def test_assay_residual_is_reported_and_never_a_gate(self):
         tot = {'K+': 0.01, 'Cl-': 0.01}
         ok = self.calc(tot, assay_charge_residual_eq_per_kgw=1e-5)  # 0.05 %
         self.assertEqual(ok.status, 'estimated')
         self.assertAlmostEqual(ok.assay_charge_residual['percent'], 0.05, places=3)
-        self.assertEqual(
-            self.calc(tot, assay_charge_residual_eq_per_kgw=1e-4).reason,
-            'assay_charge_residual_too_large',
-        )
+        large = self.calc(tot, assay_charge_residual_eq_per_kgw=1e-4)  # 0.5 %
+        self.assertEqual((large.status, large.reason), ('estimated', None))
+        self.assertAlmostEqual(large.assay_charge_residual['percent'], 0.5, places=2)
 
-    def test_not_supported_carries_no_contributions(self):
+    def test_a_large_assay_residual_keeps_the_estimate(self):
         r = self.calc({'K+': 0.01, 'Cl-': 0.01}, assay_charge_residual_eq_per_kgw=1e-4)
-        self.assertEqual(
-            (r.status, r.reason), ('not_supported', 'assay_charge_residual_too_large')
-        )
-        self.assertEqual((r.contributions_ms_cm, r.transport_numbers), ({}, {}))
-        self.assertIsNone(r.known_species_subtotal_ms_cm)
-        self.assertIsNone(r.ec25_ms_cm)
+        self.assertEqual((r.status, r.reason), ('estimated', None))
+        self.assertTrue(r.contributions_ms_cm)
+        self.assertAlmostEqual(r.ec25_ms_cm, 1.42349, places=4)
 
     def test_declared_percent_overrides_speciated_percent(self):
         tot = {'K+': 0.01, 'Cl-': 0.01}
@@ -195,10 +193,9 @@ class TotalsTests(unittest.TestCase):
         )
         self.assertEqual(r.status, 'estimated')
         self.assertEqual(r.assay_charge_residual, {'eq_per_kgw': 1e-4, 'percent': 0.05})
-        self.assertEqual(
-            self.calc(tot, assay_charge_residual_percent=0.2).reason,
-            'assay_charge_residual_too_large',
-        )
+        large = self.calc(tot, assay_charge_residual_percent=0.2)
+        self.assertEqual((large.status, large.reason), ('estimated', None))
+        self.assertEqual(large.assay_charge_residual['percent'], 0.2)
         for bad in (float('nan'), True, '0.05'):
             with self.subTest(bad=bad), self.assertRaises(DeliveryError):
                 self.calc(tot, assay_charge_residual_percent=bad)
@@ -242,7 +239,8 @@ class TotalsTests(unittest.TestCase):
 
 
 class BoundTests(unittest.TestCase):
-    """Unknown contributions cannot be replaced by the historical universal bound."""
+    """Unknown contributions are bounded at LAMBDA_MAX_PER_CHARGE, never replaced by a value
+    (decision G7)."""
 
     KH2PO4 = {'K+': 1 / 136.09, 'PO4-3': 1 / 136.09}
 
@@ -254,19 +252,17 @@ class BoundTests(unittest.TestCase):
     def test_lambda_max_constant(self):
         self.assertEqual(LAMBDA_MAX_PER_CHARGE, 80.0)
 
-    def test_kh2po4_has_partial_subtotal_without_unproven_bound(self):
+    def test_kh2po4_has_a_low_end_and_a_bounded_high_end(self):
         r = self.calc(self.KH2PO4)
-        self.assertEqual((r.status, r.reason), ('partial', 'missing_species_contributions'))
-        self.assertAlmostEqual(r.known_species_subtotal_ms_cm, KH2PO4_SUBTOTAL, delta=0.002)
+        self.assertEqual((r.status, r.reason), ('range', None))
+        low, high = r.ec25_range_ms_cm
+        self.assertAlmostEqual(low, KH2PO4_SUBTOTAL, delta=0.002)
         self.assertEqual(r.known_species_subtotal_ms_cm, sum(r.contributions_ms_cm.values()))
-        self.assertFalse(r.bounded)
-        for value in (
-            r.ec25_ms_cm,
-            r.ec25_range_ms_cm,
-            r.uncertainty_ms_cm,
-            r.uncovered_bound_ms_cm,
-            r.audit['lambda_max_per_charge'],
-        ):
+        self.assertTrue(r.bounded)
+        self.assertAlmostEqual(r.uncovered_bound_ms_cm, high - low, places=12)
+        self.assertEqual(r.audit['lambda_max_per_charge'], LAMBDA_MAX_PER_CHARGE)
+        self.assertEqual(r.audit['uncovered_bound_ms_cm'], r.uncovered_bound_ms_cm)
+        for value in (r.ec25_ms_cm, r.uncertainty_ms_cm):
             self.assertIsNone(value)
         self.assertIn('KHPO4-', [s['name'] for s in r.missing_species])
         self.assertNotIn('H2PO4-', [s['name'] for s in r.missing_species])
@@ -274,11 +270,11 @@ class BoundTests(unittest.TestCase):
         self.assertEqual(r.transport_numbers, {})
         self.assertEqual(r.qualifier, QUALIFIER)
 
-    def test_unbounded_result_unchanged(self):  # Review Focus 2
+    def test_an_estimate_has_equal_ends_and_no_bound(self):  # Review Focus 3
         r = self.calc({'K+': 0.01, 'Cl-': 0.01})
         self.assertEqual(r.status, 'estimated')
         self.assertFalse(r.bounded)
-        self.assertIsNone(r.ec25_range_ms_cm)
+        self.assertEqual(r.ec25_range_ms_cm, (r.ec25_ms_cm, r.ec25_ms_cm))
         self.assertIsNone(r.uncertainty_ms_cm)
         self.assertIsNone(r.uncovered_bound_ms_cm)
         self.assertIsNone(r.known_species_subtotal_ms_cm)
@@ -288,24 +284,22 @@ class BoundTests(unittest.TestCase):
         self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
         self.assertIsNone(r.audit['lambda_max_per_charge'])
 
-    def test_unrecorded_counterions_still_partial(self):  # Review Focus 1
+    def test_unrecorded_counterions_are_bounded_too(self):  # Review Focus 1
         r = self.calc(self.KH2PO4, ph_mode='supplied', ph=4.0)
-        self.assertEqual((r.status, r.reason), ('partial', 'unrecorded_counterions'))
-        self.assertFalse(r.bounded)
+        self.assertEqual((r.status, r.reason), ('range', None))
+        self.assertTrue(r.bounded)
         self.assertIsNone(r.ec25_ms_cm)
-        self.assertIsNone(r.ec25_range_ms_cm)
         self.assertIsNone(r.uncertainty_ms_cm)
-        self.assertIsNone(r.uncovered_bound_ms_cm)
-        self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
+        low, high = r.ec25_range_ms_cm
+        floor = sum(
+            LAMBDA_MAX_PER_CHARGE * abs(s['charge']) * s['molal'] for s in r.missing_species
+        ) + LAMBDA_MAX_PER_CHARGE * abs(r.unrecorded_counterions_eq_per_kgw)
+        self.assertAlmostEqual(high - low, floor, places=12)
         self.assertTrue(r.missing_species)
 
     def test_other_rules_not_overridden(self):
         o5 = self.calc(self.KH2PO4, assay_charge_residual_eq_per_kgw=1e-3)
-        self.assertEqual(
-            (o5.status, o5.reason, o5.bounded),
-            ('not_supported', 'assay_charge_residual_too_large', False),
-        )
-        self.assertIsNone(o5.ec25_range_ms_cm)
+        self.assertEqual((o5.status, o5.reason, o5.bounded), ('range', None, True))
         for kw, reason in (
             ({'temperature_c': 20}, 'temperature_outside_reference'),
             ({'carbon_boundary': 'open'}, 'unsupported_carbon_boundary'),
@@ -325,7 +319,7 @@ class BoundTests(unittest.TestCase):
                 self.calc(self.KH2PO4, audit_inputs={key: 0.0})
             self.assertEqual(c.exception.code, 'invalid_audit_inputs')
 
-    def test_open_band_end_drops_nominal_bound(self):
+    def test_open_band_end_drops_nominal_range(self):
         result = calculate_irrigation_ec_band(
             {'Potassium Monobasic Phosphate': 1.0},
             recipe_id='band',
@@ -333,8 +327,8 @@ class BoundTests(unittest.TestCase):
             ph_mode='calculated',
             phase_policy='dissolved',
         )
-        self.assertFalse(result['nominal'].bounded)
-        self.assertEqual(result['nominal'].status, 'partial')
+        self.assertTrue(result['nominal'].bounded)
+        self.assertEqual(result['nominal'].status, 'range')
         for end in ('minimum', 'maximum'):
             r = result[end]
             self.assertEqual(
@@ -345,7 +339,7 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.uncovered_bound_ms_cm)
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
-    def test_all_shipped_formulas_respect_phosphate_fit_domain(self):
+    def test_all_shipped_formulas_report_a_range_beyond_the_phosphate_fit_domain(self):
         # Historical raw failures are retained in conductivity-qualification/tests.log.
         # F08's independent oracle forbids an unqualified out-of-fit prediction.
         from flahax.engine import load_library, recommend
@@ -365,13 +359,15 @@ class BoundTests(unittest.TestCase):
             )
             with self.subTest(formula=formula['name']):
                 self.assertGreater(r.ionic_strength, limit)
-                self.assertEqual(r.status, 'not_supported')
-                self.assertEqual(r.reason, 'ionic_strength_outside_phosphate_fit')
+                self.assertEqual(r.status, 'range')
+                self.assertIsNone(r.reason)
                 self.assertTrue(r.audit['supplementaryCoefficients'])
                 self.assertIsNone(r.ec25_ms_cm)
-                self.assertIsNone(r.ec25_range_ms_cm)
-                self.assertFalse(r.bounded)
-                self.assertEqual(r.contributions_ms_cm, {})
+                low, high = r.ec25_range_ms_cm
+                self.assertGreater(low, 0)
+                self.assertGreater(high, low)
+                self.assertTrue(r.bounded)
+                self.assertFalse({'H2PO4-', 'HPO4-2'} & set(r.contributions_ms_cm))
                 checked += 1
         self.assertEqual(checked, 13)  # every formula of the packaged catalogue
 
@@ -446,9 +442,7 @@ class PhosphateCoefficientTests(unittest.TestCase):
 
     def test_kh2po4_now_mostly_covered(self):
         r = self.calc(self.KH2PO4)
-        self.assertEqual(
-            (r.status, r.reason, r.bounded), ('partial', 'missing_species_contributions', False)
-        )
+        self.assertEqual((r.status, r.reason, r.bounded), ('range', None, True))
         for ion in ('H2PO4-', 'HPO4-2'):
             self.assertIn(ion, r.contributions_ms_cm)
         names = {s['name'] for s in r.missing_species}
@@ -458,7 +452,8 @@ class PhosphateCoefficientTests(unittest.TestCase):
         self.assertTrue(names)
         for s in r.missing_species:
             self.assertLess(s['molal'], 1e-3 * self.KH2PO4['PO4-3'], s['name'])
-        self.assertIsNone(r.ec25_range_ms_cm)
+        low, high = r.ec25_range_ms_cm
+        self.assertLess(high - low, 0.001 * low)  # the bounded minor species barely widen it
         self.assertIsNone(r.ec25_ms_cm)
         self.assertTrue(r.audit['supplementaryCoefficients'])
         self.assertEqual(
@@ -539,9 +534,9 @@ class CatalogueTests(unittest.TestCase):
         net, absolute = 2 * old['Mg+2'] - old['NO3-'], 2 * old['Mg+2'] + old['NO3-']
         self.assertAlmostEqual(100 * net / absolute, 0.5532, places=3)
 
-    def test_residual_gate_by_mode(self):
+    def test_residual_is_reported_by_mode_and_never_a_gate(self):
         # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the retired Mg Nitrate
-        # totals and residual are passed explicitly, so the O5 gate by pH mode stays covered.
+        # totals and residual are passed explicitly.
         residual = self.OLD_MG_NITRATE_1G_RESIDUAL
         kw = dict(
             solution_id='r',
@@ -550,13 +545,12 @@ class CatalogueTests(unittest.TestCase):
             assay_charge_residual_percent=residual['percent'],
         )
         c = calculate_ec_from_totals(self.OLD_MG_NITRATE_1G, ph_mode='calculated', **kw)
-        self.assertEqual(
-            (c.status, c.reason), ('not_supported', 'assay_charge_residual_too_large')
-        )
+        self.assertEqual((c.status, c.reason), ('range', None))  # MgOH+ is bounded
+        self.assertEqual(c.assay_charge_residual['percent'], residual['percent'])
         s = calculate_ec_from_totals(self.OLD_MG_NITRATE_1G, ph_mode='supplied', ph=6.0, **kw)
-        self.assertEqual((s.status, s.reason), ('partial', 'unrecorded_counterions'))
+        self.assertEqual((s.status, s.reason), ('range', None))
 
-    def test_gate_uses_declared_form_percent(self):
+    def test_declared_form_percent_is_reported_not_gated(self):
         # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the mix below
         # (0.40 old Mg Nitrate + 1.0 MgSO4.7H2O + 0.5 K2SO4) had a declared residual of 0.0914 %;
         # its totals and residual are now passed explicitly to keep the declared-percent gate
@@ -575,9 +569,9 @@ class CatalogueTests(unittest.TestCase):
             assay_charge_residual_eq_per_kgw=eq,
         )
         speciated = calculate_ec_from_totals(totals, **kw)
-        self.assertEqual(speciated.reason, 'assay_charge_residual_too_large')  # speciated % > 0.1
+        self.assertGreater(speciated.assay_charge_residual['percent'], 0.1)  # speciated %
         r = calculate_ec_from_totals(totals, assay_charge_residual_percent=declared, **kw)
-        self.assertNotEqual(r.reason, 'assay_charge_residual_too_large')
+        self.assertEqual(r.status, speciated.status)  # the residual never decides the status
         self.assertAlmostEqual(r.assay_charge_residual['percent'], 0.0914, places=4)
         # The catalogue path still records the declared-form percent it gated on.
         doses = {
@@ -857,7 +851,7 @@ class ComparisonTests(unittest.TestCase):
         partial = calculate_ec_from_totals(
             {'K+': 0.01, 'Cl-': 0.01}, **self.PARTIAL
         )  # M2a O2 bound
-        self.assertEqual(partial.status, 'partial')  # M2a O2 bound
+        self.assertEqual(partial.status, 'range')
         cases = [
             (partial, 1.0, 25),
             (p, 1.0, 20),
@@ -998,9 +992,8 @@ class BandChemistryTests(unittest.TestCase):
         subtotals = {}
         for end in ('minimum', 'nominal', 'maximum'):
             r = result[end]
-            self.assertEqual((r.status, r.bounded), ('partial', False), end)
-            self.assertIsNone(r.ec25_range_ms_cm)
-            self.assertIsNone(r.uncovered_bound_ms_cm)
+            self.assertEqual((r.status, r.bounded), ('range', True), end)
+            self.assertGreater(r.ec25_range_ms_cm[1], r.ec25_range_ms_cm[0])
             self.assertIsNone(r.ec25_ms_cm)
             subtotals[end] = r.known_species_subtotal_ms_cm
         self.assertLess(subtotals['minimum'], subtotals['nominal'])

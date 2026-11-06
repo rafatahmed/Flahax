@@ -21,6 +21,7 @@ import flahax
 from . import tomato_advanced, tomato_simple
 from .common import serializable
 from .visual_report import bars, number, table, text
+from flahax.grower_report import ec_text
 from flahax.saturation_policy import RISK_PHASES
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
@@ -120,7 +121,7 @@ def simple_section(s):
         + card('Ion balance', f"{b['imbalancePercent']:+.1f}%", 'cations vs anions of the formula')
         + card(
             'EC25 estimate',
-            f"{number(ec['ec25_ms_cm'], 2)} mS/cm",
+            f"{ec_display(ec)} mS/cm",
             f"at pH {number(ec['ph'], 2)}, experimental",
         )
         + '</div>'
@@ -191,8 +192,7 @@ def advanced_section(a):
     ]
     acid_rows = [(x['product'], x['status'], x['message'] or '') for x in acid['candidates']]
     ec_rows = [
-        (label, number(e['ec25_ms_cm'], 2), number(e['ph'], 2), e['status'])
-        for label, e in a['ec'].items()
+        (label, ec_display(e), number(e['ph'], 2), e['status']) for label, e in a['ec'].items()
     ]
     tank_rows = [
         (
@@ -241,7 +241,7 @@ def advanced_section(a):
         + card('Feed pH', number(c['mixed_ph'], 2), f"target {a['target_ph']}")
         + card(
             'EC25 estimate',
-            f"{number(a['ec']['acidified']['ec25_ms_cm'], 2)} mS/cm",
+            f"{ec_display(a['ec']['acidified'])} mS/cm",
             'after acid, experimental',
         )
         + '</div>'
@@ -443,7 +443,7 @@ def sheets(simple, advanced):
         f'is needed but '
         'not calculated in the simple example; plan it on your water (see the advanced sheet).',
         [
-            ('EC25 (mS/cm)', f'about {number(ec["ec25_ms_cm"], 2)} (experimental)'),
+            ('EC25 (mS/cm)', f'{ec_display(ec, about=True)} (experimental)'),
             ('pH', '5.3-5.8 after acid'),
         ],
     )
@@ -467,7 +467,7 @@ def sheets(simple, advanced):
         [
             (
                 'EC25 (mS/cm)',
-                f"about {number(a['ec']['acidified']['ec25_ms_cm'], 2)} (experimental)",
+                f"{ec_display(a['ec']['acidified'], about=True)} (experimental)",
             ),
             ('pH', str(a['target_ph'])),
             ('Nitrate-N (mg/L)', f"{number(acid['nitrate_after_mg_l'], 1)} with the acid"),
@@ -476,6 +476,14 @@ def sheets(simple, advanced):
         batch=tomato_advanced.BATCH_LITRES,
     )
     return simple_sheet, advanced_sheet
+
+
+def ec_display(e, *, about=False):
+    """The EC an example result can state: one value, 'low-high' for a range, or n/a."""
+    return (
+        ec_text({'status': e['status'], 'ec25_range_ms_cm': e['range_ms_cm']}, about=about)
+        or 'n/a'
+    )
 
 
 def build():
