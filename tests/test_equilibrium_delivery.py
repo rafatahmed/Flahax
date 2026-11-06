@@ -31,7 +31,6 @@ from flahax.saturation_policy import assess_saturation
 from tests.test_ph_planning import record
 from tests.test_stock_assignments import synthetic_model
 from tests.test_pump_planning import calibration
-from tests.catalogue_history import historical_catalogue
 
 
 def recipe_for(doses, water_mass=95.0, volume=100.0):
@@ -267,10 +266,7 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         self.assertEqual(p.reagent_mass.value, 0)
         self.assertEqual(p.reagent_volume_litres, 0)
 
-    # 33c5df2 catalogue: its PHREEQC fixture (products/mixed_target_ph_nitric) doses CH - micro,
-    # which the packaged catalogue does not hold.
     def test_real_mixed_golden_dose_and_precipitation_screen(self):
-        self.enterContext(historical_catalogue())
         fixture = (
             Path(__file__).parent
             / 'fixtures/phreeqc/products/mixed_target_ph_nitric/expected.json'
