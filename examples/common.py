@@ -56,9 +56,16 @@ def show(value):
 
 
 def ec_summary(value):
-    """Render a qualified estimate without inventing a value for a partial result."""
+    """Render a qualified estimate: one value, a low-high range, or unavailable. No midpoint."""
     ec = value['ec25_ms_cm']
     ph = value['ph']
-    estimate = 'unavailable' if ec is None else f'{ec:.2f} mS/cm'
+    low, high = value.get('range_ms_cm') or (None, None)
+    estimate = (
+        f'{ec:.2f} mS/cm'
+        if ec is not None
+        else 'unavailable'
+        if low is None
+        else f'{low:.2f}-{high:.2f} mS/cm'
+    )
     acidity = 'unavailable' if ph is None else f'{ph:.2f}'
     return f"EC25: {estimate}; pH: {acidity} ({value['status']}, experimental)"

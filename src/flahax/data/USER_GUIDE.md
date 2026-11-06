@@ -381,7 +381,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_acceptance`, `stale_acceptance` | Acceptance evidence is malformed or belongs to different result content. Review the current result and record new acceptance. |
 | `invalid_saved_result`, `stale_session` | Saved data is malformed or its source inputs/results changed. Load valid data or recalculate before reuse. |
 | `invalid_remedy` | The requested remedy is not a valid scoped change. Inspect the permitted remedy and its inputs. |
-| `ionic_strength_outside_phosphate_fit` | The phosphate conductivity fit does not cover this ionic strength. No supported total EC is available from that fit. |
+| `ionic_strength_outside_phosphate_fit` | Raised by `ionic_molal_conductivity` above the phosphate fit ionic strength. `calculate_ec_from_totals` does not refuse: it bounds that phosphate and reports an EC range. |
 | `invalid_ec_scenarios` | EC sensitivity scenarios are malformed. Supply the required explicit scenario inputs. |
 | `unknown_component`, `duplicate_product` | A component is not supported or a product ID is repeated. Correct the analytical inventory or unique product IDs. |
 | `missing_density` | A volume-based reagent calculation lacks density. Supply sourced density or use a supported mass-based input. |
@@ -431,8 +431,8 @@ hashes and result identity are distinct identifiers.
   fertilizer and reagent inventories and count reagent nutrients exactly once.
 - Explicit joint fitting requires declared solvent fractions, mass caps and controls.
   Legacy sequential fitting and bounded zero-reagent recovery remain separate modes.
-- EC can be estimated, partial or unsupported. A known-species subtotal is neither a
-  total estimate nor a bound/midpoint. Unquantified uncertainty remains unknown.
+- EC is `estimated` (one value) or a `range` (low and high, no midpoint); it is refused
+  only when the mixture cannot be solved. Unquantified uncertainty remains unknown.
 - Phase and stock decisions require condition-qualified evidence. Do not restore
   retired phase exemptions or force two tanks by waiving separations.
 - Delivery remains a draft when stock-mixture or command evidence is missing.

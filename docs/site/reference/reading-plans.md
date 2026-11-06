@@ -24,13 +24,14 @@ after mixing. It is experimental, and its results use these statuses:
 
 | Status | What it means |
 |---|---|
-| `estimated` | FlahaX gives an EC estimate. |
-| `estimated`, with a range | Some charged dissolved species have no conductivity value. Their share cannot be negative, so the range starts at the part FlahaX can count and extends only upward. The true value tends to lie in the lower half. The middle of the range and its half-width describe only this missing share; they are not an accuracy statement. |
-| `partial` | You supplied the pH and the analysis is missing some counterions. Only the part from known species is reported, with no total. |
-| `not_supported` | The mixture is outside the conditions the method covers, or FlahaX calculated the pH and the analysis does not balance closely enough. The result says why, and no EC is given. A blend with undisclosed ingredients also gives this status. |
+| `estimated` | Every charged species has a conductivity value: FlahaX gives one EC estimate. |
+| `range` | Some charged species have no conductivity value, phosphate is beyond its fitted range, or you supplied a pH that leaves charge unbalanced. The low end counts what FlahaX can; the high end adds an upper limit for the rest. It is reported as low to high, with no midpoint and no accuracy claim. |
+| `not_supported` | FlahaX could not solve the mixture (it is outside the conditions the method covers). The result says why, and no EC is given. A blend with undisclosed ingredients also gives this status. |
 
-Every result carries the sentence "Accuracy on this fertilizer mixture has
-not yet been established." No measured accuracy is claimed. When you compare a
+Every result carries the sentence "Model: McCleskey et al. (2012); its reported accuracy (-0.7 ± 5 %) is for natural waters, not fertilizer solutions. Measure EC after mixing."
+No measured accuracy is claimed. A requested EC (`--ec`) is only compared with the range:
+"compatible with the estimated range; target attainment unverified", or "requested X mS/cm
+is Y mS/cm from the estimated range". When you compare a
 prediction with your meter, FlahaX reports the difference without a pass or
 fail verdict. Always check EC with a suitable meter after the solution is
 prepared.

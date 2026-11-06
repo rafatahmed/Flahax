@@ -38,6 +38,7 @@ that matches exactly one formula name and lists the matches otherwise. Use
 | `--acid` | `FORMULA:MASS_FRACTION:DENSITY[:NAME]` from your certificate, for example `HNO3:0.60:1.37`; repeat for more | none: acids are never assumed |
 | `--limit` | a maximum in the final solution, `SYMBOL=MG_PER_L`, for example `Cl=106.35`; repeat for more | none: limits are never assumed, and undeclared ones are not checked |
 | `--max-reagent-litres` | largest pH reagent volume per batch | volume / 200 |
+| `--ec` | requested EC25 in mS/cm, compared with the estimated range and never enforced | none |
 | `--products` | JSON array of your own product records | the packaged catalogue |
 | `--rules` | JSON array of extra `compatibilityRule` records | none |
 | `--output` | a new directory; existing paths are never overwritten | required |
@@ -171,6 +172,10 @@ blocks still apply.
 If a legacy manually constructed pH plan has no retained state for the weighed
 recipe, chemistry is unavailable and EC is `not_supported` with reason
 `weighed_recipe_state_unavailable`; a rejected state is never substituted.
+
+The EC is a range, never a refusal: `status` is `estimated` (one value) or `range`
+(`ec25_range_ms_cm` is low and high, `ec25_ms_cm` is `None`, and there is no midpoint). Pass
+`--ec` with a requested EC25 in mS/cm to see where it sits against the range.
 
 The unchanged field-session regression previously combined weighed pH 5.32 with
 rejected-candidate mixed pH 5.20. It now consistently presents 5.32 for the weighed

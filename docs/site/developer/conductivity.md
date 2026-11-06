@@ -154,55 +154,55 @@ applied.
 
 | Status | Meaning |
 |---|---|
-| `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient, or a supplementary 25 C coefficient (H2PO4-, HPO4-2). `ec25_ms_cm` is the estimate. |
-| `partial` | Missing material species have no coefficient, or with a `supplied` pH there are unrecorded counterions (`unrecorded_counterions`, rule O5) reported in eq/kgw. Only a known-species subtotal is reported, with no total. |
-| `not_supported` | Outside the envelope (temperature, ionic strength, non-closed carbon) or the assay charge residual is too large. `reason` says which; no EC is reported. |
+| `estimated` | Every charged species above 1e-12 mol/kgw has a McCleskey coefficient, or a supplementary 25 C coefficient (H2PO4-, HPO4-2). `ec25_ms_cm` is the estimate and `ec25_range_ms_cm` is `(low, low)`. |
+| `range` | Some charged species have no coefficient, material H2PO4- or HPO4-2 is beyond its fit ionic strength, or with a `supplied` pH the recorded ions leave charge unbalanced. `ec25_ms_cm` is `None`; `ec25_range_ms_cm` is `(low, high)`. |
+| `not_supported` | The state cannot be solved: outside the envelope (temperature, ionic strength, non-closed carbon). `reason` says which; no EC is reported. |
 
-Assay charge residual (rule O5): a residual up to 0.1 % of the absolute
-equivalents is reported and does not block. For catalogue and plan inputs
-the percent is over the declared-form absolute equivalents (each product's
-declared ion forms, independent of pH); for raw totals without declared forms
-it is over the speciated absolute equivalents. Above it, a `supplied` pH gives
-`partial` (`unrecorded_counterions`) and a `calculated` pH gives
-`not_supported` (`assay_charge_residual_too_large`).
+**The range.** `low` is the sum over the species with a coefficient. `high`
+is `low` plus `|z| x 80 x m` for each species without one (`LAMBDA_MAX_PER_CHARGE = 80.0`, the
+bound on molar conductivity per charge), for each H2PO4- or HPO4-2 beyond the fit
+ionic strength, and for the charge a supplied pH leaves unbalanced
+(`unrecorded_counterions_eq_per_kgw`). `ec25_ms_cm` is `low` only when `low == high`;
+otherwise it is `None`. There is no midpoint in any output. `known_species_subtotal_ms_cm` is
+`low`, `bounded` is true and `uncovered_bound_ms_cm` is `high - low`; the audit carries
+`lambda_max_per_charge` and `uncovered_bound_ms_cm`.
 
-**Incomplete species coverage.** Missing conductivity coefficients cannot be
-replaced by a universal per-charge bound. Such a result is `partial` with reason
-`missing_species_contributions`: it retains the known-species subtotal and the
-missing species list, but no total EC, interval, midpoint or transport numbers.
-The subtotal is not a rigorous lower confidence bound on measured EC because
-model and input errors remain unquantified. Legacy `bounded` is false;
-`ec25_range_ms_cm`, `uncertainty_ms_cm`, `uncovered_bound_ms_cm` and
-`audit["lambda_max_per_charge"]` are None. The old constant remains solely for
-reproducing historical phosphate-fit diagnostics, never for a public bound.
+Assay charge residual: it is reported in `assay_charge_residual` (the percent over the
+declared-form absolute equivalents for catalogue and plan inputs, over the speciated absolute
+equivalents for raw totals) and never changes the status. A calculated pH carries the water's
+residual charge into the solve, so there is no unrecorded counterion to bound in that mode.
 
 `uncertainty_components` separates numerical, input and model uncertainty.
-A None bound means unknown, not zero. Speciation residuals are retained in the
-audit but are not an EC error certificate. Fully covered estimates still lack
-validated fertilizer-mixture accuracy. Manufacturer screening marks its model as
-unvalidated additivity. Measured-profile predictions identify any declared
-maximum error as belonging to that profile; it does not include unpropagated
-assay/input uncertainty or certify a different recipe.
+A None bound means unknown, not zero. Speciation residuals are retained in the audit but are
+not an EC error certificate. Estimates still lack validated fertilizer-mixture accuracy.
+Manufacturer screening marks its model as unvalidated additivity. Measured-profile
+predictions identify any declared maximum error as belonging to that profile; it does not
+include unpropagated assay/input uncertainty or certify a different recipe.
 
-`partial` also arises from unrecorded counterions; temperature, carbon,
-ionic-strength domain and undisclosed blends give `not_supported`. The historical 26-formula audit found all recipes at its calculated doses exceeded
-the stored phosphate fit ceiling and returned `not_supported`. Five presets
-were subsequently retired (#202); this historical count is not the current catalogue. Earlier estimates and their
-reported interval widths relied on extrapolation and do not establish applicability.
+Temperature, carbon, ionic-strength domain and undisclosed blends give `not_supported`. The
+historical 26-formula audit found all recipes at its calculated doses exceeded the stored
+phosphate fit ceiling and returned `not_supported`; they now report a range. Five presets were
+subsequently retired (#202); this historical count is not the current catalogue. Earlier
+estimates and their reported interval widths relied on extrapolation and do not establish
+applicability.
+
+**Requested EC.** `flahax batch --ec 2.0` (or `summarize_batch(requested_ec_ms_cm=2.0)`)
+compares a requested EC25 with the range and never enforces it: "compatible with the
+estimated range; target attainment unverified", or "requested 2.00 mS/cm is 0.35 mS/cm from
+the estimated range". Every result also carries the model note (the `qualifier`).
 
 **Phosphate (M2b).** H2PO4- and HPO4-2 are covered at 25 C by coefficients
 fitted to the measured KH2PO4 and K2HPO4 conductivities of Pethybridge,
 Talbot and House (2006), Table III, through FlahaX speciation (lambda0 and A
 fitted, B = 1.5; RMS 0.13 % over 22 points). The data reach I = 0.014 mol/kgw;
 the exact stored maximum is enforced. Above it, material H2PO4- or HPO4-2
-(molality greater than the existing 1e-12 reporting cutoff) returns
-`not_supported` / `ionic_strength_outside_phosphate_fit`, with no EC point,
-interval or contributions. The audit retains
+(molality greater than the existing 1e-12 reporting cutoff) is bounded like any uncovered
+species, so the result is a `range`; the other species still contribute. The audit retains
 `phosphate_fit_max_ionic_strength` and `supplementaryCoefficients`. PO4-3 and
-minor phosphate pairs such as KHPO4- remain uncovered. These cause a partial
-subtotal even within the fit domain. The historical fitted coefficients are
+minor phosphate pairs such as KHPO4- remain uncovered. They widen the range even within the
+fit domain. The historical fitted coefficients are
 unchanged; reproducing their fit does not validate complete-mixture conductance.
-`compare_measured_ec` refuses partial or unsupported predictions. A comparison
+`compare_measured_ec` refuses range or unsupported predictions. A comparison
 of a fully covered estimate reports a difference, never target attainment or an
 accuracy verdict.
 
@@ -215,15 +215,16 @@ m = 1 / 136.09
 result = calculate_ec_from_totals(
     {"K+": m, "PO4-3": m}, solution_id="kh2po4-1g",
     ph_mode="calculated", phase_policy="dissolved")
+low, high = result.ec25_range_ms_cm
 print(result.status, result.reason)
-print(round(result.known_species_subtotal_ms_cm, 3))
-print(result.ec25_ms_cm, result.ec25_range_ms_cm)
+print(round(low, 4), round(high, 4))
+print(result.ec25_ms_cm)
 ```
 
 ```text
-partial missing_species_contributions
-0.738
-None None
+range None
+0.7383 0.7384
+None
 ```
 
 ```python
@@ -237,7 +238,7 @@ print(result.qualifier)
 ```
 
 The 1.4235 mS/cm includes water's own H+ and OH-. Every result carries the
-qualifier "Accuracy on this fertilizer mixture has not yet been established."
+qualifier "Model: McCleskey et al. (2012); its reported accuracy (-0.7 ± 5 %) is for natural waters, not fertilizer solutions. Measure EC after mixing."
 No measured accuracy is claimed. `compare_measured_ec` reports the difference
 between a prediction and a measured EC25 without a pass/fail verdict.
 
