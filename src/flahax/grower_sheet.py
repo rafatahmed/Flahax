@@ -20,6 +20,7 @@ from .grower_report import (
     _limit_rows,
     _page,
     _reagent_line,
+    ec_text,
     grams,  # noqa: F401
     litres,
     millilitres,
@@ -176,11 +177,7 @@ def _reagent_card(summary, volumes):
 
 def _check_card(summary):
     ec = summary['ec']
-    expected = (
-        f'about {number(ec["ec25_ms_cm"], 2)} mS/cm'
-        if ec and ec.get('status') == 'estimated' and ec.get('ec25_ms_cm') is not None
-        else 'measure'
-    )
+    expected = f'{ec_text(ec, about=True)} mS/cm' if ec_text(ec) else 'measure'
     return (
         '<div class="card"><h2>Check after mixing</h2><table><tbody>'
         f'<tr><td>pH</td><td>expect {number(summary["target_ph"], 2)}</td><td><span '

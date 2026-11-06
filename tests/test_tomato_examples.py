@@ -46,9 +46,10 @@ class SimpleTomatoTests(unittest.TestCase):
 
     def test_balance_and_ec_are_reported(self):
         self.assertLess(abs(self.r['ion_balance']['imbalancePercent']), 1.0)
-        self.assertEqual(self.r['ec']['status'], 'not_supported')
+        self.assertEqual(self.r['ec']['status'], 'range')
         self.assertIsNone(self.r['ec']['ec25_ms_cm'])
-        self.assertIsNone(self.r['ec']['range_ms_cm'])
+        low, high = self.r['ec']['range_ms_cm']
+        self.assertLess(low, high)
 
 
 class AdvancedTomatoTests(unittest.TestCase):

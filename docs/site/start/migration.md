@@ -30,7 +30,7 @@ remain separate; field evidence is not invented to complete software work.
 | Composition | Keep ID-bearing doses and counterions; review assay-only qualifications. | [Inventory](../models/material-inventory.md); tests.test_material_inventory |
 | Units | Distinguish final litres, solvent kg, analytical totals and species; reconcile measured water explicitly. | [Basis](../models/concentration-basis.md); tests.test_unit_basis |
 | Recipe/reagent | Choose joint mode with its controls or documented legacy mode. Count reagent nutrients once; search exhaustion is unresolved. | [Joint fitting](../developer/joint-problem.md); tests.test_joint_workflow |
-| EC | Preserve estimated/partial/unsupported status. A subtotal is not a total, bound or midpoint. | [Conductivity](../developer/conductivity.md); tests.test_irrigation_ec |
+| EC | `partial` and the assay and phosphate-fit refusals are gone: read `status` (`estimated` or `range`) and `ec25_range_ms_cm`; there is no midpoint. | [Conductivity](../developer/conductivity.md); tests.test_irrigation_ec |
 | Phases | Phase evidence inputs and `blocks` are gone: read `risk` and `information`; saturation is not kinetics. | [Phase decisions](../developer/water-to-delivery.md#saturation-indices-and-acceptance); tests.test_chemistry_acceptance |
 | Stocks | Respect separation and solubility applicability; equipment needs can exceed two tanks. | [Assignments](../agronomist/stock-assignments.md); tests.test_stock_planning |
 | Delivery/remedies | Structural layouts, missing commands and unevaluated alternatives remain pending. Re-evaluate chosen remedies. | [Delivery](../developer/water-to-delivery.md); tests.test_delivery_plan |

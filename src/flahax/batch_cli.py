@@ -423,6 +423,7 @@ class BatchOptions:
     acid: list = field(default_factory=list)
     limit: list = field(default_factory=list)
     max_reagent_litres: float | None = None
+    ec: float | None = None
     products: str | None = None
     rules: str | None = None
     tank_litres: dict | None = None
@@ -488,6 +489,7 @@ def run_batch(options):
         injection_ratio=options.ratio,
         rules=rules,
         temperature_c=options.temperature_c,
+        requested_ec_ms_cm=options.ec,
     )
     if chemistry is not None:
         for note in chemistry.get('water_input_notes', []):
@@ -555,6 +557,7 @@ def build(args):
             acid=args.acid,
             limit=args.limit,
             max_reagent_litres=args.max_reagent_litres,
+            ec=args.ec,
             products=args.products,
             rules=args.rules,
         )
@@ -601,6 +604,11 @@ def main(argv=None):
         type=number_in('--ratio', 0),
         default=100,
         help='final litres per litre of concentrate (default 100)',
+    )
+    parser.add_argument(
+        '--ec',
+        type=number_in('--ec', 0),
+        help='requested EC25 in mS/cm, compared with the estimated range (never enforced)',
     )
     parser.add_argument(
         '--acid',
