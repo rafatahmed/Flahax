@@ -3,9 +3,11 @@
 ## Prepare an equipment-constrained plan
 
 `group_tanks(salts, products, rules=(), max_tanks=None)` searches for a minimum
-separation layout. It includes the magnesium/phosphate prohibition and applies
-sulfate/phosphate screens to micronutrients without a small-dose waiver. Element
-classes are conservative: an absence of a graph conflict is not solubility evidence.
+separation layout in the A/B form: the calcium products and every micronutrient
+product go in tank A; magnesium sulfate, the phosphates and the other macro sulfates go
+in tank B. Calcium is kept apart from phosphate and from sulfate among macro products,
+and micronutrients from phosphate, with no small-dose waiver. Magnesium is not kept apart
+from phosphate. An absence of a graph conflict is not solubility evidence.
 Versioned caller rules add hard separations. Their bans are conservatively retained
 outside temperature bounds rather than inverted into permission.
 
@@ -17,10 +19,8 @@ visible. `available_tanks` changes this report equipment count, not chemistry.
 For actual capacities and arbitrary tank IDs, use `plan_stocks` with `StockTank`
 objects, injection ratio, final recipe volume, source limits and rules.
 
-The frozen calcium / magnesium-sulfate / phosphate example previously put the
-last two products together to fit two tanks. Its graph is a triangle: all three
-pairs conflict, so its minimum is three tanks. The independent graph oracle proves
-this count without changing the original input or any solubility number.
+A batch that needs more tanks than are available is blocked and says why, naming the
+pair and the rule: "needs a third tank: P cannot share with Q (reason)".
 
 ## Separate a layout from mixture qualification
 
