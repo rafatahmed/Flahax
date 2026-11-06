@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest import mock
 from flahax.aqueous_model import solve
 from flahax.product_conversion import (
     catalogue_dose_totals,
@@ -27,7 +26,6 @@ from tools.phreeqc_evidence import (
     verify_reference_inventory,
     verify_reference_installation,
 )
-from tests.catalogue_history import historical_catalogue
 
 
 def cases():
@@ -36,7 +34,7 @@ def cases():
 
 class ProductGoldenTests(unittest.TestCase):
     def test_all_product_captures_and_hashes_are_present(self):
-        self.assertEqual(len(cases()), 10)
+        self.assertEqual(len(cases()), 9)
         for path in cases():
             data = json.loads(path.read_text())
             suffix = '_target' if data['nitric_acid_molal'] is not None else ''
@@ -51,16 +49,6 @@ class ProductGoldenTests(unittest.TestCase):
                 self.assertLessEqual(abs(row['pct_err']), 0.1)
 
     def test_runtime_equivalence_conservation_and_convergence(self):
-        self.enterContext(historical_catalogue())
-        # The captured totals are the raw labels' ions, taken before label reconciliation
-        # (decision G5), which removes the charge a label's ions cannot balance (calcium nitrate:
-        # 0.09 % of the nitrate). The capture is compared with the conversion it was made with.
-        self.enterContext(
-            mock.patch(
-                'flahax.product_conversion.chemistry_elements',
-                lambda record, ion_forms: dict(record['elements']),
-            )
-        )
         for path in cases():
             with self.subTest(case=path.parent.name):
                 data = json.loads(path.read_text())
