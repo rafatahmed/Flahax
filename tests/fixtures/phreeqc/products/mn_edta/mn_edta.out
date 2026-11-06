@@ -1,6 +1,6 @@
    Input file: mn_edta.pqi
   Output file: mn_edta.out
-Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-lcdbibbb\minteq-flahax.dat
 
 ------------------
 Reading data base.
@@ -30,9 +30,9 @@ Reading input data for simulation 1.
 	 pH 6
 	 units mol/kgw
 	 water 1
-	 Mn(2) 2.366301938234277e-05
-	 Edta 2.366301938234277e-05
-	 Na 0.002 charge
+	 Mn(2) 2.3663019382342777e-05
+	 Na 0.0020473260387646854 charge
+	 Edta 2.3663019382342777e-05
 	 Cl 0.002
 	SELECTED_OUTPUT
 	 file mn_edta.sel
@@ -43,7 +43,7 @@ Reading input data for simulation 1.
 	 charge_balance true
 	 percent_error true
 	 water true
-	 totals Mn(2) Edta Na Cl
+	 totals Mn(2) Na Edta Cl
 	 molalities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
 	 activities Cl- H+ Na+ Edta-4 OH- MnOH+ Mn(OH)3- Mn(OH)4-2 MnCl+ MnCl2 MnCl3- H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Mn(Edta)-2 MnH(Edta)- Na(Edta)-3 Mn+2
 	 si Pyrochroite Halite
@@ -149,7 +149,7 @@ End of simulation.
 Reading input data for simulation 2.
 ------------------------------------
 
--------------------------------
-End of Run after 0.043 Seconds.
--------------------------------
+------------------------------
+End of Run after 0.04 Seconds.
+------------------------------
 

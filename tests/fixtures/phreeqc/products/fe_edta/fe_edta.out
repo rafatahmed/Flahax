@@ -1,6 +1,6 @@
    Input file: fe_edta.pqi
   Output file: fe_edta.out
-Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-lcdbibbb\minteq-flahax.dat
 
 ------------------
 Reading data base.
@@ -30,9 +30,9 @@ Reading input data for simulation 1.
 	 pH 6
 	 units mol/kgw
 	 water 1
-	 Fe(3) 2.3278717879846002e-05
-	 Edta 2.3278717879846002e-05
-	 Na 0.002 charge
+	 Fe(3) 2.3278717879846005e-05
+	 Na 0.0020232787178798462 charge
+	 Edta 2.3278717879846005e-05
 	 Cl 0.002
 	SELECTED_OUTPUT
 	 file fe_edta.sel
@@ -43,7 +43,7 @@ Reading input data for simulation 1.
 	 charge_balance true
 	 percent_error true
 	 water true
-	 totals Fe(3) Edta Na Cl
+	 totals Fe(3) Na Edta Cl
 	 molalities Cl- Fe+3 H+ Na+ Edta-4 OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Na(Edta)-3
 	 activities Cl- Fe+3 H+ Na+ Edta-4 OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 H(Edta)-3 H2(Edta)-2 H3(Edta)- H4(Edta) H5(Edta)+ Fe(Edta)- FeH(Edta) FeOH(Edta)-2 Fe(OH)2(Edta)-3 Na(Edta)-3
 	 si Ferrihydrite Goethite Halite
@@ -158,6 +158,6 @@ Reading input data for simulation 2.
 ------------------------------------
 
 -------------------------------
-End of Run after 0.037 Seconds.
+End of Run after 0.036 Seconds.
 -------------------------------
 

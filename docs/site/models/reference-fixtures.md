@@ -8,7 +8,7 @@ The current mixed-model comparisons use installed **PHREEQC 3.8.6-17100**, unmod
 
 | Directory below `tests/fixtures/phreeqc/` | Cases |
 |---|---|
-| `products/` | fe_edta, mn_edta, zn_edta, cu_edta, fe_dtpa, fe_eddha, ch_micro, citrate, mixed_products, mixed_target_ph_nitric |
+| `products/` | fe_edta, mn_edta, zn_edta, cu_edta, fe_dtpa, fe_eddha, micro_combi_mix_2, mixed_products, mixed_target_ph_nitric |
 | `phases/` | calcite, calcium_phosphate, gypsum, trace_hydroxides, trace_phosphates, trace_carbonates, magnesium_salts, zero_stock, struvite, ferrous_phases, mixed_product_phases |
 | `acid_selection/` | HNO3, H3PO4, H2SO4, C6H8O7 |
 | `failures/` | Full target-pH reduction ladder, failed initial-charge phase input, and zero-inventory-phase warning input |

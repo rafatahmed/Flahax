@@ -1,6 +1,6 @@
    Input file: fe_dtpa.pqi
   Output file: fe_dtpa.out
-Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-idid_5rs\minteq-flahax.dat
+Database file: C:\Users\rafat\AppData\Local\Temp\flahax-evidence-lcdbibbb\minteq-flahax.dat
 
 ------------------
 Reading data base.
@@ -31,8 +31,8 @@ Reading input data for simulation 1.
 	 units mol/kgw
 	 water 1
 	 Fe(3) 1.9697376667562004e-05
+	 Na 0.0020393947533351242 charge
 	 Dtp 1.9697376667562004e-05
-	 Na 0.002 charge
 	 Cl 0.002
 	SELECTED_OUTPUT
 	 file fe_dtpa.sel
@@ -43,7 +43,7 @@ Reading input data for simulation 1.
 	 charge_balance true
 	 percent_error true
 	 water true
-	 totals Fe(3) Dtp Na Cl
+	 totals Fe(3) Na Dtp Cl
 	 molalities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
 	 activities Cl- Fe+3 H+ Na+ OH- FeOH+2 Fe(OH)2+ Fe(OH)3 Fe(OH)4- Fe2(OH)2+4 Fe3(OH)4+5 FeCl+2 FeCl2+ FeCl3 Dtp-5 HDtp-4 H2Dtp-3 H3Dtp-2 H4Dtp- H5Dtp FeDtp-2
 	 si Ferrihydrite Goethite Halite
@@ -79,7 +79,7 @@ Initial solution 1.
                        Mass of water (kg)  =   1.000e+00
                  Total alkalinity (eq/kg)  =  -4.044e-05
                          Temperature (°C)  =  25.00
-                  Electrical balance (eq)  =   5.095e-19
+                  Electrical balance (eq)  =   9.432e-19
  Percent error, 100*(Cat-|An|)/(Cat+|An|)  =   0.00
                                Iterations  =   9
                                   Total H  = 1.110137e+02
@@ -149,7 +149,7 @@ End of simulation.
 Reading input data for simulation 2.
 ------------------------------------
 
--------------------------------
-End of Run after 0.035 Seconds.
--------------------------------
+------------------------------
+End of Run after 0.03 Seconds.
+------------------------------
 
