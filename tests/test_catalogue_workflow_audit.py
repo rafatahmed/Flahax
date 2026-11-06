@@ -154,5 +154,6 @@ class PhaseAuditTests(unittest.TestCase):
         self.assertEqual(result['chemistry']['precipitated'], {})
         self.assertEqual(result['ec']['status'], 'range')
         self.assertIsNone(result['ec']['ec25_ms_cm'])
-        missing = {r['product'] for r in result['stock_solubility'] if r['limit_g_per_l'] is None}
-        self.assertTrue({'Iron EDTA', 'Mn EDTA', 'Copper EDTA', 'Zn EDTA'} <= missing)
+        limits = {r['product']: r['limit_g_per_l'] for r in result['stock_solubility']}
+        for name in ('Iron EDTA', 'Mn EDTA', 'Copper EDTA', 'Zn EDTA'):
+            self.assertIsNotNone(limits[name], name)  # the catalogue's own solubility value

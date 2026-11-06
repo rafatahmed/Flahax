@@ -2,16 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Source-qualified single-product screening, never mixed-stock dissolution approval.
+"""Single-product stock solubility from measured data; never a mixed-stock approval.
 
-Historical density-one values are conditional screening floors, not measured
-limits. Exceeding a floor is inconclusive. No source value is silently converted,
-interpolated or applied to a different grade.
+A product's own catalogue ``physicalProperties.waterSolubility`` is the first source, the
+historical table the second; a product with neither is ``not_checked``. Each source value is
+used as measured: its basis and both temperatures are reported and nothing is interpolated or
+converted. A value in a unit the check does not know is ``not_checked``.
 """
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -19,16 +19,16 @@ from pathlib import Path
 from .delivery_contracts import DeliveryError
 
 TABLE_PATH = Path(__file__).with_name('data') / 'solubility.json'
-_HISTORICAL_SHA256 = '857c6f7b4aa7c73209b25b8848b5da4f66436c8b22814d650fd64a52cb0bf001'
-SINGLE_SALT = (
-    'single-product screening only; mixture solubility, common-ion effects, '
-    'grade equivalence and preparation conditions require separate evidence'
+SINGLE_SALT = 'single-product check; the mixed tank is not assessed'
+SOLUTION_BASIS = (
+    'g product/L solution (historical table value, converted at density 1 by its source)'
 )
+NO_DATA = 'no solubility data'
 
 
 @dataclass(frozen=True)
 class SolubilityRow:
-    """Reference comparison with explicit qualification; no mixture approval."""
+    """One product against its source value: basis and both temperatures stated."""
 
     tank: str
     product: str
@@ -36,8 +36,10 @@ class SolubilityRow:
     limit_g_per_l: float | None
     status: str
     source: str | None
-    screening_g_per_l: float | None = None
     reason: str | None = None
+    basis: str | None = None
+    source_temperature_c: float | None = None
+    tank_temperature_c: float | None = None
     qualification: dict = field(default_factory=dict)
     mixture_approved: bool = False
 
@@ -97,30 +99,11 @@ def source_concentration_g_per_l(
 
 
 def load_solubility_table(path=TABLE_PATH):
-    """Load records; annotate only the byte-pinned historical table as assumed floors.
-
-    Historical numeric values stay unchanged. The CALCINIT source supplies 20 C
-    only; the earlier 20-to-40 C extension does not establish applicability.
-    """
+    """The historical records, unchanged: product, temperature points and source."""
     path = Path(path)
     if not path.is_file():
         return []
-    raw = path.read_bytes()
-    records = json.loads(raw.decode('utf-8'))
-    if hashlib.sha256(raw).hexdigest() == _HISTORICAL_SHA256:
-        for record in records:
-            record['qualification'] = {
-                'kind': 'assumed_density_floor',
-                'basis': 'g_product_per_l_solution',
-                'interpolation': 'none',
-                'reviewed': False,
-                'reason': (
-                    'historical_density_one_assumption; ' 'grade/density applicability unverified'
-                ),
-            }
-            if record['product'] == 'Calcium Nitrate (ag grade)':
-                record['qualification']['source_temperatures_c'] = [20.0]
-    return records
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 def _points(points):
@@ -142,7 +125,7 @@ def _points(points):
 
 
 def limit_at(points, temperature_c):
-    """Algebraic linear interpolation only; physical applicability must be checked separately."""
+    """Algebraic linear interpolation of a point list; the stock check does not use it."""
     temperature_c = _number(temperature_c, 'temperature')
     points = _points(points)
     for temperature, concentration in points:
@@ -155,57 +138,52 @@ def limit_at(points, temperature_c):
     return None
 
 
-def _reference(record, temperature, grade):
-    points = _points(record.get('points'))
-    q = record.get('qualification')
-    if not isinstance(q, Mapping) or q.get('basis') != 'g_product_per_l_solution':
-        return None, 'missing_or_unsupported_basis', {}
-    q = dict(q)
-    kind = q.get('kind')
-    if kind not in ('limit', 'lower_bound', 'assumed_density_floor'):
-        return None, 'unknown_qualification', q
-    if kind != 'assumed_density_floor':
-        if (
-            q.get('reviewed') is not True
-            or not isinstance(q.get('review_id'), str)
-            or not q['review_id'].strip()
-        ):
-            return None, 'unreviewed_source', q
-        if (
-            not isinstance(q.get('grade_id'), str)
-            or not q['grade_id'].strip()
-            or grade != q['grade_id']
-        ):
-            return None, 'grade_not_matched', q
-    allowed = q.get('source_temperatures_c')
-    if allowed is not None:
-        if not isinstance(allowed, (list, tuple)):
-            raise DeliveryError(
-                'invalid_solubility_table', 'source temperatures must be a sequence'
-            )
-        allowed = [_number(t, 'source temperature') for t in allowed]
-        if temperature not in allowed:
-            return None, 'temperature_not_qualified', q
-    exact = next((g for t, g in points if t == temperature), None)
-    if exact is not None:
-        return exact, None, q
-    if (
-        q.get('interpolation') != 'linear'
-        or not isinstance(q.get('interpolation_review_id'), str)
-        or not q['interpolation_review_id'].strip()
-    ):
-        return None, 'interpolation_not_qualified', q
-    value = limit_at(points, temperature)
-    return value, None if value is not None else 'temperature_outside_source', q
+def _catalogue_source(record):
+    """(g/L, basis, source temperature, reason) from ``physicalProperties.waterSolubility``.
+
+    ``None`` when the record holds no such value; a ``None`` g/L with a reason when it is unusable.
+    """
+    data = (record.get('physicalProperties') or {}).get('waterSolubility')
+    if not isinstance(data, Mapping):
+        return None
+    value, unit, temperature = data.get('value'), data.get('unit'), data.get('temperatureC')
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not value >= 0:
+        return None, None, None, 'unusable solubility value'
+    basis = str(data.get('basis') or '')
+    if unit == 'g/L':
+        if 'water' not in basis:
+            basis = 'g/L (volume basis unspecified by source)'
+        return float(value), basis, temperature, None
+    return None, None, None, 'unsupported solubility unit'
 
 
-def check_stock_solubility(tanks, ratio, temperature_c, *, table=None, product_grades=None):
-    """Compare each product with a qualified limit or a conditional screening value.
+def _table_source(record, temperature_c):
+    """The historical point nearest the tank temperature (the lower one on a tie); no blending."""
+    t, g = min(_points(record.get('points')), key=lambda p: (abs(p[0] - temperature_c), p[0]))
+    return g, SOLUTION_BASIS, t, None
 
-    Caller-reviewed limit/lower-bound records require matching product_grades.
-    Source and grade review metadata are supplied by the caller, not authenticated
-    here. Interpolation requires an explicit review ID; extrapolation is refused.
-    Assumed floors never produce ok/exceeds. No row approves a mixed stock.
+
+def _catalogue_records(products):
+    if products is None:
+        return {}
+    items = products.values() if isinstance(products, Mapping) else products
+    return {str(p['name']): p for p in items if isinstance(p, Mapping) and 'name' in p}
+
+
+def _source_label(record):
+    source = (record.get('physicalProperties') or {}).get('source') or {}
+    return f'{source.get("organization", "catalogue")}, {source.get("title", "catalogue data")}'
+
+
+def check_stock_solubility(
+    tanks, ratio, temperature_c, *, table=None, product_grades=None, products=None
+):
+    """Compare each product's stock with its own solubility value, in the value's own basis.
+
+    ``products`` are catalogue records; their ``physicalProperties.waterSolubility`` is the
+    first source, ``table`` (default: the historical table) the second. Status is ``ok``,
+    ``exceeds`` (it blocks) or ``not_checked`` ("no solubility data"). ``product_grades`` is
+    accepted for callers and does not select a value. No row approves a mixed stock.
     """
     ratio = _number(ratio, 'injection ratio', positive=True)
     temperature = _number(temperature_c, 'temperature')
@@ -228,8 +206,10 @@ def check_stock_solubility(tanks, ratio, temperature_c, *, table=None, product_g
             raise DeliveryError(
                 'invalid_solubility_table', 'records need unique product names and sources'
             )
-        _points(record.get('points'))
+        if not _points(record.get('points')):
+            raise DeliveryError('invalid_solubility_table', 'a record needs at least one point')
         records[record['product']] = record
+    catalogue = _catalogue_records(products)
     found = []
     for tank in tanks:
         for product in tank.products:
@@ -237,30 +217,23 @@ def check_stock_solubility(tanks, ratio, temperature_c, *, table=None, product_g
             if dose < 0:
                 raise DeliveryError('invalid_solubility_input', 'product dose must be nonnegative')
             stock = _number(dose * ratio, 'stock concentration')
-            record = records.get(product.name)
-            value, reason, q = (
-                (None, 'missing_source', {})
-                if record is None
-                else _reference(record, temperature, grades.get(product.name))
-            )
-            limit = screening = None
-            if value is None:
-                status = 'not_checked'
-            elif q['kind'] == 'limit':
-                limit = value
-                status = 'exceeds' if stock > value else 'ok'
+            value = basis = source = source_t = None
+            reason = NO_DATA
+            own = catalogue.get(product.name)
+            from_catalogue = _catalogue_source(own) if own else None
+            if from_catalogue is not None:
+                value, basis, source_t, why = from_catalogue
+                source, reason = _source_label(own), f'{NO_DATA}: {why}' if why else reason
+            if value is None and product.name in records:
+                value, basis, source_t, why = _table_source(records[product.name], temperature)
+                source, reason = records[product.name]['source'], why
+            limit, status = None, 'not_checked'
+            if value is not None:
+                limit, status = value, 'exceeds' if stock > value else 'ok'
                 reason = (
                     'above_single_product_limit'
-                    if stock > value
+                    if status == 'exceeds'
                     else 'within_single_product_limit'
-                )
-            else:
-                screening = value
-                status = 'inconclusive' if stock > value else 'screening_only'
-                reason = (
-                    'above_floor_not_proven_failure'
-                    if stock > value
-                    else 'within_floor_not_mixture_approval'
                 )
             found.append(
                 SolubilityRow(
@@ -269,24 +242,30 @@ def check_stock_solubility(tanks, ratio, temperature_c, *, table=None, product_g
                     stock,
                     limit,
                     status,
-                    record['source'] if record else None,
-                    screening,
+                    source,
                     reason,
-                    q,
+                    basis,
+                    source_t,
+                    temperature,
                 )
             )
     return found
 
 
 def exceeds_message(row, temperature_c):
-    """Describe only a qualified limit exceedance, without claiming mixture dissolution failure."""
+    """Describe a single-product exceedance, without claiming mixture dissolution failure."""
     if row.status != 'exceeds' or row.limit_g_per_l is None:
         raise DeliveryError(
-            'unqualified_solubility_limit', 'only qualified limit exceedances have this message'
+            'unqualified_solubility_limit', 'only single-product exceedances have this message'
         )
+    source_t = (
+        'source temperature not stated'
+        if row.source_temperature_c is None
+        else f'{row.source_temperature_c:g} °C source'
+    )
     return (
         f'{row.product} exceeds the recorded single-product limit in tank {row.tank}: '
         f'{row.stock_g_per_l:.4g} g/L needed, '
-        f'{row.limit_g_per_l:.4g} g/L at {temperature_c:g} °C; '
+        f'{row.limit_g_per_l:.4g} g/L ({row.basis}; {source_t}, tank at {temperature_c:g} °C); '
         'mixture solubility is not established'
     )

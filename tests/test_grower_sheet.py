@@ -30,6 +30,7 @@ def tomato_ro():
             acid=NITRIC,
             tank_litres=TANKS,
             limit=[('N_NH4', 14)],
+            ratio=500,  # potassium sulfate above its solubility value blocks the batch
         )
     )
 

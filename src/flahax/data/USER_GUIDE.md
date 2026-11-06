@@ -395,7 +395,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_mixture_result`, `unqualified_stock_mixture` | The stock-mixture assessment is invalid or lacks applicable qualification. The proposed stock cannot be approved on that evidence. |
 | `stock_search_limit` | Stock assignment search exhausted its budget. This is not proof that no arrangement exists. Review constraints and search diagnostics. |
 | `invalid_solubility_input`, `invalid_solubility_basis`, `invalid_solubility_table` | Solubility data has invalid values, units/basis or table structure. Correct the sourced record before screening. |
-| `unqualified_solubility_limit` | The solubility limit lacks applicable conditions or evidence. A screening floor is not a qualified maximum. |
+| `unqualified_solubility_limit` | A solubility message was requested for a row that is not an exceedance of a single-product value. |
 
 ## 9. Verification and reproducibility
 

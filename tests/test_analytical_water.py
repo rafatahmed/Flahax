@@ -417,7 +417,7 @@ class BatchCommandTests(unittest.TestCase):
                 )
                 runs[share] = code, json.loads((out / 'summary.json').read_text(encoding='utf-8'))
             code, eight = runs['8']
-            self.assertEqual((code, eight['status']), (3, 'blocked'))
+            self.assertEqual((code, eight['status']), (0, 'requires_review'))
             self.assertEqual(eight['stages']['ph_adjustment']['status'], 'calculated')
             self.assertAlmostEqual(
                 eight['water']['analysis_mg_per_litre']['Cl'], 1280.4 * 0.08, places=9

@@ -143,7 +143,7 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         self.assertEqual(summary['ec']['ec25_range_ms_cm'], captured[0].ec25_range_ms_cm)
         self.assertEqual(tuple(summary['ec']['warnings']), captured[0].warnings)
 
-    def test_f10_two_tank_preference_cannot_waive_a_separation(self):
+    def test_f10_two_tank_preference_cannot_waive_a_calcium_separation(self):
         names = [
             'Calcium Nitrate (ag grade)',
             'Magnesium Sulfate (Heptahydrate)',
@@ -160,7 +160,10 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             )
             return
         self.assertFalse(grouping.waived, 'equipment preference is not compatibility evidence')
-        self.assertNotEqual(grouping.tank_of(names[1]), grouping.tank_of(names[2]))
+        self.assertNotEqual(grouping.tank_of(names[0]), grouping.tank_of(names[1]))
+        self.assertNotEqual(grouping.tank_of(names[0]), grouping.tank_of(names[2]))
+        # Magnesium sulfate goes with the phosphates in tank B.
+        self.assertEqual(grouping.tank_of(names[1]), grouping.tank_of(names[2]))
 
     def test_f11_unverified_source_chain_is_not_reported_as_proven_absence(self):
         state = SimpleNamespace(saturation_indices={'MnHPO4': 1.0}, precipitated={}, totals={})

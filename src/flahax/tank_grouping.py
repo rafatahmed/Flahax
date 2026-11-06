@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Conservative automatic separation assignments, never mixture-solubility approval.
+"""Automatic separation into the A/B tank layout, never mixture-solubility approval.
 
-Sourced pair prohibitions remain hard constraints. Equipment cannot waive them.
-Element classes are conservative screens, not evidence that a mixture dissolves.
-Caller rules add separations; reagent products retain their own channel.
+Tank A holds the calcium products and every micronutrient product; the phosphates, magnesium
+sulfate and the other macro sulfates go in tank B. The kept rules separate calcium from
+phosphate and calcium from sulfate among macro products, and micronutrients from phosphate.
+Equipment cannot waive them. Caller rules add separations; reagent products retain their own
+channel.
 """
 
 from dataclasses import dataclass
@@ -24,27 +26,18 @@ MICRONUTRIENTS = frozenset({'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'})
 _MICRO_COMPANIONS = frozenset({'S', 'Na', 'Cl'})
 STRONG_ACIDS = frozenset({'HNO3', 'H3PO4', 'H2SO4'})
 
-# (class, class, reason): the page 63/65 rules.
+# (class, class, reason): the page 63/65 rules, for macro products only. A micronutrient product
+# goes to tank A and is screened against phosphate alone (MICRO_PHOSPHATE).
 CLASS_RULES = (
     (
         'calcium',
         'phosphate',
         'calcium and phosphate precipitate as calcium phosphate in a concentrate',
     ),
-    ('calcium', 'sulfate', 'calcium and sulfate precipitate as gypsum in a concentrate'),
-)
-
-# Retained historical text of the retired waiver, not an active policy.
-RETIRED_TWO_TANKS = 'Retired two-tank waiver; equipment cannot establish compatibility'
-CLASS_RULES += (
-    (
-        'magnesium',
-        'phosphate',
-        'magnesium and phosphate require separation without mixture evidence',
-    ),
+    ('calcium', 'sulfate', 'calcium and sulfate precipitate in a concentrate'),
 )
 WAIVED_RULES = ()
-MAX_TANKS = 2  # Legacy equipment default for callers that explicitly request it.
+MAX_TANKS = 2  # The A/B layout: the tanks `mix` and `batch` offer by default.
 
 # Page 65 products, for labelling only: catalogue name -> Yara name. Grouping uses the class rules.
 ANALOGUE = {
@@ -144,12 +137,17 @@ def product_classes(record):
 
 
 def _class_conflict(a, b, rules=CLASS_RULES):
-    if 'micronutrient' in a | b and 'phosphate' in a | b:
-        return MICRO_PHOSPHATE
+    if 'micronutrient' in a | b:
+        return MICRO_PHOSPHATE if 'phosphate' in a | b else None
     for x, y, reason, *_ in rules:
         if (x in a and y in b) or (y in a and x in b):
             return reason
     return None
+
+
+def _magnesium_sulfate(classes):
+    """A macro magnesium sulfate product: it joins the phosphates in tank B."""
+    return {'magnesium', 'sulfate'} <= classes and 'micronutrient' not in classes
 
 
 def default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z'):
@@ -224,6 +222,7 @@ def group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=1
         key=lambda r: (
             'calcium' not in r[2],
             'micronutrient' not in r[2],
+            _magnesium_sulfate(r[2]),  # after the phosphates, so it can join their tank
             -r[0]['gramsPerLitre'],
             r[0]['id'],
         )
@@ -251,7 +250,13 @@ def group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=1
             raise DeliveryError('stock_search_limit', 'assignment search budget exhausted')
         if index == len(rows):
             return [g[:] for g in groups]
-        for group in groups:
+        # Magnesium sulfate goes with the phosphates (tank B) when no rule says otherwise.
+        order = (
+            sorted(groups, key=lambda g: not any('phosphate' in rows[j][2] for j in g))
+            if _magnesium_sulfate(rows[index][2])
+            else groups
+        )
+        for group in order:
             if all(not conflicts[(j, index)] for j in group):
                 group.append(index)
                 found = assign(index + 1, groups, count)
