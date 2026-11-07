@@ -19,6 +19,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Evaluate confirmed catalogue alternatives separately and report the direction, search result,
+  charge check and nutrient misses for a grower batch (#231). Show solid pH reagent doses in
+  grams in batch and mix (#229).
+
 - Add native console/PTY and controlled terminal lifecycle checks, including
   canonical-result and stale-session rejection in the full-screen workflow (#182).
 

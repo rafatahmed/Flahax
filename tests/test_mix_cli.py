@@ -236,8 +236,8 @@ class MixTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertTrue(any('do not mix' in line for line in lines))
         reason = next(line for line in lines if line.startswith('  ! pH adjustment:'))
-        self.assertIn('no offered candidate has passed joint workflow acceptance', reason)
-        self.assertIn('a volume cap requires reagent density', reason)
+        self.assertIn('needs an acid', reason)
+        self.assertIn('none was offered', reason)
         well = water('salty', {'Ca': '40', 'Na': '200', 'Cl': '308', 'Alk': '61'}, limits='Na=69')
         code, lines, _ = self.run_mix(
             SPEC + well + TOMATO + CATALOGUE + NITRIC + END,

@@ -146,8 +146,10 @@ def result_statuses(summary):
     stages = summary['stages']
     chemistry = summary.get('chemistry')
     stocks = summary['tanks']
+    selected = (summary.get('ph') or {}).get('selected') or {}
+    joint = selected.get('joint') or {}
     return dict(
-        numerical='not_reported',
+        numerical=joint.get('status', 'not_reported'),
         formulation='feasible' if summary['formulation']['feasible'] else 'infeasible',
         chemistry=stages.get('chemistry', {}).get('status', 'needs_input'),
         phase='requires_review'

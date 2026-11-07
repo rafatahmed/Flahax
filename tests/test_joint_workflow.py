@@ -129,6 +129,13 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertEqual(stage.status, 'blocked')
                 self.assertIsNone(stage.value.selected)
 
+    def test_exhausted_candidate_retains_the_actual_work_counts(self):
+        stage = self.positive_case(controls_change={'max_iterations': 1})
+        joint = stage.value.candidates[0].joint_result
+        self.assertEqual(joint['status'], 'search_incomplete')
+        self.assertEqual(joint['iterations'], 1)
+        self.assertGreater(joint['evaluations'], 0)
+
     def test_proportional_volume_and_solvent_scale_actual_reagent_mass(self):
         full = self.positive_case().value.selected
         half = self.positive_case(scale=0.5).value.selected
@@ -159,6 +166,21 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertIsNone(stage.value.selected)
                 self.assertEqual(stage.status, 'blocked')
                 self.assertFalse(stage.value.candidates[0].joint_result['accepted'])
+
+    def test_malformed_joint_extension_inputs_are_reported_as_input_errors(self):
+        for changed in (
+            {'additional_product_steps': 'bad'},
+            {'solid_reagent_ids': 'not-a-list'},
+            {'sequential_fallbacks': []},
+        ):
+            with self.subTest(config=changed):
+                stage = self.positive_case(changed)
+                self.assertEqual(stage.status, 'blocked')
+                if stage.value is None:
+                    self.assertEqual(stage.error_code, 'invalid_type')
+                else:
+                    self.assertIsNone(stage.value.selected)
+                    self.assertEqual(stage.value.candidates[0].error_code, 'invalid_type')
 
     def test_per_reagent_controls_and_preferred_selection(self):
         pool = [next(p for p in load_library()['salts'] if p['formula'] == 'KNO3')]

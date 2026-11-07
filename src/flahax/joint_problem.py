@@ -188,7 +188,7 @@ class JointProblem:
             for k, cap in self.maximum_concentrations.items()
             if concentrations.get(k, 0) > cap
         ]
-        violations += [
+        requirement_conflicts = [
             dict(kind='contradictory_target', symbol=k)
             for k, t in self.targets.items()
             if k in self.maximum_concentrations and t > self.maximum_concentrations[k]
@@ -225,6 +225,7 @@ class JointProblem:
             loss=loss,
             rows=rows,
             violations=violations,
+            requirementConflicts=requirement_conflicts,
             componentsMolPerKg=None if missing else components,
             nutrientComponentDifference=None
             if missing

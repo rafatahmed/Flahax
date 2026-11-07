@@ -13,12 +13,14 @@ not dosing instructions: measure EC and pH after mixing.
 
 from .canonical_result import result_statuses, seal_summary, verify_summary
 from dataclasses import asdict
+from decimal import Decimal
 from html import escape
 import math
 
 from . import __version__
 from .delivery_contracts import DeliveryError
-from .fertilizer_workflow import PH_NOT_PLANNED, unreviewed_reason
+from .fertilizer_workflow import PH_NOT_PLANNED, missed_message, unreviewed_reason
+from .requirement_fit import met
 from .irrigation_ec import QUALIFIER, calculate_ec_from_totals
 from .saturation_policy import assess_saturation, risk_warnings
 from .stock_solubility import (
@@ -260,6 +262,28 @@ def _extra_tank_note(grouping, available):
     )
 
 
+def _joint_record(result):
+    """The joint fit of one reagent, without its dose maps: status, caveats and charge residual."""
+    if result is None:
+        return None
+    return {
+        key: result[key]
+        for key in (
+            'status',
+            'accepted',
+            'globalOptimalityProven',
+            'reason',
+            'chargeResidual',
+            'chargeTolerance',
+            'finalPh',
+            'stationarityResidual',
+            'iterations',
+            'evaluations',
+        )
+        if key in result
+    }
+
+
 def summarize_batch(
     workflow,
     products,
@@ -313,14 +337,12 @@ def summarize_batch(
         recipe = plan.unadjusted_recommendation
     else:
         recipe = workflow.recommendation
-    # The incidental-nutrient review is judged on the recipe that is weighed, not the first fit. A
-    # block or any
-    # other reason is left alone: review never downgrades a block (#84).
-    form, reason = stages['formulation'], unreviewed_reason(recipe)
-    if form['status'] == 'calculated' or (
-        form['status'] == 'requires_review'
-        and form['message'] == unreviewed_reason(workflow.recommendation)
-    ):
+    # Report target misses and incidental contributions from the weighed recipe. Preserve blocks.
+    form = stages['formulation']
+    if form['status'] in ('calculated', 'requires_review'):
+        reason = (
+            '; '.join(filter(None, (missed_message(recipe), unreviewed_reason(recipe)))) or None
+        )
         form['status'], form['message'] = (
             ('requires_review', reason) if reason else ('calculated', None)
         )
@@ -338,10 +360,12 @@ def summarize_batch(
                 status=c.status,
                 volume_ml_per_batch=None
                 if c.reagent_volume_litres is None
+                or (c.product_record or {}).get('physicalForm') == 'solid'
                 else 1000 * c.reagent_volume_litres,
                 mass_g_per_batch=c.reagent_mass_g,
                 nutrient_contribution=c.nutrient_contribution,
                 message=c.message,
+                joint=_joint_record(c.joint_result),
             )
 
         # mixed_ph: the weighed recipe without its reagent (the refit when a reagent is chosen,
@@ -353,12 +377,14 @@ def summarize_batch(
         )
         ph = dict(
             status=ph_stage.status,
+            message=ph_stage.message,
             direction=plan.direction,
             unadjusted_ph=plan.unadjusted_ph,
             mixed_ph=weighed,
             target_ph=plan.target_ph,
             selected=candidate(chosen) if chosen is not None else None,
             candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'],
+            skipped=[candidate(c) for c in plan.candidates if c.status == 'not_applicable'],
         )
     elif ph_stage is not None and ph_stage.error_code in PH_NOT_PLANNED:
         # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet
@@ -555,9 +581,12 @@ def summarize_batch(
             f'use.'
         )
     elif ph_stage is not None:
-        # The pH plan carries its own refitted recipe: its stage decides.
-        status = {'calculated': 'ready', 'requires_review': 'requires_review'}.get(
-            ph_stage.status, 'blocked'
+        # These batches have a structural tank assignment only. A usable pH plan
+        # therefore starts under review; actual hard-limit failures below can still block it.
+        status = (
+            'requires_review'
+            if ph_stage.status in ('calculated', 'requires_review')
+            else 'blocked'
         )
     elif any(
         workflow.stages[n].status == 'blocked'
@@ -569,19 +598,12 @@ def summarize_batch(
         status = 'requires_review'  # pH not planned
         warnings.append('pH was not planned: measure it after mixing and adjust before use.')
 
-    if form['status'] == 'requires_review' and status == 'ready':
-        status = 'requires_review'
     water, limits = _water_and_limits(workflow, recipe)
     # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always
     # blocks, and a decision the charge balancing alone would change asks for review; review never
     # downgrades a block.
     if any(row['decision'] == 'exceeds_limit' for row in limits):
         status = 'blocked'
-    elif status == 'ready' and (
-        any(row['balancingChangesDecision'] for row in limits)
-        or (chem is not None and chem.status == 'requires_review')
-    ):
-        status = 'requires_review'
     for row in limits:
         if row['decision'] == 'exceeds_limit':
             warnings.append(
@@ -595,16 +617,12 @@ def summarize_batch(
     if len(grouping.tanks) > available_tanks:
         status = 'blocked'
         warnings.append(_extra_tank_note(grouping, available_tanks))
-    elif status == 'ready':
-        status = 'requires_review'
     warnings.append('Tank separation is a structural assignment, not qualified mixture approval.')
     for row in solubility:
         if row.status == 'exceeds':
             status = 'blocked'
             warnings.append(exceeds_message(row, temperature_c))
         elif row.status != 'ok':
-            if status != 'blocked':
-                status = 'requires_review'
             warnings.append(f'{row.product}: solubility not checked ({row.reason}).')
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
@@ -619,6 +637,9 @@ def summarize_batch(
         limits=limits,
         formulation=dict(
             feasible=recipe['feasible'],
+            targets_met=all(
+                met(r['target'], r['final']) for r in recipe['rows'] if r['target'] is not None
+            ),
             salts=[
                 dict(
                     id=s['id'],
@@ -637,9 +658,14 @@ def summarize_batch(
                     **({} if r['target'] else {'source': sources.get(r['symbol'], [])}),
                 )
                 for r in recipe['rows']
-                if r['target'] or r['final'] > 1e-6
+                if r['target'] is not None or r['final'] > 1e-6
             ],
             unmet=recipe['unmetTargets'],
+            incidental_review=[
+                r['symbol']
+                for r in recipe['incidentalContributions']
+                if r['assessment'] == 'requires_review'
+            ],
             ion_balance=recipe['targetIonBalance'],
             # The ammonium allowance (G23), shown with its basis, and total N as the
             # reported sum of the three forms (D1).
@@ -764,6 +790,98 @@ def remedy_section(summary):
     )
 
 
+_NUTRIENT_NAMES = {
+    'N_NO3': 'nitrate nitrogen',
+    'N_NH4': 'ammonium nitrogen',
+    'N_UREA': 'urea nitrogen',
+    'P': 'phosphorus',
+    'K': 'potassium',
+    'Ca': 'calcium',
+    'Mg': 'magnesium',
+    'S': 'sulfur',
+    'Fe': 'iron',
+    'Zn': 'zinc',
+    'Mn': 'manganese',
+    'B': 'boron',
+    'Cu': 'copper',
+    'Mo': 'molybdenum',
+    'Si': 'silicon',
+    'Na': 'sodium',
+    'Cl': 'chloride',
+}
+
+
+def _magnitude(value):
+    """Four significant digits, in decimal notation even for a small nonzero miss."""
+    return format(Decimal(format(abs(value), '.4g')), 'f')
+
+
+def _miss_difference(target, final):
+    delta = final - target
+    sign = '+' if delta > 0 else '-'
+    absolute = f'{sign}{_magnitude(delta)} mg/L'
+    if target == 0:
+        return absolute + '; relative difference undefined (zero target)'
+    return f'{absolute} ({sign}{_magnitude(100 * delta / target)}%)'
+
+
+def _missed_rows(summary):
+    return [
+        r
+        for r in summary['formulation']['rows']
+        if r['target'] is not None and not met(r['target'], r['final'])
+    ]
+
+
+def _review_reason(summary):
+    formulation = summary['formulation']
+    misses = _missed_rows(summary)
+    if misses:
+        row = max(misses, key=lambda r: abs(r['final'] - r['target']))
+        delta = row['final'] - row['target']
+        name = _NUTRIENT_NAMES.get(row['symbol'], row['symbol'])
+        reasons = [
+            f'{name[:1].upper() + name[1:]} is {_magnitude(delta)} mg/L '
+            f'{"above" if delta > 0 else "below"} target.'
+        ]
+        if len(misses) > 1:
+            reasons.append(f'{len(misses)} nutrient targets missed in total.')
+    else:
+        reasons = ['All nutrient targets met.']
+    incidental = formulation.get('incidental_review')
+    if incidental is None:  # Previously saved reports lack the itemized assessment.
+        limited = {r['symbol'] for r in summary['limits']}
+        if formulation.get('ammonium_allowance'):
+            limited.add('N_NH4')
+        incidental = [
+            r['symbol']
+            for r in formulation['rows']
+            if r['target'] is None and r['final'] > 0 and r['symbol'] not in limited
+        ]
+    for symbol in incidental:
+        name = _NUTRIENT_NAMES.get(symbol, symbol)
+        reasons.append(f'{name[:1].upper() + name[1:]} has no declared maximum.')
+    ph = summary.get('ph') or {}
+    if ph.get('unadjusted_ph') is None:
+        reasons.append('pH adjustment could not be verified.')
+    chemistry = summary['stages'].get('chemistry', {})
+    if chemistry.get('status') == 'requires_review' and chemistry.get('message'):
+        reasons.append(chemistry['message'])
+    for limit in summary['limits']:
+        if limit['balancingChangesDecision']:
+            reasons.append(limit['note'])
+    unchecked = [
+        r.get('product') or 'an unidentified product'
+        for r in summary['solubility']
+        if r['status'] == 'not_checked'
+    ]
+    if unchecked:
+        reasons.append('Stock solubility was not checked for ' + ', '.join(unchecked) + '.')
+    if summary['tanks'].get('mixture_approved') is False:
+        reasons.append('Mixed-stock solubility is unverified.')
+    return ' '.join(reasons)
+
+
 def percentage(value, digits=2, suffix="%"):
     """Format a relative difference without inventing a percentage for zero targets."""
     return 'undefined (zero target)' if value is None else f'{value:+.{digits}f}{suffix}'
@@ -874,13 +992,38 @@ def _card(label, value, note):
     )
 
 
-def _reagent_amount(candidate):
+def reagent_amount(candidate):
     """Display a supported liquid volume, otherwise retain the reagent mass."""
     if candidate['volume_ml_per_batch'] is None:
         if candidate['mass_g_per_batch'] is None:
             return 'Not available'
         return grams(candidate['mass_g_per_batch'])
     return f"{millilitres(candidate['volume_ml_per_batch'])} mL"
+
+
+def _joint_verdict(summary):
+    ph = summary.get('ph') or {}
+    joint = (ph.get('selected') or {}).get('joint') or {}
+    if not ph.get('selected') and ph.get('unadjusted_ph') is not None:
+        return ph.get('message') or ''
+    if joint.get('status') == 'sequential':
+        return joint['reason']
+    if 'chargeTolerance' not in joint:
+        return ''
+    counts = (
+        f' ({joint["iterations"]} iterations, {joint["evaluations"]} evaluations)'
+        if 'iterations' in joint and 'evaluations' in joint
+        else ''
+    )
+    return (
+        f'Before adjustment: pH {number(ph["unadjusted_ph"], 2)}, '
+        f'target {number(ph["target_ph"], 2)}. '
+        f'Search result: {joint["reason"].replace("_", " ")}{counts}. '
+        f'Final pH check passed at {number(joint["finalPh"], 5)}. '
+        f'Charge check passed: residual {joint["chargeResidual"]:.3g}, '
+        f'limit {joint["chargeTolerance"]:.3g}. '
+        f'Nutrient targets met: {"yes" if summary["formulation"]["targets_met"] else "no"}.'
+    )
 
 
 def _reagent_line(summary):
@@ -893,6 +1036,11 @@ def _reagent_line(summary):
     if ph is None:
         return 'pH was not planned: supply complete water chemistry and pH reagents to plan it.'
     chosen = ph['selected']
+    if ph.get('direction') == 'none':
+        return (
+            f'The feed mixes at pH {number(ph["unadjusted_ph"], 2)}, within tolerance of '
+            f'{number(ph["target_ph"], 2)}. No pH reagent is needed.'
+        )
     if chosen is None and ph['unadjusted_ph'] is None:
         return (
             f'No pH reagent was planned. {ph["message"]}. Measure the pH after mixing and '
@@ -907,7 +1055,7 @@ def _reagent_line(summary):
             'See the candidates and their reasons.'
         )
     return (
-        f'Add {_reagent_amount(chosen)} of {chosen["product"]} '
+        f'Add {reagent_amount(chosen)} of {chosen["product"]} '
         f'({chosen["formula"]}) per '
         f'{number(summary["batch_litres"], 0)} L to go from pH {number(ph["mixed_ph"], 2)} to '
         f'{number(ph["target_ph"], 2)}. Add it in steps and measure.'
@@ -919,6 +1067,9 @@ def render_report(summary):
     verify_summary(summary)
     s, f = summary, summary['formulation']
     css, line = STATUS_TEXT[s['status']]
+    plan_note = (
+        _review_reason(s) if s['status'] == 'requires_review' else STATUS_WORDS[s['status']]
+    )
     ph, chem, ec, tanks = s['ph'], s['chemistry'], s['ec'], s['tanks']
     targets = [r for r in f['rows'] if r['target'] is not None]
     body = (
@@ -929,8 +1080,12 @@ def render_report(summary):
         f'{number(s["batch_litres"], 0)} L, '
         f'target pH {number(s["target_ph"], 2)}.</p>'
         '<div class="cards">'
-        + _card('Plan', s['status'].replace('_', ' '), STATUS_WORDS[s['status']])
-        + _card('Targets met', 'Yes' if f['feasible'] else 'No', f'{len(f["unmet"])} missed')
+        + _card('Plan', s['status'].replace('_', ' '), plan_note)
+        + _card(
+            'Targets met',
+            'Yes' if f.get('targets_met', f['feasible']) else 'No',
+            f'{len(f["unmet"])} missed',
+        )
         + _card(
             'Feed pH',
             number(chem['final_ph'], 2) if chem else 'not planned',
@@ -942,12 +1097,15 @@ def render_report(summary):
             'experimental',
         )
         + '</div></header>'
-        f'<section><h2>Status</h2><p class="{css}">{text(line)}</p><p>{text(_reagent_line(s))}</p>'
+        '<section><h2>Status</h2>'
+        + (f'<p class="{css}">{text(line)}</p>' if s['status'] != 'requires_review' else '')
+        + f'<p>{text(_reagent_line(s))}</p>'
         + (
             ('<ul>' + ''.join(f'<li>{text(w)}</li>' for w in s['warnings']) + '</ul>')
             if s['warnings']
             else ''
         )
+        + (f'<p>{text(_joint_verdict(s))}</p>' if _joint_verdict(s) else '')
         + '</section>'
         '<section><h2>Recipe</h2>'
         + table(
@@ -981,7 +1139,11 @@ def render_report(summary):
                     r['symbol'],
                     number(r['target'], 3) if r['target'] is not None else 'not a target',
                     number(r['final'], 3),
-                    percentage(r['deltaPct']) if r['target'] is not None else 'incidental',
+                    _miss_difference(r['target'], r['final'])
+                    if r['target'] is not None and not met(r['target'], r['final'])
+                    else percentage(r['deltaPct'])
+                    if r['target'] is not None
+                    else 'incidental',
                 )
                 for r in f['rows']
             ],
@@ -992,8 +1154,8 @@ def render_report(summary):
             (
                 '<p>Missed targets:</p><ul>'
                 + ''.join(
-                    f'<li><b>{text(u["symbol"])}</b> {percentage(u["deltaPct"])} - '
-                    f'{text(u["reason"])}</li>'
+                    f'<li><b>{text(u["symbol"])}</b> '
+                    f'{_miss_difference(u["target"], u["final"])} - {text(u["reason"])}</li>'
                     for u in f['unmet']
                 )
                 + '</ul>'
@@ -1004,13 +1166,11 @@ def render_report(summary):
         + '</section>'
     )
     if ph is not None and ph['unadjusted_ph'] is not None:
+        needed = {'acid': 'an acid', 'base': 'a base', 'none': 'no reagent'}[ph['direction']]
         body += (
             '<section><h2>pH adjustment</h2>'
             f'<p>The first recipe mixes at pH {number(ph["unadjusted_ph"], 2)}; it needs '
-            f'{"an acid" if ph["direction"] == "acid" else "a base"} to reach '
-            f'{number(ph["target_ph"], 2)}. Each '
-            'candidate is dosed to the target and the recipe is refitted with its nutrients '
-            'counted'
+            f'{needed} to reach {number(ph["target_ph"], 2)}'
             + (
                 f'; the weighed recipe mixes at pH {number(ph["mixed_ph"], 2)} before the reagent'
                 if ph['selected'] and ph['mixed_ph'] is not None
@@ -1018,18 +1178,19 @@ def render_report(summary):
             )
             + '.</p>'
             + table(
-                ['Reagent', 'Formula', 'Quantity per batch', 'Status', 'Reason'],
+                ['Reagent', 'Formula', 'Quantity per batch', 'Status', 'Reason', 'Search outcome'],
                 [
                     (
                         c['product'],
                         c['formula'],
-                        _reagent_amount(c),
+                        reagent_amount(c),
                         c['status'],
                         c['message'] or '',
+                        (c.get('joint') or {}).get('reason', ''),
                     )
-                    for c in ph['candidates']
+                    for c in [*ph['candidates'], *ph.get('skipped', [])]
                 ],
-                'Reagents evaluated',
+                'Reagents evaluated or skipped',
             )
             + '</section>'
         )
@@ -1310,6 +1471,8 @@ def render_batch_sheet(summary):
     s, tanks = summary, summary['tanks']
     blocked = s['status'] == 'blocked'
     css, line = STATUS_TEXT[s['status']]
+    if s['status'] == 'requires_review':
+        line = _review_reason(s)
     litres, ratio = s['batch_litres'], tanks['injection_ratio']
     rows = ''.join(
         f'<tr><td>{text(t["name"])}</td><td>{text(p["name"])}</td><td '
@@ -1335,6 +1498,7 @@ def render_batch_sheet(summary):
         f'<li>Tank {text(t["name"])}: {text(n)}</li>' for t in tanks['tanks'] for n in t['notes']
     )
     warnings = ''.join(f'<li>{text(w)}</li>' for w in s['warnings'])
+    misses = _missed_rows(s)
     body = (
         f'<h1>{text(s["title"])}</h1><div class="meta">Batch sheet &middot; FlahaX '
         f'{text(s["flahax_version"])} '
@@ -1370,6 +1534,17 @@ def render_batch_sheet(summary):
         + (f'<p class="small">{text(_unchecked_line(s))}</p>' if _unchecked_line(s) else '')
         + f'<p class="small">Basis: {text(SINGLE_SALT)}.</p>'
         + f'<h2>pH</h2><div class="box warn">{text(_reagent_line(s))}</div>'
+        + (f'<p>{text(_joint_verdict(s))}</p>' if _joint_verdict(s) else '')
+        + (
+            '<h2>Missed nutrient targets</h2>'
+            + table(
+                ['Nutrient', 'Difference from target'],
+                [(row['symbol'], _miss_difference(row['target'], row['final'])) for row in misses],
+                'Final recipe deviations',
+            )
+            if misses
+            else ''
+        )
         + '<h2>Limits</h2><p class="small">'
         + text(_limits_text(s))
         + '</p>'
