@@ -60,7 +60,7 @@ $env:FLAHAX_REQUIRE_PHREEQC = '1'
 py -3.13 -m unittest discover -s tests -t .
 py -3.13 -m compileall -q src tools examples
 git diff --check
-.venv-verification/Scripts/python.exe tools/verify_distribution.py --python C:/Users/rafat/AppData/Local/Programs/Python/Python313/python.exe --report build/documentation-0.3.1-distribution.json
+.venv-verification/Scripts/python.exe tools/verify_distribution.py --python python --report build/documentation-0.3.1-distribution.json
 ```
 
 The last command shows this repository's local verification environment;

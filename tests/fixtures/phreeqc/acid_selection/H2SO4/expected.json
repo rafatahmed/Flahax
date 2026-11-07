@@ -41,9 +41,9 @@
   "regeneration": "python tools/acid_selection_evidence.py",
   "notes": "Synthetic NaCl background; no agronomic acceptance implied. H3Citrate preserves the organic citrate component, not inorganic carbon.",
   "hashes": {
-    "reference.out": "5b28473c574c11e58db0e2efa505ae30bdfb93c996067d6f6f662a79a1b3c96c",
+    "reference.out": "f1e1122afe867dbe4edcdb9d42fda2279ae99fcf2072935f1ea925427c64ac7f",
     "reference.pqi": "9e03aaa4bcb1eb5437e2f7001f99fd96f5ed61c7649dcdaccc96d64a3a7de89c",
-    "reference.screen": "ea87828edab4772f73578ebb7d959fc4073cbe42fb873e104251d2d173ba5c76",
+    "reference.screen": "f82dd13cd65c6406a8a0e14b13b506935ea5b8299fcde02e3af3eab4bd9bbd53",
     "reference.sel": "b52630cf21f3b7f597f53dbb81044a57412e4267d81b0fbd6919504b74e7d7dc"
   }
 }

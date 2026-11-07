@@ -386,9 +386,9 @@
     "acid_absolute": 2e-06
   },
   "hashes": {
-    "mixed_products.out": "8178694ab24f34294a2dae5ed81a047aa31bf8a4b978eb103f2399e364d33ffd",
+    "mixed_products.out": "1c62136df93c763d539ee47d9b28a07f6d2af79c6a786781383d81dc1da4881c",
     "mixed_products.pqi": "1cbea6a3a0f61fe343a71304c85196b7675997d27f7383e634721015cd0e57f9",
-    "mixed_products.screen": "12f16f39b14a00016a5dcff29fa6967c4d2d7e3e1f35b0e7fd625cc8105e636d",
+    "mixed_products.screen": "f54faa857b3a2aefdf6d3169edbd523e12874bbd8c55e5609c066226c70182af",
     "mixed_products.sel": "723e5d18667d3e1e21d4ade3ab6ddcdce33caceea76e19b6cbaad99ab0a9331c"
   }
 }
