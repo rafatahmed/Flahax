@@ -62,3 +62,20 @@ equivalence is not verified.
 A custom record has `product`, `source` and `points` (temperature °C, g product per L of
 solution). Pass it as `table=`, and catalogue records as `products=`. A supplied
 `product_grades={name: grade}` is accepted and never selects a value.
+
+
+## Evidence limit
+
+An `ok` result means only that the implemented comparison passes. It does not
+establish the density assumption, grade equivalence, temperature transfer or
+mixture behavior. Those source and physical qualifications remain unresolved
+where no supporting record is supplied. A nearest-temperature lookup is not
+validation at the tank temperature. Historical converted values remain identifiable
+as assumptions rather than new measurements.
+
+The screening comparison uses the reported numerical limit and retains its basis
+label. A per-litre-water label does not convert that value to per-litre-final-
+solution; the screen does not perform that density/volume conversion. Limits
+with different denominators therefore cannot establish a physically normalized
+solubility pass. Use the explicit conversion API with supported density and
+composition inputs when a common concentration basis is required.

@@ -1094,7 +1094,8 @@ DeliveryError. The assay residual is reported in ``assay_charge_residual`` (the
 declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
 residual over the speciated absolute equivalents) and never changes the status. The audit
 retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
-fertilizer mixtures has not been established.
+fertilizer mixtures has not been established. The factor 80 is an assumed allowance;
+the range is not a confidence interval or a guaranteed physical bound.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_ec_from_totals`.
 

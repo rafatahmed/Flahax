@@ -118,7 +118,7 @@ QUALIFIER = (
 MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2b-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
-# The physical bound (decision G7) on the molar conductivity per unit charge, mS kg cm-1 mol-1.
+# Assumed molar conductivity per unit charge, mS kg cm-1 mol-1; not a proven physical bound.
 # It sets the high end of the range for species without a coefficient, phosphate beyond its fit
 # domain and charge the recorded ions do not carry.
 LAMBDA_MAX_PER_CHARGE = 80.0
@@ -484,7 +484,8 @@ def calculate_ec_from_totals(
     declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
     residual over the speciated absolute equivalents) and never changes the status. The audit
     retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
-    fertilizer mixtures has not been established.
+    fertilizer mixtures has not been established. The factor 80 is an assumed allowance;
+    the range is not a confidence interval or a guaranteed physical bound.
     """
     _require_id(solution_id, 'solution_id')
     phases, reason = _validate_request(
