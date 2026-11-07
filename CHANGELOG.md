@@ -82,6 +82,9 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Preserve accented Windows input such as à without consuming the next character in
+  `flahax mix`; retain arrow navigation, editing keys and held-key repeats (#127).
+
 - Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

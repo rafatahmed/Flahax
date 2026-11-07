@@ -4,12 +4,14 @@
 # its results are calculations, not dosing instructions.
 """The console for the ``flahax mix`` full-screen wizard, from the standard library only.
 
-Windows uses ``msvcrt`` for keys and ``ctypes`` to switch on ANSI output; Linux and macOS use
+Windows uses Win32 key events and ``ctypes`` to switch on ANSI output; Linux and macOS use
 ``termios``, ``tty`` and ``select``. Keys come back as names: printable characters as
 themselves, and UP, DOWN, LEFT, RIGHT, HOME, END, ENTER, ESC, TAB, SHIFT_TAB, BACKSPACE and
 CTRL_U. Ctrl+C raises KeyboardInterrupt. The console is always restored on exit.
 """
 
+import ctypes
+from ctypes import wintypes
 import os
 import shutil
 import sys
@@ -56,6 +58,14 @@ WINDOWS_PREFIXED = {
     'O': 'END',
     '\x0f': 'SHIFT_TAB',
 }
+WINDOWS_NAVIGATION = {
+    0x26: 'UP',
+    0x28: 'DOWN',
+    0x25: 'LEFT',
+    0x27: 'RIGHT',
+    0x24: 'HOME',
+    0x23: 'END',
+}
 CONTROL = {
     '\r': 'ENTER',
     '\n': 'ENTER',
@@ -82,6 +92,25 @@ POSIX_SEQUENCES = {
 }
 
 
+class _KeyEvent(ctypes.Structure):
+    _fields_ = [
+        ('down', wintypes.BOOL),
+        ('repeat', wintypes.WORD),
+        ('virtual', wintypes.WORD),
+        ('scan', wintypes.WORD),
+        ('char', wintypes.WCHAR),
+        ('state', wintypes.DWORD),
+    ]
+
+
+class _InputEvent(ctypes.Union):
+    _fields_ = [('key', _KeyEvent), ('padding', ctypes.c_byte * 16)]
+
+
+class _InputRecord(ctypes.Structure):
+    _fields_ = [('kind', wintypes.WORD), ('event', _InputEvent)]
+
+
 class TerminalUnavailable(OSError):
     """The console cannot be put in the full-screen mode; use the line-by-line questions."""
 
@@ -100,8 +129,9 @@ def decode_windows(chars):
 
 
 def read_windows_key(getwch):
-    """One key from ``msvcrt.getwch``: after a prefix code the next code is always read.
+    """Decode a legacy ``msvcrt.getwch`` stream, which cannot distinguish a-grave.
 
+    ``Terminal`` reads Win32 events instead; this helper retains the old stream contract.
     Windows sends arrows and other special keys as two codes, the first being 0x00 or 0xE0.
     ``kbhit`` cannot tell whether the second code is coming (in Windows Terminal it reports
     False until it is read), so the letter a-grave, which is also 0xE0, cannot be told apart
@@ -163,6 +193,18 @@ def _kernel32():
     kernel.GetConsoleMode.restype = wintypes.BOOL
     kernel.SetConsoleMode.argtypes = [wintypes.HANDLE, wintypes.DWORD]
     kernel.SetConsoleMode.restype = wintypes.BOOL
+    kernel.GetNumberOfConsoleInputEvents.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    kernel.GetNumberOfConsoleInputEvents.restype = wintypes.BOOL
+    kernel.ReadConsoleInputW.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_InputRecord),
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    kernel.ReadConsoleInputW.restype = wintypes.BOOL
     return kernel
 
 
@@ -270,14 +312,7 @@ class Terminal:
         if self._pending:
             return self._pending.pop(0)
         if os.name == 'nt':
-            import msvcrt
-
-            deadline = time.monotonic() + timeout
-            while not msvcrt.kbhit():
-                if time.monotonic() >= deadline:
-                    return None
-                time.sleep(0.01)
-            return read_windows_key(msvcrt.getwch)
+            return self._read_windows_event(timeout)
         import select
 
         fd = sys.stdin.fileno()
@@ -293,6 +328,44 @@ class Terminal:
             data += chunk
         self._pending = decode_posix(data)
         return self._pending.pop(0) if self._pending else None
+
+    def _read_windows_event(self, timeout):
+        kernel = _kernel32()
+        handle = kernel.GetStdHandle(-10 & 0xFFFFFFFF)
+        deadline = time.monotonic() + timeout
+        count = wintypes.DWORD()
+        while True:
+            if not kernel.GetNumberOfConsoleInputEvents(handle, ctypes.byref(count)):
+                raise OSError('cannot read console input events')
+            if count.value:
+                event = _InputRecord()
+                if not kernel.ReadConsoleInputW(
+                    handle, ctypes.byref(event), 1, ctypes.byref(count)
+                ):
+                    raise OSError('cannot read console input event')
+                if not count.value:
+                    raise EOFError('terminal input closed')
+                if event.kind == 1:
+                    key = event.event.key
+                    # Alt+numpad emits the composed character on Alt release.
+                    if not key.down and not (key.virtual == 0x12 and key.char != '\0'):
+                        if time.monotonic() >= deadline:
+                            return None
+                        continue
+                    decoded = None
+                    if key.virtual == 0x09 and key.state & 0x10:
+                        decoded = 'SHIFT_TAB'
+                    elif key.char != '\0':
+                        decoded = _control(key.char)
+                    else:
+                        decoded = WINDOWS_NAVIGATION.get(key.virtual)
+                    if decoded is not None:
+                        self._pending.extend([decoded] * (max(1, key.repeat) - 1))
+                        return decoded
+            if time.monotonic() >= deadline:
+                return None
+            if not count.value:
+                time.sleep(0.01)
 
     def size(self):
         """(columns, rows) of the window."""
