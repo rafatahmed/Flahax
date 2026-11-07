@@ -149,12 +149,12 @@ class CoverageTests(unittest.TestCase):
         self.assertIsNone(result.uncertainty_components['numerical']['bound_ms_cm'])
 
     def test_missing_reagent_quantity_does_not_hide_ec_qualifications(self):
-        from flahax.grower_report import _reagent_amount
+        from flahax.grower_report import reagent_amount
 
         self.assertEqual(
-            _reagent_amount({'volume_ml_per_batch': None, 'mass_g_per_batch': None}),
+            reagent_amount({'volume_ml_per_batch': None, 'mass_g_per_batch': None}),
             'Not available',
         )
         self.assertEqual(
-            _reagent_amount({'volume_ml_per_batch': None, 'mass_g_per_batch': 5.0}), '5 g'
+            reagent_amount({'volume_ml_per_batch': None, 'mass_g_per_batch': 5.0}), '5 g'
         )

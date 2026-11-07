@@ -734,6 +734,7 @@ def plan_fertilizer_workflow(
                     maximum_reagent_volume_litres=ph_adjustment['maximum_reagent_volume_litres'],
                     preferred_product_id=ph_adjustment.get('preferred_product_id'),
                     joint=ph_adjustment.get('joint'),
+                    correct_mixed_ph=ph_adjustment.get('correct_mixed_ph', False),
                     water_components=water_totals,
                     residual_charge=stages['chemistry'].value['residual_charge_eq'],
                     phases=equilibrium['phases'],
