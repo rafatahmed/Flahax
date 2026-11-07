@@ -27,7 +27,7 @@ from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, rend
 from .composition import target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
-from .grower_report import _reagent_line, number, render_report
+from .grower_report import _reagent_line, _review_reason, number, render_report
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -535,7 +535,13 @@ def options_for(store, session):
         water_share=None if session['water_share'] >= 100 else session['water_share'],
         ph=session['ph'],
         ratio=spec['ratio'],
-        acid=[f'{a["formula"]}:{a["fraction"]}:{a["density"]}:{a["name"]}' for a in acids],
+        acid=[
+            f'{a["formula"]}:{a["fraction"]}:{a["density"]}:{a["name"]}'
+            + (f':{a["solvent_fraction"]}' if 'solvent_fraction' in a else '')
+            for a in acids
+        ],
+        confirmed_products=session.get('confirmed_products', []),
+        max_solid_reagent_grams=session.get('max_solid_reagent_grams'),
         limit=list(session['limits'].items()),
         products=None if session['store'] == 'catalogue' else path('stores', session['store']),
         tank_litres=spec['tank_litres'],
@@ -645,6 +651,12 @@ def check_session(data, path):
         bad("'depth' must be 1, 2 or 3")
     if not isinstance(data.get('formula_title', ''), str):
         bad("'formula_title' must be text")
+    confirmed = data.get('confirmed_products', [])
+    if not isinstance(confirmed, list) or not all(isinstance(i, str) and i for i in confirmed):
+        bad("'confirmed_products' must be a list of catalogue IDs")
+    cap = data.get('max_solid_reagent_grams')
+    if cap is not None and (not _is_number(cap) or cap < 0):
+        bad("'max_solid_reagent_grams' must be nonnegative")
     check_saved_state(data)
     return data
 
@@ -691,6 +703,8 @@ def summarize(summary, say):
     volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
+    if summary['status'] == 'requires_review' and 'formulation' in summary:
+        say(_review_reason(summary))
     for reason in map(readable, key_reasons(summary)):
         if len(reason) > 160:
             reason = reason[:150].rstrip() + ' ... (full text on the batch sheet)'
@@ -719,14 +733,20 @@ def summarize(summary, say):
                 f'{grams(product["gramsPerBatch"])}'
             )
     selected = summary['ph'] and summary['ph']['selected']
-    if selected and not blocked and selected['volume_ml_per_batch'] is None:
+    if (
+        selected
+        and not blocked
+        and (summary['ph'].get('direction') == 'none' or selected['volume_ml_per_batch'] is None)
+    ):
         say(_reagent_line(summary))
     elif selected and not blocked:
+        acid = selected.get('direction') == 'acid'
+        container = 'Acid container' if acid else 'pH-up container'
         say(
-            f'Acid container: {millilitres(selected["volume_ml_per_batch"])} mL '
+            f'{container}: {millilitres(selected["volume_ml_per_batch"])} mL '
             f'{selected["product"]}, added to water '
-            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L (acid to water, '
-            f'never water to acid)'
+            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L'
+            + (' (acid to water, never water to acid)' if acid else '')
         )
     elif not blocked:
         say(
