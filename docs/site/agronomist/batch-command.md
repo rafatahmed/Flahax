@@ -8,6 +8,18 @@ This page takes you from a water analysis and a crop to a printed batch sheet in
 `flahax batch`, then works through a tomato example on a real brackish well. FlahaX plans a batch;
 it does not run pumps or dose anything. Its evidence is computational: it has not been validated in
 the laboratory or in the field, so every sheet ends with measurements you take after mixing.
+For an acid certificate, `--acid FORMULA:FRACTION:DENSITY:NAME:SOLVENT_FRACTION`
+declares the solvent in grams per gram of product. If the certificate omits that
+last field, batch can use a labelled sequential pH calculation. Joint fitting of
+a dry reagent also needs `--max-solid-reagent-grams`, the maximum dry mass for
+this batch. The liquid volume cap applies to liquids. Check the selected method
+and limitations on the report.
+
+For a restricted product store, repeat `--confirmed-product CATALOGUE_ID` for
+each excluded fertilizer that is actually available. Batch calculates each
+alternative separately and keeps the original recipe. A saved mix session accepts
+the same IDs in `confirmed_products` and an optional `max_solid_reagent_grams`.
+
 ## Step 1. Enter your water analysis
 
 Save the analysis as a small JSON file, for example `well.json`:

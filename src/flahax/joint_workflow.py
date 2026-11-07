@@ -12,6 +12,15 @@ from .engine import _provenance
 from .requirement_fit import PH_TOLERANCE
 
 
+class _JointSearchIncomplete(DeliveryError):
+    def __init__(self, result):
+        super().__init__('joint_search_incomplete', result['reason'])
+        diagnostics = result['diagnostics']
+        self.search_counts = dict(
+            iterations=diagnostics['iterationsUsed'], evaluations=diagnostics['evaluations']
+        )
+
+
 def zero_reagent_controls(problem):
     """Bounded zero-dose recovery policy; no best-fit or stationarity acceptance."""
     return dict(
@@ -67,7 +76,12 @@ def joint_candidate(
             'reagent_solvent_fractions',
             'maximum_reagent_mass_g',
         }
-        if not required <= set(config) or set(config) - required - {'starting_points'}:
+        if not required <= set(config) or set(config) - required - {
+            'starting_points',
+            'sequential_fallbacks',
+            'solid_reagent_ids',
+            'additional_product_steps',
+        }:
             raise DeliveryError(
                 'missing_field', 'joint configuration requires ' + ', '.join(sorted(required))
             )
@@ -75,6 +89,12 @@ def joint_candidate(
             raise DeliveryError(
                 'inconsistent_basis', 'joint and workflow final solvent mass must agree'
             )
+        if not isinstance(config.get('additional_product_steps', {}), Mapping):
+            raise DeliveryError(
+                'invalid_type', 'additional_product_steps must be a dose-step mapping'
+            )
+        if not isinstance(config.get('solid_reagent_ids', ()), (tuple, list)):
+            raise DeliveryError('invalid_type', 'solid_reagent_ids must be a list of product IDs')
         if not isinstance(config['controls'], Mapping):
             raise DeliveryError('invalid_type', 'joint controls must be a mapping')
         for key in ('reagent_solvent_fractions', 'maximum_reagent_mass_g'):
@@ -96,7 +116,13 @@ def joint_candidate(
         target_ph=target_ph,
         reference_charge_mol_per_kg=residual_charge,
         maximum_reagent_mass_g=maximum_mass,
-        maximum_reagent_volume_litres=cap,
+        maximum_reagent_volume_litres=(
+            None
+            if config is not None
+            and product.get('physicalForm') == 'solid'
+            and product['id'] in config.get('solid_reagent_ids', ())
+            else cap
+        ),
         maximum_concentrations=maxima or {},
         phases=phases,
     )
@@ -109,6 +135,12 @@ def joint_candidate(
         if not isinstance(selected_controls, Mapping):
             raise DeliveryError('invalid_type', 'joint controls must be a mapping')
         controls = dict(selected_controls)
+        if 'additional_product_steps' in config and 'dose_steps' in controls:
+            additional = config['additional_product_steps']
+            controls['dose_steps'] = dict(controls['dose_steps'])
+            for salt in pool:
+                if salt['id'] in additional:
+                    controls['dose_steps'].setdefault(salt['id'], additional[salt['id']])
     doses = {s['id']: s['gramsPerLitre'] for s in initial['salts']}
     initial_reagent = 0
     if config is not None and 'starting_points' in config:
@@ -132,7 +164,7 @@ def joint_candidate(
             'invalid_value', 'joint numerical controls are incomplete or unknown'
         ) from exc
     if result['status'] not in ('numerical_candidate', 'bounded_best_fit', 'stationary_point'):
-        raise DeliveryError('joint_search_incomplete', result['reason'])
+        raise _JointSearchIncomplete(result)
     doses, reagent = result['fertilizerDoses'], result['reagentDose']
     state = problem.evaluate(doses, reagent)
     if state['violations'] or abs(state['chargeResidual']) > controls['charge_tolerance']:
@@ -141,6 +173,7 @@ def joint_candidate(
         )
     target = calculate_equilibrium_ph(
         state['componentsMolPerKg'],
+        residual_charge=problem.reference_charge_mol_per_kg,
         carbon_boundary='closed',
         phases=phases,
     )
@@ -205,5 +238,10 @@ def joint_candidate(
             reagentDose=reagent,
             controls=controls,
             chargeResidual=state['chargeResidual'],
+            chargeTolerance=controls['charge_tolerance'],
+            finalPh=target.ph,
+            stationarityResidual=(result.get('stationarity') or {}).get('relativeResidual'),
+            iterations=result['diagnostics']['iterationsUsed'],
+            evaluations=result['diagnostics']['evaluations'],
         ),
     )

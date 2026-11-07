@@ -102,9 +102,14 @@ class JointContractTests(unittest.TestCase):
             maximum_concentrations={'K': 50},
         ).evaluate({'salt': 1}, 2)
         self.assertTrue(
-            {'solvent_inventory', 'reagent_volume', 'final_volume', 'contradictory_target'}
+            {'solvent_inventory', 'reagent_volume', 'final_volume'}
             <= {v['kind'] for v in r['violations']}
         )
+
+        self.assertEqual(
+            r['requirementConflicts'], [{'kind': 'contradictory_target', 'symbol': 'K'}]
+        )
+        self.assertNotIn('contradictory_target', {v['kind'] for v in r['violations']})
 
     def test_reject_invalid_problem_inputs(self):
         bad = [

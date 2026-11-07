@@ -11,6 +11,111 @@ from flahax import joint_solver as solver
 from flahax.joint_polishing import block_polish_direction
 
 
+class WholeMixBoundaryTests(unittest.TestCase):
+    def test_exchange_stays_on_charge_surface_and_binding_nutrient_cap(self):
+        from flahax.joint_active_set import whole_mix_direction
+
+        # Minimize (a-1)^2 + (b-3)^2 with a+b <= 1, a,b >= 0.
+        # At the cap a unit exchange favors b all the way to (0,1).
+        point = [0.5, 0.5, 0.5]
+        matrix = [[1, 0, 0], [0, 1, 0], [1, 1, -1]]
+        limits = [([-1, 0, 0], 0), ([0, -1, 0], 0), ([0, 0, -1], 0), ([1, 1, 0], 1)]
+        direction, _ = whole_mix_direction(point, [-0.5, -2.5, 0], matrix, limits, 20)
+        for actual, expected in zip(direction, [-0.5, 0.5, 0.0]):
+            self.assertAlmostEqual(actual, expected)
+
+    def test_declared_zero_keeps_its_only_source_out_of_the_step(self):
+        from flahax.joint_active_set import whole_mix_direction
+
+        point = [0.0, 0.5, 0.5]
+        matrix = [[1, 1, 0], [0, 1, -1]]
+        limits = [([-1, 0, 0], 0), ([0, -1, 0], 0), ([0, 0, -1], 0), ([1, 0, 0], 0)]
+        direction, _ = whole_mix_direction(point, [-1.0, 0.0], matrix, limits, 20)
+        self.assertEqual(direction[0], 0.0)
+        self.assertAlmostEqual(direction[1], 1.0)
+        self.assertAlmostEqual(direction[2], 1.0)
+
+
+class WholeMixRefusalTests(unittest.TestCase):
+    """Synthetic trial-model boundaries. These are numerical checks, not chemistry fixtures."""
+
+    def trial(self, **changes):
+        from flahax.joint_active_set import whole_mix_trial
+
+        def value(u, **kw):
+            residual = u[0] - 2
+            charge = u[1] - 1 + (u[0] - 1) ** 2
+            return ({'chargeResidual': charge}, [residual, charge], 0, residual**2)
+
+        matrix = [[1.0, 0.0], [0.0, 1.0]]
+        args = dict(
+            point=[1.0, 1.0],
+            current=value([1.0, 1.0]),
+            matrix=matrix,
+            constraints=[([-1.0, 0.0], 0.0), ([0.0, -1.0], 0.0)],
+            radius=2.0,
+            budget=3,
+            charge_tolerance=1e-12,
+            evaluate=value,
+            active_tolerance=1e-8,
+            matrix_at=lambda state: matrix,
+            improves_stationarity=lambda u, v: False,
+            charge_scale=1.0,
+        )
+        return whole_mix_trial(**(args | changes))
+
+    def test_no_proposal_when_variables_fixed_charge_flat_or_budget_spent(self):
+        from flahax.joint_active_set import whole_mix_direction
+
+        point, residual = [1.0, 1.0], [-1.0, 0.0]
+        mat = [[1.0, 0.0], [0.0, 1.0]]
+        self.assertIsNone(whole_mix_direction(point, residual, mat, [([1.0, 1.0], 0.0)], 4))
+        self.assertIsNone(whole_mix_direction(point, residual, [mat[0], [0.0, 0.0]], [], 4))
+        self.assertIsNone(whole_mix_direction(point, residual, mat, [], 0))
+
+    def test_refinement_refuses_an_empty_face_or_unusable_charge_tangent(self):
+        self.assertIsNone(self.trial(refine=True, point=[0.0, 0.0]))
+        box = [([-1.0, 0.0], 0.0), ([0.0, -1.0], 0.0), ([1.0, 0.0], 1.0), ([0.0, 1.0], 1.0)]
+        self.assertIsNone(self.trial(refine=True, constraints=box))
+        self.assertIsNone(self.trial(refine=True, matrix=[[1.0, 0.0], [0.0, 0.0]]))
+        self.assertIsNone(
+            self.trial(
+                refine=True,
+                point=[5e-324, 0.0],
+                active_tolerance=0.0,
+                matrix=[[1.0, 0.0], [1.0, 0.0]],
+            )
+        )
+
+    def test_a_failed_curvature_probe_or_unusable_trial_has_no_result(self):
+        self.assertIsNone(self.trial(refine=True, evaluate=lambda u, **kw: None))
+
+        def failed_probe(u, **kwargs):
+            raise ValueError('out of model domain')
+
+        self.assertIsNone(self.trial(refine=True, evaluate=failed_probe))
+        self.assertIsNone(self.trial(evaluate=lambda u, **kw: None))
+
+    def test_zero_step_and_sub_roundoff_moves_do_not_claim_progress(self):
+        self.assertIsNone(self.trial(current=({'chargeResidual': 0}, [0.0, 0.0], 0.0, 0.0)))
+        self.assertIsNone(self.trial(radius=1e-20))
+
+    def test_charge_correction_obeys_pivot_trust_and_backtrack_limits(self):
+        def outside_charge(u, **kwargs):
+            return ({'chargeResidual': 10.0}, [-1.0, 10.0], 0.0, 1.0)
+
+        self.assertIsNone(self.trial(matrix=[[0.0, 1.0], [1.0, 0.0]], evaluate=outside_charge))
+        self.assertIsNone(self.trial(evaluate=outside_charge))
+        self.assertIsNone(self.trial(evaluate=outside_charge, radius=0.1))
+
+        # A useful correction on the last allowed iteration still misses charge.
+        def halves(u, **kwargs):
+            charge = 0.5 * (u[1] - 1) + 0.1
+            return ({'chargeResidual': charge}, [-1.0, charge], 0.0, 1.0)
+
+        self.assertIsNone(self.trial(evaluate=halves, budget=1))
+
+
 class PolishingBoundaryTests(unittest.TestCase):
     def arguments(self, n=3):
         source = SimpleNamespace(components={})
