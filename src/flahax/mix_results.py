@@ -10,7 +10,14 @@ the sheet's rounding, so the screen and the sheet always agree.
 
 from .grower_report import _miss_difference, _review_reason, percentage, qualification_lines
 from . import __version__
-from .grower_report import _reagent_line, grams, litres, millilitres, number
+from .grower_report import (
+    _reagent_line,
+    display_residue,
+    grams,
+    litres,
+    number,
+    reagent_preparation_lines,
+)
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -75,9 +82,8 @@ def _tank_rows(summary, width, g):
         body = [[(line, 'error' if blocked else None)] for line in wrap(head, inner, lines=4)]
         for product in tank['products']:
             weight = grams(product['gramsPerBatch'])
-            label = cut(
-                f'{"-" if blocked else "[ ]"} {product["name"]}', inner - len(weight) - 1, g
-            )
+            marker = '-' if blocked or display_residue(product['gramsPerBatch']) else '[ ]'
+            label = cut(f'{marker} {product["name"]}', inner - len(weight) - 1, g)
             gap = max(1, inner - len(label) - len(weight))
             body.append([(label + ' ' * gap, None), (weight, 'accent')])
         if not tank['acid_allowed']:
@@ -92,10 +98,11 @@ def _tank_rows(summary, width, g):
     ):
         ph = summary['ph']
         body = [
-            [
-                (f'{millilitres(selected["volume_ml_per_batch"])} mL', 'accent'),
-                (f' {selected["product"]}, added to water and made up to ', None),
-                (f'{litres(volumes["prepared_litres"]["acid"])} L', 'accent'),
+            *[[(line, None)] for line in wrap(selected['product'], inner)],
+            *[
+                [(line, None)]
+                for instruction in reagent_preparation_lines(summary)
+                for line in wrap(instruction, inner)
             ],
             *(
                 [[('Add acid to water, never water to acid.', 'warn')]]

@@ -46,27 +46,29 @@ Report a problem: https://github.com/rafatahmed/Flahax/issues
 Five questions to tank A, tank B and the acid, with a batch sheet.
 
 ```text
-usage: flahax mix [-h] [--output OUTPUT] [--plain] [session ...]
+usage: flahax mix [-h] [--output OUTPUT] [--plain] [--review-reagents] [session ...]
 
-``flahax mix``: five questions, then tank A, tank B and the acid.
+``flahax mix``: five steps, then tank A, tank B and the pH reagent.
 
     flahax mix                    ask the five steps, save the answers, write the sheets
     flahax mix sessions/NAME      run a saved session again without questions
     flahax mix --plain            ask line by line instead of the full-screen wizard
 
 Steps: 1/5 specification (tanks, injection ratio, temperature, how stock is
-prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers and acids, 5/5
-target pH. Defaults are shown in brackets; Enter keeps them. Typed items are saved
+prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5 available
+acids and bases and target pH. Defaults are shown in brackets; Enter keeps them.
+Typed items are saved
 under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and only
 once every step is answered: Ctrl+C or end of input saves nothing.
 
 positional arguments:
-  session          a saved session, e.g. tomato-ro (flahax mix sessions lists them)
+  session            a saved session, e.g. tomato-ro (flahax mix sessions lists them)
 
 options:
-  -h, --help       show this help message and exit
-  --output OUTPUT  new directory for the sheets (default: ./flahax-mix-<session>)
-  --plain          line-by-line questions instead of the full-screen wizard
+  -h, --help         show this help message and exit
+  --output OUTPUT    new directory for the sheets (default: ./flahax-mix-<session>)
+  --plain            line-by-line questions instead of the full-screen wizard
+  --review-reagents  review a saved session's available acids and bases and save new answers
 ```
 
 ## `flahax batch`
@@ -81,7 +83,7 @@ usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS] [
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
                     [--confirmed-product CATALOGUE_ID]
                     [--max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS] [--products PRODUCTS]
-                    [--rules RULES] [--output OUTPUT]
+                    [--reagents REAGENTS] [--rules RULES] [--output OUTPUT]
 
 ``flahax batch``: one formula and one water to a report, a batch sheet and a JSON summary (#79).
 
@@ -143,6 +145,8 @@ options:
   --max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS
                         maximum dry pH reagent mass per batch (g) for joint fitting
   --products PRODUCTS   JSON array of your product records (default: the packaged catalogue)
+  --reagents REAGENTS   JSON array of available pH reagent records; replaces catalogue reagents,
+                        including when empty. Explicit --acid certificates are added to this list.
   --rules RULES         JSON array of extra compatibilityRule records separating products
   --output OUTPUT       new directory for report.html, batch-sheet.html and summary.json
 ```

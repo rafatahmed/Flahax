@@ -28,10 +28,11 @@ from .mix_cli import (
     saved_line,
     summarize,
     write_sheets,
+    review_reagents,
 )
 from .terminal import Terminal, TerminalUnavailable, glyphs
 
-STEPS = ('Spec', 'Water', 'Formula', 'Fertilizers', 'Acid and pH')
+STEPS = ('Spec', 'Water', 'Formula', 'Fertilizers', 'Reagents and pH')
 MIN_WIDTH, MIN_HEIGHT, TWO_PANES = 80, 24, 100
 PANE = 30
 SMALL = 'Enlarge the window to at least 80 x 24. Q quits.'
@@ -470,7 +471,15 @@ def show_results(term, g, summary, output, ahead=()):
             shown = None  # redraw after the confirmation overlay
 
 
-def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=None):
+def run_tui(
+    store,
+    session_name,
+    output_arg,
+    term_factory=Terminal,
+    encoding=None,
+    *,
+    review_availability=False,
+):
     """``flahax mix`` on the full screen; returns the exit code and the lines to print after it.
 
     The exit code is None when the console cannot show the full screen: ask line by line.
@@ -486,6 +495,8 @@ def run_tui(store, session_name, output_arg, term_factory=Terminal, encoding=Non
             if session_name:
                 path = find_session(store, session_name)
                 name, session = path.stem, load_session(path)
+                if review_availability:
+                    name, session = review_reagents(prompts, store, name, session)
             else:
                 name, session, pending = interview(prompts, store)
                 for kind, item, data in pending:

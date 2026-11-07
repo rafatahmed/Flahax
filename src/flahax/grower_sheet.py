@@ -23,6 +23,9 @@ from .grower_report import (
     _page,
     _reagent_line,
     ec_text,
+    display_residue,
+    reagent_preparation_lines,
+    reagent_preparation,
     grams,  # noqa: F401
     litres,
     millilitres,
@@ -106,11 +109,11 @@ def limited_by(volumes):
     """In fill mode, the container that sets the batch when another one could hold more."""
     if not volumes or volumes.get('mode') != 'fill':
         return ''
-    capacity = volumes['capacity_litres']
+    capacity = {name: volumes['capacity_litres'][name] for name in ('A', 'B')}
     smallest = min(capacity, key=capacity.get)
     if all(c == capacity[smallest] for c in capacity.values()):
         return ''
-    name = 'acid container' if smallest == 'acid' else f'tank {smallest}'
+    name = f'tank {smallest}'
     return f' (your {litres(capacity[smallest])} L {name} sets the batch)'
 
 
@@ -130,7 +133,8 @@ def _tank_card(tank, volumes, blocked):
     )
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(
-        f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
+        f'<tr><td>{"" if display_residue(p["gramsPerBatch"]) else box}</td>'
+        f'<td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
         for p in tank['products']
     )
     rule = (
@@ -157,18 +161,15 @@ def _reagent_card(summary, volumes):
         return (
             f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(_reagent_line(summary))}</p></div>'
         )
-    title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
-    container_name = 'Acid container' if chosen['direction'] == 'acid' else 'pH-up container'
-    per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
-    container = (
-        (
-            f'<p>{container_name}: add <b>{millilitres(chosen["volume_ml_per_batch"])} mL</b> to '
-            f'water and make up to '
-            f'<b>{litres(volumes["prepared_litres"]["acid"])} L</b>.</p>'
+    preparation = reagent_preparation(summary)
+    if preparation and preparation['status'] == 'blocked':
+        return (
+            f'<div class="card warn"><h2>pH reagent</h2>'
+            f'<p>{text(preparation["message"])}</p></div>'
         )
-        if volumes
-        else ''
-    )
+    title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
+    per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
+    container = ''.join(f'<p>{text(line)}</p>' for line in reagent_preparation_lines(summary))
     return (
         f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> '
         f'({text(chosen["formula"])}): '

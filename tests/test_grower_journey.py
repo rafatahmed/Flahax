@@ -679,7 +679,9 @@ class SavedCucumberAcceptanceTests(unittest.TestCase):
             # Replay the saved grower view, then request full output for the same inputs.
             for depth in (original['depth'], 3):
                 with self.subTest(depth=depth):
-                    migrated = migrate_session(store, original | {'depth': depth})
+                    migrated = migrate_session(
+                        store, original | {'depth': depth, 'reagent_store': 'catalogue'}
+                    )
                     store.save('sessions', 'cucumber', migrated)
                     out = Path(temp) / f'output-{depth}'
                     code = mix(
@@ -695,8 +697,13 @@ class SavedCucumberAcceptanceTests(unittest.TestCase):
                     self.assertIn('Review required', sheet)
                     self.assertIn(summary['ph']['selected']['product'], sheet)
                     self.assertEqual(summary['title'], 'Cucumber (Howard Resh)')
-                    # The 100 L reagent tank limits the shared 1:100 irrigation run.
-                    self.assertEqual(summary['batch_litres'], 10000)
+                    # The 1000 L nutrient tanks supply the run; refill the 100 L reagent tank.
+                    self.assertEqual(summary['batch_litres'], 100000)
+                    self.assertEqual(
+                        summary['volumes']['prepared_litres'], {'A': 1000, 'B': 1000, 'acid': 100}
+                    )
+                    self.assertEqual(summary['reagent_preparation']['fills'], 10)
+                    self.assertEqual(summary['reagent_preparation']['refills'], 9)
                     self.assertEqual(summary['ph']['target_ph'], 5.9)
                     self.assertAlmostEqual(summary['chemistry']['final_ph'], 5.9, delta=1e-4)
                     joint = summary['ph']['selected']['joint']

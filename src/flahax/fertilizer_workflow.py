@@ -744,7 +744,21 @@ def plan_fertilizer_workflow(
             _not_planned(stages['ph_adjustment'])
             if plan is not None:
                 chosen = plan.selected
-                if chosen is None:
+                if chosen is None and plan.direction == 'none' and not plan.candidates:
+                    recommendation = plan.unadjusted_recommendation
+                    violations = assess_incidental(
+                        recommendation['rows'],
+                        assessed_limits(maximum_concentrations, recommendation),
+                    )['limitViolations']
+                    stages['ph_adjustment'] = WorkflowStage(
+                        'blocked' if violations else 'calculated',
+                        value=plan,
+                        error_code='nutrient_limit_exceeded' if violations else None,
+                        message='the recipe exceeds an explicit nutrient maximum'
+                        if violations
+                        else no_reagent_message(plan),
+                    )
+                elif chosen is None:
                     stages['ph_adjustment'] = WorkflowStage(
                         'blocked',
                         value=plan,

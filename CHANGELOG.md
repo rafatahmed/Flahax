@@ -19,6 +19,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Select and save available catalogue acids and bases in mix, add custom reagents, and
+  restrict batch calculations with `--reagents`. Review old sessions with
+  `--review-reagents` without overwriting their original answers (#231).
+
 - Evaluate confirmed catalogue alternatives separately and report the direction, search result,
   charge check and nutrient misses for a grower batch (#231). Show solid pH reagent doses in
   grams in batch and mix (#229).
@@ -81,6 +85,14 @@ each release, with numbers, sources and decisions, are in
 - Tanks follow the A/B layout (decisions G20-G22, #227): calcium and every micronutrient product in tank A, phosphates, magnesium sulfate and macro sulfates in tank B. The magnesium-phosphate rule is removed and the calcium-sulfate reason is reworded. A batch needing a third tank names the pair and the rule.
 
 ### Fixed
+
+- Fill nutrient stocks independently of the reagent container capacity at the shared injection
+  ratio; report reagent doses per fill, refill counts and final partial fills without changing
+  solver methods or nutrient tolerances (#231).
+
+- Refresh remedy messages from the final recipe, explain separate search and nutrient statuses,
+  and label numerical dose residues without weighing checkboxes. Preserve exact quantities and
+  clarify reagent-container capacity in fill mode (#231).
 
 - Preserve accented Windows input such as à without consuming the next character in
   `flahax mix`; retain arrow navigation, editing keys and held-key repeats (#127).

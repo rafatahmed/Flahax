@@ -48,7 +48,13 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis, VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
-from .grower_report import reagent_amount, render_batch_sheet, render_report, summarize_batch
+from .grower_report import (
+    reagent_amount,
+    reagent_preparation,
+    render_batch_sheet,
+    render_report,
+    summarize_batch,
+)
 from .measured_water import balance_water_analysis
 from .ph_adjustment import catalogue_ph_reagents, nutrient_salts
 from .planning_cli import serializable
@@ -448,6 +454,7 @@ class BatchOptions:
     title: str | None = None
     max_solid_reagent_grams: float | None = None
     confirmed_products: list[str] = field(default_factory=list)
+    reagents: str | None = None
 
 
 # Batch search controls. The loss threshold is an exact-fit shortcut. A constrained
@@ -573,7 +580,14 @@ def run_batch(options):
     if options.water_share is not None:
         label, water, chemistry = blend(label, water, chemistry, options.water_share)
     rules = read_json(options.rules, 'rules') if options.rules else ()
-    reagents = [acid_record(a) for a in options.acid] + catalogue_ph_reagents()
+    reagents = (
+        read_json(options.reagents, 'pH reagents')
+        if options.reagents is not None
+        else catalogue_ph_reagents()
+    )
+    if not isinstance(reagents, list) or not all(isinstance(r, dict) for r in reagents):
+        raise DeliveryError('invalid_value', 'pH reagents must be a JSON array of product records')
+    reagents = reagents + [acid_record(a) for a in options.acid]
     limits = dict(options.limit)
     cap_litres = options.max_reagent_litres or volume / 200
     joint = (
@@ -648,6 +662,18 @@ def run_batch(options):
 
     if volumes is not None:
         summary['volumes'] = dict(asdict(volumes), mode=options.mode)
+        summary['reagent_preparation'] = reagent_preparation(summary)
+        preparation = summary['reagent_preparation']
+        if preparation and preparation['status'] == 'blocked':
+            summary['status'] = 'blocked'
+            summary['statuses'].update(overall='blocked', delivery='blocked')
+            summary['stages']['reagent_preparation'] = dict(
+                status='blocked',
+                error_code=None,
+                message=preparation['message'],
+                required_inputs=[],
+            )
+            summary['warnings'].append('reagent_preparation: ' + preparation['message'])
     weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
     summary['product_notes'] = {
         r['name']: list(
@@ -784,6 +810,11 @@ def main(argv=None):
     )
     parser.add_argument(
         '--products', help='JSON array of your product records (default: the packaged catalogue)'
+    )
+    parser.add_argument(
+        '--reagents',
+        help='JSON array of available pH reagent records; replaces catalogue '
+        'reagents, including when empty. Explicit --acid certificates are added to this list.',
     )
     parser.add_argument(
         '--rules', help='JSON array of extra compatibilityRule records separating products'

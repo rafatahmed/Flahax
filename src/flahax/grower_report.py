@@ -12,8 +12,10 @@ not dosing instructions: measure EC and pH after mixing.
 """
 
 from .canonical_result import result_statuses, seal_summary, verify_summary
+from copy import deepcopy
 from dataclasses import asdict
 from decimal import Decimal
+from fractions import Fraction
 from html import escape
 import math
 
@@ -32,6 +34,7 @@ from .stock_solubility import (
 from .tank_grouping import group_tanks
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')
+DISPLAY_ZERO = 1e-9  # Existing display rounding only; never a solver or acceptance tolerance.
 
 
 def litres(value):
@@ -40,8 +43,15 @@ def litres(value):
     return dose_number(value, 1 if value >= 10 else 3)
 
 
+def display_residue(value):
+    """Whether a positive displayed quantity falls below the existing display-zero precision."""
+    return 0 < value < DISPLAY_ZERO
+
+
 def grams(value):
     """A weight a grower can read on a scale: never '0 g' for a product that is in the recipe."""
+    if display_residue(value):
+        return f'numerical residue: {value:.6g} g'
     digits = 1 if value >= 10 else 2 if value >= 0.1 else 3
     shown = number(value, digits)
     return f'{shown} g' if float(shown.replace(',', '')) > 0 else 'less than 0.001 g'
@@ -65,7 +75,7 @@ def number(value, digits=4):
         return 'Not available'
     if not isinstance(value, (int, float)) or not math.isfinite(value):
         return text(value)
-    if abs(value) < 1e-9:
+    if abs(value) < DISPLAY_ZERO:
         value = 0.0  # floating-point noise such as 7e-15 mg/L
     if value != 0 and abs(value) < 0.0001:
         return f'{value:.3e}'
@@ -626,7 +636,7 @@ def summarize_batch(
             warnings.append(f'{row.product}: solubility not checked ({row.reason}).')
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
-        remedies=workflow.remedies,
+        remedies=deepcopy(workflow.remedies),
         title=title,
         water_label=water_label,
         flahax_version=__version__,
@@ -702,7 +712,18 @@ def summarize_batch(
         ],
     )
 
+    # Stage evidence must describe the same final recipe as the visible stage messages.
+    # Keep alternative evaluations and the original workflow evidence unchanged.
+    for requirement in summary['remedies'].get('requirements', []):
+        kind, _, name = requirement['id'].partition(':')
+        if kind == 'stage' and name in stages:
+            stage = stages[name]
+            requirement['status'] = stage['status']
+            requirement['evidence'] = dict(
+                error_code=stage['error_code'], message=stage['message']
+            )
     summary['statuses'] = result_statuses(summary)
+    summary['status_explanations'] = status_explanations(summary)
     summary['calculation_identity'] = dict(
         status='bound' if canonical is not None else 'legacy_unverified',
         result_id=canonical.result_id if canonical is not None else None,
@@ -920,6 +941,32 @@ def requested_ec_note(requested, ec):
     return f'requested {requested:.2f} mS/cm is {distance:.2f} mS/cm from the estimated range'
 
 
+def status_explanations(summary):
+    """Explain independent status scopes without changing calculation or acceptance flags."""
+    explanations = {}
+    numerical = (summary.get('statuses') or {}).get('numerical')
+    if numerical == 'stationary_point':
+        explanations['numerical'] = (
+            'Search reached local stationarity; this is not proof of a global optimum.'
+        )
+    formulation = summary.get('formulation') or {}
+    if 'targets_met' in formulation:
+        explanations['formulation'] = (
+            'All nutrient targets meet their configured tolerances; '
+            'other review reasons remain separate.'
+            if formulation['targets_met']
+            else 'Nutrient targets are not all met; '
+            'this does not prove that no recipe can meet them.'
+        )
+    if any(r.get('status') == 'search_incomplete' for r in formulation.get('unmet', [])):
+        explanations['nutrients'] = (
+            'Nutrient-level search_incomplete describes a separate nutrient feasibility '
+            'diagnosis; '
+            'it is not the joint search stopping reason.'
+        )
+    return explanations
+
+
 def qualification_lines(summary):
     """Keep model applicability and physical validation distinct from feasibility."""
     lines = [
@@ -927,6 +974,7 @@ def qualification_lines(summary):
     ]
     for name, status in (summary.get('statuses') or {}).items():
         lines.append(f'{name}: {status}')
+    lines.extend((summary.get('status_explanations') or status_explanations(summary)).values())
     ec = summary.get('ec')
     if not ec:
         return lines + ['EC: not evaluated; no estimate or uncertainty interval available.']
@@ -1026,6 +1074,68 @@ def _joint_verdict(summary):
     )
 
 
+def reagent_preparation(summary):
+    """Split the total liquid reagent dose into refills at the shared injection ratio."""
+    ph, volumes = summary.get('ph') or {}, summary.get('volumes')
+    chosen = ph.get('selected') or {}
+    dose = chosen.get('volume_ml_per_batch')
+    if (
+        summary.get('status') == 'blocked'
+        or not volumes
+        or dose is None
+        or ph.get('direction') == 'none'
+    ):
+        return None
+    total = Fraction(str(volumes['prepared_litres']['A']))
+    fill = Fraction(str(volumes['prepared_litres']['acid']))
+    if Fraction(str(dose)) > total * 1000:
+        return dict(
+            status='blocked',
+            message='The liquid reagent amount exceeds the available reagent stock volume '
+            'at this injection ratio. Do not prepare this stock; use a suitable injection '
+            'ratio or reagent and recalculate.',
+        )
+    fills = -(-total // fill)
+    last = total - fill * (fills - 1)
+    return dict(
+        status='planned',
+        injection_ratio=summary['tanks']['injection_ratio'],
+        total_stock_litres=float(total),
+        fill_litres=float(fill),
+        last_fill_litres=float(last),
+        fills=fills,
+        refills=fills - 1,
+        total_dose_ml=dose,
+        dose_ml_per_fill=dose * float(fill / total),
+        dose_ml_last_fill=dose * float(last / total),
+    )
+
+
+def reagent_preparation_lines(summary):
+    """Describe per-fill quantities separately from the total batch reagent quantity."""
+    if summary.get('status') == 'blocked':
+        return []
+    plan = reagent_preparation(summary)
+    if plan is None:
+        return []
+    if plan['status'] == 'blocked':
+        return [plan['message']]
+    lines = [
+        f'Total reagent for this batch: {millilitres(plan["total_dose_ml"])} mL.',
+        f'Each full fill: add {millilitres(plan["dose_ml_per_fill"])} mL to water '
+        f'and make up to {litres(plan["fill_litres"])} L.',
+        f'Use {plan["fills"]} {"fill" if plan["fills"] == 1 else "fills"} total '
+        f'({plan["refills"]} refills) '
+        f'at 1:{number(plan["injection_ratio"])} injection.',
+    ]
+    if plan['last_fill_litres'] != plan['fill_litres']:
+        lines.append(
+            f'Final partial fill: add {millilitres(plan["dose_ml_last_fill"])} mL to water '
+            f'and make up to {litres(plan["last_fill_litres"])} L.'
+        )
+    return lines
+
+
 def _reagent_line(summary):
     ph = summary['ph']
     if summary.get('status') == 'blocked':
@@ -1035,6 +1145,9 @@ def _reagent_line(summary):
         )
     if ph is None:
         return 'pH was not planned: supply complete water chemistry and pH reagents to plan it.'
+    preparation = reagent_preparation(summary)
+    if preparation and preparation['status'] == 'blocked':
+        return preparation['message']
     chosen = ph['selected']
     if ph.get('direction') == 'none':
         return (
@@ -1100,6 +1213,7 @@ def render_report(summary):
         '<section><h2>Status</h2>'
         + (f'<p class="{css}">{text(line)}</p>' if s['status'] != 'requires_review' else '')
         + f'<p>{text(_reagent_line(s))}</p>'
+        + ''.join(f'<p>{text(line)}</p>' for line in reagent_preparation_lines(s))
         + (
             ('<ul>' + ''.join(f'<li>{text(w)}</li>' for w in s['warnings']) + '</ul>')
             if s['warnings']
@@ -1474,14 +1588,20 @@ def render_batch_sheet(summary):
     if s['status'] == 'requires_review':
         line = _review_reason(s)
     litres, ratio = s['batch_litres'], tanks['injection_ratio']
-    rows = ''.join(
-        f'<tr><td>{text(t["name"])}</td><td>{text(p["name"])}</td><td '
-        f'class="num">{dose_number(p["gramsPerBatch"], 1)}</td>'
-        f'<td class="num">{dose_number(p["stockGramsPerLitre"], 2)}</td><td><span '
-        f'class="{"muted" if blocked else "tick"}"></span></td></tr>'
-        for t in tanks['tanks']
-        for p in t['products']
-    )
+    rows = []
+    for tank in tanks['tanks']:
+        for product in tank['products']:
+            mass = product['gramsPerBatch']
+            residue = display_residue(mass)
+            weight = grams(mass) if residue else dose_number(mass, 1)
+            marker = 'muted' if blocked or residue else 'tick'
+            rows.append(
+                f'<tr><td>{text(tank["name"])}</td><td>{text(product["name"])}</td>'
+                f'<td class="num">{weight}</td>'
+                f'<td class="num">{dose_number(product["stockGramsPerLitre"], 2)}</td>'
+                f'<td><span class="{marker}"></span></td></tr>'
+            )
+    rows = ''.join(rows)
     ec = s['ec']
     checks = [
         (
@@ -1534,6 +1654,7 @@ def render_batch_sheet(summary):
         + (f'<p class="small">{text(_unchecked_line(s))}</p>' if _unchecked_line(s) else '')
         + f'<p class="small">Basis: {text(SINGLE_SALT)}.</p>'
         + f'<h2>pH</h2><div class="box warn">{text(_reagent_line(s))}</div>'
+        + ''.join(f'<p>{text(line)}</p>' for line in reagent_preparation_lines(s))
         + (f'<p>{text(_joint_verdict(s))}</p>' if _joint_verdict(s) else '')
         + (
             '<h2>Missed nutrient targets</h2>'

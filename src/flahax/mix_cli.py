@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""``flahax mix``: five questions, then tank A, tank B and the acid.
+"""``flahax mix``: five steps, then tank A, tank B and the pH reagent.
 
     flahax mix                    ask the five steps, save the answers, write the sheets
     flahax mix sessions/NAME      run a saved session again without questions
     flahax mix --plain            ask line by line instead of the full-screen wizard
 
 Steps: 1/5 specification (tanks, injection ratio, temperature, how stock is
-prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers and acids, 5/5
-target pH. Defaults are shown in brackets; Enter keeps them. Typed items are saved
+prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5 available
+acids and bases and target pH. Defaults are shown in brackets; Enter keeps them.
+Typed items are saved
 under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and only
 once every step is answered: Ctrl+C or end of input saves nothing.
 """
@@ -27,7 +28,14 @@ from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, rend
 from .composition import target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
-from .grower_report import _reagent_line, _review_reason, number, render_report
+from .grower_report import (
+    _reagent_line,
+    _review_reason,
+    display_residue,
+    number,
+    reagent_preparation_lines,
+    render_report,
+)
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -35,7 +43,6 @@ from .grower_sheet import (
     key_reasons,
     limited_by,
     litres,
-    millilitres,
     readable,
     render_mix_sheet,
 )  # noqa: F401 (STATUS_WORDS re-exported)
@@ -45,6 +52,7 @@ from .mix_store import Store, slug, check_saved_state, verify_session
 from .mix_water import MICROS, WATER_IONS, ask_analysis, to_elements  # noqa: F401 (re-exported)
 from .stock_volumes import prepare_stocks
 from .terminal import supported
+from .ph_adjustment import catalogue_ph_reagents, REAGENTS
 
 FORMULA_KEYS = ('N_NO3', 'N_NH4', 'P', 'K', 'Ca', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
 COMPOUND_KEYS = (
@@ -224,7 +232,7 @@ def ask_spec(p):
     tanks = {
         'A': a,
         'B': b,
-        'acid': p.number('Acid container capacity, L', min(a, b), positive=True),
+        'acid': p.number('Reagent container capacity, L', min(a, b), positive=True),
     }
     ratio = p.number(
         'Injection ratio, litres of irrigation per litre of stock', 100, positive=True
@@ -254,8 +262,10 @@ def ask_spec(p):
             p.say(f'  {exc}')
     p.say(
         f'  {number(volumes.irrigation_litres, 0)} L of irrigation; prepare '
-        f'{litres(volumes.prepared_litres["A"])} L in each container'
-        f'{limited_by(dict(asdict(volumes), mode="once" if once else "fill"))}.'
+        f'{litres(volumes.prepared_litres["A"])} L in each nutrient tank'
+        f'{limited_by(dict(asdict(volumes), mode="once" if once else "fill"))}; '
+        f'first reagent fill {litres(volumes.prepared_litres["acid"])} L '
+        f'(refill as needed at the same 1:{ratio:g} ratio).'
     )
     return dict(
         tank_litres=tanks,
@@ -470,6 +480,77 @@ def ask_products(p, store, pending, library):
     return ref, products
 
 
+def ask_reagents(p, store, pending):
+    """Select the available pH products just like the available fertilizers."""
+    from .batch_cli import acid_record
+
+    catalogue = catalogue_ph_reagents()
+    saved = [name for name in store.list('reagents') if name != 'catalogue']
+    pick = p.choose(
+        'pH reagents',
+        ['The whole catalogue'] + saved + ['Tick what I have', 'No pH reagents available'],
+    )
+    if pick == 0:
+        ref, products = 'catalogue', catalogue
+    elif pick <= len(saved):
+        ref, products = saved[pick - 1], store.load('reagents', saved[pick - 1])
+    elif pick == len(saved) + 1:
+        offered = list(catalogue)
+        for name in store.list('acids'):
+            a = store.load('acids', name)
+            spec = f'{a["formula"]}:{a["fraction"]}:{a["density"]}:{a["name"]}'
+            if 'solvent_fraction' in a:
+                spec += f':{a["solvent_fraction"]}'
+            offered.append(acid_record(spec))
+        products = [
+            offered[i] for i in p.pick_many('pH reagents you have', [r['name'] for r in offered])
+        ]
+        ref = None
+    else:
+        ref, products = None, []
+    while p.choose('Add a pH reagent?', ['No', 'A custom reagent from its declared composition']):
+        formulas = {f.upper(): f for f in REAGENTS}
+        formula = None
+        while formula is None:
+            formula = formulas.get(p.text('Reagent formula (' + ', '.join(REAGENTS) + ')').upper())
+            if formula is None:
+                p.say('This reagent identity is not supported; choose a listed formula.')
+        active_percent = p.number('Active ingredient, % w/w', positive=True, high=100)
+        fraction = active_percent / 100
+        form = ('liquid', 'solid')[p.choose('Physical form', ['Liquid', 'Solid'])]
+        density = p.number('Density, kg/L', positive=True) if form == 'liquid' else None
+        solvent = p.number(
+            'Declared water content, % w/w (Enter if unknown)',
+            blank=True,
+            high=100 - active_percent,
+        )
+        name = p.text('Reagent name')
+        record = dict(
+            id='custom-' + slug(name),
+            name=name,
+            chemicalFormula=formula,
+            massFraction=fraction,
+            physicalForm=form,
+            densityKgPerL=density,
+            solventMassFraction=None if solvent is None else solvent / 100,
+            source='user-declared composition',
+            revision='1',
+            recordedAt=date.today().isoformat(),
+        )
+        if any(r['id'] == record['id'] for r in products):
+            p.say('A reagent with that name is already selected; use a distinct name.')
+            continue
+        products = products + [record]
+        ref = None
+    if ref is None:
+        ref = p.new_name(store, 'reagents', 'Save this reagent list as', 'my reagents')
+        while ref == 'catalogue':
+            p.say('Catalogue is reserved for the built-in list. Choose another name.')
+            ref = p.new_name(store, 'reagents', 'Save this reagent list as', 'my reagents')
+        pending.append(('reagents', ref, products))
+    return ref, products
+
+
 def ask_acids(p, store, pending):
     """Names of the acids chosen for the pH plan, saved or entered from a certificate."""
     chosen, saved = [], store.list('acids')
@@ -516,6 +597,14 @@ def options_for(store, session):
     """``BatchOptions`` from a session; every saved item it names must exist."""
 
     check_session(session, "saved answers")
+    if 'reagent_store' not in session:
+        raise DeliveryError(
+            'reagent_selection_required',
+            'This saved session has no available pH reagent list. '
+            'Run flahax mix sessions/NAME --review-reagents '
+            'to select the acids and bases you have; '
+            'saved acid certificates remain available.',
+        )
     verify_session(store, session)
 
     def path(kind, name):
@@ -534,6 +623,9 @@ def options_for(store, session):
         targets=None if session['formula'] in packaged else path('formulas', session['formula']),
         water_share=None if session['water_share'] >= 100 else session['water_share'],
         ph=session['ph'],
+        reagents=None
+        if session['reagent_store'] == 'catalogue'
+        else path('reagents', session['reagent_store']),
         ratio=spec['ratio'],
         acid=[
             f'{a["formula"]}:{a["fraction"]}:{a["density"]}:{a["name"]}'
@@ -553,6 +645,31 @@ def options_for(store, session):
     )
 
 
+def review_reagents(p, store, name, session):
+    """Explicitly review availability and save new answers without rewriting the old record."""
+    verify_session(store, session)
+    pending = []
+    p.say(
+        'Review available pH reagents. Other answers are retained; '
+        'the result will be recalculated.'
+    )
+    ref, products = ask_reagents(p, store, pending)
+    p.answered('pH reagents', ', '.join(r['name'] for r in products) or 'none available')
+    updated = {
+        k: v for k, v in session.items() if k not in ('saved_state', 'acceptance', 'accepted')
+    }
+    updated.update(reagent_store=ref, acids=[])
+    new_name = p.new_name(store, 'sessions', 'Save reviewed answers as', name + ' reviewed')
+    if new_name == name:
+        raise DeliveryError(
+            'invalid_session', 'Use a new session name to preserve the original answers'
+        )
+    for kind, item, data in pending:
+        store.save(kind, item, data)
+    store.save('sessions', new_name, updated)
+    return new_name, updated
+
+
 def interview(p, store):
     """The five steps; returns (session name, session, items to save). Nothing is written here."""
     library, pending = load_library(), []
@@ -570,15 +687,15 @@ def interview(p, store):
     product_store, products = ask_products(p, store, pending, library)
     p.answered('Fertilizers', f'{len(products)} products')
     p.step(5)
-    acids = ask_acids(p, store, pending)
-    p.answered('Acids', ', '.join(acids) or 'none')
+    reagent_store, reagents = ask_reagents(p, store, pending)
+    p.answered('pH reagents', ', '.join(r['name'] for r in reagents) or 'none available')
     p.step(5, '5/5 pH requirement')
     ph = p.number('Target pH of the final solution', 5.8, high=14, positive=True)
     p.answered('Target pH', f'{ph:g}')
     depth = 1 + p.choose(
         'Output depth',
         [
-            'Grower: tanks A and B, and the acid',
+            'Grower: tanks A and B, and the pH reagent',
             'Agronomist: adds the nutrient table and the pH path',
             'Full report',
         ],
@@ -592,7 +709,8 @@ def interview(p, store):
         'formula': formula,
         'formula_title': formula_title,
         'store': product_store,
-        'acids': acids,
+        'acids': [],
+        'reagent_store': reagent_store,
         'ph': ph,
         'depth': depth,
     }
@@ -645,6 +763,10 @@ def check_session(data, path):
     if not isinstance(limits, dict) or not all(_is_number(v) for v in limits.values()):
         bad("'limits' must be an object of ion: mg/L")
     acids = data['acids']
+    if 'reagent_store' in data and (
+        not isinstance(data['reagent_store'], str) or not data['reagent_store'].strip()
+    ):
+        bad("'reagent_store' must name an available reagent list or catalogue")
     if not isinstance(acids, list) or not all(isinstance(a, str) for a in acids):
         bad("'acids' must be a list of names")
     if 'depth' in data and (type(data['depth']) is not int or data['depth'] not in (1, 2, 3)):
@@ -729,7 +851,8 @@ def summarize(summary, say):
         )
         for product in tank['products']:
             say(
-                f'  {"-" if blocked else "[ ]"} {product["name"]}: '
+                f'  {"-" if blocked or display_residue(product["gramsPerBatch"]) else "[ ]"} '
+                f'{product["name"]}: '
                 f'{grams(product["gramsPerBatch"])}'
             )
     selected = summary['ph'] and summary['ph']['selected']
@@ -741,13 +864,11 @@ def summarize(summary, say):
         say(_reagent_line(summary))
     elif selected and not blocked:
         acid = selected.get('direction') == 'acid'
-        container = 'Acid container' if acid else 'pH-up container'
-        say(
-            f'{container}: {millilitres(selected["volume_ml_per_batch"])} mL '
-            f'{selected["product"]}, added to water '
-            f'and made up to {litres(volumes["prepared_litres"]["acid"])} L'
-            + (' (acid to water, never water to acid)' if acid else '')
-        )
+        say(f'pH reagent: {selected["product"]}')
+        for line in reagent_preparation_lines(summary):
+            say(line)
+        if acid:
+            say('Add acid to water, never water to acid.')
     elif not blocked:
         say(
             'pH reagent: none planned'
@@ -821,6 +942,11 @@ def main(argv=None, *, ask=input, say=print, store=None):
         action='store_true',
         help='line-by-line questions instead of the full-screen wizard',
     )
+    parser.add_argument(
+        '--review-reagents',
+        action='store_true',
+        help='review a saved session\'s available acids and bases and save new answers',
+    )
     args = parser.parse_args(argv)
     if args.output and Path(args.output).exists():
         say(f'flahax mix: {args.output} already exists; choose a new directory')
@@ -828,6 +954,8 @@ def main(argv=None, *, ask=input, say=print, store=None):
     store = store or Store()
     p = Prompts(ask, say)
     args.session = ' '.join(args.session)
+    if args.review_reagents and not args.session:
+        parser.error('--review-reagents requires a saved session')
     if args.session.strip('/\\') == 'sessions':
         saved = store.list('sessions')
         say(
@@ -839,7 +967,9 @@ def main(argv=None, *, ask=input, say=print, store=None):
     if use_tui(args.plain, ask, say):
         from .mix_tui import run_tui  # mix_tui imports this module
 
-        code, lines = run_tui(store, args.session or None, args.output)
+        code, lines = run_tui(
+            store, args.session or None, args.output, review_availability=args.review_reagents
+        )
         if code is not None:
             for line in lines:
                 say(line)
@@ -848,6 +978,8 @@ def main(argv=None, *, ask=input, say=print, store=None):
         if args.session:
             path = find_session(store, args.session)
             name, session = path.stem, load_session(path)
+            if args.review_reagents:
+                name, session = review_reagents(p, store, name, session)
         else:
             say(
                 f'FlahaX {__version__} mix: five steps. Enter keeps the value in brackets; '

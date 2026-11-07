@@ -54,12 +54,21 @@ FIELD_TEST_KEYS = (
     + ['ENTER', 'ENTER', 'ENTER', 'ENTER']  # fill the tanks; RO; no limits; a packaged formula
     + typed('tomato')
     + ['DOWN', 'ENTER']  # the second formula matching "tomato"
-    + ['ENTER', 'ENTER', 'ENTER']  # whole catalogue; add nothing; a new acid
+    + [
+        'ENTER',
+        'ENTER',
+        'ENTER',
+        'DOWN',
+        'ENTER',
+    ]  # fertilizers; no addition; all reagents; custom
     + entry('HNO3')
     + entry('65')
+    + ['ENTER']  # liquid
     + entry('1.3')
+    + ['ENTER']  # unknown water fraction
     + entry('HNO3 65%')
-    + ['ENTER']  # done with acids
+    + ['ENTER']  # no more reagents
+    + entry('my reagents')
     + entry('6')
     + ['DOWN', 'DOWN', 'ENTER']
     + entry('tomato stage 1')

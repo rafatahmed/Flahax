@@ -57,7 +57,7 @@ JSON.
 ## Saved items of `flahax mix`
 
 `flahax mix` saves under `$FLAHAX_HOME` (default `~/.flahax`), one JSON file per item, in the
-folders `waters/`, `formulas/`, `stores/`, `acids/` and `sessions/`. A session records the answers
+folders `waters/`, `formulas/`, `stores/`, `acids/`, `reagents/` and `sessions/`. A session records the answers
 of one batch:
 
 | Key | Meaning |
@@ -67,6 +67,22 @@ of one batch:
 | `limits` | Declared maximum concentrations, mg/L |
 | `formula`, `formula_title` | The formula name and the title shown on the sheet |
 | `store`, `acids` | The saved product list (or `catalogue`) and the saved acid names |
+| `reagent_store` | The saved available pH reagent list (or explicitly selected `catalogue`). New mix sessions store selected acid and base records together here; `acids` remains an empty list. Legacy explicitly reviewed records may retain additional certificate names. |
 | `ph`, `depth` | Target pH, and the sheet depth: 1 grower, 2 agronomist, 3 full report |
 
 A damaged or hand-edited session is refused with the error `invalid_session`, naming the field.
+
+In a new calculation, fill mode derives irrigation volume from the smaller A/B nutrient tank.
+All three channels use `spec.ratio`; the reagent container is refilled as needed. In exported
+`summary.json`, `volumes.prepared_litres.acid` is the first reagent fill, not the total stock
+consumed. `reagent_preparation` records total stock and reagent quantities, fill/refill counts,
+and doses for full and final partial fills. Blocked calculations, on-target mixes and solid
+reagents have no liquid preparation schedule. A liquid reagent quantity that cannot fit the
+planned stock volume produces a blocked delivery diagnostic, without per-fill instructions.
+
+A session without `reagent_store` requires explicit availability review using
+`flahax mix sessions/NAME --review-reagents`. This saves a new session and preserves
+the old one. Existing source/input drift checks still apply. Reagent lists are arrays
+of the product records described under [batch inputs](../agronomist/batch-command.md);
+an empty array means no available reagents. The name `catalogue` is reserved for
+the built-in list.

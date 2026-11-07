@@ -3,7 +3,7 @@
 `flahax mix` asks for the same five things in order and remembers your answers,
 so the next batch is one command:
 
-1. **Specification**: tank A, tank B and acid container sizes, the injection
+1. **Specification**: tank A, tank B and reagent container sizes, the injection
    ratio, the temperature, and whether you fill the tanks full (several
    irrigations) or make just enough for one irrigation.
 2. **Water analysis**: RO water, a saved analysis, or a new one typed from the
@@ -19,12 +19,32 @@ so the next batch is one command:
    chelating agent. FlahaX checks that the label's charges balance; a compound
    that does not balance is still used for nutrients, but no acid is planned for
    that batch.
-5. **pH requirement**: the target pH of the irrigation solution.
+5. **pH reagents and target**: choose the catalogue, a saved reagent list, or
+   tick the acids and bases you actually have. Saved acid certificates also
+   appear in that selection. You can add a custom supported reagent with its
+   declared assay, physical form, liquid density and known water content.
+   Save the list, then enter the target pH. Only those reagents are considered,
+   and only in the required direction. An empty list stays empty; if correction
+   is needed, the report explains the missing reagent.
 
 ```bash
 flahax mix                          # first time: answers the five steps
 flahax mix sessions/tomato-ro       # next time: no questions
 ```
+
+Sessions created before reagent availability was recorded need explicit review:
+
+```bash
+flahax mix sessions/tomato-ro --review-reagents
+```
+
+Select the available acids and bases and save under a new session name. The old
+session is preserved; its other answers are retained and recalculated. Existing
+acid certificates remain available. Changed referenced inputs or model sources
+still require review before accepting a recalculated result.
+The reagent-only review does not clear an existing stale-input or changed-model
+warning. Review those inputs through a new interview or the documented full
+session migration first.
 
 In a terminal window (Windows Terminal, the Windows console, or a Linux or macOS
 terminal of at least 80 x 24) `flahax mix` opens full screen. The arrow keys

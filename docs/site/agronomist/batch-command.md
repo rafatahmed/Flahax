@@ -4,6 +4,19 @@
 
 # A batch from files: `flahax batch`
 
+Use `--reagents available-reagents.json` to restrict pH correction to a JSON array
+of available product records. A saved mix reagent list uses this format. An empty
+array offers no reagents; it never restores catalogue defaults. Without this flag,
+batch uses catalogue pH reagents. Any explicitly supplied `--acid` certificates are
+added to the chosen list. Direction selection then considers only these products.
+
+Each reagent record declares `id`, `name`, `chemicalFormula`, `massFraction`,
+`physicalForm`, `source`, `revision` and `recordedAt`. Liquid products declare
+`densityKgPerL`; `solventMassFraction` is the known water fraction or null when
+unknown. Supported identities are HNO3, H3PO4, H2SO4, C6H8O7, KOH, KHCO3 and K2CO3.
+Joint fitting still requires the existing declared-solvent and mass-cap inputs;
+selection does not supply missing chemical information or relax those limits.
+
 This page takes you from a water analysis and a crop to a printed batch sheet in four steps with
 `flahax batch`, then works through a tomato example on a real brackish well. FlahaX plans a batch;
 it does not run pumps or dose anything. Its evidence is computational: it has not been validated in

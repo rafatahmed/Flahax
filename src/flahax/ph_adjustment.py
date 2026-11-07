@@ -230,7 +230,7 @@ def plan_coupled_ph(
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
-    if not isinstance(products, (list, tuple)) or not products:
+    if not isinstance(products, (list, tuple)):
         raise DeliveryError('missing_field', 'sourced pH reagent product records are required')
     identifiers = [p.get('id') if isinstance(p, Mapping) else None for p in products]
     if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(

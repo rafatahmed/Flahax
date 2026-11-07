@@ -233,7 +233,8 @@ class ResultViewTests(unittest.TestCase):
         self.assertTrue(all(line.rstrip().endswith('│') for line in cards), cards)
         self.assertFalse(any(line.rstrip().endswith('…') for line in lines), lines)
         joined = ' '.join(' '.join(line.replace('│', ' ') for line in lines).split())
-        self.assertIn('sets the batch', joined)
+        self.assertIn('fills total', joined)
+        self.assertNotIn('reagent container sets the batch', joined)
 
     def test_notes_use_grower_words(self):  # 142
         summary = unbound_summary(self.summary)

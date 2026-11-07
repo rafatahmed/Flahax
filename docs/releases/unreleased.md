@@ -1,5 +1,44 @@
 # FlahaX unreleased changes: detailed notes
 
+## Final recipe report consistency (#231)
+
+Remedy stage messages now match the final recipe shown in the batch summary. Reports explain
+local stationarity, nutrient matching and nutrient feasibility diagnostics separately, without
+changing their underlying calculation statuses or implying a global optimum or impossibility.
+Positive doses below the existing display-zero precision are labelled as numerical residue and
+have no weighing checkbox; their exact values remain in the exported calculation data.
+Sheets name reagent containers without assuming they contain acid.
+No solver controls, nutrient tolerances, recipe quantities or acceptance decisions change.
+
+## Nutrient stock fill and reagent refills (#231)
+
+Fill mode now uses the smaller A/B nutrient tank to determine irrigation volume. A separate
+reagent tank can be refilled at the same injection ratio instead of shrinking the nutrient batch.
+With 100 L A/B tanks and a 10 L reagent tank at 1:100, the batch supplies 10,000 L irrigation:
+100 L in each nutrient tank, and ten 10 L reagent fills. Reports distinguish the total reagent
+amount from the amount per fill, including a scaled final partial fill. Once mode permits the
+same reagent refills while still rejecting nutrient stock volumes that exceed A/B capacity.
+Previously saved calculations retain their original volumes; a new calculation uses this rule.
+Concentration targets, solver methods and acceptance tolerances are unchanged; batch quantities
+scale with the corrected irrigation volume.
+
+## Available pH reagents (#231)
+
+Mix selects catalogue acids and bases together using the fertilizer-list interaction:
+the whole catalogue, a saved list, or individual available products. Existing saved acid
+certificates remain selectable. Custom supported liquid or solid reagents declare their
+assay and physical form, liquid density and known water content; unknown composition is
+not inferred. Only the selected list is passed into the unchanged direction and numerical
+checks. Batch accepts the same product-record array through `--reagents`; an empty array
+stays empty, while explicitly supplied `--acid` certificates are additional available products.
+
+Old sessions lacking availability require `--review-reagents` and a new session name.
+The original session is preserved. This reagent-only review cannot bypass existing
+input/model-drift checks. Catalogue is reserved for the built-in selection, so saving an
+empty or restricted list under that name cannot silently restore all products.
+
+## Earlier changes
+
 The full text of unreleased changes, as recorded when each was merged, newest first. The [changelog](../../CHANGELOG.md) groups them into a short summary. These notes do not designate a future release version. Package metadata remains `0.6.1.dev0`.
 
 These entries are a chronological record. Older entries can describe behavior
