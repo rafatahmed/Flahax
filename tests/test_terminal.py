@@ -56,6 +56,7 @@ class KeyDecodingTests(unittest.TestCase):
         ):
             reads = iter([first, second])
             self.assertEqual(read_windows_key(lambda: next(reads)), key)
+        self.assertEqual(read_windows_key(lambda: 'H'), 'H')
 
     def test_decode_posix(self):
         self.assertEqual(decode_posix(b'\x1b[A'), ['UP'])
