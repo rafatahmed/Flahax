@@ -389,6 +389,16 @@ def solve_joint_problem(
     doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [_number(reagent_dose, 'reagent dose')]
     point = [_number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
     constraints = _constraints(problem, scales)
+    # Nonnegative sources of a nutrient with no remaining allowance are fixed
+    # at zero. Keep them out of local proposals, not merely the final line search:
+    # one forbidden positive coordinate would otherwise shorten the whole step to zero.
+    fixed_zero = {
+        j
+        for row, bound in constraints
+        if bound == 0 and all(a >= 0 for a in row)
+        for j, a in enumerate(row)
+        if a > 0
+    }
     exact_model = None
     if objective_gap_tolerance is not None or stationarity_tolerance is not None:
         exact_model = [
@@ -929,7 +939,7 @@ def solve_joint_problem(
                         return trial_check['relativeResidual'] < stationary['relativeResidual']
 
                     has_active_cap = any(
-                        item['constraint'] >= n and constraints[item['constraint']][1] > 0
+                        item['constraint'] >= n and constraints[item['constraint']][1] >= 0
                         for item in stationary['activeMultipliers']
                     )
                     refine_cap = has_active_cap and stationary['relativeResidual'] <= 0.05
@@ -1052,7 +1062,10 @@ def solve_joint_problem(
                     charge_tolerance / charge_scale,
                     max_backtracks,
                     [max(0.0, v - width) for v, width in zip(point, widths)],
-                    [v + width for v, width in zip(point, widths)],
+                    [
+                        0.0 if j in fixed_zero else v + width
+                        for j, (v, width) in enumerate(zip(point, widths))
+                    ],
                     diagnostics=linear,
                 )
                 linear['chargeEquality'] = True

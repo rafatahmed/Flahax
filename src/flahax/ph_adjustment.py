@@ -548,17 +548,33 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     rebuilt rows (water, products and the reagent's supply).
     """
     maxima = assessed_limits(maxima, endpoints[0])
-    by_id = {p['id']: p for p in pool}
     entries = {s['id']: s for r in endpoints for s in r['salts']}
     doses = {}
     for recipe, factor in zip(endpoints, (1 - weight, weight)):
         for salt in recipe['salts']:
             doses[salt['id']] = doses.get(salt['id'], 0.0) + factor * salt['gramsPerLitre']
     salts = [dict(entries[key], gramsPerLitre=g) for key, g in doses.items() if g > 0]
+    result = _assess_recipe(pool, targets, supply, endpoints[0], salts, maxima)
+    if 'substitutionSearch' in result:
+        result['substitutionSearch'] = dict(
+            result['substitutionSearch'],
+            method='convex blend of searched endpoint recipes; no global search certificate',
+            attemptedProductIds=[
+                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
+            ],
+        )
+    return result
+
+
+def _assess_recipe(pool, targets, supply, recipe, salts, maxima):
+    """Reassess fixed product doses and actual supply without rerunning the fit."""
+    maxima = assessed_limits(maxima, recipe)
+    by_id = {p['id']: p for p in pool}
+    doses = {s['id']: s['gramsPerLitre'] for s in salts}
     grams = [doses.get(p['id'], 0.0) for p in pool]
     loss, rows = score(forward(pool, grams, supply), targets)
     result = dict(
-        endpoints[0],
+        recipe,
         salts=salts,
         saltIds=[s['id'] for s in salts],
         grams=grams,
@@ -607,10 +623,6 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
         result['substitutionSearch'] = dict(
             result['substitutionSearch'],
             status='candidate_found' if result['feasible'] else 'search_incomplete',
-            method='convex blend of searched endpoint recipes; no global search certificate',
-            attemptedProductIds=[
-                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
-            ],
         )
     return result
 
@@ -745,13 +757,14 @@ def _couple(
         )
         if abs(dose - assumed_dose) > DOSE_TOLERANCE * max(dose, 1e-12):
             raise DeliveryError('nonconvergent', 'blended recipe and reagent dose disagree')
-        # Recompute every assessment at the actual dose, including diagnostic rows.
-        supply = dict(water)
-        for ion, mg in contribution(dose).items():
-            supply[ion] = supply.get(ion, 0.0) + mg
-        recommendation = _blend_recipe(
-            pool, targets, supply, [recommendation] * 2, 0.0, maximum_concentrations
-        )
+    # Settling permits a small dose difference; rows and limits must still describe
+    # the actual returned dose, for ordinary fits as well as blended recipes.
+    supply = dict(water)
+    for ion, mg in contribution(dose).items():
+        supply[ion] = supply.get(ion, 0.0) + mg
+    recommendation = _assess_recipe(
+        pool, targets, supply, recommendation, recommendation['salts'], maximum_concentrations
+    )
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
     over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (

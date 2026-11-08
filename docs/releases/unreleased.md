@@ -1,5 +1,20 @@
 # FlahaX unreleased changes: detailed notes
 
+## Sequential accounting and explicit zero maxima (#237, #238)
+
+Sequential pH candidates now reassess nutrient totals, total nitrogen, loss and declared
+maximum checks using the actual returned reagent dose and unchanged fertilizer amounts.
+The settling tolerance no longer leaves assessments tied to the preceding assumed dose.
+Ordinary fits retain their search provenance; only actual blended recipes are labelled as blends.
+
+Joint proposals keep sources at zero when an existing hard constraint proves that no dose is
+allowed. The existing active-face refinement also applies to binding zero maxima. This avoids
+discarding an entire proposed step because it includes a forbidden product, and permits local
+stationarity refinement at a zero cap. Solver tolerances, iteration limits and final verification
+are unchanged. A zero ammonium target still means no requirement; an explicit zero ammonium
+maximum prohibits ammonium. Convergence does not imply that nutrient targets are met, and
+does not prove a global optimum.
+
 ## Final recipe report consistency (#231)
 
 Remedy stage messages now match the final recipe shown in the batch summary. Reports explain

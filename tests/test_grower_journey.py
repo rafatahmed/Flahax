@@ -247,10 +247,19 @@ class ReagentQualificationTests(unittest.TestCase):
         self.assertAlmostEqual(chosen['joint']['finalPh'], 5.8, places=4)
         self.assertEqual(summary['status'], 'requires_review')
 
-    def test_dry_reagent_uses_mass_on_a_real_batch_when_no_joint_candidate_verifies(self):
-        summary = tomato(formula='Lettuce 2 (Howard Resh)', ph=6.5)
+    def test_dry_reagent_uses_mass_without_a_declared_joint_mass_cap(self):
+        from flahax import catalogue_ph_reagents
+
+        solid = next(p for p in catalogue_ph_reagents() if p['chemicalFormula'] == 'KHCO3')
+        with tempfile.TemporaryDirectory() as folder:
+            reagents = Path(folder) / 'reagents.json'
+            reagents.write_text(json.dumps([solid]), encoding='utf-8')
+            summary = tomato(
+                formula='Lettuce 2 (Howard Resh)', ph=6.5, reagents=str(reagents), acid=[]
+            )
         chosen = summary['ph']['selected']
         self.assertIsNotNone(chosen, summary['ph']['message'])
+        self.assertEqual(chosen['product_id'], solid['id'])
         self.assertEqual(chosen['joint']['status'], 'sequential')
         self.assertIsNone(chosen['volume_ml_per_batch'])
         self.assertGreater(chosen['mass_g_per_batch'], 0)
