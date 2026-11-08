@@ -86,6 +86,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Reconcile sequential pH nutrient reports and limit checks with the actual returned reagent
+  dose (#237). Respect fixed-zero sources in joint proposals and enable zero-cap refinement
+  without changing tolerances or iteration limits (#238).
+
 - Fill nutrient stocks independently of the reagent container capacity at the shared injection
   ratio; report reagent doses per fill, refill counts and final partial fills without changing
   solver methods or nutrient tolerances (#231).
