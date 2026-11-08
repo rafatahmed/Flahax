@@ -723,6 +723,7 @@ def build(args):
             confirmed_products=args.confirmed_product,
             ec=args.ec,
             products=args.products,
+            reagents=args.reagents,
             rules=args.rules,
         )
     )

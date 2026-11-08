@@ -36,6 +36,23 @@ class IndependentReagentCapacityTests(unittest.TestCase):
         self.assertEqual(summary['volumes']['prepared_litres']['B'], 100)
         self.assertEqual(summary['batch_litres'], 10000)
 
+    def test_unequal_nutrient_tanks_name_the_limiting_tank_not_the_reagent_container(self):
+        summary = run_batch(
+            BatchOptions(
+                water='ro',
+                formula='DEFAULT',
+                tank_litres={'A': 100, 'B': 200, 'acid': 10},
+                ratio=100,
+                mode='fill',
+            )
+        )
+        self.assertEqual(summary['batch_litres'], 10000)
+        self.assertEqual(summary['volumes']['prepared_litres'], {'A': 100, 'B': 100, 'acid': 10})
+        sheet = render_mix_sheet(summary)
+        self.assertIn('your 100 L tank A sets the batch', sheet)
+        self.assertNotIn('reagent container sets the batch', sheet)
+        self.assertIn('10 fills total (9 refills)', sheet)
+
     def test_reagent_dose_is_split_across_ten_fills_at_the_same_ratio(self):
         summary = self.summary
         schedule = summary.get('reagent_preparation') or {}

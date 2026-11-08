@@ -702,10 +702,11 @@ class AuditWordingTests(unittest.TestCase):
     def test_acid_list_says_what_was_added(self):  # 143
         from flahax.mix_cli import ask_acids
 
-        lines, script = [], Script(['1', 'HNO3', '60', '1.37', 'Nitric acid 60%', ''])
+        lines, script = [], Script(['1', 'unknown', 'HNO3', '60', '1.37', 'Nitric acid 60%', ''])
         with tempfile.TemporaryDirectory() as tmp:
             ask_acids(Prompts(script, lines.append), Store(tmp), [])
         self.assertIn('  Added Nitric acid 60% for the pH plan.', lines)
+        self.assertTrue(any('FlahaX plans with these acids only:' in line for line in lines))
         self.assertTrue(any(prompt.startswith('Name of this acid') for prompt in script.prompts))
 
 
@@ -740,6 +741,14 @@ class SessionFileTests(unittest.TestCase):  # 149
         ),
         'limits as a list': ({**GOOD_SESSION, 'limits': [['Na', 69]]}, "'limits' must be"),
         'acids as text': ({**GOOD_SESSION, 'acids': 'hno3'}, "'acids' must be a list of names"),
+        'reagent list as number': (
+            {**GOOD_SESSION, 'reagent_store': 3},
+            "'reagent_store' must name an available reagent list or catalogue",
+        ),
+        'blank reagent list': (
+            {**GOOD_SESSION, 'reagent_store': '   '},
+            "'reagent_store' must name an available reagent list or catalogue",
+        ),
         'depth 9': ({**GOOD_SESSION, 'depth': 9}, "'depth' must be 1, 2 or 3"),
         'tanks as a list': (
             {**GOOD_SESSION, 'spec': {**GOOD_SESSION['spec'], 'tank_litres': [1, 2, 3]}},

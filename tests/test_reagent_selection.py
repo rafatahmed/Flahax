@@ -19,6 +19,57 @@ from tests.test_mix_cli import SPEC, RO, TOMATO, CATALOGUE, END, Script, GOOD_SE
 
 
 class BatchAvailabilityTests(unittest.TestCase):
+    def test_batch_cli_empty_availability_never_restores_catalogue_reagents(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / 'none.json'
+            path.write_text('[]')
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = batch(
+                    [
+                        '--water',
+                        'ro',
+                        '--formula',
+                        'Tomato (Howard Resh)',
+                        '--reagents',
+                        str(path),
+                        '--output',
+                        str(root / 'out'),
+                    ]
+                )
+            self.assertEqual(code, 3)
+            result = json.loads((root / 'out' / 'summary.json').read_text())
+            self.assertEqual(result['ph']['direction'], 'base')
+            self.assertEqual(result['ph']['candidates'], [])
+            self.assertIsNone(result['ph']['selected'])
+            self.assertIn('none was offered: add a base', result['ph']['message'])
+
+    def test_batch_rejects_reagent_json_that_is_not_an_array_of_records(self):
+        for value in ({'id': 'not-an-array'}, ['not-a-record']):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                path = root / 'reagents.json'
+                path.write_text(json.dumps(value))
+                messages = io.StringIO()
+                with contextlib.redirect_stderr(messages), contextlib.redirect_stdout(messages):
+                    code = batch(
+                        [
+                            '--water',
+                            'ro',
+                            '--formula',
+                            'DEFAULT',
+                            '--reagents',
+                            str(path),
+                            '--output',
+                            str(root / 'out'),
+                        ]
+                    )
+                self.assertNotEqual(code, 0)
+                self.assertIn(
+                    'pH reagents must be a JSON array of product records', messages.getvalue()
+                )
+                self.assertFalse((root / 'out' / 'summary.json').exists())
+
     def test_batch_cli_uses_only_the_selected_catalogue_base(self):
         base = next(r for r in catalogue_ph_reagents() if r['chemicalFormula'] == 'KOH')
         with tempfile.TemporaryDirectory() as folder:
@@ -87,6 +138,124 @@ class BatchAvailabilityTests(unittest.TestCase):
 
 
 class MixAvailabilityTests(unittest.TestCase):
+    def test_saved_acid_certificates_can_be_selected_without_inventing_solvent_content(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            store = Store(root / 'home')
+            store.save(
+                'acids',
+                'declared',
+                dict(
+                    formula='HNO3',
+                    fraction=0.65,
+                    density=1.39,
+                    name='Declared nitric',
+                    solvent_fraction=0.35,
+                ),
+            )
+            store.save(
+                'acids',
+                'unknown',
+                dict(
+                    formula='HNO3',
+                    fraction=0.60,
+                    density=1.37,
+                    name='Unknown remainder',
+                ),
+            )
+            store.save('sessions', 'old', dict(GOOD_SESSION))
+            count = len(catalogue_ph_reagents())
+            answers = Script(['2', f'{count + 1} {count + 2}', '1', 'certificates', 'reviewed'])
+            mix(
+                ['sessions/old', '--review-reagents', '--plain', '--output', str(root / 'out')],
+                store=store,
+                ask=answers,
+                say=lambda *a: None,
+            )
+            records = store.load('reagents', 'certificates')
+            self.assertEqual(
+                [r['name'] for r in records], ['Declared nitric', 'Unknown remainder']
+            )
+            self.assertEqual([r['massFraction'] for r in records], [0.65, 0.60])
+            self.assertEqual([r['solventMassFraction'] for r in records], [0.35, None])
+            self.assertEqual(store.load('sessions', 'reviewed')['reagent_store'], 'certificates')
+            self.assertEqual(answers.answers, [])
+            result = json.loads((root / 'out' / 'summary.json').read_text())
+            self.assertEqual(result['ph']['candidates'], [])
+            self.assertIsNone(result['ph']['selected'])
+
+    def test_saved_list_is_reused_and_duplicate_custom_name_keeps_original_composition(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root, lines = Path(folder), []
+            store = Store(root / 'home')
+            record = acid_record('HNO3:0.65:1.39:My nitric:0.35')
+            record['id'] = 'custom-my-nitric'
+            store.save('reagents', 'available', [record])
+            store.save('sessions', 'old', dict(GOOD_SESSION))
+            original = store.path('reagents', 'available').read_bytes()
+            answers = Script(
+                [
+                    '2',
+                    '2',
+                    'HNO3',
+                    '60',
+                    '1',
+                    '1.37',
+                    '40',
+                    'My nitric',
+                    '1',
+                    'reviewed',
+                ]
+            )
+            mix(
+                ['sessions/old', '--review-reagents', '--plain', '--output', str(root / 'out')],
+                store=store,
+                ask=answers,
+                say=lambda *a: lines.append(' '.join(map(str, a))),
+            )
+            self.assertIn(
+                'A reagent with that name is already selected; use a distinct name.', lines
+            )
+            self.assertEqual(store.load('sessions', 'reviewed')['reagent_store'], 'available')
+            self.assertEqual(store.path('reagents', 'available').read_bytes(), original)
+            self.assertEqual(store.list('reagents'), ['available'])
+            self.assertEqual(answers.answers, [])
+            result = json.loads((root / 'out' / 'summary.json').read_text())
+            self.assertEqual(result['ph']['candidates'], [])
+
+    def test_review_option_requires_a_saved_session(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store(folder)
+            messages = io.StringIO()
+            with contextlib.redirect_stderr(messages), self.assertRaises(SystemExit) as error:
+                mix(['--review-reagents', '--plain'], store=store)
+            self.assertEqual(error.exception.code, 2)
+            self.assertIn('--review-reagents requires a saved session', messages.getvalue())
+            self.assertEqual(store.list('sessions'), [])
+
+    def test_review_cannot_replace_original_session_even_after_replace_confirmation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root, lines = Path(folder), []
+            store = Store(root / 'home')
+            store.save('sessions', 'old', dict(GOOD_SESSION))
+            original = store.path('sessions', 'old').read_bytes()
+            answers = Script(['3', '1', 'none', 'old', '2'])
+            code = mix(
+                ['sessions/old', '--review-reagents', '--plain', '--output', str(root / 'out')],
+                store=store,
+                ask=answers,
+                say=lines.append,
+            )
+            self.assertEqual(code, 1)
+            self.assertIn(
+                'Use a new session name to preserve the original answers', '\n'.join(lines)
+            )
+            self.assertEqual(store.path('sessions', 'old').read_bytes(), original)
+            self.assertEqual(store.list('sessions'), ['old'])
+            self.assertEqual(store.list('reagents'), [])
+            self.assertFalse((root / 'out').exists())
+            self.assertEqual(answers.answers, [])
+
     def test_empty_list_cannot_use_the_reserved_catalogue_name(self):
         with tempfile.TemporaryDirectory() as folder:
             root, lines = Path(folder), []

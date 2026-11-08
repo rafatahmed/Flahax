@@ -412,6 +412,36 @@ class FallbackTests(unittest.TestCase):
                     line.encode('latin-1')
 
 
+class ReagentReviewTuiTests(unittest.TestCase):
+    def test_review_saves_new_availability_and_preserves_original_session(self):
+        from tests.test_mix_cli import GOOD_SESSION
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            store = Store(root / 'home')
+            store.save('sessions', 'old', dict(GOOD_SESSION))
+            original = store.path('sessions', 'old').read_bytes()
+            term = IdleTerm(
+                ['DOWN', 'DOWN', 'ENTER', 'ENTER'] + entry('none') + entry('reviewed') + ['q', 'y']
+            )
+            code, lines = run_tui(
+                store,
+                'old',
+                str(root / 'out'),
+                term_factory=lambda: term,
+                review_availability=True,
+            )
+            self.assertEqual(code, 3, lines)
+            self.assertTrue(term.exited)
+            self.assertEqual(store.path('sessions', 'old').read_bytes(), original)
+            self.assertEqual(store.load('sessions', 'reviewed')['reagent_store'], 'none')
+            self.assertEqual(store.load('reagents', 'none'), [])
+            summary = json.loads((root / 'out' / 'summary.json').read_text())
+            self.assertEqual(summary['ph']['candidates'], [])
+            self.assertIsNone(summary['ph']['selected'])
+            self.assertIn('none was offered: add a base', summary['ph']['message'])
+
+
 class RunTuiTests(unittest.TestCase):
     """The whole ``flahax mix`` run on the full screen, against the line mode's files."""
 
