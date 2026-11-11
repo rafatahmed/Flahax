@@ -411,7 +411,7 @@ def _cleaned_assay(salt: dict) -> tuple[dict[str, float] | None, str | None]:
     if sum(cleaned.values()) > 100.5:
         return None, f"{name} assays add to more than 100%"
     formula = str(salt.get("formula") or "")
-    if formula == "Input Formula Here" or str(name).lower().startswith("test_"):
+    if formula == "Input Formula Here":
         return None, f"{name} is a placeholder row"
     return cleaned, None
 

@@ -1,5 +1,22 @@
 # FlahaX unreleased changes: detailed notes
 
+## Custom batch record validation (#240, #241)
+
+Batch checks custom fertilizer and pH-reagent records before constructing a calculation.
+Records need nonempty string IDs and names; each offered list must use distinct names.
+The reagent-name check includes certificates added with `--acid`. Rename ambiguous entries
+before retrying: two different products must not share a display name, because name-based
+chemistry and reporting cannot distinguish them. Previously, that collision could change
+the calculated starting pH and reverse the required correction direction.
+
+Malformed records and nonnumeric, nonfinite or nonpositive liquid reagent densities now
+produce plain input errors rather than uncaught exceptions. Valid custom assays and product
+availability remain unchanged, as do numerical tolerances and solver controls.
+
+Valid custom names beginning with `test_` no longer cause products to be discarded as
+placeholders (#242). The declared formula and assay determine eligibility; the literal
+unfinished formula `Input Formula Here` and invalid or missing assays remain rejected.
+
 ## Sequential accounting and explicit zero maxima (#237, #238)
 
 Sequential pH candidates now reassess nutrient totals, total nitrogen, loss and declared
