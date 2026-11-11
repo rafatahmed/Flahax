@@ -86,6 +86,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Validate custom batch records and reagent densities before configuration; reject duplicate
+  product names before they can corrupt pH chemistry or reagent selection (#240, #241).
+
+- Accept valid custom product names beginning with `test_`; reject actual placeholder formulas
+  and invalid assays rather than inferring chemistry from a display-name prefix (#242).
+
 - Reconcile sequential pH nutrient reports and limit checks with the actual returned reagent
   dose (#237). Respect fixed-zero sources in joint proposals and enable zero-cap refinement
   without changing tolerances or iteration limits (#238).

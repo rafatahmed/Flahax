@@ -502,7 +502,17 @@ def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_c
             if solid_cap is not None:
                 masses[identity] = solid_cap
         elif reagent.get('densityKgPerL') is not None:
-            masses[identity] = 1000 * cap_litres * reagent['densityKgPerL']
+            density = reagent['densityKgPerL']
+            if (
+                isinstance(density, bool)
+                or not isinstance(density, (int, float))
+                or not math.isfinite(density)
+                or density <= 0
+            ):
+                raise DeliveryError(
+                    'invalid_value', f'{identity}: densityKgPerL must be finite and positive'
+                )
+            masses[identity] = 1000 * cap_litres * density
         else:
             # Neither a known solid nor a liquid with a verifiable volume cap.
             continue
@@ -556,6 +566,35 @@ def left_out_products(library, products, confirmed_products=()):
     ]
 
 
+def _product_records(records, label):
+    if not isinstance(records, list):
+        raise DeliveryError('invalid_value', f'{label} must be a JSON array of product records')
+    names = set()
+    for index, record in enumerate(records, 1):
+        if not isinstance(record, dict):
+            raise DeliveryError(
+                'invalid_value',
+                f'{label} must be a JSON array of product records; '
+                f'{label} entry {index} must be a product record',
+            )
+        identity = record.get('id')
+        if not isinstance(identity, str) or not identity.strip():
+            raise DeliveryError(
+                'invalid_value', f'{label} entry {index} needs a nonempty string id'
+            )
+        name = record.get('name')
+        if not isinstance(name, str) or not name.strip():
+            raise DeliveryError(
+                'invalid_value', f'{label} entry {index} needs a nonempty string name'
+            )
+        if name in names:
+            raise DeliveryError(
+                'invalid_value', f'{label} need distinct names; {name!r} is repeated'
+            )
+        names.add(name)
+    return records
+
+
 def run_batch(options):
     """The batch summary (``summarize_batch``); with tanks, ``summary['volumes']`` gives the stock
     volumes."""
@@ -569,7 +608,10 @@ def run_batch(options):
         )
     volume = options.volume if volumes is None else volumes.irrigation_litres
     library = load_library()
-    products = read_json(options.products, 'products') if options.products else library['salts']
+    products = _product_records(
+        read_json(options.products, 'products') if options.products else library['salts'],
+        'products',
+    )
     if options.targets:
         targets = read_json(options.targets, 'targets')
         title = options.title or Path(options.targets).stem
@@ -585,9 +627,8 @@ def run_batch(options):
         if options.reagents is not None
         else catalogue_ph_reagents()
     )
-    if not isinstance(reagents, list) or not all(isinstance(r, dict) for r in reagents):
-        raise DeliveryError('invalid_value', 'pH reagents must be a JSON array of product records')
-    reagents = reagents + [acid_record(a) for a in options.acid]
+    reagents = _product_records(reagents, 'pH reagents')
+    reagents = _product_records(reagents + [acid_record(a) for a in options.acid], 'pH reagents')
     limits = dict(options.limit)
     cap_litres = options.max_reagent_litres or volume / 200
     joint = (
