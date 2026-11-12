@@ -44,12 +44,13 @@ can predict these effects, but they are general geochemical tools and are
 rarely used in day-to-day recipe design. Decision support systems such as
 NUTRISENSE have shown the value of calculating and readjusting nutrient
 solutions from analyses in closed systems <!-- TODO cite NUTRISENSE -->.
-To our knowledge, no openly available tool combines fertilizer formulation
-against the actual water with fertilizer-specific equilibrium chemistry,
-acid planning and stock-tank planning, and none has been evaluated in the
-field for that combination.
+FlahaX combines formulation against source-water composition with
+fertilizer-specific equilibrium chemistry, acid planning and stock-tank planning.
+A [dated software comparison](../../site/evidence/competitor-comparison.md)
+records selected tools, tested versions and limitations; it does not establish
+priority or field accuracy.
 
-FlahaX is an open-source (Apache-2.0) Python engine that does this
+FlahaX is an open-source (Apache-2.0) Python engine
 <!-- TODO cite JOSS paper when published -->. Its predictions so far are
 verified only computationally, against PHREEQC. This study asks whether
 those predictions hold on real farms.

@@ -76,7 +76,7 @@ tanks. A B-side acid arrangement still needs grade/mixture/operating review.
 Existing recipe phosphoric-acid mass is not an additional pH-correction dose.
 No new compatibility database entries or approved StockPlan were generated.
 
-## Visually verified SQM anchors
+## SQM brochure values and screening applicability
 
 `165357805552.pdf`, page 2: EC of **1 g product/L at 25 C**, in mS/cm.
 
@@ -87,13 +87,23 @@ No new compatibility database entries or approved StockPlan were generated.
 | Ultrasol MKP | 0.7 |
 | Ultrasol MAP | 0.9 |
 | Ultrasol Calcium | 1.2 |
-| Ultrasol Magsul | 1.2 |
+| Ultrasol Magsul | 1.2 (disputed; excluded from screening) |
 | Ultrasol Magnit | 0.9 |
 
 The brochure also lists Magnum P44 at 1.5; this acidifying urea-phosphate
 product is not included in the pre-acid screening implementation. Acid/base
-reactions require more than an additive conductivity assumption. Magsul is
-**1.2**, not 0.9. Headline grades can differ from detailed guaranteed analysis:
+reactions require more than an additive conductivity assumption. The brochure prints
+**1.2** for Magsul, but this conflicts with chemistry calculations and remains unresolved.
+The source is retained with SHA-256
+`28a15230851581f66255fe45f67f6e3b580d88f5cfbbc65a7cb97a9c5171ad48`.
+A pure MgSO4·7H2O calculation at 1 g/kg water gives an EC range near 0.7251 mS/cm.
+Comparing it with 1 g/L assumes dilute-water concentration equivalence; the model is not
+a replacement manufacturer measurement or proof of measured accuracy. Neither 0.9 nor
+0.7251 is adopted as an anchor. See the retained [discrepancy review](audit/2026-10-17-flahax-vs-horticalc/review.md).
+Positive Magsul doses, alone or in mixtures, return `not_supported` with
+`disputed_product_ec_evidence`, the disputed source value, and no complete EC total.
+Zero doses do not affect supported requests. The ion API retains its own inputs and limits.
+Headline grades can differ from detailed guaranteed analysis:
 e.g. Magnit's nitrate-N table is 10.7%, not the rounded headline 11.
 
 ## What can now be calculated without new measurements

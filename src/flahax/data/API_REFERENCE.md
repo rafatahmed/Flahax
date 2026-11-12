@@ -150,7 +150,9 @@ A no-new-measurements, pre-acid screening estimate. Linearity/additivity
 are assumptions, not manufacturer validation. A total fertilizer loading
 cap of 1 g/L is a conservative software policy, NOT a validated range.
 No uncertainty bound or model for concentrated A/B stocks is asserted.
-Unknown products never disappear into a falsely complete total.
+Unknown or disputed products never disappear into a falsely complete total.
+Positive Magsul doses return disputed_product_ec_evidence; its published
+value is retained as disputed evidence, not replaced by a model prediction.
 
 Source module: `flahax.calculated_ec`. Import with `from flahax import estimate_manufacturer_ec`.
 

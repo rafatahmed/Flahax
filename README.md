@@ -23,9 +23,11 @@ precipitates, what the pH will be, how much acid reaches a target pH, and how th
 into stock tanks and injector flows. Every plan carries its units, model identifiers and source
 hashes, so a result can be reviewed and reproduced.
 
-To our knowledge, FlahaX is the first Python package to unite fertilizer formulation,
-fertilizer-specific aqueous equilibrium chemistry and auditable delivery planning in one
-dependency-free library, verified against PHREEQC.
+FlahaX combines fertilizer formulation, fertilizer-specific aqueous equilibrium chemistry,
+and delivery planning in a dependency-free Python library. Plans include units, model
+identifiers, and source references; selected chemistry calculations are checked against
+PHREEQC reference cases. The [dated competitor comparison](docs/site/evidence/competitor-comparison.md)
+records versions, shared inputs, results, and limitations.
 
 **Who it is for**
 

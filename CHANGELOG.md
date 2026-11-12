@@ -78,6 +78,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Withhold manufacturer-screening EC totals containing positive Ultrasol Magsul doses;
+  retain the disputed 1.2 mS/cm brochure value as evidence (#244).
+- Record all chemistry input byte identities, the versioned PHREEQC extraction route and
+  a deterministic source-manifest digest; preserve all scientific records (#245).
+- Replace broad priority claims with supported capabilities and a dated comparison (#246).
+
 - Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).
 
 - Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback

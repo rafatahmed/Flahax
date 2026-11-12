@@ -18,6 +18,10 @@ import json
 import math
 from pathlib import Path
 import re
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools.chemistry_provenance import verify_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 # Fully deprotonated ligands; these are chemical identities, not fitted constants.
@@ -193,9 +197,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database', type=Path, required=True)
     parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--model', type=Path, help='qualify a separately regenerated model')
     args = parser.parse_args()
-    model = ROOT / 'src/flahax/data/chemistry_25c.json'
-    data = json.loads(model.read_text())
+    model = args.model or ROOT / 'src/flahax/data/chemistry_25c.json'
+    data = json.loads(model.read_bytes())
     paths = {'minteq.v4.dat': args.database}
     paths.update(
         {
@@ -203,10 +208,11 @@ def main():
             for n in ('flahax-chelates-25c.dat', 'flahax-phases-25c.dat')
         }
     )
-    hashes = {n: hashlib.sha256(p.read_bytes()).hexdigest() for n, p in paths.items()}
-    report = audit_model(data, {n: p.read_text() for n, p in paths.items()})
-    if hashes['minteq.v4.dat'] != data['database_sha256']:
-        report['errors'].append('base database hash differs from pinned model')
+    raw_sources = {n: p.read_bytes() for n, p in paths.items()}
+    hashes = {n: hashlib.sha256(raw).hexdigest() for n, raw in raw_sources.items()}
+    report = audit_model(data, {n: raw.decode('utf-8') for n, raw in raw_sources.items()})
+    report['errors'].extend(verify_sources(data, raw_sources))
+    if report['errors']:
         report['status'] = 'failed'
     report.update(
         source_sha256=hashes, model_sha256=hashlib.sha256(model.read_bytes()).hexdigest()

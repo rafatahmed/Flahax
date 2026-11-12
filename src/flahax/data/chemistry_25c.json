@@ -1,9 +1,91 @@
 {
-  "schema": 1,
+  "schema": 2,
   "temperature_c": 25,
   "database_sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
-  "source_url": "https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat",
-  "notice": "Modified data, not the original USGS files. Equilibrium constants at 25 C converted to JSON by Rafat A. Al Khashan for FlahaX (first committed 2026-09-27) from PHREEQC 3.8.6 minteq.v4.dat (U.S. Geological Survey; SHA-256 in database_sha256, original at source_url), keeping only the species and phases FlahaX uses, with kieserite and sylvite from PHREEQC 3.8.6 pitzer.dat and FlahaX extensions marked by their own source field. The USGS User Rights Notice for PHREEQC applies: see NOTICE. Cite Parkhurst and Appelo (2013), USGS Techniques and Methods 6-A43.",
+  "source_url": "https://water.usgs.gov/water-resources/software/PHREEQC/phreeqc-3.8.6-17100-x64.msi",
+  "sources": [
+    {
+      "filename": "minteq.v4.dat",
+      "sha256": "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7",
+      "bytes": 334121,
+      "encoding": "utf-8",
+      "transformations": [],
+      "origin": "USGS PHREEQC release distribution",
+      "archive": {
+        "url": "https://water.usgs.gov/water-resources/software/PHREEQC/phreeqc-3.8.6-17100-x64.msi",
+        "sha256": "6e5f6697fa727f919eb4e7c1c2bc20e8c2717378aaf77731efd831ef66578243",
+        "bytes": 16846848,
+        "release": "PHREEQC 3.8.6-17100",
+        "extraction": "Windows Installer administrative extraction (msiexec /a); no database edits or newline conversion"
+      },
+      "archive_member": "phreeqc-3.8.6-17100-x64/database/minteq.v4.dat"
+    },
+    {
+      "filename": "flahax-chelates-25c.dat",
+      "sha256": "bc63ebe54ef47bb38a3d3e7a00bb5231850f2de48a0cc661d0a65d1aa787cc0b",
+      "bytes": 856,
+      "encoding": "utf-8",
+      "transformations": [],
+      "origin": "FlahaX-maintained extension",
+      "repository_path": "tests/fixtures/phreeqc/database/flahax-chelates-25c.dat",
+      "url": "https://raw.githubusercontent.com/rafatahmed/Flahax/de50f8963a65a9f0f99462ffc731350de64472fc/tests/fixtures/phreeqc/database/flahax-chelates-25c.dat",
+      "attribution": [
+        {
+          "reference": "docs/site/models/flahax-chelate-thermodynamic-profile.md",
+          "scope": "Selected project protonation and Fe-only chelate profile; not independent validation"
+        }
+      ]
+    },
+    {
+      "filename": "flahax-phases-25c.dat",
+      "sha256": "0dcec007c1e7c3f475a0e67290876a23d6aaf678d95c9771821deed3c8101a5e",
+      "bytes": 745,
+      "encoding": "utf-8",
+      "transformations": [],
+      "origin": "FlahaX-maintained extension",
+      "repository_path": "tests/fixtures/phreeqc/database/flahax-phases-25c.dat",
+      "url": "https://raw.githubusercontent.com/rafatahmed/Flahax/de50f8963a65a9f0f99462ffc731350de64472fc/tests/fixtures/phreeqc/database/flahax-phases-25c.dat",
+      "attribution": [
+        {
+          "species": [
+            "Kieserite",
+            "Sylvite"
+          ],
+          "origin": "USGS PHREEQC 3.8.6-17100 pitzer.dat",
+          "archive_member": "phreeqc-3.8.6-17100-x64/database/pitzer.dat",
+          "sha256": "c3f441bea195bc85322bceed9b3d31bab300a7a725dc9e811523970d124fb7fa",
+          "bytes": 37727,
+          "lines": [
+            357,
+            433
+          ],
+          "selection": "25 C log_k and reaction only; temperature dependence not imported",
+          "archive": {
+            "url": "https://water.usgs.gov/water-resources/software/PHREEQC/phreeqc-3.8.6-17100-x64.msi",
+            "sha256": "6e5f6697fa727f919eb4e7c1c2bc20e8c2717378aaf77731efd831ef66578243",
+            "bytes": 16846848,
+            "release": "PHREEQC 3.8.6-17100",
+            "extraction": "Windows Installer administrative extraction (msiexec /a); no database edits or newline conversion"
+          }
+        },
+        {
+          "species": [
+            "Struvite"
+          ],
+          "doi": "10.1016/j.watres.2006.11.046",
+          "selection": "25 C pKsp 13.26"
+        },
+        {
+          "species": [
+            "Ure"
+          ],
+          "origin": "Fixed neutral conserved inventory identity; no hydrolysis constant"
+        }
+      ]
+    }
+  ],
+  "sources_sha256": "fc8d5ac6d2ea12c2a7edebf892607f8c15ee382f693b691f675de5ec5d555f3b",
+  "notice": "Modified data, not the original USGS files. Equilibrium constants at 25 C converted to JSON by Rafat A. Al Khashan for FlahaX (first committed 2026-09-27) from PHREEQC 3.8.6 minteq.v4.dat (U.S. Geological Survey; base SHA-256 in database_sha256; exact release archive and all input identities in sources), keeping only the species and phases FlahaX uses, with kieserite and sylvite from PHREEQC 3.8.6 pitzer.dat and FlahaX extensions marked by their own source field. The USGS User Rights Notice for PHREEQC applies: see NOTICE. Cite Parkhurst and Appelo (2013), USGS Techniques and Methods 6-A43.",
   "bases": [
     "Ca+2",
     "Mg+2",
