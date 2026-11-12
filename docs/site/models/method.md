@@ -4,7 +4,9 @@ A salt is not a knob for one element. Potassium nitrate carries potassium and ni
 
 FlahaX answers a different question: given this formula and this water, which subset of the library, at which grams per litre, makes the percentage error as small as those compositions allow?
 
-Every real salt in the library is a candidate. Non-negative grams decide which salts stay in the mix. No salt is given a role by name.
+Eligible fertilizer products are candidates for the nutrient fit. Products declared
+`role: ph_reagent` are handled separately by the pH workflow. Non-negative grams
+decide which eligible fertilizers stay in the mix.
 
 ## Equation
 
@@ -66,15 +68,20 @@ internal doses participate; published dose precision remains separately tracked.
 
 ## Library file
 
-`load_library()` reads `flahax/data/library.json`, which is installed with the package. It is an export of the production database.
+`load_library()` reads `flahax/data/library.json`, which is installed with the package. It contains the packaged Flaha Agri Tech Analysis Ver 0.0 catalogue.
 
 | Key | Count | Contents |
 |---|---:|---|
-| `salts` | 28 | Example fertilizers used by the tests. A live recommendation receives the saved rows instead. |
+| `salts` | 29 | 24 fertilizers and 5 products declared as pH reagents |
 | `waters` | 3 | `Default Water Profile` (no ions), `WC1` (Ca 20), `WC2` (N, Mg, Ca, Fe) |
-| `formulas` | 21 | Name, targets, linked water, salt names stored on the formula |
+| `formulas` | 13 | Name, targets, linked water, salt names stored on the formula |
 
-The file is an example for the tests. `python -m flahax` does not read it. The caller passes the fertilizer rows. A name that starts with `test` or a formula of `Input Formula Here` is still rejected if one is passed. Nothing in the solver prefers a salt because its name is MAP, MKP, or SOP.
+The packaged water profiles are declared examples, not measured laboratory analyses
+of a particular site water. Custom formula targets need no publication attribution.
+
+The `batch` and `mix` commands use this packaged catalogue. The low-level JSON
+recommendation interface (`python -m flahax` without a subcommand) instead accepts
+fertilizer rows from its caller. A name that starts with `test` or a formula of `Input Formula Here` is still rejected if one is passed. Nothing in the solver prefers a salt because its name is MAP, MKP, or SOP.
 
 The formulas stored in that file are the library rows. Pepper (Howard Resh) there is nitrate-N 190, P 40, K 340, Ca 170, S 360, ammonium 18. The edited pepper targets in the proof below are a separate case.
 
@@ -97,8 +104,12 @@ tests preserve these targets but allow equivalent allocations:
 
 A hand mix that forces large weights of both ammonium phosphate and potassium phosphate still produces about +216% phosphorus. That mix is the regression case in `tests/test_pepper.py`. The solver is not told to avoid it. The loss is simply higher, so those weights are not chosen.
 
-## Outside this version
+## Nutrient-fit boundary
 
-This version does not split tanks, adjust pH, price the mix, or apply a concentration factor. Grams are for one litre of the solution the plant sees. Stock-tank grams are those grams multiplied by the concentration factor, and that step belongs to the recipe screen.
+The nutrient fit described here reports grams per litre of final solution. The
+package also provides pH adjustment, joint nutrient/pH fitting, A/B tank planning,
+and stock concentration calculations through its higher-level workflows. Those
+steps have their own input requirements and model limits; a nutrient fit alone
+does not qualify a stock tank or establish a physically validated recipe.
 
 The package does not write to the FlahaFAST database and it does not change a saved run. How the application can call it is described in [INTEGRATION.md](https://github.com/rafatahmed/Flahax/blob/main/INTEGRATION.md).

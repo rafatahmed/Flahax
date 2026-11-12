@@ -10,19 +10,23 @@ caption: Illustrative tank layout; actual assignments depend on qualified condit
 flowchart LR
     A[Tank A<br/>calcium nitrate,<br/>micronutrients<br/>never acid] -->|1 : ratio| I[Irrigation water]
     B[Tank B<br/>sulfates and phosphates,<br/>magnesium sulfate] -->|1 : ratio| I
-    C[Acid container<br/>acid added to water] -->|own injector| I
+    C[Reagent container<br/>refill as needed] -->|same ratio, separate injector| I
     I --> D[Drippers]
 ```
 
 ## What each card tells you
 
 - **Tank A and tank B.** How many litres to prepare in your tank, then each product with the grams
-  to weigh and a box to tick. If one container limits the batch, the card says which ("your 100 L
-  acid container sets the batch").
+  to weigh and a box to tick. In fill mode the smaller nutrient tank sets the batch; a larger
+  nutrient tank is partly filled. The separate reagent container does not limit A or B.
 - **Tank A never takes acid.** Calcium stays apart from sulfates and phosphates, and the
   micronutrients stay with calcium, so tank A must never be acidified.
-- **Acid container.** How many millilitres of your acid to add to water, and the volume to make it
-  up to. **Add acid to water, never water to acid.**
+- **Reagent container.** The total liquid reagent amount, the amount per fill, and the number
+  of fills at the same injection ratio as A and B. A final partial fill has its own scaled dose.
+  For 100 L A/B tanks and a 10 L reagent tank at 1:100, prepare 100 L in A and B for 10,000 L
+  irrigation. Prepare ten 10 L reagent fills (one initial fill and nine refills), each containing
+  one-tenth of the total reagent amount. Do not put the total batch amount into the first fill.
+  For acid products, **add acid to water, never water to acid.**
 - **Check after mixing.** The pH to expect and, when it can be estimated, the EC. Write your
   measured values on the sheet.
 

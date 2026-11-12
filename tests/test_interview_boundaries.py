@@ -133,6 +133,7 @@ class SavedInputBoundaryTests(unittest.TestCase):
             formula='Tomato (Howard Resh)',
             store='catalogue',
             acids=[],
+            reagent_store='catalogue',
             ph=5.8,
         )
 
@@ -201,7 +202,7 @@ class TerminalSummaryBoundaryTests(unittest.TestCase):
             batch_litres=100,
             warnings=[],
             stages={},
-            volumes={'irrigation_litres': 100, 'prepared_litres': {'acid': 1}},
+            volumes={'irrigation_litres': 100, 'prepared_litres': {'A': 1, 'B': 1, 'acid': 1}},
             tanks=dict(tanks=[], injection_ratio=100),
         )
 

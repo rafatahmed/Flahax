@@ -35,7 +35,7 @@ class ReagentBoundaryTests(unittest.TestCase):
             maximum_reagent_volume_litres=1,
         )
         for change, code in [
-            ({'products': []}, 'missing_field'),
+            ({'products': None}, 'missing_field'),
             ({'products': [None]}, 'invalid_value'),
             ({'products': ACIDS * 2}, 'invalid_value'),
             ({'preferred_product_id': 'missing'}, 'unknown_product'),

@@ -118,6 +118,9 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('no acid in this tank', tanks)
 
     def test_nutrients_match_sheet(self):
+        from flahax.grower_report import _miss_difference, percentage
+        from flahax.grower_sheet import missed_target
+
         nutrients, sheet = '\n'.join(screen(self.summary, 1)), sheet_text(self.summary, 2)
         self.assertIn('From water', nutrients)
         for row in agronomist_rows(self.summary):
@@ -126,7 +129,11 @@ class ResultViewTests(unittest.TestCase):
             for cell in (
                 number(row['target'], 2),
                 number(row['final'], 2),
-                f"{row['diff_mg_l']:+.2f} ({row['diff_pct']:+.1f} %)",
+                (
+                    _miss_difference(row['target'], row['final'])
+                    if missed_target(row)
+                    else f"{row['diff_mg_l']:+.2f} ({percentage(row['diff_pct'], 1, ' %')})"
+                ),
             ):
                 self.assertIn(cell, nutrients, row['nutrient'])
                 self.assertIn(cell, sheet, row['nutrient'])
@@ -217,7 +224,7 @@ class ResultViewTests(unittest.TestCase):
         table = table[: next(i for i, row in enumerate(table) if not row.strip())]
         self.assertFalse(any('e-1' in line for line in table))
         self.assertFalse(any(re.search(r'[0-9][-+][0-9]', line) for line in table), table)
-        self.assertTrue(any(' -200.00 (-100.0 %)' in line for line in lines))
+        self.assertTrue(any(' -200 mg/L (-100%)' in line for line in lines))
 
     def test_tank_cards_keep_their_border_at_80_columns(self):  # 141
         lines = screen(presentation_summary(self.summary), 0, 80, 60)
@@ -226,7 +233,8 @@ class ResultViewTests(unittest.TestCase):
         self.assertTrue(all(line.rstrip().endswith('│') for line in cards), cards)
         self.assertFalse(any(line.rstrip().endswith('…') for line in lines), lines)
         joined = ' '.join(' '.join(line.replace('│', ' ') for line in lines).split())
-        self.assertIn('sets the batch', joined)
+        self.assertIn('fills total', joined)
+        self.assertNotIn('reagent container sets the batch', joined)
 
     def test_notes_use_grower_words(self):  # 142
         summary = unbound_summary(self.summary)

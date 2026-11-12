@@ -59,28 +59,28 @@ class ChangelogStructureTests(unittest.TestCase):
 
     def test_the_old_style_is_refused(self):
         merged = 'A long merged paragraph. ' * 20
-        old_style = f'# Changelog\n\n## Unreleased\n\n## 0.7.0 - 2027-01-01\n\n- {merged}\n'
+        old_style = f'# Changelog\n\n## Unreleased\n\n## 1.2.3 - 2027-01-01\n\n- {merged}\n'
         self.assertEqual(
             problems(old_style),
             [
                 'the first section must be ## [Unreleased]',
                 'Unreleased: heading is not "[X.Y.Z] - YYYY-MM-DD"',
-                '0.7.0 - 2027-01-01: heading is not "[X.Y.Z] - YYYY-MM-DD"',
-                '0.7.0 - 2027-01-01: bullet of 502 characters',
-                '0.7.0 - 2027-01-01: bullets without headings',
+                '1.2.3 - 2027-01-01: heading is not "[X.Y.Z] - YYYY-MM-DD"',
+                '1.2.3 - 2027-01-01: bullet of 502 characters',
+                '1.2.3 - 2027-01-01: bullets without headings',
             ],
         )
 
     def test_headings_links_and_types(self):
         text = (
-            '## [Unreleased]\n\n## [0.7.0] - 2027-01-01\n\n### News\n\n- short\n\n'
+            '## [Unreleased]\n\n## [1.2.3] - 2027-01-01\n\n### News\n\n- short\n\n'
             '[unreleased]: https://example.org/a\n'
         )
         self.assertEqual(
             problems(text),
             [
-                '[0.7.0] - 2027-01-01: no comparison link [0.7.0]',
-                "[0.7.0] - 2027-01-01: heading 'News'",
+                '[1.2.3] - 2027-01-01: no comparison link [1.2.3]',
+                "[1.2.3] - 2027-01-01: heading 'News'",
             ],
         )
 

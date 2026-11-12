@@ -141,9 +141,9 @@ meters rated for the relevant stock and irrigation ranges.
 ## Calculated irrigation EC (experimental)
 
 Purpose: estimate the EC of an irrigation solution before mixing, and compare
-it with a meter reading after mixing. This is **experimental (M2b)** and Python
-only: there is no CLI flag and no grower-facing number. It is separate from the
-calibration-based planner above.
+it with a meter reading after mixing. This is **experimental (M2b)** and is exposed through the Python API and batch reporting, including the
+`--ec` comparison described below. It is separate from the calibration-based
+planner above.
 
 The EC is the sum of species molal conductivities over one speciation
 (McCleskey et al. 2012, Eq. 8), taken at 25 C. The computational envelope is
@@ -160,12 +160,22 @@ applied.
 
 **The range.** `low` is the sum over the species with a coefficient. `high`
 is `low` plus `|z| x 80 x m` for each species without one (`LAMBDA_MAX_PER_CHARGE = 80.0`, the
-bound on molar conductivity per charge), for each H2PO4- or HPO4-2 beyond the fit
+assumed molar conductivity per charge), for each H2PO4- or HPO4-2 beyond the fit
 ionic strength, and for the charge a supplied pH leaves unbalanced
 (`unrecorded_counterions_eq_per_kgw`). `ec25_ms_cm` is `low` only when `low == high`;
 otherwise it is `None`. There is no midpoint in any output. `known_species_subtotal_ms_cm` is
 `low`, `bounded` is true and `uncovered_bound_ms_cm` is `high - low`; the audit carries
 `lambda_max_per_charge` and `uncovered_bound_ms_cm`.
+
+The factor 80 is a configured missing-species assumption, not a demonstrated
+physical upper bound for every species omitted by the current model. The current
+coverage audit identifies 127 charged species without coefficients; H+ and OH-
+have coefficients and are not in that set. The field name `bounded` describes
+the calculation's construction, not a validated confidence interval. Real EC
+is not guaranteed to lie between these endpoints. The scientific review in #161
+dispositions this factor as an explicit model assumption, not a proven physical
+bound. Species-specific coefficients require separate source, unit and domain
+qualification before adoption; no coefficient is changed here.
 
 Assay charge residual: it is reported in `assay_charge_residual` (the percent over the
 declared-form absolute equivalents for catalogue and plan inputs, over the speciated absolute

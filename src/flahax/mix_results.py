@@ -8,9 +8,16 @@ Every value comes from the batch ``summary`` through the helpers the batch sheet
 the sheet's rounding, so the screen and the sheet always agree.
 """
 
-from .grower_report import percentage, qualification_lines
+from .grower_report import _miss_difference, _review_reason, percentage, qualification_lines
 from . import __version__
-from .grower_report import _reagent_line, grams, litres, millilitres, number
+from .grower_report import (
+    _reagent_line,
+    display_residue,
+    grams,
+    litres,
+    number,
+    reagent_preparation_lines,
+)
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -75,24 +82,33 @@ def _tank_rows(summary, width, g):
         body = [[(line, 'error' if blocked else None)] for line in wrap(head, inner, lines=4)]
         for product in tank['products']:
             weight = grams(product['gramsPerBatch'])
-            label = cut(
-                f'{"-" if blocked else "[ ]"} {product["name"]}', inner - len(weight) - 1, g
-            )
+            marker = '-' if blocked or display_residue(product['gramsPerBatch']) else '[ ]'
+            label = cut(f'{marker} {product["name"]}', inner - len(weight) - 1, g)
             gap = max(1, inner - len(label) - len(weight))
             body.append([(label + ' ' * gap, None), (weight, 'accent')])
         if not tank['acid_allowed']:
             body.append([('no acid in this tank', 'dim')])
         rows += _card(f'Tank {name}', body, width, g)
     selected = summary['ph'] and summary['ph']['selected']
-    if selected and not blocked:
+    if (
+        selected
+        and not blocked
+        and summary['ph'].get('direction') != 'none'
+        and selected['volume_ml_per_batch'] is not None
+    ):
         ph = summary['ph']
         body = [
-            [
-                (f'{millilitres(selected["volume_ml_per_batch"])} mL', 'accent'),
-                (f' {selected["product"]}, added to water and made up to ', None),
-                (f'{litres(volumes["prepared_litres"]["acid"])} L', 'accent'),
+            *[[(line, None)] for line in wrap(selected['product'], inner)],
+            *[
+                [(line, None)]
+                for instruction in reagent_preparation_lines(summary)
+                for line in wrap(instruction, inner)
             ],
-            [('Add acid to water, never water to acid.', 'warn')],
+            *(
+                [[('Add acid to water, never water to acid.', 'warn')]]
+                if selected.get('direction') == 'acid'
+                else []
+            ),
             [
                 (
                     f'pH after fertilizers {number(ph["mixed_ph"], 2)}, after '
@@ -141,6 +157,8 @@ def _nutrient_rows(summary):
         diff = (
             ''
             if r['target'] is None
+            else _miss_difference(r['target'], r['final'])
+            if missed_target(r)
             else f'{r["diff_mg_l"]:+.2f} ({percentage(r["diff_pct"], 1, " %")})'
         )
         cells = (
@@ -161,7 +179,7 @@ def _nutrient_rows(summary):
     path = [f'water {number(chemistry["water_ph"], 2)}'] if chemistry else []
     if ph and ph.get('mixed_ph') is not None:
         path.append(f'after fertilizers {number(ph["mixed_ph"], 2)}')
-    if ph and ph['selected']:
+    if ph and ph.get('direction') != 'none' and ph['selected']:
         path.append(f'after {ph["selected"]["direction"]} {number(ph["target_ph"], 2)}')
     if path:
         rows += [[]] + [[('pH: ' + ', '.join(path) + ' (measure it)', None)]]
@@ -213,6 +231,10 @@ def results_lines(summary, view, width, height, scroll, g, output, message=None)
         body = _nutrient_rows(summary)
     else:
         body = _note_rows(summary, usable - 2)
+    if summary['status'] == 'requires_review':
+        body = [
+            [(line, 'warn')] for line in wrap(_review_reason(summary), usable - 2, lines=20)
+        ] + body
     room = height - 1 - len(lines) - 2
     scroll = max(0, min(scroll, len(body) - room))
     shown = body[scroll : scroll + room]

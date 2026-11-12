@@ -318,6 +318,7 @@ def solve_joint_problem(
     active_bound_tolerance=None,
     sensitivity_method='finite_difference',
     curvature_block=False,
+    whole_mix=False,
 ):
     """Search one immutable JointProblem from an explicitly supplied start.
 
@@ -326,6 +327,9 @@ def solve_joint_problem(
     Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
     squared relative nutrient errors. sensitivity_tolerance is relative agreement
     of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+
+    whole_mix optionally tries a constrained simultaneous step when recent stationarity
+    checks stall. Its linear model never supplies a success certificate.
 
     Optional objective_gap_tolerance bounds the certified absolute objective gap,
     not the nutrient loss. Optional stationarity_tolerance (relative KKT residual)
@@ -341,6 +345,13 @@ def solve_joint_problem(
     Exhaustion, bad trials, failed sensitivities and stalled local searches return
     search_incomplete, never a global infeasibility or optimality claim.
     """
+    if not isinstance(whole_mix, bool) or (
+        whole_mix and (sensitivity_method != 'equilibrium' or stationarity_tolerance is None)
+    ):
+        raise DeliveryError(
+            'invalid_value',
+            'whole_mix requires equilibrium sensitivities and stationarity controls',
+        )
     if not isinstance(curvature_block, bool):
         raise DeliveryError('invalid_value', 'curvature_block must be boolean')
     if curvature_block and sensitivity_method != 'equilibrium':
@@ -378,6 +389,16 @@ def solve_joint_problem(
     doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [_number(reagent_dose, 'reagent dose')]
     point = [_number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
     constraints = _constraints(problem, scales)
+    # Nonnegative sources of a nutrient with no remaining allowance are fixed
+    # at zero. Keep them out of local proposals, not merely the final line search:
+    # one forbidden positive coordinate would otherwise shorten the whole step to zero.
+    fixed_zero = {
+        j
+        for row, bound in constraints
+        if bound == 0 and all(a >= 0 for a in row)
+        for j, a in enumerate(row)
+        if a > 0
+    }
     exact_model = None
     if objective_gap_tolerance is not None or stationarity_tolerance is not None:
         exact_model = [
@@ -394,6 +415,7 @@ def solve_joint_problem(
         ]
     diagnostics = dict(
         evaluations=0,
+        iterationsUsed=0,
         rejectedTrials=0,
         sensitivityFailures=0,
         linearFailures=0,
@@ -419,14 +441,13 @@ def solve_joint_problem(
             return None
         try:
             x = [v * h for v, h in zip(u, scales)]
+            inputs = dict(zip(identifiers[:-1], x[:-1]))
             if sensitivity_method == 'equilibrium':
                 state = problem.evaluate(
-                    dict(zip(identifiers[:-1], x[:-1])),
-                    x[-1],
-                    equilibrium_start=None if cold else equilibrium_seed,
+                    inputs, x[-1], equilibrium_start=None if cold else equilibrium_seed
                 )
             else:
-                state = problem.evaluate(dict(zip(identifiers[:-1], x[:-1])), x[-1])
+                state = problem.evaluate(inputs, x[-1])
             if state['status'] == 'missing_chemistry' or state['violations']:
                 raise DeliveryError(
                     'unusable_trial', 'missing chemistry or hard constraint violation'
@@ -592,9 +613,12 @@ def solve_joint_problem(
     if current is None:
         return finish(point, None, 'initial_evaluation_failed')
     radius = trust_radius
+    stationary_history = []
+    use_whole_mix = False
     n = len(point)
     for iteration in range(max_iterations):
         diagnostics['iterations'] = iteration
+        diagnostics['iterationsUsed'] = iteration + 1
         equilibrium_seed = current[0]['equilibrium']
         if meets(current) or bounded(point, current):
             return finish(point, current, 'final_verification_failed')
@@ -889,6 +913,66 @@ def solve_joint_problem(
                 diagnostics['stationarity'] = stationary
                 if stationary['passed']:
                     return finish(point, current, 'final_verification_failed', stationary)
+                stationary_history.append((stationary['relativeResidual'], current[0]['loss']))
+                if whole_mix and len(stationary_history) > 4:
+                    old_residual, old_loss = stationary_history[-5]
+                    if (
+                        stationary['relativeResidual'] >= 0.5 * old_residual
+                        and current[0]['loss'] >= 0.99 * old_loss
+                    ):
+                        use_whole_mix = True
+                if use_whole_mix:
+                    from .joint_active_set import whole_mix_trial
+
+                    def matrix_at(value):
+                        return _implicit_matrix(problem, value, scales, charge_scale)
+
+                    def improves_stationarity(u, value):
+                        trial_check = _stationarity(
+                            u,
+                            value,
+                            matrix_at(value),
+                            constraints,
+                            stationarity_tolerance,
+                            active_bound_tolerance,
+                        )
+                        return trial_check['relativeResidual'] < stationary['relativeResidual']
+
+                    has_active_cap = any(
+                        item['constraint'] >= n and constraints[item['constraint']][1] >= 0
+                        for item in stationary['activeMultipliers']
+                    )
+                    refine_cap = has_active_cap and stationary['relativeResidual'] <= 0.05
+                    step = None
+                    for refine in (True, False) if refine_cap else (False,):
+                        step = whole_mix_trial(
+                            point,
+                            current,
+                            matrix,
+                            constraints,
+                            radius=radius,
+                            budget=max_backtracks,
+                            charge_tolerance=charge_tolerance,
+                            evaluate=evaluate,
+                            active_tolerance=active_bound_tolerance,
+                            matrix_at=matrix_at,
+                            improves_stationarity=improves_stationarity,
+                            charge_scale=charge_scale,
+                            refine=refine,
+                        )
+                        if step is not None:
+                            break
+                    if step is not None:
+                        point, current = step
+                        diagnostics['history'].append(
+                            dict(
+                                iteration=iteration,
+                                wholeMix=True,
+                                loss=current[0]['loss'],
+                                chargeResidual=current[0]['chargeResidual'],
+                            )
+                        )
+                        continue
             except (ValueError, OverflowError) as exc:
                 diagnostics['lastError'] = str(exc)
                 diagnostics['linearFailures'] += 1
@@ -978,7 +1062,10 @@ def solve_joint_problem(
                     charge_tolerance / charge_scale,
                     max_backtracks,
                     [max(0.0, v - width) for v, width in zip(point, widths)],
-                    [v + width for v, width in zip(point, widths)],
+                    [
+                        0.0 if j in fixed_zero else v + width
+                        for j, (v, width) in enumerate(zip(point, widths))
+                    ],
                     diagnostics=linear,
                 )
                 linear['chargeEquality'] = True

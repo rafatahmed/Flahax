@@ -41,16 +41,27 @@ Missing impurity, hydration, ligand or counterion information is not evidence of
 absence. Existing composition flags, identity status and nutrient basis remain
 available; downstream model qualification is a separate decision.
 
+Custom analyses do not require a manufacturer match. Declared nutrient percentages
+can support nutrient fitting without proving a full chemical composition. The
+chemical model separately uses supported declared constituents; unidentified
+ligands or counterions are not inferred from a similar commercial product.
+
 ## Explicit ammonium policy
 
-`recommend` defaults to `max_ammonium_fraction=None`. Omitting an ammonium
-maximum no longer invents a crop-practice limit. A caller may explicitly request
-a fraction of total target nitrogen, or supply `maximum_concentrations` in mg/L.
-The fraction has no additional 1.5 mmol/L cap. An explicit ammonium target or
-absolute maximum retains precedence over the fraction.
+`recommend` defaults to an ammonium fraction of 0.10. When `N_NH4` is
+absent or zero in the original targets and no explicit ammonium maximum exists, the allowance is the smaller of
+that fraction of positive total target nitrogen and 1.5 mmol/L expressed as nitrogen
+(21.01005 mg/L). `max_ammonium_fraction=None` disables this generated maximum.
+A positive ammonium target prevents this allowance. The public recommendation
+workflow removes a zero ammonium target before fitting; it does not treat it as
+an ammonium prohibition. An explicit ammonium maximum retains its own meaning. No allowance is generated
+when total target nitrogen is zero.
 
-This changes recipes that previously relied on the implicit allowance. It does
-not change targets or prove the remaining incidental-ion objective is optimal.
-Exact-zero targets now exclude contributing products, and absolute maxima also
-constrain targeted nutrients. These constraints do not qualify the remaining
-objective, secondary-selection or trace-reporting behavior.
+The reported practice attribution is a policy reference, not evidence that this
+allowance is agronomically appropriate for every crop, stage, water or system.
+The [2016 handbook, printed p.16](https://www.nmi-agro.nl/wp-content/uploads/2020/04/160905_manual_nutrient_solutions_digital_en-8mb.pdf#page=16)
+provides conditional 5–15% and 1–1.5 mmol/L pH-management guidance. The exact
+10% default and combined minimum are software policy, not a universal crop
+requirement. [De Kreij et al. (1999), Tables 8–9](https://edepot.wur.nl/273945)
+includes 1.8 mmol/L for tomato under high-pH conditions.
+The allowance must not be presented as measured safety or a nutrient requirement.

@@ -38,7 +38,9 @@ release:
   characters, and related changes share one bullet;
 - the bottom of the file has a comparison link for every version and for `unreleased`.
 
-The full text of a change (numbers, sources, decisions) belongs in `docs/releases/<version>.md`,
+The full text of unreleased changes belongs in `docs/releases/unreleased.md` until
+a release version is selected. Released change details (numbers, sources, decisions)
+belong in `docs/releases/<version>.md`,
 linked with a full GitHub URL, because the docs site includes the changelog. `tests/test_changelog.py`
 checks all of this.
 

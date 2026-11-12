@@ -28,7 +28,7 @@ RO = ['1', '']  # RO water; no limits
 TOMATO = ['1', 'tomato (howard']  # a packaged formula, searched
 TOMATO_KEYS = ['N_NO3', 'P', 'K', 'Mg', 'Ca', 'S', 'B', 'Fe', 'Zn', 'Cu', 'Mo', 'Mn']
 CATALOGUE = ['1', '']  # whole catalogue; add nothing
-NITRIC = ['1', 'HNO3', '60', '1.37', 'Nitric acid 60%', '']  # new acid from its certificate; done
+NITRIC = ['1', '2', 'HNO3', '60', '1', '1.37', '', 'Nitric acid 60%', '1', 'my reagents']
 END = ['', '1', '']  # pH 5.8; depth 1; session name
 
 
@@ -135,11 +135,11 @@ class MixTests(unittest.TestCase):
                 session['ph'],
                 session['depth'],
             ),
-            ('ro', 'Tomato (Howard Resh)', 'catalogue', ['nitric-acid-60'], 5.8, 1),
+            ('ro', 'Tomato (Howard Resh)', 'catalogue', [], 5.8, 1),
         )
         self.assertEqual(
-            store.load('acids', 'nitric-acid-60'),
-            {'formula': 'HNO3', 'fraction': 0.6, 'density': 1.37, 'name': 'Nitric acid 60%'},
+            store.load('reagents', session['reagent_store'])[-1]['massFraction'],
+            0.6,
         )
 
     def test_second_run_from_session_asks_nothing(self):
@@ -229,15 +229,15 @@ class MixTests(unittest.TestCase):
         # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
         # empty.
         code, lines, _ = self.run_mix(
-            SPEC + RO + TOMATO + CATALOGUE + ['2'] + END,
+            SPEC + RO + TOMATO + CATALOGUE + ['3', '1', 'no reagents'] + END,
             '--output',
             str(Path(self.tmp.name) / 'no-acid'),
         )
         self.assertEqual(code, 3)
         self.assertTrue(any('do not mix' in line for line in lines))
         reason = next(line for line in lines if line.startswith('  ! pH adjustment:'))
-        self.assertIn('no offered candidate has passed joint workflow acceptance', reason)
-        self.assertIn('a volume cap requires reagent density', reason)
+        self.assertIn('needs an acid', reason)
+        self.assertIn('none was offered', reason)
         well = water('salty', {'Ca': '40', 'Na': '200', 'Cl': '308', 'Alk': '61'}, limits='Na=69')
         code, lines, _ = self.run_mix(
             SPEC + well + TOMATO + CATALOGUE + NITRIC + END,
@@ -307,7 +307,9 @@ class MixTests(unittest.TestCase):
             str(Path(self.tmp.name) / 'first'),
         )
         self.assertEqual(code, 0, '\n'.join(lines))
-        self.assertIn('Irrigation supplied: 1,000 L at 1:100', lines)
+        self.assertIn('Irrigation supplied: 10,000 L at 1:100', lines)
+        self.assertTrue(any('first reagent fill 10 L' in line for line in lines))
+        self.assertTrue(any('10 fills total (9 refills)' in line for line in lines))
         self.assertTrue(any(line.startswith('Tank A: prepare') for line in lines))
         self.assertFalse(any('not to be prepared' in line for line in lines))
         weights = [line for line in lines if line.startswith('  [ ] ')]
@@ -333,7 +335,7 @@ class MixTests(unittest.TestCase):
         # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113
         # repeated notes.
         self.enterContext(historical_catalogue())
-        bad = ['1', '1', 'hno3', '60', '1.37', '', '']  # '1' refused, 'hno3' accepted as HNO3
+        bad = ['1', '2', '1', 'hno3', '60', '1', '1.37', '', 'HNO3 60%', '1', 'my reagents']
         changed = (
             ['2', 'lettuce general', '180'] + [''] * 12 + ['']
         )  # default name 'Lettuce General ... changed'
@@ -343,14 +345,14 @@ class MixTests(unittest.TestCase):
             str(Path(self.tmp.name) / 'sweep'),
         )
         self.assertEqual(code, 0, chr(10).join(lines))
-        self.assertIn('  FlahaX plans with these acids only: HNO3, H3PO4, H2SO4, C6H8O7.', lines)
+        self.assertIn('This reagent identity is not supported; choose a listed formula.', lines)
         self.assertTrue(
             any(
                 line.startswith('FlahaX ') and 'Lettuce General (Howard Resh) changed - ' in line
                 for line in lines
             )
         )
-        self.assertEqual(Store(self.home).load('acids', 'hno3-60')['fraction'], 0.6)
+        self.assertEqual(Store(self.home).load('reagents', 'my-reagents')[-1]['massFraction'], 0.6)
         err = io.StringIO()
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(err):
             code = batch(
@@ -700,10 +702,11 @@ class AuditWordingTests(unittest.TestCase):
     def test_acid_list_says_what_was_added(self):  # 143
         from flahax.mix_cli import ask_acids
 
-        lines, script = [], Script(NITRIC)
+        lines, script = [], Script(['1', 'unknown', 'HNO3', '60', '1.37', 'Nitric acid 60%', ''])
         with tempfile.TemporaryDirectory() as tmp:
             ask_acids(Prompts(script, lines.append), Store(tmp), [])
         self.assertIn('  Added Nitric acid 60% for the pH plan.', lines)
+        self.assertTrue(any('FlahaX plans with these acids only:' in line for line in lines))
         self.assertTrue(any(prompt.startswith('Name of this acid') for prompt in script.prompts))
 
 
@@ -722,6 +725,7 @@ GOOD_SESSION = {
     'formula_title': 'Tomato (Howard Resh)',
     'store': 'catalogue',
     'acids': [],
+    'reagent_store': 'catalogue',
     'ph': 6.0,
     'depth': 1,
 }
@@ -737,6 +741,14 @@ class SessionFileTests(unittest.TestCase):  # 149
         ),
         'limits as a list': ({**GOOD_SESSION, 'limits': [['Na', 69]]}, "'limits' must be"),
         'acids as text': ({**GOOD_SESSION, 'acids': 'hno3'}, "'acids' must be a list of names"),
+        'reagent list as number': (
+            {**GOOD_SESSION, 'reagent_store': 3},
+            "'reagent_store' must name an available reagent list or catalogue",
+        ),
+        'blank reagent list': (
+            {**GOOD_SESSION, 'reagent_store': '   '},
+            "'reagent_store' must name an available reagent list or catalogue",
+        ),
         'depth 9': ({**GOOD_SESSION, 'depth': 9}, "'depth' must be 1, 2 or 3"),
         'tanks as a list': (
             {**GOOD_SESSION, 'spec': {**GOOD_SESSION['spec'], 'tank_litres': [1, 2, 3]}},

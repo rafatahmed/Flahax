@@ -16,16 +16,19 @@ questions come line by line.
 
 ## 2. Answer the five steps
 
-1. **Tanks.** Tank A and tank B capacity, the acid container, the injection ratio (litres of
+1. **Tanks.** Tank A and tank B capacity, the reagent container, the injection ratio (litres of
    irrigation per litre of stock, often 100), the stock temperature, and whether you fill the
-   tanks full or make just enough for one irrigation.
+   tanks full or make just enough for one irrigation. All three injectors use this ratio.
+   The reagent container can be refilled; its size does not reduce the nutrient stock batch.
 2. **Water.** Choose *RO water (no ions)* for this first batch, and press Enter at the
    concentration limits for none.
 3. **Crop formula.** Choose *A packaged formula*, type `tomato` to filter the list, and pick one.
-4. **Fertilizers.** Choose *The whole catalogue*, then *No* when asked to add a product. For the
-   acid, choose *A new acid from its certificate* and type the formula (`HNO3`), the assay in
-   % w/w and the density in kg/L from your supplier's certificate.
-5. **Target pH.** Keep 5.8 or type your own. Then choose who the sheet is for (grower, agronomist
+4. **Fertilizers.** Select the products you have, or explicitly choose *The whole catalogue*,
+   then add any custom product you need.
+5. **pH reagents and target.** Select available catalogue acids and bases in the same way,
+   or choose a saved list. Add custom reagents from their declared composition if needed.
+   Choose *No pH reagents available* when you have none; the calculation will not add any.
+   Keep target pH 5.8 or type your own. Then choose who the sheet is for (grower, agronomist
    or full report) and a name for the session.
 
 ## 3. Read the result

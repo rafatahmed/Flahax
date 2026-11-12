@@ -41,11 +41,15 @@ ANSWERS = [
     '1',
     '1',
     '1',
+    '2',
     'HNO3',
     '65',
+    '1',
     '1.3',
+    '',
     'HNO3 65%',
-    '2',
+    '1',
+    'my reagents',
     '6',
     '3',
     'tomato stage 1',
@@ -188,13 +192,13 @@ if __name__ == '__main__':
 
 class ReagentQuantityRendering(unittest.TestCase):
     def test_liquid_volume_and_mass_have_distinct_units(self):
-        from flahax.grower_report import _reagent_amount
+        from flahax.grower_report import reagent_amount
 
         self.assertEqual(
-            _reagent_amount(dict(volume_ml_per_batch=12.34, mass_g_per_batch=16.042)), '12.3 mL'
+            reagent_amount(dict(volume_ml_per_batch=12.34, mass_g_per_batch=16.042)), '12.3 mL'
         )
         self.assertEqual(
-            _reagent_amount(dict(volume_ml_per_batch=None, mass_g_per_batch=16.042)), '16 g'
+            reagent_amount(dict(volume_ml_per_batch=None, mass_g_per_batch=16.042)), '16 g'
         )
 
 

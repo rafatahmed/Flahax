@@ -164,7 +164,10 @@ class CompositionBoundaryTests(unittest.TestCase):
             ({'elements': {'Xx': 1}}, 'not a balance ion'),
             ({'elements': {'K': []}}, 'non-numeric'),
             ({'elements': {'K': 60, 'Ca': 50}}, 'more than 100'),
-            ({'name': 'test_placeholder', 'elements': {'K': 1}}, 'placeholder'),
+            (
+                {'name': 'placeholder', 'formula': 'Input Formula Here', 'elements': {'K': 1}},
+                'placeholder',
+            ),
             ({'formula': 'KNO3', 'elements': {'Ca': 1}}, 'contains 0.00'),
         ]:
             with self.subTest(record=record):

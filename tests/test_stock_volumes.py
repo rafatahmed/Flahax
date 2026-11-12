@@ -59,8 +59,9 @@ class OnceModeTests(unittest.TestCase):
                 irrigation_litres=3000,
             )
         self.assertEqual(raised.exception.code, 'tank_too_small')
-        for name in ('A', 'B', 'acid'):
+        for name in ('A', 'B'):
             self.assertIn(name, str(raised.exception))
+        self.assertNotIn('acid', str(raised.exception))
 
     def test_exact_fit_passes(self):
         # irrigation / ratio equals the capacity exactly: not too small.

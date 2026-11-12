@@ -18,9 +18,14 @@ from .grower_report import (
     SHEET_STYLE,
     STATUS_WORDS,
     _limit_rows,
+    _miss_difference,
+    _review_reason,
     _page,
     _reagent_line,
     ec_text,
+    display_residue,
+    reagent_preparation_lines,
+    reagent_preparation,
     grams,  # noqa: F401
     litres,
     millilitres,
@@ -104,11 +109,11 @@ def limited_by(volumes):
     """In fill mode, the container that sets the batch when another one could hold more."""
     if not volumes or volumes.get('mode') != 'fill':
         return ''
-    capacity = volumes['capacity_litres']
+    capacity = {name: volumes['capacity_litres'][name] for name in ('A', 'B')}
     smallest = min(capacity, key=capacity.get)
     if all(c == capacity[smallest] for c in capacity.values()):
         return ''
-    name = 'acid container' if smallest == 'acid' else f'tank {smallest}'
+    name = f'tank {smallest}'
     return f' (your {litres(capacity[smallest])} L {name} sets the batch)'
 
 
@@ -128,7 +133,8 @@ def _tank_card(tank, volumes, blocked):
     )
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(
-        f'<tr><td>{box}</td><td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
+        f'<tr><td>{"" if display_residue(p["gramsPerBatch"]) else box}</td>'
+        f'<td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
         for p in tank['products']
     )
     rule = (
@@ -146,7 +152,7 @@ def _tank_card(tank, volumes, blocked):
 def _reagent_card(summary, volumes):
     ph = summary['ph']
     chosen = ph and ph['selected']
-    if not chosen:
+    if not chosen or ph.get('direction') == 'none':
         return (
             f'<div class="card warn"><h2>pH '
             f'reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
@@ -155,23 +161,26 @@ def _reagent_card(summary, volumes):
         return (
             f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(_reagent_line(summary))}</p></div>'
         )
+    preparation = reagent_preparation(summary)
+    if preparation and preparation['status'] == 'blocked':
+        return (
+            f'<div class="card warn"><h2>pH reagent</h2>'
+            f'<p>{text(preparation["message"])}</p></div>'
+        )
     title = 'Acid' if chosen['direction'] == 'acid' else 'pH reagent'
     per_1000 = chosen['volume_ml_per_batch'] * 1000.0 / summary['batch_litres']
-    container = (
-        (
-            f'<p>Acid container: add <b>{millilitres(chosen["volume_ml_per_batch"])} mL</b> to '
-            f'water and make up to '
-            f'<b>{litres(volumes["prepared_litres"]["acid"])} L</b>.</p>'
-        )
-        if volumes
-        else ''
-    )
+    container = ''.join(f'<p>{text(line)}</p>' for line in reagent_preparation_lines(summary))
     return (
         f'<div class="card"><h2>{title}</h2><p><b>{text(chosen["product"])}</b> '
         f'({text(chosen["formula"])}): '
         f'{millilitres(per_1000)} mL per 1,000 L of irrigation, on its own '
         f'injector.</p>{container}'
-        '<p class="small"><b>Add acid to water, never water to acid.</b></p></div>'
+        + (
+            '<p class="small"><b>Add acid to water, never water to acid.</b></p>'
+            if chosen['direction'] == 'acid'
+            else ''
+        )
+        + '</div>'
     )
 
 
@@ -210,13 +219,18 @@ def _agronomist_section(summary):
                 f'class="num">{cell(r["final"])}</td><td></td></tr>'
             )
             continue
-        hi = ' class="num hi"' if missed_target(r) else ' class="num"'
+        miss = missed_target(r)
+        hi = ' class="num hi"' if miss else ' class="num"'
+        difference = (
+            _miss_difference(r['target'], r['final'])
+            if miss
+            else f'{r["diff_mg_l"]:+.2f} ({percentage(r["diff_pct"], 1, " %")})'
+        )
         body += (
             f'<tr><td>{text(name)}</td><td class="num">{cell(r["target"])}</td><td '
             f'class="num">{cell(r["water"])}</td>'
             f'<td class="num">{cell(r["required"])}</td><td class="num">{cell(r["achieved"])}</td>'
-            f'<td class="num">{cell(r["final"])}</td><td{hi}>{r["diff_mg_l"]:+.2f} '
-            f'({percentage(r["diff_pct"], 1, " %")})</td></tr>'
+            f'<td class="num">{cell(r["final"])}</td><td{hi}>{difference}</td></tr>'
         )
     table = (
         '<h2>Nutrients, mg/L in the irrigation solution</h2><div '
@@ -240,7 +254,7 @@ def _agronomist_section(summary):
         path.append(f'water {number(chem["water_ph"], 2)}')
     if ph and ph.get('mixed_ph') is not None:
         path.append(f'after fertilizers {number(ph["mixed_ph"], 2)}')
-    if ph and ph['selected']:
+    if ph and ph.get('direction') != 'none' and ph['selected']:
         path.append(f'after {ph["selected"]["direction"]} {number(ph["target_ph"], 2)}')
         adds = ', '.join(
             f'{LABEL.get(k, k)} {number(v, 2)} mg/L'
@@ -285,6 +299,7 @@ def render_mix_sheet(summary, depth=1):
         f'pH '
         f'{number(s["target_ph"], 2)} &middot; {text(s["water_label"])}</div>'
         f'<div class="box {css}"><b>{text(STATUS_WORDS[s["status"]].capitalize())}.</b>'
+        + (f' {text(_review_reason(s))}' if s['status'] == 'requires_review' else '')
         + (f'<ul class="small">{notes}</ul>' if notes else '')
         + '</div>'
     )

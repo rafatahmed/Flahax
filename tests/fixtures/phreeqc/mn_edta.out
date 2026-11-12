@@ -1,4 +1,4 @@
-   Input file: .\tests\fixtures\phreeqc\mn_edta.pqi
+   Input file: .\repo\Flaha\Flahax\tests\fixtures\phreeqc\mn_edta.pqi
   Output file: .\AppData\Local\Temp\flahax-phreeqc\preserve\mn_edta.out
 Database file: reference/minteq-flahax.dat
 

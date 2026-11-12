@@ -60,12 +60,11 @@ $env:FLAHAX_REQUIRE_PHREEQC = '1'
 py -3.13 -m unittest discover -s tests -t .
 py -3.13 -m compileall -q src tools examples
 git diff --check
-.venv-verification/Scripts/python.exe tools/verify_distribution.py --python ./AppData/Local/Programs/Python/Python313/python.exe --report build/documentation-0.3.1-distribution.json
+python tools/verify_distribution.py
 ```
 
-The last command shows this repository's local verification environment;
-replace interpreter paths with your own development environment containing
-`build`. It creates isolated installs and does not upload packages.
+Run the last command with a development interpreter containing `build`.
+It creates isolated installs and does not upload packages.
 
 ## 0.3.1 documentation audit findings
 

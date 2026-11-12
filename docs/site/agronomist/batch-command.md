@@ -4,10 +4,35 @@
 
 # A batch from files: `flahax batch`
 
+Use `--reagents available-reagents.json` to restrict pH correction to a JSON array
+of available product records. A saved mix reagent list uses this format. An empty
+array offers no reagents; it never restores catalogue defaults. Without this flag,
+batch uses catalogue pH reagents. Any explicitly supplied `--acid` certificates are
+added to the chosen list. Direction selection then considers only these products.
+
+Each reagent record declares `id`, `name`, `chemicalFormula`, `massFraction`,
+`physicalForm`, `source`, `revision` and `recordedAt`. Liquid products declare
+`densityKgPerL`; `solventMassFraction` is the known water fraction or null when
+unknown. Supported identities are HNO3, H3PO4, H2SO4, C6H8O7, KOH, KHCO3 and K2CO3.
+Joint fitting still requires the existing declared-solvent and mass-cap inputs;
+selection does not supply missing chemical information or relax those limits.
+
 This page takes you from a water analysis and a crop to a printed batch sheet in four steps with
 `flahax batch`, then works through a tomato example on a real brackish well. FlahaX plans a batch;
 it does not run pumps or dose anything. Its evidence is computational: it has not been validated in
 the laboratory or in the field, so every sheet ends with measurements you take after mixing.
+For an acid certificate, `--acid FORMULA:FRACTION:DENSITY:NAME:SOLVENT_FRACTION`
+declares the solvent in grams per gram of product. If the certificate omits that
+last field, batch can use a labelled sequential pH calculation. Joint fitting of
+a dry reagent also needs `--max-solid-reagent-grams`, the maximum dry mass for
+this batch. The liquid volume cap applies to liquids. Check the selected method
+and limitations on the report.
+
+For a restricted product store, repeat `--confirmed-product CATALOGUE_ID` for
+each excluded fertilizer that is actually available. Batch calculates each
+alternative separately and keeps the original recipe. A saved mix session accepts
+the same IDs in `confirmed_products` and an optional `max_solid_reagent_grams`.
+
 ## Step 1. Enter your water analysis
 
 Save the analysis as a small JSON file, for example `well.json`:

@@ -16,7 +16,7 @@ bases: the reagent's anion (acid) or cation (base) is added at the target pH unt
 the solution is electrically neutral again.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import math
 from collections.abc import Callable, Mapping, Sequence
 
@@ -209,6 +209,7 @@ def plan_coupled_ph(
     phases=(),
     maximum_concentrations=None,
     joint=None,
+    correct_mixed_ph=False,
     water_components=None,
     residual_charge=0.0,
 ):
@@ -220,7 +221,8 @@ def plan_coupled_ph(
     points are checked as search seeds. water_components supplies the declared
     final-basis water inventory; residual_charge (eq/kg water) is the charge it
     carries uncancelled, the joint problem's reference charge (decision G11). Joint mode
-    evaluates every offered reagent and independently calculates final pH. Legacy mode
+    evaluates every offered reagent unless correct_mixed_ph restricts the search to the
+    initial mix's correction direction. Each fit independently calculates final pH. Legacy mode
     retains directional fitting, with bounded zero-reagent recovery when no matching direction
     is offered.
     A candidate's quantities and unresolved numerical status remain inspectable.
@@ -228,7 +230,7 @@ def plan_coupled_ph(
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
-    if not isinstance(products, (list, tuple)) or not products:
+    if not isinstance(products, (list, tuple)):
         raise DeliveryError('missing_field', 'sourced pH reagent product records are required')
     identifiers = [p.get('id') if isinstance(p, Mapping) else None for p in products]
     if any(not isinstance(i, str) or not i.strip() for i in identifiers) or len(
@@ -254,14 +256,30 @@ def plan_coupled_ph(
     else:
         direction = 'base' if target_ph > base_state.ph else 'acid'
     candidates = []
-    for product in products:
+    declared_fallbacks = (
+        joint.get('sequential_fallbacks', {}) if isinstance(joint, Mapping) else {}
+    )
+    if not isinstance(declared_fallbacks, Mapping) or not all(
+        isinstance(reason, str) and reason for reason in declared_fallbacks.values()
+    ):
+        raise DeliveryError('invalid_type', 'sequential_fallbacks must map product IDs to reasons')
+    fallbacks = declared_fallbacks if correct_mixed_ph else {}
+    # First evaluate qualifying joint fits. A sequential alternative is needed
+    # only when no usable joint fit exists, or the caller explicitly prefers it.
+    ordered = sorted(products, key=lambda p: p['id'] in fallbacks) if fallbacks else products
+    for product in ordered:
         identity, formula = product.get('id'), product.get('chemicalFormula')
         zero_failure = None
         try:
             fraction, density = _check_product(product)
             reagent_direction, components, molar_mass, _ = REAGENTS[formula]
             nutrients = component_nutrient_masses(components)
-            if joint is not None:
+            fallback = fallbacks.get(identity)
+            if (
+                joint is not None
+                and not fallback
+                and (not correct_mixed_ph or reagent_direction == direction)
+            ):
                 from .joint_workflow import joint_candidate
 
                 candidates.append(
@@ -312,7 +330,8 @@ def plan_coupled_ph(
                 continue
             if reagent_direction != direction:
                 if (
-                    water_components is not None
+                    not correct_mixed_ph
+                    and water_components is not None
                     and not phases
                     and not any(
                         REAGENTS.get(p.get('chemicalFormula'), ('unknown',))[0] == direction
@@ -368,25 +387,62 @@ def plan_coupled_ph(
                     )
                 )
                 continue
-            candidates.append(
-                _couple(
-                    pool,
-                    targets,
-                    water,
-                    target_ph,
-                    product,
-                    fraction,
-                    density,
-                    molar_mass,
-                    nutrients,
-                    mix,
-                    mass,
-                    volume,
-                    cap,
-                    phases,
-                    maximum_concentrations,
+            if (
+                fallback
+                and preferred_product_id is None
+                and any(
+                    c.status in ('accepted', 'requires_review', 'not_needed')
+                    for c in candidates
+                    if c.joint_result and c.joint_result.get('status') != 'sequential'
                 )
+            ):
+                candidates.append(
+                    PhCandidate(
+                        identity,
+                        formula,
+                        reagent_direction,
+                        'not_applicable',
+                        message=f'Joint fit verified; skipped sequential fit ({fallback}).',
+                        product_record=dict(product),
+                    )
+                )
+                continue
+            coupled = _couple(
+                pool,
+                targets,
+                water,
+                target_ph,
+                product,
+                fraction,
+                density,
+                molar_mass,
+                nutrients,
+                mix,
+                mass,
+                volume,
+                cap,
+                phases,
+                maximum_concentrations,
             )
+            if fallback:
+                if identity in joint.get('solid_reagent_ids', ()):
+                    mass_cap = joint['maximum_reagent_mass_g'].get(identity)
+                    if mass_cap is not None and coupled.reagent_mass_g > mass_cap:
+                        raise DeliveryError(
+                            'dose_limit_exceeded', 'solid reagent exceeds the declared mass cap'
+                        )
+                qualification = f'Sequential pH fit; {fallback}.'
+                coupled = replace(
+                    coupled,
+                    message=' '.join(filter(None, [coupled.message, qualification])),
+                    joint_result=dict(
+                        status='sequential',
+                        reason=qualification,
+                        accepted=False,
+                        globalOptimalityProven=False,
+                    ),
+                )
+            candidates.append(coupled)
         except DeliveryError as exc:
             candidates.append(
                 PhCandidate(
@@ -399,10 +455,14 @@ def plan_coupled_ph(
                     product_record=dict(product) if isinstance(product, Mapping) else None,
                     joint_result=(
                         dict(
-                            status='search_incomplete',
+                            status={
+                                'joint_search_incomplete': 'search_incomplete',
+                                'joint_verification_failed': 'verification_failed',
+                            }.get(exc.code, 'rejected'),
                             accepted=False,
                             globalOptimalityProven=False,
                             reason=str(exc),
+                            **getattr(exc, 'search_counts', {}),
                         )
                         if joint is not None
                         else None
@@ -488,17 +548,33 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     rebuilt rows (water, products and the reagent's supply).
     """
     maxima = assessed_limits(maxima, endpoints[0])
-    by_id = {p['id']: p for p in pool}
     entries = {s['id']: s for r in endpoints for s in r['salts']}
     doses = {}
     for recipe, factor in zip(endpoints, (1 - weight, weight)):
         for salt in recipe['salts']:
             doses[salt['id']] = doses.get(salt['id'], 0.0) + factor * salt['gramsPerLitre']
     salts = [dict(entries[key], gramsPerLitre=g) for key, g in doses.items() if g > 0]
+    result = _assess_recipe(pool, targets, supply, endpoints[0], salts, maxima)
+    if 'substitutionSearch' in result:
+        result['substitutionSearch'] = dict(
+            result['substitutionSearch'],
+            method='convex blend of searched endpoint recipes; no global search certificate',
+            attemptedProductIds=[
+                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
+            ],
+        )
+    return result
+
+
+def _assess_recipe(pool, targets, supply, recipe, salts, maxima):
+    """Reassess fixed product doses and actual supply without rerunning the fit."""
+    maxima = assessed_limits(maxima, recipe)
+    by_id = {p['id']: p for p in pool}
+    doses = {s['id']: s['gramsPerLitre'] for s in salts}
     grams = [doses.get(p['id'], 0.0) for p in pool]
     loss, rows = score(forward(pool, grams, supply), targets)
     result = dict(
-        endpoints[0],
+        recipe,
         salts=salts,
         saltIds=[s['id'] for s in salts],
         grams=grams,
@@ -547,10 +623,6 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
         result['substitutionSearch'] = dict(
             result['substitutionSearch'],
             status='candidate_found' if result['feasible'] else 'search_incomplete',
-            method='convex blend of searched endpoint recipes; no global search certificate',
-            attemptedProductIds=[
-                [salt['id'] for salt in endpoint['salts']] for endpoint in endpoints
-            ],
         )
     return result
 
@@ -685,13 +757,14 @@ def _couple(
         )
         if abs(dose - assumed_dose) > DOSE_TOLERANCE * max(dose, 1e-12):
             raise DeliveryError('nonconvergent', 'blended recipe and reagent dose disagree')
-        # Recompute every assessment at the actual dose, including diagnostic rows.
-        supply = dict(water)
-        for ion, mg in contribution(dose).items():
-            supply[ion] = supply.get(ion, 0.0) + mg
-        recommendation = _blend_recipe(
-            pool, targets, supply, [recommendation] * 2, 0.0, maximum_concentrations
-        )
+    # Settling permits a small dose difference; rows and limits must still describe
+    # the actual returned dose, for ordinary fits as well as blended recipes.
+    supply = dict(water)
+    for ion, mg in contribution(dose).items():
+        supply[ion] = supply.get(ion, 0.0) + mg
+    recommendation = _assess_recipe(
+        pool, targets, supply, recommendation, recommendation['salts'], maximum_concentrations
+    )
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
     over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (
@@ -740,6 +813,8 @@ def catalogue_ph_reagents():
                 'chemicalFormula': salt['formula'],
                 'massFraction': salt.get('massFraction', 1.0),
                 'densityKgPerL': salt.get('densityKgPerL'),
+                'physicalForm': salt.get('physicalForm'),
+                'solventMassFraction': salt.get('solventMassFraction'),
                 'source': source.get('title') or 'FlahaX catalogue',
                 'revision': salt['analysisBasis'],
                 'recordedAt': source.get('entered') or 'catalogue',

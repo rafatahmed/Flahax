@@ -6,7 +6,8 @@
 
 The root is ``$FLAHAX_HOME``, else ``~/.flahax``. Kinds: ``waters`` (the ``--water``
 format), ``formulas`` (``--targets``), ``stores`` (``--products``), ``acids``
-(``{"formula", "fraction", "density", "name"}``) and ``sessions`` (``mix`` only; they
+(``{"formula", "fraction", "density", "name"}``), ``reagents`` (available pH product
+records, also read by ``batch --reagents``) and ``sessions`` (``mix`` only; they
 refer to the other items by name). A save writes a temporary file and renames it, so
 a file is never left half written.
 """
@@ -19,7 +20,7 @@ import tempfile
 
 from .delivery_contracts import DeliveryError
 
-KINDS = ('waters', 'formulas', 'stores', 'acids', 'sessions', 'results')
+KINDS = ('waters', 'formulas', 'stores', 'acids', 'reagents', 'sessions', 'results')
 
 
 def default_root():
@@ -143,6 +144,8 @@ def _references(store, data):
     ]:
         if data[key] not in builtin:
             names.append((kind, data[key]))
+    if data.get('reagent_store') not in (None, 'catalogue'):
+        names.append(('reagents', data['reagent_store']))
     return {f'{kind}/{name}': _digest(store.load(kind, name)) for kind, name in names}
 
 

@@ -188,10 +188,13 @@ class PlatformInterfaceTests(unittest.TestCase):
                 Terminal(io.StringIO()).__enter__()
 
     def test_windows_poll_timeout_yields_without_input(self):
-        keys = types.SimpleNamespace(kbhit=lambda: False)
+        kernel = types.SimpleNamespace(
+            GetStdHandle=lambda _: 1,
+            GetNumberOfConsoleInputEvents=lambda *_: True,
+        )
         with (
             patch('flahax.terminal.os.name', 'nt'),
-            patch.dict('sys.modules', {'msvcrt': keys}),
+            patch('flahax.terminal._kernel32', return_value=kernel),
             patch('flahax.terminal.time.monotonic', side_effect=[0, 0.01, 0.2]),
             patch('flahax.terminal.time.sleep') as sleep,
         ):
@@ -211,6 +214,33 @@ class PlatformInterfaceTests(unittest.TestCase):
         term.show_cursor(True)
         term.show_cursor(False)
         self.assertEqual(term.stream.getvalue(), '\x1b[?25h\x1b[?25l')
+
+    def test_windows_input_failures_do_not_return_phantom_keys(self):
+        def available(handle, count):
+            count._obj.value = 1
+            return True
+
+        for poll, read, error in (
+            (lambda *_: False, lambda *_: True, OSError),
+            (available, lambda *_: False, OSError),
+            (
+                available,
+                lambda handle, event, size, count: setattr(count._obj, 'value', 0) or True,
+                EOFError,
+            ),
+        ):
+            kernel = types.SimpleNamespace(
+                GetStdHandle=lambda _: 1,
+                GetNumberOfConsoleInputEvents=poll,
+                ReadConsoleInputW=read,
+            )
+            with (
+                self.subTest(error=error, poll=poll),
+                patch('flahax.terminal.os.name', 'nt'),
+                patch('flahax.terminal._kernel32', return_value=kernel),
+                self.assertRaises(error),
+            ):
+                Terminal(io.StringIO()).read_key(0)
 
 
 class NativePlatformTests(unittest.TestCase):
@@ -412,6 +442,77 @@ def windows_console_witness():
                     )
                     assert written.value == 1
                     assert term.read_key(0.5) == 'م'
+                    # Printable U+00E0 is not the legacy extended-key prefix.
+                    for char in ('à', 'H'):
+                        event = Input(1, Event(key=Key(True, 1, 0, 0, char, 0)))
+                        assert kernel.WriteConsoleInputW(
+                            handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                        )
+                    assert term.read_key(0.5) == 'à'
+                    assert term.read_key(0.5) == 'H'
+                    for virtual, char, state, expected in (
+                        (0x26, '\0', 0, 'UP'),
+                        (0x28, '\0', 0, 'DOWN'),
+                        (0x25, '\0', 0, 'LEFT'),
+                        (0x27, '\0', 0, 'RIGHT'),
+                        (0x24, '\0', 0, 'HOME'),
+                        (0x23, '\0', 0, 'END'),
+                        (0x09, '\t', 0x10, 'SHIFT_TAB'),
+                        (0x09, '\t', 0, 'TAB'),
+                        (0x0D, '\r', 0, 'ENTER'),
+                        (0x08, '\b', 0, 'BACKSPACE'),
+                        (0x1B, '\x1b', 0, 'ESC'),
+                    ):
+                        event = Input(1, Event(key=Key(True, 1, virtual, 0, char, state)))
+                        assert kernel.WriteConsoleInputW(
+                            handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                        )
+                        assert term.read_key(0.5) == expected, expected
+                    event = Input(1, Event(key=Key(True, 3, 0, 0, 'à', 0)))
+                    assert kernel.WriteConsoleInputW(
+                        handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                    )
+                    assert [term.read_key(0.1) for _ in range(3)] == ['à', 'à', 'à']
+                    # Windows delivers an Alt+numpad character on Alt release.
+                    event = Input(1, Event(key=Key(False, 1, 0x12, 0, 'à', 0)))
+                    assert kernel.WriteConsoleInputW(
+                        handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                    )
+                    assert term.read_key(0.1) == 'à'
+                    from flahax.mix_tui import TuiPrompts
+                    from flahax.terminal import glyphs
+
+                    # Exercise the real mix widgets through the native reader.
+                    for char in 'àHPKMx\b\r':
+                        event = Input(1, Event(key=Key(True, 1, 0, 0, char, 0)))
+                        assert kernel.WriteConsoleInputW(
+                            handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                        )
+                    prompts = TuiPrompts(term, glyphs('utf-8'))
+                    assert prompts.text('Session name') == 'àHPKM'
+                    for virtual, char in ((0x28, '\0'), (0x28, '\0'), (0x26, '\0'), (13, '\r')):
+                        event = Input(1, Event(key=Key(True, 1, virtual, 0, char, 0)))
+                        assert kernel.WriteConsoleInputW(
+                            handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                        )
+                    assert prompts.choose('Formula', ['first', 'second', 'third']) == 2
+                    # Releases and non-key records must not become text or stop polling.
+                    event = Input(1, Event(key=Key(False, 1, 0x41, 0, 'a', 0)))
+                    assert kernel.WriteConsoleInputW(
+                        handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                    )
+                    assert term.read_key(0) is None
+                    for kind, down, virtual, char in (
+                        (1, False, 0x41, 'a'),
+                        (0x10, False, 0, '\0'),  # focus event
+                        (1, True, 0x10, '\0'),  # Shift alone
+                        (1, True, 0, '\x15'),
+                    ):
+                        event = Input(kind, Event(key=Key(down, 1, virtual, 0, char, 0)))
+                        assert kernel.WriteConsoleInputW(
+                            handles[0], ctypes.byref(event), 1, ctypes.byref(written)
+                        )
+                    assert term.read_key(0.5) == 'CTRL_U'
                     term.draw(['native console restore witness'])
                     raise RuntimeError('restore witness')
             except RuntimeError as exc:

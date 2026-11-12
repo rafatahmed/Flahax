@@ -191,6 +191,8 @@ class JointSensitivityTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             solve_joint_problem(p, {}, 0, **controls(p, curvature_block='yes'))
         with self.assertRaises(DeliveryError):
+            solve_joint_problem(p, {}, 0, **controls(p, whole_mix=True))
+        with self.assertRaises(DeliveryError):
             solve_joint_problem(p, {}, 0, **controls(p, curvature_block=True))
 
     def test_cold_charge_correction_rechecks_actual_melon_candidate(self):

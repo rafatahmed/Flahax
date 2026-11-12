@@ -90,17 +90,25 @@ on its own (decision D1). Total N is the sum of the three forms; it is reported 
 - `N_NO3` is fitted to its declared value.
 - `N_UREA` absent means 0: a declared zero, met within 1e-6 mg/L. A urea-bearing
   product is then not used.
-- `N_NH4` above 0 is fitted to its declared value. `N_NH4` absent or 0 is no
-  ammonium requirement: there is no ammonium row and no ban, so products such as
-  calcium nitrate, which carries a little ammonium, stay usable.
+- A positive `N_NH4` target is fitted independently. An absent or zero target
+  is removed from the fitted nitrogen rows and does not prohibit ammonium.
 
-**Ammonium allowance.** When the formula declares no ammonium (`N_NH4` absent or 0)
-and no ammonium maximum is given, the ammonium the products bring with them may reach
-min(10 % of the total target N, 1.5 mmol/L NH4 = 21.01 mg/L N). The basis is Dutch
-soilless practice (De Kreij, Voogt et al.): ammonium at 5–15 % of total N, at most
-1–1.5 mmol/L. The allowance is shown with that basis in `ammoniumLimit`, on the batch
-summary, the report and the sheets. For Cucumber (Howard Resh), N_NO3 140 and N_NH4 0,
-the allowance is min(14, 21.01) = 14 mg/L. A declared `N_NH4` maximum replaces it.
+**Ammonium allowance.** If `N_NH4` is absent or zero in the targets and no explicit
+ammonium maximum is supplied, the
+configured default, when total target nitrogen is positive, permits up to the
+smaller of 10% of total target nitrogen
+and 21.01005 mg/L as N (1.5 mmol/L). A positive ammonium target prevents
+this generated allowance. An explicit maximum supplies its own limit;
+`max_ammonium_fraction=None` disables the generated maximum.
+
+The result's practice attribution is not a crop-specific agronomic qualification.
+The [2016 nutrient-solution handbook, printed p.16](https://www.nmi-agro.nl/wp-content/uploads/2020/04/160905_manual_nutrient_solutions_digital_en-8mb.pdf#page=16)
+describes 5–15% ammonium and 1–1.5 mmol/L in conditional pH-management guidance.
+The exact 10% default and combined minimum above are software policy.
+[De Kreij et al., brochure 196 (1999), Tables 8–9](https://edepot.wur.nl/273945)
+includes 1.8 mmol/L for tomato under high-pH conditions, so 1.5 mmol/L is not a
+universal prohibition. Crop and growing conditions still require qualification
+in #161. An allowance is not evidence that a crop needs or tolerates it.
 
 ## When a target is met
 
@@ -320,3 +328,109 @@ use `material_inventory(record)`; supply `material=resolved` for a resolved
 supplier grade or lot. Check `assay_component_difference_percent` when a blend's
 label and ingredients disagree. An `assay_only` result cannot qualify chemistry.
 See the [inventory contract](../models/material-inventory.md).
+
+
+## Current catalogue provenance
+
+The packaged catalogue contains 29 products and 13 formulas. Of the product
+records, 22 have no product-level `source` value. The catalogue-wide declaration
+and analysis review do not replace a supplier certificate or a measured lot
+analysis. A supplied reference is traceability information, not independent
+verification of its contents. Hydration, counterions and blend composition retain
+the qualifications described in [material evidence](../models/material-mass-convention.md).
+
+The formula names below are retained catalogue attributions. They do not establish
+that the current targets reproduce an original publication verbatim. Nitrogen
+values are mg/L as N, shown as nitrate-N / ammonium-N.
+
+| Formula | Stored N forms | Original-source status |
+| --- | ---: | --- |
+| Cucumber (Howard Resh) | 140 / 0 | Original generic N140; nitrate-only split not explicit; S150 selects lower endpoint of150–250 |
+| DEFAULT | 210 / 0 | Present in upstream HydroBuddy, identical to its Hoagland row; original adaptation rationale missing |
+| Hoagland solution | 210 / 0 | Nitrogen agrees with original solution 1; whole-profile attribution remains incomplete |
+| Lettuce 2 (Howard Resh) | 165 / 15 | Original Resh N split verified; Ca/Mg/Fe are range midpoints; S113 absent from original webpage |
+| Lettuce General (Howard Resh) | 165 / 15 | Original Resh N split verified; Ca/Mg/Fe are range midpoints; S65 absent from original webpage |
+| Melons (Douglas Peckenpaugh) | 215 / 0 | Peckenpaugh (2004), p.85 recovered in publisher preview: Nitrogen215; phosphate/molybdate mass basis unresolved |
+| Pepper (Howard Resh) | 190 / 18 | Original N split verified; SO4 360 versus catalogue S360; original Fe1.5–3.0 versus catalogue5 |
+| Strawberry Drip Irrigation (schundler.com) | 80 / 0 | Original table recovered: N80 without form split; S180 absent |
+| Strawberry Fruiting (growing edge) | 128 / 0 | Original anthology table p.39 recovered: Nitrogen128 without form split; molybdate label needs basis clarification |
+| Tomato (Howard Resh) | 140 / 0 | Original author table recovered; generic N, without an explicit nitrogen-form split |
+| Tomato Stage.1 - 10-14 days (Howard Resh) | 100 / 0 | Original stage table and nitrogen basis unresolved |
+| Tomato Stage.2 - first cluster (Howard Resh) | 130 / 0 | Original stage table and nitrogen basis unresolved |
+| Tomato Stage.3 - to plant maturity (Howard Resh) | 180 / 0 | Original stage table and nitrogen basis unresolved |
+
+[Hoagland and Arnon, printed page 31](https://www.ars.usda.gov/ARSUserFiles/50820500/GPRG/Hoagland_WaterCultureMethodForGrowingPlantsWithoutSoil.pdf)
+specifies solution 1 with 5 mmol/L potassium nitrate and 5 mmol/L calcium nitrate:
+15 mmol/L nitrate-N, approximately 210 mg/L as N. Its molybdenum is 0.01 ppm;
+the catalogue has 0.05. That difference requires an adaptation record before
+calling it a transcription defect. Solution 2 has a different nitrogen split.
+
+[Pinho et al. (2024), Methods](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0295811)
+reports nitrate-N 165 and ammonium-N 15 in its lettuce experiment. The target
+profile matches Lettuce General; Lettuce 2 has a different sulfur target.
+This establishes the experiment's recipe; the original Resh webpage independently supports its nitrogen split but omits sulfur.
+
+Issue #201 records the provenance audit, including unresolved edition, page/table,
+nutrient-heading, unit and adaptation evidence. No verified nitrogen discrepancy currently justifies changing
+the stored targets. An unresolved source does not establish either correctness or
+an error, and does not authorize converting nitrate targets into total-N targets.
+
+### Recovered original formula sources
+
+All 13 current formula target profiles, including DEFAULT, numerically match
+[HydroBuddy's formulation database](https://github.com/danielfppps/hydrobuddy/blob/master/formulations_win.dbf)
+(blob `5232e894cd911ca7aeba6462c410e4222e814f52`). This establishes an upstream
+matching record, not the scientific validity of the original attribution or proof
+of the historical import mechanism.
+
+Archived author tables provide original evidence for
+[Resh cucumber](https://web.archive.org/web/20230203170159/http://howardresh.com/dr-howard-resh-hydroponic-services/hydroponic-cucumbers/),
+[general tomato](https://web.archive.org/web/20221127114539/http://howardresh.com/dr-howard-resh-hydroponic-services/hydroponic-tomatoes/),
+[pepper](https://web.archive.org/web/20230203165222/http://howardresh.com/dr-howard-resh-hydroponic-services/hydroponic-culture-peppers-ii/), and
+[lettuce](https://web.archive.org/web/20230330111900/http://howardresh.com/dr-howard-resh-hydroponic-services/hydroponic-lettuce-production-i/).
+The pepper sulfate heading differs from the catalogue's elemental sulfur heading;
+this establishes a label discrepancy, not authority to silently convert the target.
+The three staged tomato tables still need an original source.
+
+The [original Schundler strawberry article](http://www.schundler.com/strawberries.htm)
+and [Perlite Institute version](https://www.perlite.org/wp-content/uploads/2018/03/hydroponic-culture-strawberries-perlite.pdf)
+provide N80 and the other listed elements but no sulfur row.
+Publisher-permitted, page-indexed preview text identifies the melon table in
+[Peckenpaugh, Hydroponic Solutions (2004), p.85](https://books.google.com/books?id=Wzgh9qy30KIC&jscmd=SearchWithinVolume2&q=215)
+and the fruiting-strawberry table in
+[The Best of Growing Edge 3, p.39](https://books.google.com/books?id=lZD95wlLhxIC&jscmd=SearchWithinVolume2&q=128).
+Full page-image verification and the original mass basis of phosphate/molybdate
+labels remain outstanding. Generic Nitrogen is not an explicit nitrate-N label.
+
+### Custom formulas and blends
+
+A formula is a caller's desired nutrient concentrations, not a claim that a
+publication recommends them. Custom targets need no author attribution or
+catalogue match. They must use the supported nutrient keys and concentration
+units. Nitrogen-form targets retain the separate fitting contract described
+above; a generic total-N source must not be silently converted to nitrate-N.
+
+Likewise, a custom product's declared analysis is sufficient for nutrient mass
+accounting. Manufacturer identity and independent assay certification are not
+prerequisites for that calculation. Provenance describes the evidence supplied;
+it does not turn an unattributed analysis into an invalid nutrient input.
+
+Chemical equilibrium needs the relevant ion forms, ligands, counterions and
+other composition information. An elemental analysis alone does not determine
+these. FlahaX uses the supported declared composition and reports its model
+limits; if that information is unavailable, nutrient fitting and chemical
+speciation have different capabilities. A manufacturer name cannot fill in
+missing chemical information automatically.
+
+Micro Combi Mix 2 is a custom blend. Its retained declaration uses Fe-EDTA and
+boric acid alongside the other declared constituents. Matching nutrient
+percentages in a manufacturer's different product neither establishes identity
+nor authorizes replacing those constituents. Manufacturer sheets may be
+comparators, but are not required validation evidence for this blend. Its
+physical properties remain declared reference inputs rather than independently
+measured mixture behavior.
+
+The source audit above concerns the attribution of named presets only. Missing
+original tables, selected range endpoints, and unexplained differences are
+recorded as unresolved attribution or adaptation, not solver defects or reasons
+to reject a custom formula. No target values were changed by that audit.

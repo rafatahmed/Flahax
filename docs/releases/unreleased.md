@@ -1,6 +1,86 @@
-# FlahaX 0.7.0: detailed notes
+# FlahaX unreleased changes: detailed notes
 
-The full text of every change in 0.7.0, as recorded when each was merged, newest first. The [changelog](../../CHANGELOG.md) groups them into a short summary. 0.7.0 is not yet released.
+## Custom batch record validation (#240, #241)
+
+Batch checks custom fertilizer and pH-reagent records before constructing a calculation.
+Records need nonempty string IDs and names; each offered list must use distinct names.
+The reagent-name check includes certificates added with `--acid`. Rename ambiguous entries
+before retrying: two different products must not share a display name, because name-based
+chemistry and reporting cannot distinguish them. Previously, that collision could change
+the calculated starting pH and reverse the required correction direction.
+
+Malformed records and nonnumeric, nonfinite or nonpositive liquid reagent densities now
+produce plain input errors rather than uncaught exceptions. Valid custom assays and product
+availability remain unchanged, as do numerical tolerances and solver controls.
+
+Valid custom names beginning with `test_` no longer cause products to be discarded as
+placeholders (#242). The declared formula and assay determine eligibility; the literal
+unfinished formula `Input Formula Here` and invalid or missing assays remain rejected.
+
+## Sequential accounting and explicit zero maxima (#237, #238)
+
+Sequential pH candidates now reassess nutrient totals, total nitrogen, loss and declared
+maximum checks using the actual returned reagent dose and unchanged fertilizer amounts.
+The settling tolerance no longer leaves assessments tied to the preceding assumed dose.
+Ordinary fits retain their search provenance; only actual blended recipes are labelled as blends.
+
+Joint proposals keep sources at zero when an existing hard constraint proves that no dose is
+allowed. The existing active-face refinement also applies to binding zero maxima. This avoids
+discarding an entire proposed step because it includes a forbidden product, and permits local
+stationarity refinement at a zero cap. Solver tolerances, iteration limits and final verification
+are unchanged. A zero ammonium target still means no requirement; an explicit zero ammonium
+maximum prohibits ammonium. Convergence does not imply that nutrient targets are met, and
+does not prove a global optimum.
+
+## Final recipe report consistency (#231)
+
+Remedy stage messages now match the final recipe shown in the batch summary. Reports explain
+local stationarity, nutrient matching and nutrient feasibility diagnostics separately, without
+changing their underlying calculation statuses or implying a global optimum or impossibility.
+Positive doses below the existing display-zero precision are labelled as numerical residue and
+have no weighing checkbox; their exact values remain in the exported calculation data.
+Sheets name reagent containers without assuming they contain acid.
+No solver controls, nutrient tolerances, recipe quantities or acceptance decisions change.
+
+## Nutrient stock fill and reagent refills (#231)
+
+Fill mode now uses the smaller A/B nutrient tank to determine irrigation volume. A separate
+reagent tank can be refilled at the same injection ratio instead of shrinking the nutrient batch.
+With 100 L A/B tanks and a 10 L reagent tank at 1:100, the batch supplies 10,000 L irrigation:
+100 L in each nutrient tank, and ten 10 L reagent fills. Reports distinguish the total reagent
+amount from the amount per fill, including a scaled final partial fill. Once mode permits the
+same reagent refills while still rejecting nutrient stock volumes that exceed A/B capacity.
+Previously saved calculations retain their original volumes; a new calculation uses this rule.
+Concentration targets, solver methods and acceptance tolerances are unchanged; batch quantities
+scale with the corrected irrigation volume.
+
+## Available pH reagents (#231)
+
+Mix selects catalogue acids and bases together using the fertilizer-list interaction:
+the whole catalogue, a saved list, or individual available products. Existing saved acid
+certificates remain selectable. Custom supported liquid or solid reagents declare their
+assay and physical form, liquid density and known water content; unknown composition is
+not inferred. Only the selected list is passed into the unchanged direction and numerical
+checks. Batch accepts the same product-record array through `--reagents`; an empty array
+stays empty, while explicitly supplied `--acid` certificates are additional available products.
+
+Old sessions lacking availability require `--review-reagents` and a new session name.
+The original session is preserved. This reagent-only review cannot bypass existing
+input/model-drift checks. Catalogue is reserved for the built-in selection, so saving an
+empty or restricted list under that name cannot silently restore all products.
+
+## Earlier changes
+
+The full text of unreleased changes, as recorded when each was merged, newest first. The [changelog](../../CHANGELOG.md) groups them into a short summary. These notes do not designate a future release version. Package metadata remains `0.6.1.dev0`.
+
+These entries are a chronological record. Older entries can describe behavior
+superseded by later changes; historical decision labels are references to those
+decisions, not evidence that the current solver is qualified. In particular, label
+charge rejection described in the catalogue entry below was subsequently removed:
+the current workflow reconciles a declared compound with its label and reports
+unassigned amounts, as described in the label-reconciliation entry.
+
+- Windows `flahax mix` reads Unicode console key events instead of ambiguous character prefixes (#127). Typing à no longer consumes the next character or turns H/P/K/M into arrow actions. Navigation, editing, held-key repeats and Alt+numpad characters remain supported. Native hidden-console tests exercise both the terminal reader and the mix text-entry and selection widgets; POSIX input is unchanged.
 
 - A product label is reconciled with its compound instead of refused (decision G5, #214). `flahax.label_reconciliation` takes the charge the declared ions of the compound cannot balance from the excess side's declared nutrients in proportion to their charge contribution and reports it as `unassigned_percent`; chemistry uses the label minus that amount and the nutrient fit keeps the label. A label that leaves a charged ion unstated (a chelate's sodium, a carbonate) or states one side only (an acid, urea, KOH) is closed by that ion, so nothing is unassigned. A blend has no defined compound and keeps its label, with the note "has no defined compound: its label analysis is used as declared". Potassium nitrate at N 13.0 and K 38.2 leaves about 1.91 % K unassigned. The 1 % label charge gate (`materials._CHARGE_RESIDUAL_LIMIT_PERCENT`), the grade-range exclusion test and the `identity_inconsistent` refusals in `mix_cli` and `fertilizer_workflow` are removed; a label naming a nutrient the compound's ions do not carry is still refused.
 - The pH needs no declaration (decisions G1–G4, #215). `calculate_equilibrium_ph(totals, *, phases, temperature_c=25.0, carbon_boundary='closed', residual_charge=0.0)` no longer takes `complete_analysis` and solves to the net charge `residual_charge` (eq/kg water) instead of zero. In the workflow, a water with neither an `HCO3` key nor a measured alkalinity gives the chemistry and pH stages `needs_input` with the message "measure alkalinity (HCO3) of the water"; an ionic strength above 0.1 mol/kg gives `not_calculated` with "ionic strength above 0.1 mol/kg: outside the activity model's range"; `HCO3: 0` is a measured zero and is calculated. The recipe is produced in all three cases. The summary lists the stated model conditions: closed carbon, 25 °C only, and 1 L of solution taken as 1 kg of water.
@@ -11,7 +91,7 @@ The full text of every change in 0.7.0, as recorded when each was merged, newest
 - Tanks use the A/B layout (decisions G20-G22, #227). `CLASS_RULES` keeps calcium-phosphate and calcium-sulfate for macro products only; the magnesium-phosphate rule is deleted, and the calcium-sulfate reason reads "calcium and sulfate precipitate in a concentrate". A micronutrient product (every nutrient in `MICRONUTRIENTS`) goes to tank A and is screened against phosphate only. A batch that needs more tanks than are available is blocked with "needs a third tank: P cannot share with Q (rule)".
 - A target is met only within the numerical tolerance (decision G25, validated 2026-10-24): 1e-5 relative for a positive target, 1e-6 mg/L for a declared zero, 1e-4 pH units, in the new module `flahax.requirement_fit` (`met`, `RELATIVE_TOLERANCE`, `ZERO_TARGET_TOLERANCE_MG_PER_L`, `PH_TOLERANCE`) (#210). It replaces the ±1 % band (`engine.TOLERANCE_PCT`, removed) in `feasible`, in the short-target recovery, in the target-only diagnosis and in `unmetTargets`. `feasible` is every declared requirement met and no declared maximum exceeded. Every deviation is reported: in `plan_fertilizer_workflow` the formulation stage blocks (`infeasible_recipe`) only on a broken declared maximum; a missed target makes it `requires_review` with "targets missed: …" (each difference to three significant figures in fixed notation, for example +1400 %, before any incidental-nutrient review), and the batch, titration, nitric, acid and stock stages continue (`FinalSolutionRecipe.feasible` is true unless a declared maximum is broken). A deviation the formulation stage accepts never blocks a later stage, and `plan_equilibrium_delivery` plans an accepted empty recipe on the water alone (it formerly required a nonempty recipe): the titration, nitric (`plan_equilibrium_delivery`) and acid-selection (`plan_acid_options`) stages judge only the change their reagent makes. `maximum_nutrient_error_percent` is now optional with no default, and every stage rejects a declared value that is not finite and positive (`invalid_value`; the nitric adapter formerly accepted 0) (the titration stage formerly defaulted to 1 %, and each stage compared the whole deviation from the target); when given, it is a declared requirement on the reagent's own change to each positive target, measured from the recipe before the reagent, and a stage fails with `nutrient_tolerance_exceeded` only when that change exceeds it, or with `nutrient_limit_exceeded` when the reagent pushes a nutrient past a declared maximum. A declared zero is met within 1e-6 mg/L everywhere: in `limitViolations`, `requirementConflicts`, `unmetTargets` and on the sheets (5e-7 mg/L of urea from the water meets an absent or zero N_UREA; 2e-6 mg/L breaks it and blocks). The pH plan and the joint workflow use `PH_TOLERANCE` (1e-4) in place of the former 1e-3 in `ph_adjustment`; no tested pH result changed. A feed whose mixed pH is within 1e-4 of the target now reads "no pH reagent is needed" when no plan is selected, instead of asking for a base (#212). Because a target 0.0056 % short is now short, recovery admits a held-back product that is its only source: for Lettuce 2 (Howard Resh) on the packaged catalogue sodium molybdate replaces Micro Combi Mix 1 for Mo, which is then met exactly, sodium falls from 0.814 to 0.442 mg/L, and P finishes at 49.8384 mg/L for 50 (-0.323 %), a deviation the former band counted as met. The batch and mix sheets mark in red each target not met within the tolerance (formerly beyond 1 %), and the recovery warning reads "… stayed short of its target without it" (formerly "more than 1% short").
 - N_NO3, N_NH4 and N_UREA are each their own fitted target (decision D1); total N is reported in `totalN` (target, final, difference, `fitted: false`) as the sum of the three forms and never fitted (#209, #201). An absent N_UREA is a declared zero, and urea-bearing products are not used unless the formula declares urea. N_NH4 absent or 0 is no ammonium requirement: no row and no ban (G24), so calcium nitrate stays usable. The ammonium the products bring is then held within min(10 % of total target N, 1.5 mmol/L NH4 = 21.01 mg/L N) (G23), with the basis "Dutch soilless practice (De Kreij, Voogt et al.)", reported in `ammoniumLimit` and shown on the batch summary, the report and the batch and mix sheets; a declared N_NH4 maximum replaces it and `max_ammonium_fraction=None` removes it. `solve_weights`, the coupled pH plan and the joint problem use the same nitrogen rows and allowance, and total N is recomputed after a pH reagent. For Cucumber (Howard Resh), N_NO3 140 and N_NH4 0, the allowance is 14 mg/L.
-- The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (Flaha Agri Tech, 2026-10-29; supplied by Flaha Agri Tech, not independent laboratory verification) (#206). `library.json` holds 29 products, 24 fertilizers and 5 pH products, 13 crop formulas and the 3 waters it held before. Every product carries the analysis review record (`analysisReview`), and the library records the analysis as a whole in `fertilizerAnalysis`. The pH products, all `role: ph_reagent` and never selected as nutrient salts, are Potassium Hydroxide (45% solution), Phosphoric Acid (75%), Nitric Acid (65% solution), Potassium Bicarbonate and Potassium Carbonate; `catalogue_ph_reagents()` returns all five, so `flahax batch` and `flahax mix` now evaluate the two packaged acids beside any acid given with `--acid`. New products: Nitric Acid (65% solution), Micro Combi Mix 1 and Micro Combi Mix 2. Removed products: Ammonium Dibasic Phosphate, Calcium Chloride (Dihydrate), CH - micro (kept as a retired reference in `retiredProductReferences`), Potassium Chloride, Potassium Citrate and Potassium Dibasic Phosphate; the packaged catalogue has no chloride product. Removed formulas: Chilli (maximumyield), Generic Bloom (maximumyield), Generic Dry Season (Howard Resh), Generic Grow (maximumyield), Generic Wet Season (Howard Resh), Generic for Berries (Growing Edge), Rice (Douglas Peckenpaugh) and Tropical Lettuce (Douglas Peckenpaugh). The catalogue Potassium Nitrate analysis is 2.57 % out of charge balance against KNO3, above the 1 % label limit, so chemistry stages that include it stop with `identity_inconsistent`; that limit is under review. NOTICE and the attribution test credit Flaha Agri Tech for the analysis.
+- The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (Flaha Agri Tech, 2026-10-29; supplied by Flaha Agri Tech, not independent laboratory verification) (#206). `library.json` holds 29 products, 24 fertilizers and 5 pH products, 13 crop formulas and the 3 waters it held before. Every product carries the analysis review record (`analysisReview`), and the library records the analysis as a whole in `fertilizerAnalysis`. The pH products, all `role: ph_reagent` and never selected as nutrient salts, are Potassium Hydroxide (45% solution), Phosphoric Acid (75%), Nitric Acid (65% solution), Potassium Bicarbonate and Potassium Carbonate; `catalogue_ph_reagents()` returns all five, so `flahax batch` and `flahax mix` now evaluate the two packaged acids beside any acid given with `--acid`. New products: Nitric Acid (65% solution), Micro Combi Mix 1 and Micro Combi Mix 2. Removed products: Ammonium Dibasic Phosphate, Calcium Chloride (Dihydrate), CH - micro (kept as a retired reference in `retiredProductReferences`), Potassium Chloride, Potassium Citrate and Potassium Dibasic Phosphate; the packaged catalogue has no chloride product. Removed formulas: Chilli (maximumyield), Generic Bloom (maximumyield), Generic Dry Season (Howard Resh), Generic Grow (maximumyield), Generic Wet Season (Howard Resh), Generic for Berries (Growing Edge), Rice (Douglas Peckenpaugh) and Tropical Lettuce (Douglas Peckenpaugh). At the time of that catalogue change, Potassium Nitrate was reported as 2.57 % out of charge balance against KNO3 and the then-active 1 % label gate stopped its chemistry with `identity_inconsistent`. That gate was subsequently removed; the current label-reconciliation behavior is described above. NOTICE and the attribution test credit Flaha Agri Tech for the analysis.
 - Micro Combi Mix 1 and 2 have a declared composition (2026-10-30). Fe is Fe(III)-EDTA, Mn, Zn and Cu are EDTA chelates, Mo is sodium molybdate and, in Mix 2, B is boric acid. The sodium counter-ions follow the catalogue's own chelate identities (NaFeEDTA; Na2 Mn, Zn and Cu EDTA; Na2MoO4), and the ion forms are mol/kg from the catalogue's element percentages. The new identity status `declared_blend` resolves as a disclosed blend without the `assumed_composition` flag (`assumptionStatus`: `declared_composition_not_independently_verified`), and its chemistry source reads "declared composition of" the product. Mix 2's chemistry profile names boric acid among its components (family `edta_boric_acid_molybdate_blend`), as CH-micro's profile names borax.
 - Nitric acid is a strong acid in the engine's ion tables: `HNO3` dissociates fully into H+ and nitrate, the proton implicit, as for phosphoric acid. Nitric Acid (65% solution) converts to nitrate from its assay, with no counter-ions; parsing of the existing nitrate salts is unchanged.
 - A `flahax batch` or `flahax mix` run whose formulation stage cannot meet a target, with no other stage blocking it, now ends "requires review" (exit 0) and reports the shortfall, for example K at -100 % when a K maximum of 0 forbids every potassium product (decision 2026-10-30). Before the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0) such runs ended blocked (exit 3), because no packaged reagent could lower the pH; the packaged acids now give the pH stage a reagent.

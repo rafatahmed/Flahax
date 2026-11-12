@@ -1,6 +1,46 @@
 # Release readiness
 
-The current preparation comes first; dated audits below it are history.
+## Current preparation — unreleased
+
+The checkout identifies itself as `0.6.1.dev0`. The planned changes are collected
+under [unreleased detailed notes](releases/unreleased.md); no future release version is designated. Final version selection and release
+preparation are tracked in issue #234.
+
+Current documentation and clean-distribution qualification are tracked in #199.
+Computational qualification (#200) and the source/model qualification audits
+(#161, #201) are complete within their documented scopes. Unresolved attribution
+and model assumptions remain explicit limits, not rejected custom inputs. Physical
+validation (#41, #42) and the hands-on grower trial (#231) remain unfinished.
+A passing calculation or package check does not establish those outcomes.
+The final candidate still needs its own artifact hashes, installed-package checks,
+required CI and reference replay, review, and publication authorization.
+
+The dated records below describe their own revisions. Their remaining gates and
+capability claims are historical, not the status of the current checkout.
+
+## Current release assessment
+
+The development candidate is not a qualified release. No version bump,
+publication date, tag, DOI or release upload is established by these corrections.
+
+| Item | Current disposition |
+| --- | --- |
+| Documentation and distribution (#199) | Candidate qualification and artifact identities are recorded in #199; local checks do not establish merge, hosted CI or a published release |
+| Historical comparison (#203) | Local report corrected; it is not packaged as current performance evidence |
+| Formula provenance (#201) | Audit completed; recovered sources and unresolved attributions recorded; custom targets unchanged |
+| Scientific/source claims (#161) | Qualification audit completed; EC, ammonium, declared-product, solubility and reaction-domain limits remain explicit |
+| Grower acceptance (#231) | Hands-on trial not performed; automation cannot substitute for it |
+| Computational qualification (#200) | Completed within its recorded computational scope, not physical/source validation |
+| Physical validation (#41/#42) | Separate unfinished programme; no laboratory or field accuracy claim |
+
+The packaged water profiles are examples, not laboratory analyses. Release
+assessment must distinguish them from an actual supplied water measurement.
+Final release preparation (#234) requires an agreed candidate, the outstanding
+grower acceptance, exact-candidate full/native CI and required reference replay,
+strict documentation and clean-distribution checks, then separate publication
+authorization. Historical benchmark timings retain their measured revisions.
+
+## Historical release records
 
 ## 0.5.0 - published 2026-10-20
 
@@ -34,7 +74,7 @@ Remaining gates: hosted Python 3.11–3.13 checks and live replay on the final
 revision, review, explicit maintainer publication authorization, and a final build
 of the exact approved artifacts with recorded hashes.
 
-## Current preparation - 0.3.1 / 2026-10-01
+## Historical preparation - 0.3.1 / 2026-10-01
 
 Current branch: `release/0.3.1-site-planning`. Package metadata, citation and
 the shipped manual now identify the unreleased 0.3.1 preparation; no release

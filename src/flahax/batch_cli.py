@@ -48,9 +48,15 @@ from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis, VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
-from .grower_report import millilitres, render_batch_sheet, render_report, summarize_batch
+from .grower_report import (
+    reagent_amount,
+    reagent_preparation,
+    render_batch_sheet,
+    render_report,
+    summarize_batch,
+)
 from .measured_water import balance_water_analysis
-from .ph_adjustment import catalogue_ph_reagents
+from .ph_adjustment import catalogue_ph_reagents, nutrient_salts
 from .planning_cli import serializable
 from .product_conversion import MOLAR_MASS
 from .ph_adjustment import REAGENTS
@@ -343,11 +349,12 @@ ACID_FORMULAS = {f.upper(): f for f, (direction, *_) in REAGENTS.items() if dire
 
 
 def acid_record(spec):
-    """``FORMULA:MASS_FRACTION:DENSITY_KG_PER_L[:NAME]`` from your supplier certificate."""
+    """Parse a supplier certificate, optionally including its declared solvent mass fraction."""
     parts = spec.split(':')
-    if len(parts) not in (3, 4):
+    if len(parts) not in (3, 4, 5):
         raise DeliveryError(
-            'invalid_value', f'--acid {spec}: expected FORMULA:MASS_FRACTION:DENSITY[:NAME]'
+            'invalid_value',
+            f'--acid {spec}: expected FORMULA:MASS_FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]',
         )
     numbers = []
     for label, text in (('assay (mass fraction)', parts[1]), ('density (kg/L)', parts[2])):
@@ -369,7 +376,19 @@ def acid_record(spec):
             'invalid_value',
             f'--acid {spec}: the assay is a fraction in (0, 1] and the density in kg/L',
         )
-    name = parts[3].strip() if len(parts) == 4 else f'{formula} {fraction:.0%}'
+    name = parts[3].strip() if len(parts) >= 4 else f'{formula} {fraction:.0%}'
+    solvent = None
+    if len(parts) == 5:
+        try:
+            solvent = float(parts[4])
+        except ValueError as error:
+            raise DeliveryError(
+                'invalid_value', 'invalid declared reagent solvent fraction'
+            ) from error
+        if not (math.isfinite(solvent) and 0 <= solvent <= 1 and fraction + solvent <= 1):
+            raise DeliveryError(
+                'invalid_value', 'solvent and active fractions must fit in one gram'
+            )
     return dict(
         id=f'{formula}-{fraction:g}-{density:g}',
         name=name,
@@ -378,6 +397,7 @@ def acid_record(spec):
         recordedAt='2026-01-01T00:00:00Z',
         chemicalFormula=formula,
         massFraction=fraction,
+        solventMassFraction=solvent,
         densityKgPerL=density,
     )
 
@@ -432,6 +452,147 @@ class BatchOptions:
     temperature_c: float = 25
     depth: int = 3
     title: str | None = None
+    max_solid_reagent_grams: float | None = None
+    confirmed_products: list[str] = field(default_factory=list)
+    reagents: str | None = None
+
+
+# Batch search controls. The loss threshold is an exact-fit shortcut. A constrained
+# local solution can finish by stationarity even when nutrient targets are missed.
+JOINT_CONTROLS = dict(
+    charge_scale=0.001,
+    charge_tolerance=2e-12,
+    loss_tolerance=1e-16,
+    sensitivity_tolerance=0.01,
+    trust_radius=10000,
+    sensitivity_method='equilibrium',
+    curvature_block=True,
+    whole_mix=True,
+    stationarity_tolerance=1e-6,
+    active_bound_tolerance=1e-8,
+    max_iterations=60,
+    max_backtracks=20,
+)
+JOINT_DOSE_STEP_G_PER_L = 1e-4
+
+
+def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_cap=None):
+    """The explicit joint-fit configuration for every offered reagent.
+
+    Only declared solvent fractions enter the joint problem. Liquid mass caps use their
+    recorded densities. Dry solids use a separately declared mass cap.
+    """
+    if solid_cap is not None and (
+        isinstance(solid_cap, bool)
+        or not isinstance(solid_cap, (int, float))
+        or not math.isfinite(solid_cap)
+        or solid_cap < 0
+    ):
+        raise DeliveryError(
+            'invalid_value', 'solid reagent mass cap must be finite and nonnegative'
+        )
+    pool_ids = [p['id'] for p in nutrient_salts(products)]
+    solvents, masses, fallbacks, solids = {}, {}, {}, []
+    for reagent in reagents:
+        identity = reagent['id']
+        if reagent.get('solventMassFraction') is not None:
+            solvents[identity] = reagent['solventMassFraction']
+        if reagent.get('physicalForm') == 'solid':
+            solids.append(identity)
+            if solid_cap is not None:
+                masses[identity] = solid_cap
+        elif reagent.get('densityKgPerL') is not None:
+            density = reagent['densityKgPerL']
+            if (
+                isinstance(density, bool)
+                or not isinstance(density, (int, float))
+                or not math.isfinite(density)
+                or density <= 0
+            ):
+                raise DeliveryError(
+                    'invalid_value', f'{identity}: densityKgPerL must be finite and positive'
+                )
+            masses[identity] = 1000 * cap_litres * density
+        else:
+            # Neither a known solid nor a liquid with a verifiable volume cap.
+            continue
+        if identity not in solvents:
+            fallbacks[identity] = 'joint fit needs a declared solvent fraction'
+        elif identity not in masses and identity in solids:
+            fallbacks[identity] = 'joint fit needs a declared solid reagent mass cap'
+    return dict(
+        controls={
+            r['id']: dict(
+                JOINT_CONTROLS,
+                dose_steps={i: JOINT_DOSE_STEP_G_PER_L for i in [*pool_ids, r['id']]},
+            )
+            for r in reagents
+        },
+        solvent_mass_kg=solvent_mass_kg,
+        reagent_solvent_fractions=solvents,
+        maximum_reagent_mass_g=masses,
+        sequential_fallbacks=fallbacks,
+        solid_reagent_ids=solids,
+    )
+
+
+def left_out_products(library, products, confirmed_products=()):
+    """One declared remedy per catalogue fertilizer the grower's product list leaves out.
+
+    Only excluded catalogue IDs explicitly confirmed by the grower are rerun.
+    """
+    present = {p['id'] for p in products}
+    extras = [p for p in nutrient_salts(library['salts']) if p['id'] not in present]
+    if not isinstance(confirmed_products, (list, tuple)) or not all(
+        isinstance(i, str) for i in confirmed_products
+    ):
+        raise DeliveryError('invalid_remedy', 'confirmed products must be a list of catalogue IDs')
+    confirmed = set(confirmed_products)
+    invalid = confirmed - {p['id'] for p in extras}
+    if invalid or len(confirmed) != len(confirmed_products):
+        raise DeliveryError(
+            'invalid_remedy',
+            'confirmed IDs must be unique excluded catalogue fertilizers'
+            + (': ' + ', '.join(sorted(invalid)) if invalid else ''),
+        )
+    return [
+        dict(
+            id='catalogue:' + p['name'],
+            kind='catalogue',
+            available=p['id'] in confirmed,
+            changes=dict(products=[p]),
+        )
+        for p in extras
+    ]
+
+
+def _product_records(records, label):
+    if not isinstance(records, list):
+        raise DeliveryError('invalid_value', f'{label} must be a JSON array of product records')
+    names = set()
+    for index, record in enumerate(records, 1):
+        if not isinstance(record, dict):
+            raise DeliveryError(
+                'invalid_value',
+                f'{label} must be a JSON array of product records; '
+                f'{label} entry {index} must be a product record',
+            )
+        identity = record.get('id')
+        if not isinstance(identity, str) or not identity.strip():
+            raise DeliveryError(
+                'invalid_value', f'{label} entry {index} needs a nonempty string id'
+            )
+        name = record.get('name')
+        if not isinstance(name, str) or not name.strip():
+            raise DeliveryError(
+                'invalid_value', f'{label} entry {index} needs a nonempty string name'
+            )
+        if name in names:
+            raise DeliveryError(
+                'invalid_value', f'{label} need distinct names; {name!r} is repeated'
+            )
+        names.add(name)
+    return records
 
 
 def run_batch(options):
@@ -447,7 +608,10 @@ def run_batch(options):
         )
     volume = options.volume if volumes is None else volumes.irrigation_litres
     library = load_library()
-    products = read_json(options.products, 'products') if options.products else library['salts']
+    products = _product_records(
+        read_json(options.products, 'products') if options.products else library['salts'],
+        'products',
+    )
     if options.targets:
         targets = read_json(options.targets, 'targets')
         title = options.title or Path(options.targets).stem
@@ -458,8 +622,31 @@ def run_batch(options):
     if options.water_share is not None:
         label, water, chemistry = blend(label, water, chemistry, options.water_share)
     rules = read_json(options.rules, 'rules') if options.rules else ()
-    reagents = [acid_record(a) for a in options.acid] + catalogue_ph_reagents()
+    reagents = (
+        read_json(options.reagents, 'pH reagents')
+        if options.reagents is not None
+        else catalogue_ph_reagents()
+    )
+    reagents = _product_records(reagents, 'pH reagents')
+    reagents = _product_records(reagents + [acid_record(a) for a in options.acid], 'pH reagents')
     limits = dict(options.limit)
+    cap_litres = options.max_reagent_litres or volume / 200
+    joint = (
+        None
+        if chemistry is None
+        else joint_configuration(
+            products,
+            reagents,
+            volume * chemistry['concentration_basis']['water_kg_per_litre'],
+            cap_litres,
+            options.max_solid_reagent_grams,
+        )
+    )
+    remedies = left_out_products(library, products, options.confirmed_products)
+    if joint is not None and options.confirmed_products:
+        joint['additional_product_steps'] = dict.fromkeys(
+            options.confirmed_products, JOINT_DOSE_STEP_G_PER_L
+        )
     workflow = plan_fertilizer_workflow(
         products,
         targets,
@@ -477,9 +664,13 @@ def run_batch(options):
         ),
         ph_adjustment=dict(
             products=reagents,
-            maximum_reagent_volume_litres=options.max_reagent_litres or volume / 200,
+            correct_mixed_ph=True,
+            maximum_reagent_volume_litres=cap_litres,
+            **({} if joint is None else {'joint': joint}),
         ),
         maximum_concentrations=limits or None,
+        remedy_options=remedies,
+        max_remedy_evaluations=len(options.confirmed_products),
     )
     summary = summarize_batch(
         workflow,
@@ -512,6 +703,18 @@ def run_batch(options):
 
     if volumes is not None:
         summary['volumes'] = dict(asdict(volumes), mode=options.mode)
+        summary['reagent_preparation'] = reagent_preparation(summary)
+        preparation = summary['reagent_preparation']
+        if preparation and preparation['status'] == 'blocked':
+            summary['status'] = 'blocked'
+            summary['statuses'].update(overall='blocked', delivery='blocked')
+            summary['stages']['reagent_preparation'] = dict(
+                status='blocked',
+                error_code=None,
+                message=preparation['message'],
+                required_inputs=[],
+            )
+            summary['warnings'].append('reagent_preparation: ' + preparation['message'])
     weighed = {p['name'] for t in summary['tanks']['tanks'] for p in t['products']}
     summary['product_notes'] = {
         r['name']: list(
@@ -557,8 +760,11 @@ def build(args):
             acid=args.acid,
             limit=args.limit,
             max_reagent_litres=args.max_reagent_litres,
+            max_solid_reagent_grams=args.max_solid_reagent_grams,
+            confirmed_products=args.confirmed_product,
             ec=args.ec,
             products=args.products,
+            reagents=args.reagents,
             rules=args.rules,
         )
     )
@@ -614,8 +820,9 @@ def main(argv=None):
         '--acid',
         action='append',
         default=[],
-        metavar='FORMULA:FRACTION:DENSITY[:NAME]',
-        help='an acid from your certificate, e.g. HNO3:0.60:1.37; repeat for more',
+        metavar='FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]',
+        help='certificate acid; append the declared solvent fraction for joint fitting '
+        '(e.g. HNO3:0.60:1.37:aqueous:0.40)',
     )
     parser.add_argument(
         '--limit',
@@ -632,7 +839,24 @@ def main(argv=None):
         help='largest reagent volume per batch (default volume/200)',
     )
     parser.add_argument(
+        '--confirmed-product',
+        action='append',
+        default=[],
+        metavar='CATALOGUE_ID',
+        help='rerun an available excluded catalogue fertilizer as a separate remedy',
+    )
+    parser.add_argument(
+        '--max-solid-reagent-grams',
+        type=number_in('--max-solid-reagent-grams', 0, above=False),
+        help='maximum dry pH reagent mass per batch (g) for joint fitting',
+    )
+    parser.add_argument(
         '--products', help='JSON array of your product records (default: the packaged catalogue)'
+    )
+    parser.add_argument(
+        '--reagents',
+        help='JSON array of available pH reagent records; replaces catalogue '
+        'reagents, including when empty. Explicit --acid certificates are added to this list.',
     )
     parser.add_argument(
         '--rules', help='JSON array of extra compatibilityRule records separating products'
@@ -661,9 +885,11 @@ def main(argv=None):
     for tank in summary['tanks']['tanks']:
         print(f'  Tank {tank["name"]}: ' + ', '.join(p['name'] for p in tank['products']))
     selected = summary['ph'] and summary['ph']['selected']
-    if selected:
+    if summary['ph'] and summary['ph'].get('direction') == 'none':
+        print('  pH: already within target tolerance; no reagent needed')
+    elif selected:
         print(
-            f'  pH: {millilitres(selected["volume_ml_per_batch"])} mL {selected["product"]} per '
+            f'  pH: {reagent_amount(selected)} {selected["product"]} per '
             f'{summary["batch_litres"]:g} L'
         )
     print(f'Wrote {", ".join(files)} to {output}')

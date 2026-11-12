@@ -1096,7 +1096,8 @@ DeliveryError. The assay residual is reported in ``assay_charge_residual`` (the
 declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
 residual over the speciated absolute equivalents) and never changes the status. The audit
 retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
-fertilizer mixtures has not been established.
+fertilizer mixtures has not been established. The factor 80 is an assumed allowance;
+the range is not a confidence interval or a guaranteed physical bound.
 
 Source module: `flahax.irrigation_ec`. Import with `from flahax import calculate_ec_from_totals`.
 
@@ -1210,7 +1211,7 @@ Source module: `flahax.joint_problem`. Import with `from flahax import JointSour
 ### `solve_joint_problem`
 
 ```text
-solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks, objective_gap_tolerance=None, stationarity_tolerance=None, active_bound_tolerance=None, sensitivity_method='finite_difference', curvature_block=False)
+solve_joint_problem(problem, fertilizer_doses, reagent_dose, *, dose_steps, charge_scale, charge_tolerance, loss_tolerance, sensitivity_tolerance, trust_radius, max_iterations, max_backtracks, objective_gap_tolerance=None, stationarity_tolerance=None, active_bound_tolerance=None, sensitivity_method='finite_difference', curvature_block=False, whole_mix=False)
 ```
 
 Search one immutable JointProblem from an explicitly supplied start.
@@ -1220,6 +1221,9 @@ scale. trust_radius bounds the infinity norm of steps in those scaled variables.
 Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
 squared relative nutrient errors. sensitivity_tolerance is relative agreement
 of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+
+whole_mix optionally tries a constrained simultaneous step when recent stationarity
+checks stall. Its linear model never supplies a success certificate.
 
 Optional objective_gap_tolerance bounds the certified absolute objective gap,
 not the nutrient loss. Optional stationarity_tolerance (relative KKT residual)
@@ -1544,7 +1548,7 @@ Source module: `flahax.ph_adjustment`. Import with `from flahax import make_join
 ### `plan_coupled_ph`
 
 ```text
-plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, water_components=None, residual_charge=0.0)
+plan_coupled_ph(salts, targets, water, target_ph, *, products, mix: collections.abc.Callable[[dict], flahax.aqueous_model.AqueousResult], water_mass_kg, final_volume_litres, maximum_reagent_volume_litres, preferred_product_id=None, phases=(), maximum_concentrations=None, joint=None, correct_mixed_ph=False, water_components=None, residual_charge=0.0)
 ```
 
 Fit the recipe and its pH reagent together; one candidate per offered product.
@@ -1555,7 +1559,8 @@ final solvent mass, reagent solvent fractions and mass caps; optional starting
 points are checked as search seeds. water_components supplies the declared
 final-basis water inventory; residual_charge (eq/kg water) is the charge it
 carries uncancelled, the joint problem's reference charge (decision G11). Joint mode
-evaluates every offered reagent and independently calculates final pH. Legacy mode
+evaluates every offered reagent unless correct_mixed_ph restricts the search to the
+initial mix's correction direction. Each fit independently calculates final pH. Legacy mode
 retains directional fitting, with bounded zero-reagent recovery when no matching direction
 is offered.
 A candidate's quantities and unresolved numerical status remain inspectable.

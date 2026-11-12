@@ -54,12 +54,21 @@ FIELD_TEST_KEYS = (
     + ['ENTER', 'ENTER', 'ENTER', 'ENTER']  # fill the tanks; RO; no limits; a packaged formula
     + typed('tomato')
     + ['DOWN', 'ENTER']  # the second formula matching "tomato"
-    + ['ENTER', 'ENTER', 'ENTER']  # whole catalogue; add nothing; a new acid
+    + [
+        'ENTER',
+        'ENTER',
+        'ENTER',
+        'DOWN',
+        'ENTER',
+    ]  # fertilizers; no addition; all reagents; custom
     + entry('HNO3')
     + entry('65')
+    + ['ENTER']  # liquid
     + entry('1.3')
+    + ['ENTER']  # unknown water fraction
     + entry('HNO3 65%')
-    + ['ENTER']  # done with acids
+    + ['ENTER']  # no more reagents
+    + entry('my reagents')
     + entry('6')
     + ['DOWN', 'DOWN', 'ENTER']
     + entry('tomato stage 1')
@@ -401,6 +410,36 @@ class FallbackTests(unittest.TestCase):
             for kind in ('choice', 'filter', 'ticks', 'field'):
                 for line in frame(wizard, Question(kind, 'Q', ['a']), width, 30, g):
                     line.encode('latin-1')
+
+
+class ReagentReviewTuiTests(unittest.TestCase):
+    def test_review_saves_new_availability_and_preserves_original_session(self):
+        from tests.test_mix_cli import GOOD_SESSION
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            store = Store(root / 'home')
+            store.save('sessions', 'old', dict(GOOD_SESSION))
+            original = store.path('sessions', 'old').read_bytes()
+            term = IdleTerm(
+                ['DOWN', 'DOWN', 'ENTER', 'ENTER'] + entry('none') + entry('reviewed') + ['q', 'y']
+            )
+            code, lines = run_tui(
+                store,
+                'old',
+                str(root / 'out'),
+                term_factory=lambda: term,
+                review_availability=True,
+            )
+            self.assertEqual(code, 3, lines)
+            self.assertTrue(term.exited)
+            self.assertEqual(store.path('sessions', 'old').read_bytes(), original)
+            self.assertEqual(store.load('sessions', 'reviewed')['reagent_store'], 'none')
+            self.assertEqual(store.load('reagents', 'none'), [])
+            summary = json.loads((root / 'out' / 'summary.json').read_text())
+            self.assertEqual(summary['ph']['candidates'], [])
+            self.assertIsNone(summary['ph']['selected'])
+            self.assertIn('none was offered: add a base', summary['ph']['message'])
 
 
 class RunTuiTests(unittest.TestCase):

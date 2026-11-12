@@ -306,6 +306,14 @@ change the final stationarity threshold. A separate Decimal cubic-root witness
 checks a correlated-source nonlinear optimum.
 
 
+The batch workflow enables paired steps and `whole_mix=True` with equilibrium
+sensitivities and stationarity checks. When paired steps make little progress in
+both nutrient loss and stationarity, the solver can adjust all doses together,
+subject to the charge equation and declared caps. Near a binding cap it can
+refine the doses along that boundary. All proposals share the original iteration
+budget. Final pH, charge, hard limits and G25 nutrient fit are checked separately.
+The batch candidate's joint record reports iterations and solver evaluations.
+
 Charge-pivot and paired-source selection use the caller's existing
 `active_bound_tolerance`. A positive dose within that lower-bound distance is
 not treated as a freely adjustable charge pivot. This prevents microscopic
@@ -337,13 +345,20 @@ The original charge tolerance and independent final verification still apply.
 ## Public joint workflow
 
 `plan_fertilizer_workflow(..., ph_adjustment={..., "joint": config})` routes every
-offered reagent through the qualified joint solver. Initial recipe pH does not
-exclude a reagent in this mode. Supply all of these `config` fields:
+offered reagent through the joint solver in general redesign mode. With
+`correct_mixed_ph=True`, batch first selects the correction direction from the
+unadjusted recipe. It skips the opposite direction and uses no reagent when the
+mix is already at target. Batch uses a sequential alternative when a declared
+solvent fraction or dry mass cap is missing and no eligible joint fit verifies.
+The candidate records which method ran and why. Supply these `config` fields:
 
 - `solvent_mass_kg`: final solvent inventory, equal to `equilibrium.water_mass_kg`.
 - `reagent_solvent_fractions`: reagent ID to explicitly declared solvent mass fraction.
 - `maximum_reagent_mass_g`: reagent ID to hard product-mass cap. The existing
-  `maximum_reagent_volume_litres` is also enforced.
+  `maximum_reagent_volume_litres` is enforced for liquid and general joint inputs. Batch
+  treats an explicitly identified dry solid in `solid_reagent_ids` as mass-only: its
+  declared gram cap replaces the liquid volume cap. Without a gram cap it can use
+  only the labelled sequential alternative, which supplies no mass-cap verification.
 - `controls`: the explicit `solve_joint_problem` keyword controls, or a mapping
   from reagent ID to its controls. Each dose-step map names exactly that
   candidate's fertilizer IDs and reagent ID.

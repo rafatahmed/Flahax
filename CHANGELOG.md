@@ -19,6 +19,14 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Select and save available catalogue acids and bases in mix, add custom reagents, and
+  restrict batch calculations with `--reagents`. Review old sessions with
+  `--review-reagents` without overwriting their original answers (#231).
+
+- Evaluate confirmed catalogue alternatives separately and report the direction, search result,
+  charge check and nutrient misses for a grower batch (#231). Show solid pH reagent doses in
+  grams in batch and mix (#229).
+
 - Add native console/PTY and controlled terminal lifecycle checks, including
   canonical-result and stale-session rejection in the full-screen workflow (#182).
 
@@ -83,6 +91,26 @@ each release, with numbers, sources and decisions, are in
 - Record all chemistry input byte identities, the versioned PHREEQC extraction route and
   a deterministic source-manifest digest; preserve all scientific records (#245).
 - Replace broad priority claims with supported capabilities and a dated comparison (#246).
+- Validate custom batch records and reagent densities before configuration; reject duplicate
+  product names before they can corrupt pH chemistry or reagent selection (#240, #241).
+
+- Accept valid custom product names beginning with `test_`; reject actual placeholder formulas
+  and invalid assays rather than inferring chemistry from a display-name prefix (#242).
+
+- Reconcile sequential pH nutrient reports and limit checks with the actual returned reagent
+  dose (#237). Respect fixed-zero sources in joint proposals and enable zero-cap refinement
+  without changing tolerances or iteration limits (#238).
+
+- Fill nutrient stocks independently of the reagent container capacity at the shared injection
+  ratio; report reagent doses per fill, refill counts and final partial fills without changing
+  solver methods or nutrient tolerances (#231).
+
+- Refresh remedy messages from the final recipe, explain separate search and nutrient statuses,
+  and label numerical dose residues without weighing checkboxes. Preserve exact quantities and
+  clarify reagent-container capacity in fill mode (#231).
+
+- Preserve accented Windows input such as à without consuming the next character in
+  `flahax mix`; retain arrow navigation, editing keys and held-key repeats (#127).
 
 - Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).
 
