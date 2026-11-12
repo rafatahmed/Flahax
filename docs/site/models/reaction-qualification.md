@@ -20,10 +20,73 @@ python tools/qualify_chemistry_model.py --database PATH/minteq.v4.dat --report a
 
 This command reads the model and databases and writes only the requested report.
 It records model/source hashes, per-reaction checks, source correspondence and
-parameter status. A changed base hash fails. No solver or model-builder function
+parameter status. A changed base or extension hash, byte count, missing source,
+or changed manifest digest fails. No solver or model-builder function
 is imported by the checker. Atom, charge and basis sums use rational arithmetic;
 log-K comparison allows only a bound calculated from binary floating-point ULPs
 and the number of terms. That bound is not thermodynamic uncertainty.
+
+## Reproducing the exact chemistry inputs
+
+The original base is **334,121 bytes**, including its CRLF line endings, from the
+**PHREEQC 3.8.6-17100 Windows release distribution**. It is not the current MINTEQ
+file on upstream `master`. The versioned [USGS installer](https://water.usgs.gov/water-resources/software/PHREEQC/phreeqc-3.8.6-17100-x64.msi)
+is 16,846,848 bytes with SHA-256
+`6e5f6697fa727f919eb4e7c1c2bc20e8c2717378aaf77731efd831ef66578243`.
+Administrative extraction with `msiexec /a` yields
+`phreeqc-3.8.6-17100-x64/database/minteq.v4.dat`, whose SHA-256 is the base hash above.
+No edits or newline conversion are applied. This extraction was reproduced on
+12 November 2026 from the hash-verified release archive. It does not replace a
+database or require a system-wide installation. `tools/provision_phreeqc.ps1`
+already documents the pinned download/extraction procedure; running it is an
+explicit reference-provisioning action, not part of the model builder.
+
+`tools/chemistry_sources.json` records the three build inputs, their byte lengths,
+SHA-256 hashes, UTF-8 decoding policy and origins. The two extension URLs are pinned
+to repository revision `de50f8963a65a9f0f99462ffc731350de64472fc`; their bytes also
+remain in the source distribution under `tests/fixtures/phreeqc/database/`.
+The phase extension attributes kieserite and sylvite to `pitzer.dat` in the same
+release archive (lines 357 and 433, respectively). Only their 25 C reactions and
+log K values are selected; temperature expressions are not imported. The Pitzer
+file is attribution evidence, not an additional input consumed during regeneration.
+The manifest also distinguishes the cited struvite constant, fixed urea identity,
+and selected project chelate profile.
+
+The generated `chemistry_25c.json` schema 2 contains this manifest as `sources`.
+`database_sha256` remains a compatibility field for **the base alone**.
+`source_url` identifies the versioned release archive, not a raw database file;
+the archive member and hashes are in the base source record.
+`sources_sha256` covers the complete manifest: sort records by `filename`, serialize
+with Python JSON `sort_keys=True`, `separators=(',', ':')`, `ensure_ascii=True`,
+`allow_nan=False`, encode UTF-8 without a trailing newline, then SHA-256.
+No build timestamp or machine path participates. The builder hashes and decodes
+the same bytes and refuses inputs that differ from the pinned source manifest.
+
+With the original base already extracted, regeneration and qualification are offline:
+
+```text
+python tools/build_chemistry_model.py PATH/minteq.v4.dat --output regenerated.json
+python tools/qualify_chemistry_model.py --database PATH/minteq.v4.dat --model regenerated.json --report audit.json
+python -c "from pathlib import Path; assert Path('regenerated.json').read_bytes() == Path('src/flahax/data/chemistry_25c.json').read_bytes()"
+```
+
+`--output` writes only the requested JSON; it does not rewrite the source model or
+coverage documentation. Repeated regeneration from identical inputs must be
+byte-identical. Provenance-only changes preserve every reaction, constant, species,
+phase, basis and alias. Hash agreement establishes identity, not thermodynamic accuracy.
+
+An optional retrieval test downloads the versioned installer and pinned extension
+files into memory, checks byte counts and hashes, and never installs or executes them:
+
+```text
+# Set FLAHAX_VERIFY_SOURCE_DOWNLOADS=1 in your shell, then:
+python -m unittest tests.test_chemistry_source_downloads
+```
+
+This is independent of `FLAHAX_REQUIRE_PHREEQC`. With the download flag unset it is
+explicitly skipped; offline integrity checks still run. When enabled, retrieval
+unavailability and content mismatch are distinct failures. The installer checksum
+and member identity remain necessary even if a versioned server URL is later replaced.
 
 | Parameter origin | What is established | What is not established |
 |---|---|---|

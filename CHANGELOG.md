@@ -86,6 +86,11 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Withhold manufacturer-screening EC totals containing positive Ultrasol Magsul doses;
+  retain the disputed 1.2 mS/cm brochure value as evidence (#244).
+- Record all chemistry input byte identities, the versioned PHREEQC extraction route and
+  a deterministic source-manifest digest; preserve all scientific records (#245).
+- Replace broad priority claims with supported capabilities and a dated comparison (#246).
 - Validate custom batch records and reagent densities before configuration; reject duplicate
   product names before they can corrupt pH chemistry or reagent selection (#240, #241).
 

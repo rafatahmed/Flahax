@@ -20,12 +20,14 @@ NOTICE = ' '.join(
     (ROOT / 'NOTICE').read_text(encoding='utf-8').split()
 )  # line breaks do not matter
 CITATION = (ROOT / 'CITATION.cff').read_text(encoding='utf-8')
+CHELATE_PROFILE = 'docs/site/models/flahax-chelate-thermodynamic-profile.md'
 
 # Text a source string starts with -> the words NOTICE must contain for it.
 CREDITS = {
     'minteq.v4.dat': 'minteq.v4.dat',
     'flahax-chelates-25c.dat': 'flahax-chelates-25c.dat',
     'flahax-phases-25c.dat': 'flahax-phases-25c.dat',
+    CHELATE_PROFILE: CHELATE_PROFILE,
     'fixed-valence analytical basis': None,  # FlahaX's own convention, no external data
     'CRC Handbook': 'CRC Handbook of Chemistry and Physics',
     'Yara': 'YaraTera CALCINIT',

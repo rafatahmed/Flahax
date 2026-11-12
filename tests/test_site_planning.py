@@ -24,6 +24,22 @@ from flahax.planning_cli import interactive, execute
 
 
 class SitePlanningTests(unittest.TestCase):
+    def test_disputed_magsul_withholds_single_and_mixed_screening_totals(self):
+        for doses in (
+            {'Ultrasol Magsul': 1},
+            {'Ultrasol Magsul': 0.25, 'Ultrasol K Plus': 0.5},
+        ):
+            with self.subTest(doses=doses):
+                result = estimate_manufacturer_ec(doses, water_ec_ms_cm=0)
+                self.assertEqual(result['status'], 'not_supported')
+                self.assertEqual(result['error_code'], 'disputed_product_ec_evidence')
+                self.assertIsNone(result['ec_ms_cm'])
+                evidence = result['disputed_products']['Ultrasol Magsul']
+                self.assertEqual(evidence['published_ec_ms_cm'], 1.2)
+                self.assertEqual(evidence['status'], 'disputed')
+                self.assertEqual(result['source']['reference_g_per_litre'], 1)
+                self.assertEqual(result['source']['reference_temperature_c'], 25)
+
     def test_brochure_anchor_transcription(self):
         anchors = {
             'Ultrasol K Plus': 1.3,
@@ -31,7 +47,6 @@ class SitePlanningTests(unittest.TestCase):
             'Ultrasol MKP': 0.7,
             'Ultrasol MAP': 0.9,
             'Ultrasol Calcium': 1.2,
-            'Ultrasol Magsul': 1.2,
             'Ultrasol Magnit': 0.9,
         }
         for product, ec in anchors.items():
@@ -39,6 +54,15 @@ class SitePlanningTests(unittest.TestCase):
             self.assertEqual(result['ec_ms_cm'], ec)
             self.assertEqual(result['status'], 'screening_estimate')
             self.assertIsNone(result['uncertainty_ms_cm'])
+
+    def test_zero_disputed_dose_leaves_supported_total_unchanged(self):
+        result = estimate_manufacturer_ec(
+            {'Ultrasol Magsul': 0, 'Ultrasol K Plus': 0.5}, water_ec_ms_cm=0.2
+        )
+        self.assertEqual(result['status'], 'screening_estimate')
+        self.assertAlmostEqual(result['ec_ms_cm'], 0.85)
+        self.assertEqual(result['disputed_products'], {})
+        self.assertEqual(result['contributions_ms_cm'], {'Ultrasol K Plus': 0.65})
 
     def test_pre_acid_mixture_math_and_tds(self):
         result = estimate_manufacturer_ec(

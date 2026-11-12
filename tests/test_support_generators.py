@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 from tools import add_ph_reagents, build_chemistry_model as model
 from tools import cli_reference, generate_api_reference, inventory_numeric_decisions as numeric
-from tools import phreeqc_evidence
+from tools import chemistry_provenance, phreeqc_evidence
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -77,7 +77,7 @@ END
             database.write_text(text)
             original = database.read_bytes()
             with patch.object(model, 'ROOT', root), patch.object(model, 'PHASES', ['Synthetic']):
-                model.build(database)
+                model.build(database, allow_unpinned=True)
             result = json.loads((root / 'src/flahax/data/chemistry_25c.json').read_text())
             self.assertEqual(database.read_bytes(), original)
             aqueous = {r['name']: r for r in result['aqueous']}
@@ -87,6 +87,25 @@ END
             self.assertNotIn('Negative', aqueous)
             self.assertNotIn('Red', aqueous)
             self.assertEqual(result['database_sha256'], hashlib.sha256(original).hexdigest())
+            self.assertEqual(result['schema'], 2)
+            self.assertEqual(
+                {s['filename'] for s in result['sources']},
+                {'minteq.v4.dat', 'flahax-chelates-25c.dat', 'flahax-phases-25c.dat'},
+            )
+            self.assertEqual(len(result['sources_sha256']), 64)
+            first = (root / 'src/flahax/data/chemistry_25c.json').read_bytes()
+            with patch.object(model, 'ROOT', root), patch.object(model, 'PHASES', ['Synthetic']):
+                model.build(database, output=root / 'second.json', allow_unpinned=True)
+            self.assertEqual(first, (root / 'second.json').read_bytes())
+            pinned = root / 'sources.json'
+            pinned.write_text(json.dumps(result['sources']))
+            with (
+                patch.object(model, 'ROOT', root),
+                patch.object(model, 'PHASES', ['Synthetic']),
+                patch.object(chemistry_provenance, 'MANIFEST', pinned),
+            ):
+                model.build(database, output=root / 'pinned.json')
+            self.assertEqual(first, (root / 'pinned.json').read_bytes())
             self.assertIn(
                 'Synthetic', (root / 'docs/site/models/chemistry-coverage-matrix.md').read_text()
             )
@@ -95,7 +114,7 @@ END
                 patch.object(model, 'PHASES', ['missing']),
                 self.assertRaisesRegex(ValueError, 'unresolved phase'),
             ):
-                model.build(database)
+                model.build(database, allow_unpinned=True)
 
     def test_reference_generators_check_missing_and_stale_pages(self):
         with tempfile.TemporaryDirectory() as folder, contextlib.redirect_stdout(io.StringIO()):
@@ -190,12 +209,12 @@ END
                 patch.object(model, 'PHASES', ['Missing']),
                 self.assertRaisesRegex(ValueError, 'unresolved'),
             ):
-                model.build(database)
+                model.build(database, allow_unpinned=True)
             # The actual module entry point is also exercised against a small invalid input.
             source = ROOT / 'tools/build_chemistry_model.py'
             with (
                 patch.object(sys, 'argv', ['build', str(database)]),
-                self.assertRaisesRegex(ValueError, 'unresolved'),
+                self.assertRaisesRegex(ValueError, 'source bytes differ from pinned provenance'),
             ):
                 exec(
                     compile(source.read_text(encoding='utf-8'), str(source), 'exec'),

@@ -223,7 +223,7 @@ class QualificationCommandTests(unittest.TestCase):
                 next(r for r in report['reactions'] if r['name'] == 'FeDtp-2')['source_verified']
             )
 
-    def test_command_checks_base_hash_and_only_writes_report(self):
+    def test_command_rejects_tampering_in_each_input_and_manifest_without_writing_sources(self):
         import contextlib
         import hashlib
         import io
@@ -242,6 +242,7 @@ class QualificationCommandTests(unittest.TestCase):
             for name in ('flahax-chelates-25c.dat', 'flahax-phases-25c.dat'):
                 (extension_dir / name).write_text('')
             model = dict(
+                schema=2,
                 bases=['H2O'],
                 phases=[],
                 aqueous=[
@@ -258,18 +259,79 @@ class QualificationCommandTests(unittest.TestCase):
                 ],
                 database_sha256=hashlib.sha256(base.read_bytes()).hexdigest(),
             )
+            sources = []
+            for name, source in [('minteq.v4.dat', base)] + [
+                (n, extension_dir / n)
+                for n in ('flahax-chelates-25c.dat', 'flahax-phases-25c.dat')
+            ]:
+                raw = source.read_bytes()
+                sources.append(
+                    dict(
+                        filename=name,
+                        sha256=hashlib.sha256(raw).hexdigest(),
+                        bytes=len(raw),
+                        encoding='utf-8',
+                        transformations=[],
+                    )
+                )
+            model['sources'] = sources
+            model['sources_sha256'] = hashlib.sha256(
+                json.dumps(
+                    sorted(sources, key=lambda row: row['filename']),
+                    sort_keys=True,
+                    separators=(',', ':'),
+                    ensure_ascii=True,
+                    allow_nan=False,
+                ).encode('utf-8')
+            ).hexdigest()
             path = data_dir / 'chemistry_25c.json'
             path.write_text(json.dumps(model))
             report = root / 'report.json'
             argv = ['checker', '--database', str(base), '--report', str(report)]
-            for expected in (0, 1):
-                before = base.read_bytes()
+            originals = {p: p.read_bytes() for p in [base, *extension_dir.iterdir(), path]}
+            for damaged in (
+                None,
+                base,
+                *sorted(extension_dir.iterdir()),
+                path,
+                'legacy',
+                'missing',
+                'duplicate',
+                'encoding',
+                'transformation',
+                'size',
+            ):
+                for source, original in originals.items():
+                    source.write_bytes(original)
+                if damaged == path:
+                    altered = json.loads(path.read_bytes())
+                    altered['sources'][0]['origin'] = 'changed metadata'
+                    path.write_text(json.dumps(altered))
+                elif isinstance(damaged, str):
+                    altered = json.loads(path.read_bytes())
+                    if damaged == 'legacy':
+                        altered['schema'] = 1
+                    elif damaged == 'missing':
+                        altered.pop('sources')
+                    elif damaged == 'duplicate':
+                        altered['sources'][1] = altered['sources'][0]
+                    else:
+                        key, value = {
+                            'encoding': ('encoding', 'utf-16'),
+                            'transformation': ('transformations', ['normalize']),
+                            'size': ('bytes', 999),
+                        }[damaged]
+                        altered['sources'][0][key] = value
+                    path.write_text(json.dumps(altered))
+                elif damaged is not None:
+                    damaged.write_bytes(originals[damaged] + b'# changed input\n')
+                before = {p: p.read_bytes() for p in originals}
+                expected = int(damaged is not None)
                 with patch.object(checker, 'ROOT', root), patch('sys.argv', argv):
                     with contextlib.redirect_stdout(io.StringIO()):
                         self.assertEqual(checker.main(), expected)
-                self.assertEqual(base.read_bytes(), before)
+                self.assertEqual({p: p.read_bytes() for p in originals}, before)
                 self.assertEqual(
                     json.loads(report.read_text())['status'],
                     'passed' if expected == 0 else 'failed',
                 )
-                base.write_text(base.read_text() + '# changes the hash only\n')

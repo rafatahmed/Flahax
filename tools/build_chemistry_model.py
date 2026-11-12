@@ -14,6 +14,10 @@ import argparse
 import hashlib
 import json
 import re
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools.chemistry_provenance import SOURCE_NAMES, describe_sources, manifest_digest
 
 ROOT = Path(__file__).resolve().parents[1]
 BASES = [
@@ -77,7 +81,8 @@ NOTICE = (
     'JSON by Rafat'
     ' A. Al Khashan for FlahaX (first committed 2026-09-27) from PHREEQC 3.8.6 minteq.v4.dat '
     '(U.S. '
-    'Geological Survey; SHA-256 in database_sha256, original at source_url), keeping only the '
+    'Geological Survey; base SHA-256 in database_sha256; exact release archive and all input '
+    'identities in sources), keeping only the '
     'species and'
     ' phases FlahaX uses, with kieserite and sylvite from PHREEQC 3.8.6 pitzer.dat and FlahaX '
     'extensions '
@@ -148,13 +153,13 @@ def records(text, source):
     return result
 
 
-def build(database):
+def build(database, *, output=None, allow_unpinned=False):
     raw = database.read_bytes()
-    sources = [(database.read_text(), 'minteq.v4.dat')]
-    for filename in ('flahax-chelates-25c.dat', 'flahax-phases-25c.dat'):
-        sources.append(
-            ((ROOT / 'tests/fixtures/phreeqc/database' / filename).read_text(), filename)
-        )
+    raw_sources = {'minteq.v4.dat': raw}
+    for filename in SOURCE_NAMES[1:]:
+        raw_sources[filename] = (ROOT / 'tests/fixtures/phreeqc/database' / filename).read_bytes()
+    manifest = describe_sources(raw_sources, allow_unpinned=allow_unpinned)
+    sources = [(raw_sources[name].decode('utf-8'), name) for name in SOURCE_NAMES]
     entries = [r for text, name in sources for r in records(text, name)]
     known = {n: ({n: 1.0}, 0.0) for n in BASES + ['H+', 'H2O']}
     selected = {}
@@ -227,10 +232,12 @@ def build(database):
     if missing:
         raise ValueError(f'unresolved phase names: {missing}')
     data = dict(
-        schema=1,
+        schema=2,
         temperature_c=25,
         database_sha256=hashlib.sha256(raw).hexdigest(),
-        source_url='https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat',
+        source_url=manifest[0].get('archive', {}).get('url'),
+        sources=manifest,
+        sources_sha256=manifest_digest(manifest),
         notice=NOTICE,
         bases=BASES,
         aqueous=list(selected.values()),
@@ -243,9 +250,12 @@ def build(database):
             'B(OH)4-': 'H2BO3-',
         },
     )
-    (ROOT / 'src/flahax/data/chemistry_25c.json').write_text(json.dumps(data, indent=2) + '\n')
+    destination = output or ROOT / 'src/flahax/data/chemistry_25c.json'
+    destination.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))
     print(f'{len(selected)} aqueous species; {len(phases)} phases')
-    write_coverage(data)
+    if output is None:
+        write_coverage(data)
+    return data
 
 
 def write_coverage(data):
@@ -317,4 +327,8 @@ def write_coverage(data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('database', type=Path)
-    build(parser.parse_args().database)
+    parser.add_argument(
+        '--output', type=Path, help='write only JSON here, leaving the checkout intact'
+    )
+    args = parser.parse_args()
+    build(args.database, output=args.output)

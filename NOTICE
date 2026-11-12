@@ -28,7 +28,11 @@ underlying measurements.
      database minteq.v4.dat, distributed with PHREEQC by the U.S. Geological
      Survey (source pinned by SHA-256
      ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7,
-     https://github.com/usgs-coupled-subtrees/phreeqc3-database/blob/master/minteq.v4.dat).
+     from https://water.usgs.gov/water-resources/software/PHREEQC/phreeqc-3.8.6-17100-x64.msi).
+     Release archive SHA-256:
+     6e5f6697fa727f919eb4e7c1c2bc20e8c2717378aaf77731efd831ef66578243.
+     Administrative extraction yields the unchanged 334121-byte member
+     phreeqc-3.8.6-17100-x64/database/minteq.v4.dat (CRLF retained).
      minteq.v4.dat derives from the U.S. EPA MINTEQA2 version 4 database.
    - Phase constants for kieserite (log K -0.123) and sylvite (log K 0.9)
      from the PHREEQC 3.8.6 database pitzer.dat.
@@ -37,7 +41,9 @@ underlying measurements.
      committed 2026-09-27), keeping only the species and phases FlahaX
      uses, and added FlahaX extensions marked in the file by their own
      "source" field (flahax-chelates-25c.dat, flahax-phases-25c.dat). The
-     original database is available from the USGS at the URL above.
+     original database is available inside the versioned USGS archive above.
+     Complete input identities and extension attribution are recorded in the
+     generated model's sources manifest; database_sha256 identifies the base only.
    - The USGS User Rights Notice for PHREEQC applies to this data and is
      reproduced in full at the end of this file.
    - Please acknowledge: Parkhurst, D. L. and Appelo, C. A. J. (2013)

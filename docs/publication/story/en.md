@@ -70,9 +70,10 @@ chemistry.
 
 What FlahaX adds is the whole path in one open package: from the water
 analysis through the recipe and the chemistry to the stock tanks, with the
-chemistry checked against PHREEQC. To my knowledge it is the first open
-Python package that goes from water analysis to stock tanks with verified
-chemistry.
+selected chemistry calculations checked against PHREEQC reference cases.
+The [dated software comparison](../../site/evidence/competitor-comparison.md)
+records tested versions, inputs and limitations. Those comparisons do not establish
+experimental validation or priority.
 
 ## What it doesn't do yet
 

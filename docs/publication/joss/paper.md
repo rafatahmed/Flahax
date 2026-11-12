@@ -87,10 +87,12 @@ nutrient solutions in closed hydroponic systems, a function FlahaX does not
 provide. PHREEQC and its Python bindings [@phreeqpy] model aqueous
 equilibrium in general, without fertilizer formulation.
 
-To our knowledge, none of these combines fertilizer formulation against the
-source water, fertilizer-specific aqueous equilibrium with precipitation,
-acid planning to a target pH, and stock-tank and injector planning with an
-audit trail in one installable package. FlahaX was built as a new package
+FlahaX integrates formulation against source-water composition,
+fertilizer-specific aqueous equilibrium calculations, acid planning to a target
+pH, and stock-tank and injector planning through a shared chemistry model and
+audit trail. A [dated software comparison](../../site/evidence/competitor-comparison.md)
+records the tested versions, inputs, results, and limitations. These computational
+comparisons do not establish experimental validation or priority. FlahaX was built as a new package
 rather than as an extension of an existing one because the end-to-end audit
 trail and the shared chemistry model run through every layer, from salt
 selection to injector flow, and could not be added to a mass-balance solver

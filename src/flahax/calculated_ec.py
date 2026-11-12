@@ -22,14 +22,22 @@ SOURCE = {
     'reference_g_per_litre': 1.0,
     'reference_temperature_c': 25.0,
 }
-# Reviewed against the rendered table, not OCR. Magsul is 1.2, not 0.9.
+# The brochure prints 1.2 for Magsul, but this conflicts with the ion calculation.
+# Retain that evidence without treating it as a usable or corrected anchor.
+_DISPUTED = {
+    'Ultrasol Magsul': {
+        'status': 'disputed',
+        'published_ec_ms_cm': 1.2,
+        'reason': 'Published brochure value conflicts with chemistry calculations; unresolved.',
+        'review': 'docs/site/evidence/source-sheet-review.md',
+    },
+}
 _ANCHORS = {
     'Ultrasol K Plus': 1.3,
     'Ultrasol SOP': 1.5,
     'Ultrasol MKP': 0.7,
     'Ultrasol MAP': 0.9,
     'Ultrasol Calcium': 1.2,
-    'Ultrasol Magsul': 1.2,
     'Ultrasol Magnit': 0.9,
 }
 
@@ -50,7 +58,9 @@ def estimate_manufacturer_ec(
     are assumptions, not manufacturer validation. A total fertilizer loading
     cap of 1 g/L is a conservative software policy, NOT a validated range.
     No uncertainty bound or model for concentrated A/B stocks is asserted.
-    Unknown products never disappear into a falsely complete total.
+    Unknown or disputed products never disappear into a falsely complete total.
+    Positive Magsul doses return disputed_product_ec_evidence; its published
+    value is retained as disputed evidence, not replaced by a model prediction.
     """
     if not isinstance(doses_g_per_litre, Mapping):
         raise DeliveryError('invalid_type', 'doses must map exact commercial product names to g/L')
@@ -65,7 +75,10 @@ def estimate_manufacturer_ec(
         isinstance(channel, str) and channel.startswith('tank:') and len(channel) > 5
     ):
         raise DeliveryError('unknown_channel', 'expected irrigation or tank:<id>')
-    missing = sorted(k for k, v in doses.items() if v > 0 and k not in _ANCHORS)
+    disputed = {k: dict(_DISPUTED[k]) for k, v in doses.items() if v > 0 and k in _DISPUTED}
+    missing = sorted(
+        k for k, v in doses.items() if v > 0 and k not in _ANCHORS and k not in _DISPUTED
+    )
     result = dict(
         status='screening_estimate',
         ec_ms_cm=None,
@@ -81,6 +94,7 @@ def estimate_manufacturer_ec(
         model='manufacturer-anchor-additive-screening-v1',
         doses_g_per_litre=doses,
         missing_products=missing,
+        disputed_products=disputed,
         assumptions=[
             'Pre-acid; no precipitation or speciation corrections.',
             'Linear dose scaling and additive EC; unvalidated mixture approximation.',
@@ -89,7 +103,9 @@ def estimate_manufacturer_ec(
         ],
     )
     reason = None
-    if temperature_c != 25:
+    if disputed:
+        reason = 'disputed_product_ec_evidence'
+    elif temperature_c != 25:
         reason = 'temperature_outside_reference'
     elif channel != 'irrigation':
         reason = 'concentrated_stock_model_unavailable'
