@@ -1,4 +1,4 @@
-"""Six-nutrient fixed-ratio recipes using pure salts and KOH in demineralized water."""
+"""Six-nutrient fixed-ratio recipes including explicit source water and pH reagents."""
 
 import math
 
@@ -59,14 +59,34 @@ def plan_ratio_recipe(
     stock_dosing=None,
     stock_evidence=None,
     batch_stability=None,
+    ph_reagents=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
     Ratios use charge equivalents and total phosphate reported as H2PO4.
     Strength sums six analytical mmol/L quantities. Explicit final water mass
     converts concentrations to mol/kg for the supported 25 C aqueous model.
-    The initial allocation supports the six SOURCES and nonnegative KOH.
+    The allocation supports SOURCES plus explicitly permitted HNO3. Water
+    nutrients and both pH reagents count toward the final analytical targets.
     """
+    allowed_reagents = ["KOH"] if ph_reagents is None else ph_reagents
+    if (
+        not isinstance(allowed_reagents, (list, tuple))
+        or not allowed_reagents
+        or any(not isinstance(r, str) or r not in ("KOH", "HNO3") for r in allowed_reagents)
+        or len(set(allowed_reagents)) != len(allowed_reagents)
+    ):
+        raise DeliveryError("invalid_ph_reagents", "Select unique KOH and/or HNO3 reagents")
+    if water != "demineralized" and (uncertainty is not None or stock_dosing is not None):
+        raise DeliveryError(
+            "unsupported_ratio_water_uncertainty",
+            "Real-water uncertainty and stock verification are not yet supported",
+        )
+    if "HNO3" in allowed_reagents and (uncertainty is not None or stock_dosing is not None):
+        raise DeliveryError(
+            "unsupported_ratio_reagent_uncertainty",
+            "Nitric-acid uncertainty and stock verification are not yet supported",
+        )
     if batch_stability is not None and stock_dosing is None:
         raise DeliveryError(
             "missing_stock_dosing", "Batch stability requires stock preparation evidence"
@@ -103,8 +123,11 @@ def plan_ratio_recipe(
     strength = _number(counted_mmol_l, "counted_mmol_l")
     volume = _number(volume_litres, "volume_litres")
     water_mass = _number(water_mass_kg, "water_mass_kg")
-    if water != "demineralized":
-        raise DeliveryError("unsupported_water", "This workflow requires demineralized water")
+    from .ratio_water import account_water
+
+    water_report = account_water(water, volume, water_mass)
+    water_amounts = [water_report["nutrients_mmol_l"][n] for n in NUTRIENTS]
+    reference_charge = water_report["reference_charge_mol_kg"]
     concentration_factor = volume / water_mass / 1000
     weights = cations + anions
     cation_count = sum(v / z for v, z in zip(cations, CHARGES[:3]))
@@ -115,11 +138,17 @@ def plan_ratio_recipe(
         group_totals = [cation_total] * 3 + [anion_total] * 3
         return [v * total / z for v, total, z in zip(weights, group_totals, CHARGES)]
 
+    def aqueous_totals(values):
+        return dict(
+            water_report["background_totals_mol_kg"],
+            **{key: v * concentration_factor for key, v in zip(BASIS, values)},
+        )
+
     def state(values):
-        return solve({key: v * concentration_factor for key, v in zip(BASIS, values)}, ph)
+        return solve(aqueous_totals(values), ph)
 
     def charge(cation_total):
-        return state(amounts(cation_total)).charge_balance
+        return state(amounts(cation_total)).charge_balance - reference_charge
 
     low, high = 0.0, strength / cation_count
     low_charge, high_charge = charge(low), charge(high)
@@ -129,23 +158,49 @@ def plan_ratio_recipe(
         )
     low, high = shrink_bracket(charge, low, low_charge, high, high_charge, width=1e-11)
     target = amounts((low + high) / 2)
-    potassium, calcium, magnesium, nitrate, phosphate, sulfate = target
+    additions = [t - w for t, w in zip(target, water_amounts)]
+    if any(v < -1e-10 for v in additions):
+        raise DeliveryError(
+            "ratio_water_exceeds_target",
+            "Source water already exceeds a final nutrient target; reduce source water "
+            "or change targets",
+        )
+    potassium, calcium, magnesium, nitrate, phosphate, sulfate = additions
     magnesium_nitrate = magnesium - sulfate
-    potassium_nitrate = nitrate - 2 * (calcium + magnesium_nitrate)
-    koh = potassium - phosphate - potassium_nitrate
+    available_nitrate = nitrate - 2 * (calcium + magnesium_nitrate)
+    available_potassium = potassium - phosphate
+    potassium_nitrate = min(available_nitrate, available_potassium)
+    koh = max(0.0, available_potassium - available_nitrate)
+    acid = max(0.0, available_nitrate - available_potassium)
+    if (koh > 1e-10 and "KOH" not in allowed_reagents) or (
+        acid > 1e-10 and "HNO3" not in allowed_reagents
+    ):
+        raise DeliveryError(
+            "ratio_allocation_infeasible",
+            "Required pH reagent is not permitted; explicitly select KOH and/or HNO3",
+        )
+    sources = SOURCES + ((("HNO3", (0, 0, 0, 1, 0, 0)),) if "HNO3" in allowed_reagents else ())
     doses = [phosphate, calcium, sulfate, magnesium_nitrate, potassium_nitrate, koh]
+    if "HNO3" in allowed_reagents:
+        doses.append(acid)
     if any(v < -1e-10 for v in doses):
         raise DeliveryError(
             "ratio_allocation_infeasible",
-            "The specified ratios and pH require a source outside the six-salt/KOH allocation",
+            "The specified ratios and pH require a source outside the supported "
+            "salt/reagent allocation",
         )
     ingredients = []
-    achieved = [0.0] * 6
-    for (formula, stoichiometry), dose in zip(SOURCES, doses):
+    achieved = list(water_amounts)
+    accounting = {k: dict.fromkeys(NUTRIENTS, 0.0) for k in ("salts_mmol_l", "ph_reagents_mmol_l")}
+    accounting["water_mmol_l"] = dict(zip(NUTRIENTS, water_amounts))
+    for (formula, stoichiometry), dose in zip(sources, doses):
         dose = max(0.0, dose)
         molar_mass = sum(ATOMIC[e] * n for e, n in parse_formula(formula)["atoms"].items())
         contribution = [dose * n for n in stoichiometry]
         achieved = [a + b for a, b in zip(achieved, contribution)]
+        category = "ph_reagents_mmol_l" if formula in ("KOH", "HNO3") else "salts_mmol_l"
+        for nutrient, value in zip(NUTRIENTS, contribution):
+            accounting[category][nutrient] += value
         ingredients.append(
             {
                 "formula": formula,
@@ -154,7 +209,7 @@ def plan_ratio_recipe(
             }
         )
     chemistry = state(achieved)
-    if abs(chemistry.charge_balance) > 1e-10:
+    if abs(chemistry.charge_balance - reference_charge) > 1e-10:
         raise DeliveryError("ratio_verification_failed", "Ingredient charge verification failed")
     equivalents = [v * z for v, z in zip(achieved, CHARGES)]
     result = {
@@ -168,14 +223,22 @@ def plan_ratio_recipe(
         "cation_percent": [100 * v / sum(equivalents[:3]) for v in equivalents[:3]],
         "anion_percent": [100 * v / sum(equivalents[3:]) for v in equivalents[3:]],
         "ingredients": ingredients,
+        "water_accounting": water_report,
+        "nutrient_accounting": accounting,
+        "aqueous_totals_mol_kg": aqueous_totals(achieved),
+        "charge_closure_error_mol_kg": chemistry.charge_balance - reference_charge,
         "charge_residual_mol_kg": chemistry.charge_balance,
         "saturation_indices": chemistry.saturation_indices,
         "saturation_assessment": assess_saturation(chemistry),
         "qualifications": [
-            "Pure salts, demineralized water, zero added inorganic carbon, 25 C; gas "
-            "exchange is omitted.",
+            "Pure compounds, explicit water inventory, 25 C and closed inorganic "
+            "carbon; gas exchange is omitted.",
+            "Water sodium, chloride and carbon enter chemistry but not the six- "
+            "nutrient count. Measured-water charge imbalance is preserved; water- "
+            "analysis uncertainty is not evaluated.",
             "Masses are full precision. Recheck delivered quantities after rounding.",
-            "Analytical ratios include KOH potassium. Dissolved species depend on "
+            "Analytical ratios include water, salts, KOH potassium and any HNO3 "
+            "nitrate. Dissolved species depend on"
             "speciation and precipitation.",
             "Solution 1a measured pH 5.33, 6.45, 6.58; model replay approximately "
             "5.06, 6.66, 6.66.",
@@ -225,6 +288,8 @@ def plan_ratio_recipe(
         result["uncertainty_verification"]["verification_scope"] = result["stock_delivery"][
             "verification_scope"
         ]
+    if water != "demineralized":
+        result["verified"] = False
     result["stable"] = False
     if stock_dosing is not None:
         from .batch_stability import assess_batch_stability

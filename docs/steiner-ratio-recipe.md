@@ -12,11 +12,11 @@ PowerShell accepts the same input through Get-Content.
 
     Get-Content examples/steiner-ratio.json -Raw | python -m flahax ratio
 
-Cation shares are K, Ca and Mg equivalents. Anion shares are nitrate, total phosphate on the H2PO4 reporting basis, and sulfate equivalents. Each list is independently normalized. counted_mmol_l sums the six analytical amounts. pH, batch volume, demineralized water and final water mass are required. The example explicitly approximates 10 litres of final dilute solution as containing 10 kg water.
+Cation shares are K, Ca and Mg equivalents. Anion shares are nitrate, total phosphate on the H2PO4 reporting basis, and sulfate equivalents. Each list is independently normalized. counted_mmol_l sums the six analytical amounts. pH, batch volume, explicit water input and final water mass are required. The example explicitly approximates 10 litres of final dilute solution as containing 10 kg water.
 
-The supported preparation uses pure KH2PO4, Ca(NO3)2.4H2O, MgSO4.7H2O, Mg(NO3)2.6H2O, KNO3 and KOH. Amounts are calculated from each chemical formula using the existing atomic-weight table. A target requiring negative amounts or other sources returns ratio_allocation_infeasible. Non-demineralized water is outside this first workflow's input contract.
+The supported preparation uses pure KH2PO4, Ca(NO3)2.4H2O, MgSO4.7H2O, Mg(NO3)2.6H2O, KNO3 and KOH. Amounts are calculated from each chemical formula using the existing atomic-weight table. A target requiring negative amounts or other sources returns ratio_allocation_infeasible. An explicit measured-water inventory and optional HNO3 are now supported as described below.
 
-The aqueous model calculates the cation and anion group totals at the requested strength and pH. Final ingredient reconstruction verifies charge and preserves analytical ratios. KOH potassium contributes to the final potassium target. The calculation uses 25 C, zero added inorganic carbon and no gas exchange. The result includes all mineral saturation indices and the existing saturation assessment. It provides full-precision quantities and calls for rechecking rounded delivered doses.
+The aqueous model calculates the cation and anion group totals at the requested strength and pH. Final ingredient reconstruction verifies charge and preserves analytical ratios. KOH potassium contributes to the final potassium target. The calculation uses 25 C and no gas exchange; inorganic carbon is zero for demineralized water or comes from the supplied water analysis. The result includes all mineral saturation indices and the existing saturation assessment. It provides full-precision quantities and calls for rechecking rounded delivered doses.
 
 Steiner's pH 6.30 example gives 50:30:20 and 5:3:1, 30 mmol/L and about 1.316738 mmol/L potassium supplied by KOH in this model. The original empirical curve gives a different base dose. The solution is supersaturated with respect to calcium phosphate phases, which is visible in the output.
 
@@ -32,7 +32,7 @@ Add ph_range, selected_phases and mass_decimals to the ratio request. For exampl
     "selected_phases": ["Brushite", "Monetite", "Hydroxyapatite"],
     "mass_decimals": 5
 
-The verification first rounds every ingredient mass in grams and reconstructs all nutrient amounts from the chemical formula. Output includes the rounded ingredient list, ratios, concentration and nutrient errors. Each nutrient must remain within 0.1% of its target plus 1e-10 mmol/L numerical allowance. The independently charge-balanced pH of the rounded batch must lie inside the requested interval.
+The verification first rounds every ingredient mass in grams and reconstructs all nutrient amounts from the chemical formula. Output includes the rounded ingredient list, ratios, concentration and nutrient errors. Each nutrient must remain within 0.1% of its target plus 1e-10 mmol/L numerical allowance. The independently solved pH of the rounded batch (preserving any measured-water charge residual) must lie inside the requested interval.
 
 The calculation checks endpoints, the target pH and interior points at maximum spacing 0.001 pH. For each mineral it reports the largest index and the pH at which it occurred. Every selected mineral must have SI below -1e-7, a numerical guard around saturation. The status passed means the rounded batch met the nutrient, pH and selected mineral tests on the disclosed grid. This is a sampled numerical check, with no mathematical bound for unsampled points. Failed solves or unavailable phase values return incomplete.
 
@@ -217,3 +217,57 @@ The [10-litre laboratory worksheet](steiner-10-litre-lab-worksheet.md) collects
 actual preparation, stock assays, calibration and longitudinal measurements for
 this candidate. Its companion JSON contains planned settings and blank measured
 fields; neither file is laboratory evidence until completed from real records.
+
+## Real-water accounting
+
+`examples/steiner-real-water.json` is a synthetic 10-litre accounting example,
+not a measured water analysis or a saturation-passing preparation recommendation.
+
+Replace `water: "demineralized"` with an object containing `analysis_id`,
+`totals_mol_kg`, `measured_ph`, `temperature_c: 25` and
+`source_water_mass_kg`. Specify all six basis totals (`K+`, `Ca+2`, `Mg+2`,
+`NO3-`, `PO4-3`, `SO4-2`) plus `Na+` and `Cl-`, including explicit zeros.
+Totals are mol/kg **source water**, not mg/L or mol/L. Supply either total
+inorganic carbon as `CO3-2` (including explicit zero), or titrated
+`alkalinity_eq_per_kg` beside the totals; never both. Carbon inferred from
+alkalinity uses the existing measured-water inorganic model at measured pH.
+Unknown components and omitted required totals are rejected.
+
+`source_water_mass_kg` must not exceed final `water_mass_kg`. Their difference
+represents ion-free water in this inventory, not a guessed water density or
+automatic volume additivity. Final solution volume is independently supplied.
+For example, 0.0004 mol Ca/kg in 8 kg source water contributes
+0.0004 × 8 × 1000 / 10 = **0.32 mmol Ca/L** to a 10-litre batch.
+
+The planner fits the **final** six nutrient totals, subtracts the source-water
+contributions, then allocates the remaining pure compounds. Water exceeding any
+final target produces `ratio_water_exceeds_target`; the strength search treats
+this as an infeasible candidate. Other impossible allocations are refused.
+
+KOH remains the default permitted pH reagent. Explicitly allow
+`ph_reagents: ["KOH", "HNO3"]` for water requiring acid. Both KOH potassium and
+HNO3 nitrate consume their final nutrient targets; neither is appended after
+fitting. HNO3 quantities represent pure compound equivalent, not a commercial
+acid solution dose. Commercial assay, acid solvent contribution and other acids
+remain outside this allocation.
+
+Reports separate `nutrient_accounting.water_mmol_l`, `salts_mmol_l` and
+`ph_reagents_mmol_l`. Their sum is `analytical_mmol_l`; its six components sum
+to `counted_mmol_l`. Sodium, chloride and carbon enter the full
+`aqueous_totals_mol_kg` and saturation chemistry but not Steiner's six-nutrient
+count. That count is not total dissolved particles or ionic strength.
+
+The source analysis remains unchanged. Its measured-pH charge imbalance is
+reported and scaled by source/final water mass. The final and rounded pH solves
+preserve this reference residual, following the existing measured-water model.
+`charge_residual_mol_kg` is the raw modeled charge;
+`charge_closure_error_mol_kg` is the departure from the measured-water reference.
+A small closure error does not establish that the water analysis is accurate.
+
+Rounded verification includes water, salts and pH reagents and retains the
+fixed-carbon and disclosed pH-grid assumptions. Real-water uncertainty and stock
+verification are explicitly rejected for now, as is HNO3 with those modes.
+No real-water recipe is marked experimentally verified or stable. General
+commercial-product allocation, water-analysis uncertainty, other acids and
+Na/Cl nutrient hard limits remain open stage-3 work. Historical solution 1a's
+unresolved +0.13 pH rise remains reported.

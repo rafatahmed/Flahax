@@ -47,6 +47,7 @@ def search_ratio_recipe(
             if exc.code not in (
                 "ratio_infeasible",
                 "ratio_allocation_infeasible",
+                "ratio_water_exceeds_target",
                 "ratio_stock_dose_infeasible",
                 "ratio_stock_volume_infeasible",
                 "nonconvergent",

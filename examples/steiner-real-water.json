@@ -1,0 +1,41 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "counted_mmol_l": 30,
+  "volume_litres": 10,
+  "water": {
+    "analysis_id": "SYNTHETIC water analysis, not a lab result",
+    "totals_mol_kg": {
+      "K+": 0.0001,
+      "Ca+2": 0.0004,
+      "Mg+2": 0.00015,
+      "NO3-": 0.0002,
+      "PO4-3": 2e-05,
+      "SO4-2": 0.0001,
+      "Na+": 0.0003,
+      "Cl-": 0.0004,
+      "CO3-2": 0.006
+    },
+    "measured_ph": 7.5,
+    "temperature_c": 25,
+    "source_water_mass_kg": 8
+  },
+  "water_mass_kg": 10,
+  "ph_reagents": [
+    "KOH",
+    "HNO3"
+  ],
+  "ph_range": [
+    6.28,
+    6.32
+  ]
+}

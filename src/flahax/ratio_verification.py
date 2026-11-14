@@ -54,7 +54,9 @@ def verify_rounded_recipe(
     recipe, ph_range, phases, mass_decimals, saturation_margin=0.0, *, delivered_grams=None
 ):
     """Reconstruct delivered masses and return sampled saturation and fit checks."""
-    amounts = [0.0] * 6
+    water = recipe.get("water_accounting", {})
+    amounts = [water.get("nutrients_mmol_l", {}).get(n, 0.0) for n in NUTRIENTS]
+    reference_charge = water.get("reference_charge_mol_kg", 0.0)
     ingredients = []
     for index, row in enumerate(recipe["ingredients"]):
         grams = (
@@ -72,6 +74,7 @@ def verify_rounded_recipe(
         k: v * recipe["volume_litres"] / recipe["water_mass_kg"] / 1000
         for k, v in zip(BASIS, amounts)
     }
+    totals.update(water.get("background_totals_mol_kg", {}))
     errors = {key: analytical[key] - target for key, target in recipe["analytical_mmol_l"].items()}
     rounding_ok = all(
         abs(errors[key]) <= 1e-10 + ROUNDING_RELATIVE_TOLERANCE * abs(target)
@@ -91,6 +94,8 @@ def verify_rounded_recipe(
         "delivery_basis": "rounded_grams" if delivered_grams is None else "rounded_stock_doses",
         "ingredients": ingredients,
         "analytical_mmol_l": analytical,
+        "aqueous_totals_mol_kg": totals,
+        "reference_charge_mol_kg": reference_charge,
         "counted_mmol_l": sum(amounts),
         "nutrient_errors_mmol_l": errors,
         "rounding_relative_tolerance": ROUNDING_RELATIVE_TOLERANCE,
@@ -135,10 +140,18 @@ def verify_rounded_recipe(
         result["target_ph_saturation_indices"] = {
             phase: states[recipe["target_ph"]].saturation_indices[phase] for phase in phases
         }
-        a, b = states[low].charge_balance, states[high].charge_balance
+        a, b = (
+            states[low].charge_balance - reference_charge,
+            states[high].charge_balance - reference_charge,
+        )
         if a * b <= 0:
             left, right = shrink_bracket(
-                lambda ph: solve(totals, ph).charge_balance, low, a, high, b, width=1e-9
+                lambda ph: solve(totals, ph).charge_balance - reference_charge,
+                low,
+                a,
+                high,
+                b,
+                width=1e-9,
             )
             result["rounded_ph"] = (left + right) / 2
             result["rounded_ph_in_range"] = True
