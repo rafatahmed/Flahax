@@ -1,0 +1,620 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "volume_litres": 10,
+  "water": "demineralized",
+  "water_mass_kg": 10,
+  "ph_range": [
+    6.28,
+    6.32
+  ],
+  "selected_phases": [
+    "Brushite",
+    "Monetite",
+    "Hydroxyapatite"
+  ],
+  "mass_decimals": 5,
+  "saturation_margin": 0.3,
+  "uncertainty": {
+    "volume_error_litres": 0.05,
+    "ratio_relative_tolerance": 0.01,
+    "concentration_relative_tolerance": 0.02,
+    "impurity_model": "inert"
+  },
+  "stock_dosing": {
+    "concentrations_g_l": {
+      "KH2PO4": 10,
+      "Ca(NO3)2.4H2O": 10,
+      "MgSO4.7H2O": 10,
+      "Mg(NO3)2.6H2O": 10,
+      "KNO3": 10,
+      "KOH": 1
+    },
+    "concentration_relative_error": 0.001,
+    "dose_error_ml": 0.02,
+    "dose_decimals": 2
+  },
+  "counted_mmol_l": 1.70947360992432,
+  "stock_evidence": {
+    "assignments": {
+      "KH2PO4": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      },
+      "Ca(NO3)2.4H2O": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      },
+      "MgSO4.7H2O": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      },
+      "Mg(NO3)2.6H2O": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      },
+      "KNO3": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      },
+      "KOH": {
+        "stock_id": null,
+        "dispenser_id": null,
+        "assay_record_id": null,
+        "calibration_record_id": null
+      }
+    },
+    "assays": [
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "KH2PO4",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "Ca(NO3)2.4H2O",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "MgSO4.7H2O",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "Mg(NO3)2.6H2O",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "KNO3",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "formula": "KOH",
+        "measured_concentration_g_l": null,
+        "absolute_uncertainty_g_l": null,
+        "concentration_basis": null,
+        "reactive_impurities": null
+      }
+    ],
+    "calibrations": [
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      },
+      {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "stock_id": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "dispenser_id": null,
+        "dose_min_ml": null,
+        "dose_max_ml": null,
+        "maximum_absolute_bias_ml": null,
+        "absolute_uncertainty_ml": null,
+        "coverage": null
+      }
+    ],
+    "final_volume": {
+      "assignment": {
+        "vessel_id": null,
+        "calibration_record_id": null
+      },
+      "calibration": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "vessel_id": null,
+        "nominal_volume_litres": null,
+        "measured_volume_litres": null,
+        "absolute_uncertainty_litres": null,
+        "capacity_basis": null,
+        "application": null
+      }
+    },
+    "batch_ph": {
+      "assignment": {
+        "batch_id": null,
+        "vessel_id": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "calibration_record_id": null,
+        "measurement_record_id": null
+      },
+      "calibration": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "calibrated_at": null,
+        "ph_min": null,
+        "ph_max": null,
+        "maximum_absolute_bias_ph": null,
+        "absolute_uncertainty_ph": null,
+        "coverage": null,
+        "buffers": [
+          {
+            "reference": null,
+            "certified_ph": null
+          },
+          {
+            "reference": null,
+            "certified_ph": null
+          }
+        ]
+      },
+      "measurement": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "measured_at": null,
+        "batch_id": null,
+        "vessel_id": null,
+        "calibration_record_id": null,
+        "preparation_fingerprint": null,
+        "indicated_ph": null,
+        "additional_uncertainty_ph": null,
+        "application": null
+      }
+    }
+  },
+  "batch_stability": {
+    "assignment": {
+      "batch_id": null,
+      "vessel_id": null,
+      "preparation_fingerprint": null
+    },
+    "policy": {
+      "required_hours": [
+        0,
+        24,
+        72,
+        168
+      ],
+      "maximum_delay_hours": 1,
+      "maximum_turbidity_ntu": 1,
+      "minimum_retention_fraction": 0.95,
+      "initial_nutrient_relative_tolerance": 0.05
+    },
+    "protocol": {
+      "protocol_id": null,
+      "source": null,
+      "storage_conditions": null,
+      "filter_pore_um": null,
+      "dissolved_basis": null,
+      "material_accounting": null,
+      "turbidity_sample": null
+    },
+    "observations": [
+      {
+        "observation_id": null,
+        "sampled_at": null,
+        "turbidity_ntu": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_calcium_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_phosphorus_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "volume_litres": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "ph_measurement": {
+          "record_id": null,
+          "source": null,
+          "method": null,
+          "measured_on": null,
+          "valid_until": null,
+          "temperature_c": null,
+          "uncertainty_basis": null,
+          "meter_id": null,
+          "electrode_id": null,
+          "measured_at": null,
+          "batch_id": null,
+          "vessel_id": null,
+          "calibration_record_id": null,
+          "preparation_fingerprint": null,
+          "indicated_ph": null,
+          "additional_uncertainty_ph": null,
+          "application": null
+        }
+      },
+      {
+        "observation_id": null,
+        "sampled_at": null,
+        "turbidity_ntu": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_calcium_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_phosphorus_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "volume_litres": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "ph_measurement": {
+          "record_id": null,
+          "source": null,
+          "method": null,
+          "measured_on": null,
+          "valid_until": null,
+          "temperature_c": null,
+          "uncertainty_basis": null,
+          "meter_id": null,
+          "electrode_id": null,
+          "measured_at": null,
+          "batch_id": null,
+          "vessel_id": null,
+          "calibration_record_id": null,
+          "preparation_fingerprint": null,
+          "indicated_ph": null,
+          "additional_uncertainty_ph": null,
+          "application": null
+        }
+      },
+      {
+        "observation_id": null,
+        "sampled_at": null,
+        "turbidity_ntu": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_calcium_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_phosphorus_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "volume_litres": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "ph_measurement": {
+          "record_id": null,
+          "source": null,
+          "method": null,
+          "measured_on": null,
+          "valid_until": null,
+          "temperature_c": null,
+          "uncertainty_basis": null,
+          "meter_id": null,
+          "electrode_id": null,
+          "measured_at": null,
+          "batch_id": null,
+          "vessel_id": null,
+          "calibration_record_id": null,
+          "preparation_fingerprint": null,
+          "indicated_ph": null,
+          "additional_uncertainty_ph": null,
+          "application": null
+        }
+      },
+      {
+        "observation_id": null,
+        "sampled_at": null,
+        "turbidity_ntu": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_calcium_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "dissolved_phosphorus_mg_l": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "volume_litres": {
+          "value": null,
+          "absolute_uncertainty": null,
+          "instrument_id": null,
+          "calibration_reference": null,
+          "method": null,
+          "source": null,
+          "uncertainty_basis": null
+        },
+        "ph_measurement": {
+          "record_id": null,
+          "source": null,
+          "method": null,
+          "measured_on": null,
+          "valid_until": null,
+          "temperature_c": null,
+          "uncertainty_basis": null,
+          "meter_id": null,
+          "electrode_id": null,
+          "measured_at": null,
+          "batch_id": null,
+          "vessel_id": null,
+          "calibration_record_id": null,
+          "preparation_fingerprint": null,
+          "indicated_ph": null,
+          "additional_uncertainty_ph": null,
+          "application": null
+        }
+      }
+    ]
+  }
+}

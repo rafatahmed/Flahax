@@ -6,6 +6,10 @@ automatically stable. Supply `batch_stability` alongside `stock_evidence` in a f
 stock-recipe request. The [blank template](../examples/batch-stability-template.json)
 contains no real measurements and cannot pass as supplied.
 
+For a complete preparation and laboratory record, use the
+[10-litre lab worksheet](steiner-10-litre-lab-worksheet.md) and its combined
+[fixed-recipe evidence template](../examples/steiner-10-litre-lab-records.json).
+
 ## Accepted example policy
 
 The user-selected illustrative policy uses preparation, 24 h, 72 h and 168 h

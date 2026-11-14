@@ -208,3 +208,8 @@ preparation, 24 h, 72 h and seven days, including measurement uncertainty and pH
 each observation. Use `examples/batch-stability-template.json` for `batch_stability`;
 its empty measurements do not establish stability. Preparation verification alone
 never sets `stable: true`.
+
+The [10-litre laboratory worksheet](steiner-10-litre-lab-worksheet.md) collects
+actual preparation, stock assays, calibration and longitudinal measurements for
+this candidate. Its companion JSON contains planned settings and blank measured
+fields; neither file is laboratory evidence until completed from real records.
