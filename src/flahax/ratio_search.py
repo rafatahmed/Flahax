@@ -53,9 +53,11 @@ def search_ratio_recipe(
             status = "failed" if exc.code.startswith("ratio_") else "incomplete"
             evaluated[strength] = {"status": status, "error": str(exc)}
             return status
-        check = recipe["rounded_verification"]
+        check = recipe.get("uncertainty_verification", recipe["rounded_verification"])
         status = check["status"]
         evaluated[strength] = {"status": status}
+        if "uncertainty_verification" in recipe:
+            evaluated[strength]["failed_checks"] = check["failed_checks"]
         if status == "passed" and (best is None or strength > best[0]):
             best = (strength, recipe)
         return status
@@ -93,6 +95,7 @@ def search_ratio_recipe(
         "strength_range": [low, high],
         "strength_tolerance": tolerance,
         "saturation_margin": saturation_margin,
+        "uncertainty": recipe_options.get("uncertainty"),
         "initial_scan_points": scan_points,
         "evaluation_count": len(evaluated),
         "evaluations": [{"strength_mmol_l": x, **row} for x, row in sorted(evaluated.items())],
@@ -112,10 +115,13 @@ def search_ratio_recipe(
     strength, _ = best
     # Reconstruct again so a cached verdict is not the delivery evidence.
     recipe = plan_ratio_recipe(counted_mmol_l=strength, **recipe_options)
-    if recipe["rounded_verification"]["status"] != "passed":
+    if (
+        recipe.get("uncertainty_verification", recipe["rounded_verification"])["status"]
+        != "passed"
+    ):
         result["status"] = "incomplete"
         return result
-    maxima = recipe["rounded_verification"]["phase_maxima"]
+    maxima = recipe.get("uncertainty_verification", recipe["rounded_verification"])["phase_maxima"]
     phase = max(maxima, key=lambda name: maxima[name]["si"])
     result.update(
         requested_strength_mmol_l=strength,

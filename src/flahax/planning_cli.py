@@ -114,7 +114,8 @@ def execute(command, payload):
         from .ratio_search import search_ratio_recipe
         required = {'cation_shares', 'anion_shares', 'ph',
                     'volume_litres', 'water', 'water_mass_kg'}
-        optional = {'ph_range', 'selected_phases', 'mass_decimals', 'saturation_margin'}
+        optional = {'ph_range', 'selected_phases', 'mass_decimals',
+                    'saturation_margin', 'uncertainty'}
         search = 'strength_range' in payload
         if search and 'counted_mmol_l' in payload:
             raise DeliveryError('duplicate_strength', 'Choose fixed strength or strength_range')

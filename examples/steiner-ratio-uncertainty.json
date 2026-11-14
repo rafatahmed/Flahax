@@ -1,0 +1,44 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "strength_range": [
+    1,
+    30
+  ],
+  "strength_tolerance": 1e-05,
+  "scan_points": 129,
+  "volume_litres": 10,
+  "water": "demineralized",
+  "water_mass_kg": 10,
+  "ph_range": [
+    6.28,
+    6.32
+  ],
+  "selected_phases": [
+    "Brushite",
+    "Monetite",
+    "Hydroxyapatite"
+  ],
+  "mass_decimals": 5,
+  "saturation_margin": 0.3,
+  "uncertainty": {
+    "weighing_error_g": 0.001,
+    "purity_fraction": [
+      0.99,
+      1.0
+    ],
+    "volume_error_litres": 0.05,
+    "ratio_relative_tolerance": 0.01,
+    "concentration_relative_tolerance": 0.02,
+    "impurity_model": "inert"
+  }
+}

@@ -55,6 +55,7 @@ def plan_ratio_recipe(
     selected_phases=None,
     mass_decimals=5,
     saturation_margin=0.0,
+    uncertainty=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -63,6 +64,12 @@ def plan_ratio_recipe(
     converts concentrations to mol/kg for the supported 25 C aqueous model.
     The initial allocation supports the six SOURCES and nonnegative KOH.
     """
+    if uncertainty is not None:
+        from .ratio_uncertainty import validate_uncertainty
+
+        validate_uncertainty(uncertainty, volume_litres)
+        if ph_range is None:
+            raise DeliveryError("missing_ph_range", "Uncertainty checks require ph_range")
     cations = _shares(cation_shares, "cation_shares")
     anions = _shares(anion_shares, "anion_shares")
     ph = _number(ph, "ph", zero=True)
@@ -167,4 +174,8 @@ def plan_ratio_recipe(
         result["rounded_verification"] = verify_rounded_recipe(
             result, ph_range, phases, mass_decimals, saturation_margin
         )
+    if uncertainty is not None:
+        from .ratio_uncertainty import verify_uncertainty
+
+        result["uncertainty_verification"] = verify_uncertainty(result, uncertainty)
     return result

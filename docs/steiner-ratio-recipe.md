@@ -81,3 +81,57 @@ accuracy. Dose precision, reagent assay, final volume and source-water compositi
 must be measured before claiming practical robustness. In particular, changing the
 base dose or aeration can move pH outside the checked range. No uncertainty model
 or precipitation-rate model is inferred from this margin.
+
+## Preparation uncertainty
+
+The optional `uncertainty` object applies to fixed recipes and searches. See
+`examples/steiner-ratio-uncertainty.json` for the user-selected preparation bounds:
+
+```json
+{
+  "weighing_error_g": 0.001,
+  "purity_fraction": [0.99, 1.0],
+  "volume_error_litres": 0.05,
+  "ratio_relative_tolerance": 0.01,
+  "concentration_relative_tolerance": 0.02,
+  "impurity_model": "inert"
+}
+```
+
+These are bounded errors, not standard deviations or confidence intervals. The
+same weighing and assay bounds apply independently to all six ingredients, including
+KOH. Purity is the mass fraction of the specified hydrate or compound, with the
+remainder assumed chemically inert. No compensation for nominal assay is applied.
+KOH containing reactive carbonate is outside this contract. Water mass scales with
+volume using the explicitly supplied nominal water-mass/volume approximation.
+
+For each rounded dose `g`, the effective compound interval is
+`[(g - weighing_error_g) * purity_low, (g + weighing_error_g) * purity_high]`.
+Negative possible weighed mass is rejected. The checker reconstructs nutrient amounts
+at all effective-dose corners and both volume bounds: normally 64 × 2 = 128
+preparation scenarios. Every scenario is checked on the same disclosed pH grid,
+with the same saturation margin. Charge-balance endpoint signs must bracket an
+equilibrium pH inside the requested interval. No unaccounted acid/base correction is
+assumed to restore pH. This pH condition is separate from imposing pH for SI sensitivity.
+
+Independent errors cannot preserve exact ratios. The example permits 1% relative
+change in each equivalent share and 2% in the total analytical concentration.
+These are explicit engineering tolerances, separate from the existing nominal
+rounding check. Reported ratio and concentration ranges disclose actual deviations.
+For positive dose intervals these linear/fractional quantities attain their extrema
+at corners. The nonlinear chemistry is a scenario check; it supplies no continuous
+interior bound or mathematical global optimum. Missing phases or failed solves
+return `incomplete`. A nominal failure skips uncertainty calculations and remains failed.
+
+Search acceptance and final delivery verification both use `uncertainty_verification`
+when supplied. Rejected strengths retain failure reasons. The 129-point 1–30 mmol/L
+example found no passing candidate under these preparation bounds. At 1.7 mmol/L,
+all 128 scenarios passed the 0.30 SI margin on the imposed pH grid (worst HAP SI
+approximately -0.31262), but equilibrium pH escaped the interval and ratio deviations
+reached 1.9063%, exceeding the 1% allowance. The concentration range was
+1.666283–1.717079 mmol/L. This is a failed preparation case, not a deliverable recipe.
+
+See [supporting references](steiner-supporting-references.md) for research context.
+The unresolved solution 1a pH discrepancy remains visible. Tighter balance/assay
+bounds or verified stock dosing should be evaluated explicitly before promising a
+passing preparation; relaxing a tolerance requires a stated decision.
