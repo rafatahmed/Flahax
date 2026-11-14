@@ -9,6 +9,8 @@ contains no real measurements and cannot pass as supplied.
 For a complete preparation and laboratory record, use the
 [10-litre lab worksheet](steiner-10-litre-lab-worksheet.md) and its combined
 [fixed-recipe evidence template](../examples/steiner-10-litre-lab-records.json).
+The [Excel import workflow](lab-workbook-import.md) reads the completed workbook
+without manual evidence-to-JSON transcription and reruns the existing gates.
 
 ## Accepted example policy
 

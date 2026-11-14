@@ -31,6 +31,7 @@ recursive-include tools *.py *.ps1
 include tools/chemistry_sources.json
 include tools/requirements-benchmark-report.txt
 recursive-include examples *.py *.md
+include examples/steiner-10-litre-lab-worksheet.xlsx
 prune examples/tutorial
 global-exclude __pycache__
 global-exclude *.py[cod]

@@ -322,6 +322,10 @@ can raise concentration while nutrient mass is falling.
 
 ## 9. Transfer records into FlahaX
 
+**Excel option:** the [Excel import workflow](lab-workbook-import.md) now reads the
+completed workbook directly and runs the full checks. Use `flahax lab-import`;
+the manual JSON steps below remain available for users working with this text form.
+
 1. Copy the companion JSON; keep the original blank. Enter real stock assignments,
    assays, dispensers and final-volume records. Remove `batch_ph` temporarily from
    `stock_evidence` and omit `batch_stability` while obtaining the preparation
