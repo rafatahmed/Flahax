@@ -58,6 +58,7 @@ def plan_ratio_recipe(
     uncertainty=None,
     stock_dosing=None,
     stock_evidence=None,
+    batch_stability=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -66,6 +67,10 @@ def plan_ratio_recipe(
     converts concentrations to mol/kg for the supported 25 C aqueous model.
     The initial allocation supports the six SOURCES and nonnegative KOH.
     """
+    if batch_stability is not None and stock_dosing is None:
+        raise DeliveryError(
+            "missing_stock_dosing", "Batch stability requires stock preparation evidence"
+        )
     if stock_evidence is not None and stock_dosing is None:
         raise DeliveryError("missing_stock_dosing", "Stock evidence requires stock dosing")
     if stock_dosing is not None:
@@ -220,4 +225,10 @@ def plan_ratio_recipe(
         result["uncertainty_verification"]["verification_scope"] = result["stock_delivery"][
             "verification_scope"
         ]
+    result["stable"] = False
+    if stock_dosing is not None:
+        from .batch_stability import assess_batch_stability
+
+        result["stability_assessment"] = assess_batch_stability(result, batch_stability)
+        result["stable"] = result["stability_assessment"]["stable"]
     return result

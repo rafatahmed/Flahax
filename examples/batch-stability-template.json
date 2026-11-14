@@ -1,0 +1,266 @@
+{
+  "assignment": {
+    "batch_id": null,
+    "vessel_id": null,
+    "preparation_fingerprint": null
+  },
+  "policy": {
+    "required_hours": [
+      0,
+      24,
+      72,
+      168
+    ],
+    "maximum_delay_hours": 1,
+    "maximum_turbidity_ntu": 1,
+    "minimum_retention_fraction": 0.95,
+    "initial_nutrient_relative_tolerance": 0.05
+  },
+  "protocol": {
+    "protocol_id": null,
+    "source": null,
+    "storage_conditions": null,
+    "filter_pore_um": null,
+    "dissolved_basis": null,
+    "material_accounting": null,
+    "turbidity_sample": null
+  },
+  "observations": [
+    {
+      "observation_id": null,
+      "sampled_at": null,
+      "turbidity_ntu": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_calcium_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_phosphorus_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "volume_litres": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "ph_measurement": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "measured_at": null,
+        "batch_id": null,
+        "vessel_id": null,
+        "calibration_record_id": null,
+        "preparation_fingerprint": null,
+        "indicated_ph": null,
+        "additional_uncertainty_ph": null,
+        "application": null
+      }
+    },
+    {
+      "observation_id": null,
+      "sampled_at": null,
+      "turbidity_ntu": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_calcium_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_phosphorus_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "volume_litres": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "ph_measurement": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "measured_at": null,
+        "batch_id": null,
+        "vessel_id": null,
+        "calibration_record_id": null,
+        "preparation_fingerprint": null,
+        "indicated_ph": null,
+        "additional_uncertainty_ph": null,
+        "application": null
+      }
+    },
+    {
+      "observation_id": null,
+      "sampled_at": null,
+      "turbidity_ntu": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_calcium_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_phosphorus_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "volume_litres": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "ph_measurement": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "measured_at": null,
+        "batch_id": null,
+        "vessel_id": null,
+        "calibration_record_id": null,
+        "preparation_fingerprint": null,
+        "indicated_ph": null,
+        "additional_uncertainty_ph": null,
+        "application": null
+      }
+    },
+    {
+      "observation_id": null,
+      "sampled_at": null,
+      "turbidity_ntu": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_calcium_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "dissolved_phosphorus_mg_l": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "volume_litres": {
+        "value": null,
+        "absolute_uncertainty": null,
+        "instrument_id": null,
+        "calibration_reference": null,
+        "method": null,
+        "source": null,
+        "uncertainty_basis": null
+      },
+      "ph_measurement": {
+        "record_id": null,
+        "source": null,
+        "method": null,
+        "measured_on": null,
+        "valid_until": null,
+        "temperature_c": null,
+        "uncertainty_basis": null,
+        "meter_id": null,
+        "electrode_id": null,
+        "measured_at": null,
+        "batch_id": null,
+        "vessel_id": null,
+        "calibration_record_id": null,
+        "preparation_fingerprint": null,
+        "indicated_ph": null,
+        "additional_uncertainty_ph": null,
+        "application": null
+      }
+    }
+  ]
+}

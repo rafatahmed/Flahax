@@ -60,7 +60,12 @@ def search_ratio_recipe(
         if recipe_options.get("stock_evidence") is not None and not recipe.get("verified", False):
             if status == "passed":
                 status = "failed"
+        if recipe_options.get("batch_stability") is not None and not recipe.get("stable", False):
+            if status == "passed":
+                status = "failed"
         evaluated[strength] = {"status": status}
+        if "stability_assessment" in recipe:
+            evaluated[strength]["stability_status"] = recipe["stability_assessment"]["status"]
         if "stock_verification" in recipe:
             evaluated[strength]["verification_status"] = recipe["stock_verification"]["status"]
             evaluated[strength]["evidence_failures"] = recipe["stock_verification"]["failures"]
@@ -113,6 +118,7 @@ def search_ratio_recipe(
         "requested_strength_mmol_l": None,
         "recipe": None,
         "verified": False,
+        "stable": False,
         "verification_status": "unverified",
         "limiting_phase": None,
         "controlling_ph": None,
@@ -135,6 +141,10 @@ def search_ratio_recipe(
     if recipe_options.get("stock_evidence") is not None and not recipe.get("verified", False):
         result["status"] = "incomplete"
         return result
+    if recipe_options.get("batch_stability") is not None and not recipe.get("stable", False):
+        result["status"] = "incomplete"
+        return result
+    result["stable"] = recipe.get("stable", False)
     result["verified"] = recipe.get("verified", False)
     result["verification_status"] = "verified" if result["verified"] else "unverified"
     maxima = recipe.get("uncertainty_verification", recipe["rounded_verification"])["phase_maxima"]

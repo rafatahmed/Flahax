@@ -201,3 +201,10 @@ Verification additionally requires [measured batch pH and meter calibration](mea
 The reading's full error interval must remain within 6.28–6.32, and its preparation
 fingerprint must match the rounded stock delivery and uncertainty assumptions.
 The existing example has no real measurement records and therefore remains unverified.
+
+`stable` is separately gated by [measured batch stability records](measured-batch-stability.md).
+The explicit example policy checks unfiltered turbidity and dissolved Ca/P mass at
+preparation, 24 h, 72 h and seven days, including measurement uncertainty and pH at
+each observation. Use `examples/batch-stability-template.json` for `batch_stability`;
+its empty measurements do not establish stability. Preparation verification alone
+never sets `stable: true`.
