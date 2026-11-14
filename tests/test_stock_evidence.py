@@ -4,6 +4,8 @@ import copy
 import unittest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
+from functools import lru_cache
+from flahax.ph_evidence import preparation_fingerprint
 
 from flahax import plan_ratio_recipe, search_ratio_recipe
 from flahax.ratio_stocks import prepare_stock_delivery
@@ -12,9 +14,18 @@ from tests.test_ratio_search import OPTIONS
 from tests.test_ratio_stocks import STOCKS, UNCERTAINTY
 
 
+@lru_cache(maxsize=1)
+def reference_recipe():
+    recipe = plan_ratio_recipe(**dict(OPTIONS, counted_mmol_l=1.7))
+    recipe["stock_delivery"] = prepare_stock_delivery(recipe, STOCKS, 0.05)
+    recipe["uncertainty_verification"] = {"status": "passed", "assumptions": dict(UNCERTAINTY)}
+    return recipe
+
+
 def records():
     """Synthetic, deliberately labeled examples for validator tests only."""
-    today = datetime.now(timezone.utc).date()
+    now = datetime.now(timezone.utc)
+    today = now.date()
     common = dict(
         source="SYNTHETIC UNIT TEST - no physical measurement",
         method="synthetic bounded-result fixture",
@@ -68,6 +79,46 @@ def records():
             absolute_uncertainty_litres=0.02,
             capacity_basis="to_contain",
             application="final_solution_including_stocks",
+        ),
+    }
+    evidence["batch_ph"] = {
+        "assignment": dict(
+            batch_id="batch-1",
+            vessel_id="vessel-10l",
+            meter_id="meter-1",
+            electrode_id="electrode-1",
+            calibration_record_id="ph-cal-1",
+            measurement_record_id="ph-reading-1",
+        ),
+        "calibration": dict(
+            common,
+            record_id="ph-cal-1",
+            meter_id="meter-1",
+            electrode_id="electrode-1",
+            calibrated_at=now.isoformat(),
+            ph_min=4.01,
+            ph_max=7,
+            maximum_absolute_bias_ph=0.002,
+            absolute_uncertainty_ph=0.003,
+            coverage="entire_declared_range",
+            buffers=[
+                dict(reference="synthetic-buffer-4", certified_ph=4.01),
+                dict(reference="synthetic-buffer-7", certified_ph=7),
+            ],
+        ),
+        "measurement": dict(
+            common,
+            record_id="ph-reading-1",
+            meter_id="meter-1",
+            electrode_id="electrode-1",
+            measured_at=now.isoformat(),
+            batch_id="batch-1",
+            vessel_id="vessel-10l",
+            calibration_record_id="ph-cal-1",
+            preparation_fingerprint=preparation_fingerprint(reference_recipe(), evidence),
+            indicated_ph=6.3,
+            additional_uncertainty_ph=0.005,
+            application="final_mixed_batch_no_unaccounted_additions",
         ),
     }
     return evidence
@@ -234,6 +285,10 @@ class StockEvidenceTests(unittest.TestCase):
             uncertainty=dict(UNCERTAINTY, volume_error_litres=0),
         )
         self.assertFalse(execute("ratio", request)["verified"])
+        preliminary = execute("ratio", dict(request, stock_evidence=evidence))
+        evidence["batch_ph"]["measurement"]["preparation_fingerprint"] = preliminary[
+            "stock_verification"
+        ]["preparation_fingerprint"]
         result = execute("ratio", dict(request, stock_evidence=evidence))
         self.assertTrue(result["verified"])
         self.assertEqual(result["stock_verification"]["status"], "verified")
@@ -241,7 +296,7 @@ class StockEvidenceTests(unittest.TestCase):
             "no measured stock assays", result["uncertainty_verification"]["verification_scope"]
         )
         request.pop("counted_mmol_l")
-        request.update(strength_range=[1, 1.5], scan_points=3)
+        request.update(strength_range=[1, 1.7], scan_points=3)
         conditional = execute("ratio", request)
         self.assertEqual(conditional["status"], "found")
         self.assertFalse(conditional["verified"])

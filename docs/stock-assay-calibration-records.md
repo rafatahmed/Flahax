@@ -1,6 +1,6 @@
 # Stock assay, dispenser and final-volume calibration records
 
-Stock recipe `verified` is true only when both numerical checks and all applicable
+Stock recipe `verified` is true only when numerical checks, measured batch pH and all applicable
 supplied-record checks pass. `stock_verification` reports the numerical status,
 evidence status, failure details, per-stock checks, UTC assessment date and record
 snapshot/hash. A numerical `passed` or search `found` alone is not evidence verification.
@@ -80,6 +80,11 @@ whole-range bound; its report must justify coverage. There is no dose extrapolat
 
 ## Search and final verification
 
+Measured pH and meter/electrode calibration are now also mandatory. See
+[measured batch pH records](measured-batch-ph-records.md) for the full-interval
+acceptance rule, timestamps, calibration buffers and preparation fingerprint.
+Stock, dispenser and final-volume records alone no longer permit verification.
+
 ### Final-volume calibration
 
 `stock_evidence.final_volume` is mandatory for verification. It contains an
@@ -127,7 +132,7 @@ Without `stock_evidence`, numerical searching remains available, but results hav
 the search excludes candidates failing the record gate, including candidates whose
 rounded dose falls outside calibration coverage or the final-volume bound is unsupported.
 The selected recipe is recalculated and all three types of records checked again
-before return. Failed or incomplete chemistry always
+before return, together with the batch pH evidence. Failed or incomplete chemistry always
 blocks verification, even if every record fits.
 
 The gate snapshots records and records a SHA-256 digest of their canonical JSON.

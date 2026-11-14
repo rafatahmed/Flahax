@@ -131,6 +131,8 @@ def assess_stock_evidence(recipe, evidence):
         "failures": [],
         "stock_checks": [],
         "final_volume_check": {"status": "not_checked"},
+        "batch_ph_check": {"status": "not_checked"},
+        "preparation_fingerprint": None,
         "records_sha256": None,
         "scope": "Supplied-record applicability and numerical recipe checks only. "
         "Certificate authenticity, actual dispensing, actual batch filling, "
@@ -140,12 +142,15 @@ def assess_stock_evidence(recipe, evidence):
         result["failures"].append({"code": "missing_stock_evidence"})
         result["failures"].append({"code": "missing_final_volume_calibration"})
         result["final_volume_check"] = {"status": "missing"}
+        result["batch_ph_check"] = {"status": "missing"}
+        result["failures"].append({"code": "missing_batch_ph_evidence"})
         return result
     try:
         if (
             not isinstance(evidence, dict)
             or not {"assignments", "assays", "calibrations"} <= set(evidence)
-            or set(evidence) - {"assignments", "assays", "calibrations", "final_volume"}
+            or set(evidence)
+            - {"assignments", "assays", "calibrations", "final_volume", "batch_ph"}
         ):
             raise ValueError("Evidence requires stock records and final-volume calibration")
         canonical = json.dumps(evidence, sort_keys=True, allow_nan=False, separators=(",", ":"))
@@ -280,6 +285,21 @@ def assess_stock_evidence(recipe, evidence):
         recipe, evidence.get("final_volume"), today, indexed
     )
     result["final_volume_check"] = volume_check
+    if failure is not None:
+        result["failures"].append(failure)
+    from .ph_evidence import preparation_fingerprint, check_batch_ph
+
+    fingerprint = None
+    if volume_check["status"] == "passed":
+        fingerprint = preparation_fingerprint(recipe, evidence)
+    result["preparation_fingerprint"] = fingerprint
+    record_ids = set(indexed)
+    if volume_check["status"] == "passed":
+        record_ids.add(volume_check["calibration_record_id"])
+    ph_check, failure = check_batch_ph(
+        recipe, evidence.get("batch_ph"), fingerprint, volume_check.get("vessel_id"), record_ids
+    )
+    result["batch_ph_check"] = ph_check
     if failure is not None:
         result["failures"].append(failure)
     result["evidence_status"] = "failed" if result["failures"] else "passed"

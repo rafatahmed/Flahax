@@ -247,5 +247,61 @@
       "capacity_basis": null,
       "application": null
     }
+  },
+  "batch_ph": {
+    "assignment": {
+      "batch_id": null,
+      "vessel_id": null,
+      "meter_id": null,
+      "electrode_id": null,
+      "calibration_record_id": null,
+      "measurement_record_id": null
+    },
+    "calibration": {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "meter_id": null,
+      "electrode_id": null,
+      "calibrated_at": null,
+      "ph_min": null,
+      "ph_max": null,
+      "maximum_absolute_bias_ph": null,
+      "absolute_uncertainty_ph": null,
+      "coverage": null,
+      "buffers": [
+        {
+          "reference": null,
+          "certified_ph": null
+        },
+        {
+          "reference": null,
+          "certified_ph": null
+        }
+      ]
+    },
+    "measurement": {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "meter_id": null,
+      "electrode_id": null,
+      "measured_at": null,
+      "batch_id": null,
+      "vessel_id": null,
+      "calibration_record_id": null,
+      "preparation_fingerprint": null,
+      "indicated_ph": null,
+      "additional_uncertainty_ph": null,
+      "application": null
+    }
   }
 }

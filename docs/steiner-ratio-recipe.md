@@ -196,3 +196,8 @@ condition, apply to the finished solution including all stocks, and support the
 declared ±0.05 L volume bound after combining measured bias and uncertainty.
 Stock assays and dispenser records alone no longer permit `verified: true`.
 The numerical recipe, ratios and saturation limits are unchanged by this evidence gate.
+
+Verification additionally requires [measured batch pH and meter calibration](measured-batch-ph-records.md).
+The reading's full error interval must remain within 6.28–6.32, and its preparation
+fingerprint must match the rounded stock delivery and uncertainty assumptions.
+The existing example has no real measurement records and therefore remains unverified.
