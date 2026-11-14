@@ -1,0 +1,119 @@
+"""Bounded search for the strongest verified rounded ratio recipe found."""
+
+import math
+
+from .delivery_contracts import DeliveryError
+from .ratio_recipe import plan_ratio_recipe, _number
+
+
+def search_ratio_recipe(
+    *, strength_range, strength_tolerance=1e-5, scan_points=33, **recipe_options
+):
+    """Scan strength and refine every observed passing-to-failing transition.
+
+    Rounded doses can create discontinuities. Report search coverage and the
+    strongest verified candidate found, with no global optimality assertion.
+    """
+    if not isinstance(strength_range, (list, tuple)) or len(strength_range) != 2:
+        raise DeliveryError("invalid_strength_range", "strength_range requires two values")
+    low, high = [_number(v, "strength_range") for v in strength_range]
+    if low >= high:
+        raise DeliveryError("invalid_strength_range", "Strength bounds must be increasing")
+    tolerance = _number(strength_tolerance, "strength_tolerance")
+    if type(scan_points) is not int or not 3 <= scan_points <= 1001:
+        raise DeliveryError("invalid_scan_points", "scan_points must be an integer from 3 to 1001")
+    if recipe_options.get("ph_range") is None:
+        raise DeliveryError("missing_ph_range", "A strength search requires ph_range")
+    if "counted_mmol_l" in recipe_options:
+        raise DeliveryError("duplicate_strength", "Choose a fixed strength or a search range")
+    evaluated = {}
+    best = None
+
+    def evaluate(strength):
+        nonlocal best
+        if strength in evaluated:
+            return evaluated[strength]["status"]
+        try:
+            recipe = plan_ratio_recipe(counted_mmol_l=strength, **recipe_options)
+        except DeliveryError as exc:
+            if exc.code not in (
+                "ratio_infeasible",
+                "ratio_allocation_infeasible",
+                "nonconvergent",
+                "activity_model_out_of_range",
+            ):
+                raise
+            status = "failed" if exc.code.startswith("ratio_") else "incomplete"
+            evaluated[strength] = {"status": status, "error": str(exc)}
+            return status
+        check = recipe["rounded_verification"]
+        status = check["status"]
+        evaluated[strength] = {"status": status}
+        if status == "passed" and (best is None or strength > best[0]):
+            best = (strength, recipe)
+        return status
+
+    grid = [low + (high - low) * i / (scan_points - 1) for i in range(scan_points)]
+    for strength in grid:
+        evaluate(strength)
+    brackets = []
+    for left, right in zip(grid, grid[1:]):
+        if evaluated[left]["status"] != "passed" or evaluated[right]["status"] != "failed":
+            continue
+        for _ in range(80):
+            if right - left <= tolerance:
+                break
+            middle = (left + right) / 2
+            if not left < middle < right:
+                break
+            status = evaluate(middle)
+            if status == "incomplete":
+                break
+            if status == "passed":
+                left = middle
+            else:
+                right = middle
+        brackets.append(
+            {"passing_strength": left, "failing_strength": right, "width": right - left}
+        )
+    incomplete = any(row["status"] == "incomplete" for row in evaluated.values()) or any(
+        bracket["width"] > tolerance for bracket in brackets
+    )
+    result = {
+        "status": "incomplete"
+        if incomplete
+        else ("found" if best is not None else "no_feasible_candidate_found"),
+        "strength_range": [low, high],
+        "strength_tolerance": tolerance,
+        "initial_scan_points": scan_points,
+        "evaluation_count": len(evaluated),
+        "evaluations": [{"strength_mmol_l": x, **row} for x, row in sorted(evaluated.items())],
+        "transition_brackets": brackets,
+        "search_cap_reached": False,
+        "requested_strength_mmol_l": None,
+        "recipe": None,
+        "limiting_phase": None,
+        "controlling_ph": None,
+        "claim": "Strongest verified rounded candidate found over the stated scan and "
+        "transition refinements. Disconnected narrow feasible regions may be missed.",
+        "coverage": "Every candidate uses the reported pH grid. Rounding can make "
+        "feasibility discontinuous. Strength tolerance applies to refined brackets.",
+    }
+    if best is None:
+        return result
+    strength, _ = best
+    # Reconstruct again so a cached verdict is not the delivery evidence.
+    recipe = plan_ratio_recipe(counted_mmol_l=strength, **recipe_options)
+    if recipe["rounded_verification"]["status"] != "passed":
+        result["status"] = "incomplete"
+        return result
+    maxima = recipe["rounded_verification"]["phase_maxima"]
+    phase = max(maxima, key=lambda name: maxima[name]["si"])
+    result.update(
+        requested_strength_mmol_l=strength,
+        recipe=recipe,
+        search_cap_reached=math.isclose(strength, high, rel_tol=0, abs_tol=0),
+        limiting_phase=phase,
+        controlling_ph=maxima[phase]["ph"],
+    )
+    return result

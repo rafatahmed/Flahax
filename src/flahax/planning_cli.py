@@ -111,14 +111,23 @@ def execute(command, payload):
         raise DeliveryError('invalid_type', 'expected a JSON object')
     if command == 'ratio':
         from .ratio_recipe import plan_ratio_recipe
-        allowed = {'cation_shares', 'anion_shares', 'ph', 'counted_mmol_l',
-                   'volume_litres', 'water', 'water_mass_kg'}
+        from .ratio_search import search_ratio_recipe
+        required = {'cation_shares', 'anion_shares', 'ph',
+                    'volume_litres', 'water', 'water_mass_kg'}
         optional = {'ph_range', 'selected_phases', 'mass_decimals'}
-        if set(payload) - allowed - optional:
+        search = 'strength_range' in payload
+        if search and 'counted_mmol_l' in payload:
+            raise DeliveryError('duplicate_strength', 'Choose fixed strength or strength_range')
+        if search:
+            required = required | {'strength_range', 'ph_range'}
+            optional = optional | {'strength_tolerance', 'scan_points'}
+        else:
+            required = required | {'counted_mmol_l'}
+        if set(payload) - required - optional:
             raise DeliveryError('unknown_field', 'Unsupported ratio recipe fields')
-        if allowed - set(payload):
+        if required - set(payload):
             raise DeliveryError('missing_field', 'Missing ratio recipe fields')
-        return plan_ratio_recipe(**payload)
+        return search_ratio_recipe(**payload) if search else plan_ratio_recipe(**payload)
     if command == 'ec':
         return estimate_manufacturer_ec(**payload)
     if command == 'size':

@@ -37,3 +37,17 @@ This sensitivity holds rounded analytical nutrient totals fixed while imposing e
 At 6.30 the 11.392 mmol/L mixture passes the monetite point check, but it fails at 6.32. Likewise, the 1.94968 mmol/L mixture passes the hydroxyapatite point check but fails at 6.32. At 1.8 mmol/L the rounded mixture passes all three selected mineral checks over the stated grid.
 
 The ordinary full-precision recipe remains available alongside rounded_verification. Command exit zero indicates successful calculation; inspect rounded_verification.status to determine whether the requested checks passed.
+
+## Strongest verified rounded candidate
+
+Use `flahax.search_ratio_recipe` or replace `counted_mmol_l` with `strength_range` in the ratio command. A search requires `ph_range`.
+
+    Get-Content examples/steiner-ratio-search.json -Raw | python -m flahax ratio
+
+The example searches 1–30 mmol/L, keeping Steiner's equivalent ratios and targeting pH 6.30. Each candidate is allocated to the six ingredients, rounded to five decimal places in grams for 10 litres, reconstructed, and checked using the pH interval verification above. KOH potassium remains included. The strongest passing requested concentration found is returned with the actual rounded concentration and ratios in `recipe.rounded_verification`.
+
+The search evaluates a uniform strength grid (default 33 points), then refines every observed passing-to-failing transition to `strength_tolerance` (default 0.00001 mmol/L). It independently recalculates the selected recipe before returning it. Rounding can cause discontinuous feasibility, so this reports the strongest verified candidate found, without claiming a global optimum. Narrow disconnected feasible regions can escape the initial scan. Transition brackets, evaluated strengths and pH coverage are disclosed. Increase `scan_points` to inspect more of the requested strength interval.
+
+`status: found` means a verified candidate was found and all observed transitions were refined. `search_cap_reached` means the upper strength bound itself passed; the search has then supplied no saturation-limited maximum. `no_feasible_candidate_found` describes the evaluated candidates only. Failed chemistry calculations or unfinished refinement return `incomplete`, possibly with a lower verified candidate. `limiting_phase` identifies the selected mineral with the smallest SI margin in the delivered candidate; at a search cap it need not set the strength limit.
+
+The numerical SI guard is only a numerical margin. A candidate close to saturation has no allowance for weighing error, impurity, temperature, carbon uptake or uncertain reaction constants. Physical clarity remains unvalidated, and the unresolved solution 1a experimental pH difference remains in every returned recipe's qualifications.
