@@ -1,4 +1,4 @@
-"""Fail-closed assessment of operator-supplied stock and dispenser records."""
+"""Fail-closed assessment of stock, dispenser and final-volume records."""
 
 import copy
 import hashlib
@@ -48,6 +48,76 @@ def _within(value, limit):
     return value <= limit + 1e-12 * max(1, abs(limit))
 
 
+def _final_volume_check(recipe, evidence, today, other_record_ids):
+    check = {"status": "missing" if evidence is None else "failed"}
+    if evidence is None:
+        return check, {"code": "missing_final_volume_calibration"}
+    try:
+        if not isinstance(evidence, dict) or set(evidence) != {"assignment", "calibration"}:
+            raise ValueError("Final volume requires assignment and calibration objects")
+        assignment = evidence["assignment"]
+        if not isinstance(assignment, dict) or set(assignment) != {
+            "vessel_id",
+            "calibration_record_id",
+        }:
+            raise ValueError("Final-volume assignment requires vessel and calibration IDs")
+        for key in assignment:
+            _text(assignment, key)
+        record = evidence["calibration"]
+        _common(record, today, recipe["temperature_c"])
+        required = {
+            "record_id",
+            "source",
+            "method",
+            "measured_on",
+            "valid_until",
+            "temperature_c",
+            "uncertainty_basis",
+            "vessel_id",
+            "nominal_volume_litres",
+            "measured_volume_litres",
+            "absolute_uncertainty_litres",
+            "capacity_basis",
+            "application",
+        }
+        if set(record) != required:
+            raise ValueError("Unexpected or missing final-volume calibration fields")
+        if record["record_id"] in other_record_ids:
+            raise ValueError("Final-volume record ID duplicates another record")
+        if (
+            record["record_id"] != assignment["calibration_record_id"]
+            or record.get("vessel_id") != assignment["vessel_id"]
+        ):
+            raise ValueError(
+                "Final-volume calibration does not match the assigned vessel or record"
+            )
+        if (
+            record.get("capacity_basis") != "to_contain"
+            or record.get("application") != "final_solution_including_stocks"
+        ):
+            raise ValueError("Calibration must apply to contained final solution including stocks")
+        nominal = _number(record, "nominal_volume_litres", positive=True)
+        measured = _number(record, "measured_volume_litres", positive=True)
+        uncertainty = _number(record, "absolute_uncertainty_litres")
+        if nominal != recipe["volume_litres"]:
+            raise ValueError("Calibrated volume mark does not match the recipe's final volume")
+        allowed = recipe["uncertainty_verification"]["assumptions"]["volume_error_litres"]
+        deviation = abs(measured - nominal) + uncertainty
+        check.update(
+            **assignment,
+            measured_volume_litres=measured,
+            measured_interval_litres=[measured - uncertainty, measured + uncertainty],
+            total_deviation_litres=deviation,
+            allowed_deviation_litres=allowed,
+        )
+        if measured - uncertainty <= 0 or not _within(deviation, allowed):
+            raise ValueError("Final-volume bias plus uncertainty exceeds the modeled volume bound")
+        check["status"] = "passed"
+        return check, None
+    except (ValueError, TypeError, KeyError) as exc:
+        return check, {"code": "final_volume_record_check_failed", "message": str(exc)}
+
+
 def assess_stock_evidence(recipe, evidence):
     """Verify applicability and bounds of records, separately from their authenticity."""
     today = datetime.now(timezone.utc).date()
@@ -60,21 +130,24 @@ def assess_stock_evidence(recipe, evidence):
         "assessment_date_utc": today.isoformat(),
         "failures": [],
         "stock_checks": [],
+        "final_volume_check": {"status": "not_checked"},
         "records_sha256": None,
         "scope": "Supplied-record applicability and numerical recipe checks only. "
-        "Certificate authenticity, actual dispensing, final-volume measurement, "
+        "Certificate authenticity, actual dispensing, actual batch filling, "
         "and physical solution stability are not independently verified.",
     }
     if evidence is None:
         result["failures"].append({"code": "missing_stock_evidence"})
+        result["failures"].append({"code": "missing_final_volume_calibration"})
+        result["final_volume_check"] = {"status": "missing"}
         return result
     try:
-        if not isinstance(evidence, dict) or set(evidence) != {
-            "assignments",
-            "assays",
-            "calibrations",
-        }:
-            raise ValueError("Evidence requires assignments, assays and calibrations")
+        if (
+            not isinstance(evidence, dict)
+            or not {"assignments", "assays", "calibrations"} <= set(evidence)
+            or set(evidence) - {"assignments", "assays", "calibrations", "final_volume"}
+        ):
+            raise ValueError("Evidence requires stock records and final-volume calibration")
         canonical = json.dumps(evidence, sort_keys=True, allow_nan=False, separators=(",", ":"))
         result["records_sha256"] = hashlib.sha256(canonical.encode()).hexdigest()
         result["records"] = copy.deepcopy(evidence)
@@ -203,6 +276,12 @@ def assess_stock_evidence(recipe, evidence):
                 {"code": "stock_record_check_failed", "formula": formula, "message": str(exc)}
             )
         result["stock_checks"].append(check)
+    volume_check, failure = _final_volume_check(
+        recipe, evidence.get("final_volume"), today, indexed
+    )
+    result["final_volume_check"] = volume_check
+    if failure is not None:
+        result["failures"].append(failure)
     result["evidence_status"] = "failed" if result["failures"] else "passed"
     if numerical != "passed":
         result["failures"].append({"code": "numerical_checks_not_passed", "status": numerical})

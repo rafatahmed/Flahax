@@ -211,10 +211,10 @@ def plan_ratio_recipe(
         result["stock_verification"] = assess_stock_evidence(result, stock_evidence)
         result["verified"] = result["stock_verification"]["verified"]
         result["stock_delivery"]["verification_scope"] = (
-            "Numerical checks and supplied assay/calibration records passed; "
+            "Numerical checks and all supplied preparation records passed; "
             "physical measurements and certificate authenticity were not independently verified."
             if result["verified"]
-            else "Unverified: numerical assessment does not establish stock or dosing accuracy; "
+            else "Unverified: preparation accuracy requires supporting measurement records; "
             "see stock_verification for missing or failed evidence."
         )
         result["uncertainty_verification"]["verification_scope"] = result["stock_delivery"][

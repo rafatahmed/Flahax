@@ -226,5 +226,26 @@
       "absolute_uncertainty_ml": null,
       "coverage": null
     }
-  ]
+  ],
+  "final_volume": {
+    "assignment": {
+      "vessel_id": null,
+      "calibration_record_id": null
+    },
+    "calibration": {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "vessel_id": null,
+      "nominal_volume_litres": null,
+      "measured_volume_litres": null,
+      "absolute_uncertainty_litres": null,
+      "capacity_basis": null,
+      "application": null
+    }
+  }
 }

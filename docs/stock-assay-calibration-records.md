@@ -1,4 +1,4 @@
-# Stock assay and dispenser calibration records
+# Stock assay, dispenser and final-volume calibration records
 
 Stock recipe `verified` is true only when both numerical checks and all applicable
 supplied-record checks pass. `stock_verification` reports the numerical status,
@@ -18,7 +18,7 @@ Synthetic records exist only in unit tests and must not be treated as measuremen
 specific physical batches, not generic fertilizer names. Six distinct IDs are
 required for the six separate stocks. Record IDs must be unique across both lists.
 
-Every record requires these fields:
+Every stock assay or dispenser calibration record requires these fields:
 
 | Field | Meaning |
 |---|---|
@@ -80,11 +80,54 @@ whole-range bound; its report must justify coverage. There is no dose extrapolat
 
 ## Search and final verification
 
+### Final-volume calibration
+
+`stock_evidence.final_volume` is mandatory for verification. It contains an
+`assignment` with `vessel_id` and `calibration_record_id`, and a `calibration`
+object for that vessel and volume mark. Older evidence containing only stock assays
+and dispenser calibrations is still assessed, but remains unverified with
+`missing_final_volume_calibration`.
+
+The calibration record uses the same source, method, date, temperature and bounded
+uncertainty requirements as the other records. Its exact fields are:
+
+| Field | Requirement |
+|---|---|
+| `record_id`, `vessel_id` | Match the assignment; record ID must be distinct from all stock records |
+| `source`, `method` | Nonempty report reference and calibration/filling procedure |
+| `measured_on`, `valid_until` | ISO dates containing the current UTC assessment date |
+| `temperature_c` | Match the recipe's modeled temperature |
+| `uncertainty_basis` | `total_bound_through_valid_until` |
+| `nominal_volume_litres` | Exact requested final volume, 10 for the Steiner batch; no extrapolation |
+| `measured_volume_litres` | Measured contained volume at that mark |
+| `absolute_uncertainty_litres` | Nonnegative total volume error bound |
+| `capacity_basis` | `to_contain`, rather than a to-deliver capacity |
+| `application` | `final_solution_including_stocks` |
+
+The gate requires:
+
+`abs(measured_volume_litres - nominal_volume_litres) + absolute_uncertainty_litres <= volume_error_litres`
+
+The lower measured-volume bound must be positive. For a 10 L batch with the
+existing ±0.05 L allowance, 10.030 ±0.020 L passes; 10.031 ±0.020 L fails.
+Both positive and negative volume biases count. The submitted bound must include
+the relevant calibration, filling/meniscus, temperature, repeatability and drift
+contributions applicable to the finished solution and the referenced procedure.
+It must cover making up to the mark after adding all stock doses, not adding stocks
+after measuring 10 L of water. These applicability statements require supporting
+evidence; the software does not establish them from enum values alone.
+
+`stock_verification.final_volume_check` reports its separate status, assigned IDs,
+measured interval, total deviation and permitted bound. The whole record is included
+in the immutable snapshot and canonical-data hash. Passing stock and dispenser
+records cannot override a missing or failing final-volume check.
+
 Without `stock_evidence`, numerical searching remains available, but results have
 `verified: false` and `verification_status: unverified`. With evidence supplied,
 the search excludes candidates failing the record gate, including candidates whose
-rounded dose falls outside calibration coverage. The selected recipe is recalculated
-and its records checked again before return. Failed or incomplete chemistry always
+rounded dose falls outside calibration coverage or the final-volume bound is unsupported.
+The selected recipe is recalculated and all three types of records checked again
+before return. Failed or incomplete chemistry always
 blocks verification, even if every record fits.
 
 The gate snapshots records and records a SHA-256 digest of their canonical JSON.
@@ -93,8 +136,9 @@ proof of a certificate's authenticity. Existing expiry checks apply at evaluatio
 time. Saved results do not automatically renew: rerun before later use.
 
 `verified` means the submitted-record and numerical gates passed. It does not certify
-actual dispensing, final-volume measurement, stock storage stability beyond the
-submitted bounds, or precipitation-free operation. Final-volume error remains an
-assumption checked numerically; this feature adds no final-volume calibration record.
+actual dispensing or filling, certificate authenticity, stock storage stability beyond
+the submitted bounds, or precipitation-free operation. The final-volume calibration
+supports the numerical volume bound; it does not prove that the actual batch was
+filled correctly. No physical calibration records are fabricated or bundled.
 Steiner's unresolved experimental pH discrepancy and the sampled nature of the
 saturation/uncertainty checks remain visible.

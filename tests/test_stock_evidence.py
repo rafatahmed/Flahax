@@ -57,6 +57,19 @@ def records():
                 coverage="entire_declared_range",
             )
         )
+    evidence["final_volume"] = {
+        "assignment": {"vessel_id": "vessel-10l", "calibration_record_id": "volume-1"},
+        "calibration": dict(
+            common,
+            record_id="volume-1",
+            vessel_id="vessel-10l",
+            nominal_volume_litres=10,
+            measured_volume_litres=10,
+            absolute_uncertainty_litres=0.02,
+            capacity_basis="to_contain",
+            application="final_solution_including_stocks",
+        ),
+    }
     return evidence
 
 
@@ -67,7 +80,10 @@ class StockEvidenceTests(unittest.TestCase):
         # record tests. Integration below separately exercises the actual checker.
         cls.recipe = plan_ratio_recipe(**dict(OPTIONS, counted_mmol_l=1.7))
         cls.recipe["stock_delivery"] = prepare_stock_delivery(cls.recipe, STOCKS, 0.05)
-        cls.recipe["uncertainty_verification"] = {"status": "passed"}
+        cls.recipe["uncertainty_verification"] = {
+            "status": "passed",
+            "assumptions": dict(UNCERTAINTY),
+        }
 
     def test_valid_records_bind_all_stocks_and_are_snapshotted(self):
         evidence = records()
@@ -210,6 +226,7 @@ class StockEvidenceTests(unittest.TestCase):
             row["absolute_uncertainty_g_l"] = 0
         for row in evidence["calibrations"]:
             row.update(maximum_absolute_bias_ml=0, absolute_uncertainty_ml=0)
+        evidence["final_volume"]["calibration"]["absolute_uncertainty_litres"] = 0
         request = dict(
             OPTIONS,
             counted_mmol_l=1.7,
@@ -232,3 +249,78 @@ class StockEvidenceTests(unittest.TestCase):
         self.assertEqual(verified["status"], "found")
         self.assertTrue(verified["verified"])
         self.assertTrue(verified["recipe"]["verified"])
+        bad_volume = copy.deepcopy(evidence)
+        bad_volume["final_volume"]["calibration"]["measured_volume_litres"] = 10.001
+        rejected = execute("ratio", dict(request, stock_evidence=bad_volume))
+        self.assertEqual(rejected["status"], "no_feasible_candidate_found")
+        self.assertFalse(rejected["verified"])
+
+    def test_stock_records_alone_no_longer_verify_recipe(self):
+        evidence = records()
+        evidence.pop("final_volume")
+        result = assess_stock_evidence(self.recipe, evidence)
+        self.assertTrue(all(row["status"] == "passed" for row in result["stock_checks"]))
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["final_volume_check"]["status"], "missing")
+        self.assertIn({"code": "missing_final_volume_calibration"}, result["failures"])
+
+    def test_final_volume_interval_must_fit_exactly(self):
+        for measured, uncertainty, expected in (
+            (10.03, 0.02, True),
+            (9.97, 0.02, True),
+            (10.03001, 0.02, False),
+            (9.96999, 0.02, False),
+            (10, 0.05001, False),
+            (0.01, 0.02, False),
+        ):
+            evidence = records()
+            evidence["final_volume"]["calibration"].update(
+                measured_volume_litres=measured, absolute_uncertainty_litres=uncertainty
+            )
+            with self.subTest(measured=measured, uncertainty=uncertainty):
+                result = assess_stock_evidence(self.recipe, evidence)
+                self.assertEqual(result["verified"], expected)
+
+    def test_final_volume_identity_dates_units_and_capacity_basis(self):
+        today = datetime.now(timezone.utc).date()
+        for change in (
+            {"vessel_id": "other-vessel"},
+            {"record_id": "other-record"},
+            {"record_id": "assay-0"},
+            {"nominal_volume_litres": 20},
+            {"capacity_basis": "to_deliver"},
+            {"application": "initial_water_only"},
+            {"temperature_c": 20},
+            {"source": ""},
+            {"method": ""},
+            {"valid_until": (today - timedelta(days=1)).isoformat()},
+            {"measured_on": (today + timedelta(days=1)).isoformat()},
+            {"uncertainty_basis": "standard_deviation"},
+            {"measured_volume_ml": 10000},
+        ):
+            evidence = records()
+            evidence["final_volume"]["calibration"].update(change)
+            with self.subTest(change=change):
+                result = assess_stock_evidence(self.recipe, evidence)
+                self.assertFalse(result["verified"])
+                self.assertEqual(result["final_volume_check"]["status"], "failed")
+
+    def test_final_volume_nonfinite_and_malformed_records_fail_closed(self):
+        for value in (True, "10", float("nan"), float("inf"), -1, None):
+            evidence = records()
+            evidence["final_volume"]["calibration"]["absolute_uncertainty_litres"] = value
+            self.assertFalse(assess_stock_evidence(self.recipe, evidence)["verified"])
+        for value in ({}, [], {"assignment": None, "calibration": None}):
+            evidence = records()
+            evidence["final_volume"] = value
+            self.assertFalse(assess_stock_evidence(self.recipe, evidence)["verified"])
+
+    def test_volume_record_is_part_of_snapshot_hash(self):
+        evidence = records()
+        first = assess_stock_evidence(self.recipe, evidence)
+        evidence["final_volume"]["calibration"]["absolute_uncertainty_litres"] = 0.01
+        second = assess_stock_evidence(self.recipe, evidence)
+        self.assertNotEqual(first["records_sha256"], second["records_sha256"])
+        self.assertEqual(
+            first["records"]["final_volume"]["calibration"]["absolute_uncertainty_litres"], 0.02
+        )

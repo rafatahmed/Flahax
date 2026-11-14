@@ -189,3 +189,10 @@ passes. The stock-search example intentionally supplies no measurements and ther
 remains unverified. Supply `stock_evidence` from actual stock assays and dispenser
 calibrations to enable record-gated search and delivery verification. The blank
 `examples/stock-evidence-template.json` documents the required structure.
+
+Final-volume calibration is also required in `stock_evidence.final_volume`. The
+assigned vessel's contained-volume calibration must match the 10 L mark and 25 C
+condition, apply to the finished solution including all stocks, and support the
+declared ±0.05 L volume bound after combining measured bias and uncertainty.
+Stock assays and dispenser records alone no longer permit `verified: true`.
+The numerical recipe, ratios and saturation limits are unchanged by this evidence gate.
