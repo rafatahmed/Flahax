@@ -57,24 +57,49 @@ def verify_rounded_recipe(
     water = recipe.get("water_accounting", {})
     amounts = [water.get("nutrients_mmol_l", {}).get(n, 0.0) for n in NUTRIENTS]
     reference_charge = water.get("reference_charge_mol_kg", 0.0)
-    ingredients = []
-    for index, row in enumerate(recipe["ingredients"]):
+    if recipe.get("product_inventory"):
+        from .ratio_products import reconstruct_products
+
         grams = (
-            round(row["grams"], mass_decimals)
+            [round(row["grams"], mass_decimals) for row in recipe["ingredients"]]
             if delivered_grams is None
-            else delivered_grams[index]
+            else delivered_grams
         )
-        atoms = parse_formula(row["formula"])["atoms"]
-        molar_mass = sum(ATOMIC[e] * n for e, n in atoms.items())
-        mmol_l = grams / molar_mass * 1000 / recipe["volume_litres"]
-        amounts = [v + mmol_l * atoms.get(e, 0) for v, e in zip(amounts, ELEMENTS)]
-        ingredients.append({"formula": row["formula"], "grams": grams})
-    analytical = dict(zip(NUTRIENTS, amounts))
-    totals = {
-        k: v * recipe["volume_litres"] / recipe["water_mass_kg"] / 1000
-        for k, v in zip(BASIS, amounts)
-    }
-    totals.update(water.get("background_totals_mol_kg", {}))
+        rebuilt = reconstruct_products(
+            recipe["ingredients"], grams, water, recipe["volume_litres"], recipe["water_mass_kg"]
+        )
+        ingredients = rebuilt["ingredients"]
+        analytical = rebuilt["analytical_mmol_l"]
+        amounts = [analytical[n] for n in NUTRIENTS]
+        totals = rebuilt["aqueous_totals_mol_kg"]
+        elemental = rebuilt["elemental_mg_l"]
+        solvent_ok = rebuilt["solvent_inventory_passed"]
+    else:
+        ingredients = []
+        for index, row in enumerate(recipe["ingredients"]):
+            grams = (
+                round(row["grams"], mass_decimals)
+                if delivered_grams is None
+                else delivered_grams[index]
+            )
+            atoms = parse_formula(row["formula"])["atoms"]
+            molar_mass = sum(ATOMIC[e] * n for e, n in atoms.items())
+            mmol_l = grams / molar_mass * 1000 / recipe["volume_litres"]
+            amounts = [v + mmol_l * atoms.get(e, 0) for v, e in zip(amounts, ELEMENTS)]
+            ingredients.append({"formula": row["formula"], "grams": grams})
+        analytical = dict(zip(NUTRIENTS, amounts))
+        totals = {
+            k: v * recipe["volume_litres"] / recipe["water_mass_kg"] / 1000
+            for k, v in zip(BASIS, amounts)
+        }
+        totals.update(water.get("background_totals_mol_kg", {}))
+        from .ratio_products import elemental_from_totals
+
+        elemental = elemental_from_totals(totals, recipe["volume_litres"], recipe["water_mass_kg"])
+        solvent_ok = True
+    from .ratio_products import limit_assessment
+
+    limits = limit_assessment(elemental, recipe.get("maximum_concentrations", {}))
     errors = {key: analytical[key] - target for key, target in recipe["analytical_mmol_l"].items()}
     rounding_ok = all(
         abs(errors[key]) <= 1e-10 + ROUNDING_RELATIVE_TOLERANCE * abs(target)
@@ -88,6 +113,9 @@ def verify_rounded_recipe(
     )
     result = {
         "status": "incomplete",
+        "elemental_mg_l": elemental,
+        "limit_assessment": limits,
+        "solvent_inventory_passed": solvent_ok,
         "ph_range": list(ph_range),
         "selected_phases": list(phases),
         "mass_decimals": mass_decimals if delivered_grams is None else None,
@@ -165,6 +193,12 @@ def verify_rounded_recipe(
     ]
     result["failed_phases"] = saturated
     result["status"] = (
-        "passed" if rounding_ok and result["rounded_ph_in_range"] and not saturated else "failed"
+        "passed"
+        if rounding_ok
+        and result["rounded_ph_in_range"]
+        and not saturated
+        and limits["passed"]
+        and solvent_ok
+        else "failed"
     )
     return result

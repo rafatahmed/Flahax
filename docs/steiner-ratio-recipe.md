@@ -248,8 +248,8 @@ KOH remains the default permitted pH reagent. Explicitly allow
 `ph_reagents: ["KOH", "HNO3"]` for water requiring acid. Both KOH potassium and
 HNO3 nitrate consume their final nutrient targets; neither is appended after
 fitting. HNO3 quantities represent pure compound equivalent, not a commercial
-acid solution dose. Commercial assay, acid solvent contribution and other acids
-remain outside this allocation.
+acid solution dose. For commercial assays and declared solvent, use the explicit product allocation below;
+the original pure-compound path remains restricted to KOH/HNO3.
 
 Reports separate `nutrient_accounting.water_mmol_l`, `salts_mmol_l` and
 `ph_reagents_mmol_l`. Their sum is `analytical_mmol_l`; its six components sum
@@ -267,7 +267,92 @@ A small closure error does not establish that the water analysis is accurate.
 Rounded verification includes water, salts and pH reagents and retains the
 fixed-carbon and disclosed pH-grid assumptions. Real-water uncertainty and stock
 verification are explicitly rejected for now, as is HNO3 with those modes.
-No real-water recipe is marked experimentally verified or stable. General
-commercial-product allocation, water-analysis uncertainty, other acids and
-Na/Cl nutrient hard limits remain open stage-3 work. Historical solution 1a's
+No real-water recipe is marked experimentally verified or stable. Commercial allocation and Na/Cl ceilings are described below. Water-analysis
+and product uncertainty remain open stage-3 work. Historical solution 1a's
 unresolved +0.13 pH rise remains reported.
+
+
+## Commercial products and sodium/chloride ceilings
+
+The optional `products` list replaces the default pure-salt/reagent set. Every
+entry must declare:
+
+```json
+{
+  "product": {
+    "name": "Example potassium nitrate solution",
+    "formula": "KNO3",
+    "elements": {"K": 19.336066546655854, "N_NO3": 6.927014302387688}
+  },
+  "role": "fertilizer",
+  "solvent_fraction": 0.5
+}
+```
+
+`elements` uses **elemental mass percent**, including nitrate N as `N_NO3`,
+phosphate P as `P` and sulfate S as `S`. The example is a synthetic 50% KNO3
+assay. It is not a supplier certificate or a stock-solubility claim. Supply the
+complete existing FlahaX material record: formula, ions, identity or supported
+grade/disclosed blend. Unknown chemistry fails explicitly. Product names must be
+unique. A `ph_reagent` role identifies acid/base product contributions separately;
+supply those products in the same list. Do not also supply `ph_reagents`.
+
+`solvent_fraction` is kg solvent/kg product, explicitly declared for each entry;
+zero means no supplied solvent is being counted. The caller must account for
+carrier/hydrate water in the declared final solvent inventory. It is never
+inferred from the label remainder. The total source-water mass plus declared
+product solvent cannot exceed `water_mass_kg`; the remainder is ion-free water.
+Masses are **grams of the commercial product**, not grams of pure active compound.
+No liquid volume dose is inferred without a density/delivery contract.
+
+Supply limits separately, for example:
+
+```json
+"maximum_concentrations": {"Na": 10, "Cl": 20}
+```
+
+These are user-chosen elemental mg/L ceilings, not recommended crop limits.
+Only Na/Cl ceilings are supported by this entry point. Omitted limits remain
+unspecified and incidental ions require review; explicit zero permits no addition
+of that ion. Water, fertilizers, pH reagents and derived counterions all count.
+The fit includes these ceilings, and final reconstruction and rounded verification
+compare actual totals directly against them without a tolerance that permits an
+exceedance. A water-only exceedance is refused before allocation.
+
+The allocator uses the existing material inventory and nonnegative least-squares
+engine, with local linearization of the full aqueous charge equation at target pH.
+It solves equivalent shares, six-nutrient concentration and charge together with
+Na/Cl and solvent constraints. It does not assume commercial products have the
+stoichiometry or assay of a pure Steiner salt. It returns a locally found,
+independently reconstructed candidate; unsuccessful fitting does not prove global
+infeasibility. No global optimum or minimum-cost claim is made.
+
+Reports include:
+
+- `elemental_accounting_mg_l`: water, fertilizers and pH reagents separately.
+- `elemental_mg_l`: their final analytical sum, including additional nutrients.
+- `nutrient_accounting`: the six-nutrient molar contributions used by Steiner ratios.
+- `aqueous_totals_mol_kg`: the complete supported chemistry inventory.
+- `analytical_minus_chemistry_mg_l`: differences between the declared assay and
+  chemistry components under FlahaX's existing label-reconciliation rules.
+- `limit_assessment`: supplied ceilings, violations and unspecified incidental ions.
+- `declared_product_solvent_kg` and `solvent_inventory_passed`.
+
+The label inventory remains authoritative for ratios and nutrient ceilings; the
+chemistry inventory supplies speciation and saturation. Reconciliation differences
+are disclosed, not fitted away. For example, agricultural-grade calcium nitrate
+contains ammonium: it is retained in analytical and chemical reports but excluded
+from the six-nutrient Steiner count. That count is neither total nitrogen nor
+ionic strength, and satisfying it does not establish agronomic adequacy.
+
+Rounded verification reconstructs every product using its material assay and
+chemistry profile, then rechecks ratios, total concentration, pH, Na/Cl ceilings,
+solvent inventory and selected mineral SIs. The strength search uses these checks
+for every candidate and its final replay. Its reported highest-SI mineral is not
+necessarily the constraint controlling strength; Na/Cl or allocation can control.
+
+`examples/steiner-commercial-ratio.json` demonstrates synthetic water, fertilizer
+and base contributions at pH 6.30. Its 30 mmol/L recipe is an accounting case and
+fails phosphate saturation checks. Commercial-product uncertainty and stock/lab
+evidence verification remain unsupported and are refused. Neither a successful
+allocation nor a sampled SI pass marks a commercial recipe verified or stable.

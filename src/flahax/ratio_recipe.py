@@ -60,6 +60,8 @@ def plan_ratio_recipe(
     stock_evidence=None,
     batch_stability=None,
     ph_reagents=None,
+    products=None,
+    maximum_concentrations=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -69,6 +71,20 @@ def plan_ratio_recipe(
     The allocation supports SOURCES plus explicitly permitted HNO3. Water
     nutrients and both pH reagents count toward the final analytical targets.
     """
+    from .ratio_products import validate_limits
+
+    limits = validate_limits(maximum_concentrations)
+    if products is not None:
+        if ph_reagents is not None:
+            raise DeliveryError(
+                "ambiguous_ratio_reagents",
+                "Declare pH reagents in products or ph_reagents, not both",
+            )
+        if uncertainty is not None or stock_dosing is not None:
+            raise DeliveryError(
+                "unsupported_ratio_product_uncertainty",
+                "Commercial-product uncertainty and stock verification are not yet supported",
+            )
     allowed_reagents = ["KOH"] if ph_reagents is None else ph_reagents
     if (
         not isinstance(allowed_reagents, (list, tuple))
@@ -128,6 +144,35 @@ def plan_ratio_recipe(
     water_report = account_water(water, volume, water_mass)
     water_amounts = [water_report["nutrients_mmol_l"][n] for n in NUTRIENTS]
     reference_charge = water_report["reference_charge_mol_kg"]
+    from .ratio_products import (
+        plan_products,
+        water_totals,
+        elemental_from_totals,
+        limit_assessment,
+    )
+
+    water_elements = elemental_from_totals(
+        water_totals(water_report, volume, water_mass), volume, water_mass
+    )
+    if not limit_assessment(water_elements, limits)["passed"]:
+        raise DeliveryError(
+            "ratio_limit_exceeded", "Source water exceeds a sodium/chloride maximum"
+        )
+    if products is not None:
+        result = plan_products(
+            products, cations, anions, ph, strength, volume, water_mass, water_report, limits
+        )
+        return _finish_recipe(
+            result,
+            ph_range,
+            phases,
+            mass_decimals,
+            saturation_margin,
+            uncertainty,
+            stock_dosing,
+            stock_evidence,
+            batch_stability,
+        )
     concentration_factor = volume / water_mass / 1000
     weights = cations + anions
     cation_count = sum(v / z for v, z in zip(cations, CHARGES[:3]))
@@ -248,6 +293,35 @@ def plan_ratio_recipe(
             "physical nutrient retention requires measurement.",
         ],
     }
+    result["maximum_concentrations"] = limits
+    result["elemental_mg_l"] = elemental_from_totals(
+        result["aqueous_totals_mol_kg"], volume, water_mass
+    )
+    result["limit_assessment"] = limit_assessment(result["elemental_mg_l"], limits)
+    return _finish_recipe(
+        result,
+        ph_range,
+        phases,
+        mass_decimals,
+        saturation_margin,
+        uncertainty,
+        stock_dosing,
+        stock_evidence,
+        batch_stability,
+    )
+
+
+def _finish_recipe(
+    result,
+    ph_range,
+    phases,
+    mass_decimals,
+    saturation_margin,
+    uncertainty,
+    stock_dosing,
+    stock_evidence,
+    batch_stability,
+):
     delivered_grams = None
     effective_bounds = None
     if stock_dosing is not None:
@@ -288,7 +362,7 @@ def plan_ratio_recipe(
         result["uncertainty_verification"]["verification_scope"] = result["stock_delivery"][
             "verification_scope"
         ]
-    if water != "demineralized":
+    if result["water_accounting"]["source"] != "demineralized":
         result["verified"] = False
     result["stable"] = False
     if stock_dosing is not None:

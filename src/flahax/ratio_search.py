@@ -48,6 +48,8 @@ def search_ratio_recipe(
                 "ratio_infeasible",
                 "ratio_allocation_infeasible",
                 "ratio_water_exceeds_target",
+                "ratio_product_fit_failed",
+                "ratio_limit_exceeded",
                 "ratio_stock_dose_infeasible",
                 "ratio_stock_volume_infeasible",
                 "nonconvergent",
@@ -135,6 +137,15 @@ def search_ratio_recipe(
             anion_shares=recipe_options["anion_shares"],
         ),
     }
+    if recipe_options.get("products") is not None:
+        result["limiting_phase_scope"] = (
+            "The selected mineral with the highest SI, not necessarily the constraint "
+            "controlling strength; product allocation, Na/Cl or solvent limits can control."
+        )
+        result["allocation_scope"] = (
+            "Commercial-product allocation is a local numerical fit. A failed fit "
+            "does not prove that no allocation exists; feasible alternatives may be missed."
+        )
     if best is None:
         return result
     strength, _ = best
