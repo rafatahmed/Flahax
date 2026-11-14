@@ -1,0 +1,230 @@
+{
+  "assignments": {
+    "KH2PO4": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    },
+    "Ca(NO3)2.4H2O": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    },
+    "MgSO4.7H2O": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    },
+    "Mg(NO3)2.6H2O": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    },
+    "KNO3": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    },
+    "KOH": {
+      "stock_id": null,
+      "dispenser_id": null,
+      "assay_record_id": null,
+      "calibration_record_id": null
+    }
+  },
+  "assays": [
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "KH2PO4",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "Ca(NO3)2.4H2O",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "MgSO4.7H2O",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "Mg(NO3)2.6H2O",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "KNO3",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "formula": "KOH",
+      "measured_concentration_g_l": null,
+      "absolute_uncertainty_g_l": null,
+      "concentration_basis": null,
+      "reactive_impurities": null
+    }
+  ],
+  "calibrations": [
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    },
+    {
+      "record_id": null,
+      "source": null,
+      "method": null,
+      "stock_id": null,
+      "measured_on": null,
+      "valid_until": null,
+      "temperature_c": null,
+      "uncertainty_basis": null,
+      "dispenser_id": null,
+      "dose_min_ml": null,
+      "dose_max_ml": null,
+      "maximum_absolute_bias_ml": null,
+      "absolute_uncertainty_ml": null,
+      "coverage": null
+    }
+  ]
+}

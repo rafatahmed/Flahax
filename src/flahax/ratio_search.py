@@ -1,4 +1,4 @@
-"""Bounded search for the strongest verified rounded ratio recipe found."""
+"""Bounded search for numerically passing recipes with optional record gating."""
 
 import math
 
@@ -57,7 +57,13 @@ def search_ratio_recipe(
             return status
         check = recipe.get("uncertainty_verification", recipe["rounded_verification"])
         status = check["status"]
+        if recipe_options.get("stock_evidence") is not None and not recipe.get("verified", False):
+            if status == "passed":
+                status = "failed"
         evaluated[strength] = {"status": status}
+        if "stock_verification" in recipe:
+            evaluated[strength]["verification_status"] = recipe["stock_verification"]["status"]
+            evaluated[strength]["evidence_failures"] = recipe["stock_verification"]["failures"]
         if "uncertainty_verification" in recipe:
             evaluated[strength]["failed_checks"] = check["failed_checks"]
         if status == "passed" and (best is None or strength > best[0]):
@@ -106,9 +112,11 @@ def search_ratio_recipe(
         "search_cap_reached": False,
         "requested_strength_mmol_l": None,
         "recipe": None,
+        "verified": False,
+        "verification_status": "unverified",
         "limiting_phase": None,
         "controlling_ph": None,
-        "claim": "Strongest verified rounded candidate found over the stated scan and "
+        "claim": "Strongest numerically passing rounded candidate found over the stated scan and "
         "transition refinements. Disconnected narrow feasible regions may be missed.",
         "coverage": "Every candidate uses the reported pH grid. Rounding can make "
         "feasibility discontinuous. Strength tolerance applies to refined brackets.",
@@ -124,6 +132,11 @@ def search_ratio_recipe(
     ):
         result["status"] = "incomplete"
         return result
+    if recipe_options.get("stock_evidence") is not None and not recipe.get("verified", False):
+        result["status"] = "incomplete"
+        return result
+    result["verified"] = recipe.get("verified", False)
+    result["verification_status"] = "verified" if result["verified"] else "unverified"
     maxima = recipe.get("uncertainty_verification", recipe["rounded_verification"])["phase_maxima"]
     phase = max(maxima, key=lambda name: maxima[name]["si"])
     result.update(

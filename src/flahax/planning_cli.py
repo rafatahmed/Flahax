@@ -115,7 +115,7 @@ def execute(command, payload):
         required = {'cation_shares', 'anion_shares', 'ph',
                     'volume_litres', 'water', 'water_mass_kg'}
         optional = {'ph_range', 'selected_phases', 'mass_decimals',
-                    'saturation_margin', 'uncertainty', 'stock_dosing'}
+                    'saturation_margin', 'uncertainty', 'stock_dosing', 'stock_evidence'}
         search = 'strength_range' in payload
         if search and 'counted_mmol_l' in payload:
             raise DeliveryError('duplicate_strength', 'Choose fixed strength or strength_range')

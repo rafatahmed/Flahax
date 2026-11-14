@@ -182,3 +182,10 @@ mmol/L and the largest relative equivalent-share deviation is 0.39925%.
 Worst brushite, monetite and hydroxyapatite SI values are -1.715176, -1.435150
 and -0.300258 respectively, all at imposed pH 6.32. This remains a sampled,
 conditional calculation rather than measured stability or a proven global maximum.
+
+Stock delivery now has a separate [assay and calibration evidence gate](stock-assay-calibration-records.md).
+`verified` remains false without applicable records, even if every numerical check
+passes. The stock-search example intentionally supplies no measurements and therefore
+remains unverified. Supply `stock_evidence` from actual stock assays and dispenser
+calibrations to enable record-gated search and delivery verification. The blank
+`examples/stock-evidence-template.json` documents the required structure.

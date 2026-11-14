@@ -57,6 +57,7 @@ def plan_ratio_recipe(
     saturation_margin=0.0,
     uncertainty=None,
     stock_dosing=None,
+    stock_evidence=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -65,6 +66,8 @@ def plan_ratio_recipe(
     converts concentrations to mol/kg for the supported 25 C aqueous model.
     The initial allocation supports the six SOURCES and nonnegative KOH.
     """
+    if stock_evidence is not None and stock_dosing is None:
+        raise DeliveryError("missing_stock_dosing", "Stock evidence requires stock dosing")
     if stock_dosing is not None:
         from .ratio_stocks import validate_stocks
 
@@ -202,4 +205,19 @@ def plan_ratio_recipe(
         result["uncertainty_verification"] = verify_uncertainty(
             result, uncertainty, effective_bounds=effective_bounds
         )
+    if stock_dosing is not None:
+        from .stock_evidence import assess_stock_evidence
+
+        result["stock_verification"] = assess_stock_evidence(result, stock_evidence)
+        result["verified"] = result["stock_verification"]["verified"]
+        result["stock_delivery"]["verification_scope"] = (
+            "Numerical checks and supplied assay/calibration records passed; "
+            "physical measurements and certificate authenticity were not independently verified."
+            if result["verified"]
+            else "Unverified: numerical assessment does not establish stock or dosing accuracy; "
+            "see stock_verification for missing or failed evidence."
+        )
+        result["uncertainty_verification"]["verification_scope"] = result["stock_delivery"][
+            "verification_scope"
+        ]
     return result

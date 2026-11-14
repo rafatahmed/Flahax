@@ -58,7 +58,8 @@ class RatioStockTests(unittest.TestCase):
             potassium += ingredient["grams"] / mw * atoms.get("K", 0) * 1000 / 10
         self.assertAlmostEqual(check["analytical_mmol_l"]["K"], potassium)
         self.assertEqual(result["uncertainty_verification"]["status"], "passed")
-        self.assertIn("no measured stock assays", result["stock_delivery"]["verification_scope"])
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["stock_verification"]["evidence_status"], "missing")
 
     def test_effective_bounds_use_concentration_times_delivered_volume(self):
         recipe = {"ingredients": [{"formula": "KOH", "grams": 0.025}], "volume_litres": 10}
