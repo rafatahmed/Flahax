@@ -50,7 +50,7 @@ def verification_options(ph, ph_range, selected_phases, mass_decimals):
     return tuple(dict.fromkeys(PHASE_ALIASES[p] for p in phases))
 
 
-def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals):
+def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals, saturation_margin=0.0):
     """Reconstruct delivered masses and return sampled saturation and fit checks."""
     amounts = [0.0] * 6
     ingredients = []
@@ -101,7 +101,11 @@ def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals):
         "chemical_scenario": "Fixed rounded analytical totals at imposed pH. Off-target "
         "charge residuals are reported. Acid/base additions and gas "
         "exchange would require their own material accounting.",
-        "si_required_below": -SI_GUARD,
+        "saturation_margin": saturation_margin,
+        "si_required_below": -saturation_margin - SI_GUARD,
+        "maximum_activity_product_fraction": 10 ** (-saturation_margin),
+        "margin_qualification": "Engineering allowance in the pinned reaction convention; "
+        "not a measured bound on weighing, purity, temperature or model uncertainty.",
         "phase_maxima": {},
         "charge_residuals_mol_kg": [],
         "rounded_ph": None,
@@ -134,7 +138,11 @@ def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals):
     except DeliveryError as exc:
         result["error"] = {"code": exc.code, "message": str(exc)}
         return result
-    saturated = [phase for phase, row in result["phase_maxima"].items() if row["si"] >= -SI_GUARD]
+    saturated = [
+        phase
+        for phase, row in result["phase_maxima"].items()
+        if row["si"] >= result["si_required_below"]
+    ]
     result["failed_phases"] = saturated
     result["status"] = (
         "passed" if rounding_ok and result["rounded_ph_in_range"] and not saturated else "failed"

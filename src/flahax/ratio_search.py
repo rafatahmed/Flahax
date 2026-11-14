@@ -7,7 +7,12 @@ from .ratio_recipe import plan_ratio_recipe, _number
 
 
 def search_ratio_recipe(
-    *, strength_range, strength_tolerance=1e-5, scan_points=33, **recipe_options
+    *,
+    strength_range,
+    strength_tolerance=1e-5,
+    scan_points=33,
+    saturation_margin=0.3,
+    **recipe_options,
 ):
     """Scan strength and refine every observed passing-to-failing transition.
 
@@ -26,6 +31,8 @@ def search_ratio_recipe(
         raise DeliveryError("missing_ph_range", "A strength search requires ph_range")
     if "counted_mmol_l" in recipe_options:
         raise DeliveryError("duplicate_strength", "Choose a fixed strength or a search range")
+    saturation_margin = _number(saturation_margin, "saturation_margin", zero=True)
+    recipe_options["saturation_margin"] = saturation_margin
     evaluated = {}
     best = None
 
@@ -85,6 +92,7 @@ def search_ratio_recipe(
         else ("found" if best is not None else "no_feasible_candidate_found"),
         "strength_range": [low, high],
         "strength_tolerance": tolerance,
+        "saturation_margin": saturation_margin,
         "initial_scan_points": scan_points,
         "evaluation_count": len(evaluated),
         "evaluations": [{"strength_mmol_l": x, **row} for x, row in sorted(evaluated.items())],

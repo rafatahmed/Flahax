@@ -51,3 +51,33 @@ The search evaluates a uniform strength grid (default 33 points), then refines e
 `status: found` means a verified candidate was found and all observed transitions were refined. `search_cap_reached` means the upper strength bound itself passed; the search has then supplied no saturation-limited maximum. `no_feasible_candidate_found` describes the evaluated candidates only. Failed chemistry calculations or unfinished refinement return `incomplete`, possibly with a lower verified candidate. `limiting_phase` identifies the selected mineral with the smallest SI margin in the delivered candidate; at a search cap it need not set the strength limit.
 
 The numerical SI guard is only a numerical margin. A candidate close to saturation has no allowance for weighing error, impurity, temperature, carbon uptake or uncertain reaction constants. Physical clarity remains unvalidated, and the unresolved solution 1a experimental pH difference remains in every returned recipe's qualifications.
+
+## Explicit saturation safety margin
+
+Searches now default to `saturation_margin: 0.3`. Every selected phase must satisfy
+`SI < -saturation_margin - 1e-7` at every sampled pH after mass rounding. Since
+`SI = log10(IAP/K)`, a margin of 0.30 limits IAP/K to approximately 0.5012.
+This is an engineering allowance chosen for this workflow, not a validated physical
+uncertainty bound. SI uses the pinned reaction normalization; compare margins only
+after matching reaction stoichiometry and thermodynamic conventions.
+
+Fixed-strength requests retain a default margin of zero for compatibility; pass
+`saturation_margin: 0.3` with `ph_range` to apply the same acceptance policy.
+Explicit zero in a search reproduces the earlier numerical-boundary search.
+Negative, nonfinite and boolean margins are rejected. The margin and activity-product
+fraction are recorded in the rounded verification; the independent final check uses
+the same policy as candidate selection.
+
+For the example's 1–30 mmol/L search, the requested strength is approximately
+1.720861 mmol/L and the delivered rounded concentration is 1.720848 mmol/L.
+The worst indices, all at pH 6.32, are brushite -1.715116, monetite -1.435089
+and hydroxyapatite -0.300021. The rounded batch's modeled pH is 6.299946.
+This result preserves the six nutrient targets within the stated rounding tolerance,
+including KOH potassium. It is the strongest passing candidate found on the disclosed
+search, not a global optimum or a crop nutrition recommendation.
+
+Five decimal places in grams specify the numerical recipe, not attainable weighing
+accuracy. Dose precision, reagent assay, final volume and source-water composition
+must be measured before claiming practical robustness. In particular, changing the
+base dose or aeration can move pH outside the checked range. No uncertainty model
+or precipitation-rate model is inferred from this margin.

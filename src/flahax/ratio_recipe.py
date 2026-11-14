@@ -54,6 +54,7 @@ def plan_ratio_recipe(
     ph_range=None,
     selected_phases=None,
     mass_decimals=5,
+    saturation_margin=0.0,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -67,7 +68,10 @@ def plan_ratio_recipe(
     ph = _number(ph, "ph", zero=True)
     if ph > 14:
         raise DeliveryError("invalid_ratio_input", "ph must be between 0 and 14")
-    if ph_range is None and (selected_phases is not None or mass_decimals != 5):
+    saturation_margin = _number(saturation_margin, "saturation_margin", zero=True)
+    if ph_range is None and (
+        selected_phases is not None or mass_decimals != 5 or saturation_margin != 0
+    ):
         raise DeliveryError("missing_ph_range", "Rounding verification requires ph_range")
     phases = (
         verification_options(ph, ph_range, selected_phases, mass_decimals)
@@ -161,6 +165,6 @@ def plan_ratio_recipe(
     }
     if phases is not None:
         result["rounded_verification"] = verify_rounded_recipe(
-            result, ph_range, phases, mass_decimals
+            result, ph_range, phases, mass_decimals, saturation_margin
         )
     return result

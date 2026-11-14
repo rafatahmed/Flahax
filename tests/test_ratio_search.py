@@ -15,11 +15,28 @@ OPTIONS = dict(
     water_mass_kg=10,
     ph_range=[6.28, 6.32],
     mass_decimals=5,
+    saturation_margin=0.0,
     selected_phases=["Brushite", "Monetite", "Hydroxyapatite"],
 )
 
 
 class RatioSearchTests(unittest.TestCase):
+    def test_default_margin_reduces_strength_and_survives_rounding(self):
+        options = {k: v for k, v in OPTIONS.items() if k != "saturation_margin"}
+        result = search_ratio_recipe(strength_range=[1, 3], **options)
+        self.assertEqual(result["saturation_margin"], 0.3)
+        self.assertEqual(result["status"], "found")
+        self.assertLess(result["requested_strength_mmol_l"], 1.8)
+        check = result["recipe"]["rounded_verification"]
+        self.assertEqual(check["status"], "passed")
+        self.assertAlmostEqual(check["maximum_activity_product_fraction"], 10**-0.3)
+        for row in check["phase_maxima"].values():
+            self.assertLess(row["si"], -0.3000001)
+        from flahax.planning_cli import execute
+
+        request = dict(options, counted_mmol_l=1.8, saturation_margin=0.3)
+        self.assertEqual(execute("ratio", request)["rounded_verification"]["status"], "failed")
+
     def test_strongest_steiner_candidate(self):
         result = search_ratio_recipe(strength_range=[1, 3], **OPTIONS)
         self.assertEqual(result["status"], "found")
@@ -54,6 +71,9 @@ class RatioSearchTests(unittest.TestCase):
             {"scan_points": True},
             {"scan_points": 2},
             {"ph_range": None},
+            {"saturation_margin": -0.1},
+            {"saturation_margin": float("nan")},
+            {"saturation_margin": True},
         ):
             args = dict(OPTIONS, strength_range=[1, 3])
             args.update(changes)
