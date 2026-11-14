@@ -73,6 +73,7 @@ def plan_ratio_recipe(
     """
     from .ratio_products import validate_limits
 
+    analysis_mode = isinstance(uncertainty, dict) and uncertainty.get("mode") == "water_product"
     limits = validate_limits(maximum_concentrations)
     if products is not None:
         if ph_reagents is not None:
@@ -80,7 +81,7 @@ def plan_ratio_recipe(
                 "ambiguous_ratio_reagents",
                 "Declare pH reagents in products or ph_reagents, not both",
             )
-        if uncertainty is not None or stock_dosing is not None:
+        if (uncertainty is not None and not analysis_mode) or stock_dosing is not None:
             raise DeliveryError(
                 "unsupported_ratio_product_uncertainty",
                 "Commercial-product uncertainty and stock verification are not yet supported",
@@ -93,7 +94,9 @@ def plan_ratio_recipe(
         or len(set(allowed_reagents)) != len(allowed_reagents)
     ):
         raise DeliveryError("invalid_ph_reagents", "Select unique KOH and/or HNO3 reagents")
-    if water != "demineralized" and (uncertainty is not None or stock_dosing is not None):
+    if water != "demineralized" and (
+        (uncertainty is not None and not analysis_mode) or stock_dosing is not None
+    ):
         raise DeliveryError(
             "unsupported_ratio_water_uncertainty",
             "Real-water uncertainty and stock verification are not yet supported",
@@ -118,7 +121,17 @@ def plan_ratio_recipe(
     if uncertainty is not None:
         from .ratio_uncertainty import validate_uncertainty
 
-        validate_uncertainty(uncertainty, volume_litres, stock_mode=stock_dosing is not None)
+        if analysis_mode:
+            from .ratio_analysis_uncertainty import validate_analysis_uncertainty
+
+            if stock_dosing is not None:
+                raise DeliveryError(
+                    "unsupported_ratio_product_uncertainty",
+                    "Stock evidence is not supported by water_product uncertainty",
+                )
+            validate_analysis_uncertainty(uncertainty, volume_litres, products, water)
+        else:
+            validate_uncertainty(uncertainty, volume_litres, stock_mode=stock_dosing is not None)
         if ph_range is None:
             raise DeliveryError("missing_ph_range", "Uncertainty checks require ph_range")
     cations = _shares(cation_shares, "cation_shares")
@@ -344,9 +357,30 @@ def _finish_recipe(
     if uncertainty is not None:
         from .ratio_uncertainty import verify_uncertainty
 
-        result["uncertainty_verification"] = verify_uncertainty(
-            result, uncertainty, effective_bounds=effective_bounds
-        )
+        if uncertainty.get("mode") == "water_product":
+            from .ratio_analysis_uncertainty import verify_analysis_uncertainty
+
+            result["uncertainty_verification"] = verify_analysis_uncertainty(result, uncertainty)
+            if "qualification" in result["water_accounting"]:
+                result["water_accounting"]["qualification"] = result["water_accounting"][
+                    "qualification"
+                ].replace(
+                    "Water uncertainty is not evaluated.",
+                    "Water uncertainty is assessed in uncertainty_verification "
+                    "under explicit bounds.",
+                )
+            result["qualifications"] = [
+                q.replace(
+                    "product and water uncertainty are not evaluated",
+                    "product and water uncertainty are evaluated under the separately disclosed "
+                    "bounds and chemistry sampling",
+                )
+                for q in result["qualifications"]
+            ]
+        else:
+            result["uncertainty_verification"] = verify_uncertainty(
+                result, uncertainty, effective_bounds=effective_bounds
+            )
     if stock_dosing is not None:
         from .stock_evidence import assess_stock_evidence
 

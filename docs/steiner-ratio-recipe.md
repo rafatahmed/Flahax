@@ -48,7 +48,7 @@ Use `flahax.search_ratio_recipe` or replace `counted_mmol_l` with `strength_rang
 
     Get-Content examples/steiner-ratio-search.json -Raw | python -m flahax ratio
 
-The example searches 1–30 mmol/L, keeping Steiner's equivalent ratios and targeting pH 6.30. Each candidate is allocated to the six ingredients, rounded to five decimal places in grams for 10 litres, reconstructed, and checked using the pH interval verification above. KOH potassium remains included. The strongest passing requested concentration found is returned with the actual rounded concentration and ratios in `recipe.rounded_verification`.
+The example searches 1â€“30 mmol/L, keeping Steiner's equivalent ratios and targeting pH 6.30. Each candidate is allocated to the six ingredients, rounded to five decimal places in grams for 10 litres, reconstructed, and checked using the pH interval verification above. KOH potassium remains included. The strongest passing requested concentration found is returned with the actual rounded concentration and ratios in `recipe.rounded_verification`.
 
 The search evaluates a uniform strength grid (default 33 points), then refines every observed passing-to-failing transition to `strength_tolerance` (default 0.00001 mmol/L). It independently recalculates the selected recipe before returning it. Rounding can cause discontinuous feasibility, so this reports the strongest verified candidate found, without claiming a global optimum. Narrow disconnected feasible regions can escape the initial scan. Transition brackets, evaluated strengths and pH coverage are disclosed. Increase `scan_points` to inspect more of the requested strength interval.
 
@@ -72,7 +72,7 @@ Negative, nonfinite and boolean margins are rejected. The margin and activity-pr
 fraction are recorded in the rounded verification; the independent final check uses
 the same policy as candidate selection.
 
-For the example's 1–30 mmol/L search, the requested strength is approximately
+For the example's 1â€“30 mmol/L search, the requested strength is approximately
 1.720861 mmol/L and the delivered rounded concentration is 1.720848 mmol/L.
 The worst indices, all at pH 6.32, are brushite -1.715116, monetite -1.435089
 and hydroxyapatite -0.300021. The rounded batch's modeled pH is 6.299946.
@@ -112,7 +112,7 @@ volume using the explicitly supplied nominal water-mass/volume approximation.
 For each rounded dose `g`, the effective compound interval is
 `[(g - weighing_error_g) * purity_low, (g + weighing_error_g) * purity_high]`.
 Negative possible weighed mass is rejected. The checker reconstructs nutrient amounts
-at all effective-dose corners and both volume bounds: normally 64 × 2 = 128
+at all effective-dose corners and both volume bounds: normally 64 Ã— 2 = 128
 preparation scenarios. Every scenario is checked on the same disclosed pH grid,
 with the same saturation margin. Charge-balance endpoint signs must bracket an
 equilibrium pH inside the requested interval. No unaccounted acid/base correction is
@@ -128,12 +128,12 @@ interior bound or mathematical global optimum. Missing phases or failed solves
 return `incomplete`. A nominal failure skips uncertainty calculations and remains failed.
 
 Search acceptance and final delivery verification both use `uncertainty_verification`
-when supplied. Rejected strengths retain failure reasons. The 129-point 1–30 mmol/L
+when supplied. Rejected strengths retain failure reasons. The 129-point 1â€“30 mmol/L
 example found no passing candidate under these preparation bounds. At 1.7 mmol/L,
 all 128 scenarios passed the 0.30 SI margin on the imposed pH grid (worst HAP SI
 approximately -0.31262), but equilibrium pH escaped the interval and ratio deviations
 reached 1.9063%, exceeding the 1% allowance. The concentration range was
-1.666283–1.717079 mmol/L. This is a failed preparation case, not a deliverable recipe.
+1.666283â€“1.717079 mmol/L. This is a failed preparation case, not a deliverable recipe.
 
 See [supporting references](steiner-supporting-references.md) for research context.
 The unresolved solution 1a pH discrepancy remains visible. Tighter balance/assay
@@ -151,7 +151,7 @@ concentrations or unspecified commercial fertilizer grades.
 
 The example specifies 10 g/L for KH2PO4, Ca(NO3)2.4H2O, MgSO4.7H2O,
 Mg(NO3)2.6H2O and KNO3, and 1 g/L for KOH. Stock concentrations are bounded to
-±0.1% and each delivered volume to ±0.02 mL, with doses rounded to 0.01 mL.
+Â±0.1% and each delivered volume to Â±0.02 mL, with doses rounded to 0.01 mL.
 These are declared specifications, not measured assays or calibration records.
 The numerical result is conditional on verifying them for actual stocks and dispensers.
 
@@ -159,14 +159,14 @@ The `uncertainty` object retains final-volume error, ratio and concentration
 tolerances, and the inert-impurity model. Raw `weighing_error_g` and `purity_fraction`
 are rejected in stock mode to avoid ambiguous double counting. Their effects must
 instead be included in the verified stock-concentration interval, along with stock
-preparation and stability errors. A 99–100% reagent label cannot alone support a
-±0.1% active stock concentration. KOH alkalinity alone is insufficient if reactive
+preparation and stability errors. A 99â€“100% reagent label cannot alone support a
+Â±0.1% active stock concentration. KOH alkalinity alone is insufficient if reactive
 carbonate or other contaminants invalidate the declared pure-compound accounting.
 
 For each ideal compound mass, the calculator rounds its stock dose in mL and
 reconstructs nominal compound mass as `dose_ml * concentration_g_l / 1000`.
 It does not round that equivalent mass a second time. Uncertainty endpoints are
-`(dose_ml ± dose_error_ml) * concentration_g_l * (1 ± relative_error) / 1000`.
+`(dose_ml Â± dose_error_ml) * concentration_g_l * (1 Â± relative_error) / 1000`.
 All stocks vary independently. The same 128 preparation corners and pH grid are
 used. Stock-volume overflow and negative possible doses are rejected. Potassium
 from the KOH stock enters both nominal and uncertain nutrient accounting.
@@ -177,7 +177,7 @@ stock solubility, storage stability and concentrate mixing compatibility are not
 certified. The existing density approximation, 25 C assumption, excluded gas
 exchange and unresolved historical pH discrepancy remain applicable.
 
-For this example's 1–30 mmol/L bounded search, the strongest passing candidate
+For this example's 1â€“30 mmol/L bounded search, the strongest passing candidate
 found requests 1.709473610 mmol/L. Rounded stock delivery gives 1.709479411 mmol/L
 at nominal volume. Doses in source order are 44.88, 36.60, 13.55, 12.40, 14.45
 and 24.70 mL, totaling 146.58 mL. The nominal modeled pH is 6.300028.
@@ -197,12 +197,12 @@ calibrations to enable record-gated search and delivery verification. The blank
 Final-volume calibration is also required in `stock_evidence.final_volume`. The
 assigned vessel's contained-volume calibration must match the 10 L mark and 25 C
 condition, apply to the finished solution including all stocks, and support the
-declared ±0.05 L volume bound after combining measured bias and uncertainty.
+declared Â±0.05 L volume bound after combining measured bias and uncertainty.
 Stock assays and dispenser records alone no longer permit `verified: true`.
 The numerical recipe, ratios and saturation limits are unchanged by this evidence gate.
 
 Verification additionally requires [measured batch pH and meter calibration](measured-batch-ph-records.md).
-The reading's full error interval must remain within 6.28–6.32, and its preparation
+The reading's full error interval must remain within 6.28â€“6.32, and its preparation
 fingerprint must match the rounded stock delivery and uncertainty assumptions.
 The existing example has no real measurement records and therefore remains unverified.
 
@@ -237,7 +237,7 @@ Unknown components and omitted required totals are rejected.
 represents ion-free water in this inventory, not a guessed water density or
 automatic volume additivity. Final solution volume is independently supplied.
 For example, 0.0004 mol Ca/kg in 8 kg source water contributes
-0.0004 � 8 � 1000 / 10 = **0.32 mmol Ca/L** to a 10-litre batch.
+0.0004 × 8 × 1000 / 10 = **0.32 mmol Ca/L** to a 10-litre batch.
 
 The planner fits the **final** six nutrient totals, subtracts the source-water
 contributions, then allocates the remaining pure compounds. Water exceeding any
@@ -265,8 +265,9 @@ preserve this reference residual, following the existing measured-water model.
 A small closure error does not establish that the water analysis is accurate.
 
 Rounded verification includes water, salts and pH reagents and retains the
-fixed-carbon and disclosed pH-grid assumptions. Real-water uncertainty and stock
-verification are explicitly rejected for now, as is HNO3 with those modes.
+fixed-carbon and disclosed pH-grid assumptions. Combined water/product uncertainty is available through the explicit mode below.
+The legacy preparation-uncertainty and stock-verification contracts remain
+restricted to their original inputs.
 No real-water recipe is marked experimentally verified or stable. Commercial allocation and Na/Cl ceilings are described below. Water-analysis
 and product uncertainty remain open stage-3 work. Historical solution 1a's
 unresolved +0.13 pH rise remains reported.
@@ -353,6 +354,85 @@ necessarily the constraint controlling strength; Na/Cl or allocation can control
 
 `examples/steiner-commercial-ratio.json` demonstrates synthetic water, fertilizer
 and base contributions at pH 6.30. Its 30 mmol/L recipe is an accounting case and
-fails phosphate saturation checks. Commercial-product uncertainty and stock/lab
-evidence verification remain unsupported and are refused. Neither a successful
+fails phosphate saturation checks. Commercial-product uncertainty is available under the explicit model below.
+Stock/lab evidence verification for these inputs remains unsupported and is refused. Neither a successful
 allocation nor a sampled SI pass marks a commercial recipe verified or stable.
+
+
+## Water-analysis and commercial-assay uncertainty
+
+Use `uncertainty.mode: "water_product"` with explicit `products` and a `ph_range`.
+This opt-in contract is separate from the legacy pure-compound purity/stock mode.
+The complete example is `examples/steiner-commercial-uncertainty.json`.
+
+Required fields:
+
+| Field | Meaning / demonstration value |
+|---|---|
+| `weighing_error_g` | Independent absolute error on each nonzero rounded product dose; 0.001 g |
+| `volume_error_litres` | Final solution volume error; 0.05 L |
+| `water_relative_error` | Independent relative bounds on each stated water concentration and alkalinity, if supplied; 0.01 |
+| `water_ph_error` | Absolute uncertainty of measured **source-water** pH; 0.02 |
+| `product_assay_factors` | Every product name, including pH reagents, mapped to `[0.99, 1.0]` |
+| `ratio_relative_tolerance` | Maximum relative departure of each equivalent share; 0.01 |
+| `concentration_relative_tolerance` | Maximum relative departure from requested six-nutrient count; 0.02 |
+| `impurity_model` | Must be `inert` |
+| `water_mass_model` | Must explicitly be `scale_with_final_volume` |
+| `max_scenarios` | Chemistry sampling budget; 128 in the demonstration |
+
+The assay factor scales **the whole declared product composition together**,
+including all counterions and any assay/chemistry discrepancy. For a product with
+2% nominal active composition, `[0.99, 1]` represents 1.98-2.00% active composition,
+not 99-100% pure product. Each product has its own independent factor. The missing
+active fraction is modeled as inert; it is not assumed to become solvent. This
+mode does not cover independent element-assay changes, changing blend proportions,
+unknown reactive impurities or carbonate contamination of a base.
+
+The recipe is fitted once. Checks then hold its rounded doses fixed; they never
+refit salts or add acid/base to make a scenario pass. Weighing and active-content
+bounds combine into effective inventory-dose intervals. Zero-dose products are
+not dispensed. Source-water quantity is fixed. Final water mass scales with final
+volume using the declared nominal water-mass/volume approximation; no density
+measurement or solvent uncertainty is inferred. The maximum supplied product
+solvent is checked separately against the minimum final water inventory.
+
+Every sampled water analysis is speciated again at its perturbed measured pH.
+Carbon inferred from alkalinity and the source charge reference are recalculated,
+then diluted onto the scenario's final-water basis. The nominal charge reference
+is not silently reused. Water pH uncertainty is not final-batch pH-meter uncertainty.
+
+Analytical reporting and nonlinear chemistry have different coverage:
+
+- Concentration and Na/Cl maxima/minima are calculated over the full declared
+  independent inventory intervals and final-volume bounds.
+- Equivalent-share bounds retain the correlation between each product's nutrient
+  contributions. A linear-fractional endpoint calculation avoids enumerating the
+  full Cartesian product. These are floating-point analytical bounds for this
+  stated composition model, not a guarantee for unspecified impurity chemistry.
+- Chemistry evaluates axes, mixed extremes, ratio-bound witnesses and deterministic
+  corner/interior samples (seed 1961). Small boxes include all corners when the
+  budget permits. Each selected scenario evaluates every nominal pH-grid point.
+  Even checking all corners does not prove continuous nonlinear extrema.
+- `dimensions`, `dimension_units`, `corner_count`, `corners_evaluated`,
+  `all_corners_evaluated`, `required_scenarios`, `planned_scenarios` and
+  `scenario_count` disclose coverage. A budget too small for the required axes and
+  witnesses returns `incomplete`; missing phases or failed solves cannot pass.
+
+`uncertainty_verification.status: passed` means analytical bounds meet the stated
+ratio/concentration tolerances and Na/Cl ceilings, solvent inventory passes, and
+all evaluated chemistry scenarios meet the modeled pH bracket and selected SI
+margin. It is a sampled numerical result, not a probabilistic confidence level,
+proof over every continuous chemistry state, or experimental verification.
+`verified` and `stable` remain false without applicable physical evidence.
+The strength search uses this result, so failed/incomplete uncertainty cannot
+produce a passing candidate.
+
+The illustrative 10-L example uses 0.1 kg of synthetic source water, final water
+mass 10 kg, six-nutrient count 1.3 mmol/L and 2% active-composition product solutions.
+It is not the earlier 30 mmol/L mixture, which fails phosphate saturation. The
+50% product version at 1.3 mmol/L fails the 1% ratio tolerance under the selected
+weighing bounds; diluting product assays increases weighed masses without relaxing
+acceptance. The 2% example passes the declared analytical bounds and 128 sampled
+chemistry scenarios over pH 6.28-6.32 at SI margin 0.3. No maximum-strength claim is
+made, and these synthetic product solutions are not verified supplier assays,
+stock-solubility measurements or preparation recommendations.
