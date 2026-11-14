@@ -12,6 +12,7 @@
       149
     ]
   },
+  "article_evidence_resource": "flahax/data/steiner_1961_evidence.json",
   "order": [
     "K",
     "Ca",

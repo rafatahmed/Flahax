@@ -1,5 +1,9 @@
 # Fixed-ratio pure-salt recipes
 
+Reports include [Steiner source uncertainties and applicability warnings](steiner-source-context.md).
+The `historical_context` field distinguishes source observations, expectations,
+historical limits and extrapolation from FlahaX's numerical acceptance.
+
 Use the public Python function flahax.plan_ratio_recipe or pipe examples/steiner-ratio.json into the ratio command.
 
     python -m flahax ratio < examples/steiner-ratio.json

@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 
 from flahax.aqueous_model import solve
+from flahax.steiner_context import article_evidence
 
 FIXTURE = json.loads((Path(__file__).parent / "fixtures/steiner/solution_1a.json").read_text())
 VALENCES = (1, 2, 2, 1, 1, 2)
@@ -95,6 +96,8 @@ class SteinerReferenceTests(unittest.TestCase):
         self.assertEqual(FIXTURE["measurements"], {"initial":5.33,"titrated":6.45,"final":6.58})
         self.assertTrue(FIXTURE["uncertainties"])
         self.assertEqual(FIXTURE["model_assumptions"]["temperature_c"], 25)
+        self.assertEqual(article_evidence()["solution_1a"]["measured_ph"],
+                         [FIXTURE["measurements"][s] for s in ("initial", "titrated", "final")])
 
 
 if __name__ == "__main__":
@@ -107,5 +110,6 @@ if __name__ == "__main__":
                      "difference": ph - measured, "meq_l": amounts,
                      "counted_mmol_l": counted_total(amounts),
                      "charge_residual_mol_kg": state.charge_balance})
-    print(json.dumps({"source": FIXTURE["source"], "assumptions": FIXTURE["model_assumptions"],
+    print(json.dumps({"source": FIXTURE["source"], "article_evidence": article_evidence(),
+                      "assumptions": FIXTURE["model_assumptions"],
                       "final_koh_meq_l": dose, "results": rows}, indent=2))

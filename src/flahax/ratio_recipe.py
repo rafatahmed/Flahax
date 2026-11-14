@@ -231,4 +231,11 @@ def plan_ratio_recipe(
 
         result["stability_assessment"] = assess_batch_stability(result, batch_stability)
         result["stable"] = result["stability_assessment"]["stable"]
+    from .steiner_context import recipe_historical_context
+
+    result["historical_context"] = recipe_historical_context(result)
+    result["qualifications"].extend(
+        "Steiner (1961): " + warning["message"]
+        for warning in result["historical_context"]["warnings"]
+    )
     return result

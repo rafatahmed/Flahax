@@ -4,6 +4,7 @@ import math
 
 from .delivery_contracts import DeliveryError
 from .ratio_recipe import plan_ratio_recipe, _number
+from .steiner_context import historical_context
 
 
 def search_ratio_recipe(
@@ -126,6 +127,12 @@ def search_ratio_recipe(
         "transition refinements. Disconnected narrow feasible regions may be missed.",
         "coverage": "Every candidate uses the reported pH grid. Rounding can make "
         "feasibility discontinuous. Strength tolerance applies to refined brackets.",
+        "historical_context": historical_context(
+            strength_range=[low, high],
+            ph_range=recipe_options["ph_range"],
+            cation_shares=recipe_options["cation_shares"],
+            anion_shares=recipe_options["anion_shares"],
+        ),
     }
     if best is None:
         return result
