@@ -73,7 +73,10 @@ def plan_ratio_recipe(
     """
     from .ratio_products import validate_limits
 
-    analysis_mode = isinstance(uncertainty, dict) and uncertainty.get("mode") == "water_product"
+    analysis_mode = isinstance(uncertainty, dict) and uncertainty.get("mode") in (
+        "water_product",
+        "water_product_elemental",
+    )
     limits = validate_limits(maximum_concentrations)
     if products is not None:
         if ph_reagents is not None:
@@ -357,7 +360,7 @@ def _finish_recipe(
     if uncertainty is not None:
         from .ratio_uncertainty import verify_uncertainty
 
-        if uncertainty.get("mode") == "water_product":
+        if uncertainty.get("mode") in ("water_product", "water_product_elemental"):
             from .ratio_analysis_uncertainty import verify_analysis_uncertainty
 
             result["uncertainty_verification"] = verify_analysis_uncertainty(result, uncertainty)

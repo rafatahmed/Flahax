@@ -14,6 +14,8 @@ from .ratio_water import BASIS, account_water
 
 def validate_analysis_uncertainty(options, volume, products, water):
     """Validate a separate, explicit uncertainty contract for material inventories."""
+    elemental = isinstance(options, dict) and options.get("mode") == "water_product_elemental"
+    assay_field = "product_element_factors" if elemental else "product_assay_factors"
     required = {
         "mode",
         "weighing_error_g",
@@ -22,7 +24,7 @@ def validate_analysis_uncertainty(options, volume, products, water):
         "concentration_relative_tolerance",
         "water_relative_error",
         "water_ph_error",
-        "product_assay_factors",
+        assay_field,
         "impurity_model",
         "water_mass_model",
         "max_scenarios",
@@ -30,14 +32,15 @@ def validate_analysis_uncertainty(options, volume, products, water):
     if (
         not isinstance(options, dict)
         or set(options) != required
-        or options["mode"] != "water_product"
+        or options["mode"] not in ("water_product", "water_product_elemental")
     ):
         raise DeliveryError(
-            "invalid_analysis_uncertainty", "Supply exactly the water_product uncertainty fields"
+            "invalid_analysis_uncertainty",
+            "Supply exactly the uncertainty fields for the selected assay mode",
         )
     for key in required - {
         "mode",
-        "product_assay_factors",
+        assay_field,
         "impurity_model",
         "water_mass_model",
         "max_scenarios",
@@ -80,26 +83,36 @@ def validate_analysis_uncertainty(options, volume, products, water):
         )
     from .ratio_products import _sources
 
-    names = [p["name"] for p in _sources(products)]
-    factors = options["product_assay_factors"]
-    if not isinstance(factors, dict) or set(factors) != set(names) or len(names) != len(products):
-        raise DeliveryError(
-            "invalid_analysis_uncertainty",
-            "Provide assay factors for every product, including pH reagents",
-        )
-    for pair in factors.values():
+    sources = _sources(products)
+    if elemental:
+        from .ratio_element_uncertainty import validate_element_factors
+
+        validate_element_factors(sources, options[assay_field])
+    else:
+        names = [p["name"] for p in sources]
+        factors = options["product_assay_factors"]
         if (
-            not isinstance(pair, (list, tuple))
-            or len(pair) != 2
-            or any(
-                isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
-                for v in pair
-            )
-            or not 0 < pair[0] <= pair[1] <= 1
+            not isinstance(factors, dict)
+            or set(factors) != set(names)
+            or len(names) != len(products)
         ):
             raise DeliveryError(
-                "invalid_analysis_uncertainty", "Assay factors require 0 < low <= high <= 1"
+                "invalid_analysis_uncertainty",
+                "Provide assay factors for every product, including pH reagents",
             )
+        for pair in factors.values():
+            if (
+                not isinstance(pair, (list, tuple))
+                or len(pair) != 2
+                or any(
+                    isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                    for v in pair
+                )
+                or not 0 < pair[0] <= pair[1] <= 1
+            ):
+                raise DeliveryError(
+                    "invalid_analysis_uncertainty", "Assay factors require 0 < low <= high <= 1"
+                )
     if isinstance(water, dict):
         measured_ph = water.get("measured_ph")
         if (
@@ -141,7 +154,8 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
             - r * sum(v[i] * VALENCES[i] for i in range(offset, offset + 3))
             for v in group[1:]
         ]
-        return int(scores[1] > scores[0]) if maximum else int(scores[1] < scores[0])
+        choose = max if maximum else min
+        return choose(range(len(scores)), key=scores.__getitem__)
 
     for _ in range(65):
         mid = (low + high) / 2
@@ -161,6 +175,7 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
 
 def verify_analysis_uncertainty(recipe, options):
     """Bound linear inventory quantities and sample nonlinear chemistry without refitting."""
+    elemental = options["mode"] == "water_product_elemental"
     nominal = recipe["rounded_verification"]
     result = dict(
         status="incomplete",
@@ -190,6 +205,18 @@ def verify_analysis_uncertainty(recipe, options):
             "are not dispensed. No experimental verification or probability claim."
         ),
     )
+    if elemental:
+        result["qualification"] = (
+            "Declared elemental assays vary independently; all elements in a product share "
+            "its weighing error. Hypothetical assays are reprocessed through the existing "
+            "material/charge-reconciliation model; sampled label/chemistry discrepancies "
+            "are reported, not erased. Derived analytical nutrients without explicit "
+            "bounds and nested grade/blend records are refused. This is not proof of "
+            "physically realizable lots or continuous chemistry extrema. Source water "
+            "mass is fixed and final water mass scales with final volume. Unknown reactive "
+            "impurities and temperature/gas effects remain excluded."
+        )
+        result["maximum_abs_assay_chemistry_difference_mg_l"] = {}
     if nominal["status"] != "passed":
         result.update(status=nominal["status"], failed_checks=["nominal_recipe"])
         return result
@@ -200,6 +227,7 @@ def verify_analysis_uncertainty(recipe, options):
     dimensions = {}
     groups = []
     effective = []
+    choice_coordinates = {}
 
     def dimension(name, low, high):
         if low != high:
@@ -245,22 +273,33 @@ def verify_analysis_uncertainty(recipe, options):
                 status="failed", failed_checks=["weighing_interval_includes_negative_mass"]
             )
             return result
-        a, b = options["product_assay_factors"][row["name"]]
-        low, high = (dose - error) * a, (dose + error) * b
-        effective.append((low, high))
-        name = "product." + row["name"]
-        dimension(name, low, high)
-        percent = row["inventory"]["nutrient_percent"]
-        vector = [percent.get(k, 0) * 10 / MOLAR_MASS[k.split("_")[0]] for k in LABELS]
-        vector += [percent.get(k, 0) * 10 for k in ("Na", "Cl")]
-        groups.append((name, [v * low for v in vector], [v * high for v in vector]))
+        if elemental:
+            from .ratio_element_uncertainty import product_vertices
+
+            group, coordinates, pair = product_vertices(row, options, dimension)
+            groups.append(group)
+            choice_coordinates[group[0]] = coordinates
+            effective.append(pair)
+        else:
+            a, b = options["product_assay_factors"][row["name"]]
+            low, high = (dose - error) * a, (dose + error) * b
+            effective.append((low, high))
+            name = "product." + row["name"]
+            dimension(name, low, high)
+            percent = row["inventory"]["nutrient_percent"]
+            vector = [percent.get(k, 0) * 10 / MOLAR_MASS[k.split("_")[0]] for k in LABELS]
+            vector += [percent.get(k, 0) * 10 for k in ("Na", "Cl")]
+            groups.append((name, [v * low for v in vector], [v * high for v in vector]))
         maximum_solvent += (dose + error) * row["solvent_fraction"] / 1000
     dimension("volume", *volumes)
-    count_low = sum(sum(g[1][:6]) for g in groups) / volumes[1]
-    count_high = sum(sum(g[2][:6]) for g in groups) / volumes[0]
+    count_low = sum(min(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[1]
+    count_high = sum(max(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[0]
     result["counted_mmol_l_range"] = [count_low, count_high]
     result["elemental_mg_l_ranges"] = {
-        k: [sum(g[1][i] for g in groups) / volumes[1], sum(g[2][i] for g in groups) / volumes[0]]
+        k: [
+            sum(min(v[i] for v in g[1:]) for g in groups) / volumes[1],
+            sum(max(v[i] for v in g[1:]) for g in groups) / volumes[0],
+        ]
         for k, i in (("Na", 6), ("Cl", 7))
     }
     failures = set()
@@ -279,7 +318,13 @@ def verify_analysis_uncertainty(recipe, options):
     witnesses = []
     ranges = []
     for offset in (0, 3):
-        if sum(sum(g[1][i] * VALENCES[i] for i in range(offset, offset + 3)) for g in groups) <= 0:
+        if (
+            sum(
+                min(sum(v[i] * VALENCES[i] for i in range(offset, offset + 3)) for v in g[1:])
+                for g in groups
+            )
+            <= 0
+        ):
             result.update(status="failed", failed_checks=["empty_ion_group"])
             return result
         for i in range(offset, offset + 3):
@@ -319,11 +364,21 @@ def verify_analysis_uncertainty(recipe, options):
         add({name: 0.0})
         add({name: 1.0})
     for witness in witnesses:
-        add(witness)
+        coordinates = {}
+        for group, index in witness.items():
+            if group in choice_coordinates:
+                coordinates.update(choice_coordinates[group][index])
+            else:
+                coordinates[group] = index
+        add(coordinates)
     result["dimensions"] = dict(dimensions)
     result["dimension_units"] = {
         name: (
-            "effective grams of declared product"
+            "grams of commercial product"
+            if name.startswith("mass.")
+            else "fraction of declared elemental assay"
+            if name.startswith("assay.")
+            else "effective grams of declared product"
             if name.startswith("product.")
             else "litres"
             if name == "volume"
@@ -378,11 +433,22 @@ def verify_analysis_uncertainty(recipe, options):
                         "water.alkalinity", actual_water["alkalinity_eq_per_kg"]
                     )
             water_report = account_water(actual_water, actual_volume, mass)
-            doses = [
-                values.get("product." + row["name"], pair[0])
-                for row, pair in zip(sources, effective)
-            ]
-            rebuilt = reconstruct_products(sources, doses, water_report, actual_volume, mass)
+            if elemental:
+                from .ratio_element_uncertainty import perturb_sources
+
+                changed, doses = perturb_sources(sources, options, values)
+                rebuilt = reconstruct_products(changed, doses, water_report, actual_volume, mass)
+                for key, difference in rebuilt["analytical_minus_chemistry_mg_l"].items():
+                    previous = result["maximum_abs_assay_chemistry_difference_mg_l"].get(key, 0.0)
+                    result["maximum_abs_assay_chemistry_difference_mg_l"][key] = max(
+                        previous, abs(difference)
+                    )
+            else:
+                doses = [
+                    values.get("product." + row["name"], pair[0])
+                    for row, pair in zip(sources, effective)
+                ]
+                rebuilt = reconstruct_products(sources, doses, water_report, actual_volume, mass)
             reference = water_report["reference_charge_mol_kg"]
             for key, value in (
                 ("reference_charge_mol_kg_range", reference),

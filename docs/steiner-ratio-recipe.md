@@ -436,3 +436,66 @@ acceptance. The 2% example passes the declared analytical bounds and 128 sampled
 chemistry scenarios over pH 6.28-6.32 at SI margin 0.3. No maximum-strength claim is
 made, and these synthetic product solutions are not verified supplier assays,
 stock-solubility measurements or preparation recommendations.
+
+
+## Independent elemental-assay uncertainty
+
+Use `uncertainty.mode: "water_product_elemental"` to vary declared elements
+independently. Replace `product_assay_factors` with `product_element_factors`;
+all other preparation, water, tolerance and sampling fields remain unchanged.
+Provide every product, including pH reagents, and every element in its declared
+`elements` record, with no extra entries. For example:
+
+```json
+"product_element_factors": {
+  "Example potassium nitrate": {
+    "K": [0.99, 1.0],
+    "N_NO3": [0.99, 1.0]
+  }
+}
+```
+
+These are fractions of each declared elemental mass percentage, not elemental
+purity percentages. Bounds must satisfy `0 < low <= high <= 1`. A fixed assay is
+`[1,1]`. They replace, rather than multiply, the whole-composition factors. A
+stated zero remains zero; this mode does not invent contamination of absent
+components. The selected illustrative bounds retain 99-100% for each declared
+element; actual laboratory/certificate limits must replace these assumptions.
+
+All elements from a product share its weighing error. Analytical extrema use
+local product dose/assay endpoint combinations while retaining this common dose.
+They do not incorrectly treat each element as independently weighed. Water,
+fertilizers and pH reagents still contribute to the final analytical ratios,
+six-nutrient count and direct Na/Cl ceiling checks. Values for additional declared
+elements also vary in chemistry even when outside the six-nutrient count.
+
+Each sampled hypothetical product record is rebuilt through `material_inventory`
+and the existing label/charge-reconciliation rules. Source records and the rounded
+recipe are unchanged. Analytical labels remain authoritative for nutrient limits;
+reconciled components determine speciation. The report includes
+`maximum_abs_assay_chemistry_difference_mg_l`: the largest **sampled** absolute
+difference for each element. Such a difference is not experimental error removed
+by the checker, nor proof that the hypothetical label represents a realizable lot.
+
+This first independent-assay implementation supports explicit flat material
+records with formula, ions or identity. Nested grade/blend records are refused;
+changing their assays independently would require consistent ingredient and
+provenance semantics. If a six-nutrient or Na/Cl contribution is inferred but not
+declared in the product assay, analytical certification is refused with
+`unsupported_elemental_counterion_bounds`. Supply defensible measurements/bounds
+or use a supported uncertainty model; do not insert fabricated zero assays.
+
+The complete input `examples/steiner-elemental-uncertainty.json` reuses the prior
+rounded 10-litre, 1.3 mmol/L example, nominal 2% product formulations, 0.1 kg
+synthetic source water, Na/Cl limits of 10/20 mg/L and pH 6.28-6.32 with SI margin
+0.3. It replaces shared content scaling with independent factors on all 14
+product element assays. Alongside water, weighing and volume this gives 30 varying
+dimensions and 1,073,741,824 endpoint combinations. The demonstration checks 128
+scenarios, not that full chemistry box. The analytical interval calculations cover
+the declared inventory bounds, but chemistry extrema remain sampled.
+
+Do not interpret a lower maximum sampled SI than in the correlated-assay example
+as reduced risk: the sampling points differ in the larger uncertainty space.
+The recipe has not been refitted or experimentally verified; unknown reactive
+impurities, continuous chemistry extrema, grade/blend uncertainty, actual stock
+solubility and Steiner's unresolved experimental pH difference remain open.
