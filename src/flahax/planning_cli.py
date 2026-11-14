@@ -113,7 +113,8 @@ def execute(command, payload):
         from .ratio_recipe import plan_ratio_recipe
         allowed = {'cation_shares', 'anion_shares', 'ph', 'counted_mmol_l',
                    'volume_litres', 'water', 'water_mass_kg'}
-        if set(payload) - allowed:
+        optional = {'ph_range', 'selected_phases', 'mass_decimals'}
+        if set(payload) - allowed - optional:
             raise DeliveryError('unknown_field', 'Unsupported ratio recipe fields')
         if allowed - set(payload):
             raise DeliveryError('missing_field', 'Missing ratio recipe fields')

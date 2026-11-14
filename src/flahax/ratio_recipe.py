@@ -7,6 +7,7 @@ from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
 from .root_finding import shrink_bracket
 from .saturation_policy import assess_saturation
+from .ratio_verification import verification_options, verify_rounded_recipe
 
 NUTRIENTS = ("K", "Ca", "Mg", "NO3", "P", "SO4")
 BASIS = ("K+", "Ca+2", "Mg+2", "NO3-", "PO4-3", "SO4-2")
@@ -42,7 +43,17 @@ def _shares(values, name):
 
 
 def plan_ratio_recipe(
-    *, cation_shares, anion_shares, ph, counted_mmol_l, volume_litres, water, water_mass_kg
+    *,
+    cation_shares,
+    anion_shares,
+    ph,
+    counted_mmol_l,
+    volume_litres,
+    water,
+    water_mass_kg,
+    ph_range=None,
+    selected_phases=None,
+    mass_decimals=5,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -56,6 +67,13 @@ def plan_ratio_recipe(
     ph = _number(ph, "ph", zero=True)
     if ph > 14:
         raise DeliveryError("invalid_ratio_input", "ph must be between 0 and 14")
+    if ph_range is None and (selected_phases is not None or mass_decimals != 5):
+        raise DeliveryError("missing_ph_range", "Rounding verification requires ph_range")
+    phases = (
+        verification_options(ph, ph_range, selected_phases, mass_decimals)
+        if ph_range is not None
+        else None
+    )
     strength = _number(counted_mmol_l, "counted_mmol_l")
     volume = _number(volume_litres, "volume_litres")
     water_mass = _number(water_mass_kg, "water_mass_kg")
@@ -113,7 +131,7 @@ def plan_ratio_recipe(
     if abs(chemistry.charge_balance) > 1e-10:
         raise DeliveryError("ratio_verification_failed", "Ingredient charge verification failed")
     equivalents = [v * z for v, z in zip(achieved, CHARGES)]
-    return {
+    result = {
         "schema_version": "1",
         "target_ph": ph,
         "volume_litres": volume,
@@ -141,3 +159,8 @@ def plan_ratio_recipe(
             "physical nutrient retention requires measurement.",
         ],
     }
+    if phases is not None:
+        result["rounded_verification"] = verify_rounded_recipe(
+            result, ph_range, phases, mass_decimals
+        )
+    return result
