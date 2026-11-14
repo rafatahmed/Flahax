@@ -56,6 +56,7 @@ def plan_ratio_recipe(
     mass_decimals=5,
     saturation_margin=0.0,
     uncertainty=None,
+    stock_dosing=None,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -64,10 +65,16 @@ def plan_ratio_recipe(
     converts concentrations to mol/kg for the supported 25 C aqueous model.
     The initial allocation supports the six SOURCES and nonnegative KOH.
     """
+    if stock_dosing is not None:
+        from .ratio_stocks import validate_stocks
+
+        validate_stocks(stock_dosing, [formula for formula, _ in SOURCES])
+        if uncertainty is None:
+            raise DeliveryError("missing_uncertainty", "Stock dosing requires uncertainty bounds")
     if uncertainty is not None:
         from .ratio_uncertainty import validate_uncertainty
 
-        validate_uncertainty(uncertainty, volume_litres)
+        validate_uncertainty(uncertainty, volume_litres, stock_mode=stock_dosing is not None)
         if ph_range is None:
             raise DeliveryError("missing_ph_range", "Uncertainty checks require ph_range")
     cations = _shares(cation_shares, "cation_shares")
@@ -170,12 +177,29 @@ def plan_ratio_recipe(
             "physical nutrient retention requires measurement.",
         ],
     }
+    delivered_grams = None
+    effective_bounds = None
+    if stock_dosing is not None:
+        from .ratio_stocks import prepare_stock_delivery
+
+        result["stock_delivery"] = prepare_stock_delivery(
+            result, stock_dosing, uncertainty["volume_error_litres"]
+        )
+        delivered_grams = [row["effective_grams"] for row in result["stock_delivery"]["stocks"]]
+        effective_bounds = result["stock_delivery"]["effective_grams_bounds"]
     if phases is not None:
         result["rounded_verification"] = verify_rounded_recipe(
-            result, ph_range, phases, mass_decimals, saturation_margin
+            result,
+            ph_range,
+            phases,
+            mass_decimals,
+            saturation_margin,
+            delivered_grams=delivered_grams,
         )
     if uncertainty is not None:
         from .ratio_uncertainty import verify_uncertainty
 
-        result["uncertainty_verification"] = verify_uncertainty(result, uncertainty)
+        result["uncertainty_verification"] = verify_uncertainty(
+            result, uncertainty, effective_bounds=effective_bounds
+        )
     return result

@@ -9,7 +9,7 @@ from .delivery_contracts import DeliveryError
 from .ratio_verification import BASIS, ELEMENTS, VALENCES
 
 
-def validate_uncertainty(options, volume):
+def validate_uncertainty(options, volume, *, stock_mode=False):
     """Require explicit finite preparation bounds and acceptance tolerances."""
     required = {
         "weighing_error_g",
@@ -19,8 +19,13 @@ def validate_uncertainty(options, volume):
         "concentration_relative_tolerance",
         "impurity_model",
     }
+    if stock_mode:
+        required -= {"weighing_error_g", "purity_fraction"}
     if not isinstance(options, dict) or set(options) != required:
-        raise DeliveryError("invalid_uncertainty", "Supply all six preparation uncertainty fields")
+        raise DeliveryError(
+            "invalid_uncertainty",
+            "Supply exactly the preparation uncertainty fields for this mode",
+        )
     for key in required - {"purity_fraction", "impurity_model"}:
         value = options[key]
         if (
@@ -30,7 +35,7 @@ def validate_uncertainty(options, volume):
             or value < 0
         ):
             raise DeliveryError("invalid_uncertainty", f"{key} must be finite and nonnegative")
-    purity = options["purity_fraction"]
+    purity = options.get("purity_fraction", [1, 1])
     if (
         not isinstance(purity, (list, tuple))
         or len(purity) != 2
@@ -56,7 +61,7 @@ def validate_uncertainty(options, volume):
         )
 
 
-def verify_uncertainty(recipe, options):
+def verify_uncertainty(recipe, options, *, effective_bounds=None):
     """Evaluate effective-dose interval corners at both volume bounds and the pH grid.
 
     Dose/purity products have exact endpoint bounds. Nonlinear chemistry is sampled
@@ -87,8 +92,8 @@ def verify_uncertainty(recipe, options):
         result["status"] = nominal["status"]
         result["failed_checks"] = ["nominal_recipe"]
         return result
-    error = options["weighing_error_g"]
-    low_purity, high_purity = options["purity_fraction"]
+    error = options.get("weighing_error_g", 0)
+    low_purity, high_purity = options.get("purity_fraction", [1, 1])
     bounds, vectors = [], []
     for row in nominal["ingredients"]:
         if row["grams"] < error:
@@ -100,6 +105,10 @@ def verify_uncertainty(recipe, options):
         atoms = parse_formula(row["formula"])["atoms"]
         mw = sum(ATOMIC[e] * n for e, n in atoms.items())
         vectors.append([1000 * atoms.get(e, 0) / mw for e in ELEMENTS])
+    if effective_bounds is not None:
+        bounds = effective_bounds
+        result["stock_specification"] = recipe["stock_delivery"]["specification"]
+        result["verification_scope"] = recipe["stock_delivery"]["verification_scope"]
     volume_error = options["volume_error_litres"]
     volumes = sorted(
         {recipe["volume_litres"] - volume_error, recipe["volume_litres"] + volume_error}

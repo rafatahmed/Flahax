@@ -1,0 +1,52 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "strength_range": [
+    1,
+    30
+  ],
+  "strength_tolerance": 1e-05,
+  "scan_points": 33,
+  "volume_litres": 10,
+  "water": "demineralized",
+  "water_mass_kg": 10,
+  "ph_range": [
+    6.28,
+    6.32
+  ],
+  "selected_phases": [
+    "Brushite",
+    "Monetite",
+    "Hydroxyapatite"
+  ],
+  "mass_decimals": 5,
+  "saturation_margin": 0.3,
+  "uncertainty": {
+    "volume_error_litres": 0.05,
+    "ratio_relative_tolerance": 0.01,
+    "concentration_relative_tolerance": 0.02,
+    "impurity_model": "inert"
+  },
+  "stock_dosing": {
+    "concentrations_g_l": {
+      "KH2PO4": 10,
+      "Ca(NO3)2.4H2O": 10,
+      "MgSO4.7H2O": 10,
+      "Mg(NO3)2.6H2O": 10,
+      "KNO3": 10,
+      "KOH": 1
+    },
+    "concentration_relative_error": 0.001,
+    "dose_error_ml": 0.02,
+    "dose_decimals": 2
+  }
+}

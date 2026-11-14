@@ -46,6 +46,8 @@ def search_ratio_recipe(
             if exc.code not in (
                 "ratio_infeasible",
                 "ratio_allocation_infeasible",
+                "ratio_stock_dose_infeasible",
+                "ratio_stock_volume_infeasible",
                 "nonconvergent",
                 "activity_model_out_of_range",
             ):
@@ -96,6 +98,7 @@ def search_ratio_recipe(
         "strength_tolerance": tolerance,
         "saturation_margin": saturation_margin,
         "uncertainty": recipe_options.get("uncertainty"),
+        "stock_dosing": recipe_options.get("stock_dosing"),
         "initial_scan_points": scan_points,
         "evaluation_count": len(evaluated),
         "evaluations": [{"strength_mmol_l": x, **row} for x, row in sorted(evaluated.items())],

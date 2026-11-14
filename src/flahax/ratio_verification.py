@@ -50,12 +50,18 @@ def verification_options(ph, ph_range, selected_phases, mass_decimals):
     return tuple(dict.fromkeys(PHASE_ALIASES[p] for p in phases))
 
 
-def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals, saturation_margin=0.0):
+def verify_rounded_recipe(
+    recipe, ph_range, phases, mass_decimals, saturation_margin=0.0, *, delivered_grams=None
+):
     """Reconstruct delivered masses and return sampled saturation and fit checks."""
     amounts = [0.0] * 6
     ingredients = []
-    for row in recipe["ingredients"]:
-        grams = round(row["grams"], mass_decimals)
+    for index, row in enumerate(recipe["ingredients"]):
+        grams = (
+            round(row["grams"], mass_decimals)
+            if delivered_grams is None
+            else delivered_grams[index]
+        )
         atoms = parse_formula(row["formula"])["atoms"]
         molar_mass = sum(ATOMIC[e] * n for e, n in atoms.items())
         mmol_l = grams / molar_mass * 1000 / recipe["volume_litres"]
@@ -81,7 +87,8 @@ def verify_rounded_recipe(recipe, ph_range, phases, mass_decimals, saturation_ma
         "status": "incomplete",
         "ph_range": list(ph_range),
         "selected_phases": list(phases),
-        "mass_decimals": mass_decimals,
+        "mass_decimals": mass_decimals if delivered_grams is None else None,
+        "delivery_basis": "rounded_grams" if delivered_grams is None else "rounded_stock_doses",
         "ingredients": ingredients,
         "analytical_mmol_l": analytical,
         "counted_mmol_l": sum(amounts),

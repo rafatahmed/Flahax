@@ -135,3 +135,50 @@ See [supporting references](steiner-supporting-references.md) for research conte
 The unresolved solution 1a pH discrepancy remains visible. Tighter balance/assay
 bounds or verified stock dosing should be evaluated explicitly before promising a
 passing preparation; relaxing a tolerance requires a stated decision.
+
+## Assayed-stock delivery specifications
+
+`stock_dosing` replaces direct weighing with six independent single-compound stock
+deliveries. See `examples/steiner-ratio-stock-search.json`. It requires a concentration
+map (`concentrations_g_l`) with all six formula keys, `concentration_relative_error`,
+`dose_error_ml` and `dose_decimals`. Concentrations are active mass equivalents of
+the specified hydrate or compound per litre of final stock. They are not elemental
+concentrations or unspecified commercial fertilizer grades.
+
+The example specifies 10 g/L for KH2PO4, Ca(NO3)2.4H2O, MgSO4.7H2O,
+Mg(NO3)2.6H2O and KNO3, and 1 g/L for KOH. Stock concentrations are bounded to
+±0.1% and each delivered volume to ±0.02 mL, with doses rounded to 0.01 mL.
+These are declared specifications, not measured assays or calibration records.
+The numerical result is conditional on verifying them for actual stocks and dispensers.
+
+The `uncertainty` object retains final-volume error, ratio and concentration
+tolerances, and the inert-impurity model. Raw `weighing_error_g` and `purity_fraction`
+are rejected in stock mode to avoid ambiguous double counting. Their effects must
+instead be included in the verified stock-concentration interval, along with stock
+preparation and stability errors. A 99–100% reagent label cannot alone support a
+±0.1% active stock concentration. KOH alkalinity alone is insufficient if reactive
+carbonate or other contaminants invalidate the declared pure-compound accounting.
+
+For each ideal compound mass, the calculator rounds its stock dose in mL and
+reconstructs nominal compound mass as `dose_ml * concentration_g_l / 1000`.
+It does not round that equivalent mass a second time. Uncertainty endpoints are
+`(dose_ml ± dose_error_ml) * concentration_g_l * (1 ± relative_error) / 1000`.
+All stocks vary independently. The same 128 preparation corners and pH grid are
+used. Stock-volume overflow and negative possible doses are rejected. Potassium
+from the KOH stock enters both nominal and uncertain nutrient accounting.
+
+Use six separate stocks and include all delivered stock volumes when making up
+the final 10 L batch. This feature checks final diluted-solution chemistry;
+stock solubility, storage stability and concentrate mixing compatibility are not
+certified. The existing density approximation, 25 C assumption, excluded gas
+exchange and unresolved historical pH discrepancy remain applicable.
+
+For this example's 1–30 mmol/L bounded search, the strongest passing candidate
+found requests 1.709473610 mmol/L. Rounded stock delivery gives 1.709479411 mmol/L
+at nominal volume. Doses in source order are 44.88, 36.60, 13.55, 12.40, 14.45
+and 24.70 mL, totaling 146.58 mL. The nominal modeled pH is 6.300028.
+All 128 preparation corners pass; concentration ranges from 1.697906 to 1.721172
+mmol/L and the largest relative equivalent-share deviation is 0.39925%.
+Worst brushite, monetite and hydroxyapatite SI values are -1.715176, -1.435150
+and -0.300258 respectively, all at imposed pH 6.32. This remains a sampled,
+conditional calculation rather than measured stability or a proven global maximum.
