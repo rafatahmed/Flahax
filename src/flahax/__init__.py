@@ -4,7 +4,10 @@
 # its results are calculations, not dosing instructions.
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
+from .ratio_recipe import plan_ratio_recipe
+
 __all__ = [
+    "plan_ratio_recipe",
     "CanonicalResult",
     "accept_result",
     "verify_acceptance",

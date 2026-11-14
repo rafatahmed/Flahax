@@ -1,0 +1,143 @@
+"""Six-nutrient fixed-ratio recipes using pure salts and KOH in demineralized water."""
+
+import math
+
+from .aqueous_model import solve
+from .composition import ATOMIC, parse_formula
+from .delivery_contracts import DeliveryError
+from .root_finding import shrink_bracket
+from .saturation_policy import assess_saturation
+
+NUTRIENTS = ("K", "Ca", "Mg", "NO3", "P", "SO4")
+BASIS = ("K+", "Ca+2", "Mg+2", "NO3-", "PO4-3", "SO4-2")
+CHARGES = (1, 2, 2, 1, 1, 2)
+# Stoichiometric contributions per mole of each pure compound, in NUTRIENTS order.
+SOURCES = (
+    ("KH2PO4", (1, 0, 0, 0, 1, 0)),
+    ("Ca(NO3)2.4H2O", (0, 1, 0, 2, 0, 0)),
+    ("MgSO4.7H2O", (0, 0, 1, 0, 0, 1)),
+    ("Mg(NO3)2.6H2O", (0, 0, 1, 2, 0, 0)),
+    ("KNO3", (1, 0, 0, 1, 0, 0)),
+    ("KOH", (1, 0, 0, 0, 0, 0)),
+)
+
+
+def _number(value, name, *, zero=False):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise DeliveryError("invalid_ratio_input", f"{name} must be numeric")
+    if not math.isfinite(value) or value < 0 or (value == 0 and not zero):
+        raise DeliveryError("invalid_ratio_input", f"{name} must be finite and positive")
+    return float(value)
+
+
+def _shares(values, name):
+    if not isinstance(values, (list, tuple)) or len(values) != 3:
+        raise DeliveryError("invalid_ratio_input", f"{name} requires three shares")
+    values = [_number(v, name, zero=True) for v in values]
+    largest = max(values)
+    if largest == 0:
+        raise DeliveryError("invalid_ratio_input", f"{name} must have a positive total")
+    scaled = [v / largest for v in values]
+    return [v / sum(scaled) for v in scaled]
+
+
+def plan_ratio_recipe(
+    *, cation_shares, anion_shares, ph, counted_mmol_l, volume_litres, water, water_mass_kg
+):
+    """Return a full-precision pure-salt recipe and its modeled chemistry.
+
+    Ratios use charge equivalents and total phosphate reported as H2PO4.
+    Strength sums six analytical mmol/L quantities. Explicit final water mass
+    converts concentrations to mol/kg for the supported 25 C aqueous model.
+    The initial allocation supports the six SOURCES and nonnegative KOH.
+    """
+    cations = _shares(cation_shares, "cation_shares")
+    anions = _shares(anion_shares, "anion_shares")
+    ph = _number(ph, "ph", zero=True)
+    if ph > 14:
+        raise DeliveryError("invalid_ratio_input", "ph must be between 0 and 14")
+    strength = _number(counted_mmol_l, "counted_mmol_l")
+    volume = _number(volume_litres, "volume_litres")
+    water_mass = _number(water_mass_kg, "water_mass_kg")
+    if water != "demineralized":
+        raise DeliveryError("unsupported_water", "This workflow requires demineralized water")
+    concentration_factor = volume / water_mass / 1000
+    weights = cations + anions
+    cation_count = sum(v / z for v, z in zip(cations, CHARGES[:3]))
+    anion_count = sum(v / z for v, z in zip(anions, CHARGES[3:]))
+
+    def amounts(cation_total):
+        anion_total = max(0.0, (strength - cation_count * cation_total) / anion_count)
+        group_totals = [cation_total] * 3 + [anion_total] * 3
+        return [v * total / z for v, total, z in zip(weights, group_totals, CHARGES)]
+
+    def state(values):
+        return solve({key: v * concentration_factor for key, v in zip(BASIS, values)}, ph)
+
+    def charge(cation_total):
+        return state(amounts(cation_total)).charge_balance
+
+    low, high = 0.0, strength / cation_count
+    low_charge, high_charge = charge(low), charge(high)
+    if low_charge * high_charge > 0:
+        raise DeliveryError(
+            "ratio_infeasible", "Ratios and strength cannot balance charge at this pH"
+        )
+    low, high = shrink_bracket(charge, low, low_charge, high, high_charge, width=1e-11)
+    target = amounts((low + high) / 2)
+    potassium, calcium, magnesium, nitrate, phosphate, sulfate = target
+    magnesium_nitrate = magnesium - sulfate
+    potassium_nitrate = nitrate - 2 * (calcium + magnesium_nitrate)
+    koh = potassium - phosphate - potassium_nitrate
+    doses = [phosphate, calcium, sulfate, magnesium_nitrate, potassium_nitrate, koh]
+    if any(v < -1e-10 for v in doses):
+        raise DeliveryError(
+            "ratio_allocation_infeasible",
+            "The specified ratios and pH require a source outside the six-salt/KOH allocation",
+        )
+    ingredients = []
+    achieved = [0.0] * 6
+    for (formula, stoichiometry), dose in zip(SOURCES, doses):
+        dose = max(0.0, dose)
+        molar_mass = sum(ATOMIC[e] * n for e, n in parse_formula(formula)["atoms"].items())
+        contribution = [dose * n for n in stoichiometry]
+        achieved = [a + b for a, b in zip(achieved, contribution)]
+        ingredients.append(
+            {
+                "formula": formula,
+                "grams": dose * volume * molar_mass / 1000,
+                "contributions_mmol_l": dict(zip(NUTRIENTS, contribution)),
+            }
+        )
+    chemistry = state(achieved)
+    if abs(chemistry.charge_balance) > 1e-10:
+        raise DeliveryError("ratio_verification_failed", "Ingredient charge verification failed")
+    equivalents = [v * z for v, z in zip(achieved, CHARGES)]
+    return {
+        "schema_version": "1",
+        "target_ph": ph,
+        "volume_litres": volume,
+        "water_mass_kg": water_mass,
+        "temperature_c": 25,
+        "counted_mmol_l": sum(achieved),
+        "analytical_mmol_l": dict(zip(NUTRIENTS, achieved)),
+        "cation_percent": [100 * v / sum(equivalents[:3]) for v in equivalents[:3]],
+        "anion_percent": [100 * v / sum(equivalents[3:]) for v in equivalents[3:]],
+        "ingredients": ingredients,
+        "charge_residual_mol_kg": chemistry.charge_balance,
+        "saturation_indices": chemistry.saturation_indices,
+        "saturation_assessment": assess_saturation(chemistry),
+        "qualifications": [
+            "Pure salts, demineralized water, zero added inorganic carbon, 25 C; gas "
+            "exchange is omitted.",
+            "Masses are full precision. Recheck delivered quantities after rounding.",
+            "Analytical ratios include KOH potassium. Dissolved species depend on "
+            "speciation and precipitation.",
+            "Solution 1a measured pH 5.33, 6.45, 6.58; model replay approximately "
+            "5.06, 6.66, 6.66.",
+            "PHREEQC agrees within 0.002 pH under matched conditions. The measured "
+            "0.13 pH rise remains unresolved.",
+            "Saturation results describe the mixture before solid allocation; "
+            "physical nutrient retention requires measurement.",
+        ],
+    }

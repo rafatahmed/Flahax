@@ -109,6 +109,15 @@ def execute(command, payload):
     """
     if not isinstance(payload, dict):
         raise DeliveryError('invalid_type', 'expected a JSON object')
+    if command == 'ratio':
+        from .ratio_recipe import plan_ratio_recipe
+        allowed = {'cation_shares', 'anion_shares', 'ph', 'counted_mmol_l',
+                   'volume_litres', 'water', 'water_mass_kg'}
+        if set(payload) - allowed:
+            raise DeliveryError('unknown_field', 'Unsupported ratio recipe fields')
+        if allowed - set(payload):
+            raise DeliveryError('missing_field', 'Missing ratio recipe fields')
+        return plan_ratio_recipe(**payload)
     if command == 'ec':
         return estimate_manufacturer_ec(**payload)
     if command == 'size':

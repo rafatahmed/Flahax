@@ -1,0 +1,134 @@
+{
+  "source": {
+    "title": "A universal method for preparing nutrient solutions of a certain desired composition",
+    "author": "A. A. Steiner",
+    "year": 1961,
+    "url": "https://edepot.wur.nl/309364",
+    "pages": [
+      145,
+      146,
+      147,
+      148,
+      149
+    ]
+  },
+  "order": [
+    "K",
+    "Ca",
+    "Mg",
+    "NO3",
+    "P",
+    "SO4"
+  ],
+  "cation_shares": [
+    80,
+    10,
+    10
+  ],
+  "anion_shares": [
+    80,
+    5,
+    15
+  ],
+  "target_counted_mmol_l": 30,
+  "initial_printed_meq_l": [
+    13.151,
+    1.644,
+    1.644,
+    13.151,
+    0.822,
+    2.466
+  ],
+  "final_printed_meq_l": [
+    13.269,
+    1.659,
+    1.659,
+    13.035,
+    0.815,
+    2.444
+  ],
+  "test_koh_meq_l": 0.296,
+  "final_printed_koh_meq_l": 0.293,
+  "stocks": [
+    {
+      "formula": "KH2PO4",
+      "normality": 1,
+      "ml_per_10_l": 8.22,
+      "ions": [
+        "K",
+        "P"
+      ]
+    },
+    {
+      "formula": "Ca(NO3)2.4H2O",
+      "normality": 10,
+      "ml_per_10_l": 1.644,
+      "ions": [
+        "Ca",
+        "NO3"
+      ]
+    },
+    {
+      "formula": "MgSO4.7H2O",
+      "normality": 2,
+      "ml_per_10_l": 8.22,
+      "ions": [
+        "Mg",
+        "SO4"
+      ]
+    },
+    {
+      "formula": "KNO3",
+      "normality": 1,
+      "ml_per_10_l": 115.07,
+      "ions": [
+        "K",
+        "NO3"
+      ]
+    },
+    {
+      "formula": "K2SO4",
+      "normality": 1,
+      "ml_per_10_l": 8.22,
+      "ions": [
+        "K",
+        "SO4"
+      ]
+    }
+  ],
+  "measurements": {
+    "initial": 5.33,
+    "titrated": 6.45,
+    "final": 6.58
+  },
+  "protocol": {
+    "initial_before_aeration_ph": 4.76,
+    "temperature_c_approx": 21,
+    "initial_aeration_hours": 24,
+    "titrated_reaeration_hours": 1,
+    "final": "Fresh 10 L batch measured after aeration; duration unspecified here."
+  },
+  "uncertainties": [
+    "Figure 6 curve A label 80:20 differs from normalized solution 1a K:Ca of 88.9:11.1.",
+    "Water conductivity inequality is inconsistent as printed.",
+    "Water composition, atmospheric CO2 and measurement uncertainty are insufficiently specified.",
+    "Printed amounts include rounding; preserve separately from full-precision reconstruction."
+  ],
+  "model_assumptions": {
+    "temperature_c": 25,
+    "added_inorganic_carbon": 0,
+    "gas_exchange": false,
+    "kg_water_per_litre_approx": 1,
+    "precipitation_phases": []
+  },
+  "regression": {
+    "baseline_revision": "e8b2abb",
+    "ph_absolute_tolerance": 2e-05,
+    "expected_ph": {
+      "initial": 5.0598514861,
+      "titrated": 6.6618809973,
+      "final": 6.6616341059
+    },
+    "tolerance_basis": "Numerical regression tolerance for the pinned 25 C calculation; independent of experimental measurement uncertainty."
+  }
+}

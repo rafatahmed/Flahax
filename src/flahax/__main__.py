@@ -25,6 +25,7 @@ Documentation: {DOCS}
 DESCRIPTION = """FlahaX: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
 
 commands:
+  ratio      fixed nutrient ratios with pure salts and KOH (JSON on stdin)
   mix        answer five questions and get tank A, tank B and the acid (growers, agronomists)
   batch      the same from files in one command, for scripts (flahax batch --help)
   recommend  read a JSON request on stdin and write a fertilizer recipe (the default)
@@ -76,7 +77,7 @@ def _main() -> int:
         'command',
         nargs='?',
         default='recommend',
-        choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix'),
+        choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix', 'ratio'),
         metavar='COMMAND',
         help='one of the commands above (default: recommend)',
     )
