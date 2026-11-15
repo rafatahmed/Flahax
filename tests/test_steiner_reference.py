@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Steiner 1a arithmetic and model regression, with measured pH reported separately."""
 import json
 from pathlib import Path
@@ -64,7 +68,7 @@ class SteinerReferenceTests(unittest.TestCase):
         for stage in ("initial", "final"):
             amounts = batches[stage]
             self.assertAlmostEqual(counted_total(amounts), 30, places=12)
-            for group, shares in ((amounts[:3], [80,10,10]), (amounts[3:], [80,5,15])):
+            for group, shares in ((amounts[:3], [80, 10, 10]), (amounts[3:], [80, 5, 15])):
                 for value, expected in zip(group, shares):
                     self.assertAlmostEqual(100 * value / sum(group), expected, places=12)
         self.assertAlmostEqual(dose, .2933946554595, places=12)
@@ -93,7 +97,9 @@ class SteinerReferenceTests(unittest.TestCase):
                                - FIXTURE["measurements"]["titrated"], .13)
 
     def test_source_measurements_remain_observations(self):
-        self.assertEqual(FIXTURE["measurements"], {"initial":5.33,"titrated":6.45,"final":6.58})
+        self.assertEqual(
+            FIXTURE["measurements"], {"initial": 5.33, "titrated": 6.45, "final": 6.58}
+        )
         self.assertTrue(FIXTURE["uncertainties"])
         self.assertEqual(FIXTURE["model_assumptions"]["temperature_c"], 25)
         self.assertEqual(article_evidence()["solution_1a"]["measured_ph"],
