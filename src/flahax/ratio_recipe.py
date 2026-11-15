@@ -62,6 +62,7 @@ def plan_ratio_recipe(
     ph_reagents=None,
     products=None,
     maximum_concentrations=None,
+    nutrient_ceiling_reserve=0.0,
 ):
     """Return a full-precision pure-salt recipe and its modeled chemistry.
 
@@ -78,6 +79,20 @@ def plan_ratio_recipe(
         "water_product_elemental",
     )
     limits = validate_limits(maximum_concentrations)
+    reserve = _number(nutrient_ceiling_reserve, "nutrient_ceiling_reserve", zero=True)
+    if reserve >= 1 or (reserve and not limits):
+        raise DeliveryError(
+            "invalid_nutrient_reserve",
+            "Nutrient reserve must be below 1 and a positive reserve requires declared ceilings",
+        )
+    reserve_report = {
+        "fraction": reserve,
+        "declared_maximum_concentrations": dict(limits),
+        "effective_maximum_concentrations": {k: v * (1 - reserve) for k, v in limits.items()},
+        "qualification": "An explicit operating reserve applied to complete rounded and uncertain "
+        "inventories, in addition to preparation uncertainty. Not a validated crop safety limit.",
+    }
+    limits = dict(reserve_report["effective_maximum_concentrations"])
     if (
         "N_NH4" in limits
         and isinstance(water, dict)
@@ -190,6 +205,7 @@ def plan_ratio_recipe(
         result = plan_products(
             products, cations, anions, ph, strength, volume, water_mass, water_report, limits
         )
+        result["nutrient_ceiling_reserve"] = reserve_report
         return _finish_recipe(
             result,
             ph_range,
@@ -322,6 +338,7 @@ def plan_ratio_recipe(
         ],
     }
     result["maximum_concentrations"] = limits
+    result["nutrient_ceiling_reserve"] = reserve_report
     result["elemental_mg_l"] = elemental_from_totals(
         result["aqueous_totals_mol_kg"], volume, water_mass
     )

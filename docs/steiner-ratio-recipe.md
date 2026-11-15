@@ -44,6 +44,31 @@ The ordinary full-precision recipe remains available alongside rounded_verificat
 
 ## Strongest verified rounded candidate
 
+### Nutrient ceiling reserve
+
+`examples/steiner-nutrient-reserve-search.json` provides the synthetic 10-litre
+demonstration with all nine nutrient ceilings, preparation uncertainty and adaptive
+pH sampling across 6.28–6.32. Its 5% reserve is an illustrative user-selected policy.
+
+Both fixed recipes and searches accept `nutrient_ceiling_reserve` as a fraction
+from 0 (default) to less than 1. A positive reserve requires explicit
+`maximum_concentrations`. For example, `0.05` reserves 5% below every declared
+ceiling: nitrate-N 6 mg/L becomes an effective operating ceiling of 5.7 mg/L.
+This applies equally to Na, Cl and every other declared supported nutrient.
+
+The effective ceilings apply to source water, allocation, rounded delivery and
+the full uncertain inventory. Preparation uncertainty cannot consume the reserve.
+The separate saturation margin and pH checks are unchanged. The recipe's
+`nutrient_ceiling_reserve` report preserves the fraction, declared ceilings and
+effective ceilings; `maximum_concentrations` contains the effective ceilings used
+by verification. When replaying the original request, use the original declared
+ceilings with the reserve to avoid applying the reserve twice.
+
+This is an explicitly chosen operating policy, not a validated crop safety
+threshold or allowance for unmodeled impurities. A strongest-found result can
+approach the effective ceiling closely while retaining the requested reserve
+below the original ceiling. Model, sampling and measurement limitations remain.
+
 Use `flahax.search_ratio_recipe` or replace `counted_mmol_l` with `strength_range` in the ratio command. A search requires `ph_range`.
 
     Get-Content examples/steiner-ratio-search.json -Raw | python -m flahax ratio
