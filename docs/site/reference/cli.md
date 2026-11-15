@@ -15,6 +15,8 @@ usage: flahax [-h] [--version] [--interactive] [COMMAND]
 FlahaX: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
 
 commands:
+  lab-import read the completed Steiner Excel workbook and verify laboratory records
+  ratio      fixed nutrient ratios with pure salts and KOH (JSON on stdin)
   mix        answer five questions and get tank A, tank B and the acid (growers, agronomists)
   batch      the same from files in one command, for scripts (flahax batch --help)
   recommend  read a JSON request on stdin and write a fertilizer recipe (the default)

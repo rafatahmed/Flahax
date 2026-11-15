@@ -398,6 +398,59 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_solubility_input`, `invalid_solubility_basis`, `invalid_solubility_table` | Solubility data has invalid values, units/basis or table structure. Correct the sourced record before screening. |
 | `unqualified_solubility_limit` | A solubility message was requested for a row that is not an exceedance of a single-product value. |
 
+**Fixed-ratio recipes, uncertainty and stock dosing**
+
+The ratio workflow adapts Steiner's design method. Water/product accounting,
+uncertainty bounds, mineral saturation checks and the search policy are FlahaX
+extensions. A numerical pass is not measured preparation or stability evidence.
+Preserve failed or incomplete checks; do not remove bounds to obtain a pass.
+
+| Code | Meaning and action |
+|---|---|
+| `duplicate_strength` | Supply either a fixed `counted_mmol_l` or a search `strength_range`, not both. |
+| `invalid_ratio_input` | A ratio, concentration, pH, volume or other numeric field is invalid. Supply finite values, three shares per ion group with a positive sum, and physically valid amounts; the message names the field. |
+| `invalid_ratio_limits` | Use supported elemental mg/L ceilings: K, Ca, Mg, nitrate-N (`N_NO3`), P, S, Na, Cl or ammonium-N (`N_NH4`). Check names, units and finite nonnegative values. |
+| `invalid_nutrient_reserve` | Reserve must be a fraction from zero up to, but not including, one. A positive reserve needs explicit nutrient ceilings. |
+| `invalid_ratio_water` | Supply `demineralized` or a complete identified water analysis with measured pH, supported temperature, source-water mass and explicit required ion totals, including justified zeros. Check the named fields and concentration basis. |
+| `missing_water_ammonium` | An ammonium ceiling needs an explicit source-water `NH4+` total, including a justified zero. Do not infer absence from a missing result. |
+| `invalid_ratio_products` | Each product needs a unique name, supported composition, elemental assay, role and solvent fraction. Correct missing fields or a mass inventory that exceeds 100%. |
+| `ambiguous_ratio_reagents` | Declare pH reagents through product roles or `ph_reagents`, not both. |
+| `invalid_ph_reagents` | The pure-salt allocation accepts a nonempty, unique selection of KOH and/or HNO3. Declare the intended permitted reagents explicitly. |
+| `ratio_water_exceeds_target` | Source water already supplies more than a target nutrient. Review source-water quantity/composition or targets; adding salts cannot remove that excess. |
+| `ratio_limit_exceeded` | Source water or the calculated recipe exceeds a declared ceiling. Inspect the complete nutrient inventory, including pH reagents; revise the preparation inputs rather than ignoring the limit. |
+| `ratio_infeasible` | The requested ratios and strength cannot close charge at the specified pH in this model. Review those inputs and the supported chemistry. |
+| `ratio_allocation_infeasible` | The pure-salt allocation needs an unpermitted pH reagent or an unsupported source. Check permitted reagents and whether the requested composition is supported. |
+| `ratio_product_fit_failed` | The local product allocator did not produce an acceptable fit, exhausted its budget, or could not satisfy limits/solvent inventory. Inspect products and constraints. This does not prove global infeasibility or identify a mineral as the cause. |
+| `ratio_verification_failed` | Independent recipe reconstruction or charge verification failed. Preserve the request and diagnostics for investigation; do not use the unverified allocation. |
+| `missing_ph_range`, `invalid_ph_range` | Rounding, uncertainty and strength-search checks need two finite pH endpoints containing the target, within 0-14. Supply the intended operating interval. |
+| `invalid_rounding` | Set `mass_decimals` to an integer from zero to eight; verify the rounded recipe at the chosen precision. |
+| `invalid_phases` | Select at least one supported mineral: brushite, monetite or hydroxyapatite. Check names instead of silently dropping a phase. |
+| `phase_unavailable` | A selected mineral has no finite saturation index. Preserve the incomplete calculation and investigate model support/data; absence of an SI is not a saturation pass. |
+| `ph_refinement_incomplete` | Adaptive pH refinement exhausted its budget. Treat coverage as incomplete, not passing; inspect the reported unresolved intervals. |
+| `invalid_strength_range`, `invalid_scan_points` | Use an increasing pair of positive strengths and an integer scan count from three to 1001. A finite search still cannot prove a global maximum. |
+| `missing_uncertainty`, `invalid_uncertainty` | Supply the exact preparation fields for the selected pure-salt/stock mode. Errors must be finite and nonnegative, purity bounds positive and at most one, and volume must remain positive. Only an inert inactive fraction is supported. |
+| `invalid_analysis_uncertainty` | Water/product uncertainty fields do not match the selected mode or their bounds are invalid/incomplete. Bound every relevant product and element, including pH reagents; retain the required water, volume and scenario-budget fields. |
+| `unsupported_ratio_water_uncertainty` | The selected pure-salt uncertainty/stock mode cannot handle real-water inputs. Use the supported explicit water/product uncertainty workflow when applicable; do not substitute demineralized water to hide contributions. |
+| `unsupported_ratio_product_uncertainty` | The requested combination of products, uncertainty and stock evidence is not supported. Explicit products use the water/product uncertainty modes; native volumetric stock verification cannot be combined with those modes. |
+| `unsupported_ratio_reagent_uncertainty` | Nitric-acid uncertainty or stock verification is unsupported in the selected pure-salt mode. Retain that limitation rather than assuming an exact acid dose. |
+| `invalid_assay_document_source`, `missing_assay_document` | Select a supported grade or lot source and supply the linked grade/lot records. Missing documents cannot establish bounds. |
+| `unsupported_assay_impurity_bounds` | Document impurity limits need explicit composition and bounded inventories. They cannot be replaced by zero or inferred from active-content factors. |
+| `unsupported_elemental_grade` | The selected grade/composition does not support this elemental uncertainty model or does not preserve nominal inventory. Use a supported single identity or an explicitly supported ingredient model. |
+| `assay_document_element_mismatch` | A lot introduces elements absent from the nominal product. Add their explicit nominal composition and bounds before verification. |
+| `incomplete_assay_bounds` | Every declared element needs positive nominal content and explicit positive lower/upper bounds. A typical value alone is not an uncertainty interval. |
+| `unsupported_blend_bounds` | Blend verification requires disclosed, supported ingredients without unmodeled impurity limits. Supply supported composition evidence; do not invent ingredient chemistry. |
+| `invalid_blend_bounds` | Bound every disclosed ingredient, at most eight, with finite mass fractions from zero to one containing each nominal fraction. |
+| `invalid_blend_mass_bounds`, `invalid_elemental_mass_bounds` | Upper ingredient or elemental bounds plus solvent exceed product mass. Reconcile the stated composition and physical bounds. |
+| `blend_assay_mismatch` | The nominal blend does not match its declared ingredient inventory. Reconcile composition/assay records before applying correlated bounds. |
+| `unsupported_elemental_counterion_bounds` | Derived counterions need defensible explicit bounds. Do not treat unbounded counterions as fixed or absent. |
+| `unsupported_physical_uncertainty` | Closed-batch physical uncertainty requires elemental mode and an explicit source-water analysis. Use the supported combination. |
+| `invalid_physical_uncertainty` | Supply complete, ordered density, source-water quantity and solvent intervals containing nominal values. Density/source quantity must stay positive and solvent fractions cannot exceed one. |
+| `invalid_source_solvent_bounds` | The source-water non-solvent fraction is smaller than its known elemental inventory. Reconcile analysis and solvent bounds on the same mass basis. |
+| `missing_stock_dosing` | Stock verification or batch-stability records require a stock-dosing specification. Records alone do not define the preparation. |
+| `invalid_stock_dosing` | Supply all six active-compound/hydrate stock concentrations in g/L, concentration-relative error, dose error in mL and dose decimals. Check finite positive concentrations, relative error below one, and integer dose decimals from zero to six. |
+| `ratio_stock_dose_infeasible` | A positive rounded stock dose is smaller than its dosing uncertainty. Review stock concentration and the justified dispensing specification. |
+| `ratio_stock_volume_infeasible` | Stock doses, including their error bounds, leave no dilution-water allowance at the minimum final volume. Review concentrations and volumes; stock volumes count toward the final batch. |
+
 ## 9. Verification and reproducibility
 
 From an installed development checkout, run `python -m unittest discover -s tests -t .` and `python -m compileall -q src tools`. Use `PYTHONPATH=src` if the checkout is not installed. Reference acceptance also requires the pinned external PHREEQC run with `FLAHAX_REQUIRE_PHREEQC=1`; the executable is never a runtime package dependency.
