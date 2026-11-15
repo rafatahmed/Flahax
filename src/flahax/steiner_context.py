@@ -38,6 +38,7 @@ def historical_context(*, strength_range, ph_range, cation_shares, anion_shares)
 
     def near(a, b):
         return math.isclose(a, b, rel_tol=0, abs_tol=1e-9)
+
     if low < 20 and not near(low, 20):
         warn(
             'below_historical_tested_strength',

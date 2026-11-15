@@ -3,6 +3,7 @@
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
 """Steiner 1a arithmetic and model regression, with measured pH reported separately."""
+
 import json
 from pathlib import Path
 import unittest
@@ -31,15 +32,15 @@ def preparations():
         for value, share in zip(initial, FIXTURE["cation_shares"] + [0, 0, 0])
     ]
     scale = FIXTURE["target_counted_mmol_l"] / counted_total(corrected)
-    return {"initial": initial, "titrated": titrated,
-            "final": [value * scale for value in corrected]}, dose * scale
+    return {
+        "initial": initial,
+        "titrated": titrated,
+        "final": [value * scale for value in corrected],
+    }, dose * scale
 
 
 def predicted_ph(amounts):
-    totals = {
-        name: value / charge / 1000
-        for name, value, charge in zip(BASIS, amounts, VALENCES)
-    }
+    totals = {name: value / charge / 1000 for name, value, charge in zip(BASIS, amounts, VALENCES)}
     low, high = 3.0, 9.0
     assert solve(totals, low).charge_balance > 0
     assert solve(totals, high).charge_balance < 0
@@ -71,15 +72,15 @@ class SteinerReferenceTests(unittest.TestCase):
             for group, shares in ((amounts[:3], [80, 10, 10]), (amounts[3:], [80, 5, 15])):
                 for value, expected in zip(group, shares):
                     self.assertAlmostEqual(100 * value / sum(group), expected, places=12)
-        self.assertAlmostEqual(dose, .2933946554595, places=12)
+        self.assertAlmostEqual(dose, 0.2933946554595, places=12)
         final = batches["final"]
         self.assertAlmostEqual(sum(final[:3]) - sum(final[3:]), dose, places=12)
         for value, printed in zip(final, FIXTURE["final_printed_meq_l"]):
-            self.assertLess(abs(value - printed), .001)
+            self.assertLess(abs(value - printed), 0.001)
 
     def test_titration_adds_potassium_and_increases_count(self):
         batches, _ = preparations()
-        self.assertAlmostEqual(batches["titrated"][0] - batches["initial"][0], .296)
+        self.assertAlmostEqual(batches["titrated"][0] - batches["initial"][0], 0.296)
         self.assertEqual(batches["titrated"][1:], batches["initial"][1:])
         self.assertAlmostEqual(counted_total(batches["titrated"]), 30.296)
 
@@ -89,12 +90,14 @@ class SteinerReferenceTests(unittest.TestCase):
         for stage, amounts in batches.items():
             with self.subTest(stage=stage):
                 ph, state = predicted_ph(amounts)
-                self.assertAlmostEqual(ph, regression["expected_ph"][stage],
-                                       delta=regression["ph_absolute_tolerance"])
+                self.assertAlmostEqual(
+                    ph, regression["expected_ph"][stage], delta=regression["ph_absolute_tolerance"]
+                )
                 self.assertLess(abs(state.charge_balance), 1e-10)
-                self.assertLess(state.ionic_strength, .1)
-        self.assertAlmostEqual(FIXTURE["measurements"]["final"]
-                               - FIXTURE["measurements"]["titrated"], .13)
+                self.assertLess(state.ionic_strength, 0.1)
+        self.assertAlmostEqual(
+            FIXTURE["measurements"]["final"] - FIXTURE["measurements"]["titrated"], 0.13
+        )
 
     def test_source_measurements_remain_observations(self):
         self.assertEqual(
@@ -102,8 +105,10 @@ class SteinerReferenceTests(unittest.TestCase):
         )
         self.assertTrue(FIXTURE["uncertainties"])
         self.assertEqual(FIXTURE["model_assumptions"]["temperature_c"], 25)
-        self.assertEqual(article_evidence()["solution_1a"]["measured_ph"],
-                         [FIXTURE["measurements"][s] for s in ("initial", "titrated", "final")])
+        self.assertEqual(
+            article_evidence()["solution_1a"]["measured_ph"],
+            [FIXTURE["measurements"][s] for s in ("initial", "titrated", "final")],
+        )
 
 
 if __name__ == "__main__":
@@ -112,10 +117,26 @@ if __name__ == "__main__":
     for stage, amounts in batches.items():
         ph, state = predicted_ph(amounts)
         measured = FIXTURE["measurements"][stage]
-        rows.append({"stage": stage, "measured_ph": measured, "predicted_ph": ph,
-                     "difference": ph - measured, "meq_l": amounts,
-                     "counted_mmol_l": counted_total(amounts),
-                     "charge_residual_mol_kg": state.charge_balance})
-    print(json.dumps({"source": FIXTURE["source"], "article_evidence": article_evidence(),
-                      "assumptions": FIXTURE["model_assumptions"],
-                      "final_koh_meq_l": dose, "results": rows}, indent=2))
+        rows.append(
+            {
+                "stage": stage,
+                "measured_ph": measured,
+                "predicted_ph": ph,
+                "difference": ph - measured,
+                "meq_l": amounts,
+                "counted_mmol_l": counted_total(amounts),
+                "charge_residual_mol_kg": state.charge_balance,
+            }
+        )
+    print(
+        json.dumps(
+            {
+                "source": FIXTURE["source"],
+                "article_evidence": article_evidence(),
+                "assumptions": FIXTURE["model_assumptions"],
+                "final_koh_meq_l": dose,
+                "results": rows,
+            },
+            indent=2,
+        )
+    )

@@ -33,7 +33,7 @@ def orderings(count):
 
 
 def exercise(case, order_index=0):
-    name, expected, request, proof = case
+    name, expected, request, _proof = case
     req = deepcopy(request)
     order = orderings(len(req['products']))[order_index]
     req['products'] = [req['products'][i] for i in order]
