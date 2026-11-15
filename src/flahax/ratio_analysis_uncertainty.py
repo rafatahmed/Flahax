@@ -203,6 +203,11 @@ def verify_analysis_uncertainty(recipe, options):
         scenario_count=0,
         failed_checks=[],
         phase_maxima={},
+        ph_refinement={
+            "scenarios": [],
+            "total_ph_evaluations": 0,
+            "continuous_extrema_proved": False,
+        },
         ratio_percent_ranges=None,
         counted_mmol_l_range=None,
         worst_ratio_relative_error=0.0,
@@ -214,7 +219,7 @@ def verify_analysis_uncertainty(recipe, options):
         coverage=(
             "Analytical inventory bounds cover the declared independent intervals. "
             "Chemistry uses deterministic axes, analytical-extreme witnesses and mixed "
-            "corner/interior samples on every disclosed pH grid point; unsampled "
+            "corner/interior samples with separate adaptive pH refinement per scenario; unsampled "
             "chemistry extrema are not bounded."
         ),
         qualification=(
@@ -555,9 +560,24 @@ def verify_analysis_uncertainty(recipe, options):
                     if result[key] is None
                     else [min(result[key][0], value), max(result[key][1], value)]
                 )
+            from .ratio_ph_refinement import refine_ph
+
+            states, refinement = refine_ph(
+                lambda ph: solve(rebuilt["aqueous_totals_mol_kg"], ph),
+                nominal.get("base_evaluated_ph", nominal["evaluated_ph"]),
+                nominal["selected_phases"],
+                result["si_required_below"],
+            )
+            refinement["scenario"] = index
+            refinement["evaluated_ph"] = sorted(states)
+            result["ph_refinement"]["scenarios"].append(refinement)
+            result["ph_refinement"]["total_ph_evaluations"] += len(states)
+            if not refinement["complete"]:
+                raise DeliveryError(
+                    "ph_refinement_incomplete", "Scenario pH sampling budget exhausted"
+                )
             charges = []
-            for ph in nominal["evaluated_ph"]:
-                state = solve(rebuilt["aqueous_totals_mol_kg"], ph)
+            for ph, state in sorted(states.items()):
                 charges.append(state.charge_balance - reference)
                 for phase in nominal["selected_phases"]:
                     si = state.saturation_indices.get(phase)

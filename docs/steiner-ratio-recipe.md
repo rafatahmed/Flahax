@@ -711,3 +711,37 @@ Mg 2, nitrate-N 6, P 8, S 1.4, Na 10, Cl 20 and ammonium-N 0.01 mg/L. Its
 source-water NH4+ is an explicit synthetic zero, not an actual laboratory result.
 The previous physical preparation bounds and pH interval 6.28-6.32 are retained.
 These values exercise software acceptance and are not crop recommendations.
+
+### Adaptive pH refinement
+
+Rounded-recipe checks now keep the endpoint/target/interior grid (maximum initial
+spacing 0.001 pH) and adaptively bisect intervals around observed mineral maxima,
+every observed local peak, and crossings of SI = 0 or the requested guarded SI
+limit. Each selected phase contributes refinement intervals. Refinement stops
+when these detected features have adjacent intervals no wider than `1e-5` pH.
+This local resolution is not the maximum spacing everywhere in the interval.
+
+The policy allows at most 16 rounds and 256 additional points per chemistry
+scenario. Unfinished refinement or missing/nonfinite selected phase data gives
+an incomplete check; search cannot accept it as a passing recipe. A single-pH
+request remains a single evaluation. Existing limits and the `1e-7` SI comparison
+guard are unchanged; an actual detected exceedance still fails.
+
+`rounded_verification.base_evaluated_ph` records the initial grid, while
+`evaluated_ph` includes the added samples. `ph_refinement` reports resolution,
+rounds, budgets, completion, unresolved intervals, maximum-neighbour intervals
+and SI crossing brackets. Charge residuals stay aligned with the sorted evaluated
+pH values. The separately calculated equilibrium pH bracket is unchanged.
+
+Both uncertainty workflows independently refine **each** preparation scenario
+from the coarse grid; they do not assume nominal-recipe refinement is sufficient
+for every uncertain composition. `uncertainty_verification.ph_refinement` records
+per-scenario completion/evaluated points and total pH evaluations. Worst mineral
+SIs include all refined points. Preparation scenario count/budget, source-water,
+assay, density, solvent, weighing and final-volume bounds remain visible.
+
+Refinement follows features detected at sampled points. A narrow unsampled peak
+can still be missed. Neither local refinement nor a sampled uncertainty pass is
+a mathematical bound over continuous pH/composition, a global optimum or proof
+of physical stability. The existing `examples/steiner-nutrient-limits.json` uses
+this policy without changing its rounded 10-litre recipe or acceptance limits.

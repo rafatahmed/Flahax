@@ -74,6 +74,11 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
         "status": "failed",
         "assumptions": dict(options),
         "phase_maxima": {},
+        "ph_refinement": {
+            "scenarios": [],
+            "total_ph_evaluations": 0,
+            "continuous_extrema_proved": False,
+        },
         "scenario_count": 0,
         "planned_scenarios": 0,
         "failed_checks": [],
@@ -164,9 +169,24 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
                             "sodium_chloride_limits" if key in ("Na", "Cl") else "nutrient_limits"
                         )
                 totals = dict(zip(BASIS, [a / 1000 / water_mass for a in batch]))
+                from .ratio_ph_refinement import refine_ph
+
+                states, refinement = refine_ph(
+                    lambda ph: solve(totals, ph),
+                    nominal.get("base_evaluated_ph", nominal["evaluated_ph"]),
+                    nominal["selected_phases"],
+                    nominal["si_required_below"],
+                )
+                refinement["scenario"] = result["scenario_count"]
+                refinement["evaluated_ph"] = sorted(states)
+                result["ph_refinement"]["scenarios"].append(refinement)
+                result["ph_refinement"]["total_ph_evaluations"] += len(states)
+                if not refinement["complete"]:
+                    raise DeliveryError(
+                        "ph_refinement_incomplete", "Scenario pH sampling budget exhausted"
+                    )
                 charges = []
-                for ph in nominal["evaluated_ph"]:
-                    state = solve(totals, ph)
+                for ph, state in sorted(states.items()):
                     charges.append(state.charge_balance)
                     for phase in nominal["selected_phases"]:
                         si = state.saturation_indices.get(phase)

@@ -135,6 +135,7 @@ def verify_rounded_recipe(
         if sum(equivalents[3:])
         else None,
         "evaluated_ph": [],
+        "base_evaluated_ph": list(grid),
         "max_grid_spacing": max((b - a for a, b in zip(grid, grid[1:])), default=0),
         "coverage": "Endpoints, target and interior grid; maximum spacing 0.001 pH. "
         "This sampled check supplies no mathematical bound between grid points.",
@@ -153,9 +154,16 @@ def verify_rounded_recipe(
     }
     states = {}
     try:
-        for ph in grid:
-            state = solve(totals, ph)
-            states[ph] = state
+        from .ratio_ph_refinement import refine_ph
+
+        states, result["ph_refinement"] = refine_ph(
+            lambda ph: solve(totals, ph), grid, phases, result["si_required_below"]
+        )
+        result["coverage"] += (
+            " Adaptive refinement resolves observed peaks and crossings to 1e-5 pH locally; "
+            "no continuous bound is proved."
+        )
+        for ph, state in sorted(states.items()):
             result["evaluated_ph"].append(ph)
             result["charge_residuals_mol_kg"].append(state.charge_balance)
             for phase in phases:
@@ -165,6 +173,10 @@ def verify_rounded_recipe(
                 previous = result["phase_maxima"].get(phase)
                 if previous is None or value > previous["si"]:
                     result["phase_maxima"][phase] = {"si": value, "ph": ph}
+        if not result["ph_refinement"]["complete"]:
+            raise DeliveryError(
+                "ph_refinement_incomplete", "Adaptive pH sampling budget exhausted"
+            )
         result["target_ph_saturation_indices"] = {
             phase: states[recipe["target_ph"]].saturation_indices[phase] for phase in phases
         }
