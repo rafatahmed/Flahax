@@ -313,7 +313,7 @@ Supply limits separately, for example:
 ```
 
 These are user-chosen elemental mg/L ceilings, not recommended crop limits.
-Only Na/Cl ceilings are supported by this entry point. Omitted limits remain
+Ceilings support K, Ca, Mg, N_NO3, P, S, Na, Cl and N_NH4. Omitted limits remain
 unspecified and incidental ions require review; explicit zero permits no addition
 of that ion. Water, fertilizers, pH reagents and derived counterions all count.
 The fit includes these ceilings, and final reconstruction and rounded verification
@@ -677,3 +677,37 @@ water 0.099-0.101 kg, product solvent fractions 0.9799-0.9800 and fixed source
 solvent fraction 0.9999. Existing weighing, volume, assay, Na/Cl, ratio and
 saturation limits remain unchanged. These are demonstration assumptions, not
 validated preparation specifications or proof of continuous chemistry extrema.
+
+### Expanded analytical nutrient ceilings
+
+`maximum_concentrations` accepts K, Ca, Mg, N_NO3, P, S, Na, Cl and N_NH4,
+all as elemental mg/L. `N_NO3` and `N_NH4` mean nitrate-nitrogen and
+ammonium-nitrogen, respectively, not nitrate or ammonium ion mass. P and S are
+elemental amounts, not phosphate and sulfate mass. Oxide limits, total nitrogen,
+micronutrient ceilings, activity limits and lower-bound targets are not supported
+by this entry point. Unknown keys fail validation; no limits are inferred from crops.
+
+Allocation includes supported commercial-product ceilings; nominal and rounded
+inventories use direct ceiling comparisons. A pure-salt nominal exceedance raises
+`ratio_limit_exceeded`. Uncertainty includes limits on all supported quantities:
+`elemental_mg_l_ranges` now reports all nine analytical ranges in material modes.
+`nutrient_limits` identifies a non-Na/Cl exceedance; `sodium_chloride_limits`
+remains the compatibility code for Na/Cl failures. Existing pure-salt/stock
+uncertainty paths also check the six-nutrient ceilings at their preparation
+corners. Search cannot accept a failed uncertainty result.
+
+Explicit source-water `NH4+` in `totals_mol_kg` is supported. It enters full
+chemistry, nitrogen accounting and limits, while remaining outside Steiner's
+six-nutrient count and equivalent-share groups. If an N_NH4 ceiling is requested
+with real water, NH4+ must be supplied explicitly, including a justified zero;
+otherwise `missing_water_ammonium` is raised. Steiner did not validate ammonium
+in his historical ratio/pH method. Product ammonium and ingredient-derived
+ammonium are included through existing material inventories. Independent assay
+mode refuses an inferred ammonium contribution without explicit bounds; disclosed
+ingredient mode retains its correlation with the ingredient.
+
+`examples/steiner-nutrient-limits.json` uses illustrative ceilings K 16, Ca 5,
+Mg 2, nitrate-N 6, P 8, S 1.4, Na 10, Cl 20 and ammonium-N 0.01 mg/L. Its
+source-water NH4+ is an explicit synthetic zero, not an actual laboratory result.
+The previous physical preparation bounds and pH interval 6.28-6.32 are retained.
+These values exercise software acceptance and are not crop recommendations.

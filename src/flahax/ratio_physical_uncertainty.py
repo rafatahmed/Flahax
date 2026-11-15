@@ -95,22 +95,22 @@ def water_vertices(water, options, dimension):
     """Keep one source-water quantity shared by all water constituent assays."""
     masses = options["physical_preparation"]["source_water_mass_kg"]
     dimension("source_water.mass", *masses)
-    keys = [k for k in (*BASIS, "Na+", "Cl-") if water["totals_mol_kg"][k] > 0]
+    keys = [k for k in (*BASIS, "Na+", "Cl-", "NH4+") if water["totals_mol_kg"].get(k, 0) > 0]
     vectors, coordinates = [], []
     for m_end in (0, 1):
         for ends in itertools.product((0, 1), repeat=len(keys)):
-            vector = [0.0] * 8
+            vector = [0.0] * 9
             coords = {"source_water.mass": m_end}
             for k, end in zip(keys, ends):
                 v = water["totals_mol_kg"][k] * (
                     1 + options["water_relative_error"] * (2 * end - 1)
                 )
-                i = BASIS.index(k) if k in BASIS else (6 if k == "Na+" else 7)
+                i = BASIS.index(k) if k in BASIS else {"Na+": 6, "Cl-": 7, "NH4+": 8}[k]
                 vector[i] = (
                     v
                     * masses[m_end]
                     * 1000
-                    * (1 if i < 6 else MOLAR_MASS["Na" if i == 6 else "Cl"])
+                    * (1 if i < 6 else MOLAR_MASS[{6: "Na", 7: "Cl", 8: "N"}[i]])
                 )
                 coords["water." + k] = end
             vectors.append(vector)

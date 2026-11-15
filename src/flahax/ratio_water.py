@@ -50,12 +50,12 @@ def account_water(water, volume, final_water_mass):
     if (
         not isinstance(totals, dict)
         or not needed <= totals.keys()
-        or totals.keys() - needed - {"CO3-2"}
+        or totals.keys() - needed - {"CO3-2", "NH4+"}
     ):
         raise DeliveryError(
             "invalid_ratio_water",
             "Explicit six nutrient, sodium and chloride totals (including zeros) are "
-            "required; only inorganic carbon may be added",
+            "required; inorganic carbon and ammonium may be added",
         )
     measured = balance_water_analysis(
         totals,

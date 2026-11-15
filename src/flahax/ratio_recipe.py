@@ -78,6 +78,18 @@ def plan_ratio_recipe(
         "water_product_elemental",
     )
     limits = validate_limits(maximum_concentrations)
+    if (
+        "N_NH4" in limits
+        and isinstance(water, dict)
+        and (
+            not isinstance(water.get("totals_mol_kg"), dict)
+            or "NH4+" not in water["totals_mol_kg"]
+        )
+    ):
+        raise DeliveryError(
+            "missing_water_ammonium",
+            "An ammonium limit requires explicit source-water NH4+, including a justified zero",
+        )
     if products is not None:
         if ph_reagents is not None:
             raise DeliveryError(
@@ -172,7 +184,7 @@ def plan_ratio_recipe(
     )
     if not limit_assessment(water_elements, limits)["passed"]:
         raise DeliveryError(
-            "ratio_limit_exceeded", "Source water exceeds a sodium/chloride maximum"
+            "ratio_limit_exceeded", "Source water exceeds a stated nutrient maximum"
         )
     if products is not None:
         result = plan_products(
@@ -314,6 +326,8 @@ def plan_ratio_recipe(
         result["aqueous_totals_mol_kg"], volume, water_mass
     )
     result["limit_assessment"] = limit_assessment(result["elemental_mg_l"], limits)
+    if not result["limit_assessment"]["passed"]:
+        raise DeliveryError("ratio_limit_exceeded", "Recipe exceeds a stated nutrient maximum")
     return _finish_recipe(
         result,
         ph_range,

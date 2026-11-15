@@ -134,7 +134,7 @@ def blend_vertices(row, options, dimension):
                 percent.get(k, 0) * 10 * masses[mass_end] / MOLAR_MASS[k.split("_")[0]]
                 for k in LABELS
             ]
-            vector += [percent.get(k, 0) * 10 * masses[mass_end] for k in ("Na", "Cl")]
+            vector += [percent.get(k, 0) * 10 * masses[mass_end] for k in ("Na", "Cl", "N_NH4")]
             vectors.append(vector)
             coordinates.append(
                 {

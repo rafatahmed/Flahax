@@ -17,11 +17,13 @@ VALENCES = (1, 2, 2, 1, 1, 2)
 
 
 def validate_limits(limits):
-    """Explicit Na/Cl maxima in elemental mg/L, with no crop-specific defaults."""
+    """Explicit analytical nutrient maxima in elemental mg/L, without crop defaults."""
     if limits is None:
         return {}
-    if not isinstance(limits, dict) or set(limits) - {"Na", "Cl"}:
-        raise DeliveryError("invalid_ratio_limits", "Only Na and Cl maxima in mg/L are supported")
+    if not isinstance(limits, dict) or set(limits) - {*LABELS, "Na", "Cl", "N_NH4"}:
+        raise DeliveryError(
+            "invalid_ratio_limits", "Use K, Ca, Mg, N_NO3, P, S, Na, Cl or N_NH4 in elemental mg/L"
+        )
     return _checked_profile(limits, "maximum_concentrations")
 
 
@@ -39,7 +41,10 @@ def _checked_profile(values, name):
 
 def limit_assessment(elemental, limits):
     """Use the existing direct ceiling comparison on the analytical inventory."""
-    rows = [{"symbol": n, "target": None, "final": elemental.get(n, 0.0)} for n in ("Na", "Cl")]
+    rows = [
+        {"symbol": n, "target": None, "final": elemental.get(n, 0.0)}
+        for n in dict.fromkeys(("Na", "Cl", *limits))
+    ]
     result = assess_incidental(rows, limits)
     result["passed"] = not result["limitViolations"]
     result["maximum_concentrations_mg_l"] = dict(limits)
@@ -183,7 +188,7 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
     water_elements = elemental_from_totals(initial, volume, mass)
     if not limit_assessment(water_elements, limits)["passed"]:
         raise DeliveryError(
-            "ratio_limit_exceeded", "Source water exceeds a sodium/chloride maximum"
+            "ratio_limit_exceeded", "Source water exceeds a stated nutrient maximum"
         )
     # Explicit zero headroom cannot be supplied by any nonnegative product dose.
     keep = [

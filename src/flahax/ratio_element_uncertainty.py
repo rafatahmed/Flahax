@@ -91,7 +91,7 @@ def validate_element_factors(sources, factors):
             )
         missing = {
             k
-            for k in (*LABELS, "Na", "Cl")
+            for k in (*LABELS, "Na", "Cl", "N_NH4")
             if k not in product["elements"]
             and source["inventory"]["nutrient_percent"].get(k, 0) > 0
         }
@@ -118,7 +118,9 @@ def product_vertices(row, options, dimension):
     for key, value in row["product"]["elements"].items():
         if dose > 0 and value > 0:
             dimension("assay." + name + "." + key, *factors[key])
-    relevant = [k for k in (*LABELS, "Na", "Cl") if row["product"]["elements"].get(k, 0) > 0]
+    relevant = [
+        k for k in (*LABELS, "Na", "Cl", "N_NH4") if row["product"]["elements"].get(k, 0) > 0
+    ]
     # Each product is one group, retaining a common dose for every element.
     # Other elements affect chemistry but not the six-ion/Na/Cl objective vertices.
     vertices = []
@@ -127,7 +129,7 @@ def product_vertices(row, options, dimension):
         for ends in itertools.product((0, 1), repeat=len(relevant)):
             chosen = dict(zip(relevant, ends))
             vector = []
-            for key in (*LABELS, "Na", "Cl"):
+            for key in (*LABELS, "Na", "Cl", "N_NH4"):
                 percent = row["product"]["elements"].get(key, 0)
                 factor = factors[key][chosen.get(key, 0)] if key in factors else 1.0
                 mg = percent * 10 * masses[mass_end] * factor

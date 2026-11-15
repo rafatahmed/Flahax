@@ -7,6 +7,8 @@ from .aqueous_model import solve
 from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
 from .ratio_verification import BASIS, ELEMENTS, VALENCES
+from .ratio_products import LABELS
+from .product_conversion import MOLAR_MASS
 
 
 def validate_uncertainty(options, volume, *, stock_mode=False):
@@ -152,6 +154,15 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
                 if relative > options["concentration_relative_tolerance"] + 1e-10:
                     failures.add("total_concentration")
                 water_mass = recipe["water_mass_kg"] * volume / recipe["volume_litres"]
+                elemental = {
+                    k: batch[i] / volume * MOLAR_MASS[k.split("_")[0]]
+                    for i, k in enumerate(LABELS)
+                }
+                for key, cap in recipe.get("maximum_concentrations", {}).items():
+                    if elemental.get(key, 0) > cap:
+                        failures.add(
+                            "sodium_chloride_limits" if key in ("Na", "Cl") else "nutrient_limits"
+                        )
                 totals = dict(zip(BASIS, [a / 1000 / water_mass for a in batch]))
                 charges = []
                 for ph in nominal["evaluated_ph"]:

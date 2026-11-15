@@ -113,7 +113,7 @@ class RatioWaterTests(unittest.TestCase):
             item['totals_mol_kg'].pop(key)
             cases.append(item)
         item = water()
-        item['totals_mol_kg']['NH4+'] = 0.001
+        item['totals_mol_kg']['NO2-'] = 0.001
         cases.append(item)
         item = water()
         item['source_water_mass_kg'] = 11

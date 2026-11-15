@@ -287,13 +287,15 @@ def verify_analysis_uncertainty(recipe, options):
             )
             name = "water." + key
             dimension(name, low, high)
-            vector = [0.0] * 8
+            vector = [0.0] * 9
             if key in BASIS:
                 vector[BASIS.index(key)] = source_mass * 1000
             if key in ("Na+", "Cl-"):
                 vector[6 if key == "Na+" else 7] = (
                     source_mass * MOLAR_MASS["Na" if key == "Na+" else "Cl"] * 1000
                 )
+            if key == "NH4+":
+                vector[8] = source_mass * MOLAR_MASS["N"] * 1000
             if not physical:
                 groups.append((name, [v * low for v in vector], [v * high for v in vector]))
         if physical:
@@ -340,7 +342,7 @@ def verify_analysis_uncertainty(recipe, options):
             dimension(name, low, high)
             percent = row["inventory"]["nutrient_percent"]
             vector = [percent.get(k, 0) * 10 / MOLAR_MASS[k.split("_")[0]] for k in LABELS]
-            vector += [percent.get(k, 0) * 10 for k in ("Na", "Cl")]
+            vector += [percent.get(k, 0) * 10 for k in ("Na", "Cl", "N_NH4")]
             groups.append((name, [v * low for v in vector], [v * high for v in vector]))
         solvent_high = (
             options["physical_preparation"]["product_solvent_fractions"][row["name"]][1]
@@ -354,17 +356,19 @@ def verify_analysis_uncertainty(recipe, options):
     result["counted_mmol_l_range"] = [count_low, count_high]
     result["elemental_mg_l_ranges"] = {
         k: [
-            sum(min(v[i] for v in g[1:]) for g in groups) / volumes[1],
-            sum(max(v[i] for v in g[1:]) for g in groups) / volumes[0],
+            sum(min(v[i] for v in g[1:]) for g in groups)
+            / volumes[1]
+            * (MOLAR_MASS[k.split("_")[0]] if i < 6 else 1),
+            sum(max(v[i] for v in g[1:]) for g in groups)
+            / volumes[0]
+            * (MOLAR_MASS[k.split("_")[0]] if i < 6 else 1),
         ]
-        for k, i in (("Na", 6), ("Cl", 7))
+        for i, k in enumerate((*LABELS, "Na", "Cl", "N_NH4"))
     }
     failures = set()
-    if any(
-        result["elemental_mg_l_ranges"][k][1] > cap
-        for k, cap in recipe.get("maximum_concentrations", {}).items()
-    ):
-        failures.add("sodium_chloride_limits")
+    for k, cap in recipe.get("maximum_concentrations", {}).items():
+        if result["elemental_mg_l_ranges"][k][1] > cap:
+            failures.add("sodium_chloride_limits" if k in ("Na", "Cl") else "nutrient_limits")
     result["maximum_declared_product_solvent_kg"] = maximum_solvent
     minimum_water_mass = recipe["water_mass_kg"] * volumes[0] / volume
     if physical:
