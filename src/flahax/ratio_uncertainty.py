@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Bounded preparation scenarios for rounded six-ingredient recipes."""
 
 import itertools
@@ -84,6 +88,7 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
         "failed_checks": [],
         "ratio_percent_ranges": None,
         "counted_mmol_l_range": None,
+        "elemental_mg_l_ranges": {},
         "all_scenario_ph_in_range": None,
         "ph_failure_example": None,
         "worst_ratio_relative_error": 0.0,
@@ -163,6 +168,12 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
                     k: batch[i] / volume * MOLAR_MASS[k.split("_")[0]]
                     for i, k in enumerate(LABELS)
                 }
+                for key, value in elemental.items():
+                    prior = result["elemental_mg_l_ranges"].get(key, [value, value])
+                    result["elemental_mg_l_ranges"][key] = [
+                        min(prior[0], value),
+                        max(prior[1], value),
+                    ]
                 for key, cap in recipe.get("maximum_concentrations", {}).items():
                     if elemental.get(key, 0) > cap:
                         failures.add(

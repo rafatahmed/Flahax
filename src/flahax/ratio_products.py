@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Commercial-material inventories and a local fixed-ratio allocation."""
 
 from copy import deepcopy
@@ -258,6 +262,16 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         rhs.append(bound / scale)
     factor = volume / mass
     charge_scale = mass / volume * 1000 / strength
+    # Chemically identical dose directions must have the same charge derivative.
+    # Independent finite-difference steps can otherwise break exact redundancy
+    # and make NNLS transfer dose between equivalent products (#248).
+    directions = [
+        tuple(sorted(s["inventory"]["components_moles_per_gram"].items())) for s in active
+    ]
+    direction_columns = {
+        direction: [j for j, value in enumerate(directions) if value == direction]
+        for direction in directions
+    }
 
     def state(point):
         totals = dict(initial)
@@ -280,11 +294,15 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         ):
             break
         derivative = []
+        charge_derivatives = {}
         for j in range(n):
-            step = 1e-5 * max(1, point[j])
-            trial = list(point)
-            trial[j] += step
-            derivative.append((errors(trial)[1] - charge) / step)
+            direction = directions[j]
+            if direction not in charge_derivatives:
+                step = 1e-5 * max(1, sum(point[k] for k in direction_columns[direction]))
+                trial = list(point)
+                trial[j] += step
+                charge_derivatives[direction] = (errors(trial)[1] - charge) / step
+            derivative.append(charge_derivatives[direction])
         derivative += [0.0] * slack
         proposal = nnls(
             matrix + [derivative], rhs + [sum(a * x for a, x in zip(derivative, point)) - charge]

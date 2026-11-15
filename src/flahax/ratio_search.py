@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Flaha. Created by Rafat A. Al Khashan.
+# SPDX-License-Identifier: Apache-2.0
+# Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
+# its results are calculations, not dosing instructions.
 """Bounded search for numerically passing recipes with optional record gating."""
 
 import math
@@ -5,6 +9,7 @@ import math
 from .delivery_contracts import DeliveryError
 from .ratio_recipe import plan_ratio_recipe, _number
 from .steiner_context import historical_context
+from .ratio_search_evidence import constraint_violations, observed_limit
 
 
 def search_ratio_recipe(
@@ -57,7 +62,12 @@ def search_ratio_recipe(
             ):
                 raise
             status = "failed" if exc.code.startswith("ratio_") else "incomplete"
-            evaluated[strength] = {"status": status, "error": str(exc)}
+            evaluated[strength] = {
+                "status": status,
+                "error": str(exc),
+                "error_code": exc.code,
+                "constraint_violations": [],
+            }
             return status
         check = recipe.get("uncertainty_verification", recipe["rounded_verification"])
         status = check["status"]
@@ -67,7 +77,10 @@ def search_ratio_recipe(
         if recipe_options.get("batch_stability") is not None and not recipe.get("stable", False):
             if status == "passed":
                 status = "failed"
-        evaluated[strength] = {"status": status}
+        evaluated[strength] = {
+            "status": status,
+            "constraint_violations": constraint_violations(recipe),
+        }
         if "stability_assessment" in recipe:
             evaluated[strength]["stability_status"] = recipe["stability_assessment"]["status"]
         if "stock_verification" in recipe:
@@ -126,6 +139,17 @@ def search_ratio_recipe(
         "verification_status": "unverified",
         "limiting_phase": None,
         "controlling_ph": None,
+        "highest_si_phase": None,
+        "highest_si_ph": None,
+        "observed_strength_limit": {
+            "status": "unknown",
+            "reason": "no_selected_candidate",
+            "violations": [],
+        },
+        "limiting_phase_scope": (
+            "Compatibility alias for highest_si_phase; "
+            "not necessarily the observed strength constraint."
+        ),
         "claim": "Strongest numerically passing rounded candidate found over the stated scan and "
         "transition refinements. Disconnected narrow feasible regions may be missed.",
         "coverage": "Every candidate uses the reported pH grid. Rounding can make "
@@ -174,5 +198,8 @@ def search_ratio_recipe(
         search_cap_reached=math.isclose(strength, high, rel_tol=0, abs_tol=0),
         limiting_phase=phase,
         controlling_ph=maxima[phase]["ph"],
+        highest_si_phase=phase,
+        highest_si_ph=maxima[phase]["ph"],
+        observed_strength_limit=observed_limit(strength, high, brackets, evaluated),
     )
     return result
