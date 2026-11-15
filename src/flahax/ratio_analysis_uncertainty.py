@@ -29,6 +29,12 @@ def validate_analysis_uncertainty(options, volume, products, water):
         "water_mass_model",
         "max_scenarios",
     }
+    physical = (
+        isinstance(options, dict)
+        and options.get("water_mass_model") == "closed_batch_mass_balance"
+    )
+    if physical:
+        required.add("physical_preparation")
     if (
         not isinstance(options, dict)
         or set(options) != required
@@ -44,6 +50,7 @@ def validate_analysis_uncertainty(options, volume, products, water):
         "impurity_model",
         "water_mass_model",
         "max_scenarios",
+        "physical_preparation",
     }:
         v = options[key]
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
@@ -64,13 +71,13 @@ def validate_analysis_uncertainty(options, volume, products, water):
             "invalid_analysis_uncertainty",
             "Water concentrations and final volume must remain nonnegative/positive",
         )
-    if (
-        options["impurity_model"] != "inert"
-        or options["water_mass_model"] != "scale_with_final_volume"
+    if options["impurity_model"] != "inert" or options["water_mass_model"] not in (
+        "scale_with_final_volume",
+        "closed_batch_mass_balance",
     ):
         raise DeliveryError(
             "invalid_analysis_uncertainty",
-            "Declare inert missing active content and scale_with_final_volume water mass",
+            "Declare inert missing active content and a supported water mass model",
         )
     if type(options["max_scenarios"]) is not int or not 1 <= options["max_scenarios"] <= 4096:
         raise DeliveryError(
@@ -90,7 +97,11 @@ def validate_analysis_uncertainty(options, volume, products, water):
 
         options, _ = resolve_documented_assays(options, sources)
         validate_element_factors(sources, options[assay_field])
-    else:
+    if physical:
+        from .ratio_physical_uncertainty import validate_physical
+
+        validate_physical(options, sources, water)
+    if not elemental:
         names = [p["name"] for p in sources]
         factors = options["product_assay_factors"]
         if (
@@ -178,6 +189,7 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
 def verify_analysis_uncertainty(recipe, options):
     """Bound linear inventory quantities and sample nonlinear chemistry without refitting."""
     elemental = options["mode"] == "water_product_elemental"
+    physical = options["water_mass_model"] == "closed_batch_mass_balance"
     nominal = recipe["rounded_verification"]
     document_evidence = {}
     if elemental:
@@ -240,6 +252,16 @@ def verify_analysis_uncertainty(recipe, options):
             "impurities and temperature/gas effects remain excluded."
         )
         result["maximum_abs_assay_chemistry_difference_mg_l"] = {}
+    if physical:
+        result["qualification"] = (
+            "Closed-batch mass balance: density times volume gives total batch mass; "
+            "declared non-solvent product and source-water mass is subtracted to obtain "
+            "final solvent mass. Source-water quantity is shared by all its constituents. "
+            "Pure make-up water fills the remaining mass. Solvent fractions and density "
+            "are independent supplied intervals, not predicted properties. No evaporation, "
+            "gas-transfer mass, reactive impurities or experimental verification is modeled. "
+            "Analytical interval bounds retain source correlations; chemistry remains sampled."
+        )
     if nominal["status"] != "passed":
         result.update(status=nominal["status"], failed_checks=["nominal_recipe"])
         return result
@@ -272,7 +294,14 @@ def verify_analysis_uncertainty(recipe, options):
                 vector[6 if key == "Na+" else 7] = (
                     source_mass * MOLAR_MASS["Na" if key == "Na+" else "Cl"] * 1000
                 )
-            groups.append((name, [v * low for v in vector], [v * high for v in vector]))
+            if not physical:
+                groups.append((name, [v * low for v in vector], [v * high for v in vector]))
+        if physical:
+            from .ratio_physical_uncertainty import water_vertices
+
+            group, coords = water_vertices(water, options, dimension)
+            groups.append(group)
+            choice_coordinates[group[0]] = coords
         if "alkalinity_eq_per_kg" in water:
             v = water["alkalinity_eq_per_kg"]
             a, b = sorted(
@@ -313,7 +342,12 @@ def verify_analysis_uncertainty(recipe, options):
             vector = [percent.get(k, 0) * 10 / MOLAR_MASS[k.split("_")[0]] for k in LABELS]
             vector += [percent.get(k, 0) * 10 for k in ("Na", "Cl")]
             groups.append((name, [v * low for v in vector], [v * high for v in vector]))
-        maximum_solvent += (dose + error) * row["solvent_fraction"] / 1000
+        solvent_high = (
+            options["physical_preparation"]["product_solvent_fractions"][row["name"]][1]
+            if physical
+            else row["solvent_fraction"]
+        )
+        maximum_solvent += (dose + error) * solvent_high / 1000
     dimension("volume", *volumes)
     count_low = sum(min(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[1]
     count_high = sum(max(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[0]
@@ -333,7 +367,18 @@ def verify_analysis_uncertainty(recipe, options):
         failures.add("sodium_chloride_limits")
     result["maximum_declared_product_solvent_kg"] = maximum_solvent
     minimum_water_mass = recipe["water_mass_kg"] * volumes[0] / volume
-    if (
+    if physical:
+        from .ratio_physical_uncertainty import mass_bounds
+
+        mass_range, makeup_low = mass_bounds(recipe, options, dimension)
+        result["final_water_mass_kg_range"] = mass_range
+        result["minimum_pure_makeup_water_kg"] = makeup_low
+        if makeup_low < 0 or mass_range[0] <= 0:
+            result.update(
+                status="failed", failed_checks=sorted(failures | {"physical_mass_balance"})
+            )
+            return result
+    elif (
         maximum_solvent + recipe["water_accounting"].get("source_water_mass_kg", 0)
         > minimum_water_mass
     ):
@@ -407,6 +452,12 @@ def verify_analysis_uncertainty(recipe, options):
             if name.startswith("product.")
             else "litres"
             if name == "volume"
+            else "kg/L final solution"
+            if name == "solution.density"
+            else "kg source solvent water"
+            if name == "source_water.mass"
+            else "solvent mass fraction"
+            if name.startswith("solvent.") or name == "source_water.solvent_fraction"
             else "pH"
             if name == "water.ph"
             else "eq/kg source water"
@@ -446,8 +497,18 @@ def verify_analysis_uncertainty(recipe, options):
             }
             actual_volume = values.get("volume", volume)
             mass = recipe["water_mass_kg"] * actual_volume / volume
+            if physical:
+                from .ratio_element_uncertainty import perturb_sources
+                from .ratio_physical_uncertainty import scenario_mass
+
+                changed, doses = perturb_sources(sources, options, values)
+                mass, actual_source_mass = scenario_mass(
+                    changed, doses, options, values, actual_volume
+                )
             actual_water = deepcopy(water)
             if isinstance(actual_water, dict):
+                if physical:
+                    actual_water["source_water_mass_kg"] = actual_source_mass
                 for key in actual_water["totals_mol_kg"]:
                     actual_water["totals_mol_kg"][key] = values.get(
                         "water." + key, actual_water["totals_mol_kg"][key]
@@ -461,7 +522,8 @@ def verify_analysis_uncertainty(recipe, options):
             if elemental:
                 from .ratio_element_uncertainty import perturb_sources
 
-                changed, doses = perturb_sources(sources, options, values)
+                if not physical:
+                    changed, doses = perturb_sources(sources, options, values)
                 rebuilt = reconstruct_products(
                     changed, doses, water_report, actual_volume, mass, scenario_inventories=True
                 )

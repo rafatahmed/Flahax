@@ -619,3 +619,61 @@ checks. This is not a new supplier certificate, strongest-recipe search, physica
 stability result or continuous uncertainty guarantee. Other products still use
 their explicitly stated independent element factors. Inferred-counterion bounds
 outside this ingredient model remain unsupported.
+
+### Density, solvent and source-water quantity
+
+In `water_product_elemental` mode with an explicit source-water analysis, opt in
+to `water_mass_model: "closed_batch_mass_balance"` and supply
+`physical_preparation` with exactly these fields:
+
+| Field | Meaning |
+|---|---|
+| `solution_density_kg_l` | Positive lower/upper final solution density, kg/L |
+| `source_water_mass_kg` | Positive lower/upper source **solvent-water** mass, kg; includes nominal quantity |
+| `source_water_solvent_fraction` | Positive lower/upper water mass fraction of the source solution, at most 1 |
+| `product_solvent_fractions` | Every product name mapped to lower/upper water mass fractions, including its nominal fraction |
+
+These are absolute intervals. They do not describe temperature coefficients or
+probability distributions. The previous `scale_with_final_volume` model remains
+unchanged when explicitly selected. Physical preparation currently requires
+elemental uncertainty mode; whole-product effective-dose mode is not supported.
+
+For each fixed rounded recipe scenario, with final volume V, density rho,
+source solvent-water mass W, source solvent fraction f, product masses m in kg,
+and product solvent fractions s:
+
+```
+total solution mass = rho * V
+source solution mass = W / f
+final solvent-water mass = rho * V - W * (1/f - 1) - sum(m * (1-s))
+pure make-up water mass = rho * V - W/f - sum(m)
+```
+
+The mass balance assumes retained inputs and pure make-up water; it does not add
+liquid volumes. The calculated solvent-water mass is the denominator for mol/kg
+chemistry. Nutrient amount per litre still uses final volume. Density alone
+therefore cannot change the analytical ratios or mg/L inventory. Product solvent
+changes the chemistry denominator while its stated nutrient assay remains fixed.
+The supplied solvent fractions must account for all water intended to act as
+solvent; hydrate release is not inferred automatically.
+
+All source-water constituents share one quantity variable, including its charge
+reference and carbon inventory. Analytical vertices retain that correlation with
+the independently bounded source concentrations. Solvent fractions and density
+also enter chemistry sampling. Reports expose `final_water_mass_kg_range`,
+`minimum_pure_makeup_water_kg`, units and sampled phase maxima.
+
+The complete interval box must permit positive final solvent mass and nonnegative
+make-up water. Upper ingredient/element inventories plus upper product solvent
+fractions must fit each product's mass. Source non-solvent mass must at least
+cover its known elemental inventory; this necessary lower bound is not a full
+dissolved-solids reconstruction. Missing constituents, density-composition
+correlations, evaporation, gas exchange and physical stability remain outside
+this model. No measured density or solvent fraction is invented.
+
+`examples/steiner-physical-uncertainty.json` retains the previous rounded blend
+recipe and uses user-approved illustrative density 0.9991-1.0011 kg/L, source
+water 0.099-0.101 kg, product solvent fractions 0.9799-0.9800 and fixed source
+solvent fraction 0.9999. Existing weighing, volume, assay, Na/Cl, ratio and
+saturation limits remain unchanged. These are demonstration assumptions, not
+validated preparation specifications or proof of continuous chemistry extrema.
