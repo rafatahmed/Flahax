@@ -38,6 +38,11 @@ def validate_element_factors(sources, factors):
     for source in sources:
         product = source["product"]
         entry = factors[source["name"]]
+        from .ratio_blend_uncertainty import is_blend, validate_blend
+
+        if is_blend(entry):
+            validate_blend(source, entry)
+            continue
         if product.get("grade") is not None:
             adapted = material_inventory(_hypothetical_product(product))
             original = source["inventory"]
@@ -100,6 +105,10 @@ def validate_element_factors(sources, factors):
 
 def product_vertices(row, options, dimension):
     """Return local mass/element vertices and their sampling-coordinate witnesses."""
+    from .ratio_blend_uncertainty import is_blend, blend_vertices
+
+    if is_blend(options["product_element_factors"][row["name"]]):
+        return blend_vertices(row, options, dimension)
     name = row["name"]
     dose = row["grams"]
     error = options["weighing_error_g"] if dose > 0 else 0
@@ -139,6 +148,13 @@ def perturb_sources(sources, options, values):
     doses = []
     for row in changed:
         name = row["name"]
+        from .ratio_blend_uncertainty import is_blend, sampled_inventory
+
+        entry = options["product_element_factors"][name]
+        if is_blend(entry):
+            row["_scenario_inventory"] = sampled_inventory(row, entry, values)
+            doses.append(values.get("mass." + name, row["grams"]))
+            continue
         row["product"] = _hypothetical_product(row["product"])
         for key, percent in row["product"]["elements"].items():
             low, high = options["product_element_factors"][name][key]

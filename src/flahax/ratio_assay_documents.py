@@ -16,6 +16,8 @@ def resolve_documented_assays(options, sources):
     for row in sources:
         name = row["name"]
         entry = entries.get(name)
+        if isinstance(entry, dict) and entry.get("source") == "blend_ingredients":
+            continue
         if not isinstance(entry, dict) or "source" not in entry:
             continue
         lot_mode = entry.get("source") == "lot" and set(entry) == {"source", "lot"}

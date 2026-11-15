@@ -493,8 +493,9 @@ upper elemental assays plus declared solvent must not exceed total product mass
 physically realizable salt at every independent assay combination. Unknown
 reactive remainder and changing solvent fractions remain excluded. Whole-product
 `water_product` purity factors still cannot exceed one.
-Blend and declared-ion grades remain refused because they require consistent
-ingredient/assay uncertainty semantics. If a six-nutrient or Na/Cl contribution is inferred but not
+Blend grades remain refused in independent-element factor mode; the disclosed
+ingredient mode below is a separate model. Declared-ion grades remain unsupported.
+If a six-nutrient or Na/Cl contribution is inferred but not
 declared in the product assay, analytical certification is refused with
 `unsupported_elemental_counterion_bounds`. Supply defensible measurements/bounds
 or use a supported uncertainty model; do not insert fabricated zero assays.
@@ -572,3 +573,49 @@ intervals still assume no correlations and must pass the upper mass bound.
 99-101% case with MKP grade bounds. It correctly fails the 1% nutrient-ratio
 tolerance, even though sampled pH and mineral checks pass. Document conversion
 does not relax acceptance limits or turn failed recipes into verified batches.
+
+### Disclosed blend ingredient bounds
+
+An entry in `product_element_factors` can instead select:
+
+```json
+{"source": "blend_ingredients", "mass_fraction_bounds": {
+  "idn-potassium-nitrate": [0.01940004, 0.019596],
+  "idn-monopotassium-phosphate": [0.000396, 0.0004],
+  "idn-sodium-iron-edta": [0.00000396, 0.000004]
+}}
+```
+
+This mode requires a supported `disclosed` grade, no unmodeled impurity limits,
+and explicit bounds for every ingredient (up to eight). Values are absolute
+ingredient mass fractions of the commercial product. They must contain the
+nominal fractions, lie within 0-1, and their simultaneous upper sum plus declared
+solvent cannot exceed one. The remaining mass is assumed inert; solvent remains
+fixed. Ingredient fractions vary independently, while each ingredient's elemental
+assays and inferred counterions vary **together** with that fraction. Catalogue
+ingredient assays are fixed inputs, not measured lot assays. Arbitrary assay
+covariance, constant-sum exchange constraints and undisclosed ingredients are not
+supported by this box model.
+
+Nominal declared blend assays must match the ingredient-weighted catalogue assay
+inventory; chemical components must also reproduce the nominal material inventory.
+An inconsistent blend is refused with `blend_assay_mismatch`, rather than silently
+discarding its label. Existing catalogue label/chemistry differences remain
+separate and reported. Unstated nutrients are derived from the same ingredient
+chemistry that provides speciation inputs; they are not assumed zero or fixed.
+
+Analytical vertices combine a shared product weighing error with ingredient
+fraction endpoints. This bounds the final equivalent ratios, concentration and
+Na/Cl inventory while retaining ingredient correlations. Each sampled chemistry
+case is reconstructed from those same ingredient fractions. Reports include
+`blend_bound_sources`, ingredient inventory snapshots, inferred nutrient names,
+fraction dimensions, and sampling coverage. Nominal source documents stay intact.
+
+`examples/steiner-blend-uncertainty.json` is an illustrative 10-litre demonstration
+with a disclosed nitrate/MKP/iron-EDTA formulation replacing the earlier synthetic
+contaminated nitrate. It is a new composition and is fitted and rounded again.
+It retains the original ratio, concentration, Na/Cl, pH-range and mineral-margin
+checks. This is not a new supplier certificate, strongest-recipe search, physical
+stability result or continuous uncertainty guarantee. Other products still use
+their explicitly stated independent element factors. Inferred-counterion bounds
+outside this ingredient model remain unsupported.

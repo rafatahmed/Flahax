@@ -214,12 +214,21 @@ def verify_analysis_uncertainty(recipe, options):
         ),
     )
     if elemental:
+        from .ratio_blend_uncertainty import is_blend, bound_evidence
+
+        result["blend_bound_sources"] = {
+            row["name"]: bound_evidence(row, options["product_element_factors"][row["name"]])
+            for row in nominal["ingredients"]
+            if is_blend(options["product_element_factors"][row["name"]])
+        }
         result["qualification"] = (
             "Declared elemental assays vary independently; all elements in a product share "
             "its weighing error. Hypothetical assays are reprocessed through the existing "
             "material/charge-reconciliation model; sampled label/chemistry discrepancies "
             "are reported, not erased. Derived analytical nutrients without explicit "
-            "bounds and blend grades are refused. Single-identity grade scenarios use "
+            "bounds are refused in independent-element mode. Disclosed blends can instead "
+            "use ingredient fraction bounds with correlated assays and derived counterions. "
+            "Single-identity grade scenarios use "
             "separate hypothetical assays; original grade documents remain unchanged. "
             "Factors are supplied explicitly or converted from complete documented bounds. "
             "Documents are not independent measurement verification. "
@@ -392,6 +401,8 @@ def verify_analysis_uncertainty(recipe, options):
             if name.startswith("mass.")
             else "fraction of declared elemental assay"
             if name.startswith("assay.")
+            else "ingredient mass fraction of commercial product"
+            if name.startswith("ingredient.")
             else "effective grams of declared product"
             if name.startswith("product.")
             else "litres"
@@ -451,7 +462,9 @@ def verify_analysis_uncertainty(recipe, options):
                 from .ratio_element_uncertainty import perturb_sources
 
                 changed, doses = perturb_sources(sources, options, values)
-                rebuilt = reconstruct_products(changed, doses, water_report, actual_volume, mass)
+                rebuilt = reconstruct_products(
+                    changed, doses, water_report, actual_volume, mass, scenario_inventories=True
+                )
                 for key, difference in rebuilt["analytical_minus_chemistry_mg_l"].items():
                     previous = result["maximum_abs_assay_chemistry_difference_mg_l"].get(key, 0.0)
                     result["maximum_abs_assay_chemistry_difference_mg_l"][key] = max(

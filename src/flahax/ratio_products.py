@@ -107,7 +107,7 @@ def _sources(products):
     return sources
 
 
-def reconstruct_products(sources, grams, water, volume, mass):
+def reconstruct_products(sources, grams, water, volume, mass, *, scenario_inventories=False):
     """Sum declared analytical assays separately from conserved chemistry components."""
     totals = water_totals(water, volume, mass)
     audit = {
@@ -118,7 +118,11 @@ def reconstruct_products(sources, grams, water, volume, mass):
     ingredients = []
     solvent = 0.0
     for source, dose in zip(sources, grams):
-        inv = material_inventory(source["product"])
+        inv = (
+            source["_scenario_inventory"]
+            if scenario_inventories and "_scenario_inventory" in source
+            else material_inventory(source["product"])
+        )
         if inv["components_moles_per_gram"] is None:
             raise DeliveryError(inv["limitation_code"], inv["limitation"])
         amounts = {k: dose / volume * v * 10 for k, v in inv["nutrient_percent"].items()}
