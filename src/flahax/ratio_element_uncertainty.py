@@ -5,8 +5,26 @@ import itertools
 import math
 
 from .delivery_contracts import DeliveryError
-from .product_conversion import MOLAR_MASS
+from .product_conversion import MOLAR_MASS, material_inventory
 from .ratio_products import LABELS
+
+
+def _hypothetical_product(product):
+    """Detach a single-identity hypothesis from its unmodified source document."""
+    if product.get("grade") is None:
+        return deepcopy(product)
+    grade = product["grade"]
+    if grade.get("composition") != "single":
+        raise DeliveryError(
+            "unsupported_elemental_grade",
+            "Blend and declared-ion grades require a separate ingredient/assay uncertainty model",
+        )
+    from .materials import make_grade
+
+    parsed = make_grade(grade)
+    return dict(
+        name=product["name"], identityId=parsed.identity_id, elements=deepcopy(product["elements"])
+    )
 
 
 def validate_element_factors(sources, factors):
@@ -21,11 +39,20 @@ def validate_element_factors(sources, factors):
         product = source["product"]
         entry = factors[source["name"]]
         if product.get("grade") is not None:
-            raise DeliveryError(
-                "unsupported_elemental_grade",
-                "Nested grade/blend records need a separate consistent assay/ingredient "
-                "uncertainty model; supply an explicit supported material record",
-            )
+            adapted = material_inventory(_hypothetical_product(product))
+            original = source["inventory"]
+            if adapted["status"] != "supported_components" or any(
+                set(adapted[field]) != set(original[field])
+                or any(
+                    not math.isclose(value, original[field][key], rel_tol=1e-12, abs_tol=1e-15)
+                    for key, value in adapted[field].items()
+                )
+                for field in ("nutrient_percent", "components_moles_per_gram")
+            ):
+                raise DeliveryError(
+                    "unsupported_elemental_grade",
+                    "Grade hypothesis does not preserve the nominal material inventory",
+                )
         if not isinstance(entry, dict) or set(entry) != set(product["elements"]):
             raise DeliveryError(
                 "invalid_analysis_uncertainty",
@@ -39,12 +66,24 @@ def validate_element_factors(sources, factors):
                     isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
                     for v in pair
                 )
-                or not 0 < pair[0] <= pair[1] <= 1
+                or not 0 < pair[0] <= pair[1]
             ):
                 raise DeliveryError(
                     "invalid_analysis_uncertainty",
-                    "Elemental factors require 0 < low <= high <= 1",
+                    "Elemental factors require finite 0 < low <= high",
                 )
+        # Independent intervals include the all-high vertex. This necessary mass
+        # bound does not establish stoichiometric realizability of every vertex.
+        upper_percent = sum(product["elements"][k] * pair[1] for k, pair in entry.items())
+        if (
+            not math.isfinite(upper_percent)
+            or upper_percent / 100 + source["solvent_fraction"] > 1 + 1e-12
+        ):
+            raise DeliveryError(
+                "invalid_elemental_mass_bounds",
+                f"{source['name']}: upper elemental assays plus declared solvent "
+                "exceed product mass",
+            )
         missing = {
             k
             for k in (*LABELS, "Na", "Cl")
@@ -100,6 +139,7 @@ def perturb_sources(sources, options, values):
     doses = []
     for row in changed:
         name = row["name"]
+        row["product"] = _hypothetical_product(row["product"])
         for key, percent in row["product"]["elements"].items():
             low, high = options["product_element_factors"][name][key]
             factor = values.get("assay." + name + "." + key, (low + high) / 2)

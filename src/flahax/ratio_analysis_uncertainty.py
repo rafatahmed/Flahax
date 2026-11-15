@@ -86,7 +86,9 @@ def validate_analysis_uncertainty(options, volume, products, water):
     sources = _sources(products)
     if elemental:
         from .ratio_element_uncertainty import validate_element_factors
+        from .ratio_assay_documents import resolve_documented_assays
 
+        options, _ = resolve_documented_assays(options, sources)
         validate_element_factors(sources, options[assay_field])
     else:
         names = [p["name"] for p in sources]
@@ -177,9 +179,15 @@ def verify_analysis_uncertainty(recipe, options):
     """Bound linear inventory quantities and sample nonlinear chemistry without refitting."""
     elemental = options["mode"] == "water_product_elemental"
     nominal = recipe["rounded_verification"]
+    document_evidence = {}
+    if elemental:
+        from .ratio_assay_documents import resolve_documented_assays
+
+        options, document_evidence = resolve_documented_assays(options, nominal["ingredients"])
     result = dict(
         status="incomplete",
         assumptions=deepcopy(options),
+        assay_bound_sources=document_evidence,
         scenario_count=0,
         failed_checks=[],
         phase_maxima={},
@@ -211,7 +219,13 @@ def verify_analysis_uncertainty(recipe, options):
             "its weighing error. Hypothetical assays are reprocessed through the existing "
             "material/charge-reconciliation model; sampled label/chemistry discrepancies "
             "are reported, not erased. Derived analytical nutrients without explicit "
-            "bounds and nested grade/blend records are refused. This is not proof of "
+            "bounds and blend grades are refused. Single-identity grade scenarios use "
+            "separate hypothetical assays; original grade documents remain unchanged. "
+            "Factors are supplied explicitly or converted from complete documented bounds. "
+            "Documents are not independent measurement verification. "
+            "Above-one factors mean above-label elemental content, not purity over 100%; "
+            "upper elemental inventories must fit the declared non-solvent mass. "
+            "This is not proof of "
             "physically realizable lots or continuous chemistry extrema. Source water "
             "mass is fixed and final water mass scales with final volume. Unknown reactive "
             "impurities and temperature/gas effects remain excluded."

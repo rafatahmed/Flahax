@@ -456,7 +456,7 @@ Provide every product, including pH reagents, and every element in its declared
 ```
 
 These are fractions of each declared elemental mass percentage, not elemental
-purity percentages. Bounds must satisfy `0 < low <= high <= 1`. A fixed assay is
+purity percentages. Bounds must be finite and satisfy `0 < low <= high`. A fixed assay is
 `[1,1]`. They replace, rather than multiply, the whole-composition factors. A
 stated zero remains zero; this mode does not invent contamination of absent
 components. The selected illustrative bounds retain 99-100% for each declared
@@ -477,10 +477,24 @@ reconciled components determine speciation. The report includes
 difference for each element. Such a difference is not experimental error removed
 by the checker, nor proof that the hypothetical label represents a realizable lot.
 
-This first independent-assay implementation supports explicit flat material
-records with formula, ions or identity. Nested grade/blend records are refused;
-changing their assays independently would require consistent ingredient and
-provenance semantics. If a six-nutrient or Na/Cl contribution is inferred but not
+Independent-assay checks support explicit flat material records with formula,
+ions or identity, and supported single-identity nested grades. A grade is first
+resolved normally. Its hypothetical flat identity adapter must reproduce the
+nominal analytical and chemistry inventories before any sampling is allowed.
+Each sample uses a separate hypothetical assay; the original grade document and
+its provenance remain in the recipe unchanged. Factors may be supplied explicitly
+or converted from complete documents using the opt-in selectors below. Supported
+factors remain greater than zero. Above-one factors are allowed
+for elemental content above the nominal label: `[0.99, 1.01]` means 99-101% of the
+declared elemental amount, not more than 100% product purity. The simultaneous
+upper elemental assays plus declared solvent must not exceed total product mass
+(numerical allowance `1e-12` in mass fraction); otherwise the request raises
+`invalid_elemental_mass_bounds`. This necessary mass bound does not guarantee a
+physically realizable salt at every independent assay combination. Unknown
+reactive remainder and changing solvent fractions remain excluded. Whole-product
+`water_product` purity factors still cannot exceed one.
+Blend and declared-ion grades remain refused because they require consistent
+ingredient/assay uncertainty semantics. If a six-nutrient or Na/Cl contribution is inferred but not
 declared in the product assay, analytical certification is refused with
 `unsupported_elemental_counterion_bounds`. Supply defensible measurements/bounds
 or use a supported uncertainty model; do not insert fabricated zero assays.
@@ -497,5 +511,64 @@ the declared inventory bounds, but chemistry extrema remain sampled.
 Do not interpret a lower maximum sampled SI than in the correlated-assay example
 as reduced risk: the sampling points differ in the larger uncertainty space.
 The recipe has not been refitted or experimentally verified; unknown reactive
-impurities, continuous chemistry extrema, grade/blend uncertainty, actual stock
+impurities, continuous chemistry extrema, blend uncertainty, actual stock
 solubility and Steiner's unresolved experimental pH difference remain open.
+
+`examples/steiner-grade-uncertainty.json` repeats the 10-litre check with the MKP
+source represented as an illustrative single-identity grade. Its document is a
+synthetic test fixture, not a supplier certificate or measured stock assay. The
+same rounded doses, uncertainty bounds and mineral limits apply.
+
+### Documented grade and lot bounds
+
+In `water_product_elemental` mode, each entry in `product_element_factors`
+can remain an explicit element-to-factor mapping, or select one of these sources:
+
+```json
+{"source": "grade"}
+```
+
+```json
+{"source": "lot", "lot": {
+  "lot_id": "example-lot",
+  "grade_id": "the-product-grade-id",
+  "measured": {"K": 14.0, "P": 11.0},
+  "uncertainty": {"K": 0.05, "P": 0.04},
+  "document": {
+    "supplier": "Example only", "title": "Illustrative certificate",
+    "issued": "2026-11-01", "entered": "2026-11-15"
+  }
+}}
+```
+
+These values illustrate the schema; they are not measured supplier data. Both
+selectors require the product's supported single-identity `grade` record.
+Documents with nonempty `impurity_limits` are refused with
+`unsupported_assay_impurity_bounds`: those limits need explicit composition and
+bounded inventories, and cannot be silently treated as zero contamination.
+Grade mode requires explicit minimum and maximum values for **every** nominal
+element. Lot mode requires a correctly linked lot, a measurement and explicitly
+stated uncertainty for every element; it never substitutes grade bounds when a
+lot uncertainty is missing. Extra measured elements must be modeled in the
+nominal product before use. Blends and standalone identity-only lots remain
+unsupported here.
+
+The existing material schema uses mass percent, including oxide percentages.
+Lot uncertainty is an absolute percentage-point amount, not a relative percent.
+Existing conversions transform oxide values and their uncertainties to elemental
+mass percent. Grade factors are `[minimum / nominal, maximum / nominal]`; lot
+factors are `[(measured - uncertainty) / nominal, (measured + uncertainty) / nominal]`.
+The original nominal recipe is not refitted to the lot center. Bounds at or below
+zero and zero nominal assays cannot be represented by this positive-factor mode
+and are refused, not clipped. No probability or confidence coverage is inferred.
+
+`uncertainty_verification.assumptions` contains the resolved numeric factors;
+`assay_bound_sources` retains the original grade/lot records, converted elemental
+intervals, oxide conversions and units. Documents are inputs, not independent
+authentication or verification of measurement accuracy. Independent element
+intervals still assume no correlations and must pass the upper mass bound.
+
+`examples/steiner-documented-assay-uncertainty.json` replays the illustrative
+99-101% case with MKP grade bounds. It correctly fails the 1% nutrient-ratio
+tolerance, even though sampled pH and mineral checks pass. Document conversion
+does not relax acceptance limits or turn failed recipes into verified batches.
