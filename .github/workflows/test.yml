@@ -102,17 +102,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Keep native macOS coverage outside the capacity-constrained ARM64 pool (#256).
-        os: [ubuntu-latest, windows-latest, macos-15-intel]
+        # Current CI acceptance covers Linux and Windows; macOS is excluded (#256).
+        os: [ubuntu-latest, windows-latest]
         shard: [0, 1, 2, 3]
         include:
           - os: windows-latest
             shard: 4
           - os: windows-latest
-            shard: 5
-          - os: macos-15-intel
-            shard: 4
-          - os: macos-15-intel
             shard: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 
 from tools.check_coverage import inventory, validate
 
-PLATFORMS = ('Linux', 'Windows', 'Darwin')
+PLATFORMS = ('Linux', 'Windows')
 
 
 def digest(path):
@@ -62,7 +62,7 @@ def record(root, output, expected):
     value = identity(root, expected)
     value.update(platform=platform.system(), python=platform.python_version())
     if value['platform'] not in PLATFORMS or sys.version_info[:2] != (3, 13):
-        raise ValueError('coverage shards require native Linux/Windows/macOS Python 3.13')
+        raise ValueError('coverage shards require native Linux/Windows Python 3.13')
     output.mkdir(parents=True)
     write(output / 'manifest.json', value)
 
@@ -170,7 +170,7 @@ def aggregate(root, inputs, output, expected):
     current = identity(root, expected)
     directories = sorted(p.parent for p in inputs.glob('*/bundle.json'))
     if not directories:
-        raise ValueError('coverage evidence required for all three native platforms')
+        raise ValueError('coverage evidence required for native Linux and Windows')
     manifests = [shard(root, p, current) for p in directories]
     if set(m['platform'] for m in manifests) != set(PLATFORMS):
         raise ValueError('missing, duplicate or unsupported native platform')

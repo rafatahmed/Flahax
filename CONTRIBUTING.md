@@ -161,14 +161,16 @@ push/manual run). Preserve the existing `test (3.11)` through `test (3.14)` and
 Python/platform tests, live reference replay and documentation jobs before it
 accepts coverage. A failed prerequisite makes the gate fail explicitly.
 
-Python 3.13 on native Linux, Windows and macOS records a clean candidate, all
+Current CI does not validate macOS.
+
+Python 3.13 on native Linux and Windows records a clean candidate, all
 tracked input hashes, Python/platform and workflow run/attempt before measurement.
 Support-test dependencies are installed explicitly. After tests, the input hashes
 are checked again and the test outcome, raw branch data and JSON report are sealed
 into a checksum bundle. These hashes detect changed artifacts; they are not a
 signature or protection against a malicious workflow.
 
-Linux uses four balanced coverage shards; Windows and Intel macOS each use six. Each
+Linux uses four balanced coverage shards; Windows uses six. Each
 shard runs three isolated test processes. Class/module fixtures remain intact; every unique discovered case is
 retained, including its full subtest matrix. Scheduling weights are hints, not
 selection rules. Each shard records the complete test inventory and assigned IDs;

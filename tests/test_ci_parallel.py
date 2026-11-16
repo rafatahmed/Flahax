@@ -131,7 +131,7 @@ class ParallelRunnerTests(unittest.TestCase):
         from tools.ci_coverage import validate_partitions
 
         records = []
-        for platform in ('Linux', 'Windows', 'Darwin'):
+        for platform in ('Linux', 'Windows'):
             for index, selected in enumerate((['a'], ['b'])):
                 records.append(
                     (

@@ -97,7 +97,7 @@ class NativeCoverageTests(unittest.TestCase):
         script = """
 import coverage, pathlib, runpy, sys
 inputs = pathlib.Path(sys.argv[1])
-for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
+for index, system in enumerate(('Linux', 'Windows')):
     path = inputs / system
     path.mkdir(parents=True)
     c = coverage.Coverage(data_file=str(path / '.coverage'))
@@ -161,12 +161,13 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             ci.aggregate(root, inputs, root / 'aggregate', current['source_revision'])
 
     def test_real_branch_union_and_xml_have_exact_counts(self):
+        self.assertEqual(ci.PLATFORMS, ('Linux', 'Windows'))
         with tempfile.TemporaryDirectory() as folder:
             root, inputs, current = self.fixture(folder)
             self.aggregate(root, inputs, current)
             result = ci.read(root / 'aggregate/provenance.json')
             self.assertEqual((result['statements'], result['branches']), (9, 2))
-            self.assertEqual(len(result['shards']), 3)
+            self.assertEqual(len(result['shards']), 2)
             self.assertTrue(ci.read(root / 'aggregate/gate.json')['passed'])
             with self.assertRaisesRegex(ValueError, 'preserve'):
                 self.aggregate(root, inputs, current)
@@ -213,9 +214,9 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             (inputs / 'Linux/bundle.json').unlink()
             with self.assertRaisesRegex(ValueError, 'platform'):
                 self.aggregate(root, inputs, current)
-            for system in ('Windows', 'Darwin'):
+            for system in ('Windows',):
                 (inputs / system / 'bundle.json').unlink()
-            with self.assertRaisesRegex(ValueError, 'three native'):
+            with self.assertRaisesRegex(ValueError, 'Linux and Windows'):
                 self.aggregate(root, inputs, current)
 
     def test_tampered_bundle_missing_metadata_and_statement_only_data(self):
@@ -529,11 +530,9 @@ class WorkflowEnforcementTests(unittest.TestCase):
             [
                 {'os': 'windows-latest', 'shard': '4'},
                 {'os': 'windows-latest', 'shard': '5'},
-                {'os': 'macos-15-intel', 'shard': '4'},
-                {'os': 'macos-15-intel', 'shard': '5'},
             ],
         )
-        self.assertEqual(len(native['strategy']['matrix']['os']), 3)
+        self.assertEqual(native['strategy']['matrix']['os'], ['ubuntu-latest', 'windows-latest'])
         self.assertLessEqual(int(native['timeout-minutes']), 40)
         measure = next(
             s for s in native['steps'] if s.get('name') == 'Candidate-bound native coverage'
