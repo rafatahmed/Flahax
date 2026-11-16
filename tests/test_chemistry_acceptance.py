@@ -2,7 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Acceptance invariants independent of the PHREEQC output comparator."""
+"""Integration invariants using production conversion and chemistry paths.
+
+These checks are separate from the PHREEQC comparator, not independent
+thermodynamic evidence; external reference checks remain in their own suites.
+"""
 
 import math
 import unittest

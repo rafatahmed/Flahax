@@ -32,18 +32,24 @@ def orderings(count):
     return result
 
 
-def exercise(case, order_index=0):
+def exercise(case, order_index=0, *, witness=None):
     name, expected, request, _proof = case
     req = deepcopy(request)
     order = orderings(len(req['products']))[order_index]
     req['products'] = [req['products'][i] for i in order]
-    witness = independent_witness(request) if expected == 'feasible' else None
+    if expected == 'feasible' and witness is None:
+        witness = independent_witness(request)
     certificate = infeasibility_certificate(case) if expected == 'infeasible' else None
     try:
         result = plan_ratio_recipe(**req)
     except DeliveryError as exc:
         assert expected == 'infeasible', (name, order_index, exc.code, str(exc))
-        assert exc.code.startswith('ratio_'), (name, exc.code)
+        expected_code = (
+            'ratio_limit_exceeded'
+            if name in ('water_sodium_ceiling', 'zero_nitrate_headroom')
+            else 'ratio_product_fit_failed'
+        )
+        assert exc.code == expected_code, (name, exc.code, expected_code)
         return {
             'case': name,
             'order': order,
@@ -123,9 +129,10 @@ class AllocationReliabilityTests(unittest.TestCase):
 
 def install(case):
     def test(self):
+        witness = independent_witness(case[2]) if case[1] == 'feasible' else None
         for index in range(6 if case[1] == 'feasible' else 1):
             with self.subTest(order=index):
-                exercise(case, index)
+                exercise(case, index, witness=witness)
 
     setattr(AllocationReliabilityTests, 'test_' + case[0].replace('.', '_'), test)
 

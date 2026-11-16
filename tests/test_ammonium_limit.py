@@ -5,6 +5,7 @@
 """The ammonium allowance (G23): incidental NH4-N up to min(10% of total N, 1.5 mmol/L)."""
 
 import unittest
+from flahax.engine import InputError
 
 from flahax import load_library, recommend
 from tests.catalogue_history import historical_catalogue
@@ -101,7 +102,10 @@ class AmmoniumLimitTests(unittest.TestCase):
     def test_invalid_fraction_is_rejected(self):
         targets = formula("Chilli (maximumyield)")["targets"]
         for bad in (-0.1, 1.5, float("nan")):
-            with self.subTest(bad=bad), self.assertRaises(Exception):
+            with (
+                self.subTest(bad=bad),
+                self.assertRaisesRegex(InputError, 'max_ammonium_fraction'),
+            ):
                 recommend(SALTS, targets, {}, max_ammonium_fraction=bad)
 
     def test_zero_fraction_is_recorded_without_becoming_an_unspecified_limit(self):

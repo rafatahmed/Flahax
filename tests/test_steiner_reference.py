@@ -40,6 +40,7 @@ def preparations():
 
 
 def predicted_ph(amounts):
+    """Separate charge-balance bisection using the production speciation kernel."""
     totals = {name: value / charge / 1000 for name, value, charge in zip(BASIS, amounts, VALENCES)}
     low, high = 3.0, 9.0
     assert solve(totals, low).charge_balance > 0

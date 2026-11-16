@@ -76,7 +76,7 @@ def stress_case(case):
     witness = independent_witness(req)
     counterexample = sulfate_counterexample(req, witness['grams'])
     if counterexample['relative_error'] <= 0.01:
-        result = exercise(case)
+        result = exercise(case, witness=witness)
         result['expected_disposition'] = 'accepted_under_declared_bounds'
     else:
         actual = plan_ratio_recipe(**req)
@@ -221,14 +221,6 @@ class SolverBoundaryTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(DeliveryError) as caught:
                 plan_ratio_recipe(**req)
             self.assertEqual(caught.exception.code, expected)
-
-    def test_linear_impossibilities_do_not_become_passing_recipes(self):
-        from tests.ratio_allocation_cases import cases
-
-        for case in cases():
-            if case[0] in ('zero_magnesium_share', 'water_above_count', 'zero_nitrate_headroom'):
-                with self.subTest(case=case[0]):
-                    self.assertEqual(exercise(case)['status'], 'passed')
 
     def test_insufficient_uncertainty_budget_is_incomplete(self):
         req = base_request()

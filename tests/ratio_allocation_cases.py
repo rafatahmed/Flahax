@@ -231,8 +231,9 @@ def independent_witness(req):
     ]
     assert abs(sum(amounts) - req['counted_mmol_l']) < 1e-10
     assert abs(charge) < 1e-12 and min(doses) >= 0
+    states = [solve(totals, ph) for ph in (6.28, 6.30, 6.32)]
     maxima = {
-        phase: max(solve(totals, ph).saturation_indices[phase] for ph in (6.28, 6.30, 6.32))
+        phase: max(state.saturation_indices[phase] for state in states)
         for phase in ('CaHPO4:2H2O', 'CaHPO4', 'Hydroxylapatite')
     }
     assert all(si < -0.3000001 for si in maxima.values())

@@ -5,6 +5,7 @@
 """Tests for flahax.product_conversion."""
 
 import unittest
+from flahax.delivery_contracts import DeliveryError
 
 from flahax import (
     convert_catalogue_product_dose,
@@ -78,7 +79,7 @@ class ProductConversionTests(unittest.TestCase):
     def test_profile_mismatch_fails_before_any_solver_can_use_label(self):
         product = next(p for p in load_library()["salts"] if p["name"] == "Urea")
         profile = chemistry_for_product("Iron EDTA")
-        with self.assertRaises(Exception) as caught:
+        with self.assertRaises(DeliveryError) as caught:
             convert_product_dose(product, profile, 1.0)
         self.assertEqual(caught.exception.code, "product_chemistry_mismatch")
 

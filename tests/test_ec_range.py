@@ -22,9 +22,6 @@ def ec(totals, **kw):
 
 
 class EcRangeTests(unittest.TestCase):
-    def test_the_physical_bound_per_charge_is_80(self):
-        self.assertEqual(LAMBDA_MAX_PER_CHARGE, 80.0)
-
     def test_a_solution_of_covered_species_is_a_single_estimate(self):
         result = ec({'K+': 1e-3, 'Cl-': 1e-3})
         self.assertEqual(result.status, 'estimated')

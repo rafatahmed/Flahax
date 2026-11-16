@@ -6,9 +6,11 @@
 
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 from flahax.reference_fixtures import assert_reference_result, load_reference_fixture
+from flahax.delivery_contracts import DeliveryError
 from flahax.equilibrium import (
     calcite_co2_reference_values,
     gypsum_reference_values,
@@ -68,14 +70,12 @@ class ReferenceFixtures(unittest.TestCase):
     def test_fixture_hash_mismatch_is_rejected(self):
         payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
         payload["inputSha256"] = "0" * 64
-        altered = FIXTURE.parent / "altered.json"
-        try:
+        with tempfile.TemporaryDirectory() as directory:
+            altered = Path(directory) / "altered.json"
             altered.write_text(json.dumps(payload), encoding="utf-8")
-            with self.assertRaises(Exception):
+            with self.assertRaisesRegex(DeliveryError, 'inputSha256') as caught:
                 load_reference_fixture(altered)
-        finally:
-            if altered.exists():
-                altered.unlink()
+            self.assertEqual(caught.exception.code, 'invalid_fixture')
 
 
 if __name__ == "__main__":
