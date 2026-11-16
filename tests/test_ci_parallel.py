@@ -22,6 +22,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ParallelRunnerTests(unittest.TestCase):
+    def test_worker_timeout_is_reported_before_executor_cleanup(self):
+        # Fault injection: a subprocess deadline, not a simulated chemistry result.
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / 'result.json'
+            messages = io.StringIO()
+            with (
+                patch.object(
+                    ci_parallel.subprocess,
+                    'run',
+                    side_effect=subprocess.TimeoutExpired('worker', 1800),
+                ),
+                contextlib.redirect_stdout(messages),
+                self.assertRaises(subprocess.TimeoutExpired),
+            ):
+                ci_parallel.execute((output, ['fixture.Case.test_timeout']))
+            self.assertIn('::error::', messages.getvalue())
+            self.assertIn('fixture.Case.test_timeout', messages.getvalue())
+            self.assertIn('1800', messages.getvalue())
+            self.assertFalse(output.exists(), 'a timed-out worker cannot claim a test result')
+
     @unittest.skipUnless(importlib.util.find_spec('coverage'), 'coverage tooling unavailable')
     def test_measured_worker_retains_data_when_tests_construct_coverage(self):
         import coverage

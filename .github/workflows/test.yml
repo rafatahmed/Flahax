@@ -110,6 +110,10 @@ jobs:
             shard: 4
           - os: windows-latest
             shard: 5
+          - os: macos-15-intel
+            shard: 4
+          - os: macos-15-intel
+            shard: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -128,9 +132,13 @@ jobs:
         run: |
           python -m tools.ci_coverage record --candidate "$CANDIDATE_SHA" --output build/coverage
           set +e
-          python -m coverage run -m tools.ci_parallel --output build/coverage --shard-index ${{ matrix.shard }} --shard-count ${{ matrix.os == 'windows-latest' && 6 || 4 }} --workers 3 2>&1 | tee build/coverage/tests.log
+          python -m coverage run -m tools.ci_parallel --output build/coverage --shard-index ${{ matrix.shard }} --shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }} --workers 3 2>&1 | tee build/coverage/tests.log
           test_status=${PIPESTATUS[0]}
           set -e
+          if [ ! -f build/coverage/tests.json ]; then
+            echo "::error::Test summary missing; see worker logs for the original failure."
+            exit 1
+          fi
           python -m tools.ci_coverage report --candidate "$CANDIDATE_SHA" --output build/coverage
           exit "$test_status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

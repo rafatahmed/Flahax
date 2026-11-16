@@ -92,12 +92,19 @@ def execute(item):
         command += ['-m', 'coverage', 'run']
     command += ['-m', 'tools.ci_parallel', '--output', str(output), '--group', *ids]
     with output.with_suffix('.log').open('w', encoding='utf-8') as log:
-        process = subprocess.run(
-            command,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            timeout=1800,
-        )
+        try:
+            process = subprocess.run(
+                command,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                timeout=1800,
+            )
+        except subprocess.TimeoutExpired:
+            print(
+                f'::error::{ids[0]} exceeded 1800 seconds; see {output.with_suffix(".log")}',
+                flush=True,
+            )
+            raise
     result = json.loads(output.read_text(encoding='utf-8'))
     if result['test_ids'] != ids or result['tests'] != len(ids):
         raise ValueError('worker test inventory differs from assigned cases')

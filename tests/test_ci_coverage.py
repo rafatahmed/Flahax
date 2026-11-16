@@ -529,6 +529,8 @@ class WorkflowEnforcementTests(unittest.TestCase):
             [
                 {'os': 'windows-latest', 'shard': '4'},
                 {'os': 'windows-latest', 'shard': '5'},
+                {'os': 'macos-15-intel', 'shard': '4'},
+                {'os': 'macos-15-intel', 'shard': '5'},
             ],
         )
         self.assertEqual(len(native['strategy']['matrix']['os']), 3)
@@ -539,8 +541,10 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
         self.assertIn(
-            "--shard-count ${{ matrix.os == 'windows-latest' && 6 || 4 }}", measure['run']
+            "--shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }}", measure['run']
         )
+        self.assertIn('if [ ! -f build/coverage/tests.json ]; then', measure['run'])
+        self.assertIn('exit 1\nfi\npython -m tools.ci_coverage report', measure['run'])
         self.assertIn('--workers 3', measure['run'])
         self.assertTrue(any(s.get('name') == 'Enforce 45-minute workflow budget' for s in steps))
         self.assertFalse(any(s.get('uses', '').startswith('codecov/') for s in test['steps']))

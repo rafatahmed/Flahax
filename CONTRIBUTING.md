@@ -168,7 +168,7 @@ are checked again and the test outcome, raw branch data and JSON report are seal
 into a checksum bundle. These hashes detect changed artifacts; they are not a
 signature or protection against a malicious workflow.
 
-Linux and macOS each use four balanced coverage shards; Windows uses six. Each
+Linux uses four balanced coverage shards; Windows and Intel macOS each use six. Each
 shard runs three isolated test processes. Class/module fixtures remain intact; every unique discovered case is
 retained, including its full subtest matrix. Scheduling weights are hints, not
 selection rules. Each shard records the complete test inventory and assigned IDs;
