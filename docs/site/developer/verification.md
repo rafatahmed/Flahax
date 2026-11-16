@@ -106,7 +106,7 @@ The source distribution now includes offline fixture inputs/outputs, extensions 
 
 ### Bounded CI execution
 
-The PR acceptance budget is 45 minutes from workflow start through the required checks. Exceeding the budget fails acceptance; a timeout or an omitted test is not a pass. Native Python 3.13 branch coverage runs on Linux, Windows and macOS, using four shards per platform and three isolated worker processes per shard. Compatibility suites use two shards per Python version; inventory-verifying checks retain their required `test (3.11)` through `test (3.14)` names.
+The PR acceptance budget is 45 minutes from workflow start through the required checks. Exceeding the budget fails acceptance; a timeout or an omitted test is not a pass. Native Python 3.13 branch coverage uses four shards each on Linux and macOS, six on Windows, and three isolated worker processes per shard. Python 3.11, 3.12 and 3.14 compatibility suites use two shards each; Python 3.13 reuses its complete native Linux test evidence. Inventory-verifying checks retain their required `test (3.11)` through `test (3.14)` names. This keeps the long-running matrix at twenty jobs without deleting unique cases.
 
 `python -m tools.ci_parallel --output build/unit-tests --workers 3` runs the complete discovered suite locally. Shared class/module fixtures stay together. Expensive independent classes can be divided into test methods; each method still executes all its subtests. `tools/ci_test_weights.json` contains scheduling hints derived from Linux run 43774097468. Weights never select or omit tests, and new tests are included automatically.
 

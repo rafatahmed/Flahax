@@ -504,24 +504,43 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertNotIn('merge-multiple', download['with'])
         test = workflow['jobs']['test']
         self.assertIn("format('test ({0})'", test['name'])
-        self.assertEqual(test['needs'], 'compatibility')
+        self.assertEqual(set(test['needs']), {'compatibility', 'native-coverage'})
+        self.assertEqual(
+            test['strategy']['matrix']['python-version'], ['3.11', '3.12', '3.13', '3.14']
+        )
+        download = next(
+            s for s in test['steps'] if s.get('uses', '').startswith('actions/download-artifact@')
+        )
+        self.assertIn('coverage-evidence-ubuntu-latest-3.13-*', download['with']['pattern'])
         self.assertTrue(any('ci_coverage check-tests' in s.get('run', '') for s in test['steps']))
         compatibility = workflow['jobs']['compatibility']
         self.assertEqual(compatibility['strategy']['matrix']['shard'], ['0', '1'])
+        self.assertEqual(
+            compatibility['strategy']['matrix']['python-version'], ['3.11', '3.12', '3.14']
+        )
         self.assertIn(
             'tools.ci_parallel',
             next(s['run'] for s in compatibility['steps'] if s.get('name') == 'Unit tests'),
         )
         native = workflow['jobs']['native-coverage']
         self.assertEqual(native['strategy']['matrix']['shard'], ['0', '1', '2', '3'])
+        self.assertEqual(
+            native['strategy']['matrix']['include'],
+            [
+                {'os': 'windows-latest', 'shard': '4'},
+                {'os': 'windows-latest', 'shard': '5'},
+            ],
+        )
         self.assertEqual(len(native['strategy']['matrix']['os']), 3)
-        self.assertLessEqual(int(native['timeout-minutes']), 35)
+        self.assertLessEqual(int(native['timeout-minutes']), 40)
         measure = next(
             s for s in native['steps'] if s.get('name') == 'Candidate-bound native coverage'
         )
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
-        self.assertIn('--shard-count 4', measure['run'])
+        self.assertIn(
+            "--shard-count ${{ matrix.os == 'windows-latest' && 6 || 4 }}", measure['run']
+        )
         self.assertIn('--workers 3', measure['run'])
         self.assertTrue(any(s.get('name') == 'Enforce 45-minute workflow budget' for s in steps))
         self.assertFalse(any(s.get('uses', '').startswith('codecov/') for s in test['steps']))
