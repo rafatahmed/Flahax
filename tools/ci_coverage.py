@@ -68,9 +68,11 @@ def record(root, output, expected):
 
 
 def run_tests(output):
-    result = unittest.TextTestRunner(verbosity=2).run(
-        unittest.defaultTestLoader.discover('tests', top_level_dir='.')
-    )
+    from tools.ci_parallel import flatten
+
+    suite = unittest.defaultTestLoader.discover('tests', top_level_dir='.')
+    ids = sorted(case.id() for case in flatten(suite))
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
     write(
         output / 'tests.json',
         dict(
@@ -79,6 +81,10 @@ def run_tests(output):
             errors=len(result.errors),
             skipped=[(t.id(), reason) for t, reason in result.skipped],
             passed=result.wasSuccessful() and result.testsRun > 0,
+            inventory=ids,
+            test_ids=ids,
+            shard_index=0,
+            shard_count=1,
         ),
     )
     return 0 if result.wasSuccessful() and result.testsRun > 0 else 1
@@ -129,16 +135,35 @@ def shard(root, directory, current):
     return manifest
 
 
+def validate_partitions(records, expected_ids):
+    for system in PLATFORMS:
+        tests = [t for m, t in records if m['platform'] == system]
+        count = len(tests)
+        if not count or sorted(t['shard_index'] for t in tests) != list(range(count)):
+            raise ValueError('missing or duplicate native test partition')
+        if any(t['shard_count'] != count or t['inventory'] != expected_ids for t in tests):
+            raise ValueError('test partition inventory or count differs')
+        ids = sorted(case for t in tests for case in t['test_ids'])
+        if ids != expected_ids or any(t['tests'] != len(t['test_ids']) for t in tests):
+            raise ValueError('missing, duplicate or unexecuted test cases')
+
+
 def aggregate(root, inputs, output, expected):
     import coverage
 
     current = identity(root, expected)
     directories = sorted(p.parent for p in inputs.glob('*/bundle.json'))
-    if len(directories) != len(PLATFORMS):
-        raise ValueError('exactly three native coverage shards are required')
+    if not directories:
+        raise ValueError('coverage evidence required for all three native platforms')
     manifests = [shard(root, p, current) for p in directories]
-    if sorted(m['platform'] for m in manifests) != sorted(PLATFORMS):
+    if set(m['platform'] for m in manifests) != set(PLATFORMS):
         raise ValueError('missing, duplicate or unsupported native platform')
+    from tools.ci_parallel import collect, flatten
+
+    validate_partitions(
+        [(m, read(p / 'tests.json')) for p, m in zip(directories, manifests)],
+        sorted(case.id() for case in flatten(collect())),
+    )
     if output.exists():
         raise ValueError('preserve existing aggregate evidence')
     output.mkdir(parents=True)

@@ -11,14 +11,14 @@ import unittest
 from flahax import DeliveryError, VolumeLitres
 from flahax.delivery_quantities import GramsPerLitre, MassGrams, InjectionRatio
 from flahax.delivery_plan import compose_delivery_plan, transition_plan
-from tests.test_delivery_plan import DeliveryPlanTests
+from tests import test_delivery_plan
 from tests.test_ph_planning import inputs
 from flahax.ph_planning import plan_ph
 
 
 class DeliveryBalanceTests(unittest.TestCase):
     def setUp(self):
-        self.plan = DeliveryPlanTests().make_plan()
+        self.plan = test_delivery_plan.DeliveryPlanTests().make_plan()
 
     def compose(self, **changes):
         p = replace(self.plan, **changes)

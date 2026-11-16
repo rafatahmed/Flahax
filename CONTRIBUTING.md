@@ -168,8 +168,23 @@ are checked again and the test outcome, raw branch data and JSON report are seal
 into a checksum bundle. These hashes detect changed artifacts; they are not a
 signature or protection against a malicious workflow.
 
+Each native platform uses four balanced shards, each with three isolated test
+processes. Class/module fixtures remain intact; every unique discovered case is
+retained, including its full subtest matrix. Scheduling weights are hints, not
+selection rules. Each shard records the complete test inventory and assigned IDs;
+aggregation independently discovers the inventory and requires every case exactly
+once on each platform. The serial `ci_coverage run` command remains supported as
+a single partition. `python -m tools.ci_parallel --output build/unit-tests` runs
+the complete suite in parallel locally.
+
+PR acceptance requires completion within 45 minutes from workflow start. Native
+and compatibility jobs have a 35-minute timeout. The final gate checks elapsed
+time after uploading evidence, retaining 60 seconds for runner cleanup. Confirm
+actual workflow completion time before declaring the performance fix accepted;
+timeouts or skipped checks are failures, not a faster pass.
+
 The aggregation job downloads only this workflow run's artifacts. It rejects
-missing/duplicate platforms, stale revisions or attempts, changed inputs, failed
+missing platforms or duplicate partitions, stale revisions or attempts, changed inputs, failed
 or empty tests, skipped optional support dependencies and statement-only data.
 It combines the raw branch data and reports every inventoried Python source,
 including unimported files. Zero missing statements and zero missing branch

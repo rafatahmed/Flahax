@@ -82,7 +82,18 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             path = inputs / system
             ci.write(path / 'manifest.json', dict(current, platform=system, python='3.13.9'))
             ci.write(
-                path / 'tests.json', dict(tests=1, passed=True, failures=0, errors=0, skipped=[])
+                path / 'tests.json',
+                dict(
+                    tests=1,
+                    passed=True,
+                    failures=0,
+                    errors=0,
+                    skipped=[],
+                    shard_index=0,
+                    shard_count=1,
+                    inventory=['fixture'],
+                    test_ids=['fixture'],
+                ),
             )
             self.seal(path)
         return root, inputs, current
@@ -97,7 +108,13 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
         )
 
     def aggregate(self, root, inputs, current):
-        with contextlib.chdir(root), patch.object(ci, 'identity', return_value=current):
+        with (
+            contextlib.chdir(root),
+            patch.object(ci, 'identity', return_value=current),
+            patch(
+                'tools.ci_parallel.collect', return_value=[SimpleNamespace(id=lambda: 'fixture')]
+            ),
+        ):
             ci.aggregate(root, inputs, root / 'aggregate', current['source_revision'])
 
     def test_real_branch_union_and_xml_have_exact_counts(self):
@@ -151,7 +168,11 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
         with tempfile.TemporaryDirectory() as folder:
             root, inputs, current = self.fixture(folder)
             (inputs / 'Linux/bundle.json').unlink()
-            with self.assertRaisesRegex(ValueError, 'three'):
+            with self.assertRaisesRegex(ValueError, 'platform'):
+                self.aggregate(root, inputs, current)
+            for system in ('Windows', 'Darwin'):
+                (inputs / system / 'bundle.json').unlink()
+            with self.assertRaisesRegex(ValueError, 'three native'):
                 self.aggregate(root, inputs, current)
 
     def test_tampered_bundle_missing_metadata_and_statement_only_data(self):
@@ -255,7 +276,13 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                     wasSuccessful=lambda: success,
                 )
                 with (
-                    patch.object(ci.unittest.defaultTestLoader, 'discover'),
+                    patch.object(
+                        ci.unittest.defaultTestLoader,
+                        'discover',
+                        return_value=unittest.TestSuite(
+                            unittest.FunctionTestCase(lambda: None) for _ in range(count)
+                        ),
+                    ),
                     patch.object(ci.unittest, 'TextTestRunner') as runner,
                 ):
                     runner.return_value.run.return_value = fake
@@ -263,6 +290,10 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                     self.assertEqual(
                         ci.read(Path(folder) / 'tests.json')['passed'], bool(count and success)
                     )
+                    evidence = ci.read(Path(folder) / 'tests.json')
+                    self.assertEqual(evidence['inventory'], evidence['test_ids'])
+                    self.assertEqual(len(evidence['test_ids']), count)
+                    self.assertEqual((evidence['shard_index'], evidence['shard_count']), (0, 1))
 
     def test_upload_integrity_rejects_regeneration_and_wrong_candidate(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -396,7 +427,9 @@ class WorkflowEnforcementTests(unittest.TestCase):
             )
             self.assertEqual(checkout['with']['ref'], candidate)
         gate = workflow['jobs']['coverage-gate']
-        self.assertEqual(set(gate['needs']), {'style', 'test', 'phreeqc-live', 'docs'})
+        self.assertEqual(
+            set(gate['needs']), {'style', 'test', 'native-coverage', 'phreeqc-live', 'docs'}
+        )
         self.assertEqual(gate['if'], 'always() && !cancelled()')
         self.assertIn('all(v["result"] == "success"', gate['steps'][0]['run'])
         steps = gate['steps']
@@ -427,13 +460,22 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertNotIn('merge-multiple', download['with'])
         test = workflow['jobs']['test']
         self.assertIn("format('test ({0})'", test['name'])
-        self.assertEqual(len(test['strategy']['matrix']['include']), 2)
+        self.assertIn(
+            'tools.ci_parallel',
+            next(s['run'] for s in test['steps'] if s.get('name') == 'Unit tests'),
+        )
+        native = workflow['jobs']['native-coverage']
+        self.assertEqual(native['strategy']['matrix']['shard'], ['0', '1', '2', '3'])
+        self.assertEqual(len(native['strategy']['matrix']['os']), 3)
+        self.assertLessEqual(int(native['timeout-minutes']), 35)
         measure = next(
-            s for s in test['steps'] if s.get('name') == 'Candidate-bound native coverage'
+            s for s in native['steps'] if s.get('name') == 'Candidate-bound native coverage'
         )
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
-        self.assertEqual(measure['if'], "matrix.python-version == '3.13'")
+        self.assertIn('--shard-count 4', measure['run'])
+        self.assertIn('--workers 3', measure['run'])
+        self.assertTrue(any(s.get('name') == 'Enforce 45-minute workflow budget' for s in steps))
         self.assertFalse(any(s.get('uses', '').startswith('codecov/') for s in test['steps']))
         config = yaml.load(
             (root / 'codecov.yml').read_text(encoding='utf-8'), Loader=yaml.BaseLoader
