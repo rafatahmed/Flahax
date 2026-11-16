@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "source": {
+    "author": "A. A. Steiner",
+    "year": 1961,
+    "title": "A universal method for preparing nutrient solutions of a certain desired composition",
+    "journal": "Plant and Soil 15, 134-154",
+    "url": "https://edepot.wur.nl/309364",
+    "provenance": "Article text supplied by the user; page and figure interpretations cross-checked in the Steiner scientific audit. Transcribed ambiguities are retained, not silently corrected."
+  },
+  "experimental_design": {
+    "pages": [142, 143, 144, 145, 148, 149],
+    "anion_ratios": 20,
+    "cation_ratios": 16,
+    "ratio_combinations": 320,
+    "target_ph_values": [5.0, 5.8, 6.5, 7.1, 7.6],
+    "nominal_conditions": 1600,
+    "design_strength_mmol_l": 30,
+    "later_printed_combinations": 360,
+    "additional_intermediate_combinations": 80,
+    "resolved_curve_development_sample_count": null,
+    "count_ambiguity_resolved": false,
+    "precipitating_mixtures_excluded_from_reformulation": true,
+    "qualification": "20 x 16 x 5 = 1600 nominal conditions at the main strength. The later printed 360 conflicts with 320; another 80 intermediate combinations are mentioned. Do not invent a resolved total or count all nominal conditions as successful reformulated batches. Already turbid mixtures and those precipitating during KOH titration were excluded from reformulation. No case-level dataset or replication statistics is supplied."
+  },
+  "figure_6": {
+    "pages": [149, 150, 151, 152],
+    "curve_a_printed_k_ca": [80, 20],
+    "solution_1a_k_ca_before_normalization": [80, 10],
+    "solution_1a_k_ca_normalized_percent": [88.88888888888889, 11.11111111111111],
+    "mapping_resolved": false,
+    "raw_fit_points_available": false,
+    "fit_uncertainty_available": false,
+    "reproducible_extrapolation_rule_available": false,
+    "ordinate": "Added OH equivalents as a percentage of total phosphate on the H2PO4 reporting basis",
+    "qualification": "The paper compares solution 1a to curve A despite the ratio-label mismatch. Preserve that comparison without treating it as a resolved mapping or an independent holdout validation. Figure 6 base-dose percentages are not the HPO4 species fraction from Figure 1."
+  },
+  "worked_example": {
+    "pages": [150, 151, 152],
+    "cation_equivalent_shares": [50, 30, 20],
+    "anion_equivalent_shares": [5, 3, 1],
+    "strength_mmol_l": 30,
+    "target_ph": 6.3,
+    "expected_ph": 6.37,
+    "evidence_kind": "stated_expectation",
+    "measured_outcome_reported": false,
+    "interpolated_oh_percent_of_phosphate": 26.0,
+    "qualification": "The stated approximately 6.37 after aeration is a worked-example expectation, not a reported measured batch result or a FlahaX prediction."
+  },
+  "solution_1a": {
+    "pages": [147, 148, 149, 152],
+    "stage_order": ["initial_after_24h_aeration", "titrated_after_1h_reaeration", "fresh_batch_after_aeration"],
+    "measured_ph": [5.33, 6.45, 6.58],
+    "evidence_kind": "reported_measurements",
+    "before_aeration_ph": 4.76,
+    "reported_test_to_fresh_ph_rise": 0.13,
+    "rise_explanation_established_by_flahax": false,
+    "experimental_temperature_c_approx": 21,
+    "missing_experimental_inputs": ["complete water composition", "air CO2 and carbon inventory", "aeration transfer history", "measurement uncertainty", "replication statistics", "measured dissolved nutrient profiles"]
+  },
+  "water_conductivity": {
+    "pages": [147],
+    "verbatim_transcription": "spec. conductivity usually $10^{-6}$ and never $<10^{-5}ohm^{-1}cm^{-1}$",
+    "inequality_resolved": false,
+    "usable_as_water_input_specification": false,
+    "qualification": "The usual value and printed inequality are internally inconsistent. Do not reverse the inequality or derive an accepted water conductivity limit."
+  },
+  "concentration_basis": {
+    "pages": [140, 141, 144, 145, 148, 151],
+    "historical_term": "mg ions per litre",
+    "modern_unit": "mmol/L",
+    "definition": "Sum of six analytical nutrient amounts K, Ca, Mg, nitrate, total phosphate and sulfate; not mass of fertilizer salts.",
+    "not_equivalent_to": ["ionic strength", "actual species particle concentration", "measured osmolality", "electrical conductivity"],
+    "phosphate_reporting_basis": "total phosphate reported as H2PO4",
+    "group_equivalent_totals_may_differ": true,
+    "electroneutrality_basis": "Full actual aqueous species, not equality of the two independently normalized nutrient subsets",
+    "ideal_osmotic_estimate": {
+      "strength_mmol_l": 30,
+      "pressure_atm_approx": 0.71,
+      "temperature_c": 15,
+      "assumptions": ["ideal complete dissociation", "no hydrolysis", "no precipitation"],
+      "evidence_kind": "ideal_estimate_not_measured_osmolality"
+    }
+  },
+  "historical_domain": {
+    "pages": [152, 153, 154],
+    "main_strength_mmol_l": 30,
+    "limited_additional_test_strength_mmol_l": 20,
+    "tests_below_20_reported": false,
+    "continuous_20_to_30_validation_reported": false,
+    "higher_strength_observation": {
+      "approx_strength_mmol_l": 42,
+      "approx_ideal_pressure_atm": 1,
+      "qualification": "Only a few combinations reported feasible; above pH 6.5 very few extreme ratios remain. This is not general method validation at 42 mmol/L."
+    },
+    "curve_minimum_investigated_ph": 5,
+    "curve_specific_upper_ph_limits": null,
+    "upper_limit_qualification": "Upper pH coverage varies by K:Ca curve and feasible composition; no universal upper cutoff is inferred from the precision statements.",
+    "ph_precision": [
+      {"range_description": "pH 5.0 to 5.5", "reported_plus_minus_ph": 0.2},
+      {"range_description": "pH 5.5 to 6.0", "reported_plus_minus_ph": 0.15},
+      {"range_description": "pH 6.0 to 7.0", "reported_plus_minus_ph": 0.1},
+      {"range_description": "above pH 7.0, within feasible curve coverage", "reported_plus_minus_ph": 0.2}
+    ],
+    "precision_scope": "Author-reported historical method precision, not a confidence interval, instrument uncertainty, FlahaX prediction bound or acceptance tolerance. Shared band endpoints do not establish a new sharper boundary rule.",
+    "exclusions": ["no calcium", "no phosphate", "extreme ratios", "combinations precipitating even inside the drawn curve range"],
+    "extreme_ratio_numeric_cutoff": null,
+    "additional_ions": {
+      "Na": "exploratory K+Na substitution in the curve ratio; not demonstrated nutritional equivalence",
+      "NH4": "not_investigated"
+    },
+    "qualification": "Being at 30 mmol/L and within a quoted precision band does not establish applicability to every ratio or pH. The article does not establish crop optima, crop sufficiency, phase-specific kinetics or universal physical stability."
+  },
+  "empirical_screens": [
+    {
+      "pages": [153],
+      "product": "Ca x sulfate",
+      "threshold": 60,
+      "threshold_description": "above 60 reported infeasible, independent of pH in the study",
+      "printed_unit": "mg ions per litre",
+      "interpreted_unit": "(mmol/L)^2",
+      "unit_interpretation": "Dimensional interpretation when both input concentrations are mmol/L; the printed product unit is inconsistent.",
+      "thermodynamic_ksp": false
+    },
+    {
+      "pages": [153],
+      "product": "Ca x HPO4",
+      "threshold": 2.2,
+      "threshold_description": "approximately 2.2 doubtful; above it turbidity reported, with composition-dependent borderline cases",
+      "printed_unit": "mg ions per litre",
+      "interpreted_unit": "(mmol/L)^2",
+      "unit_interpretation": "Dimensional interpretation when both input concentrations are mmol/L; the printed product unit is inconsistent.",
+      "phosphate_fraction_method": "Approximate Figure 1 graphical HPO4 fraction of total phosphate at the relevant pH; not Figure 6 OH dose fraction",
+      "thermodynamic_ksp": false
+    }
+  ],
+  "screen_scope": "Historical concentration-product screens are contextual empirical evidence, not activity-based mineral saturation indices, universal solubility constants or guarantees of retained dissolved nutrients."
+}

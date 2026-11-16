@@ -1,0 +1,274 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "counted_mmol_l": 1.3,
+  "volume_litres": 10,
+  "water": {
+    "analysis_id": "SYNTHETIC water analysis, not a lab result",
+    "totals_mol_kg": {
+      "K+": 0.0001,
+      "Ca+2": 0.0004,
+      "Mg+2": 0.00015,
+      "NO3-": 0.0002,
+      "PO4-3": 2e-05,
+      "SO4-2": 0.0001,
+      "Na+": 0.0003,
+      "Cl-": 0.0004,
+      "CO3-2": 0
+    },
+    "measured_ph": 6.3,
+    "temperature_c": 25,
+    "source_water_mass_kg": 0.1
+  },
+  "water_mass_kg": 10,
+  "products": [
+    {
+      "product": {
+        "name": "Synthetic KH2PO4",
+        "formula": "KH2PO4",
+        "elements": {
+          "K": 0.574621177010256,
+          "P": 0.45521620062446555
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.98
+    },
+    {
+      "product": {
+        "name": "Synthetic Ca(NO3)2.4H2O",
+        "formula": "Ca(NO3)2.4H2O",
+        "elements": {
+          "Ca": 0.3394367812334265,
+          "N_NO3": 0.23725680741066094
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.98
+    },
+    {
+      "product": {
+        "name": "Synthetic MgSO4.7H2O",
+        "formula": "MgSO4.7H2O",
+        "elements": {
+          "Mg": 0.1972298077413085,
+          "S": 0.2601599521162868
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.98
+    },
+    {
+      "product": {
+        "name": "Synthetic Mg(NO3)2.6H2O",
+        "formula": "Mg(NO3)2.6H2O",
+        "elements": {
+          "Mg": 0.18958622854372192,
+          "N_NO3": 0.21851285145800042
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.98
+    },
+    {
+      "product": {
+        "id": "cmbpfudmt00ozq8z9gsnrs779+synthetic-blend",
+        "name": "Potassium Nitrate",
+        "formula": null,
+        "elements": {
+          "K": 0.7600472,
+          "N_NO3": 0.254748
+        },
+        "provenance": {
+          "identityId": null,
+          "gradeId": "synthetic-blend",
+          "lotId": null,
+          "documents": {
+            "grade": {
+              "supplier": "Illustrative only",
+              "title": "Synthetic composition",
+              "issued": "2026-11-01",
+              "entered": "2026-11-15",
+              "url": null,
+              "sha256": null
+            },
+            "lot": null
+          },
+          "source": null,
+          "oxideConversions": {
+            "grade": {},
+            "lot": {}
+          },
+          "assumed": false,
+          "sourceStatus": "grade_documented",
+          "assumptionStatus": "declared_composition_not_independently_verified",
+          "identityStatus": null,
+          "atomicMassConvention": "flahax-atomic-legacy-1",
+          "identitiesSha256": "886ad53887c594e62b3e733f7fa5424f2262778673ef3b809b873fedc6ade5be",
+          "hostProduct": "Potassium Nitrate",
+          "blendImpliedAnalysis": {
+            "K": 0.7600472,
+            "N_NO3": 0.254748
+          },
+          "recordId": "cmbpfudmt00ozq8z9gsnrs779+synthetic-blend",
+          "analysisBasis": {
+            "K": "grade_typical",
+            "N_NO3": "grade_typical"
+          },
+          "flags": []
+        },
+        "grade": {
+          "grade_id": "synthetic-blend",
+          "supplier": "Illustrative only",
+          "product": "Nitrate/MKP",
+          "composition": "disclosed",
+          "components": [
+            {
+              "identity_id": "idn-potassium-nitrate",
+              "mass_fraction": 0.019596
+            },
+            {
+              "identity_id": "idn-monopotassium-phosphate",
+              "mass_fraction": 0.0004
+            },
+            {
+              "identity_id": "idn-sodium-iron-edta",
+              "mass_fraction": 4e-06
+            }
+          ],
+          "analysis": {
+            "K": {
+              "typical": 0.7600472
+            },
+            "N_NO3": {
+              "typical": 0.254748
+            }
+          },
+          "document": {
+            "supplier": "Illustrative only",
+            "title": "Synthetic composition",
+            "issued": "2026-11-01",
+            "entered": "2026-11-15"
+          }
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.98
+    },
+    {
+      "product": {
+        "name": "Synthetic sodium-bearing base",
+        "ions": {
+          "K+": 1,
+          "Na+": 0.01,
+          "OH-": 1.01
+        },
+        "elements": {
+          "K": 1.3838855532002772,
+          "Na": 0.008137235938777795
+        }
+      },
+      "role": "ph_reagent",
+      "solvent_fraction": 0.98
+    }
+  ],
+  "ph_range": [
+    6.28,
+    6.32
+  ],
+  "maximum_concentrations": {
+    "Na": 10,
+    "Cl": 20
+  },
+  "saturation_margin": 0.3,
+  "uncertainty": {
+    "mode": "water_product_elemental",
+    "weighing_error_g": 0.001,
+    "volume_error_litres": 0.05,
+    "ratio_relative_tolerance": 0.01,
+    "concentration_relative_tolerance": 0.02,
+    "water_relative_error": 0.01,
+    "water_ph_error": 0.02,
+    "impurity_model": "inert",
+    "water_mass_model": "scale_with_final_volume",
+    "max_scenarios": 128,
+    "product_element_factors": {
+      "Synthetic KH2PO4": {
+        "K": [
+          0.99,
+          1
+        ],
+        "P": [
+          0.99,
+          1
+        ]
+      },
+      "Synthetic Ca(NO3)2.4H2O": {
+        "Ca": [
+          0.99,
+          1
+        ],
+        "N_NO3": [
+          0.99,
+          1
+        ]
+      },
+      "Synthetic MgSO4.7H2O": {
+        "Mg": [
+          0.99,
+          1
+        ],
+        "S": [
+          0.99,
+          1
+        ]
+      },
+      "Synthetic Mg(NO3)2.6H2O": {
+        "Mg": [
+          0.99,
+          1
+        ],
+        "N_NO3": [
+          0.99,
+          1
+        ]
+      },
+      "Synthetic sodium-bearing base": {
+        "K": [
+          0.99,
+          1
+        ],
+        "Na": [
+          0.99,
+          1
+        ]
+      },
+      "Potassium Nitrate": {
+        "source": "blend_ingredients",
+        "mass_fraction_bounds": {
+          "idn-potassium-nitrate": [
+            0.01940004,
+            0.019596
+          ],
+          "idn-monopotassium-phosphate": [
+            0.00039600000000000003,
+            0.0004
+          ],
+          "idn-sodium-iron-edta": [
+            3.96e-06,
+            4e-06
+          ]
+        }
+      }
+    }
+  }
+}

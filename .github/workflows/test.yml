@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -30,19 +31,44 @@ jobs:
         run: ruff format --check .
 
   test:
-    # Linux keeps the check names "test (3.11)" ... that branch protection requires.
-    name: ${{ matrix.os == 'ubuntu-latest' && format('test ({0})', matrix.python-version) || format('test ({0}, {1})', matrix.os, matrix.python-version) }}
+    # Preserve branch-protection names; accept only complete compatibility evidence.
+    name: ${{ format('test ({0})', matrix.python-version) }}
+    needs: [compatibility, native-coverage]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - name: Require successful version and native jobs
+        env:
+          RESULTS: ${{ needs.compatibility.result }} ${{ needs.native-coverage.result }}
+        run: test "$RESULTS" = "success success"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: ${{ matrix.python-version == '3.13' && 'coverage-evidence-ubuntu-latest-3.13-*' || format('compatibility-{0}-*', matrix.python-version) }}
+          path: build/compatibility
+      - name: Verify complete successful test inventory
+        run: python -m tools.ci_coverage check-tests --candidate "$CANDIDATE_SHA" --inputs build/compatibility --output build/compatibility-verified
+
+  compatibility:
+    name: compatibility (${{ matrix.python-version }}, ${{ matrix.shard }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
-        include:
-          - os: windows-latest
-            python-version: "3.13"
-          - os: macos-latest
-            python-version: "3.13"
+        python-version: ["3.11", "3.12", "3.14"]
+        shard: [0, 1]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,39 +77,80 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install
-        run: python -m pip install -e . build
+        run: python -m pip install -e . build PyYAML==6.0.3
       - name: Unit tests
-        if: matrix.python-version != '3.13'
-        run: python -m unittest discover -s tests -t .
+        run: python -m tools.ci_parallel --output build/unit-tests --workers 3 --shard-index ${{ matrix.shard }} --shard-count 2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: compatibility-${{ matrix.python-version }}-${{ matrix.shard }}
+          if-no-files-found: error
+          path: build/unit-tests/
+      - name: Clean wheel and sdist verification
+        if: matrix.shard == 0
+        run: python tools/verify_distribution.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always() && matrix.shard == 0
+        with:
+          name: distribution-evidence-${{ matrix.os }}-${{ matrix.python-version }}
+          path: build/distribution-verification.json
+
+  native-coverage:
+    name: coverage (${{ matrix.os }}, 3.13, ${{ matrix.shard }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        # Current CI acceptance covers Linux and Windows; macOS is excluded (#256).
+        os: [ubuntu-latest, windows-latest]
+        shard: [0, 1, 2, 3]
+        include:
+          - os: windows-latest
+            shard: 4
+          - os: windows-latest
+            shard: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e . build
       - name: Install coverage and support-test dependencies
-        if: matrix.python-version == '3.13'
         run: python -m pip install coverage==7.17.0 PyYAML==6.0.3 -r benchmarks/requirements.txt -r tools/requirements-benchmark-report.txt
       - name: Candidate-bound native coverage
-        if: matrix.python-version == '3.13'
         shell: bash
         env:
           COVERAGE_FILE: build/coverage/.coverage
         run: |
           python -m tools.ci_coverage record --candidate "$CANDIDATE_SHA" --output build/coverage
           set +e
-          python -m coverage run -m tools.ci_coverage run --candidate "$CANDIDATE_SHA" --output build/coverage 2>&1 | tee build/coverage/tests.log
+          python -m coverage run -m tools.ci_parallel --output build/coverage --shard-index ${{ matrix.shard }} --shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }} --workers 3 2>&1 | tee build/coverage/tests.log
           test_status=${PIPESTATUS[0]}
           set -e
+          if [ ! -f build/coverage/tests.json ]; then
+            echo "::error::Test summary missing; see worker logs for the original failure."
+            exit 1
+          fi
           python -m tools.ci_coverage report --candidate "$CANDIDATE_SHA" --output build/coverage
           exit "$test_status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always() && matrix.python-version == '3.13'
+        if: always()
         with:
-          name: coverage-evidence-${{ matrix.os }}-${{ matrix.python-version }}
+          name: coverage-evidence-${{ matrix.os }}-3.13-${{ matrix.shard }}
           include-hidden-files: true
           if-no-files-found: error
           path: build/coverage/
       - name: Clean wheel and sdist verification
+        if: matrix.shard == 0
         run: python tools/verify_distribution.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: always() && matrix.shard == 0
         with:
-          name: distribution-evidence-${{ matrix.os }}-${{ matrix.python-version }}
+          name: native-distribution-evidence-${{ matrix.os }}-3.13
           path: build/distribution-verification.json
 
   phreeqc-live:
@@ -128,7 +195,8 @@ jobs:
 
   coverage-gate:
     name: coverage-gate
-    needs: [style, test, phreeqc-live, docs]
+    needs: [style, test, native-coverage, phreeqc-live, docs]
+    timeout-minutes: 8
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
@@ -144,7 +212,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install exact coverage reporter
-        run: python -m pip install coverage==7.17.0
+        run: python -m pip install -e . coverage==7.17.0 PyYAML==6.0.3 -r benchmarks/requirements.txt -r tools/requirements-benchmark-report.txt
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: coverage-evidence-*
@@ -175,3 +243,9 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           path: build/coverage-gate/
+      - name: Enforce 45-minute workflow budget
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          export RUN_STARTED_AT=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_started_at)
+          python -c 'import datetime, os; start = datetime.datetime.fromisoformat(os.environ["RUN_STARTED_AT"].replace("Z", "+00:00")); elapsed = (datetime.datetime.now(datetime.timezone.utc) - start).total_seconds(); print(f"Workflow elapsed: {elapsed:.1f}s / 2700s (60s cleanup reserve)"); assert elapsed <= 2640, "45-minute PR CI budget would consume cleanup reserve"'

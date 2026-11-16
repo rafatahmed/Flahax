@@ -24,6 +24,49 @@ from tools.check_coverage import inventory
 
 @unittest.skipUnless(importlib.util.find_spec('coverage'), 'coverage tooling unavailable')
 class NativeCoverageTests(unittest.TestCase):
+    def test_compatibility_gate_requires_all_cases_and_successful_partitions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            inputs = root / 'inputs'
+            for i, name in enumerate(('first', 'second')):
+                path = inputs / str(i)
+                path.mkdir(parents=True)
+                ci.write(
+                    path / 'tests.json',
+                    dict(
+                        tests=1,
+                        passed=True,
+                        failures=0,
+                        errors=0,
+                        skipped=[],
+                        shard_index=i,
+                        shard_count=2,
+                        inventory=['first', 'second'],
+                        test_ids=[name],
+                    ),
+                )
+            with (
+                patch.object(ci, 'identity', return_value={'source_revision': 'a' * 40}),
+                patch(
+                    'tools.ci_parallel.collect',
+                    return_value=[
+                        SimpleNamespace(id=lambda: 'first'),
+                        SimpleNamespace(id=lambda: 'second'),
+                    ],
+                ),
+            ):
+                ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+                self.assertTrue(ci.read(root / 'out/tests.json')['passed'])
+                original = ci.read(inputs / '0/tests.json')
+                for key, value in (('passed', False), ('failures', 1), ('errors', 1)):
+                    ci.write(inputs / '0/tests.json', dict(original, **{key: value}))
+                    with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'failed'):
+                        ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+                ci.write(inputs / '0/tests.json', original)
+                (inputs / '1/tests.json').unlink()
+                with self.assertRaisesRegex(ValueError, 'partition'):
+                    ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+
     def fixture(self, folder, *, complete=True):
         root = Path(folder)
         for name in ('src/flahax', 'tools', 'examples', 'benchmarks', 'docs/site'):
@@ -54,7 +97,7 @@ class NativeCoverageTests(unittest.TestCase):
         script = """
 import coverage, pathlib, runpy, sys
 inputs = pathlib.Path(sys.argv[1])
-for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
+for index, system in enumerate(('Linux', 'Windows')):
     path = inputs / system
     path.mkdir(parents=True)
     c = coverage.Coverage(data_file=str(path / '.coverage'))
@@ -82,7 +125,18 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             path = inputs / system
             ci.write(path / 'manifest.json', dict(current, platform=system, python='3.13.9'))
             ci.write(
-                path / 'tests.json', dict(tests=1, passed=True, failures=0, errors=0, skipped=[])
+                path / 'tests.json',
+                dict(
+                    tests=1,
+                    passed=True,
+                    failures=0,
+                    errors=0,
+                    skipped=[],
+                    shard_index=0,
+                    shard_count=1,
+                    inventory=['fixture'],
+                    test_ids=['fixture'],
+                ),
             )
             self.seal(path)
         return root, inputs, current
@@ -97,16 +151,23 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
         )
 
     def aggregate(self, root, inputs, current):
-        with contextlib.chdir(root), patch.object(ci, 'identity', return_value=current):
+        with (
+            contextlib.chdir(root),
+            patch.object(ci, 'identity', return_value=current),
+            patch(
+                'tools.ci_parallel.collect', return_value=[SimpleNamespace(id=lambda: 'fixture')]
+            ),
+        ):
             ci.aggregate(root, inputs, root / 'aggregate', current['source_revision'])
 
     def test_real_branch_union_and_xml_have_exact_counts(self):
+        self.assertEqual(ci.PLATFORMS, ('Linux', 'Windows'))
         with tempfile.TemporaryDirectory() as folder:
             root, inputs, current = self.fixture(folder)
             self.aggregate(root, inputs, current)
             result = ci.read(root / 'aggregate/provenance.json')
             self.assertEqual((result['statements'], result['branches']), (9, 2))
-            self.assertEqual(len(result['shards']), 3)
+            self.assertEqual(len(result['shards']), 2)
             self.assertTrue(ci.read(root / 'aggregate/gate.json')['passed'])
             with self.assertRaisesRegex(ValueError, 'preserve'):
                 self.aggregate(root, inputs, current)
@@ -151,7 +212,11 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
         with tempfile.TemporaryDirectory() as folder:
             root, inputs, current = self.fixture(folder)
             (inputs / 'Linux/bundle.json').unlink()
-            with self.assertRaisesRegex(ValueError, 'three'):
+            with self.assertRaisesRegex(ValueError, 'platform'):
+                self.aggregate(root, inputs, current)
+            for system in ('Windows',):
+                (inputs / system / 'bundle.json').unlink()
+            with self.assertRaisesRegex(ValueError, 'Linux and Windows'):
                 self.aggregate(root, inputs, current)
 
     def test_tampered_bundle_missing_metadata_and_statement_only_data(self):
@@ -255,7 +320,13 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                     wasSuccessful=lambda: success,
                 )
                 with (
-                    patch.object(ci.unittest.defaultTestLoader, 'discover'),
+                    patch.object(
+                        ci.unittest.defaultTestLoader,
+                        'discover',
+                        return_value=unittest.TestSuite(
+                            unittest.FunctionTestCase(lambda: None) for _ in range(count)
+                        ),
+                    ),
                     patch.object(ci.unittest, 'TextTestRunner') as runner,
                 ):
                     runner.return_value.run.return_value = fake
@@ -263,6 +334,10 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                     self.assertEqual(
                         ci.read(Path(folder) / 'tests.json')['passed'], bool(count and success)
                     )
+                    evidence = ci.read(Path(folder) / 'tests.json')
+                    self.assertEqual(evidence['inventory'], evidence['test_ids'])
+                    self.assertEqual(len(evidence['test_ids']), count)
+                    self.assertEqual((evidence['shard_index'], evidence['shard_count']), (0, 1))
 
     def test_upload_integrity_rejects_regeneration_and_wrong_candidate(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -354,9 +429,9 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             self.assertEqual(caught.exception.code, 0)
 
     def test_cli_dispatch_and_required_aggregation_input(self):
-        for action in ('record', 'report', 'run', 'aggregate', 'verify-upload'):
+        for action in ('record', 'report', 'run', 'aggregate', 'verify-upload', 'check-tests'):
             args = ['ci', action, '--output', 'out', '--candidate', 'a' * 40]
-            if action == 'aggregate':
+            if action in ('aggregate', 'check-tests'):
                 args += ['--inputs', 'in']
             with (
                 patch.object(sys, 'argv', args),
@@ -365,6 +440,7 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                 patch.object(ci, 'report'),
                 patch.object(ci, 'run_tests', return_value=1),
                 patch.object(ci, 'aggregate'),
+                patch.object(ci, 'check_tests'),
             ):
                 self.assertEqual(ci.main(), 1 if action == 'run' else 0)
         with (
@@ -396,7 +472,9 @@ class WorkflowEnforcementTests(unittest.TestCase):
             )
             self.assertEqual(checkout['with']['ref'], candidate)
         gate = workflow['jobs']['coverage-gate']
-        self.assertEqual(set(gate['needs']), {'style', 'test', 'phreeqc-live', 'docs'})
+        self.assertEqual(
+            set(gate['needs']), {'style', 'test', 'native-coverage', 'phreeqc-live', 'docs'}
+        )
         self.assertEqual(gate['if'], 'always() && !cancelled()')
         self.assertIn('all(v["result"] == "success"', gate['steps'][0]['run'])
         steps = gate['steps']
@@ -427,13 +505,47 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertNotIn('merge-multiple', download['with'])
         test = workflow['jobs']['test']
         self.assertIn("format('test ({0})'", test['name'])
-        self.assertEqual(len(test['strategy']['matrix']['include']), 2)
+        self.assertEqual(set(test['needs']), {'compatibility', 'native-coverage'})
+        self.assertEqual(
+            test['strategy']['matrix']['python-version'], ['3.11', '3.12', '3.13', '3.14']
+        )
+        download = next(
+            s for s in test['steps'] if s.get('uses', '').startswith('actions/download-artifact@')
+        )
+        self.assertIn('coverage-evidence-ubuntu-latest-3.13-*', download['with']['pattern'])
+        self.assertTrue(any('ci_coverage check-tests' in s.get('run', '') for s in test['steps']))
+        compatibility = workflow['jobs']['compatibility']
+        self.assertEqual(compatibility['strategy']['matrix']['shard'], ['0', '1'])
+        self.assertEqual(
+            compatibility['strategy']['matrix']['python-version'], ['3.11', '3.12', '3.14']
+        )
+        self.assertIn(
+            'tools.ci_parallel',
+            next(s['run'] for s in compatibility['steps'] if s.get('name') == 'Unit tests'),
+        )
+        native = workflow['jobs']['native-coverage']
+        self.assertEqual(native['strategy']['matrix']['shard'], ['0', '1', '2', '3'])
+        self.assertEqual(
+            native['strategy']['matrix']['include'],
+            [
+                {'os': 'windows-latest', 'shard': '4'},
+                {'os': 'windows-latest', 'shard': '5'},
+            ],
+        )
+        self.assertEqual(native['strategy']['matrix']['os'], ['ubuntu-latest', 'windows-latest'])
+        self.assertLessEqual(int(native['timeout-minutes']), 40)
         measure = next(
-            s for s in test['steps'] if s.get('name') == 'Candidate-bound native coverage'
+            s for s in native['steps'] if s.get('name') == 'Candidate-bound native coverage'
         )
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
-        self.assertEqual(measure['if'], "matrix.python-version == '3.13'")
+        self.assertIn(
+            "--shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }}", measure['run']
+        )
+        self.assertIn('if [ ! -f build/coverage/tests.json ]; then', measure['run'])
+        self.assertIn('exit 1\nfi\npython -m tools.ci_coverage report', measure['run'])
+        self.assertIn('--workers 3', measure['run'])
+        self.assertTrue(any(s.get('name') == 'Enforce 45-minute workflow budget' for s in steps))
         self.assertFalse(any(s.get('uses', '').startswith('codecov/') for s in test['steps']))
         config = yaml.load(
             (root / 'codecov.yml').read_text(encoding='utf-8'), Loader=yaml.BaseLoader

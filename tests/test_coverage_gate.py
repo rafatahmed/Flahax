@@ -43,11 +43,21 @@ class CoverageGateTests(unittest.TestCase):
     def test_complete_raw_measurement_passes(self):
         self.assertTrue(self.result()['passed'])
 
-    def test_missing_unimported_module_and_empty_report_fail(self):
+    def test_missing_unimported_module_fails(self):
         self.current['src/flahax/unimported.py'] = 'new'
-        self.assertFalse(self.result()['passed'])
+        self.manifest['files'] = dict(self.current)
+        result = self.result()
+        self.assertFalse(result['passed'])
+        self.assertEqual(
+            result['errors'],
+            ["report inventory mismatch: missing=['src/flahax/unimported.py']; extra=[]"],
+        )
+
+    def test_empty_report_fails(self):
         self.report['files'].clear()
-        self.assertFalse(self.result()['passed'])
+        result = self.result()
+        self.assertFalse(result['passed'])
+        self.assertIn('empty runtime measurement', result['errors'])
 
     def test_stale_commit_source_and_configuration_fail(self):
         for field, value in [

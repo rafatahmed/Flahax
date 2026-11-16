@@ -30,7 +30,6 @@ class PrecipitationReportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.default = run()
-        cls.neutral = run('--ph', '6.5')
 
     def test_slow_forming_phases_are_information_and_the_recipe_is_produced(self):
         chemistry = self.default['chemistry']
@@ -59,6 +58,15 @@ class PrecipitationReportTests(unittest.TestCase):
         self.assertIn(FERROUS_IRON_ADVISORY, chemistry['advisories'])
         self.assertIn(FERROUS_IRON_ADVISORY, self.default['warnings'])
 
+    def test_a_recipe_with_only_information_phases_is_assessed(self):
+        self.assertEqual(self.default['statuses']['phase'], 'assessed')
+
+
+class BrushiteReportTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.neutral = run('--ph', '6.5')
+
     def test_brushite_above_saturation_labels_the_recipe_without_refusing_it(self):
         chemistry = self.neutral['chemistry']
         self.assertEqual([row['phase'] for row in chemistry['risk']], ['CaHPO4:2H2O'])
@@ -69,9 +77,6 @@ class PrecipitationReportTests(unittest.TestCase):
         )
         self.assertNotEqual(self.neutral['stages']['ph_adjustment']['status'], 'blocked')
         self.assertEqual(self.neutral['statuses']['phase'], 'requires_review')
-
-    def test_a_recipe_with_only_information_phases_is_assessed(self):
-        self.assertEqual(self.default['statuses']['phase'], 'assessed')
 
 
 if __name__ == '__main__':

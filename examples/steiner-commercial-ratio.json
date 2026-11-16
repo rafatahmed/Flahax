@@ -1,0 +1,126 @@
+{
+  "cation_shares": [
+    50,
+    30,
+    20
+  ],
+  "anion_shares": [
+    5,
+    3,
+    1
+  ],
+  "ph": 6.3,
+  "counted_mmol_l": 30,
+  "volume_litres": 10,
+  "water": {
+    "analysis_id": "SYNTHETIC water analysis, not a lab result",
+    "totals_mol_kg": {
+      "K+": 0.0001,
+      "Ca+2": 0.0004,
+      "Mg+2": 0.00015,
+      "NO3-": 0.0002,
+      "PO4-3": 2e-05,
+      "SO4-2": 0.0001,
+      "Na+": 0.0003,
+      "Cl-": 0.0004,
+      "CO3-2": 0
+    },
+    "measured_ph": 6.3,
+    "temperature_c": 25,
+    "source_water_mass_kg": 8
+  },
+  "water_mass_kg": 10,
+  "products": [
+    {
+      "product": {
+        "name": "Synthetic KH2PO4",
+        "formula": "KH2PO4",
+        "elements": {
+          "K": 14.3655294252564,
+          "P": 11.380405015611638
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.5
+    },
+    {
+      "product": {
+        "name": "Synthetic Ca(NO3)2.4H2O",
+        "formula": "Ca(NO3)2.4H2O",
+        "elements": {
+          "Ca": 8.485919530835663,
+          "N_NO3": 5.931420185266523
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.5
+    },
+    {
+      "product": {
+        "name": "Synthetic MgSO4.7H2O",
+        "formula": "MgSO4.7H2O",
+        "elements": {
+          "Mg": 4.9307451935327125,
+          "S": 6.503998802907169
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.5
+    },
+    {
+      "product": {
+        "name": "Synthetic Mg(NO3)2.6H2O",
+        "formula": "Mg(NO3)2.6H2O",
+        "elements": {
+          "Mg": 4.739655713593048,
+          "N_NO3": 5.46282128645001
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.5
+    },
+    {
+      "product": {
+        "name": "Synthetic contaminated nitrate",
+        "ions": {
+          "K+": 1,
+          "NO3-": 1,
+          "Na+": 0.02,
+          "Cl-": 0.02
+        },
+        "elements": {
+          "K": 19.11508552110373,
+          "N_NO3": 6.847849353256883,
+          "Na": 0.22479309870015798,
+          "Cl": 0.34662876990719654
+        }
+      },
+      "role": "fertilizer",
+      "solvent_fraction": 0.5
+    },
+    {
+      "product": {
+        "name": "Synthetic sodium-bearing base",
+        "ions": {
+          "K+": 1,
+          "Na+": 0.01,
+          "OH-": 1.01
+        },
+        "elements": {
+          "K": 34.59713883000693,
+          "Na": 0.20343089846944487
+        }
+      },
+      "role": "ph_reagent",
+      "solvent_fraction": 0.5
+    }
+  ],
+  "ph_range": [
+    6.28,
+    6.32
+  ],
+  "maximum_concentrations": {
+    "Na": 10,
+    "Cl": 20
+  }
+}

@@ -25,6 +25,8 @@ Documentation: {DOCS}
 DESCRIPTION = """FlahaX: fertilizer recipe, pH and A/B stock tanks from your water and crop formula.
 
 commands:
+  lab-import read the completed Steiner Excel workbook and verify laboratory records
+  ratio      fixed nutrient ratios with pure salts and KOH (JSON on stdin)
   mix        answer five questions and get tank A, tank B and the acid (growers, agronomists)
   batch      the same from files in one command, for scripts (flahax batch --help)
   recommend  read a JSON request on stdin and write a fertilizer recipe (the default)
@@ -54,6 +56,10 @@ def main() -> int:
 
 
 def _main() -> int:
+    if sys.argv[1:2] == ['lab-import']:
+        from .lab_workbook import main as lab_import
+
+        return lab_import(sys.argv[2:])
     if not sys.argv[1:] and sys.stdin.isatty():
         print(WELCOME, end='')
         return 0
@@ -76,7 +82,7 @@ def _main() -> int:
         'command',
         nargs='?',
         default='recommend',
-        choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix'),
+        choices=('recommend', 'workflow', 'ec', 'size', 'batch', 'mix', 'ratio'),
         metavar='COMMAND',
         help='one of the commands above (default: recommend)',
     )

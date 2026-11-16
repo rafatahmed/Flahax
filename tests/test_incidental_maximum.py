@@ -5,6 +5,7 @@
 """A stated maximum lets an incidental ion be used up to that limit, never past it silently."""
 
 import unittest
+from flahax.engine import InputError
 
 from flahax import load_library, recommend
 from flahax.requirement_fit import met
@@ -130,7 +131,7 @@ class IncidentalMaximumTests(unittest.TestCase):
         self.assertAlmostEqual(final(allowed, "Cl"), 1280.4 * 0.09, places=9)
 
     def test_invalid_maximum_is_rejected(self):
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(InputError, 'maximum_concentrations'):
             recommend(LIBRARY["salts"], FORMULA["targets"], {}, maximum_concentrations={"Cl": -1})
 
 

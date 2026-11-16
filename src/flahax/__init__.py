@@ -5,6 +5,8 @@
 """FlahaX: choose salt weights that minimize formulation Δ%."""
 
 __all__ = [
+    "plan_ratio_recipe",
+    "search_ratio_recipe",
     "CanonicalResult",
     "accept_result",
     "verify_acceptance",
@@ -156,6 +158,9 @@ __all__ = [
     "identity_for_product",
 ]
 __version__ = "0.6.1.dev0"
+
+from .ratio_recipe import plan_ratio_recipe
+from .ratio_search import search_ratio_recipe
 
 from .composition import InputError
 from .competition import (

@@ -1847,6 +1847,39 @@ Calculate a bounded command; this function performs no device I/O.
 
 Source module: `flahax.pump_planning`. Import with `from flahax import plan_pump_command`.
 
+## flahax.ratio_recipe
+
+### `plan_ratio_recipe`
+
+```text
+plan_ratio_recipe(*, cation_shares, anion_shares, ph, counted_mmol_l, volume_litres, water, water_mass_kg, ph_range=None, selected_phases=None, mass_decimals=5, saturation_margin=0.0, uncertainty=None, stock_dosing=None, stock_evidence=None, batch_stability=None, ph_reagents=None, products=None, maximum_concentrations=None, nutrient_ceiling_reserve=0.0)
+```
+
+Return a full-precision pure-salt recipe and its modeled chemistry.
+
+Ratios use charge equivalents and total phosphate reported as H2PO4.
+Strength sums six analytical mmol/L quantities. Explicit final water mass
+converts concentrations to mol/kg for the supported 25 C aqueous model.
+The allocation supports SOURCES plus explicitly permitted HNO3. Water
+nutrients and both pH reagents count toward the final analytical targets.
+
+Source module: `flahax.ratio_recipe`. Import with `from flahax import plan_ratio_recipe`.
+
+## flahax.ratio_search
+
+### `search_ratio_recipe`
+
+```text
+search_ratio_recipe(*, strength_range, strength_tolerance=1e-05, scan_points=33, saturation_margin=0.3, **recipe_options)
+```
+
+Scan strength and refine every observed passing-to-failing transition.
+
+Rounded doses can create discontinuities. Report search coverage and the
+strongest verified candidate found, with no global optimality assertion.
+
+Source module: `flahax.ratio_search`. Import with `from flahax import search_ratio_recipe`.
+
 ## flahax.result_acceptance
 
 ### `accept_result`

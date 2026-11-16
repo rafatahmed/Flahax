@@ -5,27 +5,32 @@
 """The Read the Docs site source must be configured, pinned and free of private material."""
 
 from pathlib import Path
+import importlib.util
+import json
 import re
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / 'docs' / 'site'
 
 
 class DocsSiteTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('yaml'), 'YAML tooling unavailable')
     def test_readthedocs_config(self):
+        import yaml
+
         if not (ROOT / '.readthedocs.yaml').exists():
             self.skipTest('repository-checkout-only check')
-        text = (ROOT / '.readthedocs.yaml').read_text(encoding='utf-8')
-        for needle in (
-            'version: 2',
-            'configuration: docs/site/conf.py',
-            'fail_on_warning: true',
-            'docs/site/requirements.txt',
-            'python: "3.13"',
-        ):
-            with self.subTest(needle=needle):
-                self.assertIn(needle, text)
+        config = yaml.safe_load((ROOT / '.readthedocs.yaml').read_text(encoding='utf-8'))
+        self.assertIsInstance(config, dict)
+        self.assertEqual(config['version'], 2)
+        self.assertEqual(config['sphinx']['configuration'], 'docs/site/conf.py')
+        self.assertIs(config['sphinx']['fail_on_warning'], True)
+        self.assertEqual(config['build']['tools']['python'], '3.13')
+        self.assertIn({'requirements': 'docs/site/requirements.txt'}, config['python']['install'])
+        self.assertIn({'method': 'pip', 'path': '.'}, config['python']['install'])
 
     def test_docs_requirements_pinned(self):
         if not (SITE / 'requirements.txt').exists():
@@ -107,9 +112,26 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertIn('https://flahax.readthedocs.io/', old.read_text(encoding='utf-8'))
 
     def test_chemistry_matrix_tool_writes_site_page(self):
-        text = (ROOT / 'tools' / 'build_chemistry_model.py').read_text(encoding='utf-8')
-        self.assertIn('docs/site/models/chemistry-coverage-matrix.md', text)
-        self.assertNotIn("'docs/chemistry-coverage-matrix.md'", text)
+        from tools import build_chemistry_model
+
+        data = json.loads((ROOT / 'src/flahax/data/chemistry_25c.json').read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            destination = root / 'docs/site/models/chemistry-coverage-matrix.md'
+            destination.parent.mkdir(parents=True)
+            with patch.object(build_chemistry_model, 'ROOT', root):
+                build_chemistry_model.write_coverage(data)
+            text = destination.read_text()
+            self.assertTrue(text.startswith('# Chemistry coverage matrix\n'))
+            self.assertIn(data['database_sha256'], text)
+            for record in data['aqueous'] + data['phases']:
+                with self.subTest(name=record['name']):
+                    self.assertIn(
+                        f'| `{record["name"]}` | `{record["equation"]}` | '
+                        f'{record["log_k"]:g} | {record["source"]}:{record["line"]} |',
+                        text,
+                    )
+            self.assertFalse((root / 'docs/chemistry-coverage-matrix.md').exists())
 
     def test_built_site_has_audit_data(self):
         built = ROOT / 'build' / 'docs-html'
