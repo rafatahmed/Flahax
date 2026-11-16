@@ -84,9 +84,16 @@ def measure(output, ids):
 def execute(item):
     output, ids = item
     started = time.monotonic()
+    command = [sys.executable]
+    coverage = sys.modules.get('coverage')
+    if coverage is not None and coverage.Coverage.current() is not None:
+        # Coverage-aware tests disable automatic subprocess saving when they
+        # construct Coverage objects. An explicit runner always saves its data.
+        command += ['-m', 'coverage', 'run']
+    command += ['-m', 'tools.ci_parallel', '--output', str(output), '--group', *ids]
     with output.with_suffix('.log').open('w', encoding='utf-8') as log:
         process = subprocess.run(
-            [sys.executable, '-m', 'tools.ci_parallel', '--output', str(output), '--group', *ids],
+            command,
             stdout=log,
             stderr=subprocess.STDOUT,
             timeout=1800,

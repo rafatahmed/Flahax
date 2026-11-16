@@ -6,8 +6,11 @@
 
 import contextlib
 import io
+import importlib.util
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -19,6 +22,78 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ParallelRunnerTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('coverage'), 'coverage tooling unavailable')
+    def test_measured_worker_retains_data_when_tests_construct_coverage(self):
+        import coverage
+
+        with tempfile.TemporaryDirectory(dir=ROOT) as folder:
+            root = Path(folder)
+            fixture = root / 'ci_measure_fixture.py'
+            fixture.write_text(
+                'import unittest\nimport coverage\nclass Probe(unittest.TestCase):\n'
+                ' def test_probe(self):\n  coverage.Coverage()\n'
+                '  marker = 123\n  self.assertEqual(marker, 123)\n',
+                encoding='utf-8',
+            )
+            script = root / 'measure_worker.py'
+            script.write_text(
+                'import unittest\nfrom pathlib import Path\n'
+                'from tools.ci_parallel import run\n'
+                'raise SystemExit(run(Path(__file__).parent / "results", suite='
+                'unittest.defaultTestLoader.loadTestsFromName("ci_measure_fixture"), '
+                'weights={}))\n',
+                encoding='utf-8',
+            )
+            config = root / 'coverage.ini'
+            config.write_text(
+                '[run]\nbranch = true\nparallel = true\npatch = subprocess\n'
+                f'source = {folder}\n',
+                encoding='utf-8',
+            )
+            data_file = root / '.coverage'
+            env = dict(
+                os.environ,
+                COVERAGE_FILE=str(data_file),
+                COVERAGE_RCFILE=str(config),
+                PYTHONPATH=os.pathsep.join([folder, str(ROOT), str(ROOT / 'src')]),
+            )
+            result = subprocess.run(
+                [sys.executable, '-m', 'coverage', 'run', str(script)],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            c = coverage.Coverage(data_file=str(data_file), config_file=str(config))
+            c.combine(data_paths=[folder], strict=True)
+            data = c.get_data()
+            measured = next(
+                name for name in data.measured_files() if Path(name).name == fixture.name
+            )
+            self.assertIn(6, data.lines(measured), 'worker statement after Coverage() was lost')
+
+    @unittest.skipUnless(importlib.util.find_spec('coverage'), 'coverage tooling unavailable')
+    def test_worker_also_runs_without_an_active_measurement(self):
+        import coverage
+
+        # Fault injection: keep the outer test measurement alive while exposing
+        # the public no-active-collector state to the worker launcher.
+        with (
+            tempfile.TemporaryDirectory(dir=ROOT) as folder,
+            patch.object(coverage.Coverage, 'current', return_value=None),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            result = ci_parallel.execute(
+                (
+                    Path(folder) / 'result.json',
+                    [
+                        'tests.test_ci_parallel.ParallelRunnerTests.test_cli_help_and_default_dispatch'
+                    ],
+                )
+            )
+            self.assertTrue(result['passed'])
+
     def test_collection_retains_scientific_regressions(self):
         ids = [case.id() for case in ci_parallel.flatten(ci_parallel.collect())]
         self.assertIn(
