@@ -57,6 +57,7 @@ def search_ratio_recipe(
                 "ratio_limit_exceeded",
                 "ratio_stock_dose_infeasible",
                 "ratio_stock_volume_infeasible",
+                "ratio_stock_carrier_infeasible",
                 "nonconvergent",
                 "activity_model_out_of_range",
             ):

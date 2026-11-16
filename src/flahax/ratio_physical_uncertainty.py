@@ -139,11 +139,15 @@ def mass_bounds(recipe, options, dimension):
     maximum_products = 0
     for row in recipe["rounded_verification"]["ingredients"]:
         low, high = p["product_solvent_fractions"][row["name"]]
-        error = options["weighing_error_g"] if row["grams"] else 0
+        from .ratio_product_stocks import product_mass_bounds
+
+        mass_low, mass_high = product_mass_bounds(row, options)
         dimension("solvent." + row["name"], low, high)
-        non_low += (row["grams"] - error) * (1 - high) / 1000
-        non_high += (row["grams"] + error) * (1 - low) / 1000
-        maximum_products += (row["grams"] + error) / 1000
+        non_low += mass_low * (1 - high) / 1000
+        non_high += mass_high * (1 - low) / 1000
+        maximum_products += mass_high / 1000
+    if "stock_delivery" in recipe:
+        maximum_products = recipe["stock_delivery"]["maximum_stock_mass_kg"]
     return [
         total_low - non_high,
         total_high - non_low,

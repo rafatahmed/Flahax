@@ -121,8 +121,9 @@ def blend_vertices(row, options, dimension):
     parts = ingredients(row)
     name = row["name"]
     dose = row["grams"]
-    error = options["weighing_error_g"] if dose > 0 else 0
-    masses = (dose - error, dose + error)
+    from .ratio_product_stocks import product_mass_bounds
+
+    masses = product_mass_bounds(row, options)
     dimension("mass." + name, *masses)
     bounds = entry["mass_fraction_bounds"]
     for identity, _, _ in parts:

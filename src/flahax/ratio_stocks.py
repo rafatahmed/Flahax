@@ -22,10 +22,10 @@ def validate_stocks(options, formulae):
     concentrations = options["concentrations_g_l"]
     if not isinstance(concentrations, dict) or set(concentrations) != set(formulae):
         raise DeliveryError(
-            "invalid_stock_dosing", "Specify active-compound g/L for all six stocks"
+            "invalid_stock_dosing", "Specify concentration g/L for every declared stock"
         )
-    for key, value in list(concentrations.items()) + [
-        (k, options[k]) for k in ("concentration_relative_error", "dose_error_ml")
+    for key, value, positive in [(k, v, True) for k, v in concentrations.items()] + [
+        (k, options[k], False) for k in ("concentration_relative_error", "dose_error_ml")
     ]:
         if (
             isinstance(value, bool)
@@ -33,7 +33,7 @@ def validate_stocks(options, formulae):
             or not math.isfinite(value)
         ):
             raise DeliveryError("invalid_stock_dosing", f"{key} must be finite and numeric")
-        if value < 0 or (key in concentrations and value == 0):
+        if value < 0 or (positive and value == 0):
             raise DeliveryError("invalid_stock_dosing", f"Invalid stock value for {key}")
     if options["concentration_relative_error"] >= 1:
         raise DeliveryError("invalid_stock_dosing", "Concentration uncertainty must be below 100%")

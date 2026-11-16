@@ -19,6 +19,9 @@ each release, with numbers, sources and decisions, are in
 
 ### Added
 
+- Support rounded volumetric product stocks with real-water, assay and physical uncertainty;
+  retain nutrient reserves and pH-range saturation checks without claiming lab verification (#257).
+
 - Select and save available catalogue acids and bases in mix, add custom reagents, and
   restrict batch calculations with `--reagents`. Review old sessions with
   `--review-reagents` without overwriting their original answers (#231).
