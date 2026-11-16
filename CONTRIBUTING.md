@@ -177,6 +177,11 @@ once on each platform. The serial `ci_coverage run` command remains supported as
 a single partition. `python -m tools.ci_parallel --output build/unit-tests` runs
 the complete suite in parallel locally.
 
+Compatibility suites use two shards for each supported Python version. The
+required `test (3.x)` checks validate those shards against an independently
+discovered inventory; failed or incomplete evidence cannot produce a green check.
+Clean wheel/sdist verification remains on every Python version and native OS.
+
 PR acceptance requires completion within 45 minutes from workflow start. Native
 and compatibility jobs have a 35-minute timeout. The final gate checks elapsed
 time after uploading evidence, retaining 60 seconds for runner cleanup. Confirm

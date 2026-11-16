@@ -138,14 +138,30 @@ def shard(root, directory, current):
 def validate_partitions(records, expected_ids):
     for system in PLATFORMS:
         tests = [t for m, t in records if m['platform'] == system]
-        count = len(tests)
-        if not count or sorted(t['shard_index'] for t in tests) != list(range(count)):
-            raise ValueError('missing or duplicate native test partition')
-        if any(t['shard_count'] != count or t['inventory'] != expected_ids for t in tests):
-            raise ValueError('test partition inventory or count differs')
-        ids = sorted(case for t in tests for case in t['test_ids'])
-        if ids != expected_ids or any(t['tests'] != len(t['test_ids']) for t in tests):
-            raise ValueError('missing, duplicate or unexecuted test cases')
+        validate_test_inventory(tests, expected_ids)
+
+
+def validate_test_inventory(tests, expected_ids):
+    count = len(tests)
+    if not count or sorted(t['shard_index'] for t in tests) != list(range(count)):
+        raise ValueError('missing or duplicate test partition')
+    if any(t['shard_count'] != count or t['inventory'] != expected_ids for t in tests):
+        raise ValueError('test partition inventory or count differs')
+    ids = sorted(case for t in tests for case in t['test_ids'])
+    if ids != expected_ids or any(t['tests'] != len(t['test_ids']) for t in tests):
+        raise ValueError('missing, duplicate or unexecuted test cases')
+
+
+def check_tests(root, inputs, output, expected):
+    from tools.ci_parallel import collect, flatten
+
+    current = identity(root, expected)
+    tests = [read(path) for path in sorted(inputs.glob('*/tests.json'))]
+    validate_test_inventory(tests, sorted(case.id() for case in flatten(collect())))
+    if any(t['passed'] is not True or t['failures'] or t['errors'] for t in tests):
+        raise ValueError('failed compatibility partition')
+    output.mkdir(parents=True, exist_ok=True)
+    write(output / 'tests.json', dict(**current, passed=True, partitions=tests))
 
 
 def aggregate(root, inputs, output, expected):
@@ -278,19 +294,21 @@ def verify_upload(root, output, expected):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        'action', choices=('record', 'run', 'report', 'aggregate', 'verify-upload')
+        'action', choices=('record', 'run', 'report', 'aggregate', 'verify-upload', 'check-tests')
     )
     parser.add_argument('--root', type=Path, default=Path.cwd())
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--inputs', type=Path)
     parser.add_argument('--candidate', required=True)
     args = parser.parse_args()
-    if args.action == 'aggregate' and args.inputs is None:
-        parser.error('--inputs is required for aggregation')
+    if args.action in ('aggregate', 'check-tests') and args.inputs is None:
+        parser.error('--inputs is required for aggregation or compatibility checks')
     if args.action == 'run':
         return run_tests(args.output)
-    if args.action == 'aggregate':
-        aggregate(args.root, args.inputs, args.output, args.candidate)
+    if args.action in ('aggregate', 'check-tests'):
+        {'aggregate': aggregate, 'check-tests': check_tests}[args.action](
+            args.root, args.inputs, args.output, args.candidate
+        )
     else:
         {'record': record, 'report': report, 'verify-upload': verify_upload}[args.action](
             args.root, args.output, args.candidate

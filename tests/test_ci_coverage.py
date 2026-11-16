@@ -24,6 +24,49 @@ from tools.check_coverage import inventory
 
 @unittest.skipUnless(importlib.util.find_spec('coverage'), 'coverage tooling unavailable')
 class NativeCoverageTests(unittest.TestCase):
+    def test_compatibility_gate_requires_all_cases_and_successful_partitions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            inputs = root / 'inputs'
+            for i, name in enumerate(('first', 'second')):
+                path = inputs / str(i)
+                path.mkdir(parents=True)
+                ci.write(
+                    path / 'tests.json',
+                    dict(
+                        tests=1,
+                        passed=True,
+                        failures=0,
+                        errors=0,
+                        skipped=[],
+                        shard_index=i,
+                        shard_count=2,
+                        inventory=['first', 'second'],
+                        test_ids=[name],
+                    ),
+                )
+            with (
+                patch.object(ci, 'identity', return_value={'source_revision': 'a' * 40}),
+                patch(
+                    'tools.ci_parallel.collect',
+                    return_value=[
+                        SimpleNamespace(id=lambda: 'first'),
+                        SimpleNamespace(id=lambda: 'second'),
+                    ],
+                ),
+            ):
+                ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+                self.assertTrue(ci.read(root / 'out/tests.json')['passed'])
+                original = ci.read(inputs / '0/tests.json')
+                for key, value in (('passed', False), ('failures', 1), ('errors', 1)):
+                    ci.write(inputs / '0/tests.json', dict(original, **{key: value}))
+                    with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'failed'):
+                        ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+                ci.write(inputs / '0/tests.json', original)
+                (inputs / '1/tests.json').unlink()
+                with self.assertRaisesRegex(ValueError, 'partition'):
+                    ci.check_tests(root, inputs, root / 'out', 'a' * 40)
+
     def fixture(self, folder, *, complete=True):
         root = Path(folder)
         for name in ('src/flahax', 'tools', 'examples', 'benchmarks', 'docs/site'):
@@ -385,9 +428,9 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
             self.assertEqual(caught.exception.code, 0)
 
     def test_cli_dispatch_and_required_aggregation_input(self):
-        for action in ('record', 'report', 'run', 'aggregate', 'verify-upload'):
+        for action in ('record', 'report', 'run', 'aggregate', 'verify-upload', 'check-tests'):
             args = ['ci', action, '--output', 'out', '--candidate', 'a' * 40]
-            if action == 'aggregate':
+            if action in ('aggregate', 'check-tests'):
                 args += ['--inputs', 'in']
             with (
                 patch.object(sys, 'argv', args),
@@ -396,6 +439,7 @@ for index, system in enumerate(('Linux', 'Windows', 'Darwin')):
                 patch.object(ci, 'report'),
                 patch.object(ci, 'run_tests', return_value=1),
                 patch.object(ci, 'aggregate'),
+                patch.object(ci, 'check_tests'),
             ):
                 self.assertEqual(ci.main(), 1 if action == 'run' else 0)
         with (
@@ -460,9 +504,13 @@ class WorkflowEnforcementTests(unittest.TestCase):
         self.assertNotIn('merge-multiple', download['with'])
         test = workflow['jobs']['test']
         self.assertIn("format('test ({0})'", test['name'])
+        self.assertEqual(test['needs'], 'compatibility')
+        self.assertTrue(any('ci_coverage check-tests' in s.get('run', '') for s in test['steps']))
+        compatibility = workflow['jobs']['compatibility']
+        self.assertEqual(compatibility['strategy']['matrix']['shard'], ['0', '1'])
         self.assertIn(
             'tools.ci_parallel',
-            next(s['run'] for s in test['steps'] if s.get('name') == 'Unit tests'),
+            next(s['run'] for s in compatibility['steps'] if s.get('name') == 'Unit tests'),
         )
         native = workflow['jobs']['native-coverage']
         self.assertEqual(native['strategy']['matrix']['shard'], ['0', '1', '2', '3'])
