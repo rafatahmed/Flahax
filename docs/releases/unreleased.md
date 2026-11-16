@@ -1,5 +1,15 @@
 # FlahaX unreleased changes: detailed notes
 
+## Volumetric product stocks (#257)
+
+Fixed-ratio recipes accept grams of supplied product per litre of stock, rounded mL doses,
+and explicit stock concentration, dispenser and density bounds alongside real-water and
+product elemental/ingredient uncertainty. Stock carrier replaces pure make-up water.
+Rounded delivery retains nutrient accounting, the 5% example reserve and saturation checks
+across pH 6.28–6.32. Impossible carrier and batch mass are rejected. Legacy pure-compound
+stocks remain supported. Stock specifications are illustrative; laboratory testing and
+measured verification remain deferred. See `docs/steiner-ratio-recipe.md` for the contract.
+
 ## Custom batch record validation (#240, #241)
 
 Batch checks custom fertilizer and pH-reagent records before constructing a calculation.

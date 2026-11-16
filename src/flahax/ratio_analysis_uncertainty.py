@@ -271,6 +271,8 @@ def verify_analysis_uncertainty(recipe, options):
             "gas-transfer mass, reactive impurities or experimental verification is modeled. "
             "Analytical interval bounds retain source correlations; chemistry remains sampled."
         )
+    if "stock_delivery" in recipe:
+        result["qualification"] += " " + recipe["stock_delivery"]["concentration_basis"]
     if nominal["status"] != "passed":
         result.update(status=nominal["status"], failed_checks=["nominal_recipe"])
         return result
@@ -329,9 +331,10 @@ def verify_analysis_uncertainty(recipe, options):
         )
     maximum_solvent = 0.0
     for row in sources:
-        dose = row["grams"]
-        error = options["weighing_error_g"] if dose > 0 else 0
-        if dose < error:
+        from .ratio_product_stocks import product_mass_bounds
+
+        mass_low, mass_high = product_mass_bounds(row, options)
+        if mass_low < 0:
             result.update(
                 status="failed", failed_checks=["weighing_interval_includes_negative_mass"]
             )
@@ -345,7 +348,7 @@ def verify_analysis_uncertainty(recipe, options):
             effective.append(pair)
         else:
             a, b = options["product_assay_factors"][row["name"]]
-            low, high = (dose - error) * a, (dose + error) * b
+            low, high = mass_low * a, mass_high * b
             effective.append((low, high))
             name = "product." + row["name"]
             dimension(name, low, high)
@@ -358,7 +361,7 @@ def verify_analysis_uncertainty(recipe, options):
             if physical
             else row["solvent_fraction"]
         )
-        maximum_solvent += (dose + error) * solvent_high / 1000
+        maximum_solvent += mass_high * solvent_high / 1000
     dimension("volume", *volumes)
     count_low = sum(min(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[1]
     count_high = sum(max(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[0]

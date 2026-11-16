@@ -115,7 +115,7 @@ def plan_ratio_recipe(
                 "ambiguous_ratio_reagents",
                 "Declare pH reagents in products or ph_reagents, not both",
             )
-        if (uncertainty is not None and not analysis_mode) or stock_dosing is not None:
+        if not analysis_mode and (uncertainty is not None or stock_dosing is not None):
             raise DeliveryError(
                 "unsupported_ratio_product_uncertainty",
                 "Commercial-product uncertainty and stock verification are not yet supported",
@@ -128,8 +128,10 @@ def plan_ratio_recipe(
         or len(set(allowed_reagents)) != len(allowed_reagents)
     ):
         raise DeliveryError("invalid_ph_reagents", "Select unique KOH and/or HNO3 reagents")
-    if water != "demineralized" and (
-        (uncertainty is not None and not analysis_mode) or stock_dosing is not None
+    if (
+        water != "demineralized"
+        and not analysis_mode
+        and (uncertainty is not None or stock_dosing is not None)
     ):
         raise DeliveryError(
             "unsupported_ratio_water_uncertainty",
@@ -146,7 +148,7 @@ def plan_ratio_recipe(
         )
     if stock_evidence is not None and stock_dosing is None:
         raise DeliveryError("missing_stock_dosing", "Stock evidence requires stock dosing")
-    if stock_dosing is not None:
+    if stock_dosing is not None and not analysis_mode:
         from .ratio_stocks import validate_stocks
 
         validate_stocks(stock_dosing, [formula for formula, _ in SOURCES])
@@ -158,12 +160,18 @@ def plan_ratio_recipe(
         if analysis_mode:
             from .ratio_analysis_uncertainty import validate_analysis_uncertainty
 
-            if stock_dosing is not None:
-                raise DeliveryError(
-                    "unsupported_ratio_product_uncertainty",
-                    "Stock evidence is not supported by water_product uncertainty",
-                )
             validate_analysis_uncertainty(uncertainty, volume_litres, products, water)
+            if stock_dosing is not None:
+                from .ratio_product_stocks import validate_product_stocks
+                from .ratio_products import _sources
+
+                validate_product_stocks(stock_dosing, _sources(products), uncertainty)
+                if stock_evidence is not None or batch_stability is not None:
+                    raise DeliveryError(
+                        "unsupported_product_stock_evidence",
+                        "Product stocks support numerical assessment only; "
+                        "lab testing is deferred",
+                    )
         else:
             validate_uncertainty(uncertainty, volume_litres, stock_mode=stock_dosing is not None)
         if ph_range is None:
@@ -375,12 +383,18 @@ def _finish_recipe(
 ):
     delivered_grams = None
     effective_bounds = None
+    product_stocks = stock_dosing is not None and result.get("product_inventory")
     if stock_dosing is not None:
-        from .ratio_stocks import prepare_stock_delivery
+        if product_stocks:
+            from .ratio_product_stocks import prepare_product_stocks
 
-        result["stock_delivery"] = prepare_stock_delivery(
-            result, stock_dosing, uncertainty["volume_error_litres"]
-        )
+            result["stock_delivery"] = prepare_product_stocks(result, stock_dosing, uncertainty)
+        else:
+            from .ratio_stocks import prepare_stock_delivery
+
+            result["stock_delivery"] = prepare_stock_delivery(
+                result, stock_dosing, uncertainty["volume_error_litres"]
+            )
         delivered_grams = [row["effective_grams"] for row in result["stock_delivery"]["stocks"]]
         effective_bounds = result["stock_delivery"]["effective_grams_bounds"]
     if phases is not None:
@@ -392,6 +406,9 @@ def _finish_recipe(
             saturation_margin,
             delivered_grams=delivered_grams,
         )
+    if product_stocks:
+        for row, bounds in zip(result["rounded_verification"]["ingredients"], effective_bounds):
+            row["stock_product_mass_bounds_g"] = [bounds[0], bounds[-1]]
     if uncertainty is not None:
         from .ratio_uncertainty import verify_uncertainty
 
@@ -419,7 +436,13 @@ def _finish_recipe(
             result["uncertainty_verification"] = verify_uncertainty(
                 result, uncertainty, effective_bounds=effective_bounds
             )
-    if stock_dosing is not None:
+    if product_stocks:
+        result["verified"] = False
+        result["stock_delivery"]["verification_scope"] = (
+            "Numerical assessment only. Product-stock evidence integration and lab testing "
+            "are deferred; no measured verification or stability claim."
+        )
+    if stock_dosing is not None and not product_stocks:
         from .stock_evidence import assess_stock_evidence
 
         result["stock_verification"] = assess_stock_evidence(result, stock_evidence)
@@ -437,7 +460,7 @@ def _finish_recipe(
     if result["water_accounting"]["source"] != "demineralized":
         result["verified"] = False
     result["stable"] = False
-    if stock_dosing is not None:
+    if stock_dosing is not None and not product_stocks:
         from .batch_stability import assess_batch_stability
 
         result["stability_assessment"] = assess_batch_stability(result, batch_stability)

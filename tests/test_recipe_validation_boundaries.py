@@ -55,7 +55,7 @@ class RecipeValidationBoundaryTests(unittest.TestCase):
             ({'stock_evidence': {}}, 'missing_stock_dosing'),
             (
                 {'stock_dosing': STOCKS, 'uncertainty': {'mode': 'water_product'}},
-                'unsupported_ratio_product_uncertainty',
+                'invalid_analysis_uncertainty',
             ),
             ({'uncertainty': dry}, 'missing_ph_range'),
             ({'stock_dosing': {}}, 'invalid_stock_dosing'),

@@ -774,3 +774,65 @@ can still be missed. Neither local refinement nor a sampled uncertainty pass is
 a mathematical bound over continuous pH/composition, a global optimum or proof
 of physical stability. The existing `examples/steiner-nutrient-limits.json` uses
 this policy without changing its rounded 10-litre recipe or acceptance limits.
+
+
+### Volumetric product stocks with real-water uncertainty
+
+`examples/steiner-volumetric-product-stocks.json` extends the synthetic 10-litre
+case with **grams of supplied product per litre of final stock**. This is different
+from the legacy pure-compound/hydrate stock basis. Each stock is separate; its
+carrier must be demineralized water. Source water is still accounted separately.
+
+Use `stock_dosing` with these fields, keyed by every declared product name:
+
+```json
+{
+  "basis": "product_mass",
+  "concentrations_g_l": {"product name": 100},
+  "concentration_relative_error": 0.0001,
+  "dose_error_ml": 0.001,
+  "dose_decimals": 4,
+  "density_kg_l": {"product name": [0.999, 1.001]},
+  "carrier": "demineralized_water"
+}
+```
+
+The complete example supplies all products, including the pH reagent. These stock
+specifications are illustrative assumptions, not measured concentrations,
+dispenser performance or stock-solubility evidence. The example retains the 5%
+reserve, all original water/product/physical bounds, and all three selected mineral
+checks across pH 6.28–6.32 with adaptive refinement and 128 preparation scenarios.
+
+This integration requires `water_product_elemental` uncertainty and
+`closed_batch_mass_balance`, including explicit source-water analysis and quantity,
+final density/volume and product solvent intervals. Independent element assays,
+documented assay bounds and correlated disclosed-blend ingredients retain their
+existing interpretation. Legacy pure-compound stocks remain unchanged.
+
+For stock concentration C g/L and rounded dose D mL, delivered product mass is
+C × D / 1000 grams. Its interval uses both stock concentration and dispenser bounds;
+the declared weighing allowance is retained **in addition** to that interval.
+Product elemental/ingredient assays are then applied to delivered product mass.
+Stock concentration error must therefore describe product loading per stock litre,
+not an active-nutrient assay already counted by the separate product bounds. Reports
+expose this convention and the resulting product-mass intervals. The supplied
+weighing allowance is a conservative absolute product-mass allowance per delivered
+aliquot; a stock preparation's balance error must be propagated to this basis or
+included in the concentration bound. Avoid counting the same source of error twice.
+
+Rounded mL doses feed the existing rounded-inventory replay without a second gram
+rounding. Source water, fertilizers and pH reagents all count toward final ratios,
+total concentration, Na/Cl and reserved nutrient ceilings. Bounds on stock density
+also constrain the maximum input mass and the minimum pure make-up water available.
+Stock carrier replaces pure make-up water: it is not an additional nutrient source.
+Final solvent mass is final density × final volume minus bounded non-solvent mass.
+The check conservatively encloses combinations of dose and concentration errors;
+it does not claim arbitrary density/composition correlations.
+
+Inconsistent carrier mass, overfilled preparations, coarse rounding, exceeded
+nutrient/saturation limits and incomplete chemistry sampling cannot pass. Only
+finite sampled chemistry is established; continuous extrema remain unproved.
+Product-stock measurement records are not integrated: supplying stock evidence or
+batch stability records for this mode is rejected. `verified` and `stable` remain
+false. Lab testing stays deferred, and Steiner's unexplained +0.13 pH rise remains
+visible in the historical context.
