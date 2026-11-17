@@ -14,6 +14,7 @@ import json
 import unittest
 
 from flahax import VolumeLitres, plan_fertilizer_workflow
+from flahax.delivery_contracts import DeliveryError
 from flahax.engine import recommend
 from flahax.irrigation_ec import calculate_ec_from_totals
 from flahax.nutrient_acceptance import assess_incidental
@@ -425,7 +426,7 @@ class SonneveldAppendixI(unittest.TestCase):
                 self.assertAlmostEqual(high, 2.202, delta=0.002)
 
     def test_batch_verifies_rounded_copper_stock_without_sodium_nitrate(self):
-        from flahax.grower_report import render_batch_sheet, summarize_batch
+        from flahax.grower_report import render_batch_sheet, render_report, summarize_batch
 
         copper = 'copper sulfate pentahydrate'
         sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
@@ -471,3 +472,129 @@ class SonneveldAppendixI(unittest.TestCase):
         self.assertIn('187.26', sheet)
         self.assertIn('mL stock', sheet)
         self.assertNotIn('Weigh and dissolve', sheet)
+        self.assertIn('Rounded batch doses', render_report(summary))
+
+    def test_rounded_delivery_validates_stock_inputs_and_missing_chemistry(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from flahax.batch_volumetric_stocks import verify_batch_stock_delivery
+
+        product = {
+            'id': 'KNO3',
+            'name': 'KNO3',
+            'formula': 'KNO3',
+            'elements': {'K': 38.67, 'N_NO3': 13.85},
+        }
+        candidate = SimpleNamespace(
+            recommendation={'salts': [{'name': 'KNO3', 'gramsPerLitre': 0.1}]},
+            reagent_volume_litres=None,
+            product_record={'massFraction': 1.0},
+            reagent_mass_g=0.0006,
+            formula='KOH',
+        )
+        chemistry = dict(
+            materials={},
+            products={'KNO3': product},
+            analytical_water_totals={},
+            water_totals={},
+            residual_charge_eq=0,
+        )
+        settings = {
+            'stock': {
+                'basis': 'product_mass',
+                'carrier': 'demineralized_water',
+                'concentrations_g_l': {'KNO3': 10.0},
+                'density_kg_l': {'KNO3': [0.998, 1.002]},
+                'concentration_relative_error': 0,
+                'dose_error_ml': 0,
+                'dose_decimals': 2,
+            },
+            'dry_mass_decimals': 3,
+            'reagent_volume_decimals': 2,
+            'nutrient_tolerance_percent': 0.1,
+            'ph_tolerance': 0.002,
+        }
+
+        def verify(config):
+            return verify_batch_stock_delivery(
+                candidate,
+                chemistry,
+                {'water_mass_kg': 1},
+                1,
+                {'K': 0},
+                5.5,
+                {'K': 1},
+                config,
+            )
+
+        for invalid in (
+            {},
+            settings | {'dry_mass_decimals': 7},
+            settings | {'ph_tolerance': 0},
+            settings | {'stock': {}},
+            settings | {'stock': {'concentrations_g_l': {'not dosed': 1}}},
+        ):
+            with self.subTest(config=invalid), self.assertRaises(DeliveryError) as error:
+                verify(invalid)
+            self.assertEqual(error.exception.code, 'invalid_stock_dosing')
+
+        rounded = verify(settings)
+        self.assertEqual(rounded['reagent']['grams'], 0.001)
+        self.assertIsNone(rounded['reagent']['volume_ml'])
+        self.assertEqual(rounded['missed_targets'], ['K'])
+        self.assertEqual(rounded['limit_violations'], ['K'])
+        self.assertFalse(rounded['ph_within_tolerance'])
+        with (
+            patch(
+                'flahax.batch_volumetric_stocks.calculate_ec_from_totals',
+                return_value=SimpleNamespace(ph=None),
+            ),
+            self.assertRaises(DeliveryError) as error,
+        ):
+            verify(settings)
+        self.assertEqual(error.exception.code, 'rounded_chemistry_incomplete')
+
+    def test_batch_blocks_a_rounded_delivery_that_misses_targets(self):
+        from unittest.mock import patch
+
+        from flahax.grower_report import render_batch_sheet, summarize_batch
+
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        # Inject a failed rounded delivery to exercise the workflow and sheet guard.
+        failed = {
+            'reagent': {'formula': 'KOH', 'volume_ml': None, 'grams': 0.001},
+            'limit_violations': [],
+            'missed_targets': ['Cu'],
+            'ph_within_tolerance': True,
+            'stocks': [],
+            'dry_product_grams': {},
+            'ph': 5.5,
+            'saturation': {'risk': [('Brushite', 0.1)]},
+            'assumptions': 'Injected rounded result for workflow guard.',
+        }
+        with patch(
+            'flahax.batch_volumetric_stocks.verify_batch_stock_delivery', return_value=failed
+        ):
+            result = self.batch_at_ph_5_5(
+                sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': 9.0}, volumetric_stocks={}
+            )
+        self.assertEqual(result.stages['volumetric_stocks'].status, 'blocked')
+        self.assertEqual(result.stages['volumetric_stocks'].value['missed_targets'], ['Cu'])
+        products = result.canonical_result.to_dict()['inputs']['salts']
+        summary = summarize_batch(result, products, title='Appendix I', water_label='Appendix I')
+        self.assertEqual(summary['status'], 'blocked')
+        sheet = render_batch_sheet(summary)
+        self.assertIn('Diagnostic quantities only', sheet)
+        self.assertIn('Brushite', sheet)
+        self.assertNotIn('Weigh and dissolve', sheet)
+
+    def test_invalid_volumetric_settings_are_reported_as_a_blocked_stage(self):
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        result = self.batch_at_ph_5_5(
+            sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': 9.0}, volumetric_stocks={}
+        )
+        stage = result.stages['volumetric_stocks']
+        self.assertEqual(stage.status, 'blocked')
+        self.assertEqual(stage.error_code, 'invalid_stock_dosing')
+        self.assertIsNone(stage.value)
