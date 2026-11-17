@@ -947,7 +947,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages separately.
@@ -964,6 +964,7 @@ ph_adjustment (products, maximum_reagent_volume_litres, optional
 preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
 acids or bases, with the reagent's nutrients counted as supply. It needs the
 equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+volumetric_stocks optionally verifies rounded delivery of the selected recipe.
 joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
 and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
 water_mass_kg. Optional starting_points are never accepted without verification.
