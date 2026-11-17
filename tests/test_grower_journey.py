@@ -637,6 +637,39 @@ class RemedyTests(unittest.TestCase):
         )
         self.assertIn('Best candidate found in this bounded search: &lt;test source&gt;.', section)
 
+    def test_available_products_remain_searchable_when_blend_chemistry_is_unavailable(self):
+        from flahax.delivery_contracts import DeliveryError
+
+        salts = {product['name']: product for product in load_library()['salts']}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, data in (
+                ('water', {'mg_per_litre': {}, 'measured_ph': 7}),
+                ('products', [salts['Potassium Nitrate']]),
+                ('alternatives', [salts['Potassium Sulfate']]),
+                ('targets', {'K': 100, 'S': 30}),
+                ('reagents', []),
+            ):
+                (root / f'{name}.json').write_text(json.dumps(data), encoding='utf-8')
+            with patch(
+                'flahax.batch_cli.balance_water_analysis',
+                side_effect=DeliveryError('invalid_value', 'Blend chemistry unavailable'),
+            ):
+                result = run_batch(
+                    BatchOptions(
+                        water=str(root / 'water.json'),
+                        water_share=50,
+                        products=str(root / 'products.json'),
+                        alternative_products=str(root / 'alternatives.json'),
+                        targets=str(root / 'targets.json'),
+                        reagents=str(root / 'reagents.json'),
+                    )
+                )
+        recipe = json.loads(result['remedies']['options'][0]['snapshot'])
+        self.assertTrue(recipe['workflow']['recommendation']['feasible'])
+        self.assertIsNone(recipe['inputs']['equilibrium'])
+        self.assertNotIn('joint', recipe['inputs']['ph_adjustment'])
+
     def test_confirmed_product_id_reruns_only_that_alternative(self):
         salts = load_library()['salts']
         kept = next(p for p in salts if p['name'] == 'Potassium Nitrate')
