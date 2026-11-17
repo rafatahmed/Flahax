@@ -199,7 +199,7 @@ class SonneveldAppendixI(unittest.TestCase):
         for key, target in COLUMN_D.items():
             self.assertAlmostEqual(rounded[key], target, delta=target * 0.001, msg=key)
 
-    def test_batch_workflow_finds_acid_for_ph_5_5(self):
+    def batch_at_ph_5_5(self, extra_grade, extra_formula, targets, *, maxima=None):
         formulas = (
             'Ca(NO3)2.4H2O',
             'NH4NO3',
@@ -213,9 +213,9 @@ class SonneveldAppendixI(unittest.TestCase):
             'H3BO3',
             'CuSO4.5H2O',
             'Na2MoO4.2H2O',
-            'NaNO3',
+            extra_formula,
         )
-        grades = GRADES + (SODIUM_NITRATE,)
+        grades = GRADES + (extra_grade,)
         products = [
             {
                 'id': name,
@@ -226,13 +226,13 @@ class SonneveldAppendixI(unittest.TestCase):
             for (name, mass, ions), formula in zip(grades, formulas, strict=True)
         ]
         products[6]['identityId'] = 'idn-disodium-iron-dtpa'
-        targets = ppm(dict(COLUMN_D, Na=0.3797305374))
         result = plan_fertilizer_workflow(
             products,
-            targets,
+            ppm(targets),
             ppm(COLUMN_E),
             5.5,
             final_volume=VolumeLitres(1000),
+            maximum_concentrations=maxima,
             equilibrium={
                 'water_totals': {'Ca+2': 0.001, 'Mg+2': 0.0004, 'SO4-2': 0.0003, 'CO3-2': 0.0022},
                 'water_mass_kg': 1000,
@@ -261,6 +261,12 @@ class SonneveldAppendixI(unittest.TestCase):
         candidate = stage.value.selected
         self.assertIsNotNone(candidate, stage.value.candidates)
         self.assertEqual(candidate.formula, 'HNO3')
+        return candidate, grades
+
+    def test_batch_workflow_finds_acid_for_ph_5_5(self):
+        candidate, grades = self.batch_at_ph_5_5(
+            SODIUM_NITRATE, 'NaNO3', dict(COLUMN_D, Na=0.3797305374)
+        )
         self.assertAlmostEqual(candidate.reagent_volume_litres * 1000, 127.75, delta=0.1)
         self.assertAlmostEqual(candidate.target.ph, 5.5, delta=0.001)
         acid = candidate.reagent_mass_g * 0.65 / 63.01
@@ -273,3 +279,30 @@ class SonneveldAppendixI(unittest.TestCase):
         self.assertAlmostEqual(high, 2.2017, delta=0.002)
         for key, target in COLUMN_D.items():
             self.assertAlmostEqual(totals[key], target, delta=target * 0.001, msg=key)
+
+    def test_batch_selects_sodium_sulfate_without_sodium_nitrate_or_target(self):
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        # An illustrative replay ceiling, not an agronomic recommendation.
+        sodium_ceiling = 9.0
+        candidate, grades = self.batch_at_ph_5_5(
+            sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': sodium_ceiling}
+        )
+        self.assertEqual(candidate.status, 'accepted')
+        self.assertTrue(candidate.recommendation['feasible'])
+        doses = {
+            salt['id']: 1000 * salt['gramsPerLitre'] for salt in candidate.recommendation['salts']
+        }
+        self.assertNotIn(SODIUM_NITRATE[0], doses)
+        self.assertAlmostEqual(doses[sulfate[0]], 24.77, delta=0.05)
+        self.assertAlmostEqual(doses['potassium nitrate'], 615.54, delta=0.05)
+        self.assertAlmostEqual(doses['potassium sulfate'], 123.88, delta=0.05)
+        self.assertAlmostEqual(candidate.reagent_volume_litres * 1000, 127.75, delta=0.1)
+
+        acid = candidate.reagent_mass_g * 0.65 / 63.01
+        totals, chemistry = reconstruct(candidate.recommendation, grades, acid)
+        for key, target in COLUMN_D.items():
+            self.assertAlmostEqual(totals[key], target, delta=target * 1e-5, msg=key)
+        sodium = totals['Na'] * ATOMIC_MASS['Na']
+        self.assertAlmostEqual(sodium, 8.73, delta=0.01)
+        self.assertLessEqual(sodium, sodium_ceiling)
+        self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.001)
