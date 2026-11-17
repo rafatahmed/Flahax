@@ -7,18 +7,27 @@
 import copy
 import json
 from fractions import Fraction
+from types import SimpleNamespace as Record
 import unittest
+from unittest.mock import patch
 
 from flahax import (
     plan_fertilizer_workflow,
+    load_library,
     VolumeLitres,
     InjectionRatio,
     TemperatureCelsius,
     StockTank,
 )
 from flahax.delivery_contracts import DeliveryError
-from flahax.evaluated_remedies import available_product_search
+from flahax.evaluated_remedies import (
+    _candidate_score,
+    _joint_start_retry,
+    available_product_search,
+)
 from flahax.grower_report import summarize_batch, render_report
+from tests.test_joint_workflow import configuration
+from tests.test_ph_adjustment import ACIDS, RO
 from tests.test_stock_planning import record
 from tests.test_stock_assignments import synthetic_model
 
@@ -77,6 +86,161 @@ class EvaluatedRemediesTests(unittest.TestCase):
         self.assertEqual(option, before)
         self.assertEqual(w.remedies['evaluations'], 1)
         self.assertEqual(w.canonical_result.to_dict()['workflow']['remedies'], w.remedies)
+
+    def test_expanded_miss_ranks_source_retries_and_preserves_budget_and_ceiling(self):
+        option = available_product_search(
+            [product('A-contaminated', Ca=10, Na=5), product('Z-clean', Ca=10)]
+        )
+        result = self.run_plan(
+            [option], maximum_concentrations={'Na': 0}, max_remedy_evaluations=2
+        )
+        remedies = result.remedies
+        self.assertEqual(remedies['evaluations'], 2)
+        self.assertEqual(remedies['status'], 'search_incomplete')
+        tried = remedies['options'][1]
+        self.assertEqual(tried['source_product_id'], 'Z-clean')
+        candidate = json.loads(tried['snapshot'])
+        self.assertEqual(candidate['inputs']['maximum_concentrations'], {'Na': 0})
+        self.assertEqual(set(candidate['workflow']['recommendation']['saltIds']), {'K', 'Z-clean'})
+        self.assertEqual(remedies['options'][2]['status'], 'not_evaluated')
+
+    def test_invalid_expanded_pool_cannot_hide_a_verified_source(self):
+        option = available_product_search([product('invalid', Ca=-1), product('valid', Ca=10)])
+
+        def evaluate(**request):
+            if any(record['id'] == 'invalid' for record in request['salts']):
+                raise DeliveryError('invalid_assay', 'Synthetic workflow failure')
+            return plan_fertilizer_workflow(**request)
+
+        with patch('flahax.fertilizer_workflow.plan_fertilizer_workflow', side_effect=evaluate):
+            result = self.run_plan([option], targets={'K': 100, 'Ca': 100})
+        remedies = result.remedies
+        expanded, valid, invalid = remedies['options']
+        self.assertEqual(expanded['status'], 'evaluation_failed')
+        self.assertEqual(valid['source_product_id'], 'valid')
+        self.assertEqual(invalid['status'], 'evaluation_failed')
+        self.assertEqual(remedies['best_verified_candidate_id'], valid['id'])
+        self.assertEqual(remedies['status'], 'search_incomplete')
+
+    def test_joint_start_from_original_mix_uses_the_same_budget_and_limits(self):
+        nitrate = next(p for p in load_library()['salts'] if p['formula'] == 'KNO3')
+        extra = dict(nitrate, id='extra-nitrate')
+        acid = ACIDS[0]
+        config = configuration([nitrate], acid, loss_tolerance=2.0)
+        config['additional_product_steps'] = {extra['id']: 1e-4}
+        args = dict(
+            salts=[nitrate],
+            targets={'K': 100, 'Ca': 100},
+            water={'Na': 0.002 * 22.989769 * 1000},
+            target_ph=5.8,
+            final_volume=VolumeLitres(1000),
+            maximum_concentrations={'Na': 50, 'N_NO3': 200},
+            equilibrium=RO | dict(water_totals={'Na+': 0.002, 'CO3-2': 0.002}, water_mass_kg=1000),
+            ph_adjustment=dict(products=[acid], maximum_reagent_volume_litres=5, joint=config),
+        )
+        option = available_product_search([extra])
+        limited = self.run_plan([option], **args, max_remedy_evaluations=1)
+        self.assertEqual(limited.remedies['evaluations'], 1)
+        self.assertEqual(limited.remedies['options'][1]['status'], 'not_evaluated')
+
+        result = self.run_plan([option], **args, max_remedy_evaluations=2)
+        self.assertEqual(result.remedies['evaluations'], 2)
+        expanded, retried = result.remedies['options']
+        self.assertIn('snapshot', expanded)
+        self.assertEqual(retried['joint_start_reagent_id'], acid['id'])
+        original = result.stages['ph_adjustment'].value.selected.joint_result
+        repeat = json.loads(retried['snapshot'])['inputs']
+        point = repeat['ph_adjustment']['joint']['starting_points'][acid['id']]
+        self.assertGreater(point['reagent_dose'], 0)
+        self.assertEqual(point['reagent_dose'], original['reagentDose'])
+        self.assertEqual(point['fertilizer_doses'], original['fertilizerDoses'])
+        self.assertEqual(repeat['maximum_concentrations'], args['maximum_concentrations'])
+        self.assertNotIn('starting_points', config)
+
+    def test_joint_start_requires_a_distinct_qualified_seed(self):
+        recipe = dict(rows=[], salts=[], feasible=False)
+        result = dict(status='numerical_candidate', fertilizerDoses={'K': 1}, reagentDose=0.1)
+        chosen = Record(
+            joint_result=result, product_id='acid', direction='acid', recommendation=recipe
+        )
+        ph = Record(status='requires_review', value=Record(selected=chosen))
+        baseline = Record(stages={'ph_adjustment': ph}, recommendation=recipe)
+        expanded_ph = Record(direction='acid', unadjusted_recommendation=recipe)
+        expanded = Record(
+            stages={'ph_adjustment': Record(value=expanded_ph)}, recommendation=recipe
+        )
+        joint = {}
+        adjust = dict(joint=joint, correct_mixed_ph=True)
+        request = dict(ph_adjustment=adjust, maximum_concentrations=None)
+        option = dict(id='pool')
+        retry, _ = _joint_start_retry(
+            option, request, baseline, expanded, {'pool:joint-start:acid'}
+        )
+        self.assertEqual(retry['id'], 'pool:joint-start:acid:retry')
+        joint['starting_points'] = {'acid': dict(fertilizer_doses={'K': 1}, reagent_dose=0.1)}
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        joint.clear()
+        expanded_ph.direction = 'base'
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        expanded_ph.direction = 'acid'
+        joint['sequential_fallbacks'] = {'acid': 'sample'}
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        joint.clear()
+        expanded.stages['ph_adjustment'].value = None
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        expanded.stages['ph_adjustment'].value = expanded_ph
+        for changes in (
+            {'fertilizerDoses': []},
+            {'reagentDose': float('nan')},
+            {'status': 'rejected'},
+        ):
+            with self.subTest(changes=changes):
+                chosen.joint_result = result | changes
+                self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        chosen.joint_result = result
+        recipe['requirementConflicts'] = ['Ca']
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        recipe.pop('requirementConflicts')
+        ph.value.selected = None
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+
+    def test_blocked_rounded_preparation_is_not_ranked(self):
+        recipe = dict(rows=[], salts=[], feasible=True)
+        stages = {'volumetric_stocks': Record(status='blocked')}
+        request = dict(ph_adjustment=None, maximum_concentrations=None, volumetric_stocks={})
+        self.assertIsNone(
+            _candidate_score(Record(stages=stages, recommendation=recipe), request, ())
+        )
+
+    def test_tolerance_and_declared_preferences_rank_verified_options_even_after_failure(self):
+        def bundle(id_, *products):
+            return catalogue(list(products)) | {'id': id_}
+
+        options = [
+            bundle('a-more-sodium', product('mixed', Ca=10, Na=5)),
+            bundle('z-no-sodium', product('clean', Ca=10)),
+            bundle('miss', product('other', Mg=10)),
+            dict(
+                id='failed',
+                kind='treatment',
+                evidence={'source': 'synthetic', 'revision': '1'},
+                changes={'water': {'Ca': -1}, 'equilibrium': {}},
+            ),
+            available_product_search([product('other', Mg=10)], preferences=('incidental_mg_l',)),
+        ]
+        for declared in (options, options[::-1]):
+            result = self.run_plan(
+                declared, targets={'K': 100, 'Ca': 100}, maximum_concentrations={'Na': 100}
+            )
+            self.assertEqual(
+                result.remedies['ranked_candidate_ids'][:2], ['z-no-sodium', 'a-more-sodium']
+            )
+            self.assertEqual(
+                result.remedies['verified_candidate_ids'], ['z-no-sodium', 'a-more-sodium']
+            )
+            self.assertIn(
+                'z-no-sodium', {r['id'] for r in result.remedies['options'] if 'snapshot' in r}
+            )
 
     def test_unavailable_missing_and_budget_are_not_success(self):
         option = catalogue([product('Ca', Ca=10)])
@@ -167,6 +331,15 @@ class EvaluatedRemediesTests(unittest.TestCase):
             ([{}], {}),
             ([dict(id='x', kind='unknown')], {}),
             ([catalogue([]), catalogue([])], {}),
+            ([catalogue([], preferences=[{}])], {}),
+            ([catalogue([], preferences=['product_count', 'product_count'])], {}),
+            (
+                [
+                    catalogue([], preferences=['product_count']),
+                    available_product_search([product('Ca', Ca=10)]),
+                ],
+                {},
+            ),
             ((), {'max_remedy_evaluations': True}),
             ([dict(id='x', kind='catalogue', changes={'targets': {'K': 0}})], {}),
             ([catalogue([product('K', K=20)])], {}),

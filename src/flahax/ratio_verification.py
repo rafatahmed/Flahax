@@ -113,7 +113,8 @@ def verify_rounded_recipe(
     low, high = ph_range
     count = max(1, math.ceil((high - low) / GRID_SPACING))
     grid = sorted(
-        {low + (high - low) * i / count for i in range(count + 1)} | {recipe["target_ph"]}
+        {low + (high - low) * i / count for i in range(1, count)}
+        | {low, high, recipe["target_ph"]}
     )
     result = {
         "status": "incomplete",

@@ -604,13 +604,32 @@ class SonneveldAppendixI(unittest.TestCase):
         from flahax.sonneveld import design_targets
 
         baseline = dict(COLUMN_D, Ca=2.75, Mg=1, K=6.5, N_NO3=10.75, N_NH4=1, S=1.5, B=0.020)
-        design = design_targets(
-            {
-                'baseline_mmol_l': baseline,
-                'adjustments_mmol_l': {'K': 2, 'N_NH4': 0.5, 'B': 0.010},
-                'irrigation_ec_ds_m': 1.8,
-            }
+        request = {
+            'baseline_mmol_l': baseline,
+            'adjustments_mmol_l': {'K': 2, 'N_NH4': 0.5, 'B': 0.010},
+            'irrigation_ec_ds_m': 1.8,
+        }
+        # Illustrative root-zone readings paired with the paper’s tomato guides.
+        sample = {
+            'sample_id': 'appendix-i-feedback-example',
+            'sampled_on': '2026-11-17',
+            'measured_mmol_l': {'K': 6.5, 'Ca': 10.0, 'B': 0.035},
+            'guide_mmol_l': {'K': 8.0, 'Ca': 10.0, 'B': 0.050},
+        }
+        preview = design_targets(request | {'root_zone_feedback': sample})
+        self.assertEqual(preview['root_zone_feedback']['deviations_mmol_l']['K'], -1.5)
+        approval = {
+            'approved_by': 'Example grower',
+            'reason': 'Use the worked example feed corrections after sample review.',
+            'design_sha256': preview['root_zone_feedback']['design_sha256'],
+        }
+        approved = design_targets(
+            request | {'root_zone_feedback': sample | {'approval': approval}},
+            require_approval=True,
         )
+        self.assertEqual(approved['root_zone_feedback']['status'], 'approved')
+        self.assertEqual(approved['targets_mg_l'], design_targets(request)['targets_mg_l'])
+        design = approved
         columns = design['columns_mmol_l']
         self.assertEqual(columns['A'], baseline)
         self.assertEqual(columns['B'], {'K': 2, 'N_NH4': 0.5, 'B': 0.010})

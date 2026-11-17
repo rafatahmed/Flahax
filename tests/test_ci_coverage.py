@@ -524,14 +524,8 @@ class WorkflowEnforcementTests(unittest.TestCase):
             next(s['run'] for s in compatibility['steps'] if s.get('name') == 'Unit tests'),
         )
         native = workflow['jobs']['native-coverage']
-        self.assertEqual(native['strategy']['matrix']['shard'], ['0', '1', '2', '3'])
-        self.assertEqual(
-            native['strategy']['matrix']['include'],
-            [
-                {'os': 'windows-latest', 'shard': '4'},
-                {'os': 'windows-latest', 'shard': '5'},
-            ],
-        )
+        shards = native['strategy']['matrix']['shard']
+        self.assertEqual(shards, [str(index) for index in range(6)])
         self.assertEqual(native['strategy']['matrix']['os'], ['ubuntu-latest', 'windows-latest'])
         self.assertLessEqual(int(native['timeout-minutes']), 40)
         measure = next(
@@ -539,9 +533,7 @@ class WorkflowEnforcementTests(unittest.TestCase):
         )
         self.assertIn('test_status=${PIPESTATUS[0]}', measure['run'])
         self.assertIn('exit "$test_status"', measure['run'])
-        self.assertIn(
-            "--shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }}", measure['run']
-        )
+        self.assertIn(f'--shard-count {len(shards)} ', measure['run'])
         self.assertIn('if [ ! -f build/coverage/tests.json ]; then', measure['run'])
         self.assertIn('exit 1\nfi\npython -m tools.ci_coverage report', measure['run'])
         self.assertIn('--workers 3', measure['run'])

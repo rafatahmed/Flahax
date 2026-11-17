@@ -4,8 +4,10 @@
 # its results are calculations, not dosing instructions.
 """Sonneveld et al. (1999) A–D target design for soilless irrigation feed."""
 
+from datetime import date
 import math
 
+from .canonical_result import _digest
 from .composition import ATOMIC
 from .delivery_contracts import DeliveryError
 
@@ -45,17 +47,71 @@ def _rescale(values, weights, protected, target, stage):
     return {key: values[key] * factor for key in adjustable}
 
 
-def design_targets(design):
+def _root_zone_feedback(sample, target_design, require_approval):
+    required = {'sample_id', 'sampled_on', 'measured_mmol_l', 'guide_mmol_l'}
+    if (
+        not isinstance(sample, dict)
+        or not required <= sample.keys()
+        or sample.keys() - required - {'approval'}
+        or not isinstance(sample['sample_id'], str)
+        or not sample['sample_id'].strip()
+    ):
+        raise DeliveryError(
+            'invalid_value', 'Supply a root-zone sample ID, date and nutrient profiles'
+        )
+    try:
+        date.fromisoformat(sample['sampled_on'])
+    except (ValueError, TypeError) as exc:
+        raise DeliveryError('invalid_value', 'sampled_on must be an ISO calendar date') from exc
+    measured = _profile(sample['measured_mmol_l'], 'measured_mmol_l')
+    guides = _profile(sample['guide_mmol_l'], 'guide_mmol_l')
+    paired = measured.keys() & guides.keys()
+    if not paired:
+        raise DeliveryError(
+            'invalid_value', 'Supply at least one matching nutrient measurement and guide'
+        )
+    evidence = {
+        'sample_id': sample['sample_id'],
+        'sampled_on': sample['sampled_on'],
+        'measured_mmol_l': measured,
+        'guide_mmol_l': guides,
+        'deviations_mmol_l': {key: measured[key] - guides[key] for key in sorted(paired)},
+        'without_guide': sorted(measured.keys() - guides.keys()),
+        'without_measurement': sorted(guides.keys() - measured.keys()),
+    }
+    fingerprint = _digest({'sample': evidence, 'feed_design': target_design})
+    evidence.update(design_sha256=fingerprint, status='awaiting_approval')
+    if 'approval' not in sample:
+        if require_approval:
+            raise DeliveryError('invalid_value', 'Root-zone feedback requires grower approval')
+        return evidence
+    approval = sample['approval']
+    fields = {'approved_by', 'reason', 'design_sha256'}
+    if (
+        not isinstance(approval, dict)
+        or set(approval) != fields
+        or any(not isinstance(approval[key], str) or not approval[key].strip() for key in fields)
+    ):
+        raise DeliveryError(
+            'invalid_value', 'Approval must include a grower name, reason and design hash'
+        )
+    if approval['design_sha256'] != fingerprint:
+        raise DeliveryError('invalid_value', 'Approval does not match this sample and feed design')
+    return dict(evidence, status='approved', approval=dict(approval))
+
+
+def design_targets(design, *, require_approval=False):
     """Return A–D in mmol/L and the full-precision finished-feed targets in elemental mg/L.
 
     Corrections are signed increments in mmol/L. Optional minimum_mmol_l values
     are enforced against D. The EC input sets the paper's empirical charge budget.
+    Root-zone feedback is optional. Batch callers require its preview-bound approval.
     """
     required = {'baseline_mmol_l', 'adjustments_mmol_l', 'irrigation_ec_ds_m'}
     if (
         not isinstance(design, dict)
         or not required <= design.keys()
-        or design.keys() - required - {'minimum_mmol_l'}
+        or design.keys() - required - {'minimum_mmol_l', 'root_zone_feedback'}
     ):
         raise DeliveryError('invalid_value', 'Supply the Sonneveld baseline, corrections and EC')
     a = _profile(design['baseline_mmol_l'], 'baseline_mmol_l')
@@ -90,7 +146,7 @@ def design_targets(design):
         raise DeliveryError(
             'invalid_value', 'Column D falls below the declared minimum for ' + ', '.join(misses)
         )
-    return {
+    result = {
         'columns_mmol_l': {'A': a, 'B': b, 'C': c, 'D': d},
         'charge_mmol_l': {
             name: {'cations': _charge(values, CATIONS), 'anions': _charge(values, ANIONS)}
@@ -103,3 +159,8 @@ def design_targets(design):
             for key, amount in d.items()
         },
     }
+    if 'root_zone_feedback' in design:
+        result['root_zone_feedback'] = _root_zone_feedback(
+            design['root_zone_feedback'], result, require_approval
+        )
+    return result

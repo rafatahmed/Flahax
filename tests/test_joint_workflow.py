@@ -4,6 +4,7 @@
 # its results are calculations, not dosing instructions.
 """Public joint quantities, fresh diagnosis, hard limits and unresolved searches."""
 
+from fractions import Fraction
 import unittest
 from unittest.mock import patch
 from flahax import load_library, plan_fertilizer_workflow, VolumeLitres
@@ -71,7 +72,9 @@ class JointWorkflowTests(unittest.TestCase):
             self.assertEqual(missed['final'], rows[missed['symbol']]['final'])
             self.assertEqual(missed['deltaPct'], rows[missed['symbol']]['deltaPct'])
 
-    def positive_case(self, config_change=None, controls_change=None, maxima=None, scale=1):
+    def positive_case(
+        self, config_change=None, controls_change=None, maxima=None, scale=1, targets=None
+    ):
         pool = [next(p for p in load_library()['salts'] if p['formula'] == 'KNO3')]
         product = ACIDS[0]
         config = configuration(pool, product, **(controls_change or {}))
@@ -79,7 +82,7 @@ class JointWorkflowTests(unittest.TestCase):
         config.update(config_change or {})
         return plan_fertilizer_workflow(
             pool,
-            {'K': 100},
+            {'K': 100} if targets is None else targets,
             {'Na': 0.002 * 22.989769 * 1000},
             5.8,
             final_volume=VolumeLitres(1000 * scale),
@@ -111,6 +114,7 @@ class JointWorkflowTests(unittest.TestCase):
         for change, expected in [
             ({'reagent_solvent_fractions': {}}, 'missing_field'),
             ({'solvent_mass_kg': 900}, 'inconsistent_basis'),
+            ({'check_inventory_relaxation': 'yes'}, 'invalid_type'),
         ]:
             with self.subTest(change=change):
                 stage = self.positive_case(change)
@@ -130,11 +134,36 @@ class JointWorkflowTests(unittest.TestCase):
                 self.assertIsNone(stage.value.selected)
 
     def test_exhausted_candidate_retains_the_actual_work_counts(self):
-        stage = self.positive_case(controls_change={'max_iterations': 1})
+        stage = self.positive_case(
+            {'check_inventory_relaxation': True}, controls_change={'max_iterations': 1}
+        )
         joint = stage.value.candidates[0].joint_result
         self.assertEqual(joint['status'], 'search_incomplete')
         self.assertEqual(joint['iterations'], 1)
         self.assertGreater(joint['evaluations'], 0)
+        evidence = joint['inventory_relaxation']
+        self.assertFalse(evidence['exact_target_excluded'])
+        self.assertEqual(Fraction(evidence['exact_loss_lower_bound']), 0)
+
+    def test_positive_inventory_bound_is_scoped_to_one_reagent_and_pool(self):
+        stage = self.positive_case({'check_inventory_relaxation': True}, maxima={'K': 50})
+        candidate = stage.value.candidates[0]
+        evidence = candidate.joint_result['inventory_relaxation']
+        self.assertTrue(evidence['exact_target_excluded'])
+        self.assertIn('charge and phases omitted', evidence['scope'])
+        self.assertGreater(Fraction(evidence['exact_loss_lower_bound']), 0)
+        self.assertIsNone(stage.value.selected)
+
+    def test_inventory_evidence_keeps_the_best_pH_qualified_near_fit(self):
+        stage = self.positive_case(
+            {'check_inventory_relaxation': True},
+            controls_change={'loss_tolerance': 2},
+            targets={'K': 100, 'S': 10},
+        )
+        candidate = stage.value.selected
+        self.assertEqual(stage.status, 'requires_review')
+        self.assertAlmostEqual(candidate.target.ph, 5.8, delta=0.001)
+        self.assertTrue(candidate.joint_result['inventory_relaxation']['exact_target_excluded'])
 
     def test_proportional_volume_and_solvent_scale_actual_reagent_mass(self):
         full = self.positive_case().value.selected

@@ -299,7 +299,7 @@ def plan_fertilizer_workflow(
     preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
     acids or bases, with the reagent's nutrients counted as supply. It needs the
     equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
-    volumetric_stocks optionally verifies rounded delivery of the selected recipe.
+    volumetric_stocks optionally verifies and locally refits the rounded recipe.
     joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
     and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
     water_mass_kg. Optional starting_points are never accepted without verification.
@@ -847,6 +847,12 @@ def plan_fertilizer_workflow(
                 message='Select a pH-adjusted recipe for rounded stock verification.',
             )
         else:
+            dry_caps = (ph_adjustment.get('joint') or {}).get('maximum_reagent_mass_g', {})
+            reagent_maximum = (
+                1000 * ph_adjustment['maximum_reagent_volume_litres']
+                if chosen.reagent_volume_litres is not None
+                else dry_caps.get(chosen.product_id, math.inf)
+            )
             rounded = run(
                 'volumetric_stocks',
                 lambda: verify_batch_stock_delivery(
@@ -858,17 +864,15 @@ def plan_fertilizer_workflow(
                     target_ph,
                     maximum_concentrations,
                     volumetric_stocks,
+                    reagent_maximum=reagent_maximum,
                 ),
             )
-            if rounded is not None:
+            if rounded is not None and 'reagent_limit_exceeded' not in rounded:
                 dose = rounded['reagent']
                 liquid = dose['volume_ml']
-                dry_caps = (ph_adjustment.get('joint') or {}).get('maximum_reagent_mass_g', {})
                 rounded['reagent_limit_exceeded'] = (
-                    liquid > 1000 * ph_adjustment['maximum_reagent_volume_litres']
-                    if liquid is not None
-                    else dose['grams'] > dry_caps.get(chosen.product_id, math.inf)
-                )
+                    liquid if liquid is not None else dose['grams']
+                ) > reagent_maximum
             if rounded is not None and (
                 rounded['reagent_limit_exceeded']
                 or rounded['limit_violations']
