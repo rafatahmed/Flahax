@@ -283,6 +283,7 @@ def plan_fertilizer_workflow(
     ph_adjustment=None,
     remedy_options=(),
     max_remedy_evaluations=20,
+    volumetric_stocks=None,
 ):
     """Run available stages; expose missing inputs and rejected stages separately.
 
@@ -298,6 +299,7 @@ def plan_fertilizer_workflow(
     preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
     acids or bases, with the reagent's nutrients counted as supply. It needs the
     equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
+    volumetric_stocks optionally verifies rounded delivery of the selected recipe.
     joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
     and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
     water_mass_kg. Optional starting_points are never accepted without verification.
@@ -833,6 +835,51 @@ def plan_fertilizer_workflow(
         _review_water_basis(
             output, equilibrium['water_mass_kg'], final_volume.value, maximum_concentrations
         )
+    if volumetric_stocks is not None:
+        from .batch_volumetric_stocks import verify_batch_stock_delivery
+
+        plan = stages['ph_adjustment'].value
+        chosen = getattr(plan, 'selected', None)
+        if chosen is None:
+            stages['volumetric_stocks'] = WorkflowStage(
+                'blocked',
+                error_code='ph_recipe_required',
+                message='Select a pH-adjusted recipe for rounded stock verification.',
+            )
+        else:
+            rounded = run(
+                'volumetric_stocks',
+                lambda: verify_batch_stock_delivery(
+                    chosen,
+                    stages['chemistry'].value,
+                    equilibrium,
+                    final_volume.value,
+                    targets,
+                    target_ph,
+                    maximum_concentrations,
+                    volumetric_stocks,
+                ),
+            )
+            if rounded is not None:
+                dose = rounded['reagent']
+                liquid = dose['volume_ml']
+                dry_caps = (ph_adjustment.get('joint') or {}).get('maximum_reagent_mass_g', {})
+                rounded['reagent_limit_exceeded'] = (
+                    liquid > 1000 * ph_adjustment['maximum_reagent_volume_litres']
+                    if liquid is not None
+                    else dose['grams'] > dry_caps.get(chosen.product_id, math.inf)
+                )
+            if rounded is not None and (
+                rounded['reagent_limit_exceeded']
+                or rounded['limit_violations']
+                or rounded['missed_targets']
+                or not rounded['ph_within_tolerance']
+            ):
+                stages['volumetric_stocks'].status = 'blocked'
+                stages[
+                    'volumetric_stocks'
+                ].message = 'Rounded delivery misses declared nutrient, dose or pH requirements.'
+
     request = dict(
         salts=salts,
         targets=targets,
@@ -847,6 +894,8 @@ def plan_fertilizer_workflow(
         maximum_concentrations=maximum_concentrations,
         ph_adjustment=ph_adjustment,
     )
+    if volumetric_stocks is not None:
+        request['volumetric_stocks'] = volumetric_stocks
     from .evaluated_remedies import evaluate_remedies
 
     output.remedies = evaluate_remedies(output, request, remedy_options, max_remedy_evaluations)

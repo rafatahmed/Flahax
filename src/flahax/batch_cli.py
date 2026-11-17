@@ -455,6 +455,7 @@ class BatchOptions:
     max_solid_reagent_grams: float | None = None
     confirmed_products: list[str] = field(default_factory=list)
     alternative_products: str | None = None
+    volumetric_stocks: str | None = None
     reagents: str | None = None
 
 
@@ -680,6 +681,11 @@ def run_batch(options):
             **({} if joint is None else {'joint': joint}),
         ),
         maximum_concentrations=limits or None,
+        volumetric_stocks=(
+            read_json(options.volumetric_stocks, 'volumetric stocks')
+            if options.volumetric_stocks is not None
+            else None
+        ),
         remedy_options=remedies,
         max_remedy_evaluations=len(options.confirmed_products) + bool(alternative_products),
     )
@@ -774,6 +780,7 @@ def build(args):
             max_solid_reagent_grams=args.max_solid_reagent_grams,
             confirmed_products=args.confirmed_product,
             alternative_products=args.alternative_products,
+            volumetric_stocks=args.volumetric_stocks,
             ec=args.ec,
             products=args.products,
             reagents=args.reagents,
@@ -849,6 +856,9 @@ def main(argv=None):
         '--max-reagent-litres',
         type=number_in('--max-reagent-litres', 0),
         help='largest reagent volume per batch (default volume/200)',
+    )
+    parser.add_argument(
+        '--volumetric-stocks', help='JSON settings for rounded dry and volumetric batch doses'
     )
     parser.add_argument(
         '--alternative-products',

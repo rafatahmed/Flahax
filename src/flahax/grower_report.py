@@ -714,6 +714,11 @@ def summarize_batch(
 
     # Stage evidence must describe the same final recipe as the visible stage messages.
     # Keep alternative evaluations and the original workflow evidence unchanged.
+    volumetric = workflow.stages.get('volumetric_stocks')
+    if volumetric is not None:
+        summary['volumetric_stocks'] = deepcopy(volumetric.value)
+        if volumetric.status == 'blocked':
+            summary['status'] = 'blocked'
     for requirement in summary['remedies'].get('requirements', []):
         kind, _, name = requirement['id'].partition(':')
         if kind == 'stage' and name in stages:
@@ -1373,6 +1378,8 @@ def render_report(summary):
         + ''.join(f'<li>{text(a)}</li>' for a in s['assumptions'])
         + '</ul></section>'
     )
+    if 'volumetric_stocks' in s:
+        body += volumetric_stock_section(s)
     body += remedy_section(s)
     return _page(s['title'], body + result_reference(s), STYLE)
 
@@ -1579,9 +1586,60 @@ def _unchecked_line(s):
     )
 
 
+def volumetric_stock_section(summary):
+    """Show only the delivered quantities for the rounded preparation option."""
+    stage = summary['stages']['volumetric_stocks']
+    delivered = summary['volumetric_stocks']
+    heading = '<section><h2>Rounded batch doses</h2>'
+    if delivered is None:
+        return heading + f'<p>{text(stage["message"])}</p></section>'
+    rows = [
+        (name, number(mass, 6), 'g dry product')
+        for name, mass in delivered['dry_product_grams'].items()
+    ]
+    rows += [
+        (
+            row['name'],
+            number(row['dose_ml'], 6),
+            f'mL stock at {number(row["concentration_g_l"], 6)} g/L',
+        )
+        for row in delivered['stocks']
+    ]
+    reagent = delivered['reagent']
+    liquid = reagent['volume_ml'] is not None
+    rows.append(
+        (
+            reagent['formula'],
+            number(reagent['volume_ml'] if liquid else reagent['grams'], 6),
+            'mL liquid reagent' if liquid else 'g dry reagent',
+        )
+    )
+    risk = ', '.join(name for name, _ in delivered['saturation']['risk'])
+    notice = (
+        'Review before mixing. Make up to the stated final volume including stock doses, '
+        'then measure pH and EC.'
+        if summary['status'] != 'blocked'
+        else 'Diagnostic quantities only. This batch is blocked.'
+    )
+    return (
+        heading
+        + f'<p>{text(notice)}</p>'
+        + f'<p>Modeled final pH {number(delivered["ph"], 5)}.</p>'
+        + (f'<p>Modeled saturation risk: {text(risk)}.</p>' if risk else '')
+        + table(('Product', 'Dose', 'Delivery'), rows, 'Rounded preparation')
+        + f'<p>{text(delivered["assumptions"])}</p></section>'
+    )
+
+
 def render_batch_sheet(summary):
     """Printable A4 batch sheet from ``summarize_batch``."""
     verify_summary(summary)
+    if 'volumetric_stocks' in summary:
+        title = summary['title']
+        heading = (
+            f'<h1>{text(title)}</h1><p>{number(summary["batch_litres"], 0)} L final solution.</p>'
+        )
+        return _page(title, heading + volumetric_stock_section(summary), STYLE)
     s, tanks = summary, summary['tanks']
     blocked = s['status'] == 'blocked'
     css, line = STATUS_TEXT[s['status']]

@@ -206,7 +206,16 @@ class SonneveldAppendixI(unittest.TestCase):
         for key, target in COLUMN_D.items():
             self.assertAlmostEqual(rounded[key], target, delta=target * 0.001, msg=key)
 
-    def batch_at_ph_5_5(self, extra_grade, extra_formula, targets, *, maxima=None, search=False):
+    def batch_at_ph_5_5(
+        self,
+        extra_grade,
+        extra_formula,
+        targets,
+        *,
+        maxima=None,
+        search=False,
+        volumetric_stocks=None,
+    ):
         formulas = (
             'Ca(NO3)2.4H2O',
             'NH4NO3',
@@ -247,6 +256,7 @@ class SonneveldAppendixI(unittest.TestCase):
             final_volume=VolumeLitres(1000),
             maximum_concentrations=maxima,
             remedy_options=alternatives,
+            volumetric_stocks=volumetric_stocks,
             equilibrium={
                 'water_totals': {'Ca+2': 0.001, 'Mg+2': 0.0004, 'SO4-2': 0.0003, 'CO3-2': 0.0022},
                 'water_mass_kg': 1000,
@@ -270,7 +280,7 @@ class SonneveldAppendixI(unittest.TestCase):
                 'maximum_reagent_volume_litres': 1,
             },
         )
-        if search:
+        if search or volumetric_stocks is not None:
             return result
         stage = result.stages['ph_adjustment']
         self.assertIsNotNone(stage.value, result.stages)
@@ -413,3 +423,51 @@ class SonneveldAppendixI(unittest.TestCase):
                 low, high = chemistry.ec25_range_ms_cm
                 self.assertAlmostEqual(low, 2.092, delta=0.002)
                 self.assertAlmostEqual(high, 2.202, delta=0.002)
+
+    def test_batch_verifies_rounded_copper_stock_without_sodium_nitrate(self):
+        from flahax.grower_report import render_batch_sheet, summarize_batch
+
+        copper = 'copper sulfate pentahydrate'
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        result = self.batch_at_ph_5_5(
+            sulfate,
+            'Na2SO4',
+            COLUMN_D,
+            maxima={'Na': 9.0},
+            volumetric_stocks={
+                'stock': {
+                    'basis': 'product_mass',
+                    'carrier': 'demineralized_water',
+                    'concentrations_g_l': {copper: 1.0},
+                    'density_kg_l': {copper: (0.998, 1.002)},
+                    'concentration_relative_error': 0.0003,
+                    'dose_error_ml': 0.05,
+                    'dose_decimals': 2,
+                },
+                'dry_mass_decimals': 3,
+                'reagent_volume_decimals': 2,
+                'nutrient_tolerance_percent': 0.1,
+                'ph_tolerance': 0.002,
+            },
+        )
+        stage = result.stages['volumetric_stocks']
+        self.assertEqual(stage.status, 'calculated', stage.message)
+        delivered = stage.value
+        self.assertEqual(delivered['stocks'][0]['dose_ml'], 187.26)
+        self.assertNotIn(copper, delivered['dry_product_grams'])
+        self.assertNotIn(SODIUM_NITRATE[0], delivered['dry_product_grams'])
+        self.assertAlmostEqual(delivered['reagent']['volume_ml'], 127.75, delta=0.02)
+        self.assertAlmostEqual(delivered['ph'], 5.5, delta=0.002)
+        self.assertLessEqual(delivered['nutrient_bounds_mg_l']['Na'][1], 9.0)
+        for key, target in ppm(COLUMN_D).items():
+            low, high = delivered['nutrient_bounds_mg_l'][key]
+            self.assertGreaterEqual(low, target * 0.999, key)
+            self.assertLessEqual(high, target * 1.001, key)
+        self.assertAlmostEqual(delivered['ec25_range_ms_cm'][0], 2.0916, delta=0.002)
+        products = result.canonical_result.to_dict()['inputs']['salts']
+        summary = summarize_batch(result, products, title='Appendix I', water_label='Appendix I')
+        self.assertEqual(summary['volumetric_stocks']['stocks'][0]['dose_ml'], 187.26)
+        sheet = render_batch_sheet(summary)
+        self.assertIn('187.26', sheet)
+        self.assertIn('mL stock', sheet)
+        self.assertNotIn('Weigh and dissolve', sheet)
