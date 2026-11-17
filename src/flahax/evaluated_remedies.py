@@ -143,6 +143,17 @@ def _changes(option, request):
     return deepcopy(dict(changes)), None
 
 
+def available_product_search(products):
+    """Evaluate one expanded pool of confirmed products if the first recipe misses."""
+    return dict(
+        id='catalogue:available-product-search',
+        kind='catalogue',
+        available=True,
+        on_nutrient_miss=True,
+        changes={'products': products},
+    )
+
+
 def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
     """Re-run declared alternatives without adopting them or expanding the search implicitly.
 
@@ -174,9 +185,12 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
             raise DeliveryError('invalid_remedy', 'remedy IDs must be unique and kinds supported')
         seen.add(option['id'])
     baseline = unresolved_requirements(workflow)
+    nutrient_miss = any(r["id"].startswith("nutrient:") for r in baseline)
     baseline_ids = {r['id'] for r in baseline}
     results, evaluations, skipped = [], 0, False
     for option in options:
+        if option.get('on_nutrient_miss') is True and not nutrient_miss:
+            continue
         changes, needed = _changes(option, request)
         result = dict(
             id=option['id'],

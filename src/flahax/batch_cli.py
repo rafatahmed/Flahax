@@ -454,6 +454,7 @@ class BatchOptions:
     title: str | None = None
     max_solid_reagent_grams: float | None = None
     confirmed_products: list[str] = field(default_factory=list)
+    alternative_products: str | None = None
     reagents: str | None = None
 
 
@@ -643,10 +644,20 @@ def run_batch(options):
         )
     )
     remedies = left_out_products(library, products, options.confirmed_products)
-    if joint is not None and options.confirmed_products:
-        joint['additional_product_steps'] = dict.fromkeys(
-            options.confirmed_products, JOINT_DOSE_STEP_G_PER_L
+    alternative_products = (
+        _product_records(
+            read_json(options.alternative_products, 'alternative products'), 'alternative products'
         )
+        if options.alternative_products is not None
+        else []
+    )
+    if alternative_products:
+        from .evaluated_remedies import available_product_search
+
+        remedies.insert(0, available_product_search(alternative_products))
+    additional_ids = [*options.confirmed_products, *(p['id'] for p in alternative_products)]
+    if joint is not None and additional_ids:
+        joint['additional_product_steps'] = dict.fromkeys(additional_ids, JOINT_DOSE_STEP_G_PER_L)
     workflow = plan_fertilizer_workflow(
         products,
         targets,
@@ -670,7 +681,7 @@ def run_batch(options):
         ),
         maximum_concentrations=limits or None,
         remedy_options=remedies,
-        max_remedy_evaluations=len(options.confirmed_products),
+        max_remedy_evaluations=len(options.confirmed_products) + bool(alternative_products),
     )
     summary = summarize_batch(
         workflow,
@@ -762,6 +773,7 @@ def build(args):
             max_reagent_litres=args.max_reagent_litres,
             max_solid_reagent_grams=args.max_solid_reagent_grams,
             confirmed_products=args.confirmed_product,
+            alternative_products=args.alternative_products,
             ec=args.ec,
             products=args.products,
             reagents=args.reagents,
@@ -837,6 +849,10 @@ def main(argv=None):
         '--max-reagent-litres',
         type=number_in('--max-reagent-litres', 0),
         help='largest reagent volume per batch (default volume/200)',
+    )
+    parser.add_argument(
+        '--alternative-products',
+        help='JSON array of available products to combine when nutrient targets are missed',
     )
     parser.add_argument(
         '--confirmed-product',

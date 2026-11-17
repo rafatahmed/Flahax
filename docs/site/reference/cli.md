@@ -83,6 +83,7 @@ usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS] [
                     [--ratio RATIO] [--ec EC]
                     [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
+                    [--alternative-products ALTERNATIVE_PRODUCTS]
                     [--confirmed-product CATALOGUE_ID]
                     [--max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS] [--products PRODUCTS]
                     [--reagents REAGENTS] [--rules RULES] [--output OUTPUT]
@@ -142,6 +143,9 @@ options:
                         more. Checked on the laboratory analysis; none is assumed
   --max-reagent-litres MAX_REAGENT_LITRES
                         largest reagent volume per batch (default volume/200)
+  --alternative-products ALTERNATIVE_PRODUCTS
+                        JSON array of available products to combine when nutrient targets are
+                        missed
   --confirmed-product CATALOGUE_ID
                         rerun an available excluded catalogue fertilizer as a separate remedy
   --max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS

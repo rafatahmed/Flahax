@@ -17,6 +17,7 @@ from flahax import (
     StockTank,
 )
 from flahax.delivery_contracts import DeliveryError
+from flahax.evaluated_remedies import available_product_search
 from flahax.grower_report import summarize_batch, render_report
 from tests.test_stock_planning import record
 from tests.test_stock_assignments import synthetic_model
@@ -43,6 +44,21 @@ class EvaluatedRemediesTests(unittest.TestCase):
             remedy_options=options,
         )
         return plan_fertilizer_workflow(**(args | kw))
+
+    def test_available_product_search_combines_products_only_if_targets_miss(self):
+        option = available_product_search([product('Ca', Ca=10), product('Mg', Mg=10)])
+        result = self.run_plan([option])
+        self.assertEqual(result.remedies['evaluations'], 1)
+        candidate = json.loads(result.remedies['options'][0]['snapshot'])
+        fit = candidate['workflow']['recommendation']
+        self.assertTrue(fit['feasible'])
+        self.assertEqual(set(fit['saltIds']), {'K', 'Ca', 'Mg'})
+        self.assertFalse(result.recommendation['feasible'])
+
+        matched = self.run_plan([option], targets={'K': 100})
+        self.assertTrue(matched.recommendation['feasible'])
+        self.assertEqual(matched.remedies['evaluations'], 0)
+        self.assertEqual(matched.remedies['options'], [])
 
     def test_multi_product_bundle_is_evaluated_without_adoption(self):
         option = catalogue([product('Ca', Ca=10), product('Mg', Mg=10)])

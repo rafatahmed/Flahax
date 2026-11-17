@@ -10,6 +10,7 @@ regressions. They use closed carbon, 25 C, aqueous-only equilibrium and
 1000 kg solvent for 1000 L of dilute finished solution.
 """
 
+import json
 import unittest
 
 from flahax import VolumeLitres, plan_fertilizer_workflow
@@ -199,7 +200,7 @@ class SonneveldAppendixI(unittest.TestCase):
         for key, target in COLUMN_D.items():
             self.assertAlmostEqual(rounded[key], target, delta=target * 0.001, msg=key)
 
-    def batch_at_ph_5_5(self, extra_grade, extra_formula, targets, *, maxima=None):
+    def batch_at_ph_5_5(self, extra_grade, extra_formula, targets, *, maxima=None, search=False):
         formulas = (
             'Ca(NO3)2.4H2O',
             'NH4NO3',
@@ -226,6 +227,12 @@ class SonneveldAppendixI(unittest.TestCase):
             for (name, mass, ions), formula in zip(grades, formulas, strict=True)
         ]
         products[6]['identityId'] = 'idn-disodium-iron-dtpa'
+        alternatives = ()
+        if search:
+            from flahax.evaluated_remedies import available_product_search
+
+            alternatives = (available_product_search(products[-1:]),)
+            products = products[:-1]
         result = plan_fertilizer_workflow(
             products,
             ppm(targets),
@@ -233,6 +240,7 @@ class SonneveldAppendixI(unittest.TestCase):
             5.5,
             final_volume=VolumeLitres(1000),
             maximum_concentrations=maxima,
+            remedy_options=alternatives,
             equilibrium={
                 'water_totals': {'Ca+2': 0.001, 'Mg+2': 0.0004, 'SO4-2': 0.0003, 'CO3-2': 0.0022},
                 'water_mass_kg': 1000,
@@ -256,6 +264,8 @@ class SonneveldAppendixI(unittest.TestCase):
                 'maximum_reagent_volume_litres': 1,
             },
         )
+        if search:
+            return result
         stage = result.stages['ph_adjustment']
         self.assertIsNotNone(stage.value, result.stages)
         candidate = stage.value.selected
@@ -306,3 +316,29 @@ class SonneveldAppendixI(unittest.TestCase):
         self.assertAlmostEqual(sodium, 8.73, delta=0.01)
         self.assertLessEqual(sodium, sodium_ceiling)
         self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.001)
+
+    def test_batch_search_recovers_sodium_nitrate_free_recipe_after_first_fit_misses(self):
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        result = self.batch_at_ph_5_5(sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': 9.0}, search=True)
+        baseline = result.stages['ph_adjustment'].value.selected
+        self.assertFalse(baseline.recommendation['feasible'])
+        self.assertEqual(result.remedies['evaluations'], 1)
+        trial = result.remedies['options'][0]
+        self.assertEqual(trial['status'], 'evaluated_candidate')
+        self.assertIn('nutrient:N_NO3', trial['resolved_requirements'])
+        snapshot = json.loads(trial['snapshot'])
+        self.assertEqual(snapshot['inputs']['maximum_concentrations'], {'Na': 9.0})
+        self.assertEqual(snapshot['inputs']['targets'], ppm(COLUMN_D))
+        candidate = snapshot['workflow']['stages']['ph_adjustment']['value']
+        chosen = next(item for item in candidate['candidates'] if item['status'] == 'accepted')
+        fit = chosen['recommendation']
+        self.assertTrue(fit['feasible'])
+        self.assertIn(sulfate[0], fit['saltIds'])
+        self.assertNotIn(SODIUM_NITRATE[0], fit['saltIds'])
+        self.assertAlmostEqual(chosen['reagent_volume_litres'] * 1000, 127.75, delta=0.1)
+        acid = chosen['reagent_mass_g'] * 0.65 / 63.01
+        totals, chemistry = reconstruct(fit, GRADES + (sulfate,), acid)
+        for key, target in COLUMN_D.items():
+            self.assertAlmostEqual(totals[key], target, delta=target * 1e-5, msg=key)
+        self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.001)
+        self.assertLessEqual(totals['Na'] * ATOMIC_MASS['Na'], 9.0)

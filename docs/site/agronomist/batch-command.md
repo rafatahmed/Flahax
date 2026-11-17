@@ -124,6 +124,12 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
   rebalances potassium sulfate, potassium nitrate and nitric acid. The replay
   uses an illustrative sodium ceiling of 9 mg/L. Use the ceiling appropriate to
   your crop and water, and the composition of the actual sodium sulfate grade.
+- Put any additional fertilizers you have available in a product-record JSON
+  array and pass it with `--alternative-products`. If the first recipe misses a
+  nutrient target, batch refits the original and additional products together
+  with the same water, pH, targets and ceilings. The evaluated alternative and
+  its doses are saved in the remedy snapshot in the batch result. Review that
+  recipe before using it. To exclude a product, leave it out of both lists.
 - `--volume` sets the batch size (default 1000 L), `--ph` the target pH
   (default 5.8) and `--ratio` the injection ratio (default 1:100).
 
