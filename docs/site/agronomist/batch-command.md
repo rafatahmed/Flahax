@@ -117,6 +117,13 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
   ion in the recipe up to the limit. For example, `--limit Cl=...` lets FlahaX
   use a chloride fertilizer you supply with `--products` if it helps, while
   staying under the limit (the packaged catalogue has no chloride product).
+- To try a sodium nitrate substitution, omit sodium nitrate from the available
+  list passed with `--products` and include your declared sodium sulfate grade.
+  Set `--limit Na=<ceiling>` in mg/L for the finished feed. In the 1,000 L
+  Sonneveld Appendix I replay at pH 5.50, FlahaX selects sodium sulfate and
+  rebalances potassium sulfate, potassium nitrate and nitric acid. The replay
+  uses an illustrative sodium ceiling of 9 mg/L. Use the ceiling appropriate to
+  your crop and water, and the composition of the actual sodium sulfate grade.
 - `--volume` sets the batch size (default 1000 L), `--ph` the target pH
   (default 5.8) and `--ratio` the injection ratio (default 1:100).
 
