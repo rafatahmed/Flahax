@@ -7,6 +7,7 @@
 import copy
 import json
 from fractions import Fraction
+from types import SimpleNamespace as Record
 import unittest
 from unittest.mock import patch
 
@@ -19,7 +20,11 @@ from flahax import (
     StockTank,
 )
 from flahax.delivery_contracts import DeliveryError
-from flahax.evaluated_remedies import available_product_search
+from flahax.evaluated_remedies import (
+    _candidate_score,
+    _joint_start_retry,
+    available_product_search,
+)
 from flahax.grower_report import summarize_batch, render_report
 from tests.test_joint_workflow import configuration
 from tests.test_ph_adjustment import ACIDS, RO
@@ -151,6 +156,61 @@ class EvaluatedRemediesTests(unittest.TestCase):
         self.assertEqual(point['fertilizer_doses'], original['fertilizerDoses'])
         self.assertEqual(repeat['maximum_concentrations'], args['maximum_concentrations'])
         self.assertNotIn('starting_points', config)
+
+    def test_joint_start_requires_a_distinct_qualified_seed(self):
+        recipe = dict(rows=[], salts=[], feasible=False)
+        result = dict(status='numerical_candidate', fertilizerDoses={'K': 1}, reagentDose=0.1)
+        chosen = Record(
+            joint_result=result, product_id='acid', direction='acid', recommendation=recipe
+        )
+        ph = Record(status='requires_review', value=Record(selected=chosen))
+        baseline = Record(stages={'ph_adjustment': ph}, recommendation=recipe)
+        expanded_ph = Record(direction='acid', unadjusted_recommendation=recipe)
+        expanded = Record(
+            stages={'ph_adjustment': Record(value=expanded_ph)}, recommendation=recipe
+        )
+        joint = {}
+        adjust = dict(joint=joint, correct_mixed_ph=True)
+        request = dict(ph_adjustment=adjust, maximum_concentrations=None)
+        option = dict(id='pool')
+        retry, _ = _joint_start_retry(
+            option, request, baseline, expanded, {'pool:joint-start:acid'}
+        )
+        self.assertEqual(retry['id'], 'pool:joint-start:acid:retry')
+        joint['starting_points'] = {'acid': dict(fertilizer_doses={'K': 1}, reagent_dose=0.1)}
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        joint.clear()
+        expanded_ph.direction = 'base'
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        expanded_ph.direction = 'acid'
+        joint['sequential_fallbacks'] = {'acid': 'sample'}
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        joint.clear()
+        expanded.stages['ph_adjustment'].value = None
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        expanded.stages['ph_adjustment'].value = expanded_ph
+        for changes in (
+            {'fertilizerDoses': []},
+            {'reagentDose': float('nan')},
+            {'status': 'rejected'},
+        ):
+            with self.subTest(changes=changes):
+                chosen.joint_result = result | changes
+                self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        chosen.joint_result = result
+        recipe['requirementConflicts'] = ['Ca']
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+        recipe.pop('requirementConflicts')
+        ph.value.selected = None
+        self.assertIsNone(_joint_start_retry(option, request, baseline, expanded, set()))
+
+    def test_blocked_rounded_preparation_is_not_ranked(self):
+        recipe = dict(rows=[], salts=[], feasible=True)
+        stages = {'volumetric_stocks': Record(status='blocked')}
+        request = dict(ph_adjustment=None, maximum_concentrations=None, volumetric_stocks={})
+        self.assertIsNone(
+            _candidate_score(Record(stages=stages, recommendation=recipe), request, ())
+        )
 
     def test_tolerance_and_declared_preferences_rank_verified_options_even_after_failure(self):
         def bundle(id_, *products):
