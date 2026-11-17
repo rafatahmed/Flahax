@@ -37,6 +37,7 @@ acid's certificate values with ``--acid``.
 
 import argparse
 from .canonical_result import seal_summary
+from .sonneveld import design_targets
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -456,6 +457,7 @@ class BatchOptions:
     confirmed_products: list[str] = field(default_factory=list)
     alternative_products: str | None = None
     volumetric_stocks: str | None = None
+    sonneveld_targets: str | None = None
     reagents: str | None = None
 
 
@@ -614,7 +616,14 @@ def run_batch(options):
         read_json(options.products, 'products') if options.products else library['salts'],
         'products',
     )
-    if options.targets:
+    target_design = None
+    if options.sonneveld_targets is not None:
+        if any(value is not None for value in (options.targets, options.formula, options.crop)):
+            raise DeliveryError('invalid_value', 'Choose a single source of batch targets')
+        target_design = design_targets(read_json(options.sonneveld_targets, 'Sonneveld targets'))
+        targets = target_design['targets_mg_l']
+        title = options.title or Path(options.sonneveld_targets).stem
+    elif options.targets:
         targets = read_json(options.targets, 'targets')
         title = options.title or Path(options.targets).stem
     else:
@@ -699,6 +708,8 @@ def run_batch(options):
         temperature_c=options.temperature_c,
         requested_ec_ms_cm=options.ec,
     )
+    if target_design is not None:
+        summary['sonneveld_target_design'] = target_design
     if chemistry is not None:
         for note in chemistry.get('water_input_notes', []):
             if note not in summary['warnings']:
@@ -770,6 +781,7 @@ def build(args):
             formula=args.formula,
             crop=args.crop,
             targets=args.targets,
+            sonneveld_targets=args.sonneveld_targets,
             water_share=args.water_share,
             volume=args.volume,
             ph=args.ph,
@@ -801,6 +813,15 @@ def main(argv=None):
     pick.add_argument('--formula', help='exact name of a packaged formula')
     pick.add_argument('--crop', help='text that matches exactly one packaged formula name')
     pick.add_argument('--targets', help='JSON file of target mg/L (N_NO3 and N_NH4 as N)')
+    pick.add_argument(
+        '--sonneveld-targets',
+        help='JSON baseline, corrections and irrigation EC for Sonneveld A-D',
+    )
+    parser.add_argument(
+        '--preview-targets',
+        action='store_true',
+        help='print the Sonneveld A-D design without formulating a batch',
+    )
     parser.add_argument(
         '--list-formulas', action='store_true', help='list the packaged formulas and exit'
     )
@@ -894,8 +915,22 @@ def main(argv=None):
     if args.list_formulas:
         print('\n'.join(f['name'] for f in load_library()['formulas']))
         return 0
-    if not (args.formula or args.crop or args.targets) or not args.water or not args.output:
-        parser.error('--formula, --crop or --targets, and --water and --output are required')
+    if args.preview_targets:
+        if not args.sonneveld_targets:
+            parser.error('--preview-targets requires --sonneveld-targets')
+        try:
+            design = design_targets(read_json(args.sonneveld_targets, 'Sonneveld targets'))
+        except (DeliveryError, ValueError, OSError) as exc:
+            print(f'flahax batch: {exc}', file=sys.stderr)
+            return 1
+        print(json.dumps(design, indent=2, allow_nan=False))
+        return 0
+    if (
+        not (args.formula or args.crop or args.targets or args.sonneveld_targets)
+        or not args.water
+        or not args.output
+    ):
+        parser.error('A target source, --water and --output are required')
     output = Path(args.output)
     if output.exists():
         parser.error(f'{output} already exists; choose a new directory')

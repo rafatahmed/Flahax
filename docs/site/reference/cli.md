@@ -78,7 +78,8 @@ options:
 The same from files in one command, for scripts.
 
 ```text
-usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS] [--list-formulas]
+usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
+                    --sonneveld-targets SONNEVELD_TARGETS] [--preview-targets] [--list-formulas]
                     [--water WATER] [--water-share PERCENT] [--volume VOLUME] [--ph PH]
                     [--ratio RATIO] [--ec EC]
                     [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
@@ -126,6 +127,9 @@ options:
   --formula FORMULA     exact name of a packaged formula
   --crop CROP           text that matches exactly one packaged formula name
   --targets TARGETS     JSON file of target mg/L (N_NO3 and N_NH4 as N)
+  --sonneveld-targets SONNEVELD_TARGETS
+                        JSON baseline, corrections and irrigation EC for Sonneveld A-D
+  --preview-targets     print the Sonneveld A-D design without formulating a batch
   --list-formulas       list the packaged formulas and exit
   --water WATER         "ro" or a water analysis JSON file (see above)
   --water-share PERCENT
