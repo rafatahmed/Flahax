@@ -537,6 +537,44 @@ class CatalogueFitTests(unittest.TestCase):
 
 
 class RemedyTests(unittest.TestCase):
+    def test_batch_can_try_a_broader_available_inventory(self):
+        salts = load_library()['salts']
+        kept = next(p for p in salts if p['name'] == 'Potassium Nitrate')
+        extra = next(p for p in salts if p['name'] == 'Potassium Sulfate')
+        with tempfile.TemporaryDirectory() as temp, contextlib.redirect_stdout(io.StringIO()):
+            root = Path(temp)
+            for filename, data in (
+                ('products.json', [kept]),
+                ('alternatives.json', [extra]),
+                ('targets.json', {'K': 100, 'S': 30}),
+                ('reagents.json', []),
+            ):
+                (root / filename).write_text(json.dumps(data), encoding='utf-8')
+            out = root / 'batch'
+            main(
+                [
+                    '--water',
+                    'ro',
+                    '--products',
+                    str(root / 'products.json'),
+                    '--alternative-products',
+                    str(root / 'alternatives.json'),
+                    '--targets',
+                    str(root / 'targets.json'),
+                    '--reagents',
+                    str(root / 'reagents.json'),
+                    '--output',
+                    str(out),
+                ]
+            )
+            result = json.loads((out / 'summary.json').read_text(encoding='utf-8'))
+        trial = result['remedies']['options'][0]
+        self.assertEqual(trial['id'], 'catalogue:available-product-search')
+        self.assertEqual(trial['status'], 'evaluated_candidate')
+        candidate = json.loads(trial['snapshot'])
+        self.assertTrue(candidate['workflow']['recommendation']['feasible'])
+        self.assertIn(extra['id'], candidate['workflow']['recommendation']['saltIds'])
+
     def test_confirmed_product_id_reruns_only_that_alternative(self):
         salts = load_library()['salts']
         kept = next(p for p in salts if p['name'] == 'Potassium Nitrate')
