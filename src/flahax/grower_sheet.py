@@ -23,7 +23,8 @@ from .grower_report import (
     _page,
     _reagent_line,
     ec_text,
-    display_residue,
+    below_checklist_precision,
+    checklist_grams,
     reagent_preparation_lines,
     reagent_preparation,
     grams,  # noqa: F401
@@ -118,7 +119,7 @@ def limited_by(volumes):
 
 
 def _grams(product):
-    return grams(product['gramsPerBatch'])
+    return checklist_grams(product['gramsPerBatch'])
 
 
 def _tank_card(tank, volumes, blocked):
@@ -133,7 +134,7 @@ def _tank_card(tank, volumes, blocked):
     )
     box = '<span class="muted">-</span>' if blocked else '<span class="tick"></span>'
     rows = ''.join(
-        f'<tr><td>{"" if display_residue(p["gramsPerBatch"]) else box}</td>'
+        f'<tr><td>{"" if below_checklist_precision(p["gramsPerBatch"]) else box}</td>'
         f'<td>{text(p["name"])}</td><td class="num">{_grams(p)}</td></tr>'
         for p in tank['products']
     )

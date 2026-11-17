@@ -48,7 +48,9 @@ Report a problem: https://github.com/rafatahmed/Flahax/issues
 Five questions to tank A, tank B and the acid, with a batch sheet.
 
 ```text
-usage: flahax mix [-h] [--output OUTPUT] [--plain] [--review-reagents] [session ...]
+usage: flahax mix [-h] [--output OUTPUT] [--plain] [--review-reagents]
+                  [--sonneveld-batch SONNEVELD_BATCH]
+                  [session ...]
 
 ``flahax mix``: five steps, then tank A, tank B and the pH reagent.
 
@@ -64,13 +66,15 @@ under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and
 once every step is answered: Ctrl+C or end of input saves nothing.
 
 positional arguments:
-  session            a saved session, e.g. tomato-ro (flahax mix sessions lists them)
+  session               a saved session, e.g. tomato-ro (flahax mix sessions lists them)
 
 options:
-  -h, --help         show this help message and exit
-  --output OUTPUT    new directory for the sheets (default: ./flahax-mix-<session>)
-  --plain            line-by-line questions instead of the full-screen wizard
-  --review-reagents  review a saved session's available acids and bases and save new answers
+  -h, --help            show this help message and exit
+  --output OUTPUT       new directory for the sheets (default: ./flahax-mix-<session>)
+  --plain               line-by-line questions instead of the full-screen wizard
+  --review-reagents     review a saved session's available acids and bases and save new answers
+  --sonneveld-batch SONNEVELD_BATCH
+                        review and run a Sonneveld batch profile JSON
 ```
 
 ## `flahax batch`

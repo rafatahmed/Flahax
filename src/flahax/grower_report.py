@@ -57,6 +57,18 @@ def grams(value):
     return f'{shown} g' if float(shown.replace(',', '')) > 0 else 'less than 0.001 g'
 
 
+def below_checklist_precision(value):
+    """Detect a positive mass below the dry checklist's 0.001 g reporting increment."""
+    return 0 < value < 0.001
+
+
+def checklist_grams(value):
+    """Show an unresolved small dose as a diagnostic on preparation checklists."""
+    if below_checklist_precision(value) and not display_residue(value):
+        return f'{value:.6g} g (below 0.001 g)'
+    return grams(value)
+
+
 def millilitres(value):
     """A reagent volume, one decimal, the same on every output."""
     return dose_number(value, 1)
@@ -1593,13 +1605,8 @@ def _unchecked_line(s):
     )
 
 
-def volumetric_stock_section(summary):
-    """Show only the delivered quantities for the rounded preparation option."""
-    stage = summary['stages']['volumetric_stocks']
-    delivered = summary['volumetric_stocks']
-    heading = '<section><h2>Rounded batch doses</h2>'
-    if delivered is None:
-        return heading + f'<p>{text(stage["message"])}</p></section>'
+def rounded_dose_rows(delivered):
+    """Product, dose and units shared by the rounded sheet and terminal."""
     rows = [
         (name, number(mass, 6), 'g dry product')
         for name, mass in delivered['dry_product_grams'].items()
@@ -1621,6 +1628,16 @@ def volumetric_stock_section(summary):
             'mL liquid reagent' if liquid else 'g dry reagent',
         )
     )
+    return rows
+
+
+def volumetric_stock_section(summary):
+    """Show only the delivered quantities for the rounded preparation option."""
+    stage = summary['stages']['volumetric_stocks']
+    delivered = summary['volumetric_stocks']
+    heading = '<section><h2>Rounded batch doses</h2>'
+    if delivered is None:
+        return heading + f'<p>{text(stage["message"])}</p></section>'
     risk = ', '.join(name for name, _ in delivered['saturation']['risk'])
     notice = (
         'Review before mixing. Make up to the stated final volume including stock doses, '
@@ -1633,7 +1650,9 @@ def volumetric_stock_section(summary):
         + f'<p>{text(notice)}</p>'
         + f'<p>Modeled final pH {number(delivered["ph"], 5)}.</p>'
         + (f'<p>Modeled saturation risk: {text(risk)}.</p>' if risk else '')
-        + table(('Product', 'Dose', 'Delivery'), rows, 'Rounded preparation')
+        + table(
+            ('Product', 'Dose', 'Delivery'), rounded_dose_rows(delivered), 'Rounded preparation'
+        )
         + f'<p>{text(delivered["assumptions"])}</p></section>'
     )
 

@@ -135,6 +135,8 @@ def _references(store, data):
     from .canonical_result import _digest
     from .engine import load_library
 
+    if 'sonneveld_batch' in data:
+        return {}  # all inputs are embedded in the saved answer digest
     packaged = {f['name'] for f in load_library()['formulas']}
     names = [('acids', name) for name in data['acids']]
     for kind, key, builtin in [
