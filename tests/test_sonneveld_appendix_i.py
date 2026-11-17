@@ -216,6 +216,7 @@ class SonneveldAppendixI(unittest.TestCase):
         maxima=None,
         search=False,
         volumetric_stocks=None,
+        targets_mg_l=None,
     ):
         formulas = (
             'Ca(NO3)2.4H2O',
@@ -251,7 +252,7 @@ class SonneveldAppendixI(unittest.TestCase):
             products = products[:-1]
         result = plan_fertilizer_workflow(
             products,
-            ppm(targets),
+            ppm(targets) if targets_mg_l is None else targets_mg_l,
             ppm(COLUMN_E),
             5.5,
             final_volume=VolumeLitres(1000),
@@ -598,3 +599,44 @@ class SonneveldAppendixI(unittest.TestCase):
         self.assertEqual(stage.status, 'blocked')
         self.assertEqual(stage.error_code, 'invalid_stock_dosing')
         self.assertIsNone(stage.value)
+
+    def test_calculated_column_d_feeds_batch_workflow(self):
+        from flahax.sonneveld import design_targets
+
+        baseline = dict(COLUMN_D, Ca=2.75, Mg=1, K=6.5, N_NO3=10.75, N_NH4=1, S=1.5, B=0.020)
+        design = design_targets(
+            {
+                'baseline_mmol_l': baseline,
+                'adjustments_mmol_l': {'K': 2, 'N_NH4': 0.5, 'B': 0.010},
+                'irrigation_ec_ds_m': 1.8,
+            }
+        )
+        columns = design['columns_mmol_l']
+        self.assertEqual(columns['A'], baseline)
+        self.assertEqual(columns['B'], {'K': 2, 'N_NH4': 0.5, 'B': 0.010})
+        self.assertAlmostEqual(columns['C']['K'], 7.171875)
+        self.assertAlmostEqual(columns['C']['Ca'], 2.3203125)
+        self.assertAlmostEqual(columns['D']['K'], 8.765625)
+        for key, printed in COLUMN_D.items():
+            # The appendix displays rounded or truncated concentrations.
+            self.assertAlmostEqual(columns['D'][key], printed, delta=0.01, msg=key)
+        self.assertAlmostEqual(design['charge_mmol_l']['D']['cations'], 18)
+        self.assertAlmostEqual(design['charge_mmol_l']['D']['anions'], 18)
+        self.assertAlmostEqual(columns['D']['B'], 0.030)
+
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        candidate, grades = self.batch_at_ph_5_5(
+            sulfate,
+            'Na2SO4',
+            columns['D'],
+            maxima={'Na': 9.0},
+            targets_mg_l=design['targets_mg_l'],
+        )
+        self.assertEqual(candidate.status, 'accepted')
+        self.assertTrue(candidate.recommendation['feasible'])
+        self.assertNotIn(SODIUM_NITRATE[0], candidate.recommendation['saltIds'])
+        acid = candidate.reagent_mass_g * 0.65 / 63.01
+        totals, chemistry = reconstruct(candidate.recommendation, grades, acid)
+        for key, target in columns['D'].items():
+            self.assertAlmostEqual(totals[key], target, delta=target * 0.001, msg=key)
+        self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.001)

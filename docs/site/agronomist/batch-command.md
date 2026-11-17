@@ -136,6 +136,43 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 All options are listed in [batch report, sheet and tanks](reading-results.md).
 
 
+### Generate a feed target with Sonneveld A–D
+
+Use `--sonneveld-targets design.json` as the batch target source. The example
+below reproduces the recirculating tomato target design in [Sonneveld et al.,
+Appendix I](https://ishs.org/ishs-article/481_38/). Keep the source-water
+analysis in the separate `--water` input. To review the target design before
+formulating, run `flahax batch --sonneveld-targets design.json --preview-targets`.
+
+```json
+{
+  "baseline_mmol_l": {
+    "N_NH4": 1, "K": 6.5, "Ca": 2.75, "Mg": 1,
+    "N_NO3": 10.75, "P": 1.25, "S": 1.5,
+    "Fe": 0.015, "Mn": 0.010, "Zn": 0.004,
+    "B": 0.020, "Cu": 0.00075, "Mo": 0.0005
+  },
+  "adjustments_mmol_l": {"K": 2, "N_NH4": 0.5, "B": 0.010},
+  "irrigation_ec_ds_m": 1.8
+}
+```
+
+Use mmol/L for every entry, including the trace elements. For example,
+20 micromol/L boron is 0.020 mmol/L. Declare all seven macronutrient ions in the
+baseline. `P` is the analytical phosphate amount, counted as H₂PO₄⁻ for
+charge design, and `S` is sulfate. Corrections are signed increments. When the
+holdbacks for ammonium and phosphate change, the remaining ions in their
+group rescale to preserve charge. The EC step scales the same groups to the
+paper's empirical charge budget while retaining ammonium, phosphate and trace
+levels. Optional `minimum_mmol_l` entries constrain the result in Column D. A
+conflicting minimum names the affected nutrient.
+
+The batch uses Column D at full precision, in elemental mg/L with both
+nitrogen forms expressed as N. The JSON result contains A–D, charge totals
+and the exact targets used. The input EC sets the paper's design strength.
+The batch pH and modeled or measured EC are separate quantities. Use a feed
+baseline appropriate to the crop and growing system. Root-zone measurements
+can inform corrections chosen by the grower.
 ### Rounded volumetric doses
 
 Pass `--volumetric-stocks dosing.json` when some fertilizer doses are measured
