@@ -16,9 +16,11 @@ so the next batch is one command:
    have. A product you add is either a **chemical** (MKP, calcium nitrate) with
    the label on your bag, or a **compound** (an NPK 20-20-20 + TE) typed from its
    data sheet: the nitrogen forms, P2O5, K2O, the micronutrients and the
-   chelating agent. FlahaX checks that the label's charges balance; a compound
-   that does not balance is still used for nutrients, but no acid is planned for
-   that batch.
+   chelating agent. FlahaX retains the label assay for nutrient accounting and
+   reports how it differs from the declared chemical identity. Supported
+   chemical contributions enter the pH model, and the result records any
+   remaining composition or model qualifications. Review these notes when
+   interpreting the reagent plan.
 5. **pH reagents and target**: choose the catalogue, a saved reagent list, or
    tick the acids and bases you actually have. Saved acid certificates also
    appear in that selection. You can add a custom supported reagent with its

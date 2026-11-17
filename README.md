@@ -17,22 +17,28 @@ equilibrium chemistry and auditable delivery planning.**
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23605678.svg)](https://doi.org/10.5281/zenodo.23605678)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
-FlahaX turns a crop's nutrient formula and the grower's actual water into a fertilizer recipe,
-then checks what that recipe does in solution: which ions pair up, whether anything
-precipitates, what the pH will be, how much acid reaches a target pH, and how the recipe splits
-into stock tanks and injector flows. Every plan carries its units, model identifiers and source
-hashes, so a result can be reviewed and reproduced.
+Growers and agronomists need to turn crop-feed targets, source-water analyses and available
+fertilizers into a practical batch recipe. Water nutrients, acid or base contributions, product
+composition and dispensing uncertainty affect the finished feed.
 
-FlahaX combines fertilizer formulation, fertilizer-specific aqueous equilibrium chemistry,
-and delivery planning in a dependency-free Python library. Plans include units, model
-identifiers, and source references; selected chemistry calculations are checked against
-PHREEQC reference cases. The [dated competitor comparison](docs/site/evidence/competitor-comparison.md)
-records versions, shared inputs, results, and limitations.
+FlahaX formulates candidate recipes, accounts for the water and pH reagent, and reports achieved
+nutrients, modeled pH, estimated EC and saturation assessments. It supports supplied targets or
+Sonneveld target design with grower-approved feed corrections from root-zone observations.
+Users can evaluate declared fertilizer alternatives and verify rounded dry, separate-stock and
+reagent doses against their preparation tolerances and nutrient ceilings.
+
+The grower or agronomist reviews the result and its qualifications before preparation.
+Tank assignments use the supplied equipment and compatibility evidence. Each plan retains
+units, inputs, model identifiers and source hashes for review and reproduction.
+The [scope and limits](docs/site/explanation/scope-and-limits.md) explain the supported workflows
+and the measurements needed to qualify a prepared batch.
 
 **Who it is for**
 
-- **Growers and agronomists**: `flahax mix` asks five questions and gives tank A, tank B and the
-  acid, with no code.
+- **Growers**: `flahax mix` guides a batch interview or reviews a prepared Sonneveld profile,
+  then displays the selected recipe, rounded preparation where configured, and review notes.
+- **Agronomists**: define targets, review root-zone observations, set nutrient ceilings and
+  uncertainty bounds, and assess the achieved feed and preparation evidence.
 - **Consultants and researchers**: reproducible nutrient-solution chemistry with stated validity
   limits, against real water analyses and real commercial products.
 - **Developers**: a tested, dependency-free engine for nutrition and fertigation software.

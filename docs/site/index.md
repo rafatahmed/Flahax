@@ -13,10 +13,18 @@
 **Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous equilibrium
 chemistry and auditable delivery planning.**
 
-FlahaX turns a crop's nutrient formula and your actual water into a fertilizer recipe, then
-checks what that recipe does in solution: what the pH will be, how much acid reaches your target,
-whether anything precipitates, and how the recipe splits into concentrate tanks. Every result
-carries its units and sources, so it can be reviewed and reproduced.
+Growers and agronomists need a practical batch recipe from crop-feed targets, source-water
+analyses and available fertilizers. Water nutrients, pH-reagent contributions, product
+composition and dispensing uncertainty affect the finished feed.
+
+FlahaX formulates candidate recipes, reports achieved nutrients and modeled chemistry, and
+produces traceable preparation quantities for review. Supply targets directly or use Sonneveld
+target design with approved feed corrections from root-zone observations. Evaluate declared
+fertilizer alternatives, then check rounded dry, separate-stock and reagent doses under the
+specified uncertainty and limits.
+
+The grower or agronomist makes the feed and preparation decisions using the calculated results,
+their qualifications and the required measurements.
 
 ```{mermaid}
 ---
@@ -24,12 +32,12 @@ caption: From your water to your tanks
 ---
 flowchart LR
     W[Water analysis] --> R[Recipe<br/>grams of each fertilizer]
-    F[Crop formula] --> R
+    F[Supplied or Sonneveld-designed<br/>finished-feed targets] --> R
     P[Fertilizers you have] --> R
     R --> H[pH plan<br/>acid or base to the target]
     T[Target pH] --> H
-    H --> K[Tank A, tank B<br/>and the acid container]
-    K --> S[Batch sheet<br/>and report]
+    H --> K[Tank assignment<br/>or rounded batch preparation]
+    K --> S[Batch sheet and report<br/>review and measure after mixing]
 ```
 
 ## Choose your path
@@ -41,8 +49,8 @@ flowchart LR
 :link: grower/index
 :link-type: doc
 
-Answer five questions with `flahax mix` and get what to weigh into tank A and tank B and how much
-acid to use. No code, no chemistry needed.
+Use the `flahax mix` interview or review an agronomist-prepared Sonneveld profile. Read the
+selected quantities, preparation checks and notes, then record measurements after mixing.
 :::
 
 :::{grid-item-card} Agronomist

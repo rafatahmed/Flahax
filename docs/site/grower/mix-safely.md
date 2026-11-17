@@ -8,9 +8,10 @@ FlahaX plans a batch; it does not dose anything, and its results are calculation
    after it has mixed for a few minutes. Write both on the sheet.
 2. **pH.** If it is off the target, adjust in small steps and measure again.
    Never add more acid than the sheet plans in one go.
-3. **EC.** The planned EC is an estimate. A measured value close to it confirms
-   the weighing. A large gap usually means a weighing error, a different
-   product grade or a different water: check those before adjusting anything.
+3. **EC.** Compare the measurement with the estimated EC and its stated range.
+   If they differ substantially, check weighing, the product grade, water analysis
+   and measurement conditions. Use individual nutrient analysis to verify the
+   delivered nutrient concentrations.
 4. **Concentrates.** Check each concentrate tank for undissolved product or
    cloudiness. Tank A must not be cloudy.
 5. **Keep records.** Keep the sheet with its measured values. When the water
@@ -22,8 +23,8 @@ FlahaX plans a batch; it does not dose anything, and its results are calculation
 - The sheet is **blocked** and the reason is not one you can fix yourself.
 - The sheet **requires review** and you cannot judge a reason, especially a
   precipitation note or the chemistry assumption.
-- Your water analysis is refused (more than 5 % out of balance), or your water
-  breaks a limit even at a small share.
+- Your water analysis has a large charge-imbalance warning that you cannot
+  explain, or your water breaks a limit even at a small share.
 - Targets are missed with the reason `conflicting_targets`: the search
   has not found a satisfactory fit. Review available products and constraints; this
   diagnosis does not prove that the formula is impossible.

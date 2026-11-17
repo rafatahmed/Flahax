@@ -66,15 +66,14 @@ water, `"HCO3": 0` for carbon-free water); an omitted ion is not measured.
 Optional keys: `"below_detection": {"Mn": 0.01}` (detection limits in mg/L;
 taken as zero, never adjusted).
 
-Targets and `--limit` maximums use these laboratory values. For the chemistry
-only (pH, saturation, EC, reagent dose) the analysis is speciated at its
-measured pH: used unchanged if it already balances; otherwise closed on the
-balance ion within its stated uncertainty, or, without one, as an assumption
-that puts the plan in review. An analysis more than 5 % out of charge balance
-is refused. Missing chloride does not authorize changing a measured titration.
-Positive, nonfixed directly supplied carbon may undergo the disclosed legacy model
-reconciliation; measured zeros and fixed carbon remain unchanged. The report shows
-laboratory and modelled water side by side (see
+Targets and `--limit` maximums use these laboratory values. The chemistry
+calculation speciates the analysis at its measured pH, retains the analysed
+ions, and reports and carries charge imbalance as residual charge. Its size
+alone does not reject the analysis. The interactive interview flags a charge
+difference above 5% for review and offers correction or continuation.
+Carbon supplied directly and carbon inferred from titrated alkalinity follow
+their documented input contracts. The report retains the analytical inputs
+and chemistry evidence (see
 [measured-pH water balancing](../developer/water-to-delivery.md#measured-ph-water-balancing)).
 
 ## What the files say

@@ -9,16 +9,19 @@ reviews the plan before anyone mixes.
 caption: How a lab analysis is used
 ---
 flowchart TB
-    L[Lab report<br/>as printed: mg/L, meq/L or mmol/L,<br/>measured pH, detection limits] --> C[Converted to elements<br/>and checked at the measured pH]
-    C -->|more than 5 % out of balance| X[Refused:<br/>ask the laboratory]
-    C -->|balanced, or a small gap| D{Two uses}
-    D --> T[Laboratory values<br/>nutrient targets and limits]
-    D --> M[Balanced water<br/>chemistry only: pH, saturation,<br/>acid dose]
+    L[Lab report<br/>mg/L, meq/L or mmol/L,<br/>measured pH, detection limits] --> C[Convert units<br/>retain analytical nutrient totals]
+    C --> T[Water nutrient credits<br/>finished-feed targets and limits]
+    C --> M[Speciate at measured pH<br/>report charge imbalance]
+    M --> R[Carry residual charge<br/>preserve the analysed ions]
+    R --> P[Mixed-feed pH<br/>saturation assessment<br/>reagent dose]
 ```
 
-Laboratory values determine every target and limit check. A small charge gap may be
-reconciled on a measured balance ion for chemistry only. Titrated alkalinity and fixed
-carbon stay unchanged. The report shows laboratory and model inventories side by side.
+The laboratory nutrient values supply the water credits in the finished-feed calculation.
+FlahaX reports charge imbalance and carries it as residual charge when calculating chemistry.
+It preserves the analysed ions, and the size of the imbalance alone does not reject the water.
+Titrated alkalinity can supply the inorganic-carbon inventory through its supported proton
+reference. The report retains the analytical inputs and the resulting chemistry evidence.
+Review missing measurements and any model-domain qualifications before interpreting pH.
 
 ## In this guide
 
