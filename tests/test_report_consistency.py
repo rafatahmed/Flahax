@@ -88,9 +88,9 @@ class FinalRecipeReportTests(unittest.TestCase):
         exported = json.loads(render_outputs(summary)['summary.json'])
         self.assertEqual(exported, json.loads(json.dumps(original)))
 
-    def test_positive_doses_at_and_above_display_zero_keep_weighing_checkboxes(self):
+    def test_mix_checklist_applies_its_milligram_increment(self):
         # Synthetic legacy report inputs exercise formatting, not the chemistry calculation.
-        for mass in (1e-9, 1.001e-9, 1e-6):
+        for mass in (1e-9, 1.001e-9, 1e-6, 0.000999, 0.001):
             summary = deepcopy(self.summary)
             summary.pop('export_identity')
             summary.pop('calculation_identity')
@@ -106,7 +106,11 @@ class FinalRecipeReportTests(unittest.TestCase):
                         if 'Potassium Sulfate' in row
                     )
                     self.assertNotIn('numerical residue', row)
-                    self.assertIn('class="tick"', row)
+                    if render is render_mix_sheet and mass < 0.001:
+                        self.assertIn('below 0.001 g', row)
+                        self.assertNotIn('class="tick"', row)
+                    else:
+                        self.assertIn('class="tick"', row)
 
     def test_one_irrigation_preserves_capacities_without_an_acid_capacity_limit(self):
         summary = self.summary

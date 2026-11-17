@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from flahax.grower_report import grams, millilitres, number
+from flahax.grower_report import checklist_grams, grams, millilitres, number
 from flahax.grower_sheet import agronomist_rows, readable, render_mix_sheet
 from flahax.mix_cli import main
 from flahax.mix_results import first_view, handle_results, results_lines
@@ -110,8 +110,8 @@ class ResultViewTests(unittest.TestCase):
             self.assertIn(f'Tank {tank["name"]}', tanks)
             for product in tank['products']:
                 self.assertIn(product['name'], tanks)
-                self.assertIn(grams(product['gramsPerBatch']), tanks)
-                self.assertIn(grams(product['gramsPerBatch']), sheet)
+                self.assertIn(checklist_grams(product['gramsPerBatch']), tanks)
+                self.assertIn(checklist_grams(product['gramsPerBatch']), sheet)
         acid = millilitres(summary['ph']['selected']['volume_ml_per_batch'])
         self.assertIn(f'{acid} mL', tanks)
         self.assertIn(f'{acid} mL', sheet)
