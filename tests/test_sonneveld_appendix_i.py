@@ -17,6 +17,7 @@ from flahax import VolumeLitres, plan_fertilizer_workflow
 from flahax.engine import recommend
 from flahax.irrigation_ec import calculate_ec_from_totals
 from flahax.nutrient_acceptance import assess_incidental
+from flahax.ratio_product_stocks import prepare_product_stocks, validate_product_stocks
 
 
 # Concentrations in mmol/L, including the trace elements.
@@ -118,9 +119,12 @@ def fit_recipe(acid_mmol_l, *, sodium_target=None):
     return fit, grades
 
 
-def reconstruct(fit, grades, acid_mmol_l, *, mass_decimals=None):
+def reconstruct(
+    fit, grades, acid_mmol_l, *, mass_decimals=None, stock_grams=None, water_fraction=1.0
+):
     """Calculate finished analytical totals independently from returned product weights."""
-    concentrations = dict(COLUMN_E, N_NO3=acid_mmol_l)
+    concentrations = {key: amount * water_fraction for key, amount in COLUMN_E.items()}
+    concentrations["N_NO3"] = acid_mmol_l
     if mass_decimals is not None:
         # Round the actual delivered volume (mL), then recover the acid inventory.
         acid_ml = acid_mmol_l * 63.01 / (0.65 * 1.39)
@@ -131,10 +135,12 @@ def reconstruct(fit, grades, acid_mmol_l, *, mass_decimals=None):
         grams = 1000 * salt['gramsPerLitre']
         if mass_decimals is not None:
             grams = round(grams, mass_decimals)
+        if stock_grams is not None and salt["id"] in stock_grams:
+            grams = stock_grams[salt["id"]]
         for key, count in ions.items():
             concentrations[key] = concentrations.get(key, 0) + grams / mass * count
     inventory = {BASIS[key]: amount / 1000 for key, amount in concentrations.items()}
-    inventory.update({'CO3-2': BICARBONATE / 1000, 'Dtp-5': inventory['Fe+3']})
+    inventory.update({'CO3-2': BICARBONATE * water_fraction / 1000, 'Dtp-5': inventory['Fe+3']})
     return concentrations, calculate_ec_from_totals(
         inventory,
         solution_id='sonneveld-appendix-i',
@@ -342,3 +348,68 @@ class SonneveldAppendixI(unittest.TestCase):
             self.assertAlmostEqual(totals[key], target, delta=target * 1e-5, msg=key)
         self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.001)
         self.assertLessEqual(totals['Na'] * ATOMIC_MASS['Na'], 9.0)
+
+    def test_rounded_copper_stock_preserves_sodium_nitrate_free_feed(self):
+        sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
+        candidate, grades = self.batch_at_ph_5_5(sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': 9.0})
+        fit = candidate.recommendation
+        self.assertTrue(fit['feasible'])
+        self.assertNotIn(SODIUM_NITRATE[0], fit['saltIds'])
+        acid = candidate.reagent_mass_g * 0.65 / 63.01
+        copper = 'copper sulfate pentahydrate'
+        copper_dose = next(s['gramsPerLitre'] * 1000 for s in fit['salts'] if s['id'] == copper)
+        coarse, _ = reconstruct(fit, grades, acid, mass_decimals=3)
+        self.assertGreater(abs(coarse['Cu'] / COLUMN_D['Cu'] - 1), 0.001)
+
+        # Illustrative stock and dispenser specifications, not measured values.
+        options = {
+            'basis': 'product_mass',
+            'carrier': 'demineralized_water',
+            'concentrations_g_l': {copper: 1.0},
+            'density_kg_l': {copper: (0.998, 1.002)},
+            'concentration_relative_error': 0.0003,
+            'dose_error_ml': 0.05,
+            'dose_decimals': 2,
+        }
+        bounds = {
+            'mode': 'water_product_elemental',
+            'water_mass_model': 'closed_batch_mass_balance',
+            'weighing_error_g': 0,
+            'volume_error_litres': 0,
+        }
+        validate_product_stocks(options, [{'name': copper}], bounds)
+        delivery = prepare_product_stocks(
+            {'volume_litres': 1000, 'ingredients': [{'name': copper, 'grams': copper_dose}]},
+            options,
+            bounds,
+        )['stocks'][0]
+        self.assertAlmostEqual(delivery['dose_ml'], 187.26, places=2)
+
+        # The demineralized carrier displaces an equal volume of Appendix I water.
+        # Keep the prior dilute 1 kg/L solvent approximation for speciation.
+        volume = delivery['dose_ml']
+        error = delivery['dose_error_ml']
+        scenarios = [(delivery['effective_grams'], volume)]
+        scenarios.extend(
+            (mass, ml)
+            for mass in delivery['effective_grams_bounds']
+            for ml in (volume - error, volume + error)
+        )
+        for mass, ml in scenarios:
+            with self.subTest(copper_grams=mass, stock_ml=ml):
+                totals, chemistry = reconstruct(
+                    fit,
+                    grades,
+                    acid,
+                    mass_decimals=3,
+                    stock_grams={copper: mass},
+                    water_fraction=1 - ml / 1_000_000,
+                )
+                for key, target in COLUMN_D.items():
+                    self.assertAlmostEqual(totals[key], target, delta=target * 0.001, msg=key)
+                self.assertLessEqual(totals['Na'] * ATOMIC_MASS['Na'], 9.0)
+                self.assertAlmostEqual(chemistry.ph, 5.5, delta=0.002)
+                self.assertEqual(chemistry.status, 'range')
+                low, high = chemistry.ec25_range_ms_cm
+                self.assertAlmostEqual(low, 2.092, delta=0.002)
+                self.assertAlmostEqual(high, 2.202, delta=0.002)
