@@ -1,5 +1,9 @@
 # Run a batch with `flahax mix`
 
+For an agronomist-prepared Sonneveld profile, follow
+[Review a Sonneveld batch](sonneveld-walkthrough.md). The five-step interview
+below is the standard tank workflow.
+
 `flahax mix` asks for the same five things in order and remembers your answers,
 so the next batch is one command:
 

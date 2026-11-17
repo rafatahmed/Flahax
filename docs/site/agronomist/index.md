@@ -27,6 +27,7 @@ Review missing measurements and any model-domain qualifications before interpret
 
 | Page | What it covers |
 |---|---|
+| [Sonneveld Appendix I](sonneveld-appendix-i.md) | A–D targets, approved feedback, alternative fertilizers and full rounded 1,000 L verification with uncertainty |
 | [A batch from files](batch-command.md) | The water analysis file, the formula, `flahax batch`, reading the sheet, and a worked tomato example on a brackish well |
 | [Formulas and products](formula-and-products.md) | Catalogue products, supplier labels and data sheets, and materials defined by formula, ions or analysis |
 | [pH, acids and bases](ph-and-acids.md) | How the recipe and its pH reagent are planned together |

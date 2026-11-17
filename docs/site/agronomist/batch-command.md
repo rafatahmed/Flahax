@@ -147,6 +147,11 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 All options are listed in [batch report, sheet and tanks](reading-results.md).
 
 
+For a complete reviewed profile with root-zone feedback, uncertainty and
+rounded stock delivery, follow the [1,000 L Appendix I walkthrough](sonneveld-appendix-i.md).
+The `--sonneveld-targets` option below takes only the design object, not that
+walkthrough's full TUI import profile.
+
 ### Generate a feed target with Sonneveld A–D
 
 Use `--sonneveld-targets design.json` as the batch target source. The example

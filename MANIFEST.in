@@ -32,6 +32,7 @@ include tools/chemistry_sources.json
 include tools/ci_test_weights.json
 include tools/requirements-benchmark-report.txt
 recursive-include examples *.py *.md
+include examples/sonneveld-appendix-i.json
 include examples/steiner-10-litre-lab-worksheet.xlsx
 prune examples/tutorial
 global-exclude __pycache__

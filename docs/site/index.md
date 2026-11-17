@@ -102,6 +102,7 @@ Migrate saved workflows <start/migration>
 Overview <grower/index>
 What you need <grower/inputs>
 Run a batch <grower/run-a-batch>
+Review a Sonneveld batch <grower/sonneveld-walkthrough>
 Read the batch sheet <grower/batch-sheet>
 Mix safely <grower/mix-safely>
 ```
@@ -112,6 +113,7 @@ Mix safely <grower/mix-safely>
 
 Overview <agronomist/index>
 A batch from files <agronomist/batch-command>
+Sonneveld Appendix I <agronomist/sonneveld-appendix-i>
 Formulas and products <agronomist/formula-and-products>
 pH, acids and bases <agronomist/ph-and-acids>
 Tanks and solubility <agronomist/tanks-and-solubility>

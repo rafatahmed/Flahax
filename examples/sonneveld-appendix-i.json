@@ -1,0 +1,263 @@
+{
+  "title": "Appendix I",
+  "sonneveld": {
+    "baseline_mmol_l": {
+      "Ca": 2.75,
+      "Mg": 1,
+      "K": 6.5,
+      "N_NO3": 10.75,
+      "N_NH4": 1,
+      "P": 1.25,
+      "S": 1.5,
+      "Fe": 0.015,
+      "Mn": 0.01,
+      "Zn": 0.004,
+      "B": 0.02,
+      "Cu": 0.00075,
+      "Mo": 0.0005
+    },
+    "adjustments_mmol_l": {
+      "K": 2,
+      "N_NH4": 0.5,
+      "B": 0.01
+    },
+    "irrigation_ec_ds_m": 1.8,
+    "root_zone_feedback": {
+      "sample_id": "illustrative-appendix-i",
+      "sampled_on": "2026-11-17",
+      "measured_mmol_l": {
+        "K": 6.5,
+        "Ca": 10,
+        "B": 0.035
+      },
+      "guide_mmol_l": {
+        "K": 8,
+        "Ca": 10,
+        "B": 0.05
+      }
+    }
+  },
+  "final_volume_litres": 1000,
+  "target_ph": 5.5,
+  "water": {
+    "Ca": 40.078,
+    "Mg": 9.722000000000001,
+    "S": 9.618
+  },
+  "equilibrium": {
+    "water_totals": {
+      "Ca+2": 0.001,
+      "Mg+2": 0.0004,
+      "SO4-2": 0.0003,
+      "CO3-2": 0.0022
+    },
+    "water_mass_kg": 1000,
+    "water_analysis_id": "Sonneveld Appendix I",
+    "temperature_c": 25,
+    "carbon_boundary": "closed",
+    "phases": []
+  },
+  "salts": [
+    {
+      "id": "calcium nitrate tetrahydrate",
+      "name": "calcium nitrate tetrahydrate",
+      "formula": "Ca(NO3)2.4H2O",
+      "elements": {
+        "Ca": 16.971416472580987,
+        "N_NO3": 11.862799068388735
+      }
+    },
+    {
+      "id": "ammonium nitrate",
+      "name": "ammonium nitrate",
+      "formula": "NH4NO3",
+      "elements": {
+        "N_NH4": 17.49934410254488,
+        "N_NO3": 17.49934410254488
+      }
+    },
+    {
+      "id": "magnesium sulfate heptahydrate",
+      "name": "magnesium sulfate heptahydrate",
+      "formula": "MgSO4.7H2O",
+      "elements": {
+        "Mg": 9.861240718951597,
+        "S": 13.00766827605794
+      }
+    },
+    {
+      "id": "monopotassium phosphate",
+      "name": "monopotassium phosphate",
+      "formula": "KH2PO4",
+      "elements": {
+        "K": 28.730582131887186,
+        "P": 22.760607263054244
+      }
+    },
+    {
+      "id": "potassium nitrate",
+      "name": "potassium nitrate",
+      "formula": "KNO3",
+      "elements": {
+        "K": 38.67175059098148,
+        "N_NO3": 13.854188303017716
+      }
+    },
+    {
+      "id": "potassium sulfate",
+      "name": "potassium sulfate",
+      "formula": "K2SO4",
+      "elements": {
+        "K": 44.87377983346628,
+        "S": 18.397901973499216
+      }
+    },
+    {
+      "id": "iron DTPA",
+      "name": "iron DTPA",
+      "formula": "",
+      "elements": {
+        "Fe": 11.0,
+        "Na": 9.056763183812338
+      },
+      "identityId": "idn-disodium-iron-dtpa"
+    },
+    {
+      "id": "manganese sulfate monohydrate",
+      "name": "manganese sulfate monohydrate",
+      "formula": "MnSO4.H2O",
+      "elements": {
+        "Mn": 32.503845698733876,
+        "S": 18.968169447402673
+      }
+    },
+    {
+      "id": "zinc sulfate heptahydrate",
+      "name": "zinc sulfate heptahydrate",
+      "formula": "ZnSO4.7H2O",
+      "elements": {
+        "Zn": 22.73770605828754,
+        "S": 11.14975307783265
+      }
+    },
+    {
+      "id": "boric acid",
+      "name": "boric acid",
+      "formula": "H3BO3",
+      "elements": {
+        "B": 17.483422286915737
+      }
+    },
+    {
+      "id": "copper sulfate pentahydrate",
+      "name": "copper sulfate pentahydrate",
+      "formula": "CuSO4.5H2O",
+      "elements": {
+        "Cu": 25.450977250881127,
+        "S": 12.840435757769948
+      }
+    },
+    {
+      "id": "sodium molybdate dihydrate",
+      "name": "sodium molybdate dihydrate",
+      "formula": "Na2MoO4.2H2O",
+      "elements": {
+        "Mo": 39.656953916098374,
+        "Na": 19.003736309154785
+      }
+    }
+  ],
+  "alternative_products": [
+    {
+      "id": "sodium sulfate anhydrous",
+      "name": "sodium sulfate anhydrous",
+      "formula": "Na2SO4",
+      "elements": {
+        "Na": 32.37083920022529,
+        "S": 22.571106730498453
+      }
+    }
+  ],
+  "maximum_concentrations": {
+    "Na": 9.0
+  },
+  "ph_adjustment": {
+    "products": [
+      {
+        "id": "appendix-nitric-acid",
+        "chemicalFormula": "HNO3",
+        "massFraction": 0.65,
+        "densityKgPerL": 1.39,
+        "source": "Example grade",
+        "revision": "1",
+        "recordedAt": "2026-11-17T00:00:00Z"
+      }
+    ],
+    "maximum_reagent_volume_litres": 1
+  },
+  "volumetric_stocks": {
+    "stock": {
+      "basis": "product_mass",
+      "carrier": "demineralized_water",
+      "concentrations_g_l": {
+        "copper sulfate pentahydrate": 1.0,
+        "sodium molybdate dihydrate": 1.0
+      },
+      "density_kg_l": {
+        "copper sulfate pentahydrate": [
+          0.998,
+          1.002
+        ],
+        "sodium molybdate dihydrate": [
+          0.998,
+          1.002
+        ]
+      },
+      "concentration_relative_error": 0.0003,
+      "dose_error_ml": 0.05,
+      "dose_decimals": 2
+    },
+    "dry_mass_decimals": 3,
+    "reagent_volume_decimals": 2,
+    "nutrient_tolerance_percent": 0.1,
+    "ph_tolerance": 0.002,
+    "nutrient_ceiling_reserve": 0.05,
+    "uncertainty": {
+      "dry_product_error_g": {
+        "calcium nitrate tetrahydrate": 0.01,
+        "ammonium nitrate": 0.01,
+        "magnesium sulfate heptahydrate": 0.01,
+        "monopotassium phosphate": 0.01,
+        "potassium nitrate": 0.01,
+        "potassium sulfate": 0.01,
+        "iron DTPA": 0.0001,
+        "manganese sulfate monohydrate": 0.0001,
+        "zinc sulfate heptahydrate": 0.0001,
+        "boric acid": 0.0001,
+        "sodium sulfate anhydrous": 0.01
+      },
+      "dry_product_assay_relative_error": {
+        "calcium nitrate tetrahydrate": 0.0002,
+        "ammonium nitrate": 0.0002,
+        "magnesium sulfate heptahydrate": 0.0002,
+        "monopotassium phosphate": 0.0002,
+        "potassium nitrate": 0.0002,
+        "potassium sulfate": 0.0002,
+        "iron DTPA": 0.0002,
+        "manganese sulfate monohydrate": 0.0002,
+        "zinc sulfate heptahydrate": 0.0002,
+        "boric acid": 0.0002,
+        "sodium sulfate anhydrous": 0.0002
+      },
+      "reagent_volume_error_ml": 0.025,
+      "reagent_mass_fraction_bounds": [
+        0.6499,
+        0.6501
+      ],
+      "reagent_density_kg_l_bounds": [
+        1.3899,
+        1.3901
+      ]
+    }
+  }
+}
