@@ -31,15 +31,16 @@ from .engine import load_library
 from .grower_report import (
     _reagent_line,
     _review_reason,
-    display_residue,
+    below_checklist_precision,
+    checklist_grams,
     number,
     reagent_preparation_lines,
     render_report,
+    rounded_dose_rows,
 )
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
-    grams,
     key_reasons,
     limited_by,
     litres,
@@ -735,6 +736,12 @@ def check_session(data, path):
 
     if not isinstance(data, dict):
         bad('not a JSON object')
+    if 'sonneveld_batch' in data:
+        from .mix_sonneveld import check_batch_session
+
+        check_batch_session(data)
+        check_saved_state(data)
+        return data
     for key in ('spec', 'water', 'water_share', 'limits', 'formula', 'store', 'acids', 'ph'):
         if key not in data:
             bad(f'{key!r} is missing')
@@ -785,7 +792,10 @@ def check_session(data, path):
 
 def load_session(path):
     """A checked session from its file."""
-    return check_session(read_json(path, 'session'), path)
+    session = check_session(read_json(path, 'session'), path)
+    if 'sonneveld_batch' in session and 'saved_state' not in session:
+        raise DeliveryError('invalid_session', 'Import the Sonneveld batch profile for review')
+    return session
 
 
 def find_session(store, spec):
@@ -822,7 +832,6 @@ def summarize(summary, say):
     identity = summary.get('calculation_identity') or {}
     if identity.get('result_id'):
         say('Calculation reference: ' + identity['result_id'])
-    volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
     if summary['status'] == 'requires_review' and 'formulation' in summary:
@@ -836,6 +845,15 @@ def summarize(summary, say):
             f'  ... {len(summary["warnings"]) - 3} more notes: choose output 2 or 3 to see them '
             f'all'
         )
+    if 'volumetric_stocks' in summary:
+        say(f'Final batch volume: {number(summary["batch_litres"], 0)} L')
+        delivered = summary['volumetric_stocks']
+        if delivered is not None:
+            say('Diagnostic quantities only' if blocked else 'Rounded batch doses')
+            for name, dose, units in rounded_dose_rows(delivered):
+                say(f'  {name}: {dose} {units}')
+        return
+    volumes, ratio = summary['volumes'], summary['tanks']['injection_ratio']
     say(f'Irrigation supplied: {number(volumes["irrigation_litres"], 0)} L at 1:{ratio:g}')
     for tank in summary['tanks']['tanks']:
         name = tank['name']
@@ -850,11 +868,9 @@ def summarize(summary, say):
             )
         )
         for product in tank['products']:
-            say(
-                f'  {"-" if blocked or display_residue(product["gramsPerBatch"]) else "[ ]"} '
-                f'{product["name"]}: '
-                f'{grams(product["gramsPerBatch"])}'
-            )
+            mass = product['gramsPerBatch']
+            marker = '-' if blocked or below_checklist_precision(mass) else '[ ]'
+            say(f'  {marker} {product["name"]}: {checklist_grams(mass)}')
     selected = summary['ph'] and summary['ph']['selected']
     if (
         selected
@@ -893,11 +909,14 @@ def output_folder(output, name):
 def write_sheets(summary, session, output):
     """Write the batch sheet, the summary and (full depth) the report; returns the file names."""
     depth = session.get('depth', 1)
-    files = {
-        'batch-sheet.html': render_mix_sheet(summary, depth),
-        'summary.json': render(summary)['summary.json'],
-    }
-    if depth >= 3:
+    if 'volumetric_stocks' in summary:
+        files = render(summary)
+    else:
+        files = {
+            'batch-sheet.html': render_mix_sheet(summary, depth),
+            'summary.json': render(summary)['summary.json'],
+        }
+    if depth >= 3 and 'report.html' not in files:
         files['report.html'] = render_report(summary)
     output.mkdir(parents=True)
     for file, content in files.items():
@@ -947,6 +966,7 @@ def main(argv=None, *, ask=input, say=print, store=None):
         action='store_true',
         help='review a saved session\'s available acids and bases and save new answers',
     )
+    parser.add_argument('--sonneveld-batch', help='review and run a Sonneveld batch profile JSON')
     args = parser.parse_args(argv)
     if args.output and Path(args.output).exists():
         say(f'flahax mix: {args.output} already exists; choose a new directory')
@@ -954,6 +974,8 @@ def main(argv=None, *, ask=input, say=print, store=None):
     store = store or Store()
     p = Prompts(ask, say)
     args.session = ' '.join(args.session)
+    if args.sonneveld_batch and (args.session or args.review_reagents):
+        parser.error('--sonneveld-batch starts a new session')
     if args.review_reagents and not args.session:
         parser.error('--review-reagents requires a saved session')
     if args.session.strip('/\\') == 'sessions':
@@ -968,16 +990,28 @@ def main(argv=None, *, ask=input, say=print, store=None):
         from .mix_tui import run_tui  # mix_tui imports this module
 
         code, lines = run_tui(
-            store, args.session or None, args.output, review_availability=args.review_reagents
+            store,
+            args.session or None,
+            args.output,
+            review_availability=args.review_reagents,
+            sonneveld_batch=args.sonneveld_batch,
         )
         if code is not None:
             for line in lines:
                 say(line)
             return code
     try:
-        if args.session:
+        if args.sonneveld_batch:
+            from .mix_sonneveld import approve_batch
+
+            name, session = approve_batch(p, args.sonneveld_batch)
+        elif args.session:
             path = find_session(store, args.session)
             name, session = path.stem, load_session(path)
+            if args.review_reagents and 'sonneveld_batch' in session:
+                raise DeliveryError(
+                    'invalid_session', 'Reimport the profile to review its reagents'
+                )
             if args.review_reagents:
                 name, session = review_reagents(p, store, name, session)
         else:
@@ -997,7 +1031,19 @@ def main(argv=None, *, ask=input, say=print, store=None):
         return 1
     output = output_folder(args.output, name)
     try:
-        summary = run_batch(options_for(store, session))
+        if 'sonneveld_batch' in session:
+            from .mix_sonneveld import calculate_batch, save_reviewed_batch
+
+            verify_session(store, session)
+            summary = calculate_batch(session)
+            if args.sonneveld_batch:
+                save_reviewed_batch(p, store, name, session, summary)
+                say(saved_line(store, name))
+        else:
+            summary = run_batch(options_for(store, session))
+    except (KeyboardInterrupt, EOFError):
+        say('Stopped; nothing saved.')
+        return 1
     except (DeliveryError, ValueError, OSError, KeyError) as exc:
         say(f'flahax mix: {exc}')
         return 1

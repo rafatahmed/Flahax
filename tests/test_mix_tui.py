@@ -492,6 +492,10 @@ class RunTuiTests(unittest.TestCase):
         shown = ['\n'.join(f) for f in term.frames]
         self.assertTrue(any('Calculating the recipe, pH and tanks' in f for f in shown))
         self.assertTrue(any('From water' in f for f in shown))
+        self.assertTrue(any('below 0.001 g' in f for f in shown))
+        self.assertTrue(any('below 0.001 g' in line for line in lines))
+        sheet = (self.root / 'out' / 'batch-sheet.html').read_text(encoding='utf-8')
+        self.assertIn('below 0.001 g', sheet)
 
     def test_run_tui_saved_session(self):
         term, code, _ = self.run_tui(['q', 'y'], 'plain-home', 'tomato stage 1', 'again')

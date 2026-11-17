@@ -479,6 +479,7 @@ def run_tui(
     encoding=None,
     *,
     review_availability=False,
+    sonneveld_batch=None,
 ):
     """``flahax mix`` on the full screen; returns the exit code and the lines to print after it.
 
@@ -492,9 +493,17 @@ def run_tui(
         with term_factory() as term:
             g = glyphs(encoding or getattr(sys.stdout, 'encoding', None))
             prompts = TuiPrompts(term, g)
-            if session_name:
+            if sonneveld_batch:
+                from .mix_sonneveld import approve_batch
+
+                name, session = approve_batch(prompts, sonneveld_batch)
+            elif session_name:
                 path = find_session(store, session_name)
                 name, session = path.stem, load_session(path)
+                if review_availability and 'sonneveld_batch' in session:
+                    raise DeliveryError(
+                        'invalid_session', 'Reimport the profile to review its reagents'
+                    )
                 if review_availability:
                     name, session = review_reagents(prompts, store, name, session)
             else:
@@ -502,9 +511,20 @@ def run_tui(
                 for kind, item, data in pending:
                     store.save(kind, item, data)
                 lines.append(saved_line(store, name))
-            prompts.saved = True
+            prompts.saved = not sonneveld_batch
             prompts.wizard.step = len(STEPS)
-            summary, ahead = calculate(prompts, lambda: run_batch(options_for(store, session)))
+            if 'sonneveld_batch' in session:
+                from .mix_sonneveld import calculate_batch, save_reviewed_batch
+                from .mix_store import verify_session
+
+                verify_session(store, session)
+                summary, ahead = calculate(prompts, lambda: calculate_batch(session))
+                if sonneveld_batch:
+                    save_reviewed_batch(prompts, store, name, session, summary)
+                    prompts.saved = True
+                    lines.append(saved_line(store, name))
+            else:
+                summary, ahead = calculate(prompts, lambda: run_batch(options_for(store, session)))
             output = output_folder(output_arg, name)
             files = write_sheets(summary, session, output)
             summarize(summary, lines.append)  # the recipe stays in the terminal after the screen

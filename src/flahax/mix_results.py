@@ -12,11 +12,12 @@ from .grower_report import _miss_difference, _review_reason, percentage, qualifi
 from . import __version__
 from .grower_report import (
     _reagent_line,
-    display_residue,
-    grams,
+    below_checklist_precision,
+    checklist_grams,
     litres,
     number,
     reagent_preparation_lines,
+    rounded_dose_rows,
 )
 from .grower_sheet import (
     LABEL,
@@ -69,6 +70,14 @@ def _card(title, rows, width, g):
 
 
 def _tank_rows(summary, width, g):
+    if 'volumetric_stocks' in summary:
+        blocked = summary['status'] == 'blocked'
+        rows = [[('Diagnostic quantities only', 'error')]] if blocked else []
+        delivered = summary['volumetric_stocks']
+        if delivered is not None:
+            for name, dose, units in rounded_dose_rows(delivered):
+                rows += [[(line, None)] for line in wrap(f'{name}: {dose} {units}', width - 4)]
+        return _card('Rounded batch doses', rows, width, g)
     volumes, blocked = summary['volumes'], summary['status'] == 'blocked'
     inner, rows = width - 4, []
     for tank in summary['tanks']['tanks']:
@@ -81,8 +90,9 @@ def _tank_rows(summary, width, g):
         )
         body = [[(line, 'error' if blocked else None)] for line in wrap(head, inner, lines=4)]
         for product in tank['products']:
-            weight = grams(product['gramsPerBatch'])
-            marker = '-' if blocked or display_residue(product['gramsPerBatch']) else '[ ]'
+            mass = product['gramsPerBatch']
+            weight = checklist_grams(mass)
+            marker = '-' if blocked or below_checklist_precision(mass) else '[ ]'
             label = cut(f'{marker} {product["name"]}', inner - len(weight) - 1, g)
             gap = max(1, inner - len(label) - len(weight))
             body.append([(label + ' ' * gap, None), (weight, 'accent')])
@@ -140,6 +150,19 @@ def _tank_rows(summary, width, g):
 
 
 def _nutrient_rows(summary):
+    delivered = summary.get('volumetric_stocks')
+    if delivered is not None:
+        rows = [[('Rounded finished nutrients (elemental mg/L)', 'accent')]]
+        rows.append([('Nutrient     Target       Nominal      Low          High', None)])
+        targets = summary['sonneveld_target_design']['targets_mg_l']
+        for key, target in targets.items():
+            nominal = delivered['nutrient_mg_l'].get(key, 0)
+            low, high = delivered['nutrient_bounds_mg_l'][key]
+            values = ' '.join(f'{value:12.6g}' for value in (target, nominal, low, high))
+            style = 'warn' if key in delivered['missed_targets'] else None
+            rows.append([(f'{key:<8}{values}', style)])
+        return rows
+
     def cell(value):
         return '' if value is None else number(value, 2)
 
@@ -190,6 +213,26 @@ def _note_rows(summary, width):
     blocking = key_reasons(summary) if summary['status'] == 'blocked' else []
     ordered = blocking + [w for w in summary['warnings'] if w not in blocking]
     ordered += qualification_lines(summary)
+    delivered = summary.get('volumetric_stocks')
+    if delivered is not None:
+        lower, upper = delivered['sampled_ph_range']
+        preparation = [
+            f'Rounded preparation sampled pH {lower:.6f} to {upper:.6f}.',
+        ]
+        ec_range = delivered['ec25_range_ms_cm']
+        if ec_range is not None:
+            ec_low, ec_high = ec_range
+            preparation.append(f'Modeled EC at 25 °C {ec_low:.5f} to {ec_high:.5f} mS/cm.')
+        elif delivered['ec25_ms_cm'] is not None:
+            preparation.append(f'Modeled EC at 25 °C {delivered["ec25_ms_cm"]:.5f} mS/cm.')
+        reserve = 100 * delivered['nutrient_ceiling_reserve']
+        for key, cap in delivered['effective_maximum_concentrations'].items():
+            upper = delivered['nutrient_bounds_mg_l'][key][1]
+            preparation.append(
+                f'{key} upper bound {upper:.5f} mg/L against a {cap:g} mg/L ceiling '
+                f'after {reserve:g}% reserve.'
+            )
+        ordered = preparation + ordered
     rows = []
     for warning in ordered:
         style = 'error' if warning in blocking else None

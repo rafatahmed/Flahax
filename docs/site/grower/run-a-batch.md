@@ -71,6 +71,26 @@ incompatibility. A blocked
 result shows diagnostic quantities without preparation instructions. Missing or
 condition-limited solubility evidence remains qualified in the result.
 
+## Review a Sonneveld batch
+
+Run `flahax mix --sonneveld-batch profile.json --output results` to review a
+prepared Sonneveld profile. The wizard shows the dated root-zone sample, guide
+values, feed adjustments and calculated finished targets. Enter the grower
+name and reason to approve that preview, then choose the verified preparation
+after calculation. The saved session keeps the imported inputs, preview approval
+and selected calculation identity. Replay it with `flahax mix sessions/NAME`.
+
+The profile is a JSON object with `title`, `sonneveld` (the batch target-design
+object with root-zone feedback), `final_volume_litres`, `target_ph`, `water`
+(elemental mg/L), `equilibrium`, `salts`, `alternative_products`,
+`maximum_concentrations`, `ph_adjustment`, and `volumetric_stocks`.
+The chemistry and preparation objects use the fertilizer workflow's formats.
+Stock carrier is included in the finished volume. The result screen and printed
+sheet show the rounded dry doses, separate stock volumes and pH reagent.
+
+Dry checklist amounts below 0.001 g are displayed as diagnostic quantities.
+The actual scale or stock delivery precision must be qualified before preparation.
+
 ## Resizing, stopping and reopening
 
 The full-screen view redraws when the window size changes. Esc or Q on the results
