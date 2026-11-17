@@ -135,6 +135,40 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 
 All options are listed in [batch report, sheet and tanks](reading-results.md).
 
+
+### Rounded volumetric doses
+
+Pass `--volumetric-stocks dosing.json` when some fertilizer doses are measured
+from separately prepared stocks. Use the exact names from the product records.
+The batch first selects a pH-adjusted recipe, then verifies the quantities on the
+rounded preparation sheet. The following settings are illustrative for the
+1,000 L Sonneveld copper example.
+
+```json
+{
+  "stock": {
+    "basis": "product_mass",
+    "carrier": "demineralized_water",
+    "concentrations_g_l": {"copper sulfate pentahydrate": 1.0},
+    "density_kg_l": {"copper sulfate pentahydrate": [0.998, 1.002]},
+    "concentration_relative_error": 0.0003,
+    "dose_error_ml": 0.05,
+    "dose_decimals": 2
+  },
+  "dry_mass_decimals": 3,
+  "reagent_volume_decimals": 2,
+  "nutrient_tolerance_percent": 0.1,
+  "ph_tolerance": 0.002
+}
+```
+
+The stock carrier replaces an equal volume of source water in the calculation.
+The model retains the declared final solvent mass. The JSON result includes
+the rounded doses, bounds on analytical nutrients, sampled pH, estimated EC
+and the nominal saturation screen. The supplied nutrient ceilings still apply.
+The stock bounds cover the stated concentration and dispensing errors. Dry
+weighing accuracy, reagent assay uncertainty and stock stability require
+separate evidence. The printable sheet gives the rounded quantities to review.
 FlahaX writes three files into the new folder:
 - `batch-sheet.html`: one printable page for the person mixing;
 - `report.html`: the full report with charts;

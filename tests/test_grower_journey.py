@@ -537,6 +537,34 @@ class CatalogueFitTests(unittest.TestCase):
 
 
 class RemedyTests(unittest.TestCase):
+    def test_volumetric_batch_requires_a_selected_ph_recipe(self):
+        with tempfile.TemporaryDirectory() as temp, contextlib.redirect_stdout(io.StringIO()):
+            root = Path(temp)
+            (root / 'reagents.json').write_text('[]', encoding='utf-8')
+            (root / 'volumetric.json').write_text('{}', encoding='utf-8')
+            out = root / 'batch'
+            main(
+                [
+                    '--water',
+                    'ro',
+                    '--formula',
+                    'Tomato (Howard Resh)',
+                    '--reagents',
+                    str(root / 'reagents.json'),
+                    '--volumetric-stocks',
+                    str(root / 'volumetric.json'),
+                    '--output',
+                    str(out),
+                ]
+            )
+            summary = json.loads((out / 'summary.json').read_text(encoding='utf-8'))
+            sheet = (out / 'batch-sheet.html').read_text(encoding='utf-8')
+        self.assertEqual(summary['status'], 'blocked')
+        stage = summary['stages']['volumetric_stocks']
+        self.assertEqual(stage['error_code'], 'ph_recipe_required')
+        self.assertIsNone(summary['volumetric_stocks'])
+        self.assertNotIn('Weigh and dissolve', sheet)
+
     def test_batch_can_try_a_broader_available_inventory(self):
         salts = load_library()['salts']
         kept = next(p for p in salts if p['name'] == 'Potassium Nitrate')
