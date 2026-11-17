@@ -104,12 +104,7 @@ jobs:
       matrix:
         # Current CI acceptance covers Linux and Windows; macOS is excluded (#256).
         os: [ubuntu-latest, windows-latest]
-        shard: [0, 1, 2, 3]
-        include:
-          - os: windows-latest
-            shard: 4
-          - os: windows-latest
-            shard: 5
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -128,7 +123,7 @@ jobs:
         run: |
           python -m tools.ci_coverage record --candidate "$CANDIDATE_SHA" --output build/coverage
           set +e
-          python -m coverage run -m tools.ci_parallel --output build/coverage --shard-index ${{ matrix.shard }} --shard-count ${{ matrix.os == 'ubuntu-latest' && 4 || 6 }} --workers 3 2>&1 | tee build/coverage/tests.log
+          python -m coverage run -m tools.ci_parallel --output build/coverage --shard-index ${{ matrix.shard }} --shard-count 6 --workers 3 2>&1 | tee build/coverage/tests.log
           test_status=${PIPESTATUS[0]}
           set -e
           if [ ! -f build/coverage/tests.json ]; then
