@@ -801,9 +801,16 @@ def remedy_section(summary):
     remedies = summary.get('remedies') or {}
     rows = [(r['id'], r['status'], r['next_action']) for r in remedies.get('requirements', [])]
     rows += [(r['id'], r['status'], r['next_action']) for r in remedies.get('options', [])]
+    best = remedies.get('best_candidate_id')
+    ranking = (
+        f'<p>Best candidate found in this bounded search: {text(best)}.</p>'
+        if best is not None
+        else ''
+    )
     return (
         (
             '<section><h2>Remedies and next actions</h2>'
+            + ranking
             + table(
                 ('Requirement or option', 'Status', 'Next action'),
                 rows,

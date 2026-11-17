@@ -86,6 +86,8 @@ usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
                     [--volumetric-stocks VOLUMETRIC_STOCKS]
                     [--alternative-products ALTERNATIVE_PRODUCTS]
+                    [--alternative-search-preference {relative_residual,incidental_mg_l,product_count}]
+                    [--alternative-search-budget ALTERNATIVE_SEARCH_BUDGET]
                     [--confirmed-product CATALOGUE_ID]
                     [--max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS] [--products PRODUCTS]
                     [--reagents REAGENTS] [--rules RULES] [--output OUTPUT]
@@ -153,6 +155,10 @@ options:
   --alternative-products ALTERNATIVE_PRODUCTS
                         JSON array of available products to combine when nutrient targets are
                         missed
+  --alternative-search-preference {relative_residual,incidental_mg_l,product_count}
+                        ranking preference after target attainment, repeat in priority order
+  --alternative-search-budget ALTERNATIVE_SEARCH_BUDGET
+                        maximum expanded and focused alternative-product fits (default 4)
   --confirmed-product CATALOGUE_ID
                         rerun an available excluded catalogue fertilizer as a separate remedy
   --max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS

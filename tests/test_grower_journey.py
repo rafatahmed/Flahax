@@ -578,6 +578,16 @@ class RemedyTests(unittest.TestCase):
                 ('reagents.json', []),
             ):
                 (root / filename).write_text(json.dumps(data), encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'search budget must be positive'):
+                run_batch(
+                    BatchOptions(
+                        water='ro',
+                        products=str(root / 'products.json'),
+                        targets=str(root / 'targets.json'),
+                        alternative_products=str(root / 'alternatives.json'),
+                        alternative_search_budget=0,
+                    )
+                )
             out = root / 'batch'
             main(
                 [
@@ -585,6 +595,10 @@ class RemedyTests(unittest.TestCase):
                     'ro',
                     '--products',
                     str(root / 'products.json'),
+                    '--alternative-search-budget',
+                    '2',
+                    '--alternative-search-preference',
+                    'product_count',
                     '--alternative-products',
                     str(root / 'alternatives.json'),
                     '--targets',
@@ -598,10 +612,30 @@ class RemedyTests(unittest.TestCase):
             result = json.loads((out / 'summary.json').read_text(encoding='utf-8'))
         trial = result['remedies']['options'][0]
         self.assertEqual(trial['id'], 'catalogue:available-product-search')
+        self.assertEqual(result['remedies']['ranking_preferences'], ['product_count'])
         self.assertEqual(trial['status'], 'evaluated_candidate')
         candidate = json.loads(trial['snapshot'])
         self.assertTrue(candidate['workflow']['recommendation']['feasible'])
         self.assertIn(extra['id'], candidate['workflow']['recommendation']['saltIds'])
+
+    def test_report_identifies_bounded_search_result(self):
+        from flahax.grower_report import remedy_section
+
+        section = remedy_section(
+            {
+                'remedies': {
+                    'best_candidate_id': '<test source>',
+                    'options': [
+                        {
+                            'id': '<test source>',
+                            'status': 'evaluated_candidate',
+                            'next_action': 'Review the proposed doses',
+                        }
+                    ],
+                }
+            }
+        )
+        self.assertIn('Best candidate found in this bounded search: &lt;test source&gt;.', section)
 
     def test_confirmed_product_id_reruns_only_that_alternative(self):
         salts = load_library()['salts']

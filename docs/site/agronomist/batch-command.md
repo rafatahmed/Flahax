@@ -127,9 +127,20 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 - Put any additional fertilizers you have available in a product-record JSON
   array and pass it with `--alternative-products`. If the first recipe misses a
   nutrient target, batch refits the original and additional products together
-  with the same water, pH, targets and ceilings. The evaluated alternative and
-  its doses are saved in the remedy snapshot in the batch result. Review that
-  recipe before using it. To exclude a product, leave it out of both lists.
+  with the same water, pH, targets and ceilings. If the expanded fit still
+  misses, it can reuse a distinct joint starting point from the original fit
+  and try focused eligible product additions within
+  `--alternative-search-budget` (default 4). Repeat
+  `--alternative-search-preference` to prioritize relative residual,
+  incidental mg/L or product count after target attainment. The result retains
+  all evaluated recipes and identifies the best candidate found in this search.
+  For joint-fit misses, the saved calculation can include a lower bound on
+  analytical nutrient error for the attempted reagent and product pool. A
+  positive bound excludes an exact match in that pool's linear inventory model.
+  A zero bound leaves the question open. This check omits charge and phases
+  and leaves the normal pH and nutrient tolerance checks in force.
+  Review the proposed doses before using them. Leave excluded products out of
+  both product lists.
 - `--volume` sets the batch size (default 1000 L), `--ph` the target pH
   (default 5.8) and `--ratio` the injection ratio (default 1:100).
 
@@ -173,6 +184,34 @@ and the exact targets used. The input EC sets the paper's design strength.
 The batch pH and modeled or measured EC are separate quantities. Use a feed
 baseline appropriate to the crop and growing system. Root-zone measurements
 can inform corrections chosen by the grower.
+
+#### Use a root-zone sample to review the next feed
+
+Add `root_zone_feedback` to the same design JSON. The following measurements
+are illustrative. Use the nutrient concentrations from your root-zone sample
+and the guide values for your crop and growing system.
+
+```json
+{
+  "sample_id": "tomato-bed-1",
+  "sampled_on": "2026-11-17",
+  "measured_mmol_l": {"K": 6.5, "Ca": 10.2, "Mg": 4.0},
+  "guide_mmol_l": {"K": 8.0, "Ca": 10.0, "P": 1.0}
+}
+```
+
+1. Enter the proposed changes in `adjustments_mmol_l` and run the design with
+   `--preview-targets`. The preview shows measured minus guide, unmatched
+   nutrients, and the effect of the proposed changes on the full feed target.
+   For example, measured K of 6.5 against a guide of 8.0 gives a root-zone
+   difference of -1.5 mmol/L. The grower chooses the feed correction.
+2. Review Columns A–D. When satisfied, add an `approval` object **inside**
+   `root_zone_feedback` with `approved_by`, `reason`, and the exact
+   `design_sha256` value from the preview.
+3. Run the normal batch with the approved design and a separate source-water
+   analysis. Changing the sample, guide values, or feed design requires a fresh
+   preview and approval. The result stores the sample, comparison, and approval
+   alongside the targets it used.
 ### Rounded volumetric doses
 
 Pass `--volumetric-stocks dosing.json` when some fertilizer doses are measured
@@ -203,9 +242,22 @@ The stock carrier replaces an equal volume of source water in the calculation.
 The model retains the declared final solvent mass. The JSON result includes
 the rounded doses, bounds on analytical nutrients, sampled pH, estimated EC
 and the nominal saturation screen. The supplied nutrient ceilings still apply.
-The stock bounds cover the stated concentration and dispensing errors. Dry
-weighing accuracy, reagent assay uncertainty and stock stability require
-separate evidence. The printable sheet gives the rounded quantities to review.
+The printable sheet gives the rounded quantities to review. If the first sheet
+misses a check, the batch can try adjacent dispensing increments and declared
+stock strengths. Set `alternative_stock_concentrations_g_l` to a map from
+stocked product names to lists of additional strengths. The search is bounded.
+Set `nutrient_ceiling_reserve` to `0.05` to leave 5% headroom below each declared
+nutrient ceiling in this rounded preparation check.
+
+Use the optional `uncertainty` object to supply measured preparation bounds.
+`dry_product_error_g` and `dry_product_assay_relative_error` are maps keyed by
+dry product name. The latter applies the declared relative error uniformly to
+that product's disclosed components. `reagent_mass_error_g` and
+`reagent_volume_error_ml` describe dispensing error.
+`reagent_mass_fraction_bounds` and `reagent_density_kg_l_bounds` are
+two-element intervals for the liquid reagent. Use separately prepared stocks.
+Stock dissolution, concentrate stability, and the actual mixed batch require
+physical validation.
 FlahaX writes three files into the new folder:
 - `batch-sheet.html`: one printable page for the person mixing;
 - `report.html`: the full report with charts;

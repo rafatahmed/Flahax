@@ -5,11 +5,47 @@
 """Observed strength boundaries are distinct from the highest-SI mineral."""
 
 import unittest
-from flahax import search_ratio_recipe
+from flahax import plan_ratio_recipe, search_ratio_recipe
 from tests.test_ratio_search import OPTIONS
 
 
 class SearchConstraintTests(unittest.TestCase):
+    def test_decimal_ph_endpoints_are_evaluated_exactly(self):
+        bounds = [5.047655739546547, 7.911561090980942]
+        result = plan_ratio_recipe(**dict(OPTIONS, ph_range=bounds), counted_mmol_l=1.3)
+        samples = result['rounded_verification']['evaluated_ph']
+        self.assertEqual([min(samples), max(samples)], bounds)
+
+    def test_decimal_strength_cap_is_never_exceeded(self):
+        result = search_ratio_recipe(**OPTIONS, strength_range=[0.1, 0.31], scan_points=6)
+        self.assertTrue(result['search_cap_reached'])
+        self.assertEqual(result['requested_strength_mmol_l'], 0.31)
+        self.assertEqual(result['observed_strength_limit']['status'], 'search_cap')
+        self.assertTrue(all(row['strength_mmol_l'] <= 0.31 for row in result['evaluations']))
+
+    def test_requested_failed_preparation_records_retain_reasons(self):
+        from tests.test_ratio_stocks import STOCKS, UNCERTAINTY
+
+        result = search_ratio_recipe(
+            **OPTIONS,
+            strength_range=[1.3, 1.4],
+            scan_points=3,
+            stock_dosing=dict(STOCKS, concentration_relative_error=0, dose_error_ml=0),
+            uncertainty=dict(UNCERTAINTY, volume_error_litres=0),
+            stock_evidence={},
+            batch_stability={},
+        )
+        for evaluation in result['evaluations']:
+            self.assertEqual(evaluation['status'], 'failed')
+            records = {
+                row['name']: row
+                for row in evaluation['constraint_violations']
+                if row['kind'] == 'record_check'
+            }
+            self.assertEqual(set(records), {'stock_verification', 'stability_assessment'})
+            self.assertTrue(records['stock_verification']['failures'])
+            self.assertTrue(records['stability_assessment']['failures'])
+
     def test_pure_salt_volume_uncertainty_retains_nutrient_limit_evidence(self):
         result = search_ratio_recipe(
             **dict(OPTIONS, saturation_margin=0.3),

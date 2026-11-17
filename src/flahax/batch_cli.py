@@ -456,6 +456,8 @@ class BatchOptions:
     max_solid_reagent_grams: float | None = None
     confirmed_products: list[str] = field(default_factory=list)
     alternative_products: str | None = None
+    alternative_search_preferences: tuple[str, ...] = ('relative_residual',)
+    alternative_search_budget: int = 4
     volumetric_stocks: str | None = None
     sonneveld_targets: str | None = None
     reagents: str | None = None
@@ -620,7 +622,9 @@ def run_batch(options):
     if options.sonneveld_targets is not None:
         if any(value is not None for value in (options.targets, options.formula, options.crop)):
             raise DeliveryError('invalid_value', 'Choose a single source of batch targets')
-        target_design = design_targets(read_json(options.sonneveld_targets, 'Sonneveld targets'))
+        target_design = design_targets(
+            read_json(options.sonneveld_targets, 'Sonneveld targets'), require_approval=True
+        )
         targets = target_design['targets_mg_l']
         title = options.title or Path(options.sonneveld_targets).stem
     elif options.targets:
@@ -664,7 +668,19 @@ def run_batch(options):
     if alternative_products:
         from .evaluated_remedies import available_product_search
 
-        remedies.insert(0, available_product_search(alternative_products))
+        if joint is not None:
+            joint['check_inventory_relaxation'] = True
+        if (
+            type(options.alternative_search_budget) is not int
+            or options.alternative_search_budget < 1
+        ):
+            raise DeliveryError('invalid_remedy', 'The alternative search budget must be positive')
+        remedies.insert(
+            0,
+            available_product_search(
+                alternative_products, preferences=options.alternative_search_preferences
+            ),
+        )
     additional_ids = [*options.confirmed_products, *(p['id'] for p in alternative_products)]
     if joint is not None and additional_ids:
         joint['additional_product_steps'] = dict.fromkeys(additional_ids, JOINT_DOSE_STEP_G_PER_L)
@@ -696,7 +712,8 @@ def run_batch(options):
             else None
         ),
         remedy_options=remedies,
-        max_remedy_evaluations=len(options.confirmed_products) + bool(alternative_products),
+        max_remedy_evaluations=len(options.confirmed_products)
+        + (options.alternative_search_budget if alternative_products else 0),
     )
     summary = summarize_batch(
         workflow,
@@ -792,6 +809,10 @@ def build(args):
             max_solid_reagent_grams=args.max_solid_reagent_grams,
             confirmed_products=args.confirmed_product,
             alternative_products=args.alternative_products,
+            alternative_search_preferences=tuple(
+                args.alternative_search_preference or ['relative_residual']
+            ),
+            alternative_search_budget=args.alternative_search_budget,
             volumetric_stocks=args.volumetric_stocks,
             ec=args.ec,
             products=args.products,
@@ -884,6 +905,18 @@ def main(argv=None):
     parser.add_argument(
         '--alternative-products',
         help='JSON array of available products to combine when nutrient targets are missed',
+    )
+    parser.add_argument(
+        '--alternative-search-preference',
+        action='append',
+        choices=('relative_residual', 'incidental_mg_l', 'product_count'),
+        help='ranking preference after target attainment, repeat in priority order',
+    )
+    parser.add_argument(
+        '--alternative-search-budget',
+        type=int,
+        default=4,
+        help='maximum expanded and focused alternative-product fits (default 4)',
     )
     parser.add_argument(
         '--confirmed-product',

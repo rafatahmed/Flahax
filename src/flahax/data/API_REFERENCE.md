@@ -964,7 +964,7 @@ ph_adjustment (products, maximum_reagent_volume_litres, optional
 preferred_product_id and joint) plans the recipe and its pH reagent together (#74):
 acids or bases, with the reagent's nutrients counted as supply. It needs the
 equilibrium configuration and final_volume; see ph_adjustment.plan_coupled_ph.
-volumetric_stocks optionally verifies rounded delivery of the selected recipe.
+volumetric_stocks optionally verifies and locally refits the rounded recipe.
 joint requires explicit controls, solvent_mass_kg, reagent_solvent_fractions
 and maximum_reagent_mass_g. Its final solvent basis must match the equilibrium
 water_mass_kg. Optional starting_points are never accepted without verification.

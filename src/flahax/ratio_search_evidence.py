@@ -7,7 +7,7 @@
 from copy import deepcopy
 
 
-def constraint_violations(recipe):
+def constraint_violations(recipe, required_records):
     """Read delivered-recipe checks without refitting or changing acceptance."""
     rounded = recipe['rounded_verification']
     check = recipe.get('uncertainty_verification', rounded)
@@ -108,13 +108,15 @@ def constraint_violations(recipe):
                 basis='source_relative_charge_bracket',
             )
         )
-    for field in ('stock_verification', 'stability_assessment'):
-        if field in recipe and recipe[field].get('status') in ('failed', 'incomplete'):
+    for field, flag in required_records.items():
+        if not recipe.get(flag, False):
+            record = recipe.get(field, {})
             rows.append(
                 dict(
                     kind='record_check',
                     name=field,
-                    value=recipe[field]['status'],
+                    value=record.get('status', 'unverified'),
+                    failures=deepcopy(record.get('failures', [])),
                     limit='passed',
                     basis='existing_record_assessment',
                 )

@@ -5,7 +5,9 @@
 """Public candidate reconstruction and acceptance for explicitly joint calculations."""
 
 from collections.abc import Mapping
+from fractions import Fraction
 from .delivery_contracts import DeliveryError
+from .joint_optimality import objective_certificate
 from .joint_solver import solve_joint_problem
 from .calculated_ph import calculate_equilibrium_ph
 from .engine import _provenance
@@ -13,12 +15,25 @@ from .requirement_fit import PH_TOLERANCE
 
 
 class _JointSearchIncomplete(DeliveryError):
-    def __init__(self, result):
+    def __init__(self, result, inventory_evidence):
         super().__init__('joint_search_incomplete', result['reason'])
         diagnostics = result['diagnostics']
         self.search_counts = dict(
             iterations=diagnostics['iterationsUsed'], evaluations=diagnostics['evaluations']
         )
+        self.search_counts.update(inventory_evidence)
+
+
+def _inventory_evidence(problem, result):
+    proof = objective_certificate(problem, result['fertilizerDoses'], result['reagentDose'])
+    lower = proof['exactLowerBound']
+    return dict(
+        inventory_relaxation=dict(
+            scope='Fixed inventory, reagent and linear bounds (charge and phases omitted).',
+            exact_loss_lower_bound=lower,
+            exact_target_excluded=Fraction(lower) > 0,
+        )
+    )
 
 
 def zero_reagent_controls(problem):
@@ -81,6 +96,7 @@ def joint_candidate(
             'sequential_fallbacks',
             'solid_reagent_ids',
             'additional_product_steps',
+            'check_inventory_relaxation',
         }:
             raise DeliveryError(
                 'missing_field', 'joint configuration requires ' + ', '.join(sorted(required))
@@ -95,6 +111,8 @@ def joint_candidate(
             )
         if not isinstance(config.get('solid_reagent_ids', ()), (tuple, list)):
             raise DeliveryError('invalid_type', 'solid_reagent_ids must be a list of product IDs')
+        if not isinstance(config.get('check_inventory_relaxation', False), bool):
+            raise DeliveryError('invalid_type', 'check_inventory_relaxation must be a boolean')
         if not isinstance(config['controls'], Mapping):
             raise DeliveryError('invalid_type', 'joint controls must be a mapping')
         for key in ('reagent_solvent_fractions', 'maximum_reagent_mass_g'):
@@ -163,8 +181,11 @@ def joint_candidate(
         raise DeliveryError(
             'invalid_value', 'joint numerical controls are incomplete or unknown'
         ) from exc
+    check_inventory = config is not None and config.get('check_inventory_relaxation', False)
     if result['status'] not in ('numerical_candidate', 'bounded_best_fit', 'stationary_point'):
-        raise _JointSearchIncomplete(result)
+        raise _JointSearchIncomplete(
+            result, _inventory_evidence(problem, result) if check_inventory else {}
+        )
     doses, reagent = result['fertilizerDoses'], result['reagentDose']
     state = problem.evaluate(doses, reagent)
     if state['violations'] or abs(state['chargeResidual']) > controls['charge_tolerance']:
@@ -243,5 +264,10 @@ def joint_candidate(
             stationarityResidual=(result.get('stationarity') or {}).get('relativeResidual'),
             iterations=result['diagnostics']['iterationsUsed'],
             evaluations=result['diagnostics']['evaluations'],
+            **(
+                _inventory_evidence(problem, result)
+                if check_inventory and not recommendation['feasible']
+                else {}
+            ),
         ),
     )

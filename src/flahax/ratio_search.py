@@ -39,6 +39,14 @@ def search_ratio_recipe(
         raise DeliveryError("duplicate_strength", "Choose a fixed strength or a search range")
     saturation_margin = _number(saturation_margin, "saturation_margin", zero=True)
     recipe_options["saturation_margin"] = saturation_margin
+    required_records = {
+        field: flag
+        for option, field, flag in (
+            ("stock_evidence", "stock_verification", "verified"),
+            ("batch_stability", "stability_assessment", "stable"),
+        )
+        if recipe_options.get(option) is not None
+    }
     evaluated = {}
     best = None
 
@@ -80,7 +88,7 @@ def search_ratio_recipe(
                 status = "failed"
         evaluated[strength] = {
             "status": status,
-            "constraint_violations": constraint_violations(recipe),
+            "constraint_violations": constraint_violations(recipe, required_records),
         }
         if "stability_assessment" in recipe:
             evaluated[strength]["stability_status"] = recipe["stability_assessment"]["status"]
@@ -93,7 +101,11 @@ def search_ratio_recipe(
             best = (strength, recipe)
         return status
 
-    grid = [low + (high - low) * i / (scan_points - 1) for i in range(scan_points)]
+    grid = [
+        low,
+        *(low + (high - low) * i / (scan_points - 1) for i in range(1, scan_points - 1)),
+        high,
+    ]
     for strength in grid:
         evaluate(strength)
     brackets = []
