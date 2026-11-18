@@ -46,14 +46,90 @@ checks all of this.
 
 ## Code style
 
-FlahaX follows PEP 8 with a line length of 99 characters (the team allowance PEP 8 gives). The
-settings are in `pyproject.toml`; `ruff` is a development tool only, never a runtime dependency.
+FlahaX uses [PEP 8](https://peps.python.org/pep-0008/) with the project rules and
+exceptions below. Code lines have a 99-character limit; flowing comments and
+docstrings wrap at 72 characters. PEP 8's longer-code allowance retains the
+72-character prose recommendation. Settings are in `pyproject.toml`; Ruff is
+a development tool, never a runtime dependency. A green Ruff check establishes
+the configured rules, not complete PEP 8 compliance.
 
 ```bash
 python -m pip install ruff==0.8.4
-ruff format .
 ruff check .
+ruff format --check .
 ```
+
+Use `ruff format .` to apply formatting before review. Keep Ruff pinned to
+0.8.4, matching CI. Its formatter preserves the local quote style; PEP 8 does
+not require single or double quotes for ordinary strings.
+
+### Layout, prose and preserved text
+
+Use four spaces for indentation, implicit continuation inside parentheses,
+and the formatter's spacing, blank lines and trailing commas. Keep UTF-8
+source without a byte-order mark or unnecessary encoding declaration.
+Avoid compound statements and trailing whitespace. Write comments in English
+to explain a reason, invariant, unit or limitation, rather than restating code.
+
+Wrap ordinary comment paragraphs and docstring prose at 72 columns, including
+indentation. Preserve these explicit exceptions:
+
+- The fixed SPDX/disclaimer header below remains byte-for-byte consistent
+  with the header test, even where it exceeds 72 columns.
+- Structured documentation such as equations, signatures, command examples,
+  literal blocks, tables, URLs and indivisible identifiers retains its useful
+  layout. Embedded report text, CSS, fixtures and captured terminal output
+  must not change for prose wrapping.
+- A short inline explanation can stay attached to its expression within the
+  99-character code limit. Move a longer explanation above the code and wrap
+  it as a block comment. Keep functional pragmas such as `noqa` attached.
+
+The prose limit and exception review are separate from the configured
+E/W/F checks: W505 is not enabled globally because it also flags the fixed
+headers and structured text. Review a changed paragraph for readability and
+justify an exception by its content, rather than grandfathering all old prose.
+
+### Imports and dependency boundaries
+
+Separate standard-library, third-party and local imports with blank lines,
+in that order for new independent import blocks. Explicit relative imports
+are appropriate inside the package. Do not use wildcard imports.
+
+Alphabetical import sorting is optional; Ruff's I rules are not enabled.
+Preserve existing evaluation order where moving imports could affect cycles,
+registration, optional dependencies or source-tree bootstrapping. If an old
+block interleaves categories, separate its runs without silently moving them.
+Function-local imports may resolve a cycle, keep an optional dependency lazy
+or isolate a platform-specific path; keep the reason clear at the call site.
+Review import-order changes with the affected module's import and CLI tests.
+
+### Names and interfaces
+
+Use snake_case for new functions, methods and variables, CapWords for classes,
+and UPPER_CASE for constants. Use `self` and `cls` for the corresponding method
+arguments. Keep package/module names lowercase. Avoid ambiguous single-letter
+`l`, `O` and `I` names. Use leading underscores for non-public helpers.
+
+Preserve published API names, chemical component identifiers, units and JSON
+field names. Existing `TerminalUnavailable` and `_JointSearchIncomplete`
+exception names retain their established identities; new error classes use
+an `Error` suffix. `Fraction as F`, `Decimal as D` and the corresponding local
+`D` constructor alias are deliberate mathematical notation in exact-arithmetic
+code and its independent witnesses. They are documented naming exceptions,
+not a requirement for unrelated variables. Test methods and helpers should
+use snake_case; do not change calculation names to satisfy a test-name style.
+
+### Programming recommendations
+
+Compare singletons with `is` or `is not`, and use `isinstance` for intentional
+type checks. Use clear return paths, specific exception handling and context
+managers where they preserve the operation's ownership. Preserve the distinction
+between absent data and zero, and between a Boolean and an allowed numeric input.
+Do not replace explicit numerical comparisons or domain checks with truthiness
+in chemistry or solver code. Style changes must not alter arithmetic order,
+defaults, units, constraints, exception behavior or public signatures.
+
+### Header and docstring checks
 
 Every Python file starts, in this order, with: a shebang (`#!/usr/bin/env python3`) only for
 runnable tools and examples; the header comments (SPDX copyright and license, and the
@@ -65,7 +141,11 @@ writes out unchanged (report CSS, Markdown tables) keeps its long lines, with `#
 the closing line of that string.
 Every public class, method and function in `src/flahax` has a docstring that says what it
 returns or represents; `tests/test_public_docstrings.py` and ruff (D101-D103) check it.
-`tests/test_file_headers.py` and the CI `style` job check all of this.
+`tests/test_file_headers.py` checks the fixed header/module docstring and the
+package `__all__`/`__version__` ordering. It does not inspect every dunder in
+every module. Ruff E/W/F, D101-D103, the formatter and the public-docstring
+test enforce their respective subsets; import grouping, 72-column prose,
+exception justification and API compatibility also require review.
 
 ## Required validation
 
