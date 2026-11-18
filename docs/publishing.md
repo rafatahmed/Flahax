@@ -52,11 +52,22 @@ pushing a tag.
    reference; write the changelog section; record readiness and evidence.
    Merge it by pull request after CI passes.
 2. Confirm the publication decision with the maintainer. Merging is not approval.
-3. **Finalize the wording before tagging** (#71): on a short branch, date the
-   changelog section and change the manual's version line from "release
-   candidate ... not yet published" to "released <date>"; merge it after CI
-   passes. The tag must point at this commit, because the packaged manual and
-   the sdist changelog are fixed at upload.
+3. **Finalize the artifact before tagging** (#71): after publication approval,
+   use a short branch to date the changelog and align the manual's version line
+   with that date (`released YYYY-MM-DD`). Review every candidate notice in the
+   README (including installation and citation instructions), `CITATION.cff`,
+   the manual, version release notes, documentation index, readiness page and
+   installation pages. Replace candidate wording consistently; set any citation
+   release date to the same declared date. Merge after CI passes. The tag must
+   point at this commit: packaged documentation cannot change after upload.
+
+   These are three separate states: **candidate**, **finalized artifact awaiting
+   upload**, and **verified publication**. A dated changelog and matching manual
+   declare the artifact's release date; they do not prove an upload happened.
+   Lifecycle tests allow the finalized artifact before publication. Do not add
+   a publication receipt to make CI pass. Record external publication only after
+   checking the actual registry or archive, even if its date differs from the
+   artifact's declared date.
 4. Create the GitHub Release for tag `v<version>` on that merged `main`
    commit, with the changelog section as its notes. Publishing it starts the
    workflow.
@@ -157,9 +168,11 @@ guard would skip it anyway.
 ## PyPI README validation
 
 The built metadata declares `Description-Content-Type: text/markdown`. README
-links use absolute repository URLs so they work on the PyPI project page.
-`twine check --strict` validates the metadata; it does not show that a
-package was uploaded.
+links use absolute documentation or repository URLs so they work on PyPI.
+The clean wheel and sdist installation checks reject repository-relative links
+in the installed metadata's README description. Render that description to
+inspect Markdown presentation as well: `twine check --strict` alone does not
+check Markdown links or demonstrate that a package was uploaded.
 
 ## Release history
 

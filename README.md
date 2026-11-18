@@ -30,7 +30,7 @@ reagent doses against their preparation tolerances and nutrient ceilings.
 The grower or agronomist reviews the result and its qualifications before preparation.
 Tank assignments use the supplied equipment and compatibility evidence. Each plan retains
 units, inputs, model identifiers and source hashes for review and reproduction.
-The [scope and limits](docs/site/explanation/scope-and-limits.md) explain the supported workflows
+The [scope and limits](https://flahax.readthedocs.io/en/latest/explanation/scope-and-limits.html) explain the supported workflows
 and the measurements needed to qualify a prepared batch.
 
 **Who it is for**
@@ -87,7 +87,8 @@ python -m pip install --force-reinstall --no-deps "git+https://github.com/rafata
 
 `flahax mix` asks five things in order: tank sizes and injection ratio, the water analysis as
 printed by the lab, the crop formula, the fertilizers you have, and the target pH. It shows what
-to weigh into tank A and tank B and how much acid goes in the acid container, writes a batch
+to weigh into the proposed nutrient tanks and how much selected acid or base goes in the
+separate reagent container, writes a batch
 sheet, and saves the answers so the next batch is one command:
 
 ```bash
@@ -178,10 +179,10 @@ exit 3 for a blocked result. Always inspect the returned qualifications and limi
 The manual can also be read offline from an installed package through `importlib.resources`
 (`flahax/data/USER_GUIDE.md`).
 
-For the current source documentation, [choose a workflow](docs/site/start/choose-workflow.md),
-follow the [grower Sonneveld walkthrough](docs/site/grower/sonneveld-walkthrough.md),
-or review the [complete Appendix I calculation](docs/site/agronomist/sonneveld-appendix-i.md).
-The [profile and session reference](docs/site/reference/file-formats.md#sonneveld-import-profile)
+For the current source documentation, [choose a workflow](https://flahax.readthedocs.io/en/latest/start/choose-workflow.html),
+follow the [grower Sonneveld walkthrough](https://flahax.readthedocs.io/en/latest/grower/sonneveld-walkthrough.html),
+or review the [complete Appendix I calculation](https://flahax.readthedocs.io/en/latest/agronomist/sonneveld-appendix-i.html).
+The [profile and session reference](https://flahax.readthedocs.io/en/latest/reference/file-formats.html#sonneveld-import-profile)
 describes the reusable inputs and saved evidence.
 
 ## Troubleshooting

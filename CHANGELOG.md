@@ -84,6 +84,10 @@ workflows. Physical validation remains separate in #41.
 
 ### Fixed
 
+- Separate pre-upload release finalization from verified publication receipts,
+  enforce matching valid manual/changelog dates, and make packaged README
+  documentation links portable to PyPI (#278).
+
 - Reconstruct sequential nutrient rows and limits from the actual returned
   reagent dose; preserve zero-cap sources during joint proposals/refinement
   without loosening numerical limits (#237, #238).

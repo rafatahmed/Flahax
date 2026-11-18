@@ -12,7 +12,7 @@ import contextlib
 import io
 import tomllib
 import unittest
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 import flahax
 
@@ -29,6 +29,17 @@ class ReleaseHygieneTests(unittest.TestCase):
                 exec(
                     compile(example, f'README example {index}', 'exec'), {'__name__': '__readme__'}
                 )
+
+    def test_readme_markdown_links_are_portable_to_pypi(self):
+        readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+        targets = re.findall(r'\]\(([^)]+)\)', readme)
+        invalid = [
+            target
+            for target in targets
+            if not target.startswith('#')
+            and urlsplit(target).scheme not in ('https', 'http', 'mailto')
+        ]
+        self.assertEqual(invalid, [], 'README links must resolve outside a repository checkout')
 
     def test_shipped_manual_examples(self):
         from importlib.resources import files
