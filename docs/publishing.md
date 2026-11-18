@@ -17,6 +17,23 @@ pushing a tag.
 | Maintainer approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
 | Upload | `publish` | PyPI Trusted Publishing (OIDC). No API token is stored in GitHub |
 
+## Recovering validation after an upstream outage
+
+The PHREEQC provisioner retries transient HTTP responses (408, 429, 500, 502,
+503 and 504) at most twice after the first request, with local delays of two
+and four seconds and a 60-second connection timeout per request. It does not
+use a server's `Retry-After` value to extend those delays. Other download
+errors fail immediately. The workflow's job timeout remains the overall limit.
+Installer, executable and database hashes remain mandatory; a successful HTTP
+response cannot qualify an unverified payload. Temporary downloads are removed
+after success or failure. No fallback version or mirror is selected.
+
+If a transient failure still stops validation, rerun the **whole Test workflow**
+after recovery. Coverage manifests bind the workflow run and attempt as well as
+the candidate and source inputs. A failed-jobs-only rerun can pass PHREEQC but
+will correctly reject coverage shards from the earlier attempt. Do not weaken
+that check or substitute a prior PR's successful gate for main's result.
+
 ## One-time setup
 
 1. **Trusted Publishing on PyPI** (maintainer, on pypi.org). `flahax` already
