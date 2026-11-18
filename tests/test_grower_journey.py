@@ -534,11 +534,23 @@ class CatalogueFitTests(unittest.TestCase):
         if not targets_met:
             self.assertEqual(summary['status'], 'requires_review')
 
-    def test_all_catalogue_formulas(self):
-        self.assertEqual(len(load_library()['formulas']), 13)
-        for formula in load_library()['formulas']:
-            with self.subTest(formula=formula['name']):
-                self.check_formula(formula['name'])
+    def test_catalogue_formula_inventory(self):
+        names = [formula['name'] for formula in load_library()['formulas']]
+        self.assertEqual(len(names), 13)
+        self.assertEqual(len(set(names)), 13)
+
+
+def _install_catalogue_formula(index, name):
+    def test(self):
+        self.check_formula(name)
+
+    slug = ''.join(char.lower() if char.isalnum() else '_' for char in name).strip('_')
+    test.__doc__ = f'Real batch contract for {name}.'
+    setattr(CatalogueFitTests, f'test_formula_{index:02d}_{slug}', test)
+
+
+for _formula_index, _formula in enumerate(load_library()['formulas']):
+    _install_catalogue_formula(_formula_index, _formula['name'])
 
 
 class RemedyTests(unittest.TestCase):

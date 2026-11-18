@@ -24,6 +24,24 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ParallelRunnerTests(unittest.TestCase):
+    def test_each_catalogue_formula_has_an_independent_test_identity(self):
+        from flahax import load_library
+        from tests.test_grower_journey import CatalogueFitTests
+
+        names = [formula['name'] for formula in load_library()['formulas']]
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(CatalogueFitTests)
+        ids = [case.id() for case in ci_parallel.flatten(suite)]
+        self.assertEqual(len(ids), len(names) + 1)  # formulas and inventory guard
+        self.assertEqual(len(set(ids)), len(ids))
+        seen = []
+        # Structural scheduling witness only; real calculations run in the
+        # catalogue cases. Every named case must call the unchanged helper.
+        with patch.object(CatalogueFitTests, 'check_formula', side_effect=seen.append):
+            result = unittest.TestResult()
+            suite.run(result)
+        self.assertTrue(result.wasSuccessful(), result.errors + result.failures)
+        self.assertCountEqual(seen, names)
+
     def test_worker_timeout_is_reported_before_executor_cleanup(self):
         # Fault injection: a subprocess deadline, not a simulated
         # chemistry result.

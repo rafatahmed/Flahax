@@ -93,6 +93,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Give all 13 catalogue formula checks independent test identities so the runner can
+  schedule and report them separately. Preserve the real batch assertions and add
+  an inventory/scheduling regression without raising timeout or chemistry limits (#274).
+
 - Make equilibrium evidence independent of analytical-component insertion order so
   unchanged Sonneveld sessions replay across processes without a false candidate-identity
   mismatch. Preserve input/source and selected-candidate guards (#272).
