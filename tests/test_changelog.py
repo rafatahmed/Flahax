@@ -46,13 +46,34 @@ def problems(text=None):
         key = 'unreleased' if title == '[Unreleased]' else version and version.group('version')
         if key and key not in links:
             found.append(f'{title}: no comparison link [{key}]')
-        for heading in re.findall(r'(?m)^### (.+)$', body):
-            if heading.strip() not in HEADINGS:
-                found.append(f'{title}: heading {heading.strip()!r}')
-        for bullet in re.findall(r'(?m)^- .*$', body):
-            if len(bullet) > LONGEST_BULLET:
-                found.append(f'{title}: bullet of {len(bullet)} characters')
-        if re.search(r'(?m)^- ', body) and not re.search(r'(?m)^### ', body):
+        seen, category, orphan, bullet = set(), None, False, []
+
+        def finish_bullet():
+            if bullet:
+                length = len(' '.join(bullet))
+                if length > LONGEST_BULLET:
+                    found.append(f'{title}: bullet of {length} characters')
+                bullet.clear()
+
+        for line in body.splitlines():
+            if line.startswith('### '):
+                finish_bullet()
+                category = line[4:].strip()
+                if category not in HEADINGS:
+                    found.append(f'{title}: heading {category!r}')
+                if category in seen:
+                    found.append(f'{title}: duplicate category {category}')
+                seen.add(category)
+            elif line.startswith('- '):
+                finish_bullet()
+                orphan |= category is None
+                bullet.append(line.strip())
+            elif bullet and line.startswith('  '):
+                bullet.append(line.strip())
+            elif line.strip():
+                finish_bullet()
+        finish_bullet()
+        if orphan:
             found.append(f'{title}: bullets without headings')
     return found
 
@@ -60,6 +81,40 @@ def problems(text=None):
 class ChangelogStructureTests(unittest.TestCase):
     def test_the_changelog_keeps_the_structure(self):
         self.assertEqual(problems(), [])
+
+    def test_duplicate_categories_are_reported_per_release(self):
+        text = (
+            '## [Unreleased]\n\n### Added\n\n- first\n\n### Added\n\n- second\n'
+            '[unreleased]: https://example.org/compare\n'
+        )
+        self.assertEqual(problems(text), ['[Unreleased]: duplicate category Added'])
+
+    def test_uncategorized_bullet_before_a_category_is_reported(self):
+        text = (
+            '## [Unreleased]\n\n- orphan\n\n### Fixed\n\n- categorized\n'
+            '[unreleased]: https://example.org/compare\n'
+        )
+        self.assertEqual(problems(text), ['[Unreleased]: bullets without headings'])
+
+    def test_wrapped_bullet_uses_its_complete_length(self):
+        text = (
+            '## [Unreleased]\n\n### Changed\n\n- '
+            + 'x' * 200
+            + '\n  '
+            + 'y' * 200
+            + '\n[unreleased]: https://example.org/compare\n'
+        )
+        self.assertEqual(problems(text), ['[Unreleased]: bullet of 403 characters'])
+
+    def test_four_hundred_character_bullet_and_reused_release_category_are_valid(self):
+        text = (
+            '## [Unreleased]\n\n### Added\n\n- '
+            + 'x' * 398
+            + '\n\n## [1.2.3] - not yet released\n\n### Added\n\n- released feature\n'
+            '[unreleased]: https://example.org/compare\n'
+            '[1.2.3]: https://example.org/release\n'
+        )
+        self.assertEqual(problems(text), [])
 
     def test_the_old_style_is_refused(self):
         merged = 'A long merged paragraph. ' * 20
@@ -70,7 +125,7 @@ class ChangelogStructureTests(unittest.TestCase):
                 'the first section must be ## [Unreleased]',
                 'Unreleased: heading is not "[X.Y.Z] - YYYY-MM-DD"',
                 '1.2.3 - 2027-01-01: heading is not "[X.Y.Z] - YYYY-MM-DD"',
-                '1.2.3 - 2027-01-01: bullet of 502 characters',
+                '1.2.3 - 2027-01-01: bullet of 501 characters',
                 '1.2.3 - 2027-01-01: bullets without headings',
             ],
         )

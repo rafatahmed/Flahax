@@ -1,44 +1,43 @@
 # Release readiness
 
-## Current preparation — unreleased
+## Current preparation — 0.7.0, not yet published
 
-The checkout identifies itself as `0.6.1.dev0`. The planned changes are collected
-under [unreleased detailed notes](releases/unreleased.md); no future release version is designated. Final version selection and release
-preparation are tracked in issue #234.
+The checkout identifies itself as **0.7.0**, an unpublished preparation candidate.
+See the [0.7.0 notes](releases/0.7.0.md), [changelog](../CHANGELOG.md) and
+[migration guide](site/start/migration.md). No release date, tag, version DOI,
+GitHub Release or package upload is established by preparing this version.
 
-Current documentation and clean-distribution qualification are tracked in #199.
-Computational qualification (#200) and the source/model qualification audits
-(#161, #201) are complete within their documented scopes. Unresolved attribution
-and model assumptions remain explicit limits, not rejected custom inputs. Physical
-validation (#41, #42) and the hands-on grower trial (#231) remain unfinished.
-A passing calculation or package check does not establish those outcomes.
-The final candidate still needs its own artifact hashes, installed-package checks,
-required CI and reference replay, review, and publication authorization.
-
-The dated records below describe their own revisions. Their remaining gates and
-capability claims are historical, not the status of the current checkout.
-
-## Current release assessment
-
-The development candidate is not a qualified release. No version bump,
-publication date, tag, DOI or release upload is established by these corrections.
+The baseline main d520bd7 passed all 26 jobs in
+[run 44314323686](https://github.com/rafatahmed/Flahax/actions/runs/44314323686),
+including exact native coverage, Python 3.11-3.14, required pinned PHREEQC,
+strict documentation and clean development wheel/sdist installations.
+That is supporting baseline evidence, not CI for the modified 0.7.0 candidate.
+The final source still needs its own hosted checks and artifact qualification.
 
 | Item | Current disposition |
-| --- | --- |
-| Documentation and distribution (#199) | Candidate qualification and artifact identities are recorded in #199; local checks do not establish merge, hosted CI or a published release |
-| Historical comparison (#203) | Local report corrected; it is not packaged as current performance evidence |
-| Formula provenance (#201) | Audit completed; recovered sources and unresolved attributions recorded; custom targets unchanged |
-| Scientific/source claims (#161) | Qualification audit completed; EC, ammonium, declared-product, solubility and reaction-domain limits remain explicit |
-| Grower acceptance (#231) | Hands-on trial not performed; automation cannot substitute for it |
-| Computational qualification (#200) | Completed within its recorded computational scope, not physical/source validation |
-| Physical validation (#41/#42) | Separate unfinished programme; no laboratory or field accuracy claim |
+|---|---|
+| Documentation and migration | Release-preparation corrections address #276/#277; the final notes explain Sonneveld, product search, rounded stocks, uncertainty, approvals and TUI migration. Validation must be bound to the resulting candidate. |
+| Metadata and citation | 0.7.0 is prepared as unpublished; no new version DOI/date is invented. Published 0.6.0 attribution remains distinct. |
+| Computational qualification (#200/#42) | Recorded computational scopes are complete; current exact-candidate regressions/reference evidence remain necessary. |
+| Catalogue and scientific claims (#201/#161) | Completed scoped audits retain unresolved attribution and model/data limits. |
+| Grower software acceptance (#231) | Hands-on software cases explicitly accepted on 2026-11-08 for their recorded revision. New implementer/automated checks do not fabricate independent grower trials. |
+| Physical validation (#41) | Independent assays, preparation/calibration and finished-feed measurements remain unfinished; no physical-accuracy or dosing-certification claim. |
+| Final release qualification | Exact 0.7.0 candidate CI, strict metadata, wheel/sdist installs and delivered assets/examples, source/artifact hashes and review remain required. |
+| Publication | Requires separate explicit authorization and the protected workflow in [Publishing](publishing.md). No publication is authorized by this page. |
 
-The packaged water profiles are examples, not laboratory analyses. Release
-assessment must distinguish them from an actual supplied water measurement.
-Final release preparation (#234) requires an agreed candidate, the outstanding
-grower acceptance, exact-candidate full/native CI and required reference replay,
-strict documentation and clean-distribution checks, then separate publication
-authorization. Historical benchmark timings retain their measured revisions.
+Issue #234 is closed completed software work and explicitly plans no release;
+it is not a future release authorization. #42 is a completed computational
+campaign, not the unfinished physical programme in #41. Do not reopen those
+accepted scopes based on obsolete readiness text.
+
+The packaged water profiles are examples, not laboratory measurements. Feed
+and root-zone targets, numerical acceptance, rounded-preparation tolerances
+and agronomic suitability are distinct. Physical evidence limits claims; its
+absence does not invent a new blanket refusal to formulate a recipe or release
+a clearly scoped planning prototype.
+
+Historical records below retain their revisions, publication facts and scoped
+remaining work as written at the time. They are not the current release status.
 
 ## Historical release records
 
@@ -70,7 +69,7 @@ The preparation record follows.
 0.4.0 is the first release under the Apache License 2.0 (PR #13) and adds
 measured-pH water balancing (PR #15). Evidence is in
 [release evidence](site/evidence/release-evidence.md#040-preparation---2026-10-17).
-Remaining gates: hosted Python 3.11–3.13 checks and live replay on the final
+Remaining gates: hosted Python 3.11â€“3.13 checks and live replay on the final
 revision, review, explicit maintainer publication authorization, and a final build
 of the exact approved artifacts with recorded hashes.
 
@@ -103,7 +102,7 @@ No historical CI exception is inherited by 0.3.1.
 | Metadata and documentation could drift | `tests/test_release_hygiene.py` checks version/citation/export consistency and local documentation links. Source distributions include citation and documentation assets. |
 | Apparently old runtime modules | Reduced kernels remain exported compatibility APIs or legacy-fixture dependencies; they are not presumed orphaned merely because the mixed solver supersedes their planning use. No public exports were removed. |
 
-## Publication and remaining verification — 2026-09-28
+## Publication and remaining verification â€” 2026-09-28
 
 PR #3 and PR #4 are merged; remote main was inspected at `25bfcb397b523bd538fde07bc6c99cbd818437aa`. PyPI's version JSON confirms both 0.3.0 artifacts were uploaded on 2026-09-27 (wheel 20:50:59 UTC; sdist 20:51:01 UTC). A fresh Python 3.13 virtual environment subsequently installed `flahax==0.3.0` from PyPI outside the checkout: version/import verification, all four bundled manual examples and both CLI entry points passed. This check exercised the published wheel; the candidate sdist evidence remains separately recorded.
 
@@ -113,7 +112,7 @@ The retired package-verification branch contained one post-merge authorization c
 
 Local release results remain in [release evidence](site/evidence/release-evidence.md); automated and computational acceptance are not independent human review. Assessor: Rafat Al Khashan. Future work follows the [development roadmap](development-roadmap.md).
 
-## Cleanup validation — 2026-09-28
+## Cleanup validation â€” 2026-09-28
 
 - Python 3.13 full suite: 110 tests, zero skips; 109 passed and the live PHREEQC test hit a sandbox temporary-file permission error. That exact test passed on a separate rerun with temporary-file access (all product and phase replay inputs). No runtime change was needed.
 - Release-hygiene checks: all three passed, including documentation links, metadata/export consistency and shipped-manual examples.

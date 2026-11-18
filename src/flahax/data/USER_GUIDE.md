@@ -1,8 +1,8 @@
-# FlahaX 0.6.1.dev0 — User Manual
+# FlahaX 0.7.0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.6.1.dev0, unpublished development checkout. The 0.6.0 publication dated 2026-10-24 is historical evidence for its tagged commit, not validation of this checkout.
+**Version:** 0.7.0, unpublished release-preparation candidate. The 0.6.0 publication dated 2026-10-24 is historical evidence for its tagged commit, not validation of this checkout.
 
 ## Contents
 
@@ -35,15 +35,17 @@ Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-ED
 
 ## 2. Installation and first recipe
 
-Python 3.11 or newer is required. The hosted verification matrix targets 3.11–3.13; local checks do not replace that matrix.
+Python 3.11 or newer is required. The hosted verification matrix targets 3.11–3.14; local checks do not replace that matrix.
 
-Install the published package in a virtual environment. From a source checkout, `python -m pip install .` installs the same version:
+Install this unpublished 0.7.0 candidate from a reviewed source checkout.
+The separately published 0.6.0 remains available from PyPI; installing it does
+not install this candidate:
 
 ```text
 python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # POSIX shell: source .venv/bin/activate
-python -m pip install flahax==0.6.0
+python -m pip install .
 python -c "import flahax; print(flahax.__version__)"
 ```
 
@@ -470,7 +472,7 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 ## 10. Upgrading, integration and citation
 
-### Current development migration from 0.6.0
+### Migration to the unpublished 0.7.0 candidate from 0.6.0
 
 Recalculate saved recipes from their original inputs; do not reuse an old acceptance
 or relabel a historical result as a new calculation. Package, schema, model/source
@@ -500,6 +502,13 @@ hashes and result identity are distinct identifiers.
 - Reports retain full-precision evidence offline. Blocked sheets are diagnostic.
   Numerical completion is not physical validation.
 
+Sonneveld imports use `mix --sonneveld-batch FILE` with explicit preview and
+approval. Review source water, products, stock carriers, rounding, uncertainty
+and ceilings/reserves before saving a new session. The embedded profile can
+repeat after the original import file is removed; changed samples or designs
+require new approval and source/input drift guards remain active. Broader
+search is bounded and does not guarantee a global optimum.
+
 The online [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html)
 maps these changes to current references and executable checks.
 
@@ -512,7 +521,7 @@ maps these changes to current references and executable checks.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.6.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.7.0 (unpublished candidate; include the reviewed source revision). No new version DOI or release date is assigned. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 

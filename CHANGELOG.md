@@ -1,316 +1,103 @@
 # Changelog
 
-All notable changes to FlahaX are documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
-[PEP 440](https://peps.python.org/pep-0440/); while FlahaX is below 1.0, a minor release may change
-behaviour, and every such change is listed under **Changed** or **Removed**. The full notes of
-each release, with numbers, sources and decisions, are in
-[docs/releases](https://github.com/rafatahmed/Flahax/tree/main/docs/releases).
+Notable changes for growers, agronomists and developers. Versions follow
+[PEP 440](https://peps.python.org/pep-0440/); before 1.0 a minor release can
+change interfaces and behavior. Each release describes the final difference
+from its predecessor. Detailed notes retain sources, limitations and migration.
 
 ## [Unreleased]
 
-- Correct the current release index while retaining historical publication evidence; add
-  migration guidance and executable documentation checks for current calculation contracts.
+No additional changes beyond the unpublished 0.7.0 candidate are recorded.
 
-- Preserve hard-zero targets and undefined relative differences in reports, sheets and terminal
-  views; suppress blocked-sheet preparation actions and retain offline full-precision scientific
-  qualifications, provenance and EC applicability evidence.
+## [0.7.0] - not yet released
+
+A recipe-design and verification update for growers and agronomists: Sonneveld
+feed targets, broader fertilizer search, practical rounded product stocks and
+reviewed root-zone feedback. Python 3.11 or newer; no runtime dependencies.
+All 135 package-level export names from 0.6.0 remain and 16 are added, but input,
+status, solver and saved-session contracts change. Recalculate and review old
+workflows. Physical validation remains separate in #41.
+[Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
 
 ### Added
 
-- Support rounded volumetric product stocks with real-water, assay and physical uncertainty;
-  retain nutrient reserves and pH-range saturation checks without claiming lab verification (#257).
-
-- Select and save available catalogue acids and bases in mix, add custom reagents, and
-  restrict batch calculations with `--reagents`. Review old sessions with
-  `--review-reagents` without overwriting their original answers (#231).
-
-- Evaluate confirmed catalogue alternatives separately and report the direction, search result,
-  charge check and nutrient misses for a grower batch (#231). Show solid pH reagent doses in
-  grams in batch and mix (#229).
-
-- Add native console/PTY and controlled terminal lifecycle checks, including
-  canonical-result and stale-session rejection in the full-screen workflow (#182).
-
-- Export canonical-result acceptance and archive APIs at package level. Validate
-  public CLI/file contracts and preserve hard nutrient maxima and explicit
-  permissions in recommendation JSON; reject unsupported fields (#181).
-- Update mix CLI regression assertions for qualified blocked workflows while
-  preserving historical numerical transcripts (#180).
-
-- Bind explicit proposal acceptance to exact result content, validate saved-result
-  archives, and detect saved-session input/source drift with explicit legacy
-  migration. Consent never waives calculation guards (#179).
-
-- Evaluate explicitly supplied catalogue bundles, treated-water analyses and stock
-  equipment alternatives under unchanged targets and limits. Retain candidate
-  evidence, remaining requirements and honest conditional/budget outcomes (#178).
+- Sonneveld A-D feed-target design from a crop/system baseline, explicit nutrient
+  corrections and irrigation EC, integrated with batch and mix. Root-zone samples
+  and guide comparisons support grower-approved feed changes, not automatic crop
+  control (#264, #266).
+- Bounded search over eligible alternative fertilizer combinations, retaining
+  verified candidates if later attempts fail. Rank tolerance attainment before
+  declared preferences and report the best result found within the budget (#261, #266).
+- Rounded volumetric product stocks in batch and TUI preparation, including
+  practical copper dosing, carrier-water accounting, dry/product/reagent
+  uncertainty, nutrient reserves and pH-range saturation screening (#257, #263, #266, #270).
+- Joint fertilizer/reagent problem and search APIs, actual-weighed-recipe
+  rescoring, shared material inventories and immutable result archives. Acceptance
+  binds exact input/source/result content; a local search result is not a global
+  optimality proof (#161, #177, #179, #181, #232).
+- Executable Appendix I cases, profile import, saved-session review and repeat,
+  grower/agronomist walkthroughs, strict file-format reference and offline
+  documentation assets. The 1,000 L examples remain illustrative (#259, #275).
 
 ### Changed
 
-- Define the Python style policy and its compatibility/notation exceptions; wrap flowing
-  comments and docstrings, separate import groups without reordering evaluation, normalize
-  test/helper names and refresh generated API/CLI references without changing calculations (#273).
+- Fit nitrate-N, ammonium-N and urea-N separately; report their sum as total N.
+  Absent urea is zero. Absent/zero ammonium is no requirement, with a default
+  allowance min(10% of target N, 1.5 mmol/L); an explicit cap replaces it and
+  max_ammonium_fraction=None disables the allowance (#209, #213).
+- Minimize positive-target relative error without hidden dose or incidental-ion
+  penalties. Nonzero ridge is rejected. Preserve positive dose precision and
+  hard maxima; report target misses separately from invalid/blocked results (#161, #196, #210).
+- Use numerical tolerances of 1e-5 relative for positive targets, 1e-6 mg/L for
+  declared zeros and 1e-4 pH. Preparation tolerances are explicit inputs;
+  reagent-change tolerance has no default. These are not agronomic safety bands (#210).
+- Retain measured-water inventories and residual charge without inventing or
+  changing ions. Infer carbon from applicable alkalinity accounting and state
+  solvent/carbon assumptions. Reconcile supported product labels and disclose
+  unassigned assay amounts (#214, #215, #216).
+- Report calculated EC as estimated or range, without a midpoint. The upper
+  estimate uses the disclosed 80-per-charge convention for uncovered contributions;
+  it is not a proven physical bound. Withhold the disputed Magsul screening total (#224, #244).
+- Report feed saturation as risk or information, not precipitation kinetics.
+  Solubility rows retain product basis and temperature; a single-product check
+  does not qualify a mixed tank. Preserve applicable separation and delivery
+  qualifications (#221, #226, #227).
+- Use the current catalogue of 24 fertilizers, five pH products and 13 formulas,
+  with declared composition/provenance and retained source/model limitations.
+  Explicit custom records remain supported (#201, #206, #245).
+- Make reagent availability explicit, including acids, bases, empty/custom lists
+  and separate reagent refills. Show solid reagents in grams; recompute reports
+  from final returned quantities (#229, #231).
+- Organize documentation by audience and task; define the Python style policy
+  and reviewed exceptions. Compatible prose/import-layout changes preserve
+  calculations and scientific data (#271, #273, #275).
 
-- Fit N_NO3, N_NH4 and N_UREA each as its own target; total N is their reported sum. Absent
-  N_UREA is a declared zero; N_NH4 0 is no requirement, not a ban, and incidental NH4-N is held
-  within min(10 % of total N, 1.5 mmol/L), basis Dutch soilless practice (De Kreij, Voogt et
-  al.), shown in `ammoniumLimit`, the summary, report and sheets; `solve_weights` too (#209,
-  #201).
+### Removed
 
-- A target is met only within the numerical tolerance (1e-5 relative, 1e-6 mg/L for a declared
-  zero, 1e-4 pH), which replaces the ±1 % band. Every deviation is reported ("targets missed:
-  …", review); only a broken declared maximum blocks. pH reagent stages judge only their
-  reagent's change; `maximum_nutrient_error_percent` is optional, no default (#210).
-
-- The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0: 24 fertilizers, 5 pH products and 13 crop formulas.
-
-- A product label is reconciled with its compound, not refused: the charge its ions cannot
-  balance is reported ("label analysis differs from KNO₃: 1.91 % K not assigned to an ion") and
-  left out of the chemistry, while the nutrient fit keeps the label (G5, #214).
-
-- The pH needs no completeness declaration. A water without `HCO3` or alkalinity shows "measure
-  alkalinity (HCO3) of the water"; ionic strength above 0.1 mol/kg shows "not calculated"; the
-  recipe is produced in both cases. Closed carbon, 25 °C and 1 L = 1 kg water are stated in the
-  summary. `calculate_equilibrium_ph` drops `complete_analysis` and takes `residual_charge`
-  (G1–G4, #215).
-
-- A water analysis is taken as measured: its charge imbalance is reported and carried, and no
-  ion is added, removed or adjusted. Removed: the 5 % rejection, closing on Cl, Na or carbonate
-  (carbon from a titrated alkalinity stays), `balance_ion` water-file keys, the 0.1 % charge
-  gates of the acid and delivery planners, and the formula-imbalance flag (G10, G11, #216).
-
-- Precipitation is reported by evidence, never a refusal. Brushite (`CaHPO4:2H2O`), gypsum and
-  calcite above saturation, or an allocated solid, label the recipe "precipitation risk";
-  every other supersaturated phase is information with the basis of its constant. Removed:
-  saturation blocking, the evidence and applicability inputs, `blocks` (G12–G14, #221).
-
-- EC is a range, never refused. Its low end counts the species with a coefficient; its high end adds 80 per charge for those without, for phosphate beyond its fit domain and for unrecorded charge. `status` is `estimated` or `range`, with no midpoint. Removed: `partial`, the assay-residual and phosphate-fit refusals. `--ec` compares a requested EC (G6–G9, #224).
-
-- Stock solubility compares each product with its own measured value, in the value's basis, with the source and tank temperatures shown and nothing interpolated (decisions G15-G19, #226). Order: the catalogue's waterSolubility, the historical table, none. Statuses are `ok`, `exceeds` (blocks) and `not_checked`; `screening_only`, `inconclusive` and `assumed_density_floor` are removed.
-- Tanks follow the A/B layout (decisions G20-G22, #227): calcium and every micronutrient product in tank A, phosphates, magnesium sulfate and macro sulfates in tank B. The magnesium-phosphate rule is removed and the calcium-sulfate reason is reworded. A batch needing a third tank names the pair and the rule.
-
-### Fixed
-
-- Give all 13 catalogue formula checks independent test identities so the runner can
-  schedule and report them separately. Preserve the real batch assertions and add
-  an inventory/scheduling regression without raising timeout or chemistry limits (#274).
-
-- Make equilibrium evidence independent of analytical-component insertion order so
-  unchanged Sonneveld sessions replay across processes without a false candidate-identity
-  mismatch. Preserve input/source and selected-candidate guards (#272).
-- Align the current documentation and packaged manual with source-water handling,
-  recipe-fit and ammonium rules, supported workflows and the hosted CI matrix (#271).
-
-- Withhold manufacturer-screening EC totals containing positive Ultrasol Magsul doses;
-  retain the disputed 1.2 mS/cm brochure value as evidence (#244).
-- Record all chemistry input byte identities, the versioned PHREEQC extraction route and
-  a deterministic source-manifest digest; preserve all scientific records (#245).
-- Replace broad priority claims with supported capabilities and a dated comparison (#246).
-- Validate custom batch records and reagent densities before configuration; reject duplicate
-  product names before they can corrupt pH chemistry or reagent selection (#240, #241).
-
-- Accept valid custom product names beginning with `test_`; reject actual placeholder formulas
-  and invalid assays rather than inferring chemistry from a display-name prefix (#242).
-
-- Reconcile sequential pH nutrient reports and limit checks with the actual returned reagent
-  dose (#237). Respect fixed-zero sources in joint proposals and enable zero-cap refinement
-  without changing tolerances or iteration limits (#238).
-
-- Fill nutrient stocks independently of the reagent container capacity at the shared injection
-  ratio; report reagent doses per fill, refill counts and final partial fills without changing
-  solver methods or nutrient tolerances (#231).
-
-- Refresh remedy messages from the final recipe, explain separate search and nutrient statuses,
-  and label numerical dose residues without weighing checkboxes. Preserve exact quantities and
-  clarify reagent-container capacity in fill mode (#231).
-
-- Preserve accented Windows input such as à without consuming the next character in
-  `flahax mix`; retain arrow navigation, editing keys and held-key repeats (#127).
-
-- Capture the PHREEQC product fixtures from the packaged catalogue (Micro Combi Mix 2 replaces the retired CH - micro; the citrate case is dropped as no catalogue product holds citrate), so the golden test runs the engine's label reconciliation without a patch (#222).
-
-- Normalize POSIX mode-inspection/setup/restoration failures and attempt rollback
-  after partial input-mode setup; validate the distinct native `termios.error`
-  path as well as ordinary I/O failures (#183).
-
-- Stop terminal input on POSIX EOF and attempt screen/cursor cleanup after partial
-  screen-entry failures while restoring console mode and retaining the original
-  error (#182).
-
-- Bind workflow reports to immutable calculation snapshots, product records and
-  model-source fingerprints. Reject changed calculated fields, retain shared
-  export identities, and separate computational and delivery qualifications (#177).
-
-- Reconcile stock masses, final-volume ratios and distinct reagent/pump channels
-  before delivery validation. Reject stock-volume overflow/underflow and future
-  calibration dates; retain titration final-volume identity and qualify additive
-  carrier accounting separately from hydraulic and contact models (#175).
-
-- Keep weighed-recipe chemistry, pH and EC on the same equilibrium state when no
-  reagent is selected. Retain rejected-candidate diagnostics separately and report
-  unavailable legacy state identity explicitly (#174).
-
-- Retain stock separations regardless of tank count or micronutrient dose. Search
-  equipment-constrained alternatives, require matched mixture-model applicability,
-  and prevent unqualified stock layouts from validating delivery plans (#161).
-
-- Distinguish historical solubility screening floors from qualified limits. Require
-  explicit source basis, grade and temperature evidence; report floor exceedances
-  as inconclusive and retain qualification in public reports (#172).
-- Separate synthetic terminal rendering states from actual phase-blocked workflow
-  tests, preserving blocked status and absent reagent selection (#173).
-
-- Remove phase-name exemptions from saturation decisions. Keep thermodynamic
-  signs, applicability evidence and allocated solids distinct; unresolved or
-  out-of-condition evidence prevents approval without inventing kinetics (#161).
-
-- Keep unknown conductivity contributions partial instead of inventing a universal
-  bound or midpoint. Preserve EC qualifications in grower output, distinguish
-  uncertainty sources, and evaluate explicit joint assay scenarios (#161).
-
-- Reject irrigation EC predictions beyond the recorded phosphate fit ceiling,
-  retain fit-domain audit evidence, and reproduce coefficients with independent
-  Decimal QR verification and withheld KCl comparisons (#161).
-
-- Integrate explicit joint fertilizer/reagent fitting into the public workflow;
-  rebuild final quantities and diagnoses and independently verify final pH.
-  Add bounded zero-reagent recovery when the legacy call offers no reagent in
-  the initial required direction; retain unresolved search and hard limits.
-
-- Recheck final joint charge corrections on cold equilibrium states and rebuild
-  stationarity at the corrected quantities. Restore charge through bounded
-  fertilizer adjustments when the reagent cannot move in the required direction.
-
-- Add opt-in joint objective-gap and first-order stationarity checks for nonzero
-  best-fit results, with rational certificates and fresh constraint verification.
-  Add linearized charge-equality steps and separately checked charge sensitivities;
-  preserve existing target thresholds and production acceptance policy.
-  Use direct nutrient gradients and precision-preserving feasible-step comparisons
-  to prevent roundoff from hiding near-optimum progress. Opt-in implicit equilibrium
-  derivatives, curvature polishing and verified zero-boundary recovery address stiff
-  chelate sensitivities; independent derivative and cold-state checks retain failures.
-
-- Add joint-fit qualification checks with independent rational nutrient accounting,
-  water-only objective lower bounds and retention of every multistart failure.
-  Add matched acid-reference regressions; production acceptance is unchanged.
-
-- Add a joint fertilizer/reagent numerical search with feasible steps, checked
-  sensitivities, rank-aware fallback and fresh final residual verification.
-  Explicit caller controls and incomplete-search diagnostics keep numerical
-  candidates separate from production acceptance.
-
-- Add immutable joint fertilizer/reagent problem records and fixed-candidate
-  evaluation with explicit nutrient/component units, charge residuals, zero-dose
-  boundaries and hard constraints. Add a supplied-inventory compiler; optimizer
-  integration and joint acceptance remain separate.
-
-- Recover permitted available nutrient sources from an empty initial pool and
-  repeat substitution when a new deficit appears. Record searched inventory and
-  incomplete-search outcomes without changing targets or expanding available stock.
-
-- Distinguish target-subset charge from emitted nutrient inventory without claiming
-  impossibility from partial charge sums. Label unmet-target structural proofs and
-  relaxed search observations explicitly, including source-water and zero misses.
-
-- Preserve every positive product dose at full floating-point precision so emitted
-  quantities reproduce nutrient results, including trace molybdenum.
-- Render mass-only pH reagents in grams across terminal, report and batch sheets
-  without inventing a liquid volume or crashing (#169).
-- Add `rescore_weighed_recipe` to reassess actual weighed masses against original
-  nutrient targets, source water and hard limits without refitting.
-
-- Prevent recipe simplification from degrading the original nutrient fit or
-  accumulating drift across product removals. Recheck zeros and maxima on each
-  trial and retain all positive internal doses; product count cannot increase
-  primary loss or use the feasibility band as an accuracy allowance.
-
-- Fix coupled pH trial direction crossings and discontinuous product switches by
-  bracketing and verifying a blend of the endpoint recipes. Rebuild final nutrient
-  assessments without changing targets, ceilings or chemistry constants. Initial
-  opposite-direction products remain inapplicable; global joint fitting remains open.
-
-- Fix primary fitting to minimize positive-target squared relative error without
-  hidden dose or incidental-ion penalties. Keep incidental reporting and hard limits.
-  `ridge` now defaults to zero and rejects nonzero values; remove old explicit
-  regularization arguments. Report unexplained fit degradation without blaming a
-  removed penalty, and recognize binding ceilings within the solver convergence criterion.
-
-
-- Enforce explicit zero nutrient requirements and targeted hard maxima; report
-  contradictory targets and source-water excess without relaxing the inputs.
-
-
-- Conserve calcium/sulfate in retained pairing calculations and reject exhausted
-  legacy equilibrium iterations; add kernel conservation, domain, phase and
-  failure-path controls with explicit current/legacy model distinctions.
-
-
-### Added
-
-- Independent rational bounded-fit and high-precision acid-equilibrium oracles,
-  matched-reference error accounting, and adversarial verification controls.
-  Reports identify shared provenance and the limits of reference agreement;
-  runtime tolerances and reference data remain unchanged
-  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
-
-### Changed
-
-- Aqueous results now identify omitted ligand/metal competition and selected
-  chelate-profile limitations, with explicit model-domain metadata. Added read-only
-  qualification of every pinned reaction's source, balances and basis transform;
-  reference constants and database bytes are unchanged.
-
-- Nutrient fitting now includes supported material counterions before selecting doses,
-  including sodium carried by chelates. A shared inventory traces nutrient percentages
-  and conserved chemistry components, with explicit incomplete and blend-disagreement
-  fields. Water and acid/base nutrient supply use the same component projection.
-
-- Ammonium limits are now explicit caller inputs: no default fraction or hidden
-  absolute cap. Material provenance identifies source/assumption status and the
-  versioned atomic-mass convention; retained atomic values are unchanged
-  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
+- The five University of Florida tomato presets and extension-based feed-pH and
+  residual-bicarbonate advice. Choose reviewed targets explicitly; user-saved
+  targets are not silently rewritten
+  ([094b4e0](https://github.com/rafatahmed/Flahax/commit/094b4e0)).
+- Obsolete water balance-ion/completeness inputs, label-charge refusals, EC
+  partial/refusal statuses and phase blocks fields. Migrate using the documented
+  replacement inputs/statuses; do not transfer old acceptance (#214, #215, #216, #221, #224).
 
 ### Fixed
 
-- Protect retained PHREEQC reference bytes with a complete inventory and require
-  fresh capture destinations. Reject malformed/nonfinite reference results, verify
-  executable/database pins for every current live family, and distinguish historical
-  evidence from shared-data implementation agreement
-  ([#166](https://github.com/rafatahmed/Flahax/issues/166)).
-
-- Reject invalid or unfinished root searches, remove the scale-dependent absolute
-  equilibrium pivot floor, and require pH-width evidence alongside charge closure.
-  Added numerical residual and NNLS optimality diagnostics with independent scaled
-  and high-precision controls; existing acceptance tolerances are unchanged
-  ([#165](https://github.com/rafatahmed/Flahax/issues/165)).
-
-- Account for supported noncarbonate alkalinity before inferring missing carbon.
-  Preserve measured zero/fixed carbon and titrated alkalinity; keep interactive
-  titration input separate from the legacy HCO3 carbon approximation. Reject
-  unqualified proton references rather than inventing carbonate
-  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
-
-- Respect explicit final solvent mass or density/nonwater mass when converting
-  water mg/L to molality; scale detection limits and blends on the same basis.
-  Report concentration assumptions and provide a water/carrier/hydrate ledger
-  ([#161](https://github.com/rafatahmed/Flahax/issues/161)).
-
-- Reject non-finite/non-positive identity masses and boolean ion stoichiometry,
-  while retaining explicitly unavailable masses as null
-  ([#163](https://github.com/rafatahmed/Flahax/issues/163)).
-
-### Added
-
-- Offline requirement/ledger validators, numeric-decision inventory and review gates, and source-bound
-  statement/branch coverage collection and gates, with preserved failing audit controls
-  ([#159](https://github.com/rafatahmed/Flahax/issues/159),
-  [#160](https://github.com/rafatahmed/Flahax/issues/160),
-  [#161](https://github.com/rafatahmed/Flahax/issues/161),
-  [#162](https://github.com/rafatahmed/Flahax/issues/162)). No runtime correction is claimed.
-
-- The Zenodo DOI in `CITATION.cff` and the README: concept DOI 10.5281/zenodo.23605678, version 0.6.0 10.5281/zenodo.23605679.
+- Reconstruct sequential nutrient rows and limits from the actual returned
+  reagent dose; preserve zero-cap sources during joint proposals/refinement
+  without loosening numerical limits (#237, #238).
+- Validate custom record IDs/names, duplicate names, assays and reagent densities;
+  accept valid product names beginning with test_ (#240, #241, #242).
+- Preserve native terminal input, Unicode editing and cleanup; integrate verified
+  preparation into the TUI and retain source-bound session review (#127, #182, #183, #268, #269).
+- Make unchanged Sonneveld sessions replay deterministically across processes.
+  Independently schedule all 13 real catalogue formula checks without raising
+  timeout or chemistry limits (#272, #274).
+- Reconcile current readiness/support references with completed software
+  acceptance and separate physical validation. Curate this changelog, restore
+  proven encoding damage and check duplicate categories, orphan bullets and
+  complete wrapped-entry length (#276, #277).
 
 ## [0.6.0] - 2026-10-24
 
@@ -318,7 +105,7 @@ The grower release: FlahaX becomes a tool a grower or agronomist can run without
 (`flahax mix`, `flahax batch`), plans the recipe and its pH reagent together, checks stock
 solubility, and moves to Beta. No breaking API change (14 names added, none removed); Python 3.11
 or newer, still with no runtime dependencies. Known limits: the full-screen `flahax mix` is alpha
-(`--plain` always works; typing "Ã " on Windows swallows the next key, #127), solubility checks are
+(`--plain` always works; typing "à" on Windows swallows the next key, #127), solubility checks are
 single-salt lower bounds, and there is no physical validation yet (#41).
 [Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md).
 
@@ -338,7 +125,7 @@ single-salt lower bounds, and there is no physical validation yet (#41).
 
 ### Changed
 
-- The documentation site is organised for its readers (DiÃ¡taxis): Get started, a grower, an agronomist and a developer and researcher guide, Reference (command line, Python API, input files, error codes), Explanation, Evidence and Project, with diagrams; moved pages redirect from their old addresses.
+- The documentation site is organised for its readers (Diátaxis): Get started, a grower, an agronomist and a developer and researcher guide, Reference (command line, Python API, input files, error codes), Explanation, Evidence and Project, with diagrams; moved pages redirect from their old addresses.
 - `flahax --help` describes every command, with examples and links to the documentation and the issue tracker; the README follows the order a reader needs (installation, quick start, commands, troubleshooting); the changelog follows Keep a Changelog 1.1.0 for every release.
 - Supplier labels may differ from their chemical's charge balance by up to 1 % (was 0.1 %) (#93).
 - A water report without chloride closes its charge balance on alkalinity instead of being blocked (#100).
@@ -382,7 +169,7 @@ the 26 shipped formulas (catalogue corrections below).
 - `recommend()` is 2.8-4.0x faster (#59); equilibrium solves are 3-5x and their searches 10-25x faster (#37, #61), with numerically equivalent results.
 - Incidental NH4-N is allowed up to the smaller of 10 % of total N and 1.5 mmol/L when the formula has no N_NH4 (#54).
 - Incidental-ion ceilings reach their limit in one refit (#56).
-- Catalogue: Mg Nitrate is Mg(NO3)2Â·6H2O; Phosphoric Acid (75%) is a 75 % solution; Calcium Nitrate cites the Haifa sheet; ammonium sulfate and urea cite ChemicalBook sheets.
+- Catalogue: Mg Nitrate is Mg(NO3)2·6H2O; Phosphoric Acid (75%) is a 75 % solution; Calcium Nitrate cites the Haifa sheet; ammonium sulfate and urea cite ChemicalBook sheets.
 - Chelates carry their sodium counterions in chemistry, and formulation reports that sodium as incidental Na.
 - Chlorine uses 35.45 g/mol everywhere.
 - NNLS raises `InputError` at its iteration cap instead of returning a non-optimal fit (#55).
@@ -445,7 +232,7 @@ planning commands and reports. [Full notes](https://github.com/rafatahmed/Flahax
 
 Yanked on PyPI on 2026-10-17, after 0.3.1 was published: its source distribution contained a
 third-party PDF. Use 0.3.1. Core `recommend` and CLI input contracts are unchanged, with no
-third-party runtime dependencies; the chemistry boundary is 25 Â°C, Davies I â‰¤ 0.1 mol/kg water,
+third-party runtime dependencies; the chemistry boundary is 25 °C, Davies I ≤ 0.1 mol/kg water,
 fixed product oxidation states and closed analytical inorganic carbon. Hosted checks were blocked
 by account billing; the maintainer approved publication on verified local evidence.
 [Release record](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.3.0.md).
@@ -485,6 +272,7 @@ development history remains in Git; this changelog does not claim it for the 0.2
 - The first FlahaX package on PyPI, with its release workflow.
 
 [unreleased]: https://github.com/rafatahmed/Flahax/compare/v0.6.0...HEAD
+[0.7.0]: https://github.com/rafatahmed/Flahax/compare/v0.6.0...HEAD
 [0.6.0]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rafatahmed/Flahax/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rafatahmed/Flahax/compare/v0.3.1...v0.4.0

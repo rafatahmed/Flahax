@@ -50,7 +50,9 @@ class DocumentationMigrationTests(unittest.TestCase):
         text = (ROOT / 'src/flahax/data/USER_GUIDE.md').read_text(encoding='utf-8')
         version = next(line for line in text.splitlines() if line.startswith('**Version:**'))
         self.assertRegex(version, rf'^\*\*Version:\*\* {re.escape(flahax.__version__)}(?:,|$)')
-        self.assertEqual('unpublished' in version, '.dev' in flahax.__version__)
+        evidence = (SITE / 'evidence/release-evidence.md').read_text(encoding='utf-8')
+        publications = re.findall(r'^## (\d+\.\d+\.\d+) publication', evidence, re.M)
+        self.assertEqual('unpublished' in version, flahax.__version__ not in publications)
         self.assertIn('### Historical release changes', text)
 
     def test_release_index_covers_recorded_publications(self):
@@ -59,8 +61,9 @@ class DocumentationMigrationTests(unittest.TestCase):
         publications = re.findall(r'^## (\d+\.\d+\.\d+) publication', text, re.M)
         for version in publications:
             self.assertIn(f'| {version} |', index)
-        if '.dev' in flahax.__version__:
+        if flahax.__version__ not in publications:
             self.assertIn(f'**{flahax.__version__}**', index)
-            self.assertIn('unpublished development version', index)
+            self.assertIn('unpublished', index)
+            self.assertNotIn(flahax.__version__, publications)
         else:
             self.assertIn(flahax.__version__, publications)

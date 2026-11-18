@@ -10,7 +10,9 @@ python -m venv .venv
 python -m pip install flahax
 ```
 
-Pin the version for reproducible work, for example `python -m pip install flahax==0.6.0`.
+Pin the published version for reproducible work, for example `python -m pip install flahax==0.6.0`.
+This source checkout prepares **0.7.0, not yet published**; install it from a reviewed
+checkout with `python -m pip install .`. A PyPI install does not select this candidate.
 
 ## Check what is installed
 

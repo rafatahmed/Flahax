@@ -47,9 +47,16 @@ For changes from published recipes to this development checkout, see the
 [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html).
 Recalculate and review saved results; acceptance does not transfer to changed inputs or sources.
 
+**Prepared version: 0.7.0, not yet published.** Use the source checkout for this
+candidate. The latest verified PyPI publication during preparation is 0.6.0;
+its DOI and artifacts do not identify this candidate. See the
+[0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
+
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
+From a reviewed 0.7.0 candidate source checkout, install with `python -m pip install .`.
+To use the separately published 0.6.0 instead:
 
 ```bash
 python -m pip install flahax==0.6.0
@@ -241,17 +248,17 @@ Live PHREEQC replay and distribution verification are described in
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.6.0) [Computer software]. Zenodo.
-https://doi.org/10.5281/zenodo.23605679
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, unpublished candidate)
+[Computer software]. Cite the reviewed source revision as well as the version.
+The 0.6.0 version DOI identifies the historical publication, not this candidate.
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
-  version = {0.6.0},
-  doi     = {10.5281/zenodo.23605679},
-  url     = {https://pypi.org/project/flahax/},
+  version = {0.7.0},
+  url     = {https://github.com/rafatahmed/Flahax},
   license = {Apache-2.0}
 }
 ```
