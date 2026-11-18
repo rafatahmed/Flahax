@@ -36,7 +36,8 @@ whose nutrients all fit the ten Irriblend columns are translated exactly
   apply no EC limit: every product costs 1 EUR/kg (cost = total grams),
   the EC cap is non-binding, and the residual HCO3- target is 0 (the
   benchmark waters carry no bicarbonate). A result is kept only if it
-  passes the authors' own filter (final NO3- not below the ideal). """
+  passes the authors' own filter (final NO3- not below the ideal).
+"""
 
 import hashlib
 import os

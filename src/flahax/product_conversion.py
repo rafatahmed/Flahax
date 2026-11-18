@@ -119,7 +119,8 @@ def convert_catalogue_product_dose(
     product: Mapping[str, object], dose_g_per_kg_water: float
 ) -> ProductAnalyticalTotals:
     """Catalogue adapter (the ``PRODUCT_CHEMISTRY`` view). Any material:
-    ``convert_material_dose``."""
+    ``convert_material_dose``.
+    """
     return convert_product_dose(
         product, chemistry_for_product(str(product.get("name", ""))), dose_g_per_kg_water
     )

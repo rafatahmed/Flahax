@@ -34,8 +34,8 @@ class ParallelRunnerTests(unittest.TestCase):
         self.assertEqual(len(ids), len(names) + 1)  # formulas and inventory guard
         self.assertEqual(len(set(ids)), len(ids))
         seen = []
-        # Structural scheduling witness only; real calculations run in the
-        # catalogue cases. Every named case must call the unchanged helper.
+        # Scheduling witness only; real calculations run in the catalogue
+        # cases. Every named case must call the unchanged helper once.
         with patch.object(CatalogueFitTests, 'check_formula', side_effect=seen.append):
             result = unittest.TestResult()
             suite.run(result)
