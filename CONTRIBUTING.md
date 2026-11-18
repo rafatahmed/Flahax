@@ -131,7 +131,8 @@ defaults, units, constraints, exception behavior or public signatures.
 
 ### Header and docstring checks
 
-Every Python file starts, in this order, with: a shebang (`#!/usr/bin/env python3`) only for
+Python files in `src`, `tests`, `tools`, `examples` and `benchmarks` start, in this order,
+with: a shebang (`#!/usr/bin/env python3`) only for
 runnable tools and examples; the header comments (SPDX copyright and license, and the
 disclaimer); the module docstring; `from __future__` imports; module dunders such as `__all__`
 and `__version__`; then the imports. No encoding line is needed. Code must also run on
@@ -143,7 +144,9 @@ Every public class, method and function in `src/flahax` has a docstring that say
 returns or represents; `tests/test_public_docstrings.py` and ruff (D101-D103) check it.
 `tests/test_file_headers.py` checks the fixed header/module docstring and the
 package `__all__`/`__version__` ordering. It does not inspect every dunder in
-every module. Ruff E/W/F, D101-D103, the formatter and the public-docstring
+every module. The standalone Sphinx configuration uses its module docstring
+and imports without the fixed header; it is outside that header-test scope.
+Ruff E/W/F, D101-D103, the formatter and the public-docstring
 test enforce their respective subsets; import grouping, 72-column prose,
 exception justification and API compatibility also require review.
 
