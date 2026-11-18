@@ -32,6 +32,12 @@ assert all(hasattr(flahax, name) for name in flahax.__all__)
 from flahax import load_library, solve_catalogue_product_doses, plan_catalogue_nitric_target
 import hashlib
 assert not importlib.metadata.requires('flahax'), 'unexpected runtime dependency'
+from urllib.parse import urlsplit
+readme_description = importlib.metadata.metadata('flahax').get_payload()
+for target in re.findall(r'\]\(([^)]+)\)', readme_description):
+    assert target.startswith('#') or urlsplit(target).scheme in ('https', 'http', 'mailto'), (
+        'README link is not portable outside the repository: ' + target)
+
 manual = files('flahax').joinpath('data/USER_GUIDE.md').read_text(encoding='utf-8')
 assert f'FlahaX {flahax.__version__}' in manual
 examples = re.findall(r'```python\n(.*?)```', manual, re.S)

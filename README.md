@@ -30,7 +30,7 @@ reagent doses against their preparation tolerances and nutrient ceilings.
 The grower or agronomist reviews the result and its qualifications before preparation.
 Tank assignments use the supplied equipment and compatibility evidence. Each plan retains
 units, inputs, model identifiers and source hashes for review and reproduction.
-The [scope and limits](docs/site/explanation/scope-and-limits.md) explain the supported workflows
+The [scope and limits](https://flahax.readthedocs.io/en/latest/explanation/scope-and-limits.html) explain the supported workflows
 and the measurements needed to qualify a prepared batch.
 
 **Who it is for**
@@ -47,9 +47,16 @@ For changes from published recipes to this development checkout, see the
 [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html).
 Recalculate and review saved results; acceptance does not transfer to changed inputs or sources.
 
+**Prepared version: 0.7.0, not yet published.** Use the source checkout for this
+candidate. The latest verified PyPI publication during preparation is 0.6.0;
+its DOI and artifacts do not identify this candidate. See the
+[0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
+
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
+From a reviewed 0.7.0 candidate source checkout, install with `python -m pip install .`.
+To use the separately published 0.6.0 instead:
 
 ```bash
 python -m pip install flahax==0.6.0
@@ -80,7 +87,8 @@ python -m pip install --force-reinstall --no-deps "git+https://github.com/rafata
 
 `flahax mix` asks five things in order: tank sizes and injection ratio, the water analysis as
 printed by the lab, the crop formula, the fertilizers you have, and the target pH. It shows what
-to weigh into tank A and tank B and how much acid goes in the acid container, writes a batch
+to weigh into the proposed nutrient tanks and how much selected acid or base goes in the
+separate reagent container, writes a batch
 sheet, and saves the answers so the next batch is one command:
 
 ```bash
@@ -171,10 +179,10 @@ exit 3 for a blocked result. Always inspect the returned qualifications and limi
 The manual can also be read offline from an installed package through `importlib.resources`
 (`flahax/data/USER_GUIDE.md`).
 
-For the current source documentation, [choose a workflow](docs/site/start/choose-workflow.md),
-follow the [grower Sonneveld walkthrough](docs/site/grower/sonneveld-walkthrough.md),
-or review the [complete Appendix I calculation](docs/site/agronomist/sonneveld-appendix-i.md).
-The [profile and session reference](docs/site/reference/file-formats.md#sonneveld-import-profile)
+For the current source documentation, [choose a workflow](https://flahax.readthedocs.io/en/latest/start/choose-workflow.html),
+follow the [grower Sonneveld walkthrough](https://flahax.readthedocs.io/en/latest/grower/sonneveld-walkthrough.html),
+or review the [complete Appendix I calculation](https://flahax.readthedocs.io/en/latest/agronomist/sonneveld-appendix-i.html).
+The [profile and session reference](https://flahax.readthedocs.io/en/latest/reference/file-formats.html#sonneveld-import-profile)
 describes the reusable inputs and saved evidence.
 
 ## Troubleshooting
@@ -241,17 +249,17 @@ Live PHREEQC replay and distribution verification are described in
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.6.0) [Computer software]. Zenodo.
-https://doi.org/10.5281/zenodo.23605679
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, unpublished candidate)
+[Computer software]. Cite the reviewed source revision as well as the version.
+The 0.6.0 version DOI identifies the historical publication, not this candidate.
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
-  version = {0.6.0},
-  doi     = {10.5281/zenodo.23605679},
-  url     = {https://pypi.org/project/flahax/},
+  version = {0.7.0},
+  url     = {https://github.com/rafatahmed/Flahax},
   license = {Apache-2.0}
 }
 ```

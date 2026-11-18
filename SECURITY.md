@@ -7,7 +7,7 @@ not patched; upgrade with `python -m pip install --upgrade flahax`.
 
 | Version | Supported |
 |---|---|
-| Latest release on PyPI (0.5.x today) | Yes |
+| Latest published release on PyPI | Yes |
 | `main` | Yes |
 | Earlier releases | No |
 

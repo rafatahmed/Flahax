@@ -208,5 +208,6 @@ Nothing here starts until each of these is decided:
 4. **Who prepares the solutions.** The same person may prepare them; the pH
    and titration readings should be taken without seeing the predictions.
 
-Tracking: rafatahmed/Flahax#41 (protocol and evidence), under the
-limitations tracker rafatahmed/Flahax#42.
+Tracking: [#41](https://github.com/rafatahmed/Flahax/issues/41) covers independent
+physical validation. The completed computational campaign in #42 is separate;
+its closure does not establish laboratory or field accuracy.

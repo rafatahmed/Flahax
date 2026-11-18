@@ -1,6 +1,7 @@
 # Migrate saved workflows
 
-This guide applies to **0.6.1.dev0**, an unpublished development version. The latest
+This guide applies to the **0.7.0 unpublished candidate**, upgrading from 0.6.0
+or an intermediate development checkout. No 0.7.0 package upload is claimed. The latest
 publication recorded in [release evidence](../evidence/release-evidence.md) is 0.6.0.
 Historical tests and benchmark downloads describe their own revisions.
 
@@ -24,9 +25,9 @@ remain separate; field evidence is not invented to complete software work.
 
 | Area | Migration action | Contract and executable check |
 |---|---|---|
-| Nutrient inputs | Zero is a hard zero; omitted targets are incidental. Reject total N and unknown fields. | [File formats](../reference/file-formats.md); tests.test_entry_inputs |
+| Nutrient inputs | Explicit zero is a hard zero except absent/zero N_NH4 (no requirement); absent N_UREA is zero. Other omitted targets are incidental. Reject total N and unknown fields. | [File formats](../reference/file-formats.md); tests.test_entry_inputs |
 | Objective | Remove nonzero ridge. Incidental ions and dose magnitude do not contribute to fitting loss. | [Python API](../developer/python-api.md); tests.test_unmet_targets |
-| Maximums | Supply ammonium and other caps explicitly; omitted data does not select crop limits. | [Python API](../developer/python-api.md#incidental-ions-and-ceilings); tests.test_ammonium_limit |
+| Maximums | Default incidental NH4 allowance is min(10% of target N, 1.5 mmol/L). An explicit NH4 maximum replaces it; max_ammonium_fraction=None disables it. Supply other caps explicitly. | [Python API](../developer/python-api.md#incidental-ions-and-ceilings); tests.test_ammonium_limit |
 | Composition | Keep ID-bearing doses and counterions; review assay-only qualifications. | [Inventory](../models/material-inventory.md); tests.test_material_inventory |
 | Units | Distinguish final litres, solvent kg, analytical totals and species; reconcile measured water explicitly. | [Basis](../models/concentration-basis.md); tests.test_unit_basis |
 | Recipe/reagent | Choose joint mode with its controls or documented legacy mode. Count reagent nutrients once; search exhaustion is unresolved. | [Joint fitting](../developer/joint-problem.md); tests.test_joint_workflow |
@@ -36,6 +37,32 @@ remain separate; field evidence is not invented to complete software work.
 | Delivery/remedies | Structural layouts, missing commands and unevaluated alternatives remain pending. Re-evaluate chosen remedies. | [Delivery](../developer/water-to-delivery.md); tests.test_delivery_plan |
 | Acceptance | Recalculate after input/source/quantity changes; acceptance binds the exact result. | [Results](../agronomist/reading-results.md); tests.test_canonical_result |
 | Outputs | Retain full-precision evidence; blocked quantities are diagnostic. | [Batch sheet](../grower/batch-sheet.md); tests.test_output_consistency |
+
+## Sonneveld profiles and rounded preparation
+
+1. Preserve the old source profile and session. Review the baseline, corrections,
+   source-water basis, offered products and pH reagents in the new profile.
+2. Import with `flahax mix --sonneveld-batch FILE`. Review the A-D targets before
+   approving the dated root-zone sample and explicitly chosen feed correction.
+   A changed observation/design needs a new approval; no crop response is inferred.
+3. Supply product-stock strength, carrier, dry/stock/reagent rounding and uncertainty
+   in the documented units. Choose nutrient ceilings/reserves explicitly. The 5%
+   sodium reserve and tolerances in Appendix I are example inputs, not defaults
+   that make every crop or product suitable.
+4. Review the rounded delivered recipe, nutrient intervals, pH and preparation
+   qualifications. A broader bounded search reports the best verified candidate
+   found, not a global optimum or permission to use unavailable products.
+5. Save under a new session name. The embedded profile supports repeat after
+   removing the original import file; input/source/candidate guards still apply.
+   A legacy session missing reagent availability requires `--review-reagents`
+   and a new name. That review cannot waive other source/input drift checks.
+
+See [exact file contracts](../reference/file-formats.md), the
+[grower walkthrough](../grower/sonneveld-walkthrough.md) and the
+[Appendix I calculations](../agronomist/sonneveld-appendix-i.md).
+Package 0.7.0 is separate from the existing schema and model/source versions.
+All 135 old package export names remain, but changed arguments/statuses and
+acceptance bindings require review. No old result is automatically accepted.
 
 ## Executable migration check
 

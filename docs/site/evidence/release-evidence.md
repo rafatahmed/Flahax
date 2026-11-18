@@ -9,7 +9,8 @@ which revision, and with what result. Newest first.
 [below](#060-publication-2026-10-24). This index summarizes recorded publications;
 it is not a new registry or hosted-CI verification.
 
-The checkout is **0.6.1.dev0**, an unpublished development version. Historical CI,
+The checkout is **0.7.0**, an unpublished preparation candidate. No 0.7.0
+publication date, tag, artifact upload or version DOI is recorded. Historical CI,
 reference replay and package checks do not certify this modified checkout.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.

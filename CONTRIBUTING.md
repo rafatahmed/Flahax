@@ -33,16 +33,18 @@ release:
   (a yanked release adds `[YANKED]` and keeps its section);
 - each release opens with a short paragraph: what it is, any breaking change, the supported
   Python and known limits;
-- bullets are grouped under the six change types only: **Added**, **Changed**, **Deprecated**,
+- each applicable change type appears once per release; every bullet belongs to
+  a category. Bullets are grouped under the six change types only: **Added**, **Changed**, **Deprecated**,
   **Removed**, **Fixed**, **Security**; each bullet names its issues and is at most 400
-  characters, and related changes share one bullet;
+  characters after joining wrapped continuation lines, and related changes share one bullet;
 - the bottom of the file has a comparison link for every version and for `unreleased`.
 
 The full text of unreleased changes belongs in `docs/releases/unreleased.md` until
 a release version is selected. Released change details (numbers, sources, decisions)
 belong in `docs/releases/<version>.md`,
 linked with a full GitHub URL, because the docs site includes the changelog. `tests/test_changelog.py`
-checks all of this.
+checks heading/link syntax, category uniqueness, categorized bullets and complete
+entry length. Factual completeness, compatibility and source/issue mapping require review.
 
 ## Code style
 
