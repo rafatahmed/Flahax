@@ -69,7 +69,7 @@ The preparation record follows.
 0.4.0 is the first release under the Apache License 2.0 (PR #13) and adds
 measured-pH water balancing (PR #15). Evidence is in
 [release evidence](site/evidence/release-evidence.md#040-preparation---2026-10-17).
-Remaining gates: hosted Python 3.11â€“3.13 checks and live replay on the final
+Remaining gates: hosted Python 3.11–3.13 checks and live replay on the final
 revision, review, explicit maintainer publication authorization, and a final build
 of the exact approved artifacts with recorded hashes.
 
@@ -102,7 +102,7 @@ No historical CI exception is inherited by 0.3.1.
 | Metadata and documentation could drift | `tests/test_release_hygiene.py` checks version/citation/export consistency and local documentation links. Source distributions include citation and documentation assets. |
 | Apparently old runtime modules | Reduced kernels remain exported compatibility APIs or legacy-fixture dependencies; they are not presumed orphaned merely because the mixed solver supersedes their planning use. No public exports were removed. |
 
-## Publication and remaining verification â€” 2026-09-28
+## Publication and remaining verification — 2026-09-28
 
 PR #3 and PR #4 are merged; remote main was inspected at `25bfcb397b523bd538fde07bc6c99cbd818437aa`. PyPI's version JSON confirms both 0.3.0 artifacts were uploaded on 2026-09-27 (wheel 20:50:59 UTC; sdist 20:51:01 UTC). A fresh Python 3.13 virtual environment subsequently installed `flahax==0.3.0` from PyPI outside the checkout: version/import verification, all four bundled manual examples and both CLI entry points passed. This check exercised the published wheel; the candidate sdist evidence remains separately recorded.
 
@@ -112,7 +112,7 @@ The retired package-verification branch contained one post-merge authorization c
 
 Local release results remain in [release evidence](site/evidence/release-evidence.md); automated and computational acceptance are not independent human review. Assessor: Rafat Al Khashan. Future work follows the [development roadmap](development-roadmap.md).
 
-## Cleanup validation â€” 2026-09-28
+## Cleanup validation — 2026-09-28
 
 - Python 3.13 full suite: 110 tests, zero skips; 109 passed and the live PHREEQC test hit a sandbox temporary-file permission error. That exact test passed on a separate rerun with temporary-file access (all product and phase replay inputs). No runtime change was needed.
 - Release-hygiene checks: all three passed, including documentation links, metadata/export consistency and shipped-manual examples.

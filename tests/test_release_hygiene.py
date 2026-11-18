@@ -20,6 +20,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReleaseHygieneTests(unittest.TestCase):
+    def test_readiness_preserves_historical_punctuation(self):
+        lines = (ROOT / 'docs/release-readiness.md').read_text(encoding='utf-8').splitlines()
+        # Historical wording from main d520bd7, before the 0.7.0 preparation.
+        expected = (
+            'Remaining gates: hosted Python 3.11\u20133.13 checks and live replay on the final',
+            '## Publication and remaining verification \u2014 2026-09-28',
+            '## Cleanup validation \u2014 2026-09-28',
+        )
+        for line in expected:
+            with self.subTest(historical_line=line):
+                self.assertIn(line, lines)
+
     def test_readme_quick_start(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         examples = re.findall(r'```python\n(.*?)```', readme, re.S)
