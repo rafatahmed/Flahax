@@ -100,7 +100,7 @@
   "tests.test_ph_inputs.PhInputTests.test_a_water_without_alkalinity_asks_for_it_and_still_gives_the_recipe": 1.89,
   "tests.test_ph_inputs.PhInputTests.test_ionic_strength_above_the_model_range_is_not_calculated": 1.85,
   "tests.test_ph_inputs.PhInputTests.test_ro_water_calculates_the_ph_with_nothing_declared": 84.3,
-  "tests.test_ph_inputs.PhInputTests.test_the_equilibrium_pH_needs_no_completeness_declaration": 0.01,
+  "tests.test_ph_inputs.PhInputTests.test_the_equilibrium_ph_needs_no_completeness_declaration": 0.01,
   "tests.test_ph_inputs.PhInputTests.test_the_measured_imbalance_is_reproduced_not_forced_to_zero": 0.03,
   "tests.test_ph_inputs.PhInputTests.test_the_stated_model_conditions_are_in_the_summary": 85.22,
   "tests.test_precipitation_report.BrushiteReportTests": 523.1,
