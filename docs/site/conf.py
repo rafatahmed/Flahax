@@ -1,6 +1,7 @@
 """Sphinx configuration for the FlahaX documentation site."""
 
 import os
+import re
 
 from flahax import __version__
 
@@ -22,6 +23,7 @@ html_title = "FlahaX"
 html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 html_static_path = ["_static"]
 html_css_files = ["flahax.css"]
+mermaid_height = "auto"
 html_favicon = "_static/brand/v2/flahax-logo-color.png"
 html_theme_options = {
     "light_logo": "brand/v2/flahax-logo-color.png",
@@ -89,6 +91,11 @@ def _rewrite_included_links(app, relative_path, parent_docname, content):
     """
     if relative_path.name == "USER_GUIDE.md":
         content[0] = content[0].replace("](API_REFERENCE.md)", "](api.md)")
+        content[0] = re.sub(
+            r"\]\(https://flahax\.readthedocs\.io/en/latest/([\w/-]+)\.html(#[^)]+)?\)",
+            r"](../\1.md\2)",
+            content[0],
+        )
     elif relative_path.name == "API_REFERENCE.md":
         content[0] = content[0].replace("](USER_GUIDE.md)", "](manual.md)")
     elif relative_path.name == "CONTRIBUTING.md":

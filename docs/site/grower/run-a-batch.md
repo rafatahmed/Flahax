@@ -4,6 +4,14 @@ For an agronomist-prepared Sonneveld profile, follow
 [Review a Sonneveld batch](sonneveld-walkthrough.md). The five-step interview
 below is the standard tank workflow.
 
+## On this page
+
+- [The five-step interview](#the-five-step-interview)
+- [Review a Sonneveld batch](#review-a-sonneveld-batch)
+- [Resizing, stopping and reopening](#resizing-stopping-and-reopening)
+
+## The five-step interview
+
 `flahax mix` asks for the same five things in order and remembers your answers,
 so the next batch is one command:
 
@@ -78,6 +86,11 @@ result shows diagnostic quantities without preparation instructions. Missing or
 condition-limited solubility evidence remains qualified in the result.
 
 ## Review a Sonneveld batch
+
+The [complete profile walkthrough](sonneveld-walkthrough.md) includes a
+downloadable input, current screen captures and the review/adoption steps.
+Use the [format reference](../reference/file-formats.md#sonneveld-import-profile)
+when preparing a custom profile.
 
 Run `flahax mix --sonneveld-batch profile.json --output results` to review a
 prepared Sonneveld profile. The wizard shows the dated root-zone sample, guide

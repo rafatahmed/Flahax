@@ -1,5 +1,10 @@
 # Input files
 
+Need a runnable example first? Follow the [grower profile review](../grower/sonneveld-walkthrough.md)
+or the [agronomist calculation](../agronomist/sonneveld-appendix-i.md).
+[Choose a workflow](../start/choose-workflow.md) distinguishes these inputs from
+standard batch files and direct Python calls.
+
 FlahaX reads plain JSON. Units belong to the field definitions below. Some fields have
 documented defaults; omitted analytical measurements are not measured zeros.
 
@@ -245,6 +250,14 @@ See [the worked uncertainty values](../agronomist/sonneveld-appendix-i.md#declar
 and [rounded-dose interpretation](../agronomist/batch-command.md#rounded-volumetric-doses).
 
 ## Sonneveld saved session
+
+Unchanged sessions created with this build are checked through public CLI
+import, adoption and replay in separate processes with different hash seeds.
+The original import file is not required, and the complete summary remains
+byte-identical. Component order no longer changes equilibrium evidence
+([#272](https://github.com/rafatahmed/Flahax/issues/272)). Input/source drift and
+changed selected-candidate identities still require review. Older records can
+require reimport after a calculation change; preserve their original evidence.
 
 After interactive approval and adoption, FlahaX writes a session with exactly
 these top-level fields:

@@ -17,6 +17,7 @@ Fertilizer formulation • bounded chemistry • reviewed delivery planning
 9. Verification and reproducibility
 10. Upgrading, integration and citation
 11. Site workflow, EC and injection examples
+12. Sonneveld profile review and rounded preparation
 
 For exact public signatures and result-record fields, see the bundled
 [Public API reference](API_REFERENCE.md). Both documents are installed under
@@ -24,11 +25,11 @@ For exact public signatures and result-record fields, see the bundled
 
 ## 1. Purpose and boundaries
 
-FlahaX selects fertilizer salts and their grams per litre for fixed nutrient targets after accounting for source water. Optional Python APIs evaluate one mixed aqueous system and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
+Growers and agronomists use FlahaX to turn crop-feed targets, source water and available products into candidate batch recipes. Targets may be supplied directly or calculated with Sonneveld A–D design and grower-approved feed corrections. Fertilizer and pH-reagent contributions, rounded dry/stock doses and declared uncertainty enter the relevant workflow checks. Python APIs also evaluate mixed aqueous systems and prepare auditable delivery plans. The package is dependency-free at runtime and performs no pump I/O, deployment or database writes.
 
-Source-water chemistry starts from a laboratory analysis. From 0.4.0, the water is speciated at its **measured pH**, and the analysis's small charge imbalance is closed on one named ion and reported, instead of being turned into a pH error (section 11). From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
+Source-water chemistry can start from a laboratory analysis at its **measured pH**. The analytical ions remain unchanged; the reported imbalance is carried as residual charge, and imbalance size alone does not reject the water (section 11). The interactive interview offers review and continuation when imbalance exceeds 5%. From 0.5.0, `recommend` explains every missed target, reports whether the formula itself is electrically balanced, holds incidental ions within explicitly supplied limits, and records each product's source document (section 11). FlahaX is open source under the Apache License 2.0.
 
-The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (supplied by Flaha Agri Tech, not independent laboratory verification): 13 crop formulas and 29 products, 24 fertilizers and 5 pH products. The mixed model has 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices indicate risk, not a kinetic prediction.
+The packaged catalogue is Flaha Agri Tech Analysis Ver 0.0 (supplied by Flaha Agri Tech, not independent laboratory verification): 13 crop formulas and 29 products, 24 fertilizers and 5 pH products. The mixed model has 197 aqueous entries and 28 phases. Its accepted boundary is **25 °C**, **ionic strength <= 0.1 mol/kg water**, fixed oxidation states and closed analytical inorganic carbon. Equilibrium does not predict precipitation speed, stock shelf life or a commercial lot's true assay. Positive saturation indices describe thermodynamic supersaturation; phase risk labels and information do not predict kinetics.
 
 Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-EDTA retain their declared forms. Micro Combi Mix 1 and 2 are declared blends of those EDTA forms and sodium molybdate; Mix 2 also declares its boron as boric acid. Do not substitute arbitrary product chemistry based on a similar name.
 
@@ -226,7 +227,7 @@ assert 0 < plan.reagent_volume_litres < 0.1
 print(plan.reagent_volume_litres, plan.nutrient_contribution)
 ```
 
-Final solvent mass includes reagent carrier water, and final volume is the make-up volume. This is a fixed-solvent projection, not a free-pouring dilution model. Acid molality times kg water gives acid moles; nitrate-N assay gives reagent grams, and density gives reagent litres. Added nitrate is included in the final nutrient score. Initial charge imbalance above the declared 0.1% limit is rejected. An equal target pH produces exactly zero acid; a target requiring base is outside this HNO3 path.
+Final solvent mass includes reagent carrier water, and final volume is the make-up volume. This is a fixed-solvent projection, not a free-pouring dilution model. Acid molality times kg water gives acid moles; nitrate-N assay gives reagent grams, and density gives reagent litres. Added nitrate is included in the final nutrient score. The HNO3 calculation uses the declared initial pH and inventories; the removed water-imbalance rejection is not an acceptance test. An equal target pH produces exactly zero acid; a target requiring base is outside this HNO3 path.
 
 ## 7. Stock, calibration and review workflow
 
@@ -279,7 +280,6 @@ Python callers should handle `InputError` for formulation and `DeliveryError` (w
 | The questions come line by line instead of full screen | The output is not a terminal (an editor's output panel, a pipe, a script), or the console cannot be put in full-screen mode (for example Git Bash) | Run `flahax mix` in Windows Terminal, PowerShell, `cmd`, or a Linux or macOS terminal. `flahax mix --plain` always asks line by line. |
 | The screen says "Enlarge the window to at least 80 x 24" | The window is too small | Make the window larger; the answer you were typing is kept. Q quits. |
 | Arrow keys type letters (`àH`, `àP`) or the help line is invisible | A copy older than 0.6.0 | Upgrade (see above) and check `flahax --version`. |
-| Typing "à" swallows the next key (Windows) | Windows reports "à" with the same code as the arrow keys (#127) | Type the name without the accent, or use `flahax mix --plain`. |
 | Some symbols show as `?` or as plain `+ - |` lines | The console's character set cannot show them | Use Windows Terminal; the results are unchanged. |
 | Esc or Q asks "Y/N" | Leaving asks first, so a stray key does not close the screen | Press Y to leave, any other key to stay. The sheets are already written once the results show. |
 
@@ -546,7 +546,7 @@ Supply the complete `equilibrium` record to proceed. Read all stages, not only
 |---|---|---|
 | `calculated` | That stage returned a numerical result | Inspect warnings and dependent stages |
 | `needs_input` | Required evidence is absent | Provide the named `required_inputs` |
-| `requires_review` | Incidental nutrient contribution needs assessment | Review absolute mg/L and hard caps |
+| `requires_review` | Calculated result needs assessment, such as target misses or preparation qualifications | Review residuals, absolute mg/L, limits and qualifications |
 | `blocked` | That stage was rejected | Read `error_code` and `message`; correct inputs |
 
 A zero NH4 target is no ammonium requirement: it sets no row, and products that
@@ -579,18 +579,21 @@ for miss in result['unmetTargets']:
 print(result['salts'][0]['name'], result['salts'][0]['provenance']['identityId'])
 ```
 
-Pepper (Howard Resh) lists 39% more anion than cation charge, so no salt
-combination meets every target; its warning says so. Its misses are all
+Pepper (Howard Resh) has an imbalanced nutrient charge subtotal, and this
+particular fit reports target misses. That subtotal is an informational convention;
+it does not prove that a complete chemical inventory cannot meet the targets. Its misses are all
 `conflicting_targets`, and `conflictsWith` names the targets each one competes
 with. Because the formula states an NH4 target, `max_ammonium_fraction` sets no
-allowance and `ammoniumLimit` is `None`. Other reasons are `no_source` (no
-product supplies the element), `incidental_tradeoff` (reachable, but the
-penalty on an unrequested ion chose otherwise) and `limited_by_ceiling` (a
-declared maximum binds, and `bindingLimits` names it); `reachableWithChloride`
-says whether chloride products would reach a conflicting target. A target is met
-only within the numerical tolerance (1e-5 relative, `flahax.requirement_fit.met`),
-so small misses such as Zn +0.017 % and Cu +0.0027 % here are listed too; the
-former 1 % band is gone.
+allowance and `ammoniumLimit` is `None`. Current miss reasons include `no_source`, `water_exceeds_target`,
+`target_above_maximum`, `prohibited_by_zero_requirement`, `limited_by_ceiling`,
+`fit_degradation` and `conflicting_targets`. The first four carry a proof scoped
+to the declared nonnegative nutrient inventory and constraints. The remaining
+reasons disclose incomplete relaxed searches, not impossibility proofs.
+There is no dose-size or incidental-nutrient penalty. Read `searchScope`,
+`proofScope`, `bindingLimits` and `reachableWithChloride` with the returned
+residuals; a relaxed search does not certify the original constrained recipe.
+Numerical acceptance is 1e-5 relative for positive targets and 1e-6 mg/L for
+explicit zeros; preparation tolerances are separate requirements.
 
 A binding ceiling is held exactly on its limit, less one part per million.
 The packaged catalogue has no chloride product. A chloride product you add is
@@ -736,3 +739,88 @@ sulfate and major-ion complexes. Unqualified organic/trace-metal alkalinity is
 rejected. Measured zeros and fixed carbon stay fixed; no chloride does not
 authorize altering the titration. The original laboratory inventory continues
 to determine nutrient limits.
+
+## 12. Sonneveld profile review and rounded preparation
+
+This route is available in the current development source. A profile is a
+complete reviewed-input document, not the standard five-step interview session.
+Use the current [grower walkthrough](https://flahax.readthedocs.io/en/latest/grower/sonneveld-walkthrough.html)
+and [agronomist Appendix I example](https://flahax.readthedocs.io/en/latest/agronomist/sonneveld-appendix-i.html)
+for the complete example, figures and target/nominal/bounds table. Those guides
+and the example JSON are separate from the two Markdown resources installed in
+the wheel. Obtain them before going offline; installing the wheel alone does
+not install the full website or `examples/sonneveld-appendix-i.json`.
+
+From a source checkout the full profile is `examples/sonneveld-appendix-i.json`.
+From the built site, download that file to your working folder and run:
+
+```text
+flahax mix --sonneveld-batch sonneveld-appendix-i.json --output appendix-i-output
+# Add --plain for line-by-line review instead of the full-screen TUI.
+```
+
+1. Review the dated root-zone sample, guide values, explicit feed corrections
+   and full-precision finished-feed targets. The grower/agronomist selects
+   corrections; the sample-to-guide differences do not automatically become doses.
+2. Continue all preview pages or stop. Enter the grower name and review reason
+   to approve the exact sample/design fingerprint. Save under a distinct name.
+3. Let the workflow fit fertilizer and pH-reagent nutrients together and try
+   declared additional products if needed. It never invents available products.
+4. Review the selected rounded preparation and choose the adoption option or
+   Stop. The Appendix I example selects the sodium sulfate alternative; sodium
+   nitrate is absent from both fertilizer lists.
+5. Review Tanks, Nutrients and Notes, then retain `batch-sheet.html`,
+   `report.html` and `summary.json`. Exit 0 may still mean `requires_review`.
+
+The example's final volume is 1,000 L, modeled pH target 5.5, closed carbon,
+25 °C and 1,000 kg final solvent. Source water supplies Ca 1.00, Mg 0.40 and
+sulfate 0.30 mmol/L, with 2.20 mmol/L retained inorganic carbon from bicarbonate.
+The pH solver finds the dose of 65% w/w HNO3 at 1.39 kg/L; it is not fixed to
+complete bicarbonate-neutralization equivalents. Acid nitrate and all declared
+product counterions count in the finished feed.
+
+The full-precision A–D design gives small differences from the paper's printed
+rounded D cells. For the documented grades, the rounded recipe uses 24.039 g
+anhydrous sodium sulfate, 187.26 mL copper sulfate pentahydrate stock and
+120.98 mL sodium molybdate dihydrate stock (each 1.00 g/L of supplied product
+per litre of final stock), and 127.76 mL nitric-acid product. Other dry weights
+are on the generated sheet and the agronomist walkthrough. Stocks stay separate;
+all additions are included in the final 1,000 L, with stock carrier displacing
+source water in this adapter.
+
+The profile includes dry weighing/assay errors, stock concentration/dispensing
+errors and nitric-acid assay/density/volume bounds. Its ±0.1% nutrient intervals,
+sampled pH 5.5 ±0.002 and 5% reserve below the illustrative 9 mg/L sodium ceiling
+are preparation requirements. The reserved ceiling is 8.55 mg/L. They do not
+certify source-water or final-volume uncertainty, a nonlinear pH interval, every
+saturation state, product assays, stock stability or measured batch pH/EC.
+Numerical acceptance and physical validation remain separate.
+
+Unchanged saved inputs replay with:
+
+```text
+flahax mix sessions/appendix-i --output appendix-i-repeat
+```
+
+Unchanged sessions created with this build replay in separate processes with
+identical full-precision summaries, including when the import file is removed.
+The public CLI regression varies process hash seeds while retaining all nutrient,
+pH and reserve checks ([#272](https://github.com/rafatahmed/Flahax/issues/272)).
+Preserve original sessions and exports across software updates. A calculation
+change can require reimport and review of an older record; never edit fingerprints
+to force replay.
+
+The saved session embeds the profile, preview approval, selected result identity
+and versioned input/source fingerprints. It does not need the original import
+file. A new sample, correction, product, reagent or equipment bound needs an
+updated profile and a new interactive review; retain the old record. Source/model
+drift may require reimport rather than replay. `--review-reagents` is not the
+Sonneveld reapproval path. The JSON result export is not a session or import
+profile. See [input and saved-session formats](https://flahax.readthedocs.io/en/latest/reference/file-formats.html#sonneveld-import-profile).
+
+For fully offline use, retain the **complete built HTML directory**, including
+`_static` and `_downloads`, plus the profile and results. With Mermaid unavailable,
+use the linked route table and numbered accounting steps. The installed manual
+and API reference can be located without network access using the resource command
+in section 9. Physical preparation qualification and finished-batch measurements
+remain open even when all declared software checks pass.

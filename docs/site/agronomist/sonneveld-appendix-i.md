@@ -54,6 +54,52 @@ inventory uses the stated bicarbonate, not an assumed measured pH. Its source
 water and final-volume precision are fixed in this example; uncertainty in
 those measurements is not included in the bounds below.
 
+```{rst-class} accounting-flow
+```
+
+```{mermaid}
+---
+caption: Accounting, part 1 — design and formulate the selected recipe
+---
+flowchart TB
+    accTitle: Appendix I target design and formulation
+    accDescr: Build full-precision D targets from the crop baseline, corrections and design EC. Fit with source-water credits and reagent nutrient contributions. The original inventory misses at pH 5.5, so bounded search admits the declared sodium sulfate and selects a verified alternative.
+    A[Crop baseline A<br/>explicit corrections B and design EC] --> D[Balanced C<br/>full-precision finished targets D]
+    D --> F[Fit fertilizers and solve pH reagent<br/>count nutrients and counterions]
+    W[Source-water nutrient credits<br/>and retained carbon inventory] --> F
+    G[Declared fertilizer grades<br/>and nitric acid grade] --> F
+    F --> M[Original inventory misses at pH 5.5]
+    M --> S[Bounded search admits sodium sulfate<br/>select the verified alternative]
+```
+
+Continue with that selected recipe in part 2. Its rounded quantities and source
+water are reconstructed together before the grower adopts the preparation.
+
+```{rst-class} accounting-flow
+```
+
+```{mermaid}
+---
+caption: Accounting, part 2 — reconstruct and verify rounded preparation
+---
+flowchart TB
+    accTitle: Appendix I rounded preparation and verification
+    accDescr: Round dry weights, separate product-stock doses and nitric acid. Reconstruct the finished feed with stock-carrier displacement inside the final 1000 litres. Check all 13 nutrient bounds, sodium reserve, sampled pH and nominal saturation. Adopt the preparation while retaining physical qualification requirements.
+    DR[Round dry fertilizer weights] --> V[Reconstruct finished feed<br/>water plus products plus reagent]
+    ST[Round separate stock doses<br/>carrier displaces source water] --> V
+    AC[Round nitric acid dose<br/>count its nitrate contribution] --> V
+    V --> B[Inside final 1000 L, check 13 nutrient bounds<br/>sodium reserve, sampled pH and nominal saturation]
+    B --> O[Review and adopt the verified preparation<br/>save sheet, report and calculation evidence]
+    O --> P[Physical preparation qualification<br/>and measured batch validation remain]
+```
+
+Read the flow as five accounting steps: design D; fit with source-water and
+acid nutrient contributions; retry the declared additional fertilizer; round
+and reconstruct including carrier displacement; then review bounds and
+qualifications. The sections below retain these steps when the diagram cannot
+render. See the [grower's current screen captures](../grower/sonneveld-walkthrough.md#screen-capture-provenance)
+for review, selection, rounded amounts and notes.
+
 ## Design the targets
 
 1. Start with Column A: a crop/system baseline with balanced macronutrient

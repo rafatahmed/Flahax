@@ -23,6 +23,11 @@ Titrated alkalinity can supply the inorganic-carbon inventory through its suppor
 reference. The report retains the analytical inputs and the resulting chemistry evidence.
 Review missing measurements and any model-domain qualifications before interpreting pH.
 
+For a worked design-to-preparation path, start with
+[Sonneveld Appendix I](sonneveld-appendix-i.md), then give the grower its
+[review walkthrough](../grower/sonneveld-walkthrough.md).
+[Choose a workflow](../start/choose-workflow.md) compares the other entry points.
+
 ## In this guide
 
 | Page | What it covers |

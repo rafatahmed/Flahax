@@ -124,6 +124,14 @@ class ExampleCommandTests(unittest.TestCase):
         app.connect.assert_called_once_with('include-read', cfg['_rewrite_included_links'])
         for name, original, expected in (
             ('USER_GUIDE.md', '[api](API_REFERENCE.md)', '[api](api.md)'),
+            (
+                'USER_GUIDE.md',
+                (
+                    '[profile](https://flahax.readthedocs.io/en/latest/reference/'
+                    'file-formats.html#sonneveld-import-profile)'
+                ),
+                '[profile](../reference/file-formats.md#sonneveld-import-profile)',
+            ),
             ('API_REFERENCE.md', '[manual](USER_GUIDE.md)', '[manual](manual.md)'),
             (
                 'CONTRIBUTING.md',
@@ -131,6 +139,17 @@ class ExampleCommandTests(unittest.TestCase):
                 '[conduct](../project/code-of-conduct.md)',
             ),
             ('other.md', '[api](API_REFERENCE.md)', '[api](API_REFERENCE.md)'),
+            (
+                'other.md',
+                (
+                    '[guide](https://flahax.readthedocs.io/en/latest/grower/'
+                    'sonneveld-walkthrough.html)'
+                ),
+                (
+                    '[guide](https://flahax.readthedocs.io/en/latest/grower/'
+                    'sonneveld-walkthrough.html)'
+                ),
+            ),
         ):
             content = [original]
             cfg['_rewrite_included_links'](app, Path(name), 'unused', content)

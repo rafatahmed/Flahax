@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX                                                                  0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+  Your batch                     │ Ca: finished target 2.8359375 mmol/L
+  ▸ Spec                         │ Mg: finished target 1.03125 mmol/L
+    Water                        │ K: finished target 8.765625 mmol/L
+    Formula                      │ N_NO3: finished target 13.095455 mmol/L
+    Fertilizers                  │ N_NH4: finished target 1.5 mmol/L
+    Reagents and pH              │ P: finished target 1.25 mmol/L
+                                 │ Review root-zone sample illustrative-appendix-i (2026-11-17)
+                                 │ ▸ Continue review
+                                 │   Stop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ↑↓ Move   Enter Choose   Esc Quit

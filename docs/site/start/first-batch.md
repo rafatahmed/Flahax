@@ -4,6 +4,10 @@ This walks through one batch with `flahax mix` and RO water, the simplest case. 
 five minutes. You need FlahaX [installed](install.md) and a terminal: Windows Terminal,
 PowerShell, `cmd`, or a Linux or macOS terminal.
 
+Have an agronomist-prepared Sonneveld profile instead? Use
+[its review walkthrough](../grower/sonneveld-walkthrough.md).
+[Choose a workflow](choose-workflow.md) compares all four entry points.
+
 ## 1. Start
 
 ```bash

@@ -89,6 +89,12 @@ each release, with numbers, sources and decisions, are in
 
 ### Fixed
 
+- Make equilibrium evidence independent of analytical-component insertion order so
+  unchanged Sonneveld sessions replay across processes without a false candidate-identity
+  mismatch. Preserve input/source and selected-candidate guards (#272).
+- Align the current documentation and packaged manual with source-water handling,
+  recipe-fit and ammonium rules, supported workflows and the hosted CI matrix (#271).
+
 - Withhold manufacturer-screening EC totals containing positive Ultrasol Magsul doses;
   retain the disputed 1.2 mS/cm brochure value as evidence (#244).
 - Record all chemistry input byte identities, the versioned PHREEQC extraction route and

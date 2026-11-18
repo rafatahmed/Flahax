@@ -28,19 +28,28 @@ their qualifications and the required measurements.
 
 ```{mermaid}
 ---
-caption: From your water to your tanks
+caption: From declared inputs to a reviewed batch
 ---
 flowchart LR
-    W[Water analysis] --> R[Recipe<br/>grams of each fertilizer]
+    accTitle: From declared inputs to a reviewed batch
+    accDescr: Water, feed targets, fertilizers and available pH reagents enter formulation together. Review tank assignments or rounded batch preparation, then the batch sheet, qualifications and required measurements.
+    W[Water analysis] --> R[Formulate recipe with<br/>pH-reagent nutrient accounting]
     F[Supplied or Sonneveld-designed<br/>finished-feed targets] --> R
     P[Fertilizers you have] --> R
-    R --> H[pH plan<br/>acid or base to the target]
-    T[Target pH] --> H
-    H --> K[Tank assignment<br/>or rounded batch preparation]
+    T[Target pH and<br/>available pH reagents] --> R
+    R --> K[Tank assignment<br/>or rounded batch preparation]
     K --> S[Batch sheet and report<br/>review and measure after mixing]
 ```
 
+In words: supply the water, targets and available products, count reagent
+nutrients while formulating, then review the delivery checks and measurements
+needed for the selected preparation. The [workflow chooser](start/choose-workflow.md)
+links each way of supplying those inputs.
+
 ## Choose your path
+
+[Choose a workflow](start/choose-workflow.md) to compare the standard wizard,
+Sonneveld profile review, batch files and Python route. Then follow your audience guide.
 
 ::::{grid} 1 1 3 3
 :gutter: 3
@@ -90,9 +99,11 @@ instructions. Measure pH and EC after mixing. See [Scope and limits](explanation
 :hidden:
 
 Install <start/install>
+Choose a workflow <start/choose-workflow>
 Your first batch <start/first-batch>
 Your first recipe in Python <start/first-recipe>
 Migrate saved workflows <start/migration>
+Use FlahaX offline <start/offline>
 ```
 
 ```{toctree}

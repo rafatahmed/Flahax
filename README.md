@@ -171,6 +171,12 @@ exit 3 for a blocked result. Always inspect the returned qualifications and limi
 The manual can also be read offline from an installed package through `importlib.resources`
 (`flahax/data/USER_GUIDE.md`).
 
+For the current source documentation, [choose a workflow](docs/site/start/choose-workflow.md),
+follow the [grower Sonneveld walkthrough](docs/site/grower/sonneveld-walkthrough.md),
+or review the [complete Appendix I calculation](docs/site/agronomist/sonneveld-appendix-i.md).
+The [profile and session reference](docs/site/reference/file-formats.md#sonneveld-import-profile)
+describes the reusable inputs and saved evidence.
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -194,8 +200,9 @@ with tables, charts, provenance and their limitations.
 
 - The automated test suite includes live replay of every catalogue product, phase and acid case
   against pinned PHREEQC 3.8.6 (USGS).
-- Hosted checks run on Python 3.11, 3.12, 3.13 and 3.14 on Linux, and on Windows and macOS,
-  with clean wheel and source installations.
+- Hosted checks cover Python 3.11, 3.12, 3.13 and 3.14 on Linux, with native
+  coverage on Windows using Python 3.13. Linux compatibility jobs also verify
+  clean wheel and source installations; macOS is outside the current CI matrix.
 - Evidence is recorded per release in the
   [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
 

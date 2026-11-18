@@ -21,6 +21,10 @@ flowchart LR
 
 FlahaX saves your answers, so the next batch is one command: `flahax mix sessions/NAME`.
 
+Need help choosing between the five-step interview and a prepared profile?
+Use [Choose a workflow](../start/choose-workflow.md). After reviewing quantities,
+continue to [mixing checks](mix-safely.md).
+
 ## In this guide
 
 | Page | What it covers |

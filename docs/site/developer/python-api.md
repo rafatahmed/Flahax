@@ -6,6 +6,23 @@ Python 3.11 or newer is required. The package has no third-party dependencies.
 
 FlahaX is open source under the Apache License 2.0 from version 0.4.0.
 
+For a full reviewed Sonneveld batch, start with the
+[Appendix I walkthrough](../agronomist/sonneveld-appendix-i.md) and
+[profile/session formats](../reference/file-formats.md#sonneveld-import-profile).
+The low-level fit examples below cover a smaller part of that workflow.
+
+## On this page
+
+- [Install](#install) and [library call](#library-call)
+- [Inputs](#inputs) and [result](#result)
+- [Tolerance and unmet targets](#tolerance-formula-balance-and-unmet-targets)
+- [Incidental ions and ceilings](#incidental-ions-and-ceilings)
+- [Planning commands](#python-planning-commands)
+- [Laboratory source water](#python-laboratory-water)
+- [Zero requirements and hard maxima](#zero-requirements-and-hard-maxima)
+- [Available-product search](#automatic-search-within-available-products)
+- [Joint formulation](#joint-fertilizerreagent-contract)
+
 ## Install
 
 From PyPI, inside a virtual environment (pin the version for reproducible
@@ -233,6 +250,8 @@ The equilibrium acid plan reports residual bicarbonate in
 `audit["residualBicarbonateMmolPerKg"]` without a crop-suitability warning.
 Numerical feasibility establishes agreement with supplied inputs only.
 
+(python-planning-commands)=
+
 ## Additional planning commands (since 0.3.1)
 
 The no-argument JSON recommendation command remains backward compatible.
@@ -254,6 +273,8 @@ For a grower report and printable batch sheet from one formula and one water,
 use `flahax batch` (see [batch report, sheet and tanks](../agronomist/reading-results.md)).
 See [site inputs and schemas](site-planning.md), [source-sheet review](../evidence/source-sheet-review.md)
 and [current development status](https://github.com/rafatahmed/Flahax/blob/main/docs/development-status.md).
+
+(python-laboratory-water)=
 
 ## Source water chemistry from a laboratory analysis (0.4.0)
 

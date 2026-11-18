@@ -12,3 +12,5 @@ Each method states which records it requires and what its evidence supports.
 - [pH planning with measured titration curves](../agronomist/ph-and-acids.md)
 - [EC methods and limitations](../developer/conductivity.md)
 - [Material identity, grade and lot](../agronomist/formula-and-products.md)
+- [Sonneveld grower review](../grower/sonneveld-walkthrough.md) and [Appendix I verification](../agronomist/sonneveld-appendix-i.md)
+- [Offline delivery and saved inputs](../start/offline.md)

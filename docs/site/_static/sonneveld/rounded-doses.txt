@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX   Appendix I                                                     0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+   Tanks    Nutrients    Notes                                                    review required
+
+  All nutrient targets met. Stock solubility was not checked for calcium nitrate tetrahydrate, iron
+  DTPA, boric acid, manganese sulfate monohydrate, zinc sulfate heptahydrate, copper sulfate
+  pentahydrate, sodium molybdate dihydrate, potassium nitrate, ammonium nitrate, monopotassium
+  phosphate, potassium sulfate, sodium sulfate anhydrous, magnesium sulfate heptahydrate.
+  Mixed-stock solubility is unverified.
+  ┌─ Rounded batch doses ────────────────────────────────────────────────────┐
+  │ calcium nitrate tetrahydrate: 433.557 g dry product                      │
+  │ ammonium nitrate: 120.062 g dry product                                  │
+  │ magnesium sulfate heptahydrate: 155.584 g dry product                    │
+  │ monopotassium phosphate: 170.106 g dry product                           │
+  │ potassium nitrate: 615.877 g dry product                                 │
+  │ potassium sulfate: 124.078 g dry product                                 │
+  │ iron DTPA: 7.615 g dry product                                           │
+  │ manganese sulfate monohydrate: 1.69 g dry product                        │
+  │ zinc sulfate heptahydrate: 1.15 g dry product                            │
+  │ boric acid: 1.855 g dry product                                          │
+  │ sodium sulfate anhydrous: 24.039 g dry product                           │
+  │ copper sulfate pentahydrate: 187.26 mL stock at 1 g/L                    │
+  │ sodium molybdate dihydrate: 120.98 mL stock at 1 g/L                     │
+  │ HNO3: 127.76 mL liquid reagent                                           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+  Sheets: appendix-i-output
+  Tab Next view   ↑↓ Scroll   Q Quit

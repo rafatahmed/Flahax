@@ -61,3 +61,6 @@ tests/fixtures/phreeqc/**/*.json -text whitespace=cr-at-eol
 
 # Published evidence downloads must match their archived bytes and checksums.
 docs/site/_static/benchmarks/** -text whitespace=cr-at-eol
+
+# TUI frame text preserves terminal padding and its recorded byte hashes.
+docs/site/_static/sonneveld/*.txt -text whitespace=-blank-at-eol,-blank-at-eof

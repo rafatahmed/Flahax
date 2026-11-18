@@ -1,0 +1,58 @@
+{
+  "source_revision": "0f44ff5481665a0cf4211ae78c713066b6d5746e",
+  "profile_sha256": "f39aa909ca2671cbbbad5c8dcdc769b5312ff42050be88185254f3010892a983",
+  "terminal_columns": 100,
+  "terminal_rows": 36,
+  "exit_code": 0,
+  "result_id": "ccd7bcccf5ed12caf9594ccc9fff44e8859da1533a4e714939db391e8398babb",
+  "capture_method": "Unmocked run_tui with scripted key/draw terminal adapter; real ANSI application frames, not a native desktop window screenshot.",
+  "summary_status": "requires_review",
+  "screens": [
+    {
+      "name": "sample-review",
+      "frame_index": 0,
+      "image_sha256": "4acb61aa5ee33d86935b81453ceea74f6b9b1bdbeb71a9b22d74230ec8121cb0",
+      "frame_sha256": "fdf9a11a848b67056997116f0919a3df9259647c53ad6252578dfefe7e2cab40",
+      "annotation": "Compare the observations and guides; feed corrections are explicit decisions."
+    },
+    {
+      "name": "target-review",
+      "frame_index": 1,
+      "image_sha256": "eb7a5201973d741303c668bc9221c83f7a114cb696b9a0f487b5354894b6db5e",
+      "frame_sha256": "f74a54dc21ec6c03cc4866a200fb01a7fd6b28c465408b97d0f9d408645c7270",
+      "annotation": "All profile concentrations here are mmol/L; continue through the remaining targets."
+    },
+    {
+      "name": "alternative-selection",
+      "frame_index": 1435,
+      "image_sha256": "3c57999febe8d9ad801187acf322d5e063b0f35e05d2e96f0ee74dc6e0c351ae",
+      "frame_sha256": "f94fc91e61849f579c3f949ed9c3462d37f7acbf196f6fa6536da6f80720c02e",
+      "annotation": "This choice follows the preview approval and calculation; Stop keeps no new session."
+    },
+    {
+      "name": "rounded-doses",
+      "frame_index": 1436,
+      "image_sha256": "1505398a0f9ec24a2e18c99f97ff480db750373473db997fd4795b4318bec537",
+      "frame_sha256": "ac6ff898fe2e31eac1ae49e867ecfc4ddf751236a6bad436fe95884747a18389",
+      "annotation": "Stocks are separate product solutions; include every addition in the final 1,000 L."
+    },
+    {
+      "name": "nutrient-bounds",
+      "frame_index": 1437,
+      "image_sha256": "e4dd6c9f73a1c6694bf82186e9e0045037104c5404047da131f37aeedc3250d2",
+      "frame_sha256": "978d172d4e8b2a7b2ade683fe6c2cc1f93a9653a1dbcc8feac9b5cf47403b64a",
+      "annotation": "Target, nominal, low and high are elemental mg/L; nitrogen is reported as N."
+    },
+    {
+      "name": "uncertainty-notes",
+      "frame_index": 1438,
+      "image_sha256": "38bbff3686a06ad1a2b86f1c6fe0b011b3354c567d54d1edf8b9b3b888282be0",
+      "frame_sha256": "e0ee2eee3b1b56aa0a9e99363f4a630ae68aece80ddb70d476b7ddd919aa71ff",
+      "annotation": "Sampled pH and the reserved sodium ceiling pass; the overall status still needs review."
+    }
+  ],
+  "rendering": "Actual ANSI frames rasterized with Cascadia Mono, 20 px; original visible text, ANSI colors and inverse selection retained. Numbered heading, gold outline and caption added outside/around the relevant rows. No calculation values edited.",
+  "capture_profile_sha256": "4622ee2a7b8d0ac3f1e9e33e997cb55be12184fac7fbc87dc65f88ff69fd8e61",
+  "profile_hash_basis": "SHA-256 of UTF-8 LF bytes in the published example. Captured input used CRLF; its raw hash is capture_profile_sha256. Normalizing only CRLF to LF reproduces the published example byte-for-byte.",
+  "frame_hash_basis": "SHA-256 of exact visible text joined with LF and one final LF; portable across repository checkouts."
+}

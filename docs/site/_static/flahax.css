@@ -89,3 +89,19 @@ article table.docutils code.literal { white-space: nowrap; }
 .sd-card-title { color: var(--color-brand-primary); font-weight: 650; }
 .sd-card-body p:last-child { margin-bottom: 0; }
 .sd-card-text { color: var(--color-foreground-secondary); font-size: 0.92rem; }
+
+/* Keep each accounting step diagram and caption intact in print. */
+@media print {
+  .skip-to-content, .mermaid-fullscreen-btn { display: none !important; }
+  figure.accounting-flow { break-inside: avoid; page-break-inside: avoid; }
+  figure.accounting-flow .mermaid-container svg { max-height: 8in; }
+  article table.docutils {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    overflow: visible;
+  }
+  article table.docutils th, article table.docutils td { overflow-wrap: anywhere; }
+  article table.docutils code.literal { white-space: normal; overflow-wrap: anywhere; }
+  article .highlight pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+}

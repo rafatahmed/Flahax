@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX                                                                  0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+  Your batch                     │ K: measured 6.5, guide 8 mmol/L
+  ▸ Spec                         │ Ca: measured 10, guide 10 mmol/L
+    Water                        │ B: measured 0.035, guide 0.05 mmol/L
+    Formula                      │ K: feed adjustment +2 mmol/L
+    Fertilizers                  │ N_NH4: feed adjustment +0.5 mmol/L
+    Reagents and pH              │ B: feed adjustment +0.01 mmol/L
+                                 │ Review root-zone sample illustrative-appendix-i (2026-11-17)
+                                 │ ▸ Continue review
+                                 │   Stop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ↑↓ Move   Enter Choose   Esc Quit
