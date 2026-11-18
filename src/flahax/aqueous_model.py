@@ -254,7 +254,10 @@ def _solve(
         raise DeliveryError(
             'activity_model_out_of_range', 'Davies model requires I <= 0.1 mol/kgw'
         )
-    totals = {n: v for n, v in totals.items() if v > 0}
+    # A saved JSON round trip or a set-derived inventory can reorder identical
+    # components. Fix the Newton basis (and initial strength sum) before doing
+    # arithmetic so replay retains exact scientific evidence and identity (#272).
+    totals = {n: totals[n] for n in sorted(totals) if totals[n] > 0}
     bases = list(totals)
     n = len(bases)
     permitted = set(bases) | {'H+', 'H2O'}

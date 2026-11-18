@@ -161,6 +161,13 @@ class LinearPrecisionTests(unittest.TestCase):
 
 
 class ChemistryTerminationTests(unittest.TestCase):
+    def test_component_order_preserves_exact_equilibrium_evidence(self):
+        # Minimized Appendix I replay failure (#272): identical Fe-DTPA totals
+        # reached Newton in a different order after the saved JSON round trip.
+        totals = {'Dtp-5': 1.4999552332348466e-5, 'Fe+3': 1.4999552332348466e-5}
+        expected = solve(totals, 5.499143184162676)
+        self.assertEqual(solve(dict(reversed(list(totals.items()))), expected.ph), expected)
+
     def test_discontinuous_charge_cannot_pass_the_iteration_limit(self):
         def discontinuous(totals, ph, **kwargs):
             return SimpleNamespace(ph=ph, charge_balance=1 if ph < 7.1 else -1)

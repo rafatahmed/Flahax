@@ -5,7 +5,10 @@
 """Regression for the complete Appendix I workflow through the mix wizard."""
 
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -38,6 +41,71 @@ class ReviewTerm(IdleTerm):
 
 
 class SonneveldTuiTests(unittest.TestCase):
+    def test_public_appendix_i_import_and_replay_across_processes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = root / 'appendix.json'
+            profile.write_text(json.dumps(appendix_profile()), encoding='utf-8')
+            source = Path(__file__).resolve().parents[1] / 'src'
+
+            def run(seed, *args, answers=''):
+                return subprocess.run(
+                    [sys.executable, '-X', 'utf8', '-m', 'flahax', 'mix', '--plain', *args],
+                    input=answers,
+                    capture_output=True,
+                    encoding='utf-8',
+                    cwd=root,
+                    env=dict(
+                        os.environ,
+                        PYTHONPATH=str(source),
+                        PYTHONHASHSEED=str(seed),
+                        FLAHAX_HOME=str(root / 'home'),
+                    ),
+                    timeout=600,
+                )
+
+            answers = '\n'.join([''] * 4 + ['Test grower', 'Appendix I review', 'Appendix I', '2'])
+            imported = run(
+                1,
+                '--sonneveld-batch',
+                str(profile),
+                '--output',
+                'original',
+                answers=answers + '\n',
+            )
+            self.assertEqual(imported.returncode, 0, imported.stdout + imported.stderr)
+            original = (root / 'original' / 'summary.json').read_bytes()
+            summary = json.loads(original)
+            rounded = summary['volumetric_stocks']
+            targets = summary['sonneveld_target_design']['targets_mg_l']
+            self.assertEqual(len(targets), 13)
+            for nutrient, target in targets.items():
+                low, high = rounded['nutrient_bounds_mg_l'][nutrient]
+                self.assertGreaterEqual(low, target * 0.999, nutrient)
+                self.assertLessEqual(high, target * 1.001, nutrient)
+            self.assertGreaterEqual(rounded['sampled_ph_range'][0], 5.498)
+            self.assertLessEqual(rounded['sampled_ph_range'][1], 5.502)
+            self.assertLess(rounded['nutrient_bounds_mg_l']['Na'][1], 8.55)
+            self.assertNotIn('sodium nitrate', rounded['dry_product_grams'])
+            profile.unlink()  # saved replay must not depend on the original import file
+            for seed in (2, 17):
+                with self.subTest(seed=seed):
+                    replay = run(seed, 'sessions/appendix-i', '--output', f'replay-{seed}')
+                    self.assertEqual(replay.returncode, 0, replay.stdout + replay.stderr)
+                    output = root / f'replay-{seed}'
+                    self.assertEqual((output / 'summary.json').read_bytes(), original)
+                    self.assertTrue((output / 'batch-sheet.html').is_file())
+            saved = root / 'home' / 'sessions' / 'appendix-i.json'
+            session = json.loads(saved.read_text(encoding='utf-8'))
+            session['selected_candidate'] = 'changed'
+            saved.write_text(json.dumps(session), encoding='utf-8')
+            refused = run(3, 'sessions/appendix-i', '--output', 'refused')
+            self.assertEqual(refused.returncode, 1)
+            self.assertIn(
+                'saved session metadata or inputs changed', refused.stdout + refused.stderr
+            )
+            self.assertFalse((root / 'refused').exists())
+
     def test_appendix_i_preview_search_rounded_delivery_and_replay(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
