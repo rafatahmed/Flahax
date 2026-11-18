@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Audit CLI refusal paths and hash-bound evidence; no external ledger dependence."""
+"""Audit CLI refusal paths and hash-bound evidence; no external ledger
+dependence.
+"""
 
 import contextlib
 import copy
@@ -175,7 +177,8 @@ class AuditCommandTests(unittest.TestCase):
         csv = fixture.root / 'tasks.csv'
         args = [path, '--csv', csv, '--plan', plan]
         self.assertEqual(invoke(check_traceability, [*args, '--write-summaries'])[0], 0)
-        # This synthetic ledger uses non-Pxx IDs, so recreate an action row for drift checking.
+        # This synthetic ledger uses non-Pxx IDs, so recreate an action
+        # row for drift checking.
         plan.write_text('| P00 | old |\n')
         self.assertEqual(invoke(check_traceability, args)[0], 1)
 

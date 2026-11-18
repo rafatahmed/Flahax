@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent declared element assays, preserving shared product weighing errors."""
+"""Independent declared element assays, preserving shared product
+weighing errors.
+"""
 
 from copy import deepcopy
 import itertools
@@ -14,7 +16,9 @@ from .ratio_products import LABELS
 
 
 def _hypothetical_product(product):
-    """Detach a single-identity hypothesis from its unmodified source document."""
+    """Detach a single-identity hypothesis from its unmodified source
+    document.
+    """
     if product.get("grade") is None:
         return deepcopy(product)
     grade = product["grade"]
@@ -32,7 +36,9 @@ def _hypothetical_product(product):
 
 
 def validate_element_factors(sources, factors):
-    """Require complete explicit assay bounds and refuse unbounded derived nutrients."""
+    """Require complete explicit assay bounds and refuse unbounded
+    derived nutrients.
+    """
     names = {s["name"] for s in sources}
     if not isinstance(factors, dict) or set(factors) != names:
         raise DeliveryError(
@@ -81,8 +87,9 @@ def validate_element_factors(sources, factors):
                     "invalid_analysis_uncertainty",
                     "Elemental factors require finite 0 < low <= high",
                 )
-        # Independent intervals include the all-high vertex. This necessary mass
-        # bound does not establish stoichiometric realizability of every vertex.
+        # Independent intervals include the all-high vertex. This
+        # necessary mass bound does not establish stoichiometric
+        # realizability of every vertex.
         upper_percent = sum(product["elements"][k] * pair[1] for k, pair in entry.items())
         if (
             not math.isfinite(upper_percent)
@@ -108,7 +115,9 @@ def validate_element_factors(sources, factors):
 
 
 def product_vertices(row, options, dimension):
-    """Return local mass/element vertices and their sampling-coordinate witnesses."""
+    """Return local mass/element vertices and their sampling-coordinate
+    witnesses.
+    """
     from .ratio_blend_uncertainty import is_blend, blend_vertices
 
     if is_blend(options["product_element_factors"][row["name"]]):
@@ -126,8 +135,9 @@ def product_vertices(row, options, dimension):
     relevant = [
         k for k in (*LABELS, "Na", "Cl", "N_NH4") if row["product"]["elements"].get(k, 0) > 0
     ]
-    # Each product is one group, retaining a common dose for every element.
-    # Other elements affect chemistry but not the six-ion/Na/Cl objective vertices.
+    # Each product is one group, retaining a common dose for every
+    # element. Other elements affect chemistry but not the six-ion/Na/Cl
+    # objective vertices.
     vertices = []
     coordinates = []
     for mass_end in (0, 1):
@@ -150,7 +160,9 @@ def product_vertices(row, options, dimension):
 
 
 def perturb_sources(sources, options, values):
-    """Create hypothetical assay records without altering source documents or dose fitting."""
+    """Create hypothetical assay records without altering source
+    documents or dose fitting.
+    """
     changed = deepcopy(sources)
     doses = []
     for row in changed:

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public example commands and docs hooks preserve partial results and output files."""
+"""Public example commands and docs hooks preserve partial results and
+output files.
+"""
 
 import contextlib
 import io
@@ -93,7 +95,8 @@ class ExampleCommandTests(unittest.TestCase):
                 run_all.main()
             self.assertEqual(e.exception.code, 2)
             self.assertEqual(before, {p.name: p.read_bytes() for p in target.iterdir()})
-            # The real scenarios were checked above; this branch checks stdout serialization.
+            # The real scenarios were checked above; this branch checks
+            # stdout serialization.
             with (
                 patch.object(run_all, 'SCENARIOS', {'small': lambda: {'assumptions': []}}),
                 patch.object(sys, 'argv', ['run_all']),
@@ -124,6 +127,14 @@ class ExampleCommandTests(unittest.TestCase):
         app.connect.assert_called_once_with('include-read', cfg['_rewrite_included_links'])
         for name, original, expected in (
             ('USER_GUIDE.md', '[api](API_REFERENCE.md)', '[api](api.md)'),
+            (
+                'USER_GUIDE.md',
+                (
+                    '[profile](https://flahax.readthedocs.io/en/latest/reference/'
+                    'file-formats.html#sonneveld-import-profile)'
+                ),
+                '[profile](../reference/file-formats.md#sonneveld-import-profile)',
+            ),
             ('API_REFERENCE.md', '[manual](USER_GUIDE.md)', '[manual](manual.md)'),
             (
                 'CONTRIBUTING.md',
@@ -131,6 +142,17 @@ class ExampleCommandTests(unittest.TestCase):
                 '[conduct](../project/code-of-conduct.md)',
             ),
             ('other.md', '[api](API_REFERENCE.md)', '[api](API_REFERENCE.md)'),
+            (
+                'other.md',
+                (
+                    '[guide](https://flahax.readthedocs.io/en/latest/grower/'
+                    'sonneveld-walkthrough.html)'
+                ),
+                (
+                    '[guide](https://flahax.readthedocs.io/en/latest/grower/'
+                    'sonneveld-walkthrough.html)'
+                ),
+            ),
         ):
             content = [original]
             cfg['_rewrite_included_links'](app, Path(name), 'unused', content)

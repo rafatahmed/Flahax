@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Six-nutrient fixed-ratio recipes including explicit source water and pH reagents."""
+"""Six-nutrient fixed-ratio recipes including explicit source water and
+pH reagents.
+"""
 
 import math
 
@@ -16,7 +18,8 @@ from .ratio_verification import verification_options, verify_rounded_recipe
 NUTRIENTS = ("K", "Ca", "Mg", "NO3", "P", "SO4")
 BASIS = ("K+", "Ca+2", "Mg+2", "NO3-", "PO4-3", "SO4-2")
 CHARGES = (1, 2, 2, 1, 1, 2)
-# Stoichiometric contributions per mole of each pure compound, in NUTRIENTS order.
+# Stoichiometric contributions per mole of each pure compound, in
+# NUTRIENTS order.
 SOURCES = (
     ("KH2PO4", (1, 0, 0, 0, 1, 0)),
     ("Ca(NO3)2.4H2O", (0, 1, 0, 2, 0, 0)),
@@ -68,13 +71,15 @@ def plan_ratio_recipe(
     maximum_concentrations=None,
     nutrient_ceiling_reserve=0.0,
 ):
-    """Return a full-precision pure-salt recipe and its modeled chemistry.
+    """Return a full-precision pure-salt recipe and its modeled
+    chemistry.
 
     Ratios use charge equivalents and total phosphate reported as H2PO4.
-    Strength sums six analytical mmol/L quantities. Explicit final water mass
-    converts concentrations to mol/kg for the supported 25 C aqueous model.
-    The allocation supports SOURCES plus explicitly permitted HNO3. Water
-    nutrients and both pH reagents count toward the final analytical targets.
+    Strength sums six analytical mmol/L quantities. Explicit final water
+    mass converts concentrations to mol/kg for the supported 25 C
+    aqueous model. The allocation supports SOURCES plus explicitly
+    permitted HNO3. Water nutrients and both pH reagents count toward
+    the final analytical targets.
     """
     from .ratio_products import validate_limits
 

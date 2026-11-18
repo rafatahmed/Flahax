@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bounded adaptive sampling; observed features are not continuous extrema proofs."""
+"""Bounded adaptive sampling; observed features are not continuous
+extrema proofs.
+"""
 
 import math
 
@@ -14,7 +16,9 @@ MAX_ROUNDS = 16
 
 
 def refine_ph(solve_at, base_grid, phases, si_limit):
-    """Refine observed maxima and crossings, reporting unresolved work explicitly."""
+    """Refine observed maxima and crossings, reporting unresolved work
+    explicitly.
+    """
     states = {}
 
     def evaluate(ph):
@@ -47,7 +51,8 @@ def refine_ph(solve_at, base_grid, phases, si_limit):
                     interval = [grid[j], grid[j + 1]]
                     neighbours[phase].append(interval)
                     consider(*interval)
-            # Retain every observed local peak, not just the currently highest one.
+            # Retain every observed local peak, not just the currently
+            # highest one.
             for j in range(1, len(grid) - 1):
                 if values[j] >= max(values[j - 1], values[j + 1]) and values[j] > min(
                     values[j - 1], values[j + 1]

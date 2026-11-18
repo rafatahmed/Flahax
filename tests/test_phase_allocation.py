@@ -5,6 +5,7 @@
 """Tests for flahax.phase_allocation."""
 
 import unittest
+
 from flahax.phase_allocation import phase_allocation
 
 

@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax mix`` results screen: the Tanks, Nutrients and Notes views of one batch.
+"""The ``flahax mix`` results screen: the Tanks, Nutrients and Notes
+views of one batch.
 
-Every value comes from the batch ``summary`` through the helpers the batch sheet uses, with
-the sheet's rounding, so the screen and the sheet always agree.
+Every value comes from the batch ``summary`` through the helpers the
+batch sheet uses, with the sheet's rounding, so the screen and the sheet
+always agree.
 """
 
 from .grower_report import _miss_difference, _review_reason, percentage, qualification_lines
@@ -38,7 +40,9 @@ COLUMNS += (('Achieved', 8), ('Final', 8), ('Diff', 18))
 
 
 def first_view(summary):
-    """The view the results open on: Notes for a blocked plan, else Tanks."""
+    """The view the results open on: Notes for a blocked plan, else
+    Tanks.
+    """
     return 2 if summary['status'] == 'blocked' else 0
 
 
@@ -242,9 +246,11 @@ def _note_rows(summary, width):
 
 
 def results_lines(summary, view, width, height, scroll, g, output, message=None):
-    """The lines to draw for one results view, scrolled by ``scroll`` rows.
+    """The lines to draw for one results view, scrolled by ``scroll``
+    rows.
 
-    ``message`` (a question such as the leave confirmation) replaces the "Sheets:" line.
+    ``message`` (a question such as the leave confirmation) replaces the
+    "Sheets:" line.
     """
     from .canonical_result import verify_summary
 

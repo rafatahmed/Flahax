@@ -4,11 +4,12 @@
 # its results are calculations, not dosing instructions.
 """The explicit aqueous-chemistry identity of every shipped fertilizer.
 
-This is the input boundary for the unified P2/P3 equilibrium system.  A product
-may not enter an equilibrium calculation by its display name alone: it has
-dissolved ions, a family, a source profile, and a temperature domain.  Since
-interactive mix Task 11 these are read from what the material puts in the water
-(material_chemistry); ``PRODUCT_CHEMISTRY`` is a view of the catalogue's records.
+This is the input boundary for the unified P2/P3 equilibrium system.  A
+product may not enter an equilibrium calculation by its display name
+alone: it has dissolved ions, a family, a source profile, and a
+temperature domain.  Since interactive mix Task 11 these are read from
+what the material puts in the water (material_chemistry);
+``PRODUCT_CHEMISTRY`` is a view of the catalogue's records.
 """
 
 from __future__ import annotations
@@ -21,7 +22,9 @@ from .delivery_contracts import DeliveryError
 
 @dataclass(frozen=True, slots=True)
 class ProductChemistry:
-    """Source-versioned chemical identity; not a nutrient-assay replacement."""
+    """Source-versioned chemical identity; not a nutrient-assay
+    replacement.
+    """
 
     name: str
     family: str
@@ -41,12 +44,13 @@ class ProductChemistry:
 PHREEQC_MINTEQ_V4 = "USGS PHREEQC 3.8.6 minteq.v4.dat, 25 C"
 
 
-# The canonical, fully deprotonated ligand forms used by the unified solver.
-# EDDHA is explicitly the o,o form selected for the otherwise unspecific
-# catalogue product; it is not interchangeable with o,p-EDDHA.
+# The canonical, fully deprotonated ligand forms used by the unified
+# solver. EDDHA is explicitly the o,o form selected for the otherwise
+# unspecific catalogue product; it is not interchangeable with
+# o,p-EDDHA.
 def _ligand_profiles():
-    # Public summaries must be derived from the actual reaction set, not a
-    # second, independently rounded table of equilibrium constants.
+    # Public summaries must be derived from the actual reaction set, not
+    # a second, independently rounded table of equilibrium constants.
     from .aqueous_model import chemistry
 
     result = {}
@@ -89,8 +93,9 @@ LIGAND_PROFILES = _ligand_profiles()
 
 
 class _CatalogueChemistry(Mapping):
-    """The catalogue's records through ``material_chemistry``, keyed by name; built on first
-    use."""
+    """The catalogue's records through ``material_chemistry``, keyed by
+    name; built on first use.
+    """
 
     _data: dict | None = None
 
@@ -118,7 +123,9 @@ PRODUCT_CHEMISTRY: Mapping[str, ProductChemistry] = _CatalogueChemistry()
 
 
 def chemistry_for_product(name: str) -> ProductChemistry:
-    """Return a product's explicit equilibrium identity or fail closed."""
+    """Return a product's explicit equilibrium identity or fail
+    closed.
+    """
     try:
         return PRODUCT_CHEMISTRY[name]
     except KeyError as exc:
@@ -128,7 +135,9 @@ def chemistry_for_product(name: str) -> ProductChemistry:
 
 
 def assert_catalogue_coverage(products: list[Mapping[str, object]]) -> None:
-    """Require exact one-to-one coverage of the package fertilizer catalogue."""
+    """Require exact one-to-one coverage of the package fertilizer
+    catalogue.
+    """
     names = {str(product.get("name", "")) for product in products}
     mapped = set(PRODUCT_CHEMISTRY)
     if names != mapped:

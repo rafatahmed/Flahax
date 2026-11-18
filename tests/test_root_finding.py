@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Shared bracketed root finding used by the dose, pH and alkalinity searches."""
+"""Shared bracketed root finding used by the dose, pH and alkalinity
+searches.
+"""
 
 import unittest
 
@@ -47,7 +49,8 @@ class ShrinkBracketTests(unittest.TestCase):
         self.assertIn(lo, seen)
 
     def test_stray_secant_steps_fall_back_to_bisection(self):
-        # A steep step function defeats false position; the bracket must still shrink.
+        # A steep step function defeats false position; the bracket must
+        # still shrink.
         lo, hi = shrink_bracket(
             lambda x: -1.0 if x < 0.123456 else 1e9, 0.0, -1.0, 1.0, 1e9, width=1e-9
         )

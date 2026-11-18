@@ -13,6 +13,7 @@ recursive-include benchmarks *.py *.txt
 recursive-include docs *.md *.jpg *.png *.pdf
 recursive-include docs/site *.csv
 recursive-include docs/site/_static/benchmarks *.json *.svg *.zip *.sha256
+recursive-include docs/site/_static/sonneveld *.json *.txt *.png
 exclude docs/sources/04_Fertilizer.pdf
 exclude docs/sources/165357805552.pdf
 exclude docs/sources/215057776303.pdf
@@ -32,6 +33,7 @@ include tools/chemistry_sources.json
 include tools/ci_test_weights.json
 include tools/requirements-benchmark-report.txt
 recursive-include examples *.py *.md
+include examples/sonneveld-appendix-i.json
 include examples/steiner-10-litre-lab-worksheet.xlsx
 prune examples/tutorial
 global-exclude __pycache__

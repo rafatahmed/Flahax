@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Sonneveld et al. (1999) A–D target design for soilless irrigation feed."""
+"""Sonneveld et al. (1999) A–D target design for soilless irrigation
+feed.
+"""
 
 from datetime import date
 import math
@@ -101,11 +103,13 @@ def _root_zone_feedback(sample, target_design, require_approval):
 
 
 def design_targets(design, *, require_approval=False):
-    """Return A–D in mmol/L and the full-precision finished-feed targets in elemental mg/L.
+    """Return A–D in mmol/L and the full-precision finished-feed targets
+    in elemental mg/L.
 
-    Corrections are signed increments in mmol/L. Optional minimum_mmol_l values
-    are enforced against D. The EC input sets the paper's empirical charge budget.
-    Root-zone feedback is optional. Batch callers require its preview-bound approval.
+    Corrections are signed increments in mmol/L. Optional minimum_mmol_l
+    values are enforced against D. The EC input sets the paper's
+    empirical charge budget. Root-zone feedback is optional. Batch
+    callers require its preview-bound approval.
     """
     required = {'baseline_mmol_l', 'adjustments_mmol_l', 'irrigation_ec_ds_m'}
     if (

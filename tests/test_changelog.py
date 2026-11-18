@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The changelog follows Keep a Changelog 1.1.0 (decision 2026-10-23, every release).
+"""The changelog follows Keep a Changelog 1.1.0 (decision 2026-10-23,
+every release).
 
-Headings ``## [X.Y.Z] - YYYY-MM-DD`` (``[YANKED]`` for a yanked release), ``## [Unreleased]``
-first, only the six change types, short bullets, and a comparison link for every version. The
-full text of a change belongs in docs/releases/<version>.md (CONTRIBUTING, Changelog).
+Headings ``## [X.Y.Z] - YYYY-MM-DD`` (``[YANKED]`` for a yanked
+release), ``## [Unreleased]`` first, only the six change types, short
+bullets, and a comparison link for every version. The full text of a
+change belongs in docs/releases/<version>.md (CONTRIBUTING, Changelog).
 """
 
 from pathlib import Path
@@ -28,7 +30,9 @@ def sections(text):
 
 
 def problems(text=None):
-    """Every way the changelog breaks Keep a Changelog, as readable strings."""
+    """Every way the changelog breaks Keep a Changelog, as readable
+    strings.
+    """
     if text is None:
         text = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
     found, titles = [], [title for title, _ in sections(text)]

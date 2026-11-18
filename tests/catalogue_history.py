@@ -4,10 +4,11 @@
 # its results are calculations, not dosing instructions.
 """The 33c5df2 catalogue, frozen for tests written against it.
 
-The fixture is the byte copy of ``src/flahax/data/library.json`` at commit 33c5df2, the
-data the engine-mechanics tests were written against before the packaged catalogue
-(Flaha Agri Tech Analysis Ver 0.0) replaced it. ``historical_catalogue()`` makes the
-package load that library; ``historical_library()`` returns it parsed.
+The fixture is the byte copy of ``src/flahax/data/library.json`` at
+commit 33c5df2, the data the engine-mechanics tests were written against
+before the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0)
+replaced it. ``historical_catalogue()`` makes the package load that
+library; ``historical_library()`` returns it parsed.
 """
 
 from contextlib import contextmanager
@@ -25,19 +26,25 @@ _LOAD_LIBRARY = flahax.engine.load_library
 
 
 def historical_library() -> dict:
-    """The 33c5df2 library, freshly parsed so no caller can change another's copy."""
+    """The 33c5df2 library, freshly parsed so no caller can change
+    another's copy.
+    """
     return json.loads(_TEXT)
 
 
 def _load_library():
-    """The patched ``load_library``: a function of its own, so restoring it on exit never
-    touches a module that imported ``historical_library`` itself."""
+    """The patched ``load_library``: a function of its own, so restoring
+    it on exit never touches a module that imported
+    ``historical_library`` itself.
+    """
     return historical_library()
 
 
 def _formula_names_replacement():
-    """``tools.publish_benchmark_report.formula_names`` reads library.json from a source tree;
-    for this repository it reads the fixture instead."""
+    """``tools.publish_benchmark_report.formula_names`` reads
+    library.json from a source tree; for this repository it reads the
+    fixture instead.
+    """
     import tools.publish_benchmark_report as report
 
     original = report.formula_names
@@ -51,7 +58,9 @@ def _formula_names_replacement():
 
 
 def _replacements():
-    """(original, replacement) for every catalogue reader bound by name somewhere."""
+    """(original, replacement) for every catalogue reader bound by name
+    somewhere.
+    """
     pairs = [(_LOAD_LIBRARY, _load_library)]
     if 'tools.publish_benchmark_report' in sys.modules:
         pairs.append(_formula_names_replacement())
@@ -59,8 +68,9 @@ def _replacements():
 
 
 def _bound(pairs):
-    """(module, attribute, replacement) for every loaded module holding an original reader;
-    this module keeps its own references."""
+    """(module, attribute, replacement) for every loaded module holding
+    an original reader; this module keeps its own references.
+    """
     for module in list(sys.modules.values()):
         if module is sys.modules[__name__]:
             continue
@@ -87,17 +97,20 @@ _ACTIVE = []
 def historical_catalogue():
     """Within the block, the package loads the 33c5df2 library.
 
-    Patches ``flahax.engine.load_library`` and every loaded module that imported it by name
-    (the package itself, batch_cli, mix_cli, ph_adjustment, fertilizer_workflow, conductivity,
-    equilibrium_delivery, tools and test modules); deferred imports go through the engine.
-    ``tools.publish_benchmark_report.formula_names``, which reads library.json directly, is
-    patched the same way when loaded. The catalogue-chemistry cache is cleared on entry and
-    exit.
+    Patches ``flahax.engine.load_library`` and every loaded module that
+    imported it by name (the package itself, batch_cli, mix_cli,
+    ph_adjustment, fertilizer_workflow, conductivity,
+    equilibrium_delivery, tools and test modules); deferred imports go
+    through the engine.
+    ``tools.publish_benchmark_report.formula_names``, which reads
+    library.json directly, is patched the same way when loaded. The
+    catalogue-chemistry cache is cleared on entry and exit.
 
-    Only the outermost block patches; a nested block (for example a fixture class's
-    ``setUpClass`` called from another class) changes nothing, so blocks may close in any
-    order. On the last exit every binding of a replacement, including those of modules
-    imported inside the block, is set back to its original.
+    Only the outermost block patches; a nested block (for example a
+    fixture class's ``setUpClass`` called from another class) changes
+    nothing, so blocks may close in any order. On the last exit every
+    binding of a replacement, including those of modules imported inside
+    the block, is set back to its original.
     """
     if _ACTIVE:
         yield

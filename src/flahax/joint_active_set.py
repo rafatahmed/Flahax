@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Whole-recipe trial steps on the charge surface, subject to the original linear caps."""
+"""Whole-recipe trial steps on the charge surface, subject to the
+original linear caps.
+"""
 
 import math
 
@@ -14,7 +16,9 @@ def _dot(row, x):
 
 
 def _active_step(hessian, gradient, charge, limits, budget):
-    """Minimize the local quadratic over a feasible active set, starting at zero."""
+    """Minimize the local quadratic over a feasible active set, starting
+    at zero.
+    """
     n = len(gradient)
     position = [0.0] * n
     active = []
@@ -49,8 +53,11 @@ def _active_step(hessian, gradient, charge, limits, budget):
 
 
 def whole_mix_direction(point, residual, matrix, constraints, budget):
-    """Solve for all doses together with the linearized charge equality and nutrient caps."""
-    # A nonnegative source of a nutrient explicitly capped at zero cannot be used.
+    """Solve for all doses together with the linearized charge equality
+    and nutrient caps.
+    """
+    # A nonnegative source of a nutrient explicitly capped at zero
+    # cannot be used.
     fixed = {
         j
         for row, bound in constraints
@@ -68,8 +75,9 @@ def whole_mix_direction(point, residual, matrix, constraints, budget):
     norm = math.hypot(*charge)
     if not norm:
         return None
-    # A small diagonal regularizes duplicate nutrient columns in the trial model.
-    # The solver checks stationarity on the original unregularized problem.
+    # A small diagonal regularizes duplicate nutrient columns in the
+    # trial model. The solver checks stationarity on the original
+    # unregularized problem.
     hessian = [
         [_dot(a, b) + (1e-10 if i == j else 0.0) for j, b in enumerate(columns)]
         for i, a in enumerate(columns)
@@ -92,12 +100,15 @@ def whole_mix_direction(point, residual, matrix, constraints, budget):
 
 
 def feasible_endpoint(point, direction, alpha, constraints):
-    """Round a trial inward at active caps; the ordinary evaluator still checks every limit."""
+    """Round a trial inward at active caps; the ordinary evaluator still
+    checks every limit.
+    """
     trial = [max(0.0, x + alpha * dx) for x, dx in zip(point, direction)]
     for row, bound in constraints[len(point) :]:
         total = sum(a * x for a, x in zip(row, trial))
-        # Leave room for rounding when the independent dose calculation sums
-        # products in a different order from the linear feasibility check.
+        # Leave room for rounding when the independent dose calculation
+        # sums products in a different order from the linear feasibility
+        # check.
         interior = max(0.0, bound - 4 * math.ulp(bound))
         if total > interior:
             factor = max(0.0, math.nextafter(interior / total, 0.0))
@@ -108,7 +119,9 @@ def feasible_endpoint(point, direction, alpha, constraints):
 
 
 def _face_direction(point, current, matrix, constraints, active_tolerance, evaluate, matrix_at):
-    """Newton refinement in the tangent space of positive doses and binding caps."""
+    """Newton refinement in the tangent space of positive doses and
+    binding caps.
+    """
     indices = [j for j, x in enumerate(point) if x > active_tolerance]
     if not indices:
         return None
@@ -198,7 +211,9 @@ def whole_mix_trial(
     charge_scale,
     refine=False,
 ):
-    """Backtrack a simultaneous proposal and restore nonlinear charge before accepting it."""
+    """Backtrack a simultaneous proposal and restore nonlinear charge
+    before accepting it.
+    """
     from .delivery_contracts import DeliveryError
 
     try:
@@ -222,8 +237,9 @@ def whole_mix_trial(
         if u == point:
             break
         value = evaluate(u)
-        # Use the reagent as a charge pivot. If it is bound or unavailable, the
-        # ordinary joint path can try other pivots; no constraint is discarded.
+        # Use the reagent as a charge pivot. If it is bound or
+        # unavailable, the ordinary joint path can try other pivots; no
+        # constraint is discarded.
         for _ in range(budget):
             if value is None or value[0]['chargeResidual'] == 0:
                 break

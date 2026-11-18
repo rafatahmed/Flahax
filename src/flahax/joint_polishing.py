@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Positive-curvature proposals for correlated nutrient sources on the charge manifold."""
+"""Positive-curvature proposals for correlated nutrient sources on the
+charge manifold.
+"""
 
 import math
 
@@ -23,7 +25,9 @@ def block_polish_direction(
     candidate,
     active_tolerance=0.0,
 ):
-    """Return a verified positive-curvature two-source proposal, or no proposal."""
+    """Return a verified positive-curvature two-source proposal, or no
+    proposal.
+    """
     from . import joint_solver as solver
 
     if candidate is None:

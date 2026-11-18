@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bounded search for numerically passing recipes with optional record gating."""
+"""Bounded search for numerically passing recipes with optional record
+gating.
+"""
 
 import math
 
@@ -20,10 +22,12 @@ def search_ratio_recipe(
     saturation_margin=0.3,
     **recipe_options,
 ):
-    """Scan strength and refine every observed passing-to-failing transition.
+    """Scan strength and refine every observed passing-to-failing
+    transition.
 
-    Rounded doses can create discontinuities. Report search coverage and the
-    strongest verified candidate found, with no global optimality assertion.
+    Rounded doses can create discontinuities. Report search coverage and
+    the strongest verified candidate found, with no global optimality
+    assertion.
     """
     if not isinstance(strength_range, (list, tuple)) or len(strength_range) != 2:
         raise DeliveryError("invalid_strength_range", "strength_range requires two values")
@@ -186,7 +190,8 @@ def search_ratio_recipe(
     if best is None:
         return result
     strength, _ = best
-    # Reconstruct again so a cached verdict is not the delivery evidence.
+    # Reconstruct again so a cached verdict is not the delivery
+    # evidence.
     recipe = plan_ratio_recipe(counted_mmol_l=strength, **recipe_options)
     if (
         recipe.get("uncertainty_verification", recipe["rounded_verification"])["status"]

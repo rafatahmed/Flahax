@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The console for the ``flahax mix`` full-screen wizard, from the standard library only.
+"""The console for the ``flahax mix`` full-screen wizard, from the
+standard library only.
 
-Windows uses Win32 key events and ``ctypes`` to switch on ANSI output; Linux and macOS use
-``termios``, ``tty`` and ``select``. Keys come back as names: printable characters as
-themselves, and UP, DOWN, LEFT, RIGHT, HOME, END, ENTER, ESC, TAB, SHIFT_TAB, BACKSPACE and
-CTRL_U. Ctrl+C raises KeyboardInterrupt. The console is always restored on exit.
+Windows uses Win32 key events and ``ctypes`` to switch on ANSI output;
+Linux and macOS use ``termios``, ``tty`` and ``select``. Keys come back
+as names: printable characters as themselves, and UP, DOWN, LEFT, RIGHT,
+HOME, END, ENTER, ESC, TAB, SHIFT_TAB, BACKSPACE and CTRL_U. Ctrl+C
+raises KeyboardInterrupt. The console is always restored on exit.
 """
 
 import ctypes
@@ -112,7 +114,9 @@ class _InputRecord(ctypes.Structure):
 
 
 class TerminalUnavailable(OSError):
-    """The console cannot be put in the full-screen mode; use the line-by-line questions."""
+    """The console cannot be put in the full-screen mode; use the
+    line-by-line questions.
+    """
 
 
 def _control(char):
@@ -122,20 +126,24 @@ def _control(char):
 
 
 def decode_windows(chars):
-    """The key named by ``msvcrt.getwch`` output (two characters for arrows and other keys)."""
+    """The key named by ``msvcrt.getwch`` output (two characters for
+    arrows and other keys).
+    """
     if len(chars) == 2 and chars[0] in ('\x00', '\xe0'):
         return WINDOWS_PREFIXED.get(chars[1], 'OTHER')
     return _control(chars[:1])
 
 
 def read_windows_key(getwch):
-    """Decode a legacy ``msvcrt.getwch`` stream, which cannot distinguish a-grave.
+    """Decode a legacy ``msvcrt.getwch`` stream, which cannot
+    distinguish a-grave.
 
-    ``Terminal`` reads Win32 events instead; this helper retains the old stream contract.
-    Windows sends arrows and other special keys as two codes, the first being 0x00 or 0xE0.
-    ``kbhit`` cannot tell whether the second code is coming (in Windows Terminal it reports
-    False until it is read), so the letter a-grave, which is also 0xE0, cannot be told apart
-    from the prefix here and is read as a special key.
+    ``Terminal`` reads Win32 events instead; this helper retains the old
+    stream contract. Windows sends arrows and other special keys as two
+    codes, the first being 0x00 or 0xE0. ``kbhit`` cannot tell whether
+    the second code is coming (in Windows Terminal it reports False
+    until it is read), so the letter a-grave, which is also 0xE0, cannot
+    be told apart from the prefix here and is read as a special key.
     """
     chars = getwch()
     if chars in ('\x00', '\xe0'):
@@ -173,7 +181,9 @@ def decode_posix(data):
 
 
 def glyphs(encoding):
-    """Box lines, tick, marker and ellipsis the console encoding can print (else ASCII)."""
+    """Box lines, tick, marker and ellipsis the console encoding can
+    print (else ASCII).
+    """
     try:
         ''.join(UNICODE.values()).encode(encoding or 'ascii')
     except (LookupError, UnicodeEncodeError):
@@ -182,7 +192,9 @@ def glyphs(encoding):
 
 
 def _kernel32():
-    """kernel32 with the console functions' argument and return types declared."""
+    """kernel32 with the console functions' argument and return types
+    declared.
+    """
     import ctypes
     from ctypes import wintypes
 
@@ -209,7 +221,9 @@ def _kernel32():
 
 
 def supported(stdin=None, stdout=None):
-    """True when both streams are a terminal whose mode the wizard can set."""
+    """True when both streams are a terminal whose mode the wizard can
+    set.
+    """
     stdin, stdout = stdin or sys.stdin, stdout or sys.stdout
     try:
         if not (stdin.isatty() and stdout.isatty()):
@@ -236,7 +250,9 @@ def supported(stdin=None, stdout=None):
 
 
 class Terminal:
-    """The full-screen console: alternate screen, hidden cursor, keys one at a time."""
+    """The full-screen console: alternate screen, hidden cursor, keys
+    one at a time.
+    """
 
     def __init__(self, stream=None):
         self.stream = stream or sys.stdout
@@ -249,8 +265,9 @@ class Terminal:
             self.stream.write(ENTER_SCREEN)
             self.stream.flush()
         except BaseException:
-            # Entry may have written the alternate-screen/cursor sequence before
-            # flushing failed. Try both cleanups, retaining the original error.
+            # Entry may have written the alternate-screen/cursor
+            # sequence before flushing failed. Try both cleanups,
+            # retaining the original error.
             try:
                 self.__exit__()
             except BaseException:
@@ -268,7 +285,9 @@ class Terminal:
                 restore()
 
     def _console_on(self):
-        """Put the console in the wizard's mode; returns the function that restores it."""
+        """Put the console in the wizard's mode; returns the function
+        that restores it.
+        """
         if os.name == 'nt':
             import ctypes
             from ctypes import wintypes
@@ -308,7 +327,9 @@ class Terminal:
         return restore
 
     def read_key(self, timeout=0.1):
-        """The next key, or None after ``timeout`` seconds without one (time to redraw)."""
+        """The next key, or None after ``timeout`` seconds without one
+        (time to redraw).
+        """
         if self._pending:
             return self._pending.pop(0)
         if os.name == 'nt':
@@ -347,7 +368,8 @@ class Terminal:
                     raise EOFError('terminal input closed')
                 if event.kind == 1:
                     key = event.event.key
-                    # Alt+numpad emits the composed character on Alt release.
+                    # Alt+numpad emits the composed character on Alt
+                    # release.
                     if not key.down and not (key.virtual == 0x12 and key.char != '\0'):
                         if time.monotonic() >= deadline:
                             return None
@@ -372,7 +394,9 @@ class Terminal:
         return tuple(shutil.get_terminal_size((80, 24)))
 
     def draw(self, lines, cursor=None):
-        """Replace the screen with these lines in one write; show the cursor at (row, column)."""
+        """Replace the screen with these lines in one write; show the
+        cursor at (row, column).
+        """
         text = '\x1b[H' + ''.join(f'\x1b[2K{line}\r\n' for line in lines) + '\x1b[J'
         text += f'\x1b[{cursor[0]};{cursor[1]}H\x1b[?25h' if cursor else '\x1b[?25l'
         encoding = getattr(self.stream, 'encoding', None)

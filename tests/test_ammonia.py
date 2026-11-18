@@ -5,6 +5,7 @@
 """Tests for flahax.ammonia."""
 
 import unittest
+
 from flahax.ammonia import ammonia_speciation
 
 

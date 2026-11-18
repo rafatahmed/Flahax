@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Exact-result consent and saved-input drift regression witnesses (#179)."""
+"""Exact-result consent and saved-input drift regression witnesses
+(#179).
+"""
 
 from copy import deepcopy
 import tempfile

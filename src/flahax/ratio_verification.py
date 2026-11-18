@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Verify rounded ratio recipes on a disclosed grid of imposed pH values."""
+"""Verify rounded ratio recipes on a disclosed grid of imposed pH
+values.
+"""
 
 import math
 
@@ -31,7 +33,9 @@ SI_GUARD = 1e-7
 
 
 def verification_options(ph, ph_range, selected_phases, mass_decimals):
-    """Validate the requested interval, mineral names and mass precision."""
+    """Validate the requested interval, mineral names and mass
+    precision.
+    """
     if not isinstance(ph_range, (list, tuple)) or len(ph_range) != 2:
         raise DeliveryError("invalid_ph_range", "ph_range requires two pH values")
     if any(
@@ -57,7 +61,9 @@ def verification_options(ph, ph_range, selected_phases, mass_decimals):
 def verify_rounded_recipe(
     recipe, ph_range, phases, mass_decimals, saturation_margin=0.0, *, delivered_grams=None
 ):
-    """Reconstruct delivered masses and return sampled saturation and fit checks."""
+    """Reconstruct delivered masses and return sampled saturation and
+    fit checks.
+    """
     water = recipe.get("water_accounting", {})
     amounts = [water.get("nutrients_mmol_l", {}).get(n, 0.0) for n in NUTRIENTS]
     reference_charge = water.get("reference_charge_mol_kg", 0.0)

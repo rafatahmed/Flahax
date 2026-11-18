@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Build and smoke-test wheel and sdist in separate clean, non-editable installs.
+"""Build and smoke-test wheel and sdist in separate clean, non-editable
+installs.
 
 Run with a development interpreter containing `build`. Does not publish.
-Build/install dependencies are confined to temporary virtual environments.
+Build/install dependencies are confined to temporary virtual
+environments.
 """
 
 import argparse
@@ -168,7 +170,8 @@ def verify(report, interpreter, artifacts_dir=None):
             catalogue = json.loads((ROOT / 'src/flahax/data/library.json').read_bytes())
             if result['catalogue_count'] != len(catalogue['salts']):
                 raise RuntimeError('missing packaged catalogue data')
-            # Verify the builder retained the resource bytes from this checkout.
+            # Verify the builder retained the resource bytes from this
+            # checkout.
             if (
                 result['api_reference_sha256']
                 != hashlib.sha256(

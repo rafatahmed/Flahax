@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Water analysis entry for ``flahax mix``: lab units to the ``read_water`` format.
+"""Water analysis entry for ``flahax mix``: lab units to the
+``read_water`` format.
 
-Each ion is one prompt: Enter = not measured (omitted), ``0`` = measured zero,
-``<DL`` = below the detection limit DL (as printed, e.g. ``<0.02``). A blank is
-never guessed. The grower types the report as printed; FlahaX converts.
+Each ion is one prompt: Enter = not measured (omitted), ``0`` = measured
+zero, ``<DL`` = below the detection limit DL (as printed, e.g.
+``<0.02``). A blank is never guessed. The grower types the report as
+printed; FlahaX converts.
 """
 
 import math
@@ -14,8 +16,9 @@ import math
 from .product_conversion import MOLAR_MASS
 
 HCO3, CACO3 = 61.0168, 50.0435
-# Lab name -> (water key, g/mol of the ion as reported, charge, g/mol of the water key).
-# Phosphate in meq/L is taken as H2PO4- (charge 1); the prompt says so.
+# Lab name -> (water key, g/mol of the ion as reported, charge, g/mol of
+# the water key). Phosphate in meq/L is taken as H2PO4- (charge 1); the
+# prompt says so.
 IONS = {
     'Ca': ('Ca', MOLAR_MASS['Ca'], 2, MOLAR_MASS['Ca']),
     'Mg': ('Mg', MOLAR_MASS['Mg'], 2, MOLAR_MASS['Mg']),
@@ -36,10 +39,12 @@ WATER_SCREEN_PERCENT = 5.0
 
 
 def to_elements(values, units, alkalinity, micro='mg'):
-    """Lab values (``WATER_IONS`` names) in ``units`` to the ``read_water`` keys in mg/L.
+    """Lab values (``WATER_IONS`` names) in ``units`` to the
+    ``read_water`` keys in mg/L.
 
-    Micronutrients are in ``micro`` (``mg`` of the element or ``umol``) whatever ``units`` is.
-    This preserves solution volume; ``read_water`` applies the disclosed solvent basis.
+    Micronutrients are in ``micro`` (``mg`` of the element or ``umol``)
+    whatever ``units`` is. This preserves solution volume;
+    ``read_water`` applies the disclosed solvent basis.
     """
     out = {}
     for ion, value in values.items():
@@ -60,7 +65,9 @@ def to_elements(values, units, alkalinity, micro='mg'):
 
 
 def water_balance(mg):
-    """(cations, anions meq/L, % apart, contributions by lab name) of ``read_water`` keys."""
+    """(cations, anions meq/L, % apart, contributions by lab name) of
+    ``read_water`` keys.
+    """
     parts = {}
     for ion, (key, _, charge, key_mass) in IONS.items():
         if key in mg:
@@ -73,7 +80,8 @@ def water_balance(mg):
 
 def lab_entry(answer):
     """``''`` -> (None, None); ``'0.4'`` -> (0.4, None); ``'<0.02'`` -> (None, 0.02). ValueError
-    otherwise."""
+    otherwise.
+    """
     answer = answer.strip().replace(' ', '')
     if not answer:
         return None, None
@@ -85,8 +93,8 @@ def lab_entry(answer):
 
 
 def ask_ion(p, label):
-    """One laboratory value, asked again until it is a number, 0, ``<limit`` or blank (not
-    measured).
+    """One laboratory value, asked again until it is a number, 0,
+    ``<limit`` or blank (not measured).
     """
     while True:
         answer = p.ask(
@@ -100,8 +108,9 @@ def ask_ion(p, label):
 
 
 def ask_analysis(p, store):
-    """(saved name, ``read_water`` data) for a new analysis; asks again on a large imbalance if
-    wished."""
+    """(saved name, ``read_water`` data) for a new analysis; asks again
+    on a large imbalance if wished.
+    """
     while True:
         name = p.new_name(store, 'waters', 'Name of this analysis (e.g. well 104)')
         units = UNITS[
@@ -190,7 +199,8 @@ def ask_analysis(p, store):
         if apart > WATER_SCREEN_PERCENT and pick == 2:
             continue
         data = {'id': name, 'measured_ph': ph, 'mg_per_litre': mg}
-        # The lab's alkalinity-as-HCO3 is an equivalent mass, not measured carbon.
+        # The lab's alkalinity-as-HCO3 is an equivalent mass, not
+        # measured carbon.
         if 'HCO3' in mg:
             data['alkalinity_meq_per_litre'] = mg.pop('HCO3') / HCO3
         p.say(

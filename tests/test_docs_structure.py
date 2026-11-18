@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The documentation site keeps its structure: every page in the menu once, moved pages
-redirected, and the command-line reference current (approved restructure, 2026-10-23)."""
+"""The documentation site keeps its structure: every page in the menu
+once, moved pages redirected, and the command-line reference current
+(approved restructure, 2026-10-23).
+"""
 
 from pathlib import Path
 import ast
@@ -26,7 +28,9 @@ def pages():
 
 
 def menu_entries():
-    """Docnames listed in every toctree of the site, resolved from the page that lists them."""
+    """Docnames listed in every toctree of the site, resolved from the
+    page that lists them.
+    """
     entries = []
     for doc in sorted(pages()):
         text = (SITE / f'{doc}.md').read_text(encoding='utf-8')

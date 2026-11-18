@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Convert explicit source-document bounds without inventing missing intervals."""
+"""Convert explicit source-document bounds without inventing missing
+intervals.
+"""
 
 from copy import deepcopy
 
@@ -11,7 +13,9 @@ from .materials import make_grade, make_lot, resolve_material
 
 
 def resolve_documented_assays(options, sources):
-    """Return copied numeric bounds and their source evidence for recipe verification."""
+    """Return copied numeric bounds and their source evidence for recipe
+    verification.
+    """
     resolved = deepcopy(options)
     evidence = {}
     entries = resolved.get("product_element_factors")
@@ -49,7 +53,8 @@ def resolve_documented_assays(options, sources):
                 "Lot measurements introduce elements absent from the nominal product; "
                 "model them explicitly",
             )
-        # Existing resolution validates catalogue identity and lot-to-grade linkage.
+        # Existing resolution validates catalogue identity and
+        # lot-to-grade linkage.
         resolve_material(name, grade=grade, lot=lot)
         intervals, factors = {}, {}
         for key, nominal in product["elements"].items():

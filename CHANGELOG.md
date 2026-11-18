@@ -49,6 +49,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Changed
 
+- Define the Python style policy and its compatibility/notation exceptions; wrap flowing
+  comments and docstrings, separate import groups without reordering evaluation, normalize
+  test/helper names and refresh generated API/CLI references without changing calculations (#273).
+
 - Fit N_NO3, N_NH4 and N_UREA each as its own target; total N is their reported sum. Absent
   N_UREA is a declared zero; N_NH4 0 is no requirement, not a ban, and incidental NH4-N is held
   within min(10 % of total N, 1.5 mmol/L), basis Dutch soilless practice (De Kreij, Voogt et
@@ -88,6 +92,16 @@ each release, with numbers, sources and decisions, are in
 - Tanks follow the A/B layout (decisions G20-G22, #227): calcium and every micronutrient product in tank A, phosphates, magnesium sulfate and macro sulfates in tank B. The magnesium-phosphate rule is removed and the calcium-sulfate reason is reworded. A batch needing a third tank names the pair and the rule.
 
 ### Fixed
+
+- Give all 13 catalogue formula checks independent test identities so the runner can
+  schedule and report them separately. Preserve the real batch assertions and add
+  an inventory/scheduling regression without raising timeout or chemistry limits (#274).
+
+- Make equilibrium evidence independent of analytical-component insertion order so
+  unchanged Sonneveld sessions replay across processes without a false candidate-identity
+  mismatch. Preserve input/source and selected-candidate guards (#272).
+- Align the current documentation and packaged manual with source-water handling,
+  recipe-fit and ammonium rules, supported workflows and the hosted CI matrix (#271).
 
 - Withhold manufacturer-screening EC totals containing positive Ultrasol Magsul doses;
   retain the disputed 1.2 mS/cm brochure value as evidence (#244).

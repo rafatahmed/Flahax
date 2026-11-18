@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Publication helpers render synthetic captures only into temporary sites."""
+"""Publication helpers render synthetic captures only into temporary
+sites.
+"""
 
 import contextlib
 import importlib.util

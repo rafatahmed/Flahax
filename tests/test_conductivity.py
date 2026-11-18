@@ -31,7 +31,8 @@ class ConductivityTests(unittest.TestCase):
         self.assertEqual(water_ec25(ec_ms_cm=0.5), 0.5)
         self.assertEqual(water_ec25(tds_ppm=250, tds_factor=0.5), 0.5)
         self.assertAlmostEqual(water_ec25(tds_ppm=250, tds_factor=0.7), 250 / 700)
-        # Numeric robustness only, not a physically meaningful meter scale.
+        # Numeric robustness only, not a physically meaningful meter
+        # scale.
         self.assertAlmostEqual(water_ec25(tds_ppm=1e308, tds_factor=1e308), 0.001)
         for kwargs in (
             {},
@@ -60,7 +61,8 @@ class ConductivityTests(unittest.TestCase):
         self.assertIsNone(plan.predictions['tank:A'].uncertainty_ms_cm)
 
     def test_interpolation_in_both_axes(self):
-        # Independent hand-computed bilinear interpolation: midpoint of 4 corners.
+        # Independent hand-computed bilinear interpolation: midpoint of
+        # 4 corners.
         from flahax.conductivity import _predict
 
         profile = copy.deepcopy(self.profiles[1])

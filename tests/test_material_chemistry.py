@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A material is what it puts in the water (interactive mix Task 11, decision 2026-10-22).
+"""A material is what it puts in the water (interactive mix Task 11,
+decision 2026-10-22).
 
-Compounds are defined by their formula or ions, blends by their analysis; the catalogue's
-records are pre-filled materials. Pinned values are the pre-Task-11 conversion of every
-catalogue product at 1 g/kg water, in insertion order: the refactor must not move a bit.
+Compounds are defined by their formula or ions, blends by their
+analysis; the catalogue's records are pre-filled materials. Pinned
+values are the pre-Task-11 conversion of every catalogue product at 1
+g/kg water, in insertion order: the refactor must not move a bit.
 """
 
 import unittest
@@ -158,7 +160,8 @@ TODAY = {
 }
 
 
-# The 33c5df2 catalogue: every product here has an identity record and a family above.
+# The 33c5df2 catalogue: every product here has an identity record and a
+# family above.
 with historical_catalogue():
     LIBRARY = load_library()
 CATALOGUE = {s['name']: s for s in LIBRARY['salts']}
@@ -184,11 +187,13 @@ UNDEFINED = 'give its formula, its ions, or its analysis by nutrient form'
 
 
 def user_list():
-    """The catalogue re-entered by a developer: no catalogue names, ids or identity links.
+    """The catalogue re-entered by a developer: no catalogue names, ids
+    or identity links.
 
-    The four of the brief are defined as a grower would: two by formula, calcium nitrate by its
-    commercial double-salt formula with its label, the iron chelate by ions and its chelating
-    agent. The rest carry their ions. Elements (the label) are the catalogue's.
+    The four of the brief are defined as a grower would: two by formula,
+    calcium nitrate by its commercial double-salt formula with its
+    label, the iron chelate by ions and its chelating agent. The rest
+    carry their ions. Elements (the label) are the catalogue's.
     """
     own = {
         'Potassium Monobasic Phosphate': ('My MKP', {'formula': 'KH2PO4'}),
@@ -242,8 +247,8 @@ class MaterialChemistryTests(unittest.TestCase):
             if name == 'Urea':
                 self.assertEqual(chemistry.components, ('CO(NH2)2',))
             elif name == 'Calcium Nitrate (ag grade)':
-                # Same ions; the order is now the identity's ion_forms (data), not a hand-typed
-                # tuple.
+                # Same ions; the order is now the identity's ion_forms
+                # (data), not a hand-typed tuple.
                 self.assertEqual(sorted(chemistry.components), sorted(components))
             else:
                 self.assertEqual(chemistry.components, components, name)
@@ -262,7 +267,8 @@ class MaterialChemistryTests(unittest.TestCase):
                 )
 
     def test_nitric_acid_is_a_strong_acid_like_phosphoric(self):
-        # N1: HNO3 dissociates fully (H+ + NO3-); the proton is implicit, as for H3PO4.
+        # N1: HNO3 dissociates fully (H+ + NO3-); the proton is
+        # implicit, as for H3PO4.
         self.assertEqual(ions_from_formula('HNO3'), {'HNO3': 1})
         nitric = material_chemistry(
             {'name': 'Nitric 65', 'formula': 'HNO3', 'elements': {'N_NO3': 14.4487}}
@@ -284,9 +290,9 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'identity_inconsistent')
 
     def test_micro_combi_blends_use_their_declared_composition(self):
-        # N2 (declared composition, 2026-10-30): Fe, Mn, Zn, Cu as EDTA chelates with the
-        # catalogue's sodium counter-ions, Mo as sodium molybdate, B as boric acid; the label
-        # is the analysis.
+        # N2 (declared composition, 2026-10-30): Fe, Mn, Zn, Cu as EDTA
+        # chelates with the catalogue's sodium counter-ions, Mo as
+        # sodium molybdate, B as boric acid; the label is the analysis.
         from flahax.materials import load_identities, resolve_material
 
         mass = {'Fe': 55.845, 'Cu': 63.546, 'Mn': 54.938044, 'Zn': 65.38, 'Mo': 95.95, 'B': 10.81}
@@ -322,8 +328,8 @@ class MaterialChemistryTests(unittest.TestCase):
                 )
                 self.assertEqual(set(ions), {'Na+', *(form[k] for k in salt['elements'])})
                 chemistry = material_chemistry(salt)
-                # Mix 2 declares B as boric acid, so its profile names it as CH-micro names
-                # borax; Mix 1 has no boron.
+                # Mix 2 declares B as boric acid, so its profile names
+                # it as CH-micro names borax; Mix 1 has no boron.
                 expected = {
                     'Micro Combi Mix 1': (
                         'edta_molybdate_blend',
@@ -385,7 +391,8 @@ class MaterialChemistryTests(unittest.TestCase):
         self.assertEqual(totals['SO4-2'], totals['Fe+2'])
 
     def test_a_label_off_its_ions_is_balanced_and_a_bad_composition_refused(self):
-        # Decision G5: the nitrate the potassium cannot balance is set aside, never refused.
+        # Decision G5: the nitrate the potassium cannot balance is set
+        # aside, never refused.
         odd = {'name': 'Odd nitrate', 'formula': 'KNO3', 'elements': {'K': 38.67, 'N_NO3': 20}}
         converted = convert_material_dose(odd, 1.0)
         self.assertAlmostEqual(converted.totals['nitrate'], converted.totals['K'], delta=1e-17)

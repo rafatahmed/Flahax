@@ -5,6 +5,7 @@
 """Tests for flahax.product_conversion."""
 
 import unittest
+
 from flahax.delivery_contracts import DeliveryError
 
 from flahax import (
@@ -35,7 +36,8 @@ class ProductConversionTests(unittest.TestCase):
         self.assertGreater(result.counterions["sodium"], 0.0)
 
     def test_chelate_sodium_counterions(self):
-        # D2: sodium counterions per formula unit, in chemistry totals only.
+        # D2: sodium counterions per formula unit, in chemistry totals
+        # only.
         library = {p["name"]: p for p in load_library()["salts"]}
 
         def convert(name):
@@ -52,7 +54,8 @@ class ProductConversionTests(unittest.TestCase):
         self.assertAlmostEqual(dtpa.counterions["sodium"], 2 * dtpa.totals["Fe"], places=15)
         eddha = convert("Iron EDDHA")
         self.assertAlmostEqual(eddha.counterions["sodium"], eddha.totals["Fe"], places=15)
-        # The packaged blend carries boron as boric acid (neutral): no sodium for it.
+        # The packaged blend carries boron as boric acid (neutral): no
+        # sodium for it.
         micro = convert("Micro Combi Mix 2")
         t = micro.totals
         expected = t["Fe"] + 2 * (t["Mn"] + t["Zn"] + t["Cu"]) + 2 * t["molybdate"]
@@ -72,8 +75,9 @@ class ProductConversionTests(unittest.TestCase):
         totals = catalogue_dose_totals({"Sodium Borate (Decahydrate) (borax)": 1.0})
         self.assertEqual(set(totals), {"Na+", "H3BO3"})
         self.assertAlmostEqual(totals["H3BO3"], 1.0 * 11.34 / 100 / 10.81, places=15)
-        # Decision G5: the label's Na beyond borax's charge (Na2B4O7: one Na per two B) is set
-        # aside, so Na+ balances the borate exactly (was 12.06 % / 22.989769).
+        # Decision G5: the label's Na beyond borax's charge (Na2B4O7:
+        # one Na per two B) is set aside, so Na+ balances the borate
+        # exactly (was 12.06 % / 22.989769).
         self.assertAlmostEqual(totals["Na+"], 0.5 * 11.34 / 100 / 10.81, places=15)
 
     def test_profile_mismatch_fails_before_any_solver_can_use_label(self):

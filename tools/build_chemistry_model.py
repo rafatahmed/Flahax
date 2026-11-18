@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Extract the fixed-valence fertilizer reaction closure from pinned MINTEQ.
+"""Extract the fixed-valence fertilizer reaction closure from pinned
+MINTEQ.
 
-Offline only. The source database is never modified. Each exported reaction
-retains its original equation, line number, log K and source identity.
+Offline only. The source database is never modified. Each exported
+reaction retains its original equation, line number, log K and source
+identity.
 """
 
 from pathlib import Path
@@ -75,7 +77,8 @@ PHASES = [
     'Sylvite',
 ]
 
-# The USGS User Rights Notice requires modified PHREEQC data to say what changed, by whom and when.
+# The USGS User Rights Notice requires modified PHREEQC data to say what
+# changed, by whom and when.
 NOTICE = (
     'Modified data, not the original USGS files. Equilibrium constants at 25 C converted to '
     'JSON by Rafat'
@@ -259,7 +262,9 @@ def build(database, *, output=None, allow_unpinned=False):
 
 
 def write_coverage(data):
-    """Exact, reviewable inventory; no guessed species or phase names."""
+    """Exact, reviewable inventory; no guessed species or phase
+    names.
+    """
     lines = [
         '# Chemistry coverage matrix',
         '',

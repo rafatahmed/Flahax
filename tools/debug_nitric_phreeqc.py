@@ -8,6 +8,7 @@ from pathlib import Path
 import json
 import subprocess
 import tempfile
+
 from phreeqc_evidence import ROOT, INSTALL, merge, sha, CASES, catalogue_dose_totals, BASIS_NAMES
 
 folder = ROOT / 'tests/fixtures/phreeqc/failures'

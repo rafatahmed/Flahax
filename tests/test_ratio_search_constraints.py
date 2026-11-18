@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Observed strength boundaries are distinct from the highest-SI mineral."""
+"""Observed strength boundaries are distinct from the highest-SI
+mineral.
+"""
 
 import unittest
+
 from flahax import plan_ratio_recipe, search_ratio_recipe
 from tests.test_ratio_search import OPTIONS
 
@@ -126,7 +129,8 @@ class SearchConstraintTests(unittest.TestCase):
 
         request = base_request()
         request.pop('counted_mmol_l')
-        # Deliberately stricter mineral reserve; nutrient/uncertainty limits unchanged.
+        # Deliberately stricter mineral reserve; nutrient/uncertainty
+        # limits unchanged.
         request['saturation_margin'] = 1.4
         result = search_ratio_recipe(
             **request, strength_range=[1.2, 1.24], scan_points=3, strength_tolerance=0.005

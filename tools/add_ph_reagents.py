@@ -3,13 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""One-off data change for #75: sourced pH-up reagents in the catalogue (decisions
-2026-10-22).
+"""One-off data change for #75: sourced pH-up reagents in the catalogue
+(decisions 2026-10-22).
 
-Adds Potassium Hydroxide (45% solution) and Potassium Bicarbonate, links Potassium
-Carbonate to its sourced identity-theoretical analysis, and marks all three
-`role: ph_reagent` so formulation never selects them as nutrient salts. Values
-and sources are recorded on rafatahmed/Flahax#75. Writes byte-compatible JSON.
+Adds Potassium Hydroxide (45% solution) and Potassium Bicarbonate, links
+Potassium Carbonate to its sourced identity-theoretical analysis, and
+marks all three `role: ph_reagent` so formulation never selects them as
+nutrient salts. Values and sources are recorded on rafatahmed/Flahax#75.
+Writes byte-compatible JSON.
 """
 
 import json

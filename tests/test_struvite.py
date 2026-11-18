@@ -5,6 +5,7 @@
 """Tests for flahax.struvite."""
 
 import unittest
+
 from flahax.struvite import struvite_saturation_index
 
 

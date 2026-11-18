@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Numeric inventory includes inline decisions and data without inventing qualification."""
+"""Numeric inventory includes inline decisions and data without
+inventing qualification.
+"""
 
 import json
 from pathlib import Path

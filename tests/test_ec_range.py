@@ -4,9 +4,10 @@
 # its results are calculations, not dosing instructions.
 """EC as a range, never refused and never blocking (decisions G6-G9).
 
-The covered species give the low end. Species without a conductivity coefficient, phosphate
-beyond its fit domain and charge the recorded ions do not carry are bounded at 80 mS/cm per
-charge per mol/kg, which gives the high end. There is no midpoint.
+The covered species give the low end. Species without a conductivity
+coefficient, phosphate beyond its fit domain and charge the recorded
+ions do not carry are bounded at 80 mS/cm per charge per mol/kg, which
+gives the high end. There is no midpoint.
 """
 
 from dataclasses import asdict

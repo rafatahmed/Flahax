@@ -7,6 +7,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import math
+
 from .delivery_contracts import DeliveryError
 from .equilibrium import davies_gamma
 
@@ -15,8 +16,8 @@ LOG_K_NH4_TO_NH3_25C = -9.252
 
 @dataclass(frozen=True, slots=True)
 class AmmoniaSpeciation:
-    """Total ammoniacal nitrogen split into ammonium and dissolved ammonia at a pH and ionic
-    strength (molal).
+    """Total ammoniacal nitrogen split into ammonium and dissolved
+    ammonia at a pH and ionic strength (molal).
     """
 
     total_ammoniacal_nitrogen_molal: float
@@ -30,7 +31,9 @@ class AmmoniaSpeciation:
 def ammonia_speciation(
     total_ammoniacal_nitrogen_molal: float, ph: float, ionic_strength: float
 ) -> AmmoniaSpeciation:
-    """Split analytical NHx between NH4+ and neutral NH3 at fixed pH/I."""
+    """Split analytical NHx between NH4+ and neutral NH3 at fixed
+    pH/I.
+    """
     if not all(math.isfinite(v) for v in (total_ammoniacal_nitrogen_molal, ph, ionic_strength)):
         raise DeliveryError("invalid_value", "ammonia inputs must be finite")
     if total_ammoniacal_nitrogen_molal < 0 or not 0 <= ph <= 14 or not 0 <= ionic_strength <= 0.1:

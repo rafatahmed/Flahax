@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Preserved failing mathematical controls; these are not expected-failure tests.
+"""Preserved failing mathematical controls; these are not
+expected-failure tests.
 
-Run explicitly while establishing the baseline. Their failures remain real failures
-in discovery until the owning production fixes satisfy the unchanged contract.
-Synthetic assays test the mathematical interface, not physical mixture suitability.
+Run explicitly while establishing the baseline. Their failures remain
+real failures in discovery until the owning production fixes satisfy the
+unchanged contract. Synthetic assays test the mathematical interface,
+not physical mixture suitability.
 """
 
 from fractions import Fraction
@@ -25,7 +27,8 @@ def final(result, symbol):
 
 class IndependentOracleTests(unittest.TestCase):
     def test_zero_constraint_and_allowed_counterion_witness(self):
-        # Positive dose supplies ammonium; dose zero cannot meet the positive K target.
+        # Positive dose supplies ammonium; dose zero cannot meet the
+        # positive K target.
         self.assertGreater(Fraction('0.1') * 10, 0)
         self.assertEqual(Fraction(0) * 10 * 10, 0)
         chloride = Fraction(100) * Fraction('47.555') / Fraction('52.445')
@@ -61,7 +64,8 @@ class AuditRegressionTests(unittest.TestCase):
 
     def test_f03_exact_single_product_has_no_hidden_ridge_miss(self):
         result = recommend([product('a', {'K': 10})], {'K': 100}, {})
-        # This witness is exactly representable: 1 g/L * 10 percent * 10 = 100 mg/L.
+        # This witness is exactly representable: 1 g/L * 10 percent * 10
+        # = 100 mg/L.
         self.assertEqual(final(result, 'K'), 100)
 
     def test_f03_secondary_selection_preserves_attainable_targets(self):
@@ -71,7 +75,8 @@ class AuditRegressionTests(unittest.TestCase):
             {},
             ridge=0,
         )
-        # Distinct targets require distinct final concentrations, whatever solver ordering.
+        # Distinct targets require distinct final concentrations,
+        # whatever solver ordering.
         self.assertGreater(final(result, 'K'), final(result, 'Ca'))
 
     def test_f04_reported_trace_matches_emitted_products(self):

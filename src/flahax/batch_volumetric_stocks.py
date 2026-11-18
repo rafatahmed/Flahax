@@ -99,7 +99,8 @@ def _adjacent(ideal, decimals):
 
 
 def _measure_bounds(dose, error):
-    # A zero dose is an omitted operation. A positive dose must fit the measuring range.
+    # A zero dose is an omitted operation. A positive dose must fit the
+    # measuring range.
     error = error if dose else 0
     if dose < error:
         raise DeliveryError('rounded_dose_infeasible', 'Dose is smaller than its declared error')
@@ -118,7 +119,9 @@ def verify_batch_stock_delivery(
     *,
     reagent_maximum=math.inf,
 ):
-    """Check delivery and try nearby discrete doses when the nearest recipe fails."""
+    """Check delivery and try nearby discrete doses when the nearest
+    recipe fails.
+    """
     targets = fitted_targets(targets)
     required = {
         'stock',
@@ -198,7 +201,8 @@ def verify_batch_stock_delivery(
 
     _, reagent_basis, molar_mass, _ = REAGENTS[chosen.formula]
     solvent = equilibrium['water_mass_kg']
-    # The disclosed fertilizer analyses give linear conserved amounts per gram.
+    # The disclosed fertilizer analyses give linear conserved amounts
+    # per gram.
     unit_totals = {
         name: catalogue_dose_totals(
             {name: 1 / solvent},
@@ -377,7 +381,9 @@ def verify_batch_stock_delivery(
 
 
 def _search(choices, evaluate):
-    """Bound the refit to the nearest and adjacent increments per declared strength."""
+    """Bound the refit to the nearest and adjacent increments per
+    declared strength.
+    """
     nearest = tuple(options[0] for options in choices)
     try:
         rank, original = evaluate(nearest, diagnostic=True)
@@ -388,7 +394,8 @@ def _search(choices, evaluate):
             original['rounding_search'] = dict(attempts=1, status='nearest_passed')
             return original
 
-    # Keep a small frontier so a second dose change can compensate for the first.
+    # Keep a small frontier so a second dose change can compensate for
+    # the first.
     frontier = [nearest]
     tried = {nearest}
     budget = 128

@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Ion schema, formula stoichiometry, and the checks that follow from them.
+"""Ion schema, formula stoichiometry, and the checks that follow from
+them.
 
-A salt is usable when its assay is made of known ions and, if the formula
-parses, those percentages are the composition of that formula. Nothing here
-names a product.
+A salt is usable when its assay is made of known ions and, if the
+formula parses, those percentages are the composition of that formula.
+Nothing here names a product.
 """
 
 from __future__ import annotations
@@ -14,8 +15,9 @@ from __future__ import annotations
 import math
 import re
 
-# Ions the mass balance knows. Total "N" is absent on purpose: nitrate and
-# ammonium are different rows, and a single N figure cannot be split safely.
+# Ions the mass balance knows. Total "N" is absent on purpose: nitrate
+# and ammonium are different rows, and a single N figure cannot be split
+# safely.
 IONS = frozenset(
     {
         "N_NO3",
@@ -38,17 +40,19 @@ IONS = frozenset(
     }
 )
 
-# Ions a default recipe must not introduce unless the formula asks for them
-# or the caller allows them. Admitted later only when no other salt supplies
-# a requested element.
+# Ions a default recipe must not introduce unless the formula asks for
+# them or the caller allows them. Admitted later only when no other salt
+# supplies a requested element.
 RESTRICTED_IONS = frozenset({"Na", "Cl"})
 
-# Restricted ions that recovery never admits on its own: the caller must target,
-# allow or set a maximum for them. Chloride salts change no default recipe.
+# Restricted ions that recovery never admits on its own: the caller must
+# target, allow or set a maximum for them. Chloride salts change no
+# default recipe.
 CONSENT_IONS = frozenset({"Cl"})
 
-# Versioned compatibility convention, not a claim of exact lot-specific atomic weights.
-# Keep these numbers stable for historical assays; reference comparison and limitations:
+# Versioned compatibility convention, not a claim of exact lot-specific
+# atomic weights. Keep these numbers stable for historical assays;
+# reference comparison and limitations:
 # docs/site/models/material-mass-convention.md.
 ATOMIC_CONVENTION = 'flahax-atomic-legacy-1'
 ATOMIC_SOURCE_STATUS = 'versioned_compatibility_values_not_lot_measurements'
@@ -76,9 +80,9 @@ ATOMIC = {
 
 _TOKEN = re.compile(r"[A-Z][a-z]?|\(|\)|\d+")
 
-# Declared bookkeeping convention for the target nutrient-subset charge balance:
-# P as H2PO4-, S as SO4 2-. Urea and Si are neutral; micronutrients are
-# excluded as negligible at mg/L levels.
+# Declared bookkeeping convention for the target nutrient-subset charge
+# balance: P as H2PO4-, S as SO4 2-. Urea and Si are neutral;
+# micronutrients are excluded as negligible at mg/L levels.
 BALANCE_IONS = {
     "N_NO3": ("N", -1),
     "N_NH4": ("N", 1),
@@ -93,11 +97,13 @@ BALANCE_IONS = {
 
 
 def target_ion_balance(targets: dict) -> dict:
-    """Cation and anion meq/L implied by a formula's targets, and their imbalance.
+    """Cation and anion meq/L implied by a formula's targets, and their
+    imbalance.
 
-    This is a conventional nutrient-subset calculation, not full solution charge.
-    Untargeted counterions, ligands and pH-dependent species may carry charge;
-    imbalance cannot establish nutrient infeasibility or chemical incompleteness.
+    This is a conventional nutrient-subset calculation, not full
+    solution charge. Untargeted counterions, ligands and pH-dependent
+    species may carry charge; imbalance cannot establish nutrient
+    infeasibility or chemical incompleteness.
     """
     cations = anions = 0.0
     for symbol, ppm in targets.items():
@@ -126,10 +132,12 @@ def target_ion_balance(targets: dict) -> dict:
 
 
 def imbalance_note(balance: dict) -> str | None:
-    """The formula's imbalance as information (decision G10); None when it shows as zero.
+    """The formula's imbalance as information (decision G10); None when
+    it shows as zero.
 
-    The imbalance never limits the fit: untargeted counterions and other species may balance
-    the subset, and no threshold decides when it matters.
+    The imbalance never limits the fit: untargeted counterions and other
+    species may balance the subset, and no threshold decides when it
+    matters.
     """
     if round(balance["imbalancePercent"], 1) == 0:
         return None
@@ -148,14 +156,16 @@ NITROGEN_FORMS = ("N_NO3", "N_NH4", "N_UREA")
 
 
 def nitrogen_rows(targets) -> dict:
-    """The nitrogen requirements fitted for a formula (decision D1, gates G23 and G24).
+    """The nitrogen requirements fitted for a formula (decision D1,
+    gates G23 and G24).
 
-    Each form is its own requirement on the elemental-N basis: N_NO3 as declared, N_UREA as
-    declared or 0 when absent (a declared zero, with no allowance), and N_NH4 only when it is
-    declared above 0. An absent or zero N_NH4 is no ammonium requirement at all: no row and
-    no ban, and the ammonium allowance applies to incidental NH4-N. Total N, the sum of
-    the three forms, is reported, never fitted as a row of its own. A formula that declares no
-    nitrogen form has no nitrogen rows.
+    Each form is its own requirement on the elemental-N basis: N_NO3 as
+    declared, N_UREA as declared or 0 when absent (a declared zero, with
+    no allowance), and N_NH4 only when it is declared above 0. An absent
+    or zero N_NH4 is no ammonium requirement at all: no row and no ban,
+    and the ammonium allowance applies to incidental NH4-N. Total N, the
+    sum of the three forms, is reported, never fitted as a row of its
+    own. A formula that declares no nitrogen form has no nitrogen rows.
     """
     if not any(form in targets for form in NITROGEN_FORMS):
         return {}
@@ -169,10 +179,12 @@ def nitrogen_rows(targets) -> dict:
 
 
 def fitted_targets(targets) -> dict:
-    """The targets as fitted: other nutrients unchanged, nitrogen as ``nitrogen_rows``.
+    """The targets as fitted: other nutrients unchanged, nitrogen as
+    ``nitrogen_rows``.
 
-    A zero N_NH4 is dropped (no requirement, no ban) and an absent N_UREA becomes a declared
-    zero whenever any nitrogen form is declared.
+    A zero N_NH4 is dropped (no requirement, no ban) and an absent
+    N_UREA becomes a declared zero whenever any nitrogen form is
+    declared.
     """
     nitrogen = nitrogen_rows(targets)
     fitted = {s: v for s, v in targets.items() if s not in NITROGEN_FORMS or s in nitrogen}
@@ -181,7 +193,9 @@ def fitted_targets(targets) -> dict:
 
 
 def total_nitrogen(profile) -> float:
-    """Elemental N summed over the three forms (N_NO3 + N_NH4 + N_UREA), in the profile's units."""
+    """Elemental N summed over the three forms (N_NO3 + N_NH4 + N_UREA),
+    in the profile's units.
+    """
     return math.fsum(float(profile.get(form) or 0.0) for form in NITROGEN_FORMS)
 
 
@@ -266,7 +280,8 @@ def _parse_group(tokens: list[str], index: int) -> tuple[dict, int]:
             continue
         if not token[:1].isalpha() or token not in ATOMIC:
             raise ValueError(f"cannot read {token}")
-        # Anion groups are one unit so a following multiplier applies once.
+        # Anion groups are one unit so a following multiplier applies
+        # once.
         if (
             token == "N"
             and index + 2 < len(tokens)
@@ -315,7 +330,8 @@ def _parse_group(tokens: list[str], index: int) -> tuple[dict, int]:
 
 
 def parse_formula(formula: str) -> dict | None:
-    """Element moles, nitrate moles, ammonium moles, and carbonate groups.
+    """Element moles, nitrate moles, ammonium moles, and carbonate
+    groups.
 
     Returns None when the text is a trade name rather than a formula.
     """
@@ -419,10 +435,10 @@ def _cleaned_assay(salt: dict) -> tuple[dict[str, float] | None, str | None]:
 def assay_conflict(salt: dict) -> str | None:
     """Why this row must not be dosed.
 
-    A parsed formula rejects an element it cannot contain. A percentage that
-    disagrees with the written formula is reported by assay_drift and still
-    dosed from the stored assay, because a missing hydrate is not the same
-    fault as an element the compound does not have.
+    A parsed formula rejects an element it cannot contain. A percentage
+    that disagrees with the written formula is reported by assay_drift
+    and still dosed from the stored assay, because a missing hydrate is
+    not the same fault as an element the compound does not have.
     """
     cleaned, problem = _cleaned_assay(salt)
     if problem is not None or cleaned is None:
@@ -442,7 +458,9 @@ def assay_conflict(salt: dict) -> str | None:
 
 
 def assay_drift(salt: dict) -> str | None:
-    """Stored assay versus the formula, when both describe the same elements."""
+    """Stored assay versus the formula, when both describe the same
+    elements.
+    """
     if assay_conflict(salt) is not None:
         return None
     cleaned, _problem = _cleaned_assay(salt)

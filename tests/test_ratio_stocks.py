@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Stock delivery preserves units, potassium accounting and uncertainty gates."""
+"""Stock delivery preserves units, potassium accounting and uncertainty
+gates.
+"""
 
 import copy
 import unittest
@@ -36,7 +38,8 @@ UNCERTAINTY = dict(
 
 class RatioStockTests(unittest.TestCase):
     def recipe(self, **changes):
-        # Tight zero-width error bounds provide a fast nominal delivery test.
+        # Tight zero-width error bounds provide a fast nominal delivery
+        # test.
         stocks = dict(STOCKS, concentration_relative_error=0, dose_error_ml=0)
         args = dict(
             OPTIONS,

@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Calibrated conductivity boundary checks for runtime coverage closure (#186)."""
+"""Calibrated conductivity boundary checks for runtime coverage closure
+(#186).
+"""
 
 from copy import deepcopy
 from dataclasses import replace
 import unittest
+
 from flahax import DeliveryError, VolumeLitres, GramsPerLitre, ec_recipe_key, plan_ec_delivery
 from examples.ec_and_injection import inputs
 

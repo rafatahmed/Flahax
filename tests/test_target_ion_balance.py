@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A formula's own cation/anion balance is checked before fitting (research report, Steiner
-1961)."""
+"""A formula's own cation/anion balance is checked before fitting
+(research report, Steiner
+1961).
+"""
 
 import unittest
 
@@ -19,7 +21,8 @@ def formula(name):
 
 class TargetIonBalanceTests(unittest.TestCase):
     def test_meq_sums_follow_the_documented_ion_forms(self):
-        # 1 mmol each: NO3- 1, NH4+ 1, H2PO4- 1, K+ 1, Ca2+ 2, Mg2+ 2, SO4 2-, Na+ 1, Cl- 1 meq.
+        # 1 mmol each: NO3- 1, NH4+ 1, H2PO4- 1, K+ 1, Ca2+ 2, Mg2+ 2,
+        # SO4 2-, Na+ 1, Cl- 1 meq.
         balance = target_ion_balance({"N_NO3": 14.0067, "K": 39.0983, "Ca": 40.078, "S": 32.06})
         self.assertAlmostEqual(balance["cationsMeqPerL"], 3.0)
         self.assertAlmostEqual(balance["anionsMeqPerL"], 3.0)
@@ -39,7 +42,8 @@ class TargetIonBalanceTests(unittest.TestCase):
         self.assertGreater(synthetic["imbalancePercent"], 10)
 
     def test_recommend_states_the_imbalance_without_claiming_infeasibility(self):
-        # Pepper (Howard Resh): cations 22.58, anions 37.31 meq/L, -39.5 % (hand-computed above).
+        # Pepper (Howard Resh): cations 22.58, anions 37.31 meq/L, -39.5
+        # % (hand-computed above).
         result = recommend(LIBRARY["salts"], formula("Pepper (Howard Resh)"), {})
         self.assertIn(
             "The formula's declared ions are not balanced: "

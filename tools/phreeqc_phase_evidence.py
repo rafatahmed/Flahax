@@ -3,12 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Named phase allocation references and low/high saturation boundaries."""
+"""Named phase allocation references and low/high saturation
+boundaries.
+"""
 
 import json
 import tempfile
 import argparse
 from pathlib import Path
+
 from phreeqc_evidence import (
     INSTALL,
     merge,
@@ -19,6 +22,7 @@ from phreeqc_evidence import (
     CASES as PRODUCTS,
     new_capture_root,
 )
+
 from flahax.aqueous_model import chemistry
 from flahax.product_conversion import catalogue_dose_totals
 
@@ -53,7 +57,8 @@ CASES = {
         7.0,
         ['Vivianite', 'Siderite', 'Fe(OH)2'],
     ),
-    # Product doses; converted inside generate() so the destination guard runs first.
+    # Product doses; converted inside generate() so the destination
+    # guard runs first.
     'mixed_product_phases': (PRODUCTS['mixed_products'], 6.0, None),
 }
 
@@ -79,8 +84,9 @@ def generate(destination):
             if name == 'mixed_product_phases':
                 text = fixed_ammonium(text)
             rows = execute(exe, db, folder, name, text)
-            # Phase equilibration changes pH naturally in a closed solution.
-            # Runtime is compared at that independently obtained final pH.
+            # Phase equilibration changes pH naturally in a closed
+            # solution. Runtime is compared at that independently
+            # obtained final pH.
             totals['Na+'] = rows[0]['Na']
             water = rows[-1]['mass_H2O']
             totals = {b: v / water for b, v in totals.items()}

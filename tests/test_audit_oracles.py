@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Validate independent audit witnesses and reject misleading qualifications."""
+"""Validate independent audit witnesses and reject misleading
+qualifications.
+"""
 
 from fractions import Fraction
 from types import SimpleNamespace
@@ -25,7 +27,8 @@ class AuditOracleTests(unittest.TestCase):
             state['Na'] + state['H'] - state['H2PO4'] - 2 * state['HPO4'] - state['OH'], 0
         )
         self.assertEqual(state['C'], 0)
-        # This independent conservation assertion rejects any positive invented carbon.
+        # This independent conservation assertion rejects any positive
+        # invented carbon.
         self.assertNotEqual(state['C'] + Fraction('0.000898'), 0)
 
     def test_prescribed_inventory_refuses_negative_species(self):

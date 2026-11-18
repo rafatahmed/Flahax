@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Offline generators use temporary source trees and assert reproducible transformations."""
+"""Offline generators use temporary source trees and assert reproducible
+transformations.
+"""
 
 import contextlib
 import hashlib
@@ -198,7 +200,8 @@ END
             (root / 'tests/fixtures/phreeqc/database').mkdir(parents=True)
             for name in ('flahax-chelates-25c.dat', 'flahax-phases-25c.dat'):
                 (root / 'tests/fixtures/phreeqc/database' / name).write_text('')
-            # Reverse-order dependencies exhaust the bounded closure scan; no physical model claim.
+            # Reverse-order dependencies exhaust the bounded closure
+            # scan; no physical model claim.
             text = 'SOLUTION_SPECIES\nK+ = K+ + H+\n'
             text += '\n'.join(f'X{i - 1} + H+ = X{i}' for i in range(30, 0, -1))
             text += '\nK+ = X0\nPHASES\nMissing\n Solid = Unknown\n -delta_h 1\nEND\n'
@@ -210,7 +213,8 @@ END
                 self.assertRaisesRegex(ValueError, 'unresolved'),
             ):
                 model.build(database, allow_unpinned=True)
-            # The actual module entry point is also exercised against a small invalid input.
+            # The actual module entry point is also exercised against a
+            # small invalid input.
             source = ROOT / 'tools/build_chemistry_model.py'
             with (
                 patch.object(sys, 'argv', ['build', str(database)]),

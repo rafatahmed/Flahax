@@ -38,42 +38,53 @@ from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
 from .requirement_fit import met
 
-# Rank and feasibility threshold, relative to the problem's column scale.
+# Rank and feasibility threshold, relative to the problem's column
+# scale.
 EPS = 1e-10
-# Column additions allowed per column before NNLS reports non-convergence (#55).
+# Column additions allowed per column before NNLS reports
+# non-convergence (#55).
 NNLS_ADDITION_FACTOR = 4
-# Smallest Cholesky pivot, relative to the column's squared norm, accepted by the Gram
-# path (#59); below it the subproblem is ill-conditioned and Householder decides.
+# Smallest Cholesky pivot, relative to the column's squared norm,
+# accepted by the Gram path (#59); below it the subproblem is
+# ill-conditioned and Householder decides.
 GRAM_PIVOT_FLOOR = 1e-8
-# Pivot ratio below which the Gram solution is refined against the original columns.
+# Pivot ratio below which the Gram solution is refined against the
+# original columns.
 GRAM_REFINE_BELOW = 1e-4
 # Binary64 spacing at one (2^-52), twice round-to-nearest unit roundoff.
 ROUNDOFF = 2.220446049250313e-16
-# Only exact zero doses are omitted; every positive binary64 dose is authoritative.
+# Only exact zero doses are omitted; every positive binary64 dose is
+# authoritative.
 KEEP_GRAMS = 0.0
-# A binding ceiling is met as a constraint (#68): a row of moderate weight whose aim is
-# shifted by the Lagrange multiplier, searched until the ion sits on its aim (see
-# _fit_within). A huge penalty weight instead (1024, #56) left the objective so flat in
-# double precision that doses were fixed only to ~2e-3 g/L and depended on the start.
+# A binding ceiling is met as a constraint (#68): a row of moderate
+# weight whose aim is shifted by the Lagrange multiplier, searched until
+# the ion sits on its aim (see _fit_within). A huge penalty weight
+# instead (1024, #56) left the objective so flat in double precision
+# that doses were fixed only to ~2e-3 g/L and depended on the start.
 CEILING_WEIGHT = 8.0
 CEILING_STEPS = 60
-# Converged when every active ceiling ion is within this fraction of its limit of its aim.
+# Converged when every active ceiling ion is within this fraction of its
+# limit of its aim.
 CEILING_TOLERANCE = 1e-9
-# Catalogue products with this role adjust pH only (#75): formulation never selects them.
+# Catalogue products with this role adjust pH only (#75): formulation
+# never selects them.
 PH_REAGENT = "ph_reagent"
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
-# Ammonium allowance (G23): when a formula declares no NH4-N requirement (absent or 0),
-# incidental NH4-N may reach min(10% of total target N, 1.5 mmol/L NH4 = 21.01 mg/L N).
-# Dutch soilless practice: NH4 at 5-15% of total N with at most 1-1.5 mmol/L (Van der Lugt
-# et al. 2016 handbook, after De Kreij, Voogt et al.).
+# Ammonium allowance (G23): when a formula declares no NH4-N requirement
+# (absent or 0), incidental NH4-N may reach min(10% of total target N,
+# 1.5 mmol/L NH4 = 21.01 mg/L N). Dutch soilless practice: NH4 at 5-15%
+# of total N with at most 1-1.5 mmol/L (Van der Lugt et al. 2016
+# handbook, after De Kreij, Voogt et al.).
 AMMONIUM_FRACTION = 0.10
 AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
 AMMONIUM_BASIS = "Dutch soilless practice (De Kreij, Voogt et al.)"
 
 
 def load_library() -> dict:
-    """Salt library, water profiles, and crop formulas shipped with the package."""
+    """Salt library, water profiles, and crop formulas shipped with the
+    package.
+    """
     text = files("flahax").joinpath("data/library.json").read_text(encoding="utf-8")
     return json.loads(text)
 
@@ -84,12 +95,14 @@ def ppm_per_gram(percent: float) -> float:
 
 
 def gap_for(targets: dict, water: dict | None = None) -> dict:
-    """Return target minus water in elemental mg/L, without clipping deficits.
+    """Return target minus water in elemental mg/L, without clipping
+    deficits.
 
-    Missing water concentrations default to zero in this low-level helper.
-    Water-only symbols have a None gap; negative gaps mean water exceeds the
-    target, not that fertilizer can remove the excess. Invalid nutrient maps
-    raise InputError. This is nutrient accounting, not an acid/base analysis.
+    Missing water concentrations default to zero in this low-level
+    helper. Water-only symbols have a None gap; negative gaps mean water
+    exceeds the target, not that fertilizer can remove the excess.
+    Invalid nutrient maps raise InputError. This is nutrient accounting,
+    not an acid/base analysis.
     """
     targets = validate_profile(targets, "targets")
     water = validate_profile(water or {}, "water")
@@ -103,14 +116,17 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
 
 
 def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
-    """Least squares by Householder QR. columns are the active salt vectors."""
+    """Least squares by Householder QR. columns are the active salt
+    vectors.
+    """
     if not columns:
         return []
     n = len(columns)
     m = len(b)
     matrix = [[columns[j][i] for j in range(n)] for i in range(m)]
     beta = b[:]
-    # Rank tests are relative so that rescaling a problem does not change its rank.
+    # Rank tests are relative so that rescaling a problem does not
+    # change its rank.
     rank_tol = EPS * max(math.sqrt(sum(v * v for v in column)) for column in columns)
     if rank_tol == 0.0:
         raise ValueError("rank deficient least squares block")
@@ -125,7 +141,8 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         for i in range(k + 1, m):
             reflector[i] = matrix[i][k]
         norm = sum(value * value for value in reflector)
-        # The sign choice makes norm >= 2 * sigma**2; sigma already passed rank_tol.
+        # The sign choice makes norm >= 2 * sigma**2; sigma already
+        # passed rank_tol.
         for j in range(k, n):
             dot = sum(reflector[i] * matrix[i][j] for i in range(k, m))
             factor = 2.0 * dot / norm
@@ -140,14 +157,17 @@ def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         matrix[k][k] = -sigma
     solution = [0.0] * n
     for i in range(min(n, m) - 1, -1, -1):
-        # Each diagonal is -sigma, already checked before the reflector was applied.
+        # Each diagonal is -sigma, already checked before the reflector
+        # was applied.
         total = beta[i] - sum(matrix[i][j] * solution[j] for j in range(i + 1, n))
         solution[i] = total / matrix[i][i]
     return solution
 
 
 class _LazyGram:
-    """Column inner products computed on first use and cached for one NNLS solve."""
+    """Column inner products computed on first use and cached for one
+    NNLS solve.
+    """
 
     def __init__(self, cols):
         self.cols = cols
@@ -174,11 +194,13 @@ class _GramRow:
 
 
 def _gram_lstsq(gram, cross, cols, rhs, passive):
-    """Least squares on the passive columns from a precomputed Gram matrix (#59).
+    """Least squares on the passive columns from a precomputed Gram
+    matrix (#59).
 
-    Cholesky on G[P,P] plus two refinement steps against the original columns
-    (corrected semi-normal equations). Returns None when a pivot shows poor
-    conditioning, so the caller uses Householder and keeps its rank decisions.
+    Cholesky on G[P,P] plus two refinement steps against the original
+    columns (corrected semi-normal equations). Returns None when a pivot
+    shows poor conditioning, so the caller uses Householder and keeps
+    its rank decisions.
     """
     k = len(passive)
     chol = [[0.0] * k for _ in range(k)]
@@ -207,7 +229,8 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     z = solve([cross[j] for j in passive])
     picked = [cols[j] for j in passive]
     m = len(rhs)
-    # Well-conditioned subproblems are already accurate; refine only weak ones.
+    # Well-conditioned subproblems are already accurate; refine only
+    # weak ones.
     for _ in range(0 if weakest > GRAM_REFINE_BELOW else 2):
         residual = [rhs[r] - sum(z[i] * picked[i][r] for i in range(k)) for r in range(m)]
         delta = solve([sum(col[r] * residual[r] for r in range(m)) for col in picked])
@@ -223,14 +246,16 @@ def nnls(
     *,
     diagnostics: dict | None = None,
 ) -> list[float]:
-    """Lawson-Hanson non-negative least squares. matrix is rows × columns.
+    """Lawson-Hanson non-negative least squares. matrix is rows ×
+    columns.
 
-    x0, when given, is a non-negative starting point (warm start, #59): its positive
-    entries form the initial passive set. The problem is convex, so the optimum is
-    the same; a nearby start needs far fewer column additions. gram, when given, is a
-    _LazyGram of this same matrix, shared by calls that change only rhs.
-    Optional diagnostics receives direct residual/KKT checks and rank exclusions;
-    numerical stationarity is not a certificate for downstream recipe policies.
+    x0, when given, is a non-negative starting point (warm start, #59):
+    its positive entries form the initial passive set. The problem is
+    convex, so the optimum is the same; a nearby start needs far fewer
+    column additions. gram, when given, is a _LazyGram of this same
+    matrix, shared by calls that change only rhs. Optional diagnostics
+    receives direct residual/KKT checks and rank exclusions; numerical
+    stationarity is not a certificate for downstream recipe policies.
     """
     if not matrix:
         return []
@@ -240,21 +265,25 @@ def nnls(
     x = [0.0] * n
     passive: list[int] = []
     active = list(range(n))
-    # Columns found numerically dependent on the passive set; skipped until x changes,
-    # as in Lawson-Hanson, so one dependent column cannot block the others.
+    # Columns found numerically dependent on the passive set; skipped
+    # until x changes, as in Lawson-Hanson, so one dependent column
+    # cannot block the others.
     rejected: set[int] = set()
-    # Optimality (dual) test at round-off level, per column (#68): weight j is
-    # cross[j] - sum_k G[j][k] x[k], whose rounding error is bounded by a multiple of
-    # ROUNDOFF times the sum of the magnitudes of its terms. A fixed threshold stopped
-    # early on small or near-dependent problems (#36); one global |A||b| scale stopped
-    # early when a heavily weighted row (an incidental-ion ceiling) inflated it for
-    # columns that row does not touch.
+    # Optimality (dual) test at round-off level, per column (#68):
+    # weight j is cross[j] - sum_k G[j][k] x[k], whose rounding error is
+    # bounded by a multiple of ROUNDOFF times the sum of the magnitudes
+    # of its terms. A fixed threshold stopped early on small or
+    # near-dependent problems (#36); one global |A||b| scale stopped
+    # early when a heavily weighted row (an incidental-ion ceiling)
+    # inflated it for columns that row does not touch.
     bound = 10.0 * max(m, n) * ROUNDOFF
 
-    # A caller solving several right-hand sides for one matrix may share its Gram cache.
+    # A caller solving several right-hand sides for one matrix may share
+    # its Gram cache.
     gram = _LazyGram(cols) if gram is None else gram
-    # Reject unrepresentable Gram scales before a zero/NaN dual weight can be
-    # mistaken for optimality. Zero columns remain legitimate inactive columns.
+    # Reject unrepresentable Gram scales before a zero/NaN dual weight
+    # can be mistaken for optimality. Zero columns remain legitimate
+    # inactive columns.
     for j, column in enumerate(cols):
         diagonal = gram[j][j]
         if not math.isfinite(diagonal) or (diagonal == 0 and any(column)):
@@ -271,8 +300,10 @@ def nnls(
         return _lstsq([cols[j] for j in chosen], rhs) if sub is None else sub
 
     def settle(sub: list[float]) -> None:
-        """Move x toward the passive-set least-squares solution, dropping columns
-        that reach zero, until that solution is feasible."""
+        """Move x toward the passive-set least-squares solution,
+        dropping columns that reach zero, until that solution is
+        feasible.
+        """
         nonlocal passive
         while True:
             if all(value >= -EPS for value in sub):
@@ -317,7 +348,8 @@ def nnls(
 
     additions = 0
     while True:
-        # Dual weights A^T(b - Ax) from cached Gram entries over the passive columns.
+        # Dual weights A^T(b - Ax) from cached Gram entries over the
+        # passive columns.
         support = [j for j in range(n) if x[j] != 0.0]
         weights = []
         sizes = []
@@ -331,7 +363,8 @@ def nnls(
             break
         enter = max(candidates, key=lambda j: weights[j])
         if additions >= NNLS_ADDITION_FACTOR * n:
-            # Not optimal yet; returning x would hand back a non-optimal fit silently (#55).
+            # Not optimal yet; returning x would hand back a non-optimal
+            # fit silently (#55).
             raise InputError(
                 f"NNLS did not reach optimality within {NNLS_ADDITION_FACTOR * n} column additions"
             )
@@ -368,8 +401,9 @@ def nnls(
 
 
 def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
-    """The squared-relative-error loss and one row per nutrient (target, final and percent
-    difference). Only strictly positive targets contribute to the loss.
+    """The squared-relative-error loss and one row per nutrient (target,
+    final and percent difference). Only strictly positive targets
+    contribute to the loss.
     """
     loss = 0.0
     rows = []
@@ -401,7 +435,9 @@ def _nutrients(product):
 
 
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
-    """Nutrient concentrations (mg/L) from the water plus each salt's grams per litre."""
+    """Nutrient concentrations (mg/L) from the water plus each salt's
+    grams per litre.
+    """
     water = water or {}
     achieved = {symbol: float(value) for symbol, value in water.items()}
     for salt, gram in zip(salts, grams):
@@ -422,12 +458,14 @@ def _fit(
     x0: list[float] | None = None,
     grams_cache: dict | None = None,
 ) -> dict:
-    """Minimize positive-target squared relative errors with nonnegative doses.
+    """Minimize positive-target squared relative errors with nonnegative
+    doses.
 
-    No dose or incidental-nutrient penalty enters the objective. An ion in
-    ceilings, as (weight, aim mg/L), is pulled toward that aim. The matrix depends only
-    on which ions have ceiling rows (aims change rhs alone), so grams_cache, when given,
-    shares one Gram cache per set of ceiling ions.
+    No dose or incidental-nutrient penalty enters the objective. An ion
+    in ceilings, as (weight, aim mg/L), is pulled toward that aim. The
+    matrix depends only on which ions have ceiling rows (aims change rhs
+    alone), so grams_cache, when given, shares one Gram cache per set of
+    ceiling ions.
     """
     _validate_ridge(ridge)
     maxima = maxima or {}
@@ -474,22 +512,25 @@ def _fit_within(
     maxima: dict,
     x0: list[float] | None = None,
 ) -> dict:
-    """Fit with structural zero requirements and every stated nutrient maximum.
+    """Fit with structural zero requirements and every stated nutrient
+    maximum.
 
-    The fit is convex, so a binding ceiling's optimum lies on the limit (#68). Each
-    ceiling ion gets a row of moderate weight aimed at aim - shift, where aim is the
-    limit less CEILING_MARGIN (so round-off cannot leave it exceeded) and the shift is
-    the scaled Lagrange multiplier. The ion's excess over its aim falls as the shift
-    grows, so each shift is found by a bracketed (Illinois) search; a ceiling whose
-    shift reaches zero with the ion below its aim is released. Each refit starts from
-    the last doses. A remainder after CEILING_STEPS is reported by _report as a limit
-    violation.
+    The fit is convex, so a binding ceiling's optimum lies on the limit
+    (#68). Each ceiling ion gets a row of moderate weight aimed at aim -
+    shift, where aim is the limit less CEILING_MARGIN (so round-off
+    cannot leave it exceeded) and the shift is the scaled Lagrange
+    multiplier. The ion's excess over its aim falls as the shift grows,
+    so each shift is found by a bracketed (Illinois) search; a ceiling
+    whose shift reaches zero with the ion below its aim is released.
+    Each refit starts from the last doses. A remainder after
+    CEILING_STEPS is reported by _report as a limit violation.
 
-    At a ceiling already reached by water, products carrying that ion cannot be added;
-    Water above the ceiling remains an explicit violation. This is the
-    infinite-multiplier limit of the search. Those products are left out directly (#86);
-    searching instead
-    grew the shift without bound, and with a second binding ceiling NNLS failed.
+    At a ceiling already reached by water, products carrying that ion
+    cannot be added; Water above the ceiling remains an explicit
+    violation. This is the infinite-multiplier limit of the search.
+    Those products are left out directly (#86); searching instead grew
+    the shift without bound, and with a second binding ceiling NNLS
+    failed.
     """
     # Nonnegative product contributions cannot cancel an explicit zero.
     maxima = dict(maxima)
@@ -521,13 +562,15 @@ def _fit_within(
         return {"grams": grams, "loss": loss, "rows": rows}
     cache: dict = {}
     solved = _fit(salts, targets, water, ridge, maxima, x0=x0, grams_cache=cache)
-    # symbol -> [shift, (lo shift, lo excess > 0) or None, (hi shift, hi excess < 0) or None, side]
+    # symbol -> [shift, (lo shift, lo excess > 0) or None, (hi shift, hi
+    # excess < 0) or None, side]
     search: dict[str, list] = {}
     for _ in range(CEILING_STEPS):
         final = {row["symbol"]: float(row["final"] or 0.0) for row in solved["rows"]}
         converged = True
         for symbol, limit in maxima.items():
-            # Nonpositive ceilings were eliminated by the unreachable-supply recursion.
+            # Nonpositive ceilings were eliminated by the
+            # unreachable-supply recursion.
             value = final.get(symbol, 0.0)
             if symbol not in search:
                 if value <= limit:
@@ -550,20 +593,23 @@ def _fit_within(
             else:
                 state[2] = (shift, excess)
             lo, hi = state[1], state[2]
-            # While NNLS keeps its active set the excess is affine in the shift, so a
-            # secant through two points on one side lands on the root.
+            # While NNLS keeps its active set the excess is affine in
+            # the shift, so a secant through two points on one side
+            # lands on the root.
             secant = (
                 shift - excess * (shift - last[0]) / (excess - last[1])
                 if last is not None and last[1] != excess
                 else math.nan
             )
-            # A new search either records its positive excess at shift zero or is removed;
-            # consequently every retained search has a lower endpoint.
+            # A new search either records its positive excess at shift
+            # zero or is removed; consequently every retained search has
+            # a lower endpoint.
             if hi is None:
                 growth = max(2 * shift, shift + excess, 1e-12 * limit)
                 shift = secant if shift < secant <= 4 * growth else growth  # expand to a bracket
             else:
-                # Illinois: halve the retained end's excess when the same side repeats.
+                # Illinois: halve the retained end's excess when the
+                # same side repeats.
                 g_lo, g_hi = lo[1], hi[1]
                 if state[3] == side == 1:
                     g_hi /= 2
@@ -588,7 +634,9 @@ def _fit_within(
 
 
 def _validate_ridge(ridge: float) -> None:
-    """Reject retired regularization rather than silently changing the objective."""
+    """Reject retired regularization rather than silently changing the
+    objective.
+    """
     if isinstance(ridge, bool) or not isinstance(ridge, (int, float)) or ridge != 0:
         raise InputError(
             "ridge must be 0; dose regularization conflicts with accuracy-first fitting"
@@ -603,12 +651,14 @@ def solve_weights(
     *,
     max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
 ) -> dict:
-    """Fit nonnegative g/L by positive-target squared relative error. ridge must be zero.
+    """Fit nonnegative g/L by positive-target squared relative error.
+    ridge must be zero.
 
-    Nitrogen forms and the ammonium allowance follow ``recommend``: each form is its own row,
-    a zero N_NH4 sets no row and no ban, and incidental NH4-N is held within
-    min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in ammoniumLimit with
-    its basis. totalN reports the sum of the forms.
+    Nitrogen forms and the ammonium allowance follow ``recommend``: each
+    form is its own row, a zero N_NH4 sets no row and no ban, and
+    incidental NH4-N is held within min(max_ammonium_fraction x total
+    target N, 1.5 mmol/L), reported in ammoniumLimit with its basis.
+    totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
     targets = fitted_targets(validate_profile(targets, "targets"))
@@ -629,10 +679,12 @@ def solve_weights(
 
 
 def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> dict | None:
-    """The ammonium allowance (G23) for fitted targets, added to maxima as N_NH4.
+    """The ammonium allowance (G23) for fitted targets, added to maxima
+    as N_NH4.
 
-    It applies when the targets have no NH4-N requirement and no N_NH4 maximum is stated:
-    min(fraction x total target N, AMMONIUM_CAP_MG_PER_L). None adds no maximum.
+    It applies when the targets have no NH4-N requirement and no N_NH4
+    maximum is stated: min(fraction x total target N,
+    AMMONIUM_CAP_MG_PER_L). None adds no maximum.
     """
     if fraction is None:
         return None
@@ -643,7 +695,8 @@ def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> d
     ):
         raise InputError("max_ammonium_fraction must be a number in [0, 1]")
     total_n = total_nitrogen(targets)
-    # A positive N_NH4 target keeps its own row; absent or 0 gets the allowance (G23).
+    # A positive N_NH4 target keeps its own row; absent or 0 gets the
+    # allowance (G23).
     if total_n <= 0 or "N_NH4" in targets or "N_NH4" in maxima:
         return None
     limit = min(fraction * total_n, AMMONIUM_CAP_MG_PER_L)
@@ -694,11 +747,13 @@ def _simplify(
     ridge: float,
     maxima: dict | None = None,
 ) -> dict:
-    """Reduce product count only without degrading the original fit or hard limits.
+    """Reduce product count only without degrading the original fit or
+    hard limits.
 
-    Binary64 comparisons are conservative: no extra accuracy allowance is granted
-    for a preference. Numerically unequal but equivalent optima may retain more
-    products. This is not a globally minimum-product-count search.
+    Binary64 comparisons are conservative: no extra accuracy allowance
+    is granted for a preference. Numerically unequal but equivalent
+    optima may retain more products. This is not a globally
+    minimum-product-count search.
     """
     original_rows = solved["rows"]
     grams = solved["grams"][:]
@@ -795,10 +850,12 @@ def _eligible(
 
 
 def _short(rows: list[dict], targets: dict) -> list[str]:
-    """Requested ions that finished below target, beyond the numerical tolerance (G25).
+    """Requested ions that finished below target, beyond the numerical
+    tolerance (G25).
 
-    An overshoot is not a reason to add another salt. A chloride or sodium
-    salt can only add its ions. It cannot pull an element back down.
+    An overshoot is not a reason to add another salt. A chloride or
+    sodium salt can only add its ions. It cannot pull an element back
+    down.
     """
     final = {row["symbol"]: float(row["final"] or 0.0) for row in rows}
     return [
@@ -809,7 +866,9 @@ def _short(rows: list[dict], targets: dict) -> list[str]:
 
 
 def _recover(library, ready, excluded, targets, short):
-    """Admit a held-back salt only when it is the only source of a short ion."""
+    """Admit a held-back salt only when it is the only source of a short
+    ion.
+    """
     warnings = []
     by_id = {salt.get("id"): salt for salt in library}
     ready_ids = {salt.get("id") for salt in ready}
@@ -851,10 +910,12 @@ def _recover(library, ready, excluded, targets, short):
 
 
 def _automatic_fit(library, salts, excluded, targets, water, ridge, maxima):
-    """Grow the permitted supplied pool until no deficient nutrient adds a source.
+    """Grow the permitted supplied pool until no deficient nutrient adds
+    a source.
 
-    Every successful recovery adds an ID from the finite caller inventory. Each
-    fit considers mixtures of the whole current pool; no target or limit changes.
+    Every successful recovery adds an ID from the finite caller
+    inventory. Each fit considers mixtures of the whole current pool; no
+    target or limit changes.
     """
     warnings, attempts = [], []
     while True:
@@ -885,7 +946,9 @@ def _automatic_fit(library, salts, excluded, targets, water, ridge, maxima):
 
 
 def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset()) -> set[str]:
-    """Positive targets still missed by a least-squares fit on target rows alone."""
+    """Positive targets still missed by a least-squares fit on target
+    rows alone.
+    """
     kept = {symbol: ppm for symbol, ppm in targets.items() if ppm > 0 and symbol not in drop}
     if not kept or not salts:
         return set(kept)
@@ -900,8 +963,10 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
 
 
 def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
-    """Explain missed positive/zero targets with scoped structural proofs or
-    non-certifying relaxed-search observations; never infer proof from a miss."""
+    """Explain missed positive/zero targets with scoped structural
+    proofs or non-certifying relaxed-search observations; never infer
+    proof from a miss.
+    """
     missed = [
         row
         for row in rows
@@ -995,7 +1060,9 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
 
 
 def _charge_report(result):
-    """Refresh partial charge diagnostics from the final emitted nutrient inventory."""
+    """Refresh partial charge diagnostics from the final emitted
+    nutrient inventory.
+    """
     result["targetIonBalance"] = target_ion_balance(
         {row["symbol"]: row["target"] for row in result["rows"] if row["target"] is not None}
     )
@@ -1017,7 +1084,9 @@ def _charge_report(result):
 
 
 def _documents(value) -> list[dict]:
-    """Flatten a document reference, a list of them, or a {role: reference} map to a list."""
+    """Flatten a document reference, a list of them, or a {role:
+    reference} map to a list.
+    """
     if (
         isinstance(value, dict)
         and value
@@ -1030,10 +1099,13 @@ def _documents(value) -> list[dict]:
 
 
 def _provenance(record: dict) -> dict:
-    """Provenance of the record that produced a salt entry; never guessed when absent."""
+    """Provenance of the record that produced a salt entry; never
+    guessed when absent.
+    """
     own = record.get("provenance")
     if own:
-        # A resolved record keeps its grade/lot documents and the shipped catalogue reference.
+        # A resolved record keeps its grade/lot documents and the
+        # shipped catalogue reference.
         documents = _documents(own.get("documents")) + _documents(own.get("source"))
         return {
             "recordId": own.get("recordId", record["id"]),
@@ -1073,8 +1145,10 @@ def _provenance(record: dict) -> dict:
 
 
 def total_n_report(rows: list[dict], targets: dict) -> dict:
-    """Total N reported as the sum of the three forms in the final rows (water, products and
-    any reagent); it is never a fitted row (D1). The target is None when no form is declared."""
+    """Total N reported as the sum of the three forms in the final rows
+    (water, products and any reagent); it is never a fitted row (D1).
+    The target is None when no form is declared.
+    """
     target = total_nitrogen(targets) if any(form in targets for form in NITROGEN_FORMS) else None
     final = total_nitrogen({row["symbol"]: row["final"] for row in rows})
     return {
@@ -1123,68 +1197,81 @@ def recommend(
     """Select eligible products and fit non-negative product g/L.
 
     Args:
-        library: Product records with id, name, formula and elemental mass
-            percentages in elements. Use load_library()['salts'] deliberately.
-        targets: Required nonempty elemental mg/L map; nitrogen forms are
-            separate N_NO3, N_NH4 and N_UREA keys, not generic total N. Each
-            form is its own requirement (decision D1): N_NO3 as declared,
-            N_UREA as declared or 0 when absent, and N_NH4 only when above 0.
-            An absent or zero N_NH4 sets no row and no ban; the ammonium
-            allowance below applies instead. Total N is reported in totalN as
-            the sum of the forms, never fitted. For other nutrients an explicit
-            zero prohibits positive contribution, unlike a missing key.
-        water: Source-water elemental mg/L; omitted entries default to zero.
-        allow_ions: Explicit exceptions to the default restricted-ion filter.
-        allow_carbonates: Permit carbonate products in nutrient fitting only;
-            this does not establish dissolution or stock compatibility.
-        ridge: Retained compatibility argument; must be zero. Nonzero dose
-            regularization raises InputError because it degrades target accuracy.
-        maximum_concentrations: Optional hard mg/L ceilings for any nutrient, for
-            example {"Cl": 70}. An ion with a positive ceiling is admitted like
-            allow_ions. Untargeted nutrients are not penalized up to their ceiling;
-            a fit above it is solved again with the ion held on the ceiling as a
-            constraint, and any
-            excess that cannot be removed is reported in limitViolations with
-            feasible False. Omitted keeps the default.
+        library: Product records with id, name, formula and elemental
+            mass percentages in elements. Use load_library()['salts']
+            deliberately.
+        targets: Required nonempty elemental mg/L map; nitrogen forms
+            are separate N_NO3, N_NH4 and N_UREA keys, not generic total
+            N. Each form is its own requirement (decision D1): N_NO3 as
+            declared, N_UREA as declared or 0 when absent, and N_NH4
+            only when above 0. An absent or zero N_NH4 sets no row and
+            no ban; the ammonium allowance below applies instead. Total
+            N is reported in totalN as the sum of the forms, never
+            fitted. For other nutrients an explicit zero prohibits
+            positive contribution, unlike a missing key.
+        water: Source-water elemental mg/L; omitted entries default to
+            zero.
+        allow_ions: Explicit exceptions to the default restricted-ion
+            filter.
+        allow_carbonates: Permit carbonate products in nutrient fitting
+            only; this does not establish dissolution or stock
+            compatibility.
+        ridge: Retained compatibility argument; must be zero. Nonzero
+            dose regularization raises InputError because it degrades
+            target accuracy.
+        maximum_concentrations: Optional hard mg/L ceilings for any
+            nutrient, for example {"Cl": 70}. An ion with a positive
+            ceiling is admitted like allow_ions. Untargeted nutrients
+            are not penalized up to their ceiling; a fit above it is
+            solved again with the ion held on the ceiling as a
+            constraint, and any excess that cannot be removed is
+            reported in limitViolations with feasible False. Omitted
+            keeps the default.
         max_ammonium_fraction: When targets declare no NH4-N requirement
-            (N_NH4 absent or 0) and no N_NH4 maximum is given, incidental NH4-N
-            may reach this share of the total target N (N_NO3 + N_NH4 + N_UREA),
-            capped at 1.5 mmol/L NH4 (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The
-            default AMMONIUM_FRACTION (0.10) follows Dutch soilless
-            practice (G23); ammoniumLimit reports it with its basis.
-            None adds no ammonium maximum. Untargeted nutrients do not enter
-            the objective.
+            (N_NH4 absent or 0) and no N_NH4 maximum is given,
+            incidental NH4-N may reach this share of the total target N
+            (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L NH4
+            (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The default
+            AMMONIUM_FRACTION (0.10) follows Dutch soilless practice
+            (G23); ammoniumLimit reports it with its basis. None adds no
+            ammonium maximum. Untargeted nutrients do not enter the
+            objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
-        nutrient rows, feasibility, incidental review, warnings and exclusions.
-        Each salt carries provenance (recordId, identityId, analysisBasis,
-        documents, flags) taken from the record that produced it, or
-        analysisBasis "unattributed"; identitiesSha256 pins the catalogue.
-        Supported counterions are included in the fitting and forward nutrient
-        inventory. materialInventory exposes conserved components and limitations;
-        eligibility policy still uses the declared assay and explicit permissions.
-        The raw grams vector follows the internal eligible/recovered product
+        nutrient rows, feasibility, incidental review, warnings and
+        exclusions. Each salt carries provenance (recordId, identityId,
+        analysisBasis, documents, flags) taken from the record that
+        produced it, or analysisBasis "unattributed"; identitiesSha256
+        pins the catalogue. Supported counterions are included in the
+        fitting and forward nutrient inventory. materialInventory
+        exposes conserved components and limitations; eligibility policy
+        still uses the declared assay and explicit permissions. The raw
+        grams vector follows the internal eligible/recovered product
         order, NOT necessarily the original library order. Use salts for
-        product-to-dose mapping. Feasible requires every positive target met within
-        the numerical tolerance (requirement_fit.met: 1e-5 relative), satisfied zero
-        requirements and maxima, and no requirement conflicts; a missed target is a
-        deviation reported in rows and unmetTargets.
-        requirementConflicts identifies targets above maxima and water above limits.
-        substitutionSearch records supplied and attempted product IDs and whether
-        a nutrient-feasible candidate was found. Recovery never expands the supplied
-        inventory; exhausted search is not a global infeasibility certificate.
-        This is not chemical, stock or operational approval.
+        product-to-dose mapping. Feasible requires every positive target
+        met within the numerical tolerance (requirement_fit.met: 1e-5
+        relative), satisfied zero requirements and maxima, and no
+        requirement conflicts; a missed target is a deviation reported
+        in rows and unmetTargets. requirementConflicts identifies
+        targets above maxima and water above limits. substitutionSearch
+        records supplied and attempted product IDs and whether a
+        nutrient-feasible candidate was found. Recovery never expands
+        the supplied inventory; exhausted search is not a global
+        infeasibility certificate. This is not chemical, stock or
+        operational approval.
 
     Raises:
-        InputError: Invalid targets/water or no eligible products. Inspect
-            exclusions and warnings for skipped or recovered candidates.
+        InputError: Invalid targets/water or no eligible products.
+            Inspect exclusions and warnings for skipped or recovered
+            candidates.
     """
     _validate_ridge(ridge)
     targets = validate_profile(targets, "targets")
     if not targets:
         raise InputError("targets are required")
-    # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is no row and no ban (G24).
+    # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is
+    # no row and no ban (G24).
     targets = fitted_targets(targets)
     water = validate_profile(water or {}, "water")
     allowed = frozenset(allow_ions or ())

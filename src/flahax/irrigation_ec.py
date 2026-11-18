@@ -2,16 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""EXPERIMENTAL: speciation-based irrigation EC from McCleskey et al. (2012).
+"""EXPERIMENTAL: speciation-based irrigation EC from McCleskey et al.
+(2012).
 
-Source: McCleskey, Nordstrom, Ryan, Ball (2012) Geochim. Cosmochim. Acta 77,
-369-382, Table 1 (Eq. 8 parameters), shipped in
-data/conductivity_mccleskey2012.json and pinned by SHA-256. This module holds
-the coefficient loader, the ionic molal conductivity and EC25 from speciated
-analytical totals. Units are mS kg cm-1 mol-1 x mol/kgw (no density
-conversion). H2PO4- and HPO4-2 use a supplementary 25 C block in the same file,
-fitted to Pethybridge, Talbot and House (2006) Table III by
-tools/fit_phosphate_conductivity.py (decision O1). Not validated for
+Source: McCleskey, Nordstrom, Ryan, Ball (2012) Geochim. Cosmochim. Acta
+77, 369-382, Table 1 (Eq. 8 parameters), shipped in
+data/conductivity_mccleskey2012.json and pinned by SHA-256. This module
+holds the coefficient loader, the ionic molal conductivity and EC25 from
+speciated analytical totals. Units are mS kg cm-1 mol-1 x mol/kgw (no
+density conversion). H2PO4- and HPO4-2 use a supplementary 25 C block in
+the same file, fitted to Pethybridge, Talbot and House (2006) Table III
+by tools/fit_phosphate_conductivity.py (decision O1). Not validated for
 concentrated nutrient solutions; every result carries QUALIFIER.
 """
 
@@ -44,14 +45,17 @@ def _load():
 
 
 def load_conductivity_coefficients() -> dict:
-    """Return the cached McCleskey 2012 Table 1 data and supplementary block (treat as
-    read-only)."""
+    """Return the cached McCleskey 2012 Table 1 data and supplementary
+    block (treat as read-only).
+    """
     return _load()
 
 
 @lru_cache(maxsize=1)
 def _supplementary():
-    """Supplementary 25 C ion rows (decision O1); the species name is the ion name."""
+    """Supplementary 25 C ion rows (decision O1); the species name is
+    the ion name.
+    """
     block = _load().get('supplementary', {})
     return {
         ion: row for ion, row in block.items() if isinstance(row, dict) and 'lambda0_25c' in row
@@ -65,7 +69,9 @@ def _coverage():
 
 
 def covered_species() -> frozenset:
-    """FlahaX aqueous species names with a Table 1 or supplementary (25 C) coefficient."""
+    """FlahaX aqueous species names with a Table 1 or supplementary (25
+    C) coefficient.
+    """
     return frozenset(_coverage())
 
 
@@ -74,10 +80,11 @@ def ionic_molal_conductivity(
 ) -> float:
     """Eq. 8: lambda = lambda0(T) - A(T)*sqrt(I)/(1 + B*sqrt(I)), T in C.
 
-    Supplementary ions (H2PO4-, HPO4-2) have 25 C coefficients only; any other
-    temperature raises temperature_outside_reference. Strength above the recorded
-    phosphate fit maximum raises ionic_strength_outside_phosphate_fit. Zero
-    remains available for the fitted infinite-dilution coefficient.
+    Supplementary ions (H2PO4-, HPO4-2) have 25 C coefficients only; any
+    other temperature raises temperature_outside_reference. Strength
+    above the recorded phosphate fit maximum raises
+    ionic_strength_outside_phosphate_fit. Zero remains available for the
+    fitted infinite-dilution coefficient.
     """
     row = _load()['ions'].get(ion) if isinstance(ion, str) else None
     extra = _supplementary().get(ion) if isinstance(ion, str) and row is None else None
@@ -118,9 +125,10 @@ QUALIFIER = (
 MODEL_VERSION = 'irrigation-ec-mccleskey2012-m2b-experimental'
 CONDUCTIVITY_UNITS = 'mS kg cm-1 mol-1 x mol/kgw'
 _REPORTING_TOLERANCE = 1e-12
-# Assumed molar conductivity per unit charge, mS kg cm-1 mol-1; not a proven physical bound.
-# It sets the high end of the range for species without a coefficient, phosphate beyond its fit
-# domain and charge the recorded ions do not carry.
+# Assumed molar conductivity per unit charge, mS kg cm-1 mol-1; not a
+# proven physical bound. It sets the high end of the range for species
+# without a coefficient, phosphate beyond its fit domain and charge the
+# recorded ions do not carry.
 LAMBDA_MAX_PER_CHARGE = 80.0
 _CORE_AUDIT_KEYS = frozenset(
     (
@@ -149,12 +157,15 @@ _CORE_AUDIT_KEYS = frozenset(
 
 @dataclass(frozen=True)
 class IrrigationECResult:
-    """EXPERIMENTAL irrigation EC25 result; see calculate_ec_from_totals.
+    """EXPERIMENTAL irrigation EC25 result; see
+    calculate_ec_from_totals.
 
-    ``ec25_range_ms_cm`` is (low, high): low sums the species with a coefficient and high adds
-    the bound of those without. ``ec25_ms_cm`` is the single estimate only when low equals
-    high; there is no midpoint. Numerical, input and model uncertainty are separately reported
-    as unquantified; absence of a quantified uncertainty is never zero uncertainty.
+    ``ec25_range_ms_cm`` is (low, high): low sums the species with a
+    coefficient and high adds the bound of those without. ``ec25_ms_cm``
+    is the single estimate only when low equals high; there is no
+    midpoint. Numerical, input and model uncertainty are separately
+    reported as unquantified; absence of a quantified uncertainty is
+    never zero uncertainty.
     """
 
     status: str
@@ -217,11 +228,12 @@ def _validate_request(
     assay_residual_eq,
     assay_residual_percent=None,
 ):
-    """Validate mode inputs; return (phases tuple, not_supported reason or None).
+    """Validate mode inputs; return (phases tuple, not_supported reason
+    or None).
 
-    Invalid input raises DeliveryError. Temperature and carbon boundary outside
-    the M1 scope are not errors: they return a not_supported reason, checked
-    before any solve.
+    Invalid input raises DeliveryError. Temperature and carbon boundary
+    outside the M1 scope are not errors: they return a not_supported
+    reason, checked before any solve.
     """
     if ph_mode == 'calculated':
         if ph is not None:
@@ -296,8 +308,9 @@ def _audit(
         'model': MODEL_VERSION,
         'uncovered_bound_ms_cm': uncovered_bound,
         'lambda_max_per_charge': LAMBDA_MAX_PER_CHARGE if uncovered_bound is not None else None,
-        # Decision O1: set when a supplementary (Pethybridge 2006 fit) ion contributes;
-        # the fit's data reach only this ionic strength.
+        # Decision O1: set when a supplementary (Pethybridge 2006 fit)
+        # ion contributes; the fit's data reach only this ionic
+        # strength.
         'supplementaryCoefficients': supplementary_used,
         'phosphate_fit_max_ionic_strength': data['supplementary']['fit']['max_ionic_strength']
         if supplementary_used
@@ -355,12 +368,14 @@ def _ec_from_state(
     assay_residual_percent,
     audit_inputs,
 ) -> IrrigationECResult:
-    """EXPERIMENTAL: EC25 from an already-solved 25 C, closed-carbon state.
+    """EXPERIMENTAL: EC25 from an already-solved 25 C, closed-carbon
+    state.
 
-    The caller has validated the mode inputs (see _validate_request). Status
-    order: phosphate fit applicability, O5 assay gate, then unrecorded counterions.
-    Missing material species prevent a total prediction even if other gates pass.
-    Supersaturation and incomplete-coverage warnings survive rejection.
+    The caller has validated the mode inputs (see _validate_request).
+    Status order: phosphate fit applicability, O5 assay gate, then
+    unrecorded counterions. Missing material species prevent a total
+    prediction even if other gates pass. Supersaturation and
+    incomplete-coverage warnings survive rejection.
     """
     charges = _charges()
     species_map = _coverage()
@@ -393,7 +408,8 @@ def _ec_from_state(
             for phase, si in sorted(state.saturation_indices.items())
             if si > 0
         )
-    # Charge the recorded ions do not carry (a supplied pH leaves it unbalanced) conducts too.
+    # Charge the recorded ions do not carry (a supplied pH leaves it
+    # unbalanced) conducts too.
     unrecorded = None
     excess = state.charge_balance - assay_residual_eq
     if ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
@@ -467,25 +483,31 @@ def calculate_ec_from_totals(
     audit_inputs: Mapping | None = None,
     residual_charge_eq_per_kgw: float = 0.0,
 ) -> IrrigationECResult:
-    """EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in mol/kgw.
+    """EXPERIMENTAL: irrigation EC25 (mS/cm) from analytical totals in
+    mol/kgw.
 
-    In ``ph_mode='calculated'`` the pH solve reproduces ``residual_charge_eq_per_kgw``, the
-    charge the measured water carries that no ion accounts for, instead of forcing zero.
+    In ``ph_mode='calculated'`` the pH solve reproduces
+    ``residual_charge_eq_per_kgw``, the charge the measured water
+    carries that no ion accounts for, instead of forcing zero.
 
     kappa25 = sum(lambda_i(25 C, I) * m_i) over charged species of one speciation
     (McCleskey 2012 Eq. 8) gives the low end. The high end adds |z| * 80 * m for each charged
-    species without a coefficient (``missing_species``), for H2PO4- / HPO4-2 beyond the
-    recorded fit ionic strength (Pethybridge et al. 2006 Table III, data to I = 0.014) and for
-    the charge a supplied pH leaves unbalanced. The result is never refused for these: status
-    'estimated' (low equals high, ``ec25_ms_cm`` is that value) or 'range'
-    (``ec25_ms_cm`` is None; ``ec25_range_ms_cm`` is (low, high); no midpoint). Only a state
-    the activity model cannot solve returns 'not_supported'; invalid input raises
-    DeliveryError. The assay residual is reported in ``assay_charge_residual`` (the
-    declared-form percent when ``assay_charge_residual_percent`` is given, otherwise the
-    residual over the speciated absolute equivalents) and never changes the status. The audit
-    retains supplementaryCoefficients and phosphate_fit_max_ionic_strength. Accuracy on
-    fertilizer mixtures has not been established. The factor 80 is an assumed allowance;
-    the range is not a confidence interval or a guaranteed physical bound.
+    species without a coefficient (``missing_species``), for H2PO4- /
+    HPO4-2 beyond the recorded fit ionic strength (Pethybridge et al.
+    2006 Table III, data to I = 0.014) and for the charge a supplied pH
+    leaves unbalanced. The result is never refused for these: status
+    'estimated' (low equals high, ``ec25_ms_cm`` is that value) or
+    'range' (``ec25_ms_cm`` is None; ``ec25_range_ms_cm`` is (low,
+    high); no midpoint). Only a state the activity model cannot solve
+    returns 'not_supported'; invalid input raises DeliveryError. The
+    assay residual is reported in ``assay_charge_residual`` (the
+    declared-form percent when ``assay_charge_residual_percent`` is
+    given, otherwise the residual over the speciated absolute
+    equivalents) and never changes the status. The audit retains
+    supplementaryCoefficients and phosphate_fit_max_ionic_strength.
+    Accuracy on fertilizer mixtures has not been established. The factor
+    80 is an assumed allowance; the range is not a confidence interval
+    or a guaranteed physical bound.
     """
     _require_id(solution_id, 'solution_id')
     phases, reason = _validate_request(
@@ -556,7 +578,9 @@ _PHOSPHATE_FORM_CHARGES = {'H2PO4-': -1, 'HPO4-2': -2, 'H3PO4': 0}
 
 @dataclass(frozen=True)
 class DeclaredPureWater:
-    """EXPERIMENTAL: declared ion-free water (RO or distilled) with an id."""
+    """EXPERIMENTAL: declared ion-free water (RO or distilled) with an
+    id.
+    """
 
     water_id: str
     kind: str = 'RO'
@@ -584,9 +608,9 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, material
     """EXPERIMENTAL: declared-form charge residual of catalogue doses.
 
     Returns {'eq_per_kgw', 'percent'}; percent = 100 * sum(z m) / sum(|z| m),
-    pH-independent, computed from each product's declared ion forms. Products in
-    ``materials`` (resolved user grades or lots) use their own assays, so the O5
-    gate tests the analysis actually dosed.
+    pH-independent, computed from each product's declared ion forms.
+    Products in ``materials`` (resolved user grades or lots) use their
+    own assays, so the O5 gate tests the analysis actually dosed.
     """
     _validate_doses(doses_g_per_kg_water)
     net = absolute = 0.0
@@ -597,8 +621,9 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, material
         phosphate_z = next(
             (z for form, z in _PHOSPHATE_FORM_CHARGES.items() if form in components), None
         )
-        # Borax (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3) declares -0.5 per B;
-        # equilibrium totals keep the neutral H3BO3 basis and pH forms borate.
+        # Borax (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3) declares -0.5
+        # per B; equilibrium totals keep the neutral H3BO3 basis and pH
+        # forms borate.
         boron_z = -0.5 if ('B(OH)4-' in components or 'borax' in components) else 0
         for basis, amount in totals.items():
             if basis == 'PO4-3':
@@ -622,7 +647,9 @@ def assay_charge_residual(doses_g_per_kg_water: Mapping[str, float], *, material
 
 
 def _materials_audit(doses: Mapping[str, float], materials) -> dict:
-    """Provenance with per-nutrient basis for every dosed product (shipped unless in materials)."""
+    """Provenance with per-nutrient basis for every dosed product
+    (shipped unless in materials).
+    """
     chosen = dict(materials or {})
     return {
         name: material_audit_entry(chosen.get(name) or resolve_material(name)) for name in doses
@@ -645,15 +672,17 @@ def calculate_irrigation_ec(
     temperature_c: float = 25.0,
     materials: Mapping | None = None,
 ) -> IrrigationECResult:
-    """EXPERIMENTAL: irrigation EC25 of a catalogue recipe in stated water.
+    """EXPERIMENTAL: irrigation EC25 of a catalogue recipe in stated
+    water.
 
     Water is a BalancedWaterAnalysis (with water_analysis_id) or a
-    DeclaredPureWater. Reagent additions are acid-base-neutral totals (protons
-    implicit) and are excluded from the assay residual. ``materials`` optionally
-    maps dosed product names to ResolvedMaterial (user grade or lot); the audit
-    records every dosed product's provenance under 'materials'. A blend of
-    undisclosed composition gives not_supported / composition_undisclosed.
-    Accuracy on fertilizer mixtures has not been established.
+    DeclaredPureWater. Reagent additions are acid-base-neutral totals
+    (protons implicit) and are excluded from the assay residual.
+    ``materials`` optionally maps dosed product names to
+    ResolvedMaterial (user grade or lot); the audit records every dosed
+    product's provenance under 'materials'. A blend of undisclosed
+    composition gives not_supported / composition_undisclosed. Accuracy
+    on fertilizer mixtures has not been established.
     """
     _require_id(recipe_id, 'recipe_id')
     if isinstance(water, BalancedWaterAnalysis):
@@ -708,7 +737,8 @@ def calculate_irrigation_ec(
     except DeliveryError as error:
         if error.code != 'composition_undisclosed':
             raise
-        # Mode inputs are still validated; then the whole chemistry result is refused.
+        # Mode inputs are still validated; then the whole chemistry
+        # result is refused.
         phases, _ = _validate_request(
             ph_mode=ph_mode,
             ph=ph,
@@ -764,8 +794,9 @@ BAND_END_NOTE = (
 
 
 def _end_material(material, end: str):
-    """Copy of a resolved material whose record elements are its band end, or None if any end is
-    open."""
+    """Copy of a resolved material whose record elements are its band
+    end, or None if any end is open.
+    """
     edge = material.band_minimum if end == 'minimum' else material.band_maximum
     elements = {}
     for key in material.record['elements']:
@@ -782,20 +813,24 @@ def calculate_irrigation_ec_band(
     joint_scenarios: Mapping | None = None,
     **kwargs,
 ) -> dict:
-    """EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient band ends.
+    """EXPERIMENTAL: irrigation EC25 chemistry at nominal and nutrient
+    band ends.
 
-    Takes the arguments of calculate_irrigation_ec. Returns ``nominal``, ``minimum`` and
-    ``maximum`` (each an IrrigationECResult with its own pH, warnings and EC) and a
-    ``note``. The minimum end sets every dosed product to its band minimum and the
-    maximum end to its band maximum: corner cases, not statistical bounds. An end where
-    any dosed product has an open band end (a shipped product has none) is
-    not_supported / band_end_open; nothing is substituted. Each end's audit records
-    ``band_end``; ``audit['materials']`` carries the nominal provenance. An open end
-    reports no nominal numbers (its audit assay residual is None too).
-    Optional joint_scenarios maps named scenarios to complete material mappings for
-    all dosed products. Each mapping describes a coherent joint assay realization;
-    no independence, probability or statistical bounds are inferred. Results in
-    scenarios retain individual domain/coverage failures, never an envelope promise.
+    Takes the arguments of calculate_irrigation_ec. Returns ``nominal``,
+    ``minimum`` and ``maximum`` (each an IrrigationECResult with its own
+    pH, warnings and EC) and a ``note``. The minimum end sets every
+    dosed product to its band minimum and the maximum end to its band
+    maximum: corner cases, not statistical bounds. An end where any
+    dosed product has an open band end (a shipped product has none) is
+    not_supported / band_end_open; nothing is substituted. Each end's
+    audit records ``band_end``; ``audit['materials']`` carries the
+    nominal provenance. An open end reports no nominal numbers (its
+    audit assay residual is None too). Optional joint_scenarios maps
+    named scenarios to complete material mappings for all dosed
+    products. Each mapping describes a coherent joint assay realization;
+    no independence, probability or statistical bounds are inferred.
+    Results in scenarios retain individual domain/coverage failures,
+    never an envelope promise.
     """
     if joint_scenarios is not None:
         if not isinstance(joint_scenarios, Mapping) or any(
@@ -816,7 +851,8 @@ def calculate_irrigation_ec_band(
     for end in ('minimum', 'maximum'):
         built = {name: _end_material(material, end) for name, material in sources.items()}
         if any(material is None for material in built.values()):
-            # The nominal call above already validated every input (mode and phase errors raise).
+            # The nominal call above already validated every input (mode
+            # and phase errors raise).
             result[end] = replace(
                 nominal,
                 status='not_supported',
@@ -875,12 +911,13 @@ def calculate_irrigation_ec_band(
 def calculate_irrigation_ec_from_plan(
     plan: EquilibriumPhPlan, *, phase_policy: str = 'dissolved'
 ) -> IrrigationECResult:
-    """EXPERIMENTAL: irrigation EC25 on an EquilibriumPhPlan's own target state.
+    """EXPERIMENTAL: irrigation EC25 on an EquilibriumPhPlan's own
+    target state.
 
-    The plan's solved target state is used as supplied at plan.target_ph and is
-    never re-solved; carbon boundary is closed. A plan that carries phases needs
-    phase_policy='equilibrated'. Accuracy on fertilizer mixtures has not been
-    established.
+    The plan's solved target state is used as supplied at plan.target_ph
+    and is never re-solved; carbon boundary is closed. A plan that
+    carries phases needs phase_policy='equilibrated'. Accuracy on
+    fertilizer mixtures has not been established.
     """
     plan_audit = plan.audit
     doses = dict(plan_audit['productDosesGPerKgWater'])
@@ -919,7 +956,8 @@ def calculate_irrigation_ec_from_plan(
         'waterTotalsMolal': dict(plan_audit['waterTotalsMolal']),
         'initialPh': plan_audit['initialPh'],
         'assay_charge_residual_declared_percent': residual['percent'],
-        # The plan's own material provenance, copied so the EC audit stands on its own.
+        # The plan's own material provenance, copied so the EC audit
+        # stands on its own.
         'materials': copy.deepcopy(plan_audit['materials']),
         'identitiesSha256': plan_audit['identitiesSha256'],
     }
@@ -944,12 +982,13 @@ def compare_measured_ec(
     measured_ec25_ms_cm: float,
     meter_reference_temperature_c: float,
 ) -> dict:
-    """EXPERIMENTAL post-mix comparison: the difference and range membership, no verdict or
-    tolerance.
+    """EXPERIMENTAL post-mix comparison: the difference and range
+    membership, no verdict or tolerance.
 
-    ``ec25_range_ms_cm`` is the prediction's range and ``within_range`` is True when the
-    measurement lies inside it (both ends inclusive), False when outside, and None when the
-    prediction is not bounded (it has no range). It is a fact, not a pass/fail.
+    ``ec25_range_ms_cm`` is the prediction's range and ``within_range``
+    is True when the measurement lies inside it (both ends inclusive),
+    False when outside, and None when the prediction is not bounded (it
+    has no range). It is a fact, not a pass/fail.
     """
     if prediction.status != 'estimated':
         raise DeliveryError(

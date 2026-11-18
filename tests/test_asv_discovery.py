@@ -4,10 +4,11 @@
 # its results are calculations, not dosing instructions.
 """The ASV suite must import the way ASV discovers it (#64).
 
-ASV makes only the benchmark package importable, through its own meta-path
-importer (asv_runner._aux.update_sys_path), and imports every module under it.
-The repository root is not on sys.path, so a module there that imports `tools`
-(or a development-only package) aborts discovery and no timing runs.
+ASV makes only the benchmark package importable, through its own
+meta-path importer (asv_runner._aux.update_sys_path), and imports every
+module under it. The repository root is not on sys.path, so a module
+there that imports `tools` (or a development-only package) aborts
+discovery and no timing runs.
 """
 
 import json

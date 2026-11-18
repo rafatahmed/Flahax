@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Tests for flahax.terminal: key decoding, glyph fallback and when the TUI can run."""
+"""Tests for flahax.terminal: key decoding, glyph fallback and when the
+TUI can run.
+"""
 
 import io
 import unittest
@@ -47,8 +49,9 @@ class KeyDecodingTests(unittest.TestCase):
             decode_windows('\x03')
 
     def test_windows_arrows_without_kbhit(self):
-        # Field trial in Windows Terminal (2026-10-23): after the prefix, kbhit() is False
-        # although the second code follows; reading it only when kbhit() was True typed letters.
+        # Field trial in Windows Terminal (2026-10-23): after the
+        # prefix, kbhit() is False although the second code follows;
+        # reading it only when kbhit() was True typed letters.
         for first, second, key in (
             ('\xe0', 'H', 'UP'),
             ('\xe0', 'P', 'DOWN'),
@@ -80,7 +83,9 @@ class GlyphTests(unittest.TestCase):
 
 
 class RecordingTerminal(Terminal):
-    """A Terminal writing to a string, with the console mode switch recorded instead of made."""
+    """A Terminal writing to a string, with the console mode switch
+    recorded instead of made.
+    """
 
     def __init__(self):
         super().__init__(stream=io.StringIO())

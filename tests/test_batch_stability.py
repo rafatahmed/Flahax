@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Synthetic longitudinal observations must not be confused with real stability data."""
+"""Synthetic longitudinal observations must not be confused with real
+stability data.
+"""
 
 import copy
 import unittest
@@ -23,7 +25,9 @@ POLICY = dict(
 
 
 def old_records():
-    """Create explicitly synthetic records predating a completed seven-day study."""
+    """Create explicitly synthetic records predating a completed
+    seven-day study.
+    """
     evidence = records()
     start = datetime.now(timezone.utc) - timedelta(hours=169)
     for row in (
@@ -39,7 +43,9 @@ def old_records():
 
 
 def observations(recipe):
-    """Return synthetic measurements centered on the calculated Ca/P quantities."""
+    """Return synthetic measurements centered on the calculated Ca/P
+    quantities.
+    """
     records = recipe["stock_verification"]["records"]
     initial = records["batch_ph"]["measurement"]
     start = datetime.fromisoformat(initial["measured_at"])
@@ -145,7 +151,8 @@ class BatchStabilityTests(unittest.TestCase):
     def test_nutrient_uncertainty_is_conservative(self):
         for key, name in (("dissolved_calcium_mg_l", "Ca"), ("dissolved_phosphorus_mg_l", "P")):
             evidence = copy.deepcopy(self.evidence)
-            # A 95% central result fails once both measurement bounds are included.
+            # A 95% central result fails once both measurement bounds
+            # are included.
             evidence["observations"][-1][key]["value"] *= 0.95
             result = assess_batch_stability(self.recipe, evidence)
             self.assertFalse(result["stable"])

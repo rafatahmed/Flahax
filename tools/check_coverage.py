@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Reject coverage gaps, missing sources and evidence from changed source files.
+"""Reject coverage gaps, missing sources and evidence from changed
+source files.
 
-Record a manifest immediately before measuring; check against it after combining
-coverage. A local success is not a substitute for required native-platform CI jobs.
+Record a manifest immediately before measuring; check against it after
+combining coverage. A local success is not a substitute for required
+native-platform CI jobs.
 """
 
 import argparse

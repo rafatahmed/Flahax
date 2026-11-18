@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Synthetic calibration demonstration, NOT a physical EC prediction dataset."""
+"""Synthetic calibration demonstration, NOT a physical EC prediction
+dataset.
+"""
 
 from datetime import datetime, timezone
 
@@ -15,7 +17,8 @@ from .titration_and_stocks import run as stock_example
 def inputs():
     stocks = stock_example()['stocks']
     profiles = []
-    # Deliberately curved FICTIONAL data: do not reuse these numbers in a plant.
+    # Deliberately curved FICTIONAL data: do not reuse these numbers in
+    # a plant.
     for channel, slope, strengths in [
         ('irrigation', 1.4, (0, 0.5, 1, 1.5)),
         ('tank:A', 0.35, (0, 50, 100, 150)),

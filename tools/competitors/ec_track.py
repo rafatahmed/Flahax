@@ -3,25 +3,29 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#40 EC track: irrigation EC25 from FlahaX, Horticalc, PHREEQC (PhreeqPython) and pyEQL.
+"""#40 EC track: irrigation EC25 from FlahaX, Horticalc, PHREEQC
+(PhreeqPython) and pyEQL.
 
 Two parts:
 
-1. Accuracy against the IUPAC molality-based primary standards (Pratt et al. 2001,
-   Table 1, KCl at 0.01, 0.1 and 1.0 mol/kg, 25 C; see
-   tests/fixtures/conductivity/iupac2001_kcl_table1.json). A tool may decline a
-   standard outside its stated domain; that is reported, not scored as an error.
-2. Agreement on the catalogue recipes FlahaX recommends for every shipped formula in
-   ion-free water. There is no measured EC for these solutions, so this part shows how
-   far the tools disagree, not which one is right. Every tool receives the same
-   macronutrient totals; micronutrients and chelates are left out because not every
-   tool has them (their share of FlahaX's full-recipe EC is reported per recipe). Phosphate is
-   given as H2PO4- to the
-   tools that do not speciate (the catalogue P sources are dihydrogen phosphates);
-   FlahaX and PHREEQC speciate P from its total at the charge-balance pH.
+1. Accuracy against the IUPAC molality-based primary standards (Pratt et
+   al. 2001, Table 1, KCl at 0.01, 0.1 and 1.0 mol/kg, 25 C; see
+   tests/fixtures/conductivity/iupac2001_kcl_table1.json). A tool may
+   decline a standard outside its stated domain; that is reported, not
+   scored as an error. 2. Agreement on the catalogue recipes FlahaX
+   recommends for every shipped formula in ion-free water. There is no
+   measured EC for these solutions, so this part shows how far the tools
+   disagree, not which one is right. Every tool receives the same
+   macronutrient totals; micronutrients and chelates are left out
+   because not every tool has them (their share of FlahaX's full-recipe
+   EC is reported per recipe). Phosphate is given as H2PO4- to the tools
+   that do not speciate (the catalogue P sources are dihydrogen
+   phosphates); FlahaX and PHREEQC speciate P from its total at the
+   charge-balance pH.
 
-PHREEQC conductivity needs diffusion coefficients (-dw), which minteq.v4.dat lacks, so
-it runs on the phreeqc.dat that PhreeqPython bundles (SHA-256 recorded).
+PHREEQC conductivity needs diffusion coefficients (-dw), which
+minteq.v4.dat lacks, so it runs on the phreeqc.dat that PhreeqPython
+bundles (SHA-256 recorded).
 """
 
 import argparse
@@ -104,7 +108,9 @@ def engines(pp):
 
 
 def inputs(totals):
-    """The same macronutrient totals as FlahaX bases, free ions and PHREEQC elements."""
+    """The same macronutrient totals as FlahaX bases, free ions and
+    PHREEQC elements.
+    """
     macro = {b: m for b, m in totals.items() if b in MACRO and m > 0}
     return (
         macro,

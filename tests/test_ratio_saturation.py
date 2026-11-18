@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Rounded delivered recipes must satisfy every selected phase across the pH grid."""
+"""Rounded delivered recipes must satisfy every selected phase across
+the pH grid.
+"""
 
 import unittest
 

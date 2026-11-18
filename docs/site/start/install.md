@@ -46,3 +46,6 @@ troubleshooting section of the manual.
 
 **Next:** [your first batch](first-batch.md) with `flahax mix`, or
 [your first recipe in Python](first-recipe.md).
+
+Before working without a connection, follow [Use FlahaX offline](offline.md)
+to retain the installed manual, complete website, example profile and saved inputs.

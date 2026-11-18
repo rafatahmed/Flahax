@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Material record and chemistry guard checks for runtime coverage closure (#186)."""
+"""Material record and chemistry guard checks for runtime coverage
+closure (#186).
+"""
 
 from copy import deepcopy
 import json
@@ -174,7 +176,8 @@ class CompositionBoundaryTests(unittest.TestCase):
                 self.assertIn(reason, assay_conflict(record))
                 self.assertIsNone(assay_drift(record))
         self.assertIn('N_NO3 missing', assay_drift({'formula': 'KNO3', 'elements': {'K': 38.67}}))
-        # Oxygen and hydrogen do not create missing nutrient-assay alarms.
+        # Oxygen and hydrogen do not create missing nutrient-assay
+        # alarms.
         self.assertIsNone(assay_drift({'formula': 'H2O', 'elements': {'K': 0}}))
 
     def test_product_conversion_rejects_bad_doses_and_preserves_declared_sodium(self):
@@ -220,7 +223,8 @@ class RemainingMaterialPaths(unittest.TestCase):
 
         self.assertIsNone(ions_from_formula('K2H4P2O8'))
         self.assertIn('more than one way', formula_problem('K2H4P2O8'))
-        # A future parser accepting fractional stoichiometry must still stop this adapter.
+        # A future parser accepting fractional stoichiometry must still
+        # stop this adapter.
         with patch('flahax.material_chemistry.parse_formula', return_value={'atoms': {'K': 0.5}}):
             self.assertIn('fractional atoms', formula_problem('K'))
         self.assertIsNone(_pair_ligands({'EDTA': 2, 'Fe+3': 1}))
@@ -285,7 +289,8 @@ class CompositionAdapterBoundaryTests(unittest.TestCase):
     def test_partial_parser_output_is_not_accepted_as_a_complete_formula(self):
         from flahax import composition
 
-        # Fault injection checks the parser adapter, not a valid chemical formula.
+        # Fault injection checks the parser adapter, not a valid
+        # chemical formula.
         with patch.object(composition, '_parse_group', return_value=({}, 0)):
             self.assertIsNone(composition.parse_formula('KNO3'))
 

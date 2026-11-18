@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Read-only qualification of pinned equations, source lines and basis transforms.
+"""Read-only qualification of pinned equations, source lines and basis
+transforms.
 
-This checker does not import the model builder or solver. Exact rational atom,
-charge and component balances are independent of their numerical solution.
-Source-line verification is not verification of the underlying experiments.
+This checker does not import the model builder or solver. Exact rational
+atom, charge and component balances are independent of their numerical
+solution. Source-line verification is not verification of the underlying
+experiments.
 """
 
 import argparse
@@ -24,14 +26,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.chemistry_provenance import verify_sources
 
 ROOT = Path(__file__).resolve().parents[1]
-# Fully deprotonated ligands; these are chemical identities, not fitted constants.
+# Fully deprotonated ligands; these are chemical identities, not fitted
+# constants.
 LIGANDS = dict(
     Edta='C10H12N2O8', Citrate='C6H5O7', Dtp='C14H18N3O10', Edd='C18H16N2O6', Ure='CH4N2O'
 )
 
 
 def composition(name):
-    """Parse atoms and formal charge, including parenthesized groups and hydrates."""
+    """Parse atoms and formal charge, including parenthesized groups and
+    hydrates.
+    """
     match = re.search(r'([+-])(\d*)$', name)
     charge = (1 if match[1] == '+' else -1) * int(match[2] or 1) if match else 0
     formula = name[: match.start()] if match else name
@@ -74,7 +79,9 @@ def composition(name):
 
 
 def equation(text):
-    """Signed original coefficients (reactants negative, products positive)."""
+    """Signed original coefficients (reactants negative, products
+    positive).
+    """
     result = defaultdict(Fraction)
     left, right = text.split('=')
     for sign, side in ((-1, left), (1, right)):
@@ -94,15 +101,20 @@ def weighted(terms, lookup):
 
 
 def roundoff_equal(actual, expected, terms):
-    """A floating representation check, not an allowance for parameter uncertainty."""
+    """A floating representation check, not an allowance for parameter
+    uncertainty.
+    """
     scale = max([abs(float(actual)), abs(float(expected)), 1.0] + [abs(float(v)) for v in terms])
-    # Each stored expansion is a finite sum; bound accumulated binary rounding.
+    # Each stored expansion is a finite sum; bound accumulated binary
+    # rounding.
     allowance = 4 * (len(terms) + 1) * math.ulp(scale)
     return abs(float(actual) - float(expected)) <= allowance
 
 
 def audit_model(data, source_texts=None):
-    """Return per-reaction checks and explicit unqualified source/applicability limits."""
+    """Return per-reaction checks and explicit unqualified
+    source/applicability limits.
+    """
     source_texts = source_texts or {}
     by_name = {r['name']: r for r in data['aqueous']}
     rows = []

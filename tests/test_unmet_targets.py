@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Every missed target is explained (#39): no source, a binding limit, or named conflicts."""
+"""Every missed target is explained (#39): no source, a binding limit,
+or named conflicts.
+"""
 
 import unittest
 
@@ -10,7 +12,8 @@ from flahax import load_library, recommend
 from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
-# 33c5df2 catalogue formulas (Rice, Generic Grow) and products (Calcium Chloride (Dihydrate)).
+# 33c5df2 catalogue formulas (Rice, Generic Grow) and products (Calcium
+# Chloride (Dihydrate)).
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
@@ -25,8 +28,9 @@ def unmet(result):
 
 
 class UnmetTargetTests(unittest.TestCase):
-    # Runs on the frozen pre-2026-10-29 catalogue: the packaged Hoagland solution cannot be
-    # met exactly (N_NO3 +2.32 %), so it has unmet targets.
+    # Runs on the frozen pre-2026-10-29 catalogue: the packaged Hoagland
+    # solution cannot be met exactly (N_NO3 +2.32 %), so it has unmet
+    # targets.
     def test_feasible_recipe_has_no_unmet_targets(self):
         result = recommend(SALTS, formula("Hoagland solution")["targets"], {})
         self.assertTrue(result["feasible"])

@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Saved items for ``flahax mix``: plain JSON files ``flahax batch`` also reads.
+"""Saved items for ``flahax mix``: plain JSON files ``flahax batch``
+also reads.
 
-The root is ``$FLAHAX_HOME``, else ``~/.flahax``. Kinds: ``waters`` (the ``--water``
-format), ``formulas`` (``--targets``), ``stores`` (``--products``), ``acids``
-(``{"formula", "fraction", "density", "name"}``), ``reagents`` (available pH product
-records, also read by ``batch --reagents``) and ``sessions`` (``mix`` only; they
-refer to the other items by name). A save writes a temporary file and renames it, so
+The root is ``$FLAHAX_HOME``, else ``~/.flahax``. Kinds: ``waters`` (the
+``--water`` format), ``formulas`` (``--targets``), ``stores``
+(``--products``), ``acids`` (``{"formula", "fraction", "density",
+"name"}``), ``reagents`` (available pH product records, also read by
+``batch --reagents``) and ``sessions`` (``mix`` only; they refer to the
+other items by name). A save writes a temporary file and renames it, so
 a file is never left half written.
 """
 
@@ -39,13 +41,17 @@ def slug(name):
 
 
 class Store:
-    """Saved waters, formulas, fertilizer stores, acids and sessions as JSON files."""
+    """Saved waters, formulas, fertilizer stores, acids and sessions as
+    JSON files.
+    """
 
     def __init__(self, root=None):
         self.root = Path(root) if root is not None else default_root()
 
     def path(self, kind, name):
-        """The JSON file for a saved item; raises DeliveryError for an unknown kind."""
+        """The JSON file for a saved item; raises DeliveryError for an
+        unknown kind.
+        """
         if kind not in KINDS:
             raise DeliveryError(
                 'invalid_value', f'unknown saved-item kind {kind!r}; use one of {KINDS}'
@@ -58,7 +64,9 @@ class Store:
         return sorted(p.stem for p in folder.glob('*.json')) if folder.is_dir() else []
 
     def load(self, kind, name):
-        """A saved item; raises DeliveryError when it is missing or damaged."""
+        """A saved item; raises DeliveryError when it is missing or
+        damaged.
+        """
         path = self.path(kind, name)
         if not path.is_file():
             raise DeliveryError(
@@ -106,12 +114,16 @@ class Store:
 
 
 def session_inputs(data):
-    """User answers only; stored metadata cannot grant result acceptance."""
+    """User answers only; stored metadata cannot grant result
+    acceptance.
+    """
     return {k: v for k, v in data.items() if k != 'saved_state'}
 
 
 def check_saved_state(data):
-    """Validate versioned answers; legacy inputs have no asserted provenance."""
+    """Validate versioned answers; legacy inputs have no asserted
+    provenance.
+    """
     from .canonical_result import _digest
 
     if 'acceptance' in data or 'accepted' in data:
@@ -152,7 +164,9 @@ def _references(store, data):
 
 
 def bind_session(store, data):
-    """Explicitly capture current answers/references; legacy provenance is not reconstructed."""
+    """Explicitly capture current answers/references; legacy provenance
+    is not reconstructed.
+    """
     from copy import deepcopy
     from .canonical_result import _digest, _sources
 
@@ -171,7 +185,9 @@ def bind_session(store, data):
 
 
 def verify_session(store, data):
-    """Detect reference/model drift before running saved answers. Legacy answers rerun normally."""
+    """Detect reference/model drift before running saved answers. Legacy
+    answers rerun normally.
+    """
     from .canonical_result import _sources
 
     check_saved_state(data)
@@ -185,10 +201,12 @@ def verify_session(store, data):
 
 
 def migrate_session(store, data):
-    """Explicitly rebind reviewed answers to current inputs; discard all old consent metadata.
+    """Explicitly rebind reviewed answers to current inputs; discard all
+    old consent metadata.
 
-    This returns a new object without writing the old session or claiming its history.
-    Call Store.save only after reviewing the returned answers and referenced inputs.
+    This returns a new object without writing the old session or
+    claiming its history. Call Store.save only after reviewing the
+    returned answers and referenced inputs.
     """
     from .mix_cli import check_session
 

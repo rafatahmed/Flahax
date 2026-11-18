@@ -26,7 +26,9 @@ LOG_K_HYDROXYAPATITE_HPO4 = -3.421
 
 @dataclass(frozen=True, slots=True)
 class CalciumMagnesiumPhosphateSpeciation:
-    """Species and hydroxyapatite SI for a fixed-pH, fixed-I solution."""
+    """Species and hydroxyapatite SI for a fixed-pH, fixed-I
+    solution.
+    """
 
     calcium_molal: float
     magnesium_molal: float
@@ -47,9 +49,9 @@ class CalciumMagnesiumPhosphateSpeciation:
 def hydroxyapatite_hpo4_activity_at_equilibrium(calcium_activity: float, ph: float) -> float:
     """Return the HPO4-2 activity at SI(Hydroxyapatite) = 0.
 
-    Uses the `phreeqc.dat` reaction
-    ``Hydroxyapatite + 4H+ = 5Ca+2 + 3HPO4-2 + H2O``.
-    It is a thermodynamic boundary, not a precipitation-kinetics prediction.
+    Uses the `phreeqc.dat` reaction ``Hydroxyapatite + 4H+ = 5Ca+2 +
+    3HPO4-2 + H2O``. It is a thermodynamic boundary, not a
+    precipitation-kinetics prediction.
     """
     if not math.isfinite(calcium_activity) or calcium_activity <= 0:
         raise DeliveryError("out_of_range", "calcium activity must be positive and finite")
@@ -88,8 +90,9 @@ def calcium_magnesium_phosphate_speciation(
     """Solve source-defined Ca/Mg phosphate complexes at fixed pH and I.
 
     The model is limited to 25 °C and I <= 0.1 mol/kgw. It includes the
-    phosphate acid forms, Ca/Mg phosphate complexes, and NaHPO4-; it does not
-    solve charge balance, pH, ionic strength, precipitation, or other ligands.
+    phosphate acid forms, Ca/Mg phosphate complexes, and NaHPO4-; it
+    does not solve charge balance, pH, ionic strength, precipitation, or
+    other ligands.
     """
     values = (calcium_molal, magnesium_molal, phosphate_molal, sodium_molal, ph, ionic_strength)
     if not all(math.isfinite(value) for value in values):

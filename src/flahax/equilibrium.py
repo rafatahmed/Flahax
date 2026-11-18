@@ -4,11 +4,12 @@
 # its results are calculations, not dosing instructions.
 """Narrow, transparent aqueous-equilibrium kernels for FlahaX.
 
-This module intentionally does not claim full PHREEQC coverage. Its first
-kernel solves the carbonate--calcium system used by the checked-in PHREEQC
-Example 3 fixture: open CO2 at 25 °C, calcite equilibrium, and Davies ion
-activity coefficients. Future kernels must declare their supported species,
-constants, gas boundary, and reference fixtures equally explicitly.
+This module intentionally does not claim full PHREEQC coverage. Its
+first kernel solves the carbonate--calcium system used by the checked-in
+PHREEQC Example 3 fixture: open CO2 at 25 °C, calcite equilibrium, and
+Davies ion activity coefficients. Future kernels must declare their
+supported species, constants, gas boundary, and reference fixtures
+equally explicitly.
 """
 
 from __future__ import annotations
@@ -27,7 +28,8 @@ LOG_K_WATER_25C = -14.0
 LOG_K_CALCITE_25C = -8.45
 LOG_K_GYPSUM_25C = -4.58
 LOG_K_ANHYDRITE_25C = -4.36
-# PHREEQC Version 3 master phreeqc.dat: Ca+2 + SO4-2 = CaSO4, log K 2.14.
+# PHREEQC Version 3 master phreeqc.dat: Ca+2 + SO4-2 = CaSO4, log K
+# 2.14.
 LOG_BETA_CASO4_25C = 2.14
 
 
@@ -49,9 +51,9 @@ class CalciteCo2Equilibrium:
 class GypsumEquilibrium:
     """Pure-water gypsum equilibrium at 25 °C using Davies activities.
 
-    The supported aqueous species are free ``Ca+2`` and ``SO4-2`` plus the
-    neutral ``CaSO4`` ion pair. It does not include HSO4-, Mg, phosphate,
-    background electrolyte, or temperature correction.
+    The supported aqueous species are free ``Ca+2`` and ``SO4-2`` plus
+    the neutral ``CaSO4`` ion pair. It does not include HSO4-, Mg,
+    phosphate, background electrolyte, or temperature correction.
     """
 
     ionic_strength: float
@@ -65,7 +67,9 @@ class GypsumEquilibrium:
 
 
 def calcite_co2_reference_values(result: CalciteCo2Equilibrium) -> dict[str, float]:
-    """Map the supported kernel result to PHREEQC-fixture output names."""
+    """Map the supported kernel result to PHREEQC-fixture output
+    names.
+    """
     if not isinstance(result, CalciteCo2Equilibrium):
         raise TypeError("result must be a CalciteCo2Equilibrium value")
     return {
@@ -81,7 +85,9 @@ def calcite_co2_reference_values(result: CalciteCo2Equilibrium) -> dict[str, flo
 
 
 def gypsum_reference_values(result: GypsumEquilibrium) -> dict[str, float]:
-    """Map the supported gypsum kernel result to fixture output names."""
+    """Map the supported gypsum kernel result to fixture output
+    names.
+    """
     if not isinstance(result, GypsumEquilibrium):
         raise TypeError("result must be a GypsumEquilibrium value")
     return {
@@ -132,13 +138,15 @@ def _charge_residual(ph: float, ionic_strength: float, log_pco2: float) -> float
 def solve_calcite_co2_equilibrium(
     log_pco2: float, temperature_c: float = 25.0
 ) -> CalciteCo2Equilibrium:
-    """Solve open-CO2 calcite equilibrium with charge balance and Davies activities.
+    """Solve open-CO2 calcite equilibrium with charge balance and Davies
+    activities.
 
-    Supported domain is exactly 25 °C. The equations are mass action for CO2,
-    carbonic acid, water, and calcite; electroneutrality; and iterative ionic
-    strength/activity-coefficient consistency. It deliberately excludes ion
-    pairing and all other phases, so it is a reference-tested kernel rather
-    than a general replacement for PHREEQC.
+    Supported domain is exactly 25 °C. The equations are mass action for
+    CO2, carbonic acid, water, and calcite; electroneutrality; and
+    iterative ionic strength/activity-coefficient consistency. It
+    deliberately excludes ion pairing and all other phases, so it is a
+    reference-tested kernel rather than a general replacement for
+    PHREEQC.
     """
     if not math.isfinite(log_pco2):
         raise DeliveryError("invalid_value", "log_pco2 must be finite")
@@ -190,12 +198,12 @@ def solve_gypsum_equilibrium(temperature_c: float = 25.0) -> GypsumEquilibrium:
     """Solve gypsum-saturated pure water at 25 °C.
 
     For the dissolution reaction ``Gypsum = Ca+2 + SO4-2 + 2 H2O``, this
-    solves ``a_Ca * a_SO4 = 10**logK``. Electroneutrality gives equal free
-    calcium and sulfate molalities; their divalent charge gives
-    ``I = 4 m_free``. The neutral complex obeys
-    ``m_CaSO4 = 10**logBeta * a_Ca * a_SO4`` and contributes to totals but
-    not ionic strength. Anhydrite is evaluated at the same ion activity
-    product. This is deliberately a pure-water, 25 °C kernel.
+    solves ``a_Ca * a_SO4 = 10**logK``. Electroneutrality gives equal
+    free calcium and sulfate molalities; their divalent charge gives ``I
+    = 4 m_free``. The neutral complex obeys ``m_CaSO4 = 10**logBeta *
+    a_Ca * a_SO4`` and contributes to totals but not ionic strength.
+    Anhydrite is evaluated at the same ion activity product. This is
+    deliberately a pure-water, 25 °C kernel.
     """
     if temperature_c != 25.0:
         raise DeliveryError(

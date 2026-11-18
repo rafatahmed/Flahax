@@ -2,16 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent complex-step/Decimal oracle for phase-free charge sensitivities.
+"""Independent complex-step/Decimal oracle for phase-free charge
+sensitivities.
 
-This verification tool does not call the production analytic derivative or its
-rational elimination. Both Decimal precisions must agree under the caller's
-criterion; neither precision is a production stopping default.
+This verification tool does not call the production analytic derivative
+or its rational elimination. Both Decimal precisions must agree under
+the caller's criterion; neither precision is a production stopping
+default.
 """
 
 import cmath
 import math
 from decimal import Decimal as D, localcontext
+
 from flahax.aqueous_model import chemistry
 
 
@@ -20,7 +23,8 @@ def _decimal_solve(matrix, rhs, precision):
         context.prec = precision
         n, count = len(matrix), len(rhs[0])
         a = [[+v for v in row] + [+v for v in target] for row, target in zip(matrix, rhs)]
-        # Gauss-Jordan, independently of the production forward/back substitution.
+        # Gauss-Jordan, independently of the production forward/back
+        # substitution.
         for k in range(n):
             pivot = max(range(k, n), key=lambda j: abs(a[j][k]))
             a[k], a[pivot] = a[pivot], a[k]
@@ -36,7 +40,9 @@ def _decimal_solve(matrix, rhs, precision):
 
 
 def independent_charge_gradient(problem, state, agreement_tolerance):
-    """Differentiate species by complex steps, then solve at 80 and 160 digits."""
+    """Differentiate species by complex steps, then solve at 80 and 160
+    digits.
+    """
     eq = state['equilibrium']
     if problem.phases or any(eq.precipitated.values()):
         raise ValueError('independent phase sensitivity is unsupported')
@@ -66,7 +72,8 @@ def independent_charge_gradient(problem, state, agreement_tolerance):
                 result *= activity ** powers[b]
         return result
 
-    # Imaginary perturbations avoid subtracting two nearly equal charge values.
+    # Imaginary perturbations avoid subtracting two nearly equal charge
+    # values.
     step = 1e-100
     partials = []
     for record in records:
@@ -79,7 +86,8 @@ def independent_charge_gradient(problem, state, agreement_tolerance):
                 raise ValueError('nonfinite independent sensitivity')
             row.append(D(value))
         partials.append(row)
-    # Preserve tiny individual species terms when assembling balance derivatives.
+    # Preserve tiny individual species terms when assembling balance
+    # derivatives.
     with localcontext() as context:
         context.prec = 160
         matrix = [

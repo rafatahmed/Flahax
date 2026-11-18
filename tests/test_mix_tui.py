@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Tests for flahax.mix_tui: the wizard widgets, the frame and the full-screen prompts."""
+"""Tests for flahax.mix_tui: the wizard widgets, the frame and the
+full-screen prompts.
+"""
 
 import copy
 import json
@@ -44,7 +46,8 @@ def entry(text):
     return typed(text) + ['ENTER']
 
 
-# The 2026-10-23 field-test session (tests/test_output_consistency.py ANSWERS) as wizard keys.
+# The 2026-10-23 field-test session (tests/test_output_consistency.py
+# ANSWERS) as wizard keys.
 FIELD_TEST_KEYS = (
     entry('100')
     + entry('100')
@@ -76,7 +79,9 @@ FIELD_TEST_KEYS = (
 
 
 class FakeTerm:
-    """The terminal methods TuiPrompts uses, from a key script; it keeps every frame drawn."""
+    """The terminal methods TuiPrompts uses, from a key script; it keeps
+    every frame drawn.
+    """
 
     def __init__(self, keys, sizes=((100, 30),)):
         self.keys, self.sizes, self.frames, self.cursors = list(keys), list(sizes), [], []
@@ -98,9 +103,11 @@ class FakeTerm:
 
 
 class IdleTerm(FakeTerm):
-    """A FakeTerm that waits (returns None) once its keys run out, as an idle keyboard does.
+    """A FakeTerm that waits (returns None) once its keys run out, as an
+    idle keyboard does.
 
-    The key 'CTRL_C' raises KeyboardInterrupt, as the terminal layer does for Ctrl+C.
+    The key 'CTRL_C' raises KeyboardInterrupt, as the terminal layer
+    does for Ctrl+C.
     """
 
     def __init__(self, keys, **kwargs):
@@ -209,8 +216,9 @@ class FrameTests(unittest.TestCase):
         self.assertTrue(any(line.endswith('…') for line in lines))
 
     def test_no_faint_text(self):
-        # Field trial 2026-10-23: faint text (SGR 2) vanished on a translucent grey theme,
-        # hiding the key help, the inactive steps and the "Filter:" label.
+        # Field trial 2026-10-23: faint text (SGR 2) vanished on a
+        # translucent grey theme, hiding the key help, the inactive
+        # steps and the "Filter:" label.
         for width in (90, 120):
             for kind in ('choice', 'filter', 'ticks', 'field'):
                 lines = frame(self.wizard(), Question(kind, 'Q', ['a', 'b']), width, 30, UTF8)
@@ -443,7 +451,9 @@ class ReagentReviewTuiTests(unittest.TestCase):
 
 
 class RunTuiTests(unittest.TestCase):
-    """The whole ``flahax mix`` run on the full screen, against the line mode's files."""
+    """The whole ``flahax mix`` run on the full screen, against the line
+    mode's files.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -481,7 +491,8 @@ class RunTuiTests(unittest.TestCase):
             )
         self.assertTrue(lines[0].startswith('Saved the answers as '), lines)
         self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html, summary.json'), lines)
-        # 147: the recipe stays in the terminal, as the line mode prints it.
+        # 147: the recipe stays in the terminal, as the line mode prints
+        # it.
         from flahax.mix_cli import summarize
 
         recipe = []
@@ -533,7 +544,8 @@ class RunTuiTests(unittest.TestCase):
         self.assertIn('Tab Next view', '\n'.join(after_no))
 
     def test_ctrl_c_on_results_keeps_the_result(self):  # 128
-        # The batch is ready at once, so Ctrl+C arrives on the results screen.
+        # The batch is ready at once, so Ctrl+C arrives on the results
+        # screen.
         with mock.patch('flahax.mix_tui.calculate', return_value=(self.summary, [])):
             term, code, lines = self.run_tui(['CTRL_C'], 'plain-home', 'tomato stage 1', 'ctrl-c')
         self.assertTrue(term.exited)

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Import, approve and replay a Sonneveld batch from the mix interview."""
+"""Import, approve and replay a Sonneveld batch from the mix
+interview.
+"""
 
 from copy import deepcopy
 import json
@@ -49,7 +51,9 @@ def check_batch_session(session):
 
 
 def approve_batch(prompts, resource):
-    """Review the imported sample and confirm the exact design before formulation."""
+    """Review the imported sample and confirm the exact design before
+    formulation.
+    """
     profile = read_json(resource, 'Sonneveld batch profile')
     session = {'sonneveld_batch': profile}
     check_batch_session(session)
@@ -91,7 +95,9 @@ def approve_batch(prompts, resource):
 
 
 def calculate_batch(session):
-    """Run the common recipe search and verify the selected rounded preparation."""
+    """Run the common recipe search and verify the selected rounded
+    preparation.
+    """
     profile = deepcopy(session['sonneveld_batch'])
     title, target_input = profile.pop('title'), profile.pop('sonneveld')
     alternatives = profile.pop('alternative_products')
@@ -134,7 +140,9 @@ def calculate_batch(session):
 
 
 def save_reviewed_batch(prompts, store, name, session, summary):
-    """Let the grower adopt the verified preparation and save its calculation identity."""
+    """Let the grower adopt the verified preparation and save its
+    calculation identity.
+    """
     candidate = summary['selected_preparation_candidate']
     label = (
         'Use verified original recipe' if candidate == 'original' else 'Use verified alternative'

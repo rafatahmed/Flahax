@@ -2,13 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Observed boundary evidence, separate from the mineral with the highest SI."""
+"""Observed boundary evidence, separate from the mineral with the
+highest SI.
+"""
 
 from copy import deepcopy
 
 
 def constraint_violations(recipe, required_records):
-    """Read delivered-recipe checks without refitting or changing acceptance."""
+    """Read delivered-recipe checks without refitting or changing
+    acceptance.
+    """
     rounded = recipe['rounded_verification']
     check = recipe.get('uncertainty_verification', rounded)
     rows = []
@@ -29,8 +33,9 @@ def constraint_violations(recipe, required_records):
                 )
             )
     limit = check.get('si_required_below', rounded.get('si_required_below'))
-    # An early nominal failure prevents uncertainty sampling; retain its mineral
-    # evidence rather than replacing it with the generic "nominal_recipe" flag.
+    # An early nominal failure prevents uncertainty sampling; retain its
+    # mineral evidence rather than replacing it with the generic
+    # "nominal_recipe" flag.
     maxima = check.get('phase_maxima') or rounded.get('phase_maxima', {})
     for name, witness in maxima.items():
         if limit is not None and witness['si'] >= limit:
@@ -125,7 +130,9 @@ def constraint_violations(recipe, required_records):
 
 
 def observed_limit(strength, cap, brackets, evaluated):
-    """Explain only a sampled neighbouring failure, never infer global infeasibility."""
+    """Explain only a sampled neighbouring failure, never infer global
+    infeasibility.
+    """
     scope = (
         'Violations at the adjacent evaluated failing candidate, not proof of a '
         'unique active constraint, global optimum or absence of alternative allocations.'

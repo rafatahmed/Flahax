@@ -3,16 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#40 chemistry track: FlahaX equilibrium vs live PHREEQC through PhreeqPython.
+"""#40 chemistry track: FlahaX equilibrium vs live PHREEQC through
+PhreeqPython.
 
-PhreeqPython (pinned 1.6.2) embeds IPhreeqc, so the PHREEQC reference runs on any
-platform without the Windows installer. It uses exactly the reaction set FlahaX was
-built from: minteq.v4.dat at the pinned SHA-256, merged with the FlahaX chelate and
-phase extensions by tools.phreeqc_evidence.merge (merged hash checked against the
-fixtures). Each fixture's own .pqi input is run unchanged (the _target input for acid-target
-captures). The live rows are first replayed against the stored PHREEQC 3.8.6 rows, then
-FlahaX is solved at the live prescribed pH and scored with Benchmark v1's
-evaluate_chemistry and the fixture tolerances.
+PhreeqPython (pinned 1.6.2) embeds IPhreeqc, so the PHREEQC reference
+runs on any platform without the Windows installer. It uses exactly the
+reaction set FlahaX was built from: minteq.v4.dat at the pinned SHA-256,
+merged with the FlahaX chelate and phase extensions by
+tools.phreeqc_evidence.merge (merged hash checked against the fixtures).
+Each fixture's own .pqi input is run unchanged (the _target input for
+acid-target captures). The live rows are first replayed against the
+stored PHREEQC 3.8.6 rows, then FlahaX is solved at the live prescribed
+pH and scored with Benchmark v1's evaluate_chemistry and the fixture
+tolerances.
 """
 
 import argparse
@@ -30,9 +33,10 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests/fixtures/phreeqc"
 PINNED_BASE_SHA256 = "ab0a8f7c7375e1bd997990f4bc3a9af497516f10e57f4aaa3cefb55dccac5ae7"
 REPEATS = 3
-# Replay agreement: log quantities (pH, pe, la_*, si_*) compare absolutely, everything else
-# relatively above a molality floor; charge and pct_err are convergence residuals (~1e-15),
-# not results, so they are not compared.
+# Replay agreement: log quantities (pH, pe, la_*, si_*) compare
+# absolutely, everything else relatively above a molality floor; charge
+# and pct_err are convergence residuals (~1e-15), not results, so they
+# are not compared.
 LOG_PREFIXES = ("pH", "pe", "la_", "si_")
 RESIDUALS = {"charge", "pct_err"}
 MOLALITY_FLOOR = 1e-20
@@ -46,13 +50,17 @@ def fixtures():
 
 
 def reference_input(folder, data):
-    """The .pqi whose selected output the fixture stores (acid-target captures keep _target)."""
+    """The .pqi whose selected output the fixture stores (acid-target
+    captures keep _target).
+    """
     suffix = "_target" if data.get("nitric_acid_molal") is not None else ""
     return folder / f"{data.get('case', folder.name)}{suffix}.pqi"
 
 
 def replay_difference(stored, live):
-    """Largest disagreement between a stored PHREEQC row and the live one (see LOG_PREFIXES)."""
+    """Largest disagreement between a stored PHREEQC row and the live
+    one (see LOG_PREFIXES).
+    """
     worst = 0.0
     for key, value in stored.items():
         if key in RESIDUALS or key not in live:
@@ -65,7 +73,9 @@ def replay_difference(stored, live):
 
 
 def phreeqpython_rows(pp, text):
-    """Run one PHREEQC input through PhreeqPython's IPhreeqc; return selected rows."""
+    """Run one PHREEQC input through PhreeqPython's IPhreeqc; return
+    selected rows.
+    """
     with tempfile.TemporaryDirectory() as folder:
         cwd = os.getcwd()
         os.chdir(folder)  # the inputs name a -file for selected output
@@ -74,7 +84,8 @@ def phreeqpython_rows(pp, text):
             table = pp.ip.get_selected_output_array()
         finally:
             os.chdir(cwd)
-    # IPhreeqc appends units ("(mol/kgw)", "(eq)") that PHREEQC's selected-output file omits.
+    # IPhreeqc appends units ("(mol/kgw)", "(eq)") that PHREEQC's
+    # selected-output file omits.
     headings = [
         str(h)
         .strip()
@@ -99,8 +110,9 @@ def run(base):
         out["merged_sha256"] = sha(merged)
         for name, folder in fixtures():
             data = read_fixture(name)
-            # IPhreeqc keeps SOLUTION_SPECIES/PHASES from earlier inputs (mixed_product_phases
-            # redefines ammonium species), so every fixture starts from a freshly loaded database.
+            # IPhreeqc keeps SOLUTION_SPECIES/PHASES from earlier inputs
+            # (mixed_product_phases redefines ammonium species), so
+            # every fixture starts from a freshly loaded database.
             pp = PhreeqPython(database=str(merged))
             if data.get("reference", {}).get("merged_sha256") not in (None, out["merged_sha256"]):
                 raise ValueError(f"{name}: merged database differs from the fixture's")
@@ -111,8 +123,9 @@ def run(base):
                 start = time.perf_counter()
                 rows = phreeqpython_rows(pp, text)
                 best_pp = min(best_pp, time.perf_counter() - start)
-                # FlahaX takes its prescribed pH from the same live rows it is scored against;
-                # the bundled IPhreeqc converges up to ~2e-9 pH units from PHREEQC 3.8.6 (gypsum).
+                # FlahaX takes its prescribed pH from the same live rows
+                # it is scored against; the bundled IPhreeqc converges
+                # up to ~2e-9 pH units from PHREEQC 3.8.6 (gypsum).
                 live = dict(data, selected_rows=rows)
                 start = time.perf_counter()
                 result, acid = solve_fixture(live)

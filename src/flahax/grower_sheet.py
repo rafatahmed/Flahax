@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax mix`` batch sheet: tank cards for the grower, the nutrient table for the
-agronomist.
+"""The ``flahax mix`` batch sheet: tank cards for the grower, the
+nutrient table for the agronomist.
 
-Depth 1 (grower) is the tank cards, the acid container, the checks and at most three notes.
-Depth 2 (agronomist) adds the nutrient table (target, water, required, achieved, final, diff),
-the limits and the pH path. Depth 3 (developer, manager) writes the full report beside it.
-Every number comes from ``summarize_batch``, i.e. from the recipe that is weighed.
+Depth 1 (grower) is the tank cards, the acid container, the checks and
+at most three notes. Depth 2 (agronomist) adds the nutrient table
+(target, water, required, achieved, final, diff), the limits and the pH
+path. Depth 3 (developer, manager) writes the full report beside it.
+Every number comes from ``summarize_batch``, i.e. from the recipe that
+is weighed.
 """
 
 import re
@@ -44,7 +46,9 @@ REASON_WORDS = {
 
 
 def readable(warning):
-    """A warning in grower words: NO3-N for N_NO3, plain reasons, "pH adjustment:" for a stage."""
+    """A warning in grower words: NO3-N for N_NO3, plain reasons, "pH
+    adjustment:" for a stage.
+    """
     stage = re.match(r'([a-z]+(?:_[a-z]+)*): ', warning)
     if stage:
         name = stage.group(1).replace('_', ' ')
@@ -66,8 +70,9 @@ CARD_STYLE = (
 
 
 def key_reasons(summary, n=3):
-    """The warnings a grower must read, blocking ones first (a blocked stage, a hard limit, a
-    stock that won't dissolve)."""
+    """The warnings a grower must read, blocking ones first (a blocked
+    stage, a hard limit, a stock that won't dissolve).
+    """
     stopped = tuple(
         f'{name}:' for name, s in summary['stages'].items() if s['status'] == 'blocked'
     )
@@ -82,8 +87,9 @@ def key_reasons(summary, n=3):
 
 
 def agronomist_rows(summary):
-    """Per nutrient: target, water, required (target - water), achieved (final - water), final,
-    diff (final - target)."""
+    """Per nutrient: target, water, required (target - water), achieved
+    (final - water), final, diff (final - target).
+    """
     water = summary['water']['analysis_mg_per_litre']
     rows = []
     for r in summary['formulation']['rows']:
@@ -107,7 +113,9 @@ def agronomist_rows(summary):
 
 
 def limited_by(volumes):
-    """In fill mode, the container that sets the batch when another one could hold more."""
+    """In fill mode, the container that sets the batch when another one
+    could hold more.
+    """
     if not volumes or volumes.get('mode') != 'fill':
         return ''
     capacity = {name: volumes['capacity_litres'][name] for name in ('A', 'B')}
@@ -198,8 +206,10 @@ def _check_card(summary):
 
 
 def missed_target(row):
-    """True when a row has a declared target (zero included) that its final value does not meet
-    within the numerical tolerance (G25); such rows are marked on the sheets."""
+    """True when a row has a declared target (zero included) that its
+    final value does not meet within the numerical tolerance (G25);
+    such rows are marked on the sheets.
+    """
     return row['target'] is not None and not met(row['target'], row['final'])
 
 
@@ -283,8 +293,9 @@ def _agronomist_section(summary):
 
 
 def render_mix_sheet(summary, depth=1):
-    """Printable sheet: depth 1 tank cards; depth 2 and 3 add the nutrient table, limits and pH
-    path."""
+    """Printable sheet: depth 1 tank cards; depth 2 and 3 add the
+    nutrient table, limits and pH path.
+    """
     from .canonical_result import verify_summary
 
     verify_summary(summary)

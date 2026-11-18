@@ -33,6 +33,17 @@ each excluded fertilizer that is actually available. Batch calculates each
 alternative separately and keeps the original recipe. A saved mix session accepts
 the same IDs in `confirmed_products` and an optional `max_solid_reagent_grams`.
 
+## On this page
+
+- [Enter the water analysis](#step-1-enter-your-water-analysis)
+- [Choose the crop formula](#step-2-choose-the-crop-formula)
+- [Run the command](#step-3-run-the-command)
+- [Sonneveld design and profile walkthrough](sonneveld-appendix-i.md)
+- [Rounded volumetric doses](#rounded-volumetric-doses)
+- [Read the batch sheet](#step-4-read-the-batch-sheet)
+- [Brackish-well example and historical figures](#worked-example-tomato-on-a-brackish-well)
+- [Current input contracts](#current-input-contracts)
+
 ## Step 1. Enter your water analysis
 
 Save the analysis as a small JSON file, for example `well.json`:
@@ -146,6 +157,11 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
 
 All options are listed in [batch report, sheet and tanks](reading-results.md).
 
+
+For a complete reviewed profile with root-zone feedback, uncertainty and
+rounded stock delivery, follow the [1,000 L Appendix I walkthrough](sonneveld-appendix-i.md).
+The `--sonneveld-targets` option below takes only the design object, not that
+walkthrough's full TUI import profile.
 
 ### Generate a feed target with Sonneveld A–D
 

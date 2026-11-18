@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Generate the shipped public API inventory; --check detects signature drift."""
+"""Generate the shipped public API inventory; --check detects signature
+drift.
+"""
 
 import argparse
 from collections import defaultdict
@@ -82,7 +84,8 @@ def render():
             if signature is not None:
                 lines += ['```text', name + signature, '```', '']
             doc = inspect.cleandoc(obj.__doc__ or '')
-            # Dataclasses without prose get an auto-generated signature docstring.
+            # Dataclasses without prose get an auto-generated signature
+            # docstring.
             if doc and not (is_dataclass(obj) and doc.startswith(name + '(')):
                 lines += [doc, '']
             if is_dataclass(obj):

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public command input boundary checks for runtime coverage closure (#186)."""
+"""Public command input boundary checks for runtime coverage closure
+(#186).
+"""
 
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
@@ -11,6 +13,7 @@ import json
 import tempfile
 import unittest
 from unittest.mock import patch
+
 from flahax import DeliveryError, load_library
 from flahax import planning_cli as planning, batch_cli as batch
 
@@ -84,7 +87,8 @@ class PlanningInputBoundaryTests(unittest.TestCase):
             planning.execute('unknown', {})
         self.assertEqual(caught.exception.code, 'unknown_command')
         self.assertEqual(planning.serializable(float('inf')), 'inf')
-        # Parser passes an invalid remedy shape through to the workflow's own validator.
+        # Parser passes an invalid remedy shape through to the
+        # workflow's own validator.
         with patch.object(planning, 'plan_fertilizer_workflow', return_value='sentinel') as target:
             self.assertEqual(
                 planning.execute('workflow', payload | dict(remedy_options=None)), 'sentinel'
@@ -176,7 +180,8 @@ class BatchInputBoundaryTests(unittest.TestCase):
 
 class BatchOutputBoundaryTests(unittest.TestCase):
     def test_printed_selected_volume_and_written_content_agree(self):
-        # Command formatting fixture; build qualification is tested separately.
+        # Command formatting fixture; build qualification is tested
+        # separately.
         summary = dict(
             title='Rendering fixture',
             status='requires_review',
@@ -218,7 +223,8 @@ class BatchOutputBoundaryTests(unittest.TestCase):
                 ]
                 return result
 
-            # Adapter fault injection: the batch boundary restores omitted input provenance.
+            # Adapter fault injection: the batch boundary restores
+            # omitted input provenance.
             with patch.object(batch, 'summarize_batch', missing_note):
                 with patch.object(batch, 'read_water', return_value=(label, ions, chemistry)):
                     restored = batch.run_batch(opts)

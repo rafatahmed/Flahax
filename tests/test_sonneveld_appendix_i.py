@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Sonneveld et al. (1999), Appendix I, DOI 10.17660/ActaHortic.1999.481.38.
+"""Sonneveld et al. (1999), Appendix I, DOI
+10.17660/ActaHortic.1999.481.38.
 
-The printed EC is a design target. Some cells in the available transcription
-were reconstructed using equations 2–5. The acid-to-pH cases are model
-regressions. They use closed carbon, 25 C, aqueous-only equilibrium and
-1000 kg solvent for 1000 L of dilute finished solution.
+The printed EC is a design target. Some cells in the available
+transcription were reconstructed using equations 2–5. The acid-to-pH
+cases are model regressions. They use closed carbon, 25 C, aqueous-only
+equilibrium and 1000 kg solvent for 1000 L of dilute finished solution.
 """
 
 import json
@@ -77,7 +78,8 @@ BASIS = dict(
         strict=True,
     )
 )
-# Defined grades for the replay. Fe-DTPA is the disodium form, assayed at 11% Fe.
+# Defined grades for the replay. Fe-DTPA is the disodium form, assayed
+# at 11% Fe.
 GRADES = (
     ('calcium nitrate tetrahydrate', 236.15, {'Ca': 1, 'N_NO3': 2}),
     ('ammonium nitrate', 80.043, {'N_NH4': 1, 'N_NO3': 1}),
@@ -100,7 +102,8 @@ def ppm(concentrations):
 
 
 def fit_recipe(acid_mmol_l, *, sodium_target=None):
-    # Treat the independently fixed HNO3 dose as a nitrate credit in the fit.
+    # Treat the independently fixed HNO3 dose as a nitrate credit in the
+    # fit.
     credited_water = dict(COLUMN_E, N_NO3=acid_mmol_l)
     targets = dict(COLUMN_D)
     grades = GRADES
@@ -123,11 +126,14 @@ def fit_recipe(acid_mmol_l, *, sodium_target=None):
 def reconstruct(
     fit, grades, acid_mmol_l, *, mass_decimals=None, stock_grams=None, water_fraction=1.0
 ):
-    """Calculate finished analytical totals independently from returned product weights."""
+    """Calculate finished analytical totals independently from returned
+    product weights.
+    """
     concentrations = {key: amount * water_fraction for key, amount in COLUMN_E.items()}
     concentrations["N_NO3"] = acid_mmol_l
     if mass_decimals is not None:
-        # Round the actual delivered volume (mL), then recover the acid inventory.
+        # Round the actual delivered volume (mL), then recover the acid
+        # inventory.
         acid_ml = acid_mmol_l * 63.01 / (0.65 * 1.39)
         concentrations['N_NO3'] = round(acid_ml, 2) * 0.65 * 1.39 / 63.01
     grade_by_name = {name: (mass, ions) for name, mass, ions in grades}
@@ -170,7 +176,8 @@ class SonneveldAppendixI(unittest.TestCase):
         self.assertAlmostEqual(chemistry.ec25_range_ms_cm[1], 2.1874, places=4)
 
     def test_ph_target_original_inventory_is_a_near_fit(self):
-        # Dose from the retained-carbon pH 5.5 replay with this product inventory.
+        # Dose from the retained-carbon pH 5.5 replay with this product
+        # inventory.
         acid = 1.8319650066
         fit, _, totals, chemistry = self.replay(acid)
         self.assertFalse(fit['feasible'])
@@ -310,7 +317,8 @@ class SonneveldAppendixI(unittest.TestCase):
 
     def test_batch_selects_sodium_sulfate_without_sodium_nitrate_or_target(self):
         sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
-        # An illustrative replay ceiling, not an agronomic recommendation.
+        # An illustrative replay ceiling, not an agronomic
+        # recommendation.
         sodium_ceiling = 9.0
         candidate, grades = self.batch_at_ph_5_5(
             sulfate, 'Na2SO4', COLUMN_D, maxima={'Na': sodium_ceiling}
@@ -373,7 +381,8 @@ class SonneveldAppendixI(unittest.TestCase):
         coarse, _ = reconstruct(fit, grades, acid, mass_decimals=3)
         self.assertGreater(abs(coarse['Cu'] / COLUMN_D['Cu'] - 1), 0.001)
 
-        # Illustrative stock and dispenser specifications, not measured values.
+        # Illustrative stock and dispenser specifications, not measured
+        # values.
         options = {
             'basis': 'product_mass',
             'carrier': 'demineralized_water',
@@ -397,8 +406,9 @@ class SonneveldAppendixI(unittest.TestCase):
         )['stocks'][0]
         self.assertAlmostEqual(delivery['dose_ml'], 187.26, places=2)
 
-        # The demineralized carrier displaces an equal volume of Appendix I water.
-        # Keep the prior dilute 1 kg/L solvent approximation for speciation.
+        # The demineralized carrier displaces an equal volume of
+        # Appendix I water. Keep the prior dilute 1 kg/L solvent
+        # approximation for speciation.
         volume = delivery['dose_ml']
         error = delivery['dose_error_ml']
         scenarios = [(delivery['effective_grams'], volume)]
@@ -562,7 +572,8 @@ class SonneveldAppendixI(unittest.TestCase):
         from flahax.grower_report import render_batch_sheet, summarize_batch
 
         sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
-        # Inject a failed rounded delivery to exercise the workflow and sheet guard.
+        # Inject a failed rounded delivery to exercise the workflow and
+        # sheet guard.
         failed = {
             'reagent': {'formula': 'KOH', 'volume_ml': None, 'grams': 0.001},
             'limit_violations': [],
@@ -609,7 +620,8 @@ class SonneveldAppendixI(unittest.TestCase):
             'adjustments_mmol_l': {'K': 2, 'N_NH4': 0.5, 'B': 0.010},
             'irrigation_ec_ds_m': 1.8,
         }
-        # Illustrative root-zone readings paired with the paper’s tomato guides.
+        # Illustrative root-zone readings paired with the paper’s tomato
+        # guides.
         sample = {
             'sample_id': 'appendix-i-feedback-example',
             'sampled_on': '2026-11-17',

@@ -4,8 +4,9 @@
 # its results are calculations, not dosing instructions.
 """Source-qualified allocation REVIEW, not an executable StockPlan.
 
-Yara 04_Fertilizer.pdf pp.63,65,66 supports macro separation patterns, not
-complete compatibility/solubility approval for these generic product grades.
+Yara 04_Fertilizer.pdf pp.63,65,66 supports macro separation patterns,
+not complete compatibility/solubility approval for these generic product
+grades.
 """
 
 

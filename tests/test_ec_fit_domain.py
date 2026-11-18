@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Recorded phosphate fit limits and independent numerical reproduction."""
+"""Recorded phosphate fit limits and independent numerical
+reproduction.
+"""
 
 from dataclasses import replace
 import math
@@ -26,7 +28,8 @@ class FitDomainTests(unittest.TestCase):
             block[ion][key] for ion in ('H2PO4-', 'HPO4-2') for key in ('lambda0_25c', 'A_25c')
         ]
         for got, want in zip(phosphate_refit(), expected):
-            # Existing refit tolerance: 1e-7 relative, 1e-9 absolute floor.
+            # Existing refit tolerance: 1e-7 relative, 1e-9 absolute
+            # floor.
             self.assertAlmostEqual(got, want, delta=max(1e-9, abs(want) * 1e-7))
 
     def test_ionic_boundary_and_limiting_value(self):
@@ -121,7 +124,8 @@ class WithheldReferenceTests(unittest.TestCase):
         rows = withheld_kcl()
         self.assertEqual([r['molality'] for r in rows], [0.01, 0.1, 1.0])
         self.assertEqual(rows[0]['public_status'], 'estimated')
-        # Existing Eq. 8 hand calculation, not a new measured accuracy tolerance.
+        # Existing Eq. 8 hand calculation, not a new measured accuracy
+        # tolerance.
         expected = 0.01 * (74.12875 + 76.800625 - (49.22375 + 49.51375) * 0.1 / 1.15)
         self.assertAlmostEqual(rows[0]['table1_ms_cm'], expected, places=9)
         for row in rows[1:]:

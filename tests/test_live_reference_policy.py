@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Live PHREEQC replay policy: a missing reference fails in release mode."""
+"""Live PHREEQC replay policy: a missing reference fails in release
+mode.
+"""
 
 import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
+
 from tests import test_product_phreeqc, test_acid_reference
 
 

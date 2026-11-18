@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent small optimization witnesses and safeguarded failure boundaries."""
+"""Independent small optimization witnesses and safeguarded failure
+boundaries.
+"""
 
 import unittest
 from unittest.mock import patch
+
 from flahax import JointSource, JointProblem, DeliveryError
 from flahax.joint_solver import solve_joint_problem
 
@@ -311,6 +314,7 @@ class JointFitTests(unittest.TestCase):
             )
         self.assertEqual(r['status'], 'numerical_candidate')
         self.assertAlmostEqual(r['reagentDose'], 0.3, places=6)
-        # k is fixed to zero, but the finite nonlinear reagent column must also
-        # fail the h versus h/2 check rather than being treated as reliable.
+        # k is fixed to zero, but the finite nonlinear reagent column
+        # must also fail the h versus h/2 check rather than being
+        # treated as reliable.
         self.assertGreater(r['diagnostics']['sensitivityFailures'], r['diagnostics']['iterations'])

@@ -14,7 +14,9 @@ NUTRIENTS = ("K", "Ca", "Mg", "NO3", "P", "SO4")
 
 
 def account_water(water, volume, final_water_mass):
-    """Preserve measured ions and carry measured charge, without reconciliation."""
+    """Preserve measured ions and carry measured charge, without
+    reconciliation.
+    """
     if water == "demineralized":
         return {
             "source": "demineralized",

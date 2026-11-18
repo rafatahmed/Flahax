@@ -2,35 +2,41 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Drive the authors' Irriblend-DSW optimiser (MIT, pinned) with the FlahaX catalogue.
+"""Drive the authors' Irriblend-DSW optimiser (MIT, pinned) with the
+FlahaX catalogue.
 
-Irriblend-DSW: Gallego-Elvira, B., Reca, J., Martin-Gorriz, B., Maestre-Valero, J. F. and
-Martinez-Alvarez, V. (2021) Irriblend-DSW: a decision support tool for the optimal blending
-of desalinated and conventional irrigation waters in dry regions. Agricultural Water
+Irriblend-DSW: Gallego-Elvira, B., Reca, J., Martin-Gorriz, B.,
+Maestre-Valero, J. F. and Martinez-Alvarez, V. (2021) Irriblend-DSW: a
+decision support tool for the optimal blending of desalinated and
+conventional irrigation waters in dry regions. Agricultural Water
 Management 255, 107012, doi:10.1016/j.agwat.2021.107012. Code:
 https://github.com/irriblend-dsw/irriblend-dsw-v1, MIT licence
-(Copyright (c) 2026 irriblend-dsw), added at commit a046d5c on top of the 2021 code
-commit 197d650. The module is used unmodified; its SHA-256 is checked before import.
+(Copyright (c) 2026 irriblend-dsw), added at commit a046d5c on top of
+the 2021 code commit 197d650. The module is used unmodified; its SHA-256
+is checked before import.
 
-Its notebook mounts Google Drive and writes to a fixed Colab path, so it does not run
-outside Colab. Its optimiser does: ``ferti_eco_min(ferts_xlsx, ideal_sol, water,
-water_EC, max_EC)`` minimises fertiliser cost with SciPy SLSQP (0-3 g/L per product)
-subject to exact NO3-, NH4+, H2PO4-, K+ and H+ (residual HCO3-), Ca, Mg, SO4, Cl and
-Na at or above need, and an EC cap (anion meq/L / 10). This adapter writes the FlahaX
-catalogue into its "ferts" sheet and calls it directly.
+Its notebook mounts Google Drive and writes to a fixed Colab path, so it
+does not run outside Colab. Its optimiser does:
+``ferti_eco_min(ferts_xlsx, ideal_sol, water, water_EC, max_EC)``
+minimises fertiliser cost with SciPy SLSQP (0-3 g/L per product) subject
+to exact NO3-, NH4+, H2PO4-, K+ and H+ (residual HCO3-), Ca, Mg, SO4, Cl
+and Na at or above need, and an EC cap (anion meq/L / 10). This adapter
+writes the FlahaX catalogue into its "ferts" sheet and calls it
+directly.
 
-Translation, following the authors' case-study sheets (mmol per g; phosphate as
-H2PO4-; an acid's H+ column is minus its anion):
-- products whose nutrients all fit the ten Irriblend columns are translated exactly
+Translation, following the authors' case-study sheets (mmol per g;
+phosphate as H2PO4-; an acid's H+ column is minus its anion): - products
+whose nutrients all fit the ten Irriblend columns are translated exactly
   (mmol/g = mass % x 10 / molar mass; round trip checked);
 - phosphoric acid: H+ -1 per P; dibasic phosphates: H+ +1 per P (HPO4 2- = H2PO4- - H+);
-- micronutrient products, chelates, urea (no urea column) and potassium citrate
-  (citrate has no column; it would enter as charge-free K) are outside the model and
-  left out, with the reason recorded.
-Neutral settings, because the catalogue has no prices and the other engines apply no EC
-limit: every product costs 1 EUR/kg (cost = total grams), the EC cap is non-binding, and
-the residual HCO3- target is 0 (the benchmark waters carry no bicarbonate). A result is
-kept only if it passes the authors' own filter (final NO3- not below the ideal).
+- micronutrient products, chelates, urea (no urea column) and potassium
+  citrate (citrate has no column; it would enter as charge-free K) are
+  outside the model and left out, with the reason recorded. Neutral
+  settings, because the catalogue has no prices and the other engines
+  apply no EC limit: every product costs 1 EUR/kg (cost = total grams),
+  the EC cap is non-binding, and the residual HCO3- target is 0 (the
+  benchmark waters carry no bicarbonate). A result is kept only if it
+  passes the authors' own filter (final NO3- not below the ideal).
 """
 
 import hashlib
@@ -83,7 +89,9 @@ SOURCE_ENV = "IRRIBLEND_DSW_CODE"
 
 
 def load(code_dir=None):
-    """Import the pinned, unmodified irriblend_dsw_funs module after checking its hash."""
+    """Import the pinned, unmodified irriblend_dsw_funs module after
+    checking its hash.
+    """
     code_dir = Path(code_dir or os.environ.get(SOURCE_ENV, "irriblend/code"))
     module = code_dir / "irriblend_dsw_funs.py"
     digest = hashlib.sha256(module.read_bytes()).hexdigest()
@@ -99,7 +107,9 @@ def load(code_dir=None):
 
 
 def translate(products):
-    """(rows {name: {column: mmol/g}}, excluded {name: reason}) for the Irriblend 'ferts' sheet."""
+    """(rows {name: {column: mmol/g}}, excluded {name: reason}) for the
+    Irriblend 'ferts' sheet.
+    """
     rows, excluded = {}, {}
     for product in products:
         elements = {k: float(v) for k, v in product["elements"].items() if v}
@@ -135,7 +145,9 @@ def validate_translation(products, rows):
 
 
 def write_ferts(rows, path):
-    """The authors' 'ferts' layout: name, ten ion columns (mmol/g), price (EUR/kg), density."""
+    """The authors' 'ferts' layout: name, ten ion columns (mmol/g),
+    price (EUR/kg), density.
+    """
     import pandas as pd
 
     frame = pd.DataFrame(
@@ -156,7 +168,9 @@ def mmol_per_litre(mg_per_litre):
 
 
 class Irriblend:
-    """One translated catalogue and its 'ferts' sheet; solve() per formula and water."""
+    """One translated catalogue and its 'ferts' sheet; solve() per
+    formula and water.
+    """
 
     def __init__(self, products, code_dir=None):
         self.module = load(code_dir)
@@ -167,7 +181,9 @@ class Irriblend:
         self.ferts = write_ferts(self.rows, Path(self._dir.name) / "user_input.xlsx")
 
     def solve(self, targets, water):
-        """{'salts': [...]} as the optimiser returns it, or None when its own filter rejects it."""
+        """{'salts': [...]} as the optimiser returns it, or None when
+        its own filter rejects it.
+        """
         ideal = mmol_per_litre(targets)
         _, names, grams, final = self.module.ferti_eco_min(
             str(self.ferts), ideal, mmol_per_litre(water), 0.0, MAX_EC_NON_BINDING

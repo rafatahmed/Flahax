@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Rounded batch preparation, uncertainty and dose search regressions."""
+"""Rounded batch preparation, uncertainty and dose search
+regressions.
+"""
 
 import unittest
 from types import SimpleNamespace
@@ -58,8 +60,8 @@ class RoundedBatchRefitTests(unittest.TestCase):
         )
 
     def test_refits_stock_and_dry_product_in_same_candidate(self):
-        # Nearest solutions deliver .12 g KNO3 and .10 g MgSO4.
-        # The only passing combination needs 3 mL at 37.5 g/L and .11 g dry.
+        # Nearest solutions deliver .12 g KNO3 and .10 g MgSO4. The only
+        # passing combination needs 3 mL at 37.5 g/L and .11 g dry.
         self.config['alternative_stock_concentrations_g_l'] = {'KNO3': [37.5]}
         result = self.verify(
             {'KNO3': 0.1125, 'MgSO4': 0.104},
@@ -85,8 +87,8 @@ class RoundedBatchRefitTests(unittest.TestCase):
             reagent_mass_fraction_bounds=(0.09, 0.11),
             reagent_density_kg_l_bounds=(0.99, 1.01),
         )
-        # The reagent limit is tested against the upper bounded volume. Reducing
-        # one reagent increment would miss the nitrate target.
+        # The reagent limit is tested against the upper bounded volume.
+        # Reducing one reagent increment would miss the nitrate target.
         self.config['nutrient_tolerance_percent'] = 5
         result = self.verify(
             {'KNO3': 0.12, 'MgSO4': 0.1},

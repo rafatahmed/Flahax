@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX                                                                  0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+  Your batch                     │ Modeled pH 5.49914; all declared preparation checks passed.
+  ▸ Reagents and pH              │ See the rounded product weights and stock volumes on the results
+                                 │ screen.
+                                 │ Choose the preparation to use
+                                 │   Stop
+                                 │ ▸ Use verified alternative
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ↑↓ Move   Enter Choose   Esc Quit

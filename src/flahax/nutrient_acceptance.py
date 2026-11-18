@@ -2,17 +2,20 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Keep nutrient targets, incidental contributions and hard limits distinct."""
+"""Keep nutrient targets, incidental contributions and hard limits
+distinct.
+"""
 
 from .composition import validate_profile
 from .requirement_fit import met
 
 
 def assess_incidental(rows, maximum_concentrations=None):
-    """Untargeted nutrients present in the solution and the limits exceeded; an incidental nutrient
-    without a limit requires review. Explicit zero targets are hard zero limits,
-    not incidental nutrients, met within 1e-6 mg/L (requirement_fit.met, G25). Declared maxima
-    are compared directly without an absolute slack.
+    """Untargeted nutrients present in the solution and the limits
+    exceeded; an incidental nutrient without a limit requires review.
+    Explicit zero targets are hard zero limits, not incidental
+    nutrients, met within 1e-6 mg/L (requirement_fit.met, G25).
+    Declared maxima are compared directly without an absolute slack.
     """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
@@ -49,7 +52,9 @@ def assess_incidental(rows, maximum_concentrations=None):
 
 
 def assessed_limits(maximum_concentrations, recommendation):
-    """The user's maxima plus the N_NH4 allowance ``recommend`` applied when none was declared."""
+    """The user's maxima plus the N_NH4 allowance ``recommend`` applied
+    when none was declared.
+    """
     limits = dict(maximum_concentrations or {})
     allowance = recommendation.get('ammoniumLimit')
     if allowance and 'N_NH4' not in limits:
@@ -58,11 +63,12 @@ def assessed_limits(maximum_concentrations, recommendation):
 
 
 def name_sources(assessment, dosed, library, water=None):
-    """Add ``source`` to each incidental row: the dosed products (and the water) that supply that
-    nutrient.
+    """Add ``source`` to each incidental row: the dosed products (and
+    the water) that supply that nutrient.
 
-    ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre}); ``library`` the product records.
-    Formula counterion sodium (chelates, #84) names the product that carries it.
+    ``dosed`` is a recipe's ``salts`` ({id, name, gramsPerLitre});
+    ``library`` the product records. Formula counterion sodium
+    (chelates, #84) names the product that carries it.
     """
     from .product_conversion import material_inventory
 
@@ -82,13 +88,15 @@ def name_sources(assessment, dosed, library, water=None):
 
 
 def assess_water_basis(rows, maximum_concentrations, analytical_ppm, modelled_ppm):
-    """Limits whose decision the charge balancing alone would change (#84).
+    """Limits whose decision the charge balancing alone would change
+    (#84).
 
-    ``rows`` are final concentrations on the laboratory basis (water analysis +
-    products + reagent at the final volume). The modelled value swaps only the
-    water's contribution for the charge-balanced one: same recipe, dose and
-    volume. The decision stays on the laboratory basis; a disagreement is
-    returned for review, never used to pass or fail a plan.
+    ``rows`` are final concentrations on the laboratory basis (water
+    analysis + products + reagent at the final volume). The modelled
+    value swaps only the water's contribution for the charge-balanced
+    one: same recipe, dose and volume. The decision stays on the
+    laboratory basis; a disagreement is returned for review, never used
+    to pass or fail a plan.
     """
     maximums = validate_profile(
         {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'

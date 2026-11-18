@@ -4,9 +4,10 @@
 # its results are calculations, not dosing instructions.
 """Versioned input contracts for future FlahaX delivery planning.
 
-These records deliberately contain no tank assignment, pH calculation, or
-hardware I/O. They make the source data for those later steps explicit,
-validated, and auditable while the nutrient solver remains unchanged.
+These records deliberately contain no tank assignment, pH calculation,
+or hardware I/O. They make the source data for those later steps
+explicit, validated, and auditable while the nutrient solver remains
+unchanged.
 """
 
 from __future__ import annotations
@@ -22,7 +23,9 @@ DELIVERY_MODES = frozenset({"batch"})
 
 
 class DeliveryError(InputError):
-    """A delivery-planning input failure with a stable machine-readable code."""
+    """A delivery-planning input failure with a stable machine-readable
+    code.
+    """
 
     def __init__(self, code: str, message: str):
         super().__init__(message)
@@ -111,7 +114,9 @@ def _element_assay(value: Any, label: str) -> dict[str, float]:
 
 
 def validate_water_analysis(payload: Any) -> dict:
-    """Validate a versioned water-analysis record without inventing measurements."""
+    """Validate a versioned water-analysis record without inventing
+    measurements.
+    """
     source, record = _record(payload, "waterAnalysis")
     try:
         ions = validate_profile(source.get("ions"), "waterAnalysis.ions")
@@ -136,7 +141,9 @@ def validate_water_analysis(payload: Any) -> dict:
 
 
 def validate_product_assay(payload: Any) -> dict:
-    """Validate a fertilizer, acid, or base product record and elemental assay."""
+    """Validate a fertilizer, acid, or base product record and elemental
+    assay.
+    """
     source, record = _record(payload, "productAssay")
     kind = _text(source.get("kind"), "productAssay.kind")
     if kind not in {"fertilizer", "acid", "base"}:
@@ -163,7 +170,9 @@ def validate_product_assay(payload: Any) -> dict:
 
 
 def validate_compatibility_rule(payload: Any) -> dict:
-    """Validate one sourced hard compatibility rule for concentrated stocks."""
+    """Validate one sourced hard compatibility rule for concentrated
+    stocks.
+    """
     source, record = _record(payload, "compatibilityRule")
     product_ids = source.get("productIds")
     if not isinstance(product_ids, list) or len(product_ids) < 2:
@@ -192,7 +201,9 @@ def _invalid_constraint() -> str:
 
 
 def validate_solubility_limit(payload: Any) -> dict:
-    """Validate a sourced, temperature-bounded stock solubility limit."""
+    """Validate a sourced, temperature-bounded stock solubility
+    limit.
+    """
     source, record = _record(payload, "solubilityLimit")
     minimum = _number(source.get("temperatureMinC"), "solubilityLimit.temperatureMinC")
     maximum = _number(source.get("temperatureMaxC"), "solubilityLimit.temperatureMaxC")
@@ -213,7 +224,9 @@ def validate_solubility_limit(payload: Any) -> dict:
 
 
 def validate_titration_curve(payload: Any) -> dict:
-    """Validate measured acid/base demand points for one water/reagent pair."""
+    """Validate measured acid/base demand points for one water/reagent
+    pair.
+    """
     source, record = _record(payload, "titrationCurve")
     points = source.get("points")
     if not isinstance(points, list) or len(points) < 2:
@@ -252,7 +265,9 @@ def validate_titration_curve(payload: Any) -> dict:
 
 
 def validate_pump_calibration(payload: Any) -> dict:
-    """Validate a field calibration record; it does not command a pump."""
+    """Validate a field calibration record; it does not command a
+    pump.
+    """
     source, record = _record(payload, "pumpCalibration")
     flow = _number(
         source.get("flowLitresPerMinute"), "pumpCalibration.flowLitresPerMinute", minimum=0.0
@@ -294,7 +309,9 @@ def validate_pump_calibration(payload: Any) -> dict:
 
 
 def validate_delivery_request(payload: Any) -> dict:
-    """Validate the P0 batch-planning request envelope and its referenced records."""
+    """Validate the P0 batch-planning request envelope and its
+    referenced records.
+    """
     source = _map(payload, "deliveryRequest")
     if source.get("schemaVersion") != DELIVERY_SCHEMA_VERSION:
         _error(
@@ -333,7 +350,9 @@ def _required_list(source: dict, field: str) -> list:
 
 
 def make_audit_record(request: dict, *, model_version: str) -> dict:
-    """Return a deterministic audit record for a validated delivery request."""
+    """Return a deterministic audit record for a validated delivery
+    request.
+    """
     validated = validate_delivery_request(request)
     return {
         "schemaVersion": DELIVERY_SCHEMA_VERSION,

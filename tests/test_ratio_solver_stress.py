@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""N3 bounded supported-domain stress through the public recipe workflow."""
+"""N3 bounded supported-domain stress through the public recipe
+workflow.
+"""
 
 import unittest
 
@@ -37,11 +39,13 @@ def stress_cases():
 
 
 def sulfate_counterexample(request, grams):
-    """Explicit admissible interval corner, independent of uncertainty-bound code.
+    """Explicit admissible interval corner, independent of
+    uncertainty-bound code.
 
-    High source-water quantity/sulfate and sulfate-product mass; low nitrate/
-    phosphate assays, source concentrations and other product masses. All blend
-    ingredient fractions share their declared 0.99 low multiplier in this anchor.
+    High source-water quantity/sulfate and sulfate-product mass; low
+    nitrate/ phosphate assays, source concentrations and other product
+    masses. All blend ingredient fractions share their declared 0.99 low
+    multiplier in this anchor.
     """
     from flahax.product_conversion import material_inventory
 
@@ -116,8 +120,9 @@ def stress_case(case):
             nutrient_ranges=check['elemental_mg_l_ranges'],
             charge_closure_error=actual['charge_closure_error_mol_kg'],
         )
-    # Independent direct components from the witness give an additional chemistry
-    # check without rerunning or weakening the public uncertainty calculation.
+    # Independent direct components from the witness give an additional
+    # chemistry check without rerunning or weakening the public
+    # uncertainty calculation.
     from flahax.product_conversion import material_inventory
 
     req = case[2]
@@ -154,7 +159,9 @@ def stress_case(case):
 
 
 class SolverStressTests(unittest.TestCase):
-    """Each generated method runs one complete uncertainty-preserving recipe."""
+    """Each generated method runs one complete uncertainty-preserving
+    recipe.
+    """
 
 
 def install(case):
@@ -246,7 +253,8 @@ class RefinementBudgetTests(unittest.TestCase):
         grid = [6.28 + i * 0.001 for i in range(41)]
 
         def curve(ph):
-            # Deliberately oscillatory numerical fixture, not a chemical prediction.
+            # Deliberately oscillatory numerical fixture, not a chemical
+            # prediction.
             value = -1 + 0.01 * math.cos(1000 * math.pi * (ph - 6.28))
             return SimpleNamespace(saturation_indices=dict.fromkeys(phases, value))
 

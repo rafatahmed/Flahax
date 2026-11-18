@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Product PHREEQC evidence: independent runtime equivalence and live replay."""
+"""Product PHREEQC evidence: independent runtime equivalence and live
+replay.
+"""
 
 import hashlib
 import json
@@ -11,6 +13,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+
 from flahax.aqueous_model import solve
 from flahax.product_conversion import (
     catalogue_dose_totals,

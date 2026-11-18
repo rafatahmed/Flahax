@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Fail-closed assessment of stock, dispenser and final-volume records."""
+"""Fail-closed assessment of stock, dispenser and final-volume
+records.
+"""
 
 import copy
 import hashlib
@@ -48,7 +50,8 @@ def _common(record, today, temperature):
 
 
 def _within(value, limit):
-    # Only floating-point arithmetic allowance, not a relaxed physical bound.
+    # Only floating-point arithmetic allowance, not a relaxed physical
+    # bound.
     return value <= limit + 1e-12 * max(1, abs(limit))
 
 
@@ -123,7 +126,9 @@ def _final_volume_check(recipe, evidence, today, other_record_ids):
 
 
 def assess_stock_evidence(recipe, evidence):
-    """Verify applicability and bounds of records, separately from their authenticity."""
+    """Verify applicability and bounds of records, separately from their
+    authenticity.
+    """
     today = datetime.now(timezone.utc).date()
     numerical = recipe["uncertainty_verification"]["status"]
     result = {

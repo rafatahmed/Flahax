@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Read the fixed Steiner laboratory XLSX without executing Excel or its formulas."""
+"""Read the fixed Steiner laboratory XLSX without executing Excel or its
+formulas.
+"""
 
 import argparse
 import hashlib
@@ -51,7 +53,9 @@ BOUND = 'total_bound_through_valid_until'
 
 
 class WorkbookImportError(ValueError):
-    """An unsupported layout or incomplete/unsafe input cannot become evidence."""
+    """An unsupported layout or incomplete/unsafe input cannot become
+    evidence.
+    """
 
     def __init__(self, issues):
         self.issues = list(issues)
@@ -175,7 +179,8 @@ class _Book:
         if value is None:
             return None
         try:
-            # Modern dates only: reject Excel's fictitious 1900-02-29 and date strings.
+            # Modern dates only: reject Excel's fictitious 1900-02-29
+            # and date strings.
             if value < 61 or value > 2_958_465 or (not timestamp and value != int(value)):
                 raise ValueError('date outside supported range or date-only field contains time')
             result = datetime(1899, 12, 30, tzinfo=timezone.utc) + timedelta(
@@ -519,7 +524,8 @@ def _observations(book, identity, calibration):
         if int(row) >= 54 and column in ('D', 'E', 'F', 'G', 'H', 'J'):
             if has_formula or value not in (None, ''):
                 book.issues.append(f'Measurement records!{address}: beyond 12 supported slots')
-    # Reject additional recorded samples outside the template capacity, rather than omit them.
+    # Reject additional recorded samples outside the template capacity,
+    # rather than omit them.
     for address, (value, has_formula) in book.cells['Observations'].items():
         column, row = re.fullmatch(r'([A-Z]+)([0-9]+)', address).groups()
         if (
@@ -608,11 +614,13 @@ def _observations(book, identity, calibration):
 
 
 def load_lab_workbook(path, *, prepare=False):
-    """Map literal workbook inputs to existing strict evidence schemas plus provenance.
+    """Map literal workbook inputs to existing strict evidence schemas
+    plus provenance.
 
-    Prepare mode imports stock and vessel records only, to obtain the fingerprint
-    before making the batch. Full mode requires actual records; Excel statuses and
-    cached formulas are never accepted as evidence or verification results.
+    Prepare mode imports stock and vessel records only, to obtain the
+    fingerprint before making the batch. Full mode requires actual
+    records; Excel statuses and cached formulas are never accepted as
+    evidence or verification results.
     """
     book = _Book(path)
     _design(book)
@@ -643,8 +651,9 @@ def load_lab_workbook(path, *, prepare=False):
         )
         for r in (14, 19, 20, 21, 22):
             book.read('Batch', f'B{r}', 'yes')
-        # Actual recorded deliveries must be the specified rounded instructions.
-        # Different readings require explicit replanning, not silent dose substitution.
+        # Actual recorded deliveries must be the specified rounded
+        # instructions. Different readings require explicit replanning,
+        # not silent dose substitution.
         for r, dose in enumerate(DOSES, 6):
             book.expected('Preparation', f'K{r}', dose)
         provenance['recorded_delivery_ml'] = dict(zip(FORMULAS, DOSES))
@@ -695,7 +704,9 @@ def load_lab_workbook(path, *, prepare=False):
 
 
 def verify_lab_workbook(path, *, prepare=False):
-    """Recompute chemistry, preparation verification and observed stability from XLSX."""
+    """Recompute chemistry, preparation verification and observed
+    stability from XLSX.
+    """
     from .planning_cli import execute
 
     request, provenance = load_lab_workbook(path, prepare=prepare)
@@ -705,7 +716,9 @@ def verify_lab_workbook(path, *, prepare=False):
 
 
 def main(argv=None):
-    """Import the supported lab workbook and emit the complete verification report."""
+    """Import the supported lab workbook and emit the complete
+    verification report.
+    """
     parser = argparse.ArgumentParser(prog='flahax lab-import')
     parser.add_argument('workbook', type=Path, help='completed Steiner laboratory .xlsx')
     parser.add_argument(
@@ -719,7 +732,8 @@ def main(argv=None):
         parser.error('output must not overwrite the source workbook')
     try:
         result = verify_lab_workbook(args.workbook, prepare=args.prepare)
-        # A parsed workbook is not necessarily a verified or stable physical batch.
+        # A parsed workbook is not necessarily a verified or stable
+        # physical batch.
         if args.prepare:
             ready = result['uncertainty_verification']['status'] == 'passed' and all(
                 f['code'] == 'missing_batch_ph_evidence'

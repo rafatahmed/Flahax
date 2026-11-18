@@ -215,7 +215,8 @@ class QualificationTests(unittest.TestCase):
         self.assertNotIn('Reported EC range', lines)
 
     def test_independent_nutrient_arithmetic_and_incidental_distinction(self):
-        # Independent fixture: 2 mg/L water + 3 fertilizer + 4 reagent = 9 final.
+        # Independent fixture: 2 mg/L water + 3 fertilizer + 4 reagent =
+        # 9 final.
         summary = {
             'water': {'analysis_mg_per_litre': {'K': 2}},
             'formulation': {
@@ -238,7 +239,9 @@ class QualificationTests(unittest.TestCase):
 
 
 class EvidenceParser(HTMLParser):
-    """Read the inert evidence element and reject active dependencies."""
+    """Read the inert evidence element and reject active
+    dependencies.
+    """
 
     def __init__(self):
         super().__init__()

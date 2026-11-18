@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Inventory numeric literals, comparisons, defaults and packaged numeric data for review.
+"""Inventory numeric literals, comparisons, defaults and packaged
+numeric data for review.
 
-Syntax does not determine scientific applicability. Every entry starts unreviewed;
-the inventory is a discovery aid, not automatic qualification of a source or range.
+Syntax does not determine scientific applicability. Every entry starts
+unreviewed; the inventory is a discovery aid, not automatic
+qualification of a source or range.
 """
 
 import argparse

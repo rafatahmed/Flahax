@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent material arithmetic and explicit evidence status, without lot claims."""
+"""Independent material arithmetic and explicit evidence status, without
+lot claims.
+"""
 
 from fractions import Fraction
 from decimal import Decimal
@@ -57,7 +59,8 @@ class MaterialConventionTests(unittest.TestCase):
                 self.assertGreaterEqual(Decimal(high).quantize(value), value)
 
     def test_hydrate_and_nitrogen_forms_from_independent_atom_counts(self):
-        # Literal, exact decimal compatibility masses; no production parser/oracle reuse.
+        # Literal, exact decimal compatibility masses; no production
+        # parser/oracle reuse.
         h, n, o, mg = map(Fraction, ('1.00784', '14.0067', '15.999', '24.305'))
         mass = mg + 2 * n + 12 * o + 12 * h  # Mg(NO3)2.6H2O
         assay = theoretical_assay('Mg(NO3)2.6H2O')

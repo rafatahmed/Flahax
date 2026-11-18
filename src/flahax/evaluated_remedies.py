@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bounded, explicit scenario re-evaluation; no invented treatment or equipment performance."""
+"""Bounded, explicit scenario re-evaluation; no invented treatment or
+equipment performance.
+"""
 
 from copy import deepcopy
 from collections.abc import Mapping
@@ -44,7 +46,9 @@ def _recommendation(workflow):
 
 
 def unresolved_requirements(workflow):
-    """Return next actions for every unmet nutrient, hard limit and unfinished workflow stage."""
+    """Return next actions for every unmet nutrient, hard limit and
+    unfinished workflow stage.
+    """
     recipe = _recommendation(workflow)
     requirements = []
     for row in recipe.get('unmetTargets', []):
@@ -154,10 +158,12 @@ def _changes(option, request):
 
 
 def available_product_search(products, *, preferences=('relative_residual',)):
-    """Try a confirmed expanded pool, then individual additions within the scenario budget.
+    """Try a confirmed expanded pool, then individual additions within
+    the scenario budget.
 
-    Preferences apply in the supplied order after tolerance attainment. Supported
-    metrics are relative_residual, incidental_mg_l and product_count.
+    Preferences apply in the supplied order after tolerance attainment.
+    Supported metrics are relative_residual, incidental_mg_l and
+    product_count.
     """
     return dict(
         id='catalogue:available-product-search',
@@ -234,8 +240,9 @@ def _candidate_score(candidate, request, preferences):
 
 
 def _source_gain(recipe, maxima, assay):
-    # Estimate improvement from the best permitted incremental dose. The full
-    # workflow can also trade existing doses against the additional product.
+    # Estimate improvement from the best permitted incremental dose. The
+    # full workflow can also trade existing doses against the additional
+    # product.
     rows = recipe['rows']
     final = {r['symbol']: r['final'] for r in rows}
     limits = assessed_limits(maxima, recipe)
@@ -356,11 +363,13 @@ def _joint_start_retry(option, request, workflow, expanded, seen):
 
 
 def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
-    """Re-run declared alternatives and rank checked results within the scenario budget.
+    """Re-run declared alternatives and rank checked results within the
+    scenario budget.
 
-    Options have unique id, kind (catalogue/treatment/equipment), and changes.
-    Catalogue bundles require available=True; treatment requires evidence source/revision.
-    Options from available_product_search can also try individual source additions.
+    Options have unique id, kind (catalogue/treatment/equipment), and
+    changes. Catalogue bundles require available=True; treatment
+    requires evidence source/revision. Options from
+    available_product_search can also try individual source additions.
     Only attempted workflow evaluations count against the budget.
     """
     if (

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The Read the Docs site source must be configured, pinned and free of private material."""
+"""The Read the Docs site source must be configured, pinned and free of
+private material.
+"""
 
 from pathlib import Path
 import importlib.util
@@ -75,7 +77,8 @@ class DocsSiteTests(unittest.TestCase):
                 self.assertIsNone(pattern.search(path.read_text(encoding='utf-8')))
 
     def test_public_pages_have_no_roadmap_codes(self):
-        # Release evidence cites roadmap phases and gates and explains them once.
+        # Release evidence cites roadmap phases and gates and explains
+        # them once.
         pattern = re.compile(r'\b[PG][0-9](?:\.[0-9])?\b')
         for path in SITE.rglob('*.md'):
             if path.name == 'release-evidence.md':

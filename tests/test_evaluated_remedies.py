@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent scoped remedy witnesses and honest unresolved outcomes."""
+"""Independent scoped remedy witnesses and honest unresolved
+outcomes.
+"""
 
 import copy
 import json

@@ -89,7 +89,8 @@ class FinalRecipeReportTests(unittest.TestCase):
         self.assertEqual(exported, json.loads(json.dumps(original)))
 
     def test_mix_checklist_applies_its_milligram_increment(self):
-        # Synthetic legacy report inputs exercise formatting, not the chemistry calculation.
+        # Synthetic legacy report inputs exercise formatting, not the
+        # chemistry calculation.
         for mass in (1e-9, 1.001e-9, 1e-6, 0.000999, 0.001):
             summary = deepcopy(self.summary)
             summary.pop('export_identity')

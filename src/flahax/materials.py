@@ -4,15 +4,16 @@
 # its results are calculations, not dosing instructions.
 """Traceable material catalogue: the shipped chemical-identity layer.
 
-An identity is what a material *is* (formula, hydration, molecular weight,
-CAS, dissolved ion forms, theoretical analysis), with the reference material
-that evidences it. It is not a supplier grade or a batch lot. Evidence:
-docs/audit/2026-10-18-materials-identity; decisions D1 (Mg nitrate
-hexahydrate) and D2 (chelates as their sodium salts).
+An identity is what a material *is* (formula, hydration, molecular
+weight, CAS, dissolved ion forms, theoretical analysis), with the
+reference material that evidences it. It is not a supplier grade or a
+batch lot. Evidence: docs/audit/2026-10-18-materials-identity; decisions
+D1 (Mg nitrate hexahydrate) and D2 (chelates as their sodium salts).
 
 Records are shipped in data/material_identities.json, pinned by SHA-256.
-The loader fails closed if a record is malformed or if a stored theoretical
-analysis disagrees with composition.theoretical_assay for a parseable formula.
+The loader fails closed if a record is malformed or if a stored
+theoretical analysis disagrees with composition.theoretical_assay for a
+parseable formula.
 """
 
 import hashlib
@@ -39,7 +40,8 @@ IDENTITY_STATUSES = frozenset(
         'commercial_double_salt',
         'aqueous_solution',
         'assumed_blend',
-        # Declared blend composition, not independently verified (2026-10-30).
+        # Declared blend composition, not independently verified
+        # (2026-10-30).
         'declared_blend',
     }
 )
@@ -58,7 +60,8 @@ _REQUIRED = (
     'notes',
 )
 _THEORY_TOLERANCE = 1e-9
-# Blends dosed as one catalogue product; only the assumed one carries 'assumed_composition'.
+# Blends dosed as one catalogue product; only the assumed one carries
+# 'assumed_composition'.
 _BLEND_STATUSES = frozenset({'assumed_blend', 'declared_blend'})
 
 
@@ -128,12 +131,16 @@ def _load() -> tuple[dict, dict]:
 
 
 def load_identities() -> dict:
-    """Return the cached identity records keyed by id (treat as read-only)."""
+    """Return the cached identity records keyed by id (treat as
+    read-only).
+    """
     return _load()[0]
 
 
 def identity_for_product(name: str) -> dict:
-    """Return the identity record of a catalogue product name, or fail closed."""
+    """Return the identity record of a catalogue product name, or fail
+    closed.
+    """
     identities, by_product = _load()
     try:
         return identities[by_product[name]]
@@ -167,7 +174,8 @@ def _oxide_factor(element: str, count: int, oxygens: int) -> float:
     return mass / (mass + oxygens * ATOMIC['O'])
 
 
-# Oxide -> (element, factor); elemental % = oxide % x factor, from composition.ATOMIC.
+# Oxide -> (element, factor); elemental % = oxide % x factor, from
+# composition.ATOMIC.
 OXIDE_FACTORS = {
     'P2O5': ('P', _oxide_factor('P', 2, 5)),
     'K2O': ('K', _oxide_factor('K', 2, 1)),
@@ -179,13 +187,15 @@ COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed', 'declared_ions'}
 CHELATING_AGENTS = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
-# Disclosed blend: declared vs component-implied analysis, relative and absolute (% points).
+# Disclosed blend: declared vs component-implied analysis, relative and
+# absolute (% points).
 _BLEND_RELATIVE_TOLERANCE = 0.05
 _BLEND_ABSOLUTE_TOLERANCE = 0.05
 _FRACTION_TOLERANCE = 1e-9
 
-# Dissolved ion form -> (nutrient form it carries, charge per nutrient atom). Each listed
-# form carries one atom of its nutrient. Forms without a nutrient (CO3-2, citrate) are absent.
+# Dissolved ion form -> (nutrient form it carries, charge per nutrient
+# atom). Each listed form carries one atom of its nutrient. Forms
+# without a nutrient (CO3-2, citrate) are absent.
 _ION_NUTRIENT_CHARGE = {
     'NO3-': ('N_NO3', -1),
     'NH4+': ('N_NH4', 1),
@@ -216,8 +226,8 @@ _ION_NUTRIENT_CHARGE = {
 
 @dataclass(frozen=True)
 class DocumentReference:
-    """The supplier document a value comes from: title, issue and entry dates, and optionally its
-    URL and SHA-256.
+    """The supplier document a value comes from: title, issue and entry
+    dates, and optionally its URL and SHA-256.
     """
 
     supplier: str
@@ -230,8 +240,8 @@ class DocumentReference:
 
 @dataclass(frozen=True)
 class Grade:
-    """A supplier grade: typical, minimum and maximum analysis, impurity limits, composition kind
-    and its source document.
+    """A supplier grade: typical, minimum and maximum analysis, impurity
+    limits, composition kind and its source document.
     """
 
     grade_id: str
@@ -255,8 +265,8 @@ class Grade:
 
 @dataclass(frozen=True)
 class DeclaredCheck:
-    """Whether a label-declared compound balances well enough to model its chemistry, and why not
-    when it does not.
+    """Whether a label-declared compound balances well enough to model
+    its chemistry, and why not when it does not.
     """
 
     modellable: bool
@@ -280,8 +290,8 @@ class Lot:
 
 @dataclass(frozen=True)
 class ResolvedMaterial:
-    """A material ready for formulation: the record, the analysis basis and band, composition kind,
-    provenance and flags.
+    """A material ready for formulation: the record, the analysis basis
+    and band, composition kind, provenance and flags.
     """
 
     name: str
@@ -350,7 +360,9 @@ def _document(record: Mapping, label: str) -> DocumentReference:
 
 
 def _nutrient_key(key: Any, label: str, conversions: dict, extra: tuple = ()) -> tuple[str, float]:
-    """Map an analysis key to its elemental form and the factor that converts its value."""
+    """Map an analysis key to its elemental form and the factor that
+    converts its value.
+    """
     if key in OXIDE_FACTORS:
         element, factor = OXIDE_FACTORS[key]
         conversions[key] = {'element': element, 'factor': factor}
@@ -426,7 +438,9 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
 
 
 def _nutrient_charges(identity: dict) -> dict:
-    """Mean charge per nutrient atom, from the identity's dissolved ion forms."""
+    """Mean charge per nutrient atom, from the identity's dissolved ion
+    forms.
+    """
     totals: dict = {}
     for ion, count in identity['ion_forms'].items():
         if ion in _ION_NUTRIENT_CHARGE:
@@ -437,9 +451,11 @@ def _nutrient_charges(identity: dict) -> dict:
 
 
 def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
-    """100 * sum(z n) / sum(|z| n) over declared forms; None without a cation and an anion.
+    """100 * sum(z n) / sum(|z| n) over declared forms; None without a
+    cation and an anion.
 
-    Information on a grade (``Grade.charge_residual_percent``); it never blocks (decision G5).
+    Information on a grade (``Grade.charge_residual_percent``); it never
+    blocks (decision G5).
     """
     charges = _nutrient_charges(identity)
     signed = absolute = 0.0
@@ -465,7 +481,9 @@ def _analysis_targets(
     split: dict,
     extra: tuple = (),
 ) -> list:
-    """Elemental forms an analysis key feeds, each with its multiplier."""
+    """Elemental forms an analysis key feeds, each with its
+    multiplier.
+    """
     if key != 'N':
         return [_nutrient_key(key, label, conversions, extra)]
     theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
@@ -480,7 +498,9 @@ def _analysis_targets(
 
 
 def make_grade(record: Mapping) -> Grade:
-    """Validate a technical-data-sheet grade; oxide inputs are converted to elemental %."""
+    """Validate a technical-data-sheet grade; oxide inputs are converted
+    to elemental %.
+    """
     if not isinstance(record, Mapping):
         raise DeliveryError('invalid_value', 'a grade must be a mapping')
     label = f"grade {record.get('grade_id')!r}"
@@ -521,7 +541,8 @@ def make_grade(record: Mapping) -> Grade:
     split: dict = {}
     bands: dict = {band: {} for band in _BANDS}
     for key, stated in analysis.items():
-        # A declared-ions compound may state its chloride: it closes the charge balance.
+        # A declared-ions compound may state its chloride: it closes the
+        # charge balance.
         targets = _analysis_targets(
             key,
             label,
@@ -563,13 +584,13 @@ def make_grade(record: Mapping) -> Grade:
         for key, value in impurities.items()
     }
 
-    # A label off its compound is reconciled, never flagged (decision G5, label_reconciliation);
-    # the charge residual is information.
+    # A label off its compound is reconciled, never flagged (decision
+    # G5, label_reconciliation); the charge residual is information.
     residual = None
     if composition == 'single':
         identity = load_identities()[identity_id]
-        # Declared forms only: typical, else minimum; forms split from total N are inferred, not
-        # declared.
+        # Declared forms only: typical, else minimum; forms split from
+        # total N are inferred, not declared.
         inferred = set(split.get('N', ()))
         declared = {
             key: value
@@ -599,8 +620,9 @@ def make_grade(record: Mapping) -> Grade:
 
 _MICRONUTRIENTS = ('Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
 _PROTONS_PER_PHOSPHATE = (1.0, 2.0)  # HPO4-2 .. H2PO4-, the forms in fertilizer salts
-# Labels and catalogue assays are rounded: 1 g KNO3 + 1 g KH2PO4 from the catalogue assays
-# implies 2.0001 H+ per P. A hidden acid moves it by tenths (K2O 10 instead of 20: 2.75).
+# Labels and catalogue assays are rounded: 1 g KNO3 + 1 g KH2PO4 from
+# the catalogue assays implies 2.0001 H+ per P. A hidden acid moves it
+# by tenths (K2O 10 instead of 20: 2.75).
 _PROTONS_ROUNDING = 0.01
 _DECLARED_RESIDUAL_LIMIT_PERCENT = 5.0
 
@@ -608,8 +630,9 @@ _DECLARED_RESIDUAL_LIMIT_PERCENT = 5.0
 def declared_ions_check(grade: Grade) -> DeclaredCheck:
     """Whether a data-sheet compound's declared ions can be modelled.
 
-    Charges are those of the declared-ions conversion (phosphate as PO4-3, chelates as
-    their D2 sodium salts); implied protons per P = (anion charge - cation charge) / mol P.
+    Charges are those of the declared-ions conversion (phosphate as
+    PO4-3, chelates as their D2 sodium salts); implied protons per P =
+    (anion charge - cation charge) / mol P.
     """
     from .product_conversion import (
         declared_ion_charges,
@@ -671,7 +694,9 @@ def declared_ions_check(grade: Grade) -> DeclaredCheck:
 
 
 def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> ResolvedMaterial:
-    """A data-sheet compound: elements are the label's, chemistry its declared ions."""
+    """A data-sheet compound: elements are the label's, chemistry its
+    declared ions.
+    """
     if lot is not None:
         raise DeliveryError(
             'material_mismatch',
@@ -684,7 +709,8 @@ def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> Resol
         basis[key] = 'grade_typical' if in_typical else 'grade_minimum'
     check = declared_ions_check(grade)
     lower_bound = ('lower_bound_grade_assay',) if 'grade_minimum' in basis.values() else ()
-    # Na, Cl and S the label does not state are taken as zero; each assumption is named.
+    # Na, Cl and S the label does not state are taken as zero; each
+    # assumption is named.
     unstated = tuple(f'unstated_{k}' for k in ('Na', 'Cl', 'S') if k not in elements)
     flags = _unique(
         [*grade.flags, *lower_bound, *unstated, *(() if check.modellable else ('not_modellable',))]
@@ -732,7 +758,9 @@ def _resolve_declared(product_name: str, grade: Grade, lot: Lot | None) -> Resol
 
 
 def make_lot(record: Mapping) -> Lot:
-    """Validate a certificate-of-analysis lot linked to exactly one grade or one identity."""
+    """Validate a certificate-of-analysis lot linked to exactly one
+    grade or one identity.
+    """
     if not isinstance(record, Mapping):
         raise DeliveryError('invalid_value', 'a lot must be a mapping')
     label = f"lot {record.get('lot_id')!r}"
@@ -782,8 +810,8 @@ def _unique(items) -> tuple:
 
 
 def _blend_implied(grade: Grade) -> tuple[dict, bool]:
-    """Component-implied % of each declared nutrient, and whether any disagrees with the
-    declaration.
+    """Component-implied % of each declared nutrient, and whether any
+    disagrees with the declaration.
 
     Implied = sum(mass fraction x component's shipped catalogue assay). A difference above
     max(5 % of declared, 0.05 % points) is unreconciled; it is reported, never rejected.
@@ -837,17 +865,21 @@ def _check_linkage(
 def resolve_material(
     product_name: str, *, grade: Grade | None = None, lot: Lot | None = None
 ) -> ResolvedMaterial:
-    """Pick each nutrient's assay: lot measured > grade typical > grade minimum > identity theory.
+    """Pick each nutrient's assay: lot measured > grade typical > grade
+    minimum > identity theory.
 
-    With neither grade nor lot, the shipped catalogue record is used with its declared basis.
-    With a grade or lot, ``record['id']`` is the catalogue id suffixed with the grade and lot
-    ids, so a resolved record is never mistaken for the shipped product; ``record['name']``
-    stays the product name. A ``declared_ions`` grade (a compound entered from its data
-    sheet) names the product itself; its record id is the grade id.
+    With neither grade nor lot, the shipped catalogue record is used
+    with its declared basis. With a grade or lot, ``record['id']`` is
+    the catalogue id suffixed with the grade and lot ids, so a resolved
+    record is never mistaken for the shipped product; ``record['name']``
+    stays the product name. A ``declared_ions`` grade (a compound
+    entered from its data sheet) names the product itself; its record id
+    is the grade id.
 
-    Provenance separates sourceStatus (document supplied or unattributed),
-    assumptionStatus and atomicMassConvention. Documentation is not independent
-    verification of a composition, grade or lot.
+    Provenance separates sourceStatus (document supplied or
+    unattributed), assumptionStatus and atomicMassConvention.
+    Documentation is not independent verification of a composition,
+    grade or lot.
     """
     if grade is not None and grade.composition == 'declared_ions':
         return _resolve_declared(product_name, grade, lot)
@@ -893,7 +925,8 @@ def resolve_material(
                     high = min(100.0, value + uncertainty[key])
                 else:
                     low, high = minimum.get(key), maximum.get(key)
-                    # The certificate outranks the data sheet: widen the band to include it.
+                    # The certificate outranks the data sheet: widen the
+                    # band to include it.
                     if low is not None and value < low:
                         low, outside = value, True
                     if high is not None and value > high:
@@ -927,8 +960,9 @@ def resolve_material(
     if assumed:
         flags = _unique([*flags, 'assumed_composition'])
 
-    # A grade or lot is not the shipped product: it gets its own record id. The name stays the
-    # shipped product's, which chemistry and materials= keying rely on.
+    # A grade or lot is not the shipped product: it gets its own record
+    # id. The name stays the shipped product's, which chemistry and
+    # materials= keying rely on.
     record_id = salt['id']
     if grade is not None:
         record_id += f'+{grade.grade_id}' + (f'+{lot.lot_id}' if lot is not None else '')
@@ -969,7 +1003,8 @@ def resolve_material(
         provenance['hostProduct'] = product_name  # the catalogue name the blend is dosed under
     if implied is not None:
         provenance['blendImpliedAnalysis'] = implied
-    # A blend has no single formula; the host's would make assay checks compare the wrong compound.
+    # A blend has no single formula; the host's would make assay checks
+    # compare the wrong compound.
     formula = None if blend else identity['formula'] or salt.get('formula')
     record = {
         'id': record_id,
@@ -998,10 +1033,11 @@ def resolve_material(
 
 
 def material_audit_entry(material: ResolvedMaterial) -> dict:
-    """Audit record of one dosed material: provenance plus per-nutrient basis.
+    """Audit record of one dosed material: provenance plus per-nutrient
+    basis.
 
-    ``analysisBasis`` is the basis shared by every nutrient (always one for a shipped
-    product), else None.
+    ``analysisBasis`` is the basis shared by every nutrient (always one
+    for a shipped product), else None.
     """
     bases = set(material.basis.values())
     return {
@@ -1022,11 +1058,13 @@ def nutrient_band(
     *,
     materials: Mapping[str, ResolvedMaterial] | None = None,
 ) -> dict:
-    """Delivered nutrient (mg/L) at nominal and band-end assays for the same doses.
+    """Delivered nutrient (mg/L) at nominal and band-end assays for the
+    same doses.
 
-    Linear re-evaluation (mg/L = g/L x % x 10); the solver is never called. A nutrient
-    whose contributor has an open band end gets ``None`` for that end of the total.
-    Products without a resolved material use the shipped record with no band.
+    Linear re-evaluation (mg/L = g/L x % x 10); the solver is never
+    called. A nutrient whose contributor has an open band end gets
+    ``None`` for that end of the total. Products without a resolved
+    material use the shipped record with no band.
     """
     from .product_conversion import (
         _check_materials,

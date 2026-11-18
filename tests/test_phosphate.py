@@ -20,7 +20,7 @@ class OrthophosphateSpeciationTests(unittest.TestCase):
         self.assertGreater(result.h2po4_molal, result.hpo4_molal)
         self.assertGreater(result.hpo4_molal, result.po4_molal)
 
-    def test_pH_moves_the_dominant_species(self):
+    def test_ph_moves_the_dominant_species(self):
         acidic = orthophosphate_speciation(0.001, 5.0, 0.01)
         alkaline = orthophosphate_speciation(0.001, 10.0, 0.01)
         self.assertGreater(acidic.h2po4_molal, acidic.hpo4_molal)

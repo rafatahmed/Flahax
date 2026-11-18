@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Render a clean benchmark capture as static docs and a portable evidence bundle.
+"""Render a clean benchmark capture as static docs and a portable
+evidence bundle.
 
 No benchmark is run and no external service is modified by this command.
-Install tools/requirements-benchmark-report.txt to regenerate the charts.
+Install tools/requirements-benchmark-report.txt to regenerate the
+charts.
 """
 
 import argparse
@@ -65,11 +67,14 @@ def load_capture(capture):
 
 
 def redact(text):
-    """Remove user-home identifiers only; numerical measurements stay unchanged."""
+    """Remove user-home identifiers only; numerical measurements stay
+    unchanged.
+    """
     text = re.sub(r"[A-Za-z]:[\\/]+Users[\\/]+[^\\/\"\s]+", "<USER_HOME>", text)
     text = re.sub(r"[A-Za-z]__Users_[^_\\/\"\s]+", "USER_HOME", text)
     text = re.sub(r"/home/[^/\"\s]+", "<USER_HOME>", text)
-    # JSON-escaped Windows separators can leave repeated slashes after replacement.
+    # JSON-escaped Windows separators can leave repeated slashes after
+    # replacement.
     return text
 
 
@@ -90,7 +95,9 @@ def formula_names(source):
 
 
 def case_label(case_id, names):
-    """Readable recipe label; the catalogue ID stays visible for traceability."""
+    """Readable recipe label; the catalogue ID stays visible for
+    traceability.
+    """
     formula, _, water = case_id.partition(":")
     return f"{names.get(formula, 'Unknown formula')}, {water.replace('_', ' ')} (`{case_id}`)"
 
@@ -100,7 +107,9 @@ def is_pass(value):
 
 
 def miss_summary(rows, names):
-    """Largest positive-target miss and failing targets by nutrient, from formulation rows."""
+    """Largest positive-target miss and failing targets by nutrient,
+    from formulation rows.
+    """
     misses = [r for r in rows if not is_pass(r["passes"]) and float(r["target_mg_l"]) > 0]
     if not misses:
         return "All explicit nutrient targets pass in this capture."
@@ -132,8 +141,9 @@ def csv_bytes(rows, fields):
 
 
 def scorecard_notice(kernel_pass, kernel_total, chemistry, missing_text, missing_count, manual):
-    """Admonition for the page head: a warning naming failed gates, or a note when none failed
-    (#66)."""
+    """Admonition for the page head: a warning naming failed gates, or a
+    note when none failed (#66).
+    """
     workflow = (
         f"The [manual GitHub benchmark workflow]({manual['url']}) completed with "
         f"conclusion **{manual['conclusion']}**."

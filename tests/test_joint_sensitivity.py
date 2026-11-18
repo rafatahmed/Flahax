@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent equation derivatives and phase-boundary rejection witnesses."""
+"""Independent equation derivatives and phase-boundary rejection
+witnesses.
+"""
 
 from dataclasses import replace
 from fractions import Fraction as F
@@ -44,7 +46,8 @@ class JointSensitivityTests(unittest.TestCase):
                 oracle = independent_charge_gradient(p, state, 1e-10)
                 for a, b in zip(actual, oracle):
                     self.assertAlmostEqual(a, b, delta=1e-12)
-                # Independent forward perturbation of the full nonlinear solve.
+                # Independent forward perturbation of the full nonlinear
+                # solve.
                 for j in range(2):
                     shifted = dict(doses)
                     q = reagent
@@ -173,8 +176,9 @@ class JointSensitivityTests(unittest.TestCase):
         ):
             result = solve_joint_problem(p, {'a': 0.8, 'b': 0.7}, 1.13, **settings)
         self.assertEqual(result['status'], 'stationary_point')
-        # Eliminating r=a^2+b^2 gives a symmetric interior minimum. Its t=a=b
-        # solves 8*t^3-3*t-1=0; bisection is independent of the solver's derivatives.
+        # Eliminating r=a^2+b^2 gives a symmetric interior minimum. Its
+        # t=a=b solves 8*t^3-3*t-1=0; bisection is independent of the
+        # solver's derivatives.
         with localcontext() as context:
             context.prec = 60
             low, high = D('.7'), D('.8')
@@ -196,11 +200,14 @@ class JointSensitivityTests(unittest.TestCase):
             solve_joint_problem(p, {}, 0, **controls(p, curvature_block=True))
 
     def test_cold_charge_correction_rechecks_actual_melon_candidate(self):
-        # The retained search point doses pre-packaged-catalogue product IDs.
+        # The retained search point doses pre-packaged-catalogue product
+        # IDs.
         self.enterContext(historical_catalogue())
-        # It was found while a label's charge surplus entered chemistry as implicit H+/OH-
-        # (before decision G5); with labels balanced it is no longer a point that needs a cold
-        # charge correction, so the label chemistry it was found with is kept for this test.
+        # It was found while a label's charge surplus entered chemistry
+        # as implicit H+/OH- (before decision G5); with labels balanced
+        # it is no longer a point that needs a cold charge correction,
+        # so the label chemistry it was found with is kept for this
+        # test.
         from unittest import mock
 
         self.enterContext(
@@ -221,8 +228,9 @@ class JointSensitivityTests(unittest.TestCase):
             for f in library['formulas']
             if f['name'] == 'Melons (Douglas Peckenpaugh)'
         )
-        # The retained search point was found on station 104 with its charge closed on chloride,
-        # a fixture of this witness (the packaged workflow no longer closes a water on an ion).
+        # The retained search point was found on station 104 with its
+        # charge closed on chloride, a fixture of this witness (the
+        # packaged workflow no longer closes a water on an ion).
         from flahax.measured_water import solve
 
         closed = dict(balance_water_analysis(STATION_104, measured_ph=7.8).totals)
@@ -252,7 +260,8 @@ class JointSensitivityTests(unittest.TestCase):
             maximum_reagent_mass_g=6000,
             maximum_reagent_volume_litres=5,
         )
-        # Retained failing search point, not an oracle for optimal quantities.
+        # Retained failing search point, not an oracle for optimal
+        # quantities.
         doses = {
             'cmbpfudkn00naq8z9kd4qsr60': 0.48176024259035294,
             'cmuh6f7s80005127gbyr2ip91': 0.4035994690084655,
@@ -371,7 +380,8 @@ class JointSensitivityTests(unittest.TestCase):
             settings['charge_tolerance'],
         )
         # Charge equality requires a=1+r. Nonnegativity and the squared
-        # nutrient residual independently give the unique optimum a=1, r=0.
+        # nutrient residual independently give the unique optimum a=1,
+        # r=0.
         self.assertEqual(result['status'], 'numerical_candidate')
         self.assertAlmostEqual(result['fertilizerDoses']['a'], 1)
         self.assertEqual(result['reagentDose'], 0)
@@ -418,8 +428,9 @@ class JointSensitivityTests(unittest.TestCase):
         ):
             result = solve_joint_problem(p, {'a': 0.8, 'b': 0.6}, 1e-160, **settings)
         self.assertEqual(result['status'], 'stationary_point')
-        # Cauchy-Schwarz: a+b <= sqrt(2*(1-r)); both objective terms worsen
-        # for r>0. Thus r=0 and a=b=1/sqrt(2) give the independent optimum.
+        # Cauchy-Schwarz: a+b <= sqrt(2*(1-r)); both objective terms
+        # worsen for r>0. Thus r=0 and a=b=1/sqrt(2) give the
+        # independent optimum.
         for dose in result['fertilizerDoses'].values():
             self.assertAlmostEqual(dose, 1 / math.sqrt(2), delta=2e-6)
         self.assertLessEqual(result['reagentDose'], 1e-12)

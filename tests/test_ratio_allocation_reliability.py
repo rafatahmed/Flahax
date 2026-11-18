@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""N1: independently witnessed cases through the public recipe interface."""
+"""N1: independently witnessed cases through the public recipe
+interface.
+"""
 
 from copy import deepcopy
 import random
@@ -77,7 +79,8 @@ def exercise(case, order_index=0, *, witness=None):
     assert all(x['si'] < -0.3000001 for x in check['phase_maxima'].values())
     for k, limits in check['elemental_mg_l_ranges'].items():
         assert limits[1] <= req['maximum_concentrations'][k] * 0.95, (name, k, limits)
-    # Direct elemental sum is independent of recipe allocation/reconstruction.
+    # Direct elemental sum is independent of recipe
+    # allocation/reconstruction.
     totals = {
         k: req['water']['totals_mol_kg'][b]
         * req['water']['source_water_mass_kg']

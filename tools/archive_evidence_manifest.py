@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Index preserved pre-closure successes and diagnostic artifacts without editing them."""
+"""Index preserved pre-closure successes and diagnostic artifacts
+without editing them.
+"""
 
 import json
+
 from phreeqc_evidence import ROOT, sha, selected
 
 folder = ROOT / 'tests/fixtures/phreeqc'

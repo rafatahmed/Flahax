@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Generate Benchmark v1 correctness/evidence JSON; ASV owns all new timings.
+"""Generate Benchmark v1 correctness/evidence JSON; ASV owns all new
+timings.
 
-Run from the repository root: python -m tools.benchmark_baseline --output PATH
-An unsuccessful comparison is recorded before a nonzero exit. A recipe missing
-its target is a measured limitation, not automatically an implementation error.
+Run from the repository root: python -m tools.benchmark_baseline
+--output PATH An unsuccessful comparison is recorded before a nonzero
+exit. A recipe missing its target is a measured limitation, not
+automatically an implementation error.
 """
 
 import argparse
@@ -55,7 +57,8 @@ def provenance():
         except importlib.metadata.PackageNotFoundError:
             versions[name] = None
     inputs = {}
-    # Includes runtime code/data and the exact benchmark harness, even uncommitted.
+    # Includes runtime code/data and the exact benchmark harness, even
+    # uncommitted.
     for folder, patterns in [
         (source, ("*.py", "*.json")),
         (ROOT / "benchmarks", ("*.py", "*.txt")),
@@ -73,7 +76,8 @@ def provenance():
                     except ValueError:
                         key = "installed/flahax/" + path.relative_to(source).as_posix()
                     inputs[key] = digest(path)
-    # Only shipped helpers: local tutorial scripts are deliberately ignored.
+    # Only shipped helpers: local tutorial scripts are deliberately
+    # ignored.
     for relative in git("ls-files", "examples/*.py").splitlines():
         inputs[relative] = digest(ROOT / relative)
     for path in [
@@ -281,7 +285,9 @@ def historical(path):
 
 
 def asv_samples(directory):
-    """Export ASV timing samples and nearest-rank p95 without relabelling averages."""
+    """Export ASV timing samples and nearest-rank p95 without
+    relabelling averages.
+    """
     reports = []
     for path in sorted(Path(directory).rglob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -348,7 +354,8 @@ def main(argv=None):
         )
         failed = not report["input_manifest_matches"]
     if not args.metadata_only:
-        # Missing SciPy is a dependency error, not silently skipped evidence.
+        # Missing SciPy is a dependency error, not silently skipped
+        # evidence.
         for name, function in [
             ("kernel", kernel),
             ("formulation", formulation),

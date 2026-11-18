@@ -4,16 +4,18 @@
 # its results are calculations, not dosing instructions.
 """pH adjustment planned together with the recipe (#74, #75, #76, #77).
 
-A reagent that corrects pH also supplies nutrients: nitric acid adds nitrate-N,
-phosphoric acid P, sulfuric acid S, potassium hydroxide and carbonates K. Planned
-one after the other, the recipe already meets every target and the reagent then
-overshoots it, so no plan is acceptable (#74). Here the reagent's nutrients are
-counted as supply, like the water's, and the recipe is fitted again until the
-dose and the recipe agree. Acids are pH reagents in this mode and are not offered
-to the nutrient fit as salts (#76), and a recipe that misses a target is still
-given a pH plan (#77). The dose itself is the same equilibrium solve for acids and
-bases: the reagent's anion (acid) or cation (base) is added at the target pH until
-the solution is electrically neutral again.
+A reagent that corrects pH also supplies nutrients: nitric acid adds
+nitrate-N, phosphoric acid P, sulfuric acid S, potassium hydroxide and
+carbonates K. Planned one after the other, the recipe already meets
+every target and the reagent then overshoots it, so no plan is
+acceptable (#74). Here the reagent's nutrients are counted as supply,
+like the water's, and the recipe is fitted again until the dose and the
+recipe agree. Acids are pH reagents in this mode and are not offered to
+the nutrient fit as salts (#76), and a recipe that misses a target is
+still given a pH plan (#77). The dose itself is the same equilibrium
+solve for acids and bases: the reagent's anion (acid) or cation (base)
+is added at the target pH until the solution is electrically neutral
+again.
 """
 
 from dataclasses import dataclass, replace
@@ -42,8 +44,8 @@ from .saturation_policy import assess_saturation
 
 _K, _C, _O, _H = ATOMIC['K'], ATOMIC['C'], ATOMIC['O'], ATOMIC['H']
 
-# formula -> (direction, basis moles added per mole of reagent, g/mol, nutrient g per mole of
-# reagent)
+# formula -> (direction, basis moles added per mole of reagent, g/mol,
+# nutrient g per mole of reagent)
 REAGENTS = {
     'HNO3': ('acid', {'NO3-': 1}, 63.01284, {'N_NO3': 14.0067}),
     'H3PO4': ('acid', {'PO4-3': 1}, 97.995182, {'P': 30.973762}),
@@ -53,17 +55,20 @@ REAGENTS = {
     'KHCO3': ('base', {'K+': 1, 'CO3-2': 1}, _K + _H + _C + 3 * _O, {'K': _K}),
     'K2CO3': ('base', {'K+': 2, 'CO3-2': 1}, 2 * _K + _C + 3 * _O, {'K': 2 * _K}),
 }
-# The recipe and its reagent dose agree when they differ by less than this fraction.
+# The recipe and its reagent dose agree when they differ by less than
+# this fraction.
 DOSE_TOLERANCE = 1e-4
 
 
 def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=None):
-    """Moles of reagent per kg water that bring an electroneutral solution to target_ph.
+    """Moles of reagent per kg water that bring an electroneutral
+    solution to target_ph.
 
-    Returns (dose_molal, state at target_ph). The reagent is neutral, so the
-    solution's residual charge at the new pH must equal its residual at the initial
-    pH; the dose adds the reagent's conserved ions (an acid's anion, a base's K+ and
-    carbonate) with its protons or hydroxide implicit.
+    Returns (dose_molal, state at target_ph). The reagent is neutral, so
+    the solution's residual charge at the new pH must equal its residual
+    at the initial pH; the dose adds the reagent's conserved ions (an
+    acid's anion, a base's K+ and carbonate) with its protons or
+    hydroxide implicit.
     """
     if formula not in REAGENTS:
         raise DeliveryError('unsupported_reagent', 'supported identities: ' + ', '.join(REAGENTS))
@@ -74,7 +79,8 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
     if (target_ph > initial_ph) != (direction == 'base'):
         needed = 'base' if target_ph > initial_ph else 'acid'
         raise DeliveryError('wrong_reagent_direction', f'target requires {needed}, not {formula}')
-    # An acid's added anion lowers the residual charge at the target pH; a base's cation raises it.
+    # An acid's added anion lowers the residual charge at the target pH;
+    # a base's cation raises it.
     sign = 1.0 if direction == 'acid' else -1.0
     last = [initial]
 
@@ -112,8 +118,9 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
 
 @dataclass(frozen=True)
 class PhCandidate:
-    """One pH reagent tried in one direction: its dose, reagent amount, nutrient contribution and
-    solved solutions, or why it was not usable.
+    """One pH reagent tried in one direction: its dose, reagent amount,
+    nutrient contribution and solved solutions, or why it was not
+    usable.
     """
 
     product_id: str
@@ -138,7 +145,9 @@ class PhCandidate:
 
 @dataclass(frozen=True)
 class PhAdjustmentPlan:
-    """Every pH reagent tried and the selected one; the pH must still be measured after mixing."""
+    """Every pH reagent tried and the selected one; the pH must still be
+    measured after mixing.
+    """
 
     target_ph: float
     unadjusted_ph: float
@@ -185,7 +194,9 @@ def _check_product(product):
 
 
 def nutrient_salts(salts):
-    """Products the coupled plan offers to the nutrient fit: no pH reagents and no acids (#76)."""
+    """Products the coupled plan offers to the nutrient fit: no pH
+    reagents and no acids (#76).
+    """
     acids = {formula for formula, (direction, *_rest) in REAGENTS.items() if direction == 'acid'}
     return [
         s
@@ -213,19 +224,22 @@ def plan_coupled_ph(
     water_components=None,
     residual_charge=0.0,
 ):
-    """Fit the recipe and its pH reagent together; one candidate per offered product.
+    """Fit the recipe and its pH reagent together; one candidate per
+    offered product.
 
-    mix(recommendation) returns the mixed state (water and products, before any
-    reagent) at its calculated pH. Explicit joint configuration supplies controls,
-    final solvent mass, reagent solvent fractions and mass caps; optional starting
-    points are checked as search seeds. water_components supplies the declared
-    final-basis water inventory; residual_charge (eq/kg water) is the charge it
-    carries uncancelled, the joint problem's reference charge (decision G11). Joint mode
-    evaluates every offered reagent unless correct_mixed_ph restricts the search to the
-    initial mix's correction direction. Each fit independently calculates final pH. Legacy mode
-    retains directional fitting, with bounded zero-reagent recovery when no matching direction
-    is offered.
-    A candidate's quantities and unresolved numerical status remain inspectable.
+    mix(recommendation) returns the mixed state (water and products,
+    before any reagent) at its calculated pH. Explicit joint
+    configuration supplies controls, final solvent mass, reagent solvent
+    fractions and mass caps; optional starting points are checked as
+    search seeds. water_components supplies the declared final-basis
+    water inventory; residual_charge (eq/kg water) is the charge it
+    carries uncancelled, the joint problem's reference charge (decision
+    G11). Joint mode evaluates every offered reagent unless
+    correct_mixed_ph restricts the search to the initial mix's
+    correction direction. Each fit independently calculates final pH.
+    Legacy mode retains directional fitting, with bounded zero-reagent
+    recovery when no matching direction is offered. A candidate's
+    quantities and unresolved numerical status remain inspectable.
     """
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
@@ -246,8 +260,9 @@ def plan_coupled_ph(
     phases = tuple(phases)
     pool = nutrient_salts(salts)
     unadjusted = recommend(pool, targets, water, maximum_concentrations=maximum_concentrations)
-    # Every refit uses the nitrogen rows recommend fitted (D1, G24); the joint search holds the
-    # ammonium allowance recommend applied as a declared maximum (G23).
+    # Every refit uses the nitrogen rows recommend fitted (D1, G24); the
+    # joint search holds the ammonium allowance recommend applied as a
+    # declared maximum (G23).
     targets = fitted_targets(targets)
     joint_maxima = assessed_limits(maximum_concentrations, unadjusted)
     base_state = mix(unadjusted)
@@ -264,8 +279,9 @@ def plan_coupled_ph(
     ):
         raise DeliveryError('invalid_type', 'sequential_fallbacks must map product IDs to reasons')
     fallbacks = declared_fallbacks if correct_mixed_ph else {}
-    # First evaluate qualifying joint fits. A sequential alternative is needed
-    # only when no usable joint fit exists, or the caller explicitly prefers it.
+    # First evaluate qualifying joint fits. A sequential alternative is
+    # needed only when no usable joint fit exists, or the caller
+    # explicitly prefers it.
     ordered = sorted(products, key=lambda p: p['id'] in fallbacks) if fallbacks else products
     for product in ordered:
         identity, formula = product.get('id'), product.get('chemicalFormula')
@@ -303,7 +319,8 @@ def plan_coupled_ph(
                 )
                 continue
             if direction == 'none':
-                # No reagent, but the same final acceptance as every dosed candidate (#84).
+                # No reagent, but the same final acceptance as every
+                # dosed candidate (#84).
                 status, code, message, saturation = _judge(
                     unadjusted, base_state, maximum_concentrations, accepted='not_needed'
                 )
@@ -469,7 +486,8 @@ def plan_coupled_ph(
                     ),
                 )
             )
-    # Accepted plans first; a plan with review-only findings (#78) is usable after review.
+    # Accepted plans first; a plan with review-only findings (#78) is
+    # usable after review.
     usable = [
         c
         for c in candidates
@@ -510,8 +528,10 @@ def _loss(recommendation):
 
 
 def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
-    """Final acceptance of one candidate: dose, then hard limits. A precipitation risk is
-    returned with the candidate and never rejects it (decision G12)."""
+    """Final acceptance of one candidate: dose, then hard limits. A
+    precipitation risk is returned with the candidate and never
+    rejects it (decision G12).
+    """
     incidental = assess_incidental(
         recommendation['rows'], assessed_limits(maximum_concentrations, recommendation)
     )
@@ -541,11 +561,13 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
 
 
 def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
-    """Conserve product doses and rebuild assessments for a convex recipe blend.
+    """Conserve product doses and rebuild assessments for a convex
+    recipe blend.
 
-    Incidental nutrients are assessed against the same limits as the endpoint recipes,
-    including the ammonium allowance they report (G23), and total N is recomputed from the
-    rebuilt rows (water, products and the reagent's supply).
+    Incidental nutrients are assessed against the same limits as the
+    endpoint recipes, including the ammonium allowance they report
+    (G23), and total N is recomputed from the rebuilt rows (water,
+    products and the reagent's supply).
     """
     maxima = assessed_limits(maxima, endpoints[0])
     entries = {s['id']: s for r in endpoints for s in r['salts']}
@@ -567,7 +589,9 @@ def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
 
 
 def _assess_recipe(pool, targets, supply, recipe, salts, maxima):
-    """Reassess fixed product doses and actual supply without rerunning the fit."""
+    """Reassess fixed product doses and actual supply without rerunning
+    the fit.
+    """
     maxima = assessed_limits(maxima, recipe)
     by_id = {p['id']: p for p in pool}
     doses = {s['id']: s['gramsPerLitre'] for s in salts}
@@ -644,15 +668,18 @@ def _couple(
     phases,
     maximum_concentrations,
 ):
-    """Find the reagent dose the recipe fitted for that dose's nutrients actually needs.
+    """Find the reagent dose the recipe fitted for that dose's nutrients
+    actually needs.
 
-    F(d) is the dose required by the recipe fitted with supply water + reagent(d).
-    A few fixed-point steps settle most feeds; otherwise the root of F(d) - d is
-    bracketed (the fixed-point step can oscillate, and the recipe can switch
-    products between nearby doses). A direction-crossing trial bounds the search
-    but cannot be returned as a plan. At a product switch, blend the bracketing
-    product doses and solve charge balance on the actual mixture. This preserves
-    nonnegative mass accounting; it is not a global joint-optimality certificate.
+    F(d) is the dose required by the recipe fitted with supply water +
+    reagent(d). A few fixed-point steps settle most feeds; otherwise the
+    root of F(d) - d is bracketed (the fixed-point step can oscillate,
+    and the recipe can switch products between nearby doses). A
+    direction-crossing trial bounds the search but cannot be returned as
+    a plan. At a product switch, blend the bracketing product doses and
+    solve charge balance on the actual mixture. This preserves
+    nonnegative mass accounting; it is not a global joint-optimality
+    certificate.
     """
     formula, identity = product['chemicalFormula'], product['id']
     cache = {}
@@ -676,7 +703,8 @@ def _couple(
             except DeliveryError as exc:
                 if exc.code != 'wrong_reagent_direction' or assumed == 0:
                     raise
-                # This trial bounds the search but cannot be emitted as a plan.
+                # This trial bounds the search but cannot be emitted as
+                # a plan.
                 dose, target = 0.0, None
             cache[assumed] = (dose, recommendation, mixed, target)
         return cache[assumed]
@@ -722,9 +750,10 @@ def _couple(
         )
     dose, recommendation, mixed, target = evaluate(assumed)
     if not settled(assumed):
-        # A product switch makes the optimizer's selection discontinuous. Blend
-        # the two bracketing recipes, not their pH values: mass contributions are
-        # affine, but chemistry must be solved on each trial mixture.
+        # A product switch makes the optimizer's selection
+        # discontinuous. Blend the two bracketing recipes, not their pH
+        # values: mass contributions are affine, but chemistry must be
+        # solved on each trial mixture.
         ends = [evaluate(x)[1] for x in (low, high)]
         blended = {}
 
@@ -757,8 +786,9 @@ def _couple(
         )
         if abs(dose - assumed_dose) > DOSE_TOLERANCE * max(dose, 1e-12):
             raise DeliveryError('nonconvergent', 'blended recipe and reagent dose disagree')
-    # Settling permits a small dose difference; rows and limits must still describe
-    # the actual returned dose, for ordinary fits as well as blended recipes.
+    # Settling permits a small dose difference; rows and limits must
+    # still describe the actual returned dose, for ordinary fits as well
+    # as blended recipes.
     supply = dict(water)
     for ion, mg in contribution(dose).items():
         supply[ion] = supply.get(ion, 0.0) + mg
@@ -795,11 +825,13 @@ def _couple(
 
 
 def catalogue_ph_reagents():
-    """Reagent records for the catalogue's sourced pH products (#75), ready for plan_coupled_ph.
+    """Reagent records for the catalogue's sourced pH products (#75),
+    ready for plan_coupled_ph.
 
-    The packaged catalogue lists potassium hydroxide, bicarbonate and carbonate to raise
-    the pH and phosphoric and nitric acid to lower it. A record you supply from your own
-    supplier certificate (assay and density) is evaluated beside them.
+    The packaged catalogue lists potassium hydroxide, bicarbonate and
+    carbonate to raise the pH and phosphoric and nitric acid to lower
+    it. A record you supply from your own supplier certificate (assay
+    and density) is evaluated beside them.
     """
     records = []
     for salt in load_library()['salts']:
@@ -824,13 +856,16 @@ def catalogue_ph_reagents():
 
 
 def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fraction, **conditions):
-    """Compile a fixed-target contract from supplied nutrient and reagent records.
+    """Compile a fixed-target contract from supplied nutrient and
+    reagent records.
 
-    conditions supplies the explicit water components, final solvent mass/volume,
-    target pH, reference charge and reagent mass cap required by JointProblem.
-    Reagent solvent fraction is declared separately; assay remainder is not water.
-    This compiler does not run the sequential or joint optimizer. Fertilizer carrier
-    or hydrate solvent is not inferred; use explicit JointSource records when needed.
+    conditions supplies the explicit water components, final solvent
+    mass/volume, target pH, reference charge and reagent mass cap
+    required by JointProblem. Reagent solvent fraction is declared
+    separately; assay remainder is not water. This compiler does not run
+    the sequential or joint optimizer. Fertilizer carrier or hydrate
+    solvent is not inferred; use explicit JointSource records when
+    needed.
     """
     from .joint_problem import JointSource, JointProblem, _number
 

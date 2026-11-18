@@ -3,15 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Advanced tomato example: a published brackish well, from laboratory analysis to batch plan.
+"""Advanced tomato example: a published brackish well, from laboratory
+analysis to batch plan.
 
-Steps: balance the well analysis at its measured pH (for chemistry only); choose the largest blend
-with
-desalinated water that keeps Na and Cl within open-system limits; formulate Dutch
-tomato targets on that water; speciate the mix (pH, saturation indices); evaluate
-nitric and phosphoric acid; estimate EC; group concentrates into compatible tanks
-from a cited table; size injection; and compare growth-stage formulas, each as its
-own batch.
+Steps: balance the well analysis at its measured pH (for chemistry
+only); choose the largest blend with desalinated water that keeps Na and
+Cl within open-system limits; formulate Dutch tomato targets on that
+water; speciate the mix (pH, saturation indices); evaluate nitric and
+phosphoric acid; estimate EC; group concentrates into compatible tanks
+from a cited table; size injection; and compare growth-stage formulas,
+each as its own batch.
 
 Run from the repository root:  python -m examples.tomato_advanced
 """
@@ -33,8 +34,9 @@ from flahax import (
 from flahax.product_conversion import MOLAR_MASS
 from flahax.tank_grouping import ANALOGUE
 
-# Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, supplementary Table S1, station 104
-# (Qatar). Measured pH 7.80; mg/L; CO3-2 is total inorganic carbon expressed as C.
+# Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411,
+# supplementary Table S1, station 104 (Qatar). Measured pH 7.80; mg/L;
+# CO3-2 is total inorganic carbon expressed as C.
 WELL_MG_L = {
     'Na+': 680,
     'K+': 44.2,
@@ -61,7 +63,8 @@ WELL_PH = 7.8
 # (De Kreij, Voogt and Baas 2003, PPO Brochure 191, p. 6).
 LIMITS_MG_L = {'Na': 3 * 22.98977, 'Cl': 3 * 35.45}
 
-# Tomato, open system: De Kreij, Voogt and Baas (1999), Brochure 196, Supplement 2, p. 32.
+# Tomato, open system: De Kreij, Voogt and Baas (1999), Brochure 196,
+# Supplement 2, p. 32.
 MMOL = {
     'N_NO3': (16.0, 'N'),
     'N_NH4': (1.2, 'N'),
@@ -74,7 +77,8 @@ MMOL = {
 UMOL = {'Fe': 15, 'Mn': 10, 'Zn': 5, 'B': 30, 'Cu': 0.75, 'Mo': 0.5}
 TARGET_PH = 5.5  # root-environment pH in the same table
 
-# EXAMPLE acid grades, not a supplier's certificate: replace with your product's assay and density.
+# EXAMPLE acid grades, not a supplier's certificate: replace with your
+# product's assay and density.
 ACIDS = [
     dict(
         schemaVersion='0.1',
@@ -89,11 +93,13 @@ ACIDS = [
     for formula, fraction, density in (('HNO3', 0.60, 1.37), ('H3PO4', 0.75, 1.58))
 ]
 
-# Phosphoric acid is in the catalogue as a P source; on this water it over-acidifies the feed.
+# Phosphoric acid is in the catalogue as a P source; on this water it
+# over-acidifies the feed.
 PHOSPHORIC = 'Phosphoric Acid (75%)'
 BATCH_LITRES = 1000
 INJECTION_RATIO = 100  # final litres per litre of each concentrate (1:100)
-# Illustrative irrigation event for sizing: 1000 m2 greenhouse, 5 mm in 1 hour.
+# Illustrative irrigation event for sizing: 1000 m2 greenhouse, 5 mm in
+# 1 hour.
 SITE = dict(active_area_m2=1000, gross_depth_mm=5, duration_hours=1, equipment_type='dosatron')
 STAGES = [
     'Tomato Stage.1 - 10-14 days (Howard Resh)',
@@ -108,7 +114,9 @@ def targets():
 
 
 def water_mg_l(totals):
-    """Nutrient and salinity mg/L of a water (1 kg water per litre) from mol/kg totals."""
+    """Nutrient and salinity mg/L of a water (1 kg water per litre) from
+    mol/kg totals.
+    """
     keys = {'Ca+2': 'Ca', 'Mg+2': 'Mg', 'K+': 'K', 'Na+': 'Na', 'SO4-2': 'S'}
     out = {k: totals[b] * MOLAR_MASS[k] * 1000 for b, k in keys.items()}
     out['N_NO3'] = totals['NO3-'] * MOLAR_MASS['N'] * 1000
@@ -117,9 +125,11 @@ def water_mg_l(totals):
 
 
 def largest_blend(balanced):
-    """Largest whole-percent share of well water whose Na and Cl stay within LIMITS_MG_L.
+    """Largest whole-percent share of well water whose Na and Cl stay
+    within LIMITS_MG_L.
 
-    Decided on the laboratory analysis, never on the charge-balanced model (#84).
+    Decided on the laboratory analysis, never on the charge-balanced
+    model (#84).
     """
     for percent in range(100, 0, -1):
         water = water_mg_l({k: v * percent / 100 for k, v in balanced.analytical_totals.items()})
@@ -129,7 +139,9 @@ def largest_blend(balanced):
 
 
 def tank_table(salts, products):
-    """The packaged default grouping (flahax.group_tanks) in the shape this report prints."""
+    """The packaged default grouping (flahax.group_tanks) in the shape
+    this report prints.
+    """
     grouping = group_tanks(salts, products)
     return dict(
         source=grouping.source,
@@ -157,12 +169,14 @@ def run():
     salts = library['salts']
     goal = targets()
 
-    # 1. The laboratory analysis is 3.5% out of charge balance; anchor it at the measured pH.
+    # 1. The laboratory analysis is 3.5% out of charge balance; anchor
+    #    it at the measured pH.
     well = {ion: mg / GRAMS_PER_MOL[ion] / 1000 for ion, mg in WELL_MG_L.items()}
     balanced = balance_water_analysis(well, measured_ph=WELL_PH)
 
-    # 2. Blend with desalinated (ion-free) water until Na and Cl meet the open-system limits,
-    #    on the laboratory values. The balanced model (Cl -9.5%) is for the chemistry only.
+    # 2. Blend with desalinated (ion-free) water until Na and Cl meet
+    #    the open-system limits, on the laboratory values. The balanced
+    #    model (Cl -9.5%) is for the chemistry only.
     percent = largest_blend(balanced)
     blend_water = balanced.diluted(percent / 100)
     blend = blend_water.totals  # chemistry
@@ -183,9 +197,10 @@ def run():
         for p in sorted({100, 25, percent + 1, percent}, reverse=True)
     ]
 
-    # 3. Formulate on the blend and speciate the mix. With the whole catalogue the fit takes P
-    #    from phosphoric acid and the feed ends far below the target pH; without it, potassium
-    #    phosphate supplies P and both acids are evaluated against the targets.
+    # 3. Formulate on the blend and speciate the mix. With the whole
+    #    catalogue the fit takes P from phosphoric acid and the feed
+    #    ends far below the target pH; without it, potassium phosphate
+    #    supplies P and both acids are evaluated against the targets.
     def plan(products):
         return plan_fertilizer_workflow(
             products,
@@ -209,8 +224,9 @@ def run():
     chemistry = workflow.stages['chemistry'].value
     mixed = chemistry['mixed']
 
-    # 4. Acid to the target pH. Each acid is evaluated on the mixed feed and its nutrients are
-    #    rescored against the targets; a plan with a supersaturated phase is not accepted.
+    # 4. Acid to the target pH. Each acid is evaluated on the mixed feed
+    #    and its nutrients are rescored against the targets; a plan with
+    #    a supersaturated phase is not accepted.
     achieved = {row['symbol']: row['final'] for row in recipe['rows']}
     options = plan_acid_options(
         mixed.totals,
@@ -224,7 +240,8 @@ def run():
         maximum_nutrient_error_percent=5,
         maximum_reagent_volume_litres=2,
     )
-    # The nitric demand itself, computed directly so it is reported even when no plan is accepted.
+    # The nitric demand itself, computed directly so it is reported even
+    # when no plan is accepted.
     doses = {s['name']: s['gramsPerLitre'] for s in recipe['salts']}
     nitric = plan_catalogue_nitric_target(doses, mixed.ph, TARGET_PH, water_totals=blend)
     grade = ACIDS[0]
@@ -246,7 +263,8 @@ def run():
         key=lambda item: -item[1],
     )
 
-    # 5. EC of the feed before and after the acid (experimental speciation estimate).
+    # 5. EC of the feed before and after the acid (experimental
+    #    speciation estimate).
     ec = {
         label: calculate_ec_from_totals(
             state.totals,
@@ -258,7 +276,8 @@ def run():
         for label, state in (('mixed', mixed), ('acidified', nitric.target))
     }
 
-    # 6. Concentrate tanks from the cited compatibility table, then injection sizing.
+    # 6. Concentrate tanks from the cited compatibility table, then
+    #    injection sizing.
     tanks = tank_table(recipe['salts'], salts)
     channels = {
         name: dict(final_litres_per_stock_litre=INJECTION_RATIO, available_stock_litres=50)
@@ -266,7 +285,8 @@ def run():
     }
     sizing = size_injection_requirements(channels=channels, **SITE)
 
-    # 7. Growth stages: each stage formula is its own batch calculation on the same water.
+    # 7. Growth stages: each stage formula is its own batch calculation
+    #    on the same water.
     stages = []
     for name in STAGES:
         stage_targets = next(f['targets'] for f in library['formulas'] if f['name'] == name)

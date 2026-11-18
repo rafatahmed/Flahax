@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Secondary preferences must preserve the original numerical fit and hard limits."""
+"""Secondary preferences must preserve the original numerical fit and
+hard limits.
+"""
 
 import math
 import unittest
 from unittest.mock import patch
+
 from flahax import recommend
 from flahax.engine import _simplify, _still_within, score
 
@@ -73,7 +76,8 @@ class SecondaryFitTests(unittest.TestCase):
         products = [product(str(i), K=10, Ca=10) for i in range(3)]
         targets = {'K': 100, 'Ca': 100}
         original = fit([1, 1, 1], {'K': 99, 'Ca': 99}, targets)
-        # First removal improves K, retaining Ca; second attempts to worsen Ca.
+        # First removal improves K, retaining Ca; second attempts to
+        # worsen Ca.
         trials = [
             fit([1, 1], {'K': 100, 'Ca': 99}, targets),
             fit([1], {'K': 100, 'Ca': 98.9999999}, targets),
@@ -99,7 +103,8 @@ class SecondaryFitTests(unittest.TestCase):
 
     def test_zero_and_maximum_are_checked_after_secondary_refit(self):
         for targets, maxima, achieved in [
-            # A declared zero is met within 1e-6 mg/L (G25): 2e-6 breaks it.
+            # A declared zero is met within 1e-6 mg/L (G25): 2e-6 breaks
+            # it.
             ({'K': 100, 'S': 0}, {}, {'K': 100, 'S': 2e-6}),
             ({'K': 100}, {'Ca': 10}, {'K': 100, 'Ca': 11}),
         ]:

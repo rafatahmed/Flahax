@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The A/B tank layout (decisions G20-G22): micronutrients and calcium in A, the rest in B."""
+"""The A/B tank layout (decisions G20-G22): micronutrients and calcium
+in A, the rest in B.
+"""
 
 import json
 from types import SimpleNamespace
@@ -116,7 +118,8 @@ class ThirdTankTests(unittest.TestCase):
         self.assertEqual(summary['status'], 'blocked')
         [note] = [w for w in summary['warnings'] if w.startswith('Stock assignment needs')]
         self.assertRegex(note, r'needs a second tank: .+ cannot share with .+ \(.+\)')
-        # The precipitation screen may detect gypsum; the tank plan never names it.
+        # The precipitation screen may detect gypsum; the tank plan
+        # never names it.
         self.assertNotIn('gypsum', json.dumps(summary['tanks']).lower())
         self.assertNotIn('gypsum', note.lower())
 

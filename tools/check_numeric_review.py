@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Validate disposition of a numeric inventory without mistaking audit for qualification.
+"""Validate disposition of a numeric inventory without mistaking audit
+for qualification.
 
-The external review register maps every current inventory entry to a reviewed
-semantic group. Inherited, unqualified decisions remain explicit downstream work.
-No physical/numerical value is adopted merely because a citation or group exists.
+The external review register maps every current inventory entry to a
+reviewed semantic group. Inherited, unqualified decisions remain
+explicit downstream work. No physical/numerical value is adopted merely
+because a citation or group exists.
 """
 
 import argparse
@@ -25,7 +27,9 @@ DISPOSITIONS = {'retain_unqualified', 'structural', 'qualified'}
 
 
 def validate(register, root, evidence_root, *, require_qualified=False):
-    """Return missing, stale or unsupported review dispositions; never qualify science."""
+    """Return missing, stale or unsupported review dispositions; never
+    qualify science.
+    """
     try:
         return _validate(register, root, evidence_root, require_qualified)
     except (KeyError, TypeError, ValueError, AttributeError, OSError) as error:

@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Fictional measured-curve records and two-tank compatibility demonstration."""
+"""Fictional measured-curve records and two-tank compatibility
+demonstration.
+"""
 
 from flahax import (
     VolumeLitres,

@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Atomic, reviewable composition of recipe, stock, pH, and pump plans."""
+"""Atomic, reviewable composition of recipe, stock, pH, and pump
+plans.
+"""
 
 from __future__ import annotations
 from dataclasses import dataclass, replace
 import math
 from typing import Iterable, Mapping, Any
+
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import FinalSolutionRecipe
 from .ph_planning import PhPlan
@@ -30,8 +33,8 @@ _TRANSITIONS = {
 
 @dataclass(frozen=True, slots=True)
 class DeliveryPlan:
-    """A recipe, its stock tanks, pH plan and pump commands, with the audit record, warnings and
-    its approval state (``draft`` first).
+    """A recipe, its stock tanks, pH plan and pump commands, with the
+    audit record, warnings and its approval state (``draft`` first).
     """
 
     recipe: FinalSolutionRecipe
@@ -44,10 +47,13 @@ class DeliveryPlan:
 
 
 def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
-    """Check additive batch-volume bookkeeping and unrounded product identities."""
+    """Check additive batch-volume bookkeeping and unrounded product
+    identities.
+    """
 
     def matches(actual, expected, *, absolute=1e-12):
-        # Preserve command-volume tolerance; product mass has no absolute floor.
+        # Preserve command-volume tolerance; product mass has no
+        # absolute floor.
         return (
             math.isfinite(actual)
             and math.isfinite(expected)
@@ -115,8 +121,8 @@ def compose_delivery_plan(
     audit_record: Mapping[str, Any],
     warnings: Iterable[str] = (),
 ) -> DeliveryPlan:
-    """A draft DeliveryPlan after checking that every stage plans the same recipe; raises
-    DeliveryError when a stage does not match.
+    """A draft DeliveryPlan after checking that every stage plans the
+    same recipe; raises DeliveryError when a stage does not match.
     """
     if not isinstance(recipe, FinalSolutionRecipe) or not isinstance(stocks, StockPlan):
         raise DeliveryError("invalid_type", "recipe and stocks must be planning values")
@@ -163,8 +169,9 @@ def compose_delivery_plan(
 
 
 def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
-    """The plan moved to ``target`` state; raises DeliveryError when the move is not allowed or a
-    validated plan lacks its pH plan, commands or clean equilibrium.
+    """The plan moved to ``target`` state; raises DeliveryError when the
+    move is not allowed or a validated plan lacks its pH plan,
+    commands or clean equilibrium.
     """
     if not isinstance(plan, DeliveryPlan):
         raise DeliveryError("invalid_type", "plan must be a DeliveryPlan")
@@ -179,7 +186,8 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
             'unqualified_stock_mixture', 'stock mixtures require qualified model evidence'
         )
     if target != 'blocked':
-        # Revalidate even manually constructed/replaced values before advancing state.
+        # Revalidate even manually constructed/replaced values before
+        # advancing state.
         compose_delivery_plan(
             plan.recipe, plan.stocks, plan.ph_plan, plan.commands, plan.audit_record
         )
@@ -198,15 +206,15 @@ def transition_plan(plan: DeliveryPlan, target: str) -> DeliveryPlan:
     if target == "operator-approved" and any(
         c.requires_operator_verification for c in plan.commands
     ):
-        # The explicit transition is the approval; commands remain verification-required at
-        # execution.
+        # The explicit transition is the approval; commands remain
+        # verification-required at execution.
         pass
     return replace(plan, state=target)
 
 
 def delivery_report(plan: DeliveryPlan) -> str:
-    """A short plain-text summary of the plan: state, volume, tanks, pump commands, pH target and
-    warnings.
+    """A short plain-text summary of the plan: state, volume, tanks,
+    pump commands, pH target and warnings.
     """
     if not isinstance(plan, DeliveryPlan):
         raise DeliveryError("invalid_type", "plan must be a DeliveryPlan")

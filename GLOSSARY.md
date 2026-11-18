@@ -1,15 +1,18 @@
 # FlahaX
 
-FlahaX plans one batch of hydroponic nutrient solution: one crop formula and one water give one recipe, plus the acid or base that sets the pH.
+FlahaX turns crop-feed targets, source-water analyses and available products into candidate
+batch recipes with pH-reagent accounting and preparation checks. Growers and agronomists
+review the achieved nutrients, modeled chemistry, rounded doses and remaining qualifications.
 
 ## Language
 
 **Formula**:
-A crop's target nutrient concentrations (mg/L).
+A crop's target nutrient concentrations in the finished feed (mg/L).
 _Avoid_: Nutrient solution, program, mix
 
 **Recipe**:
-The product weights chosen to meet a formula from a given water.
+The fertilizer quantities calculated for a formula and a given water, with achieved nutrient
+concentrations and residuals retained for review.
 _Avoid_: Blend, result, plan
 
 **Catalogue**:
@@ -17,7 +20,8 @@ The packaged products and formulas.
 _Avoid_: Library, database
 
 **pH reagent**:
-A catalogue product used only to move pH.
+A supplied acid or base product offered for pH adjustment. Its nutrient contributions enter
+the finished-feed accounting.
 _Avoid_: Acid, base, adjuster
 
 **Label reconciliation**:
@@ -25,7 +29,8 @@ The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
 **Ammonium allowance**:
-The incidental NH₄-N, capped at 10 % of total N and 1.5 mmol/L, permitted when no NH₄ target is declared.
+The default incidental NH₄-N ceiling when the NH₄ target is absent or zero, set to the smaller
+of 10% of total target nitrogen and 1.5 mmol/L ammonium. A declared NH₄-N maximum takes precedence.
 _Avoid_: Ammonium ban, zero ammonium
 
 **Precipitation risk**:
@@ -45,5 +50,18 @@ A limit reported with the result, such as closed carbon, 25 °C or 1 L of soluti
 _Avoid_: Declaration, assumption to confirm
 
 **Tank A / Tank B**:
-The two stock tanks: calcium and micronutrients in A, the sulfates and phosphates in B.
+The usual nutrient stock channels, with calcium and micronutrients in A and sulfates and
+phosphates in B. Actual layouts depend on separation constraints, equipment and mixture evidence.
 _Avoid_: Part A / Part B, Stock 1 / Stock 2
+
+**Sonneveld target design**:
+The A–D calculation from a crop/system baseline, explicit nutrient corrections and irrigation
+EC to finished-feed targets.
+
+**Root-zone feedback**:
+A dated sample and guide comparison reviewed with explicit feed corrections approved by
+the grower for the exact preview.
+
+**Rounded preparation**:
+The dry weights, separate product-stock volumes and reagent dose checked after rounding
+under declared uncertainty and preparation tolerances.

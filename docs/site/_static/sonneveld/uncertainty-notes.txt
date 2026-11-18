@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX   Appendix I                                                     0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+   Tanks    Nutrients    Notes                                                    review required
+
+  All nutrient targets met. Stock solubility was not checked for calcium nitrate tetrahydrate, iron
+  DTPA, boric acid, manganese sulfate monohydrate, zinc sulfate heptahydrate, copper sulfate
+  pentahydrate, sodium molybdate dihydrate, potassium nitrate, ammonium nitrate, monopotassium
+  phosphate, potassium sulfate, sodium sulfate anhydrous, magnesium sulfate heptahydrate.
+  Mixed-stock solubility is unverified.
+  - Rounded preparation sampled pH 5.498093 to 5.500191.
+  - Modeled EC at 25 °C 2.09079 to 2.20091 mS/cm.
+  - Na upper bound 8.49925 mg/L against a 8.55 mg/L ceiling after 5% reserve.
+  - Goethite supersaturated (SI 0.252); no kinetic interpretation
+  - Hydroxylapatite supersaturated (SI 0.793); no kinetic interpretation
+  - MnHPO4 supersaturated (SI 3.027); no kinetic interpretation
+  - Species without a conductivity coefficient are bounded at 80 per charge: the EC is a range.
+  - Phosphate conductivity is beyond its recorded fit domain; those species are bounded.
+  - Model: McCleskey et al. (2012); its reported accuracy (-0.7 ± 5 %) is for natural waters, not
+    fertilizer solutions. Measure EC after mixing.
+  - Concentration basis: Final solvent inventory includes carrier and dissolved hydrate water.
+    Uncertainty: not supplied.
+  - Tank separation is a structural assignment, not qualified mixture approval.
+  - calcium nitrate tetrahydrate: solubility not checked (no solubility data).
+  - iron DTPA: solubility not checked (no solubility data).
+  - boric acid: solubility not checked (no solubility data).
+  - manganese sulfate monohydrate: solubility not checked (no solubility data).
+  - zinc sulfate heptahydrate: solubility not checked (no solubility data).
+  - copper sulfate pentahydrate: solubility not checked (no solubility data).
+  - sodium molybdate dihydrate: solubility not checked (no solubility data).
+  - potassium nitrate: solubility not checked (no solubility data).
+  - ammonium nitrate: solubility not checked (no solubility data).
+  - monopotassium phosphate: solubility not checked (no solubility data).
+  ↓ more below (↑↓ to scroll)
+  Sheets: appendix-i-output
+  Tab Next view   ↑↓ Scroll   Q Quit

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Water in the fertilizer workflow: separate from the crop formula, explicit when used."""
+"""Water in the fertilizer workflow: separate from the crop formula,
+explicit when used.
+"""
 
 import json
 from pathlib import Path
@@ -84,7 +86,8 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(result.target_ph, 6.5)
         self.assertEqual(result.water['Ca'], 20)
         self.assertFalse(result.recommendation['feasible'])
-        # G25: missed targets are reported deviations; only a broken maximum blocks.
+        # G25: missed targets are reported deviations; only a broken
+        # maximum blocks.
         self.assertEqual(result.stages['formulation'].status, 'requires_review')
         self.assertIsNone(result.stages['formulation'].error_code)
         self.assertEqual(
@@ -92,8 +95,9 @@ class WaterWorkflowTests(unittest.TestCase):
             'targets missed: N_NO3 -5.37 %, P -1.05 %, K +3.01 %, Ca +3.31 %, Mg +1.94 %, '
             'S -1.88 %, Fe +0.1 %, Mn -100 %, Zn +0.00512 %, Cu +0.00176 %, Mo -100 %',
         )
-        # G23/G24: N_NH4 0 is no requirement; calcium nitrate's NH4-N is within the allowance
-        # min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
+        # G23/G24: N_NH4 0 is no requirement; calcium nitrate's NH4-N is
+        # within the allowance min(10 % of 128 mg/L total N, 21.01) =
+        # 12.8 mg/L.
         self.assertEqual(result.recommendation['ammoniumLimit']['mgPerL'], 12.8)
         (incidental,) = result.recommendation['incidentalContributions']
         self.assertEqual(
@@ -105,8 +109,9 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(finals['N_NH4'], 5.0624, places=4)
         self.assertEqual(incidental['ppm'], finals['N_NH4'])
         self.assertEqual(finals['Na'], 0)
-        # Independent Na inventory: assayed sodium plus two Na per Mn-EDTA.
-        # Fit changes may change doses; a historical recipe's Na is not an oracle.
+        # Independent Na inventory: assayed sodium plus two Na per
+        # Mn-EDTA. Fit changes may change doses; a historical recipe's
+        # Na is not an oracle.
         sodium_rates = {
             p['name']: p['elements'].get('Na', 0) * 10
             + (
@@ -119,7 +124,8 @@ class WaterWorkflowTests(unittest.TestCase):
         expected_na = sum(
             s['gramsPerLitre'] * sodium_rates[s['name']] for s in result.recommendation['salts']
         )
-        # Published doses have six decimals; continuous fitted rows remain F04's scope.
+        # Published doses have six decimals; continuous fitted rows
+        # remain F04's scope.
         rounding_bound = sum(sodium_rates.values()) * 0.5e-6
         self.assertAlmostEqual(finals['Na'], expected_na, delta=rounding_bound + 1e-12)
         self.assertEqual(result.stages['chemistry'].status, 'needs_input')
@@ -130,9 +136,10 @@ class WaterWorkflowTests(unittest.TestCase):
     def test_explicit_water_required_and_incidental_additions_are_separate(self):
         with self.assertRaises(DeliveryError):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
-        # G24: an explicit N_NH4 0 is no ammonium requirement, the same as an omitted one;
-        # calcium nitrate (1.1 % NH4-N) stays eligible. recommend and solve_weights hold
-        # incidental NH4-N within the same G23 allowance (10 % of total N).
+        # G24: an explicit N_NH4 0 is no ammonium requirement, the same
+        # as an omitted one; calcium nitrate (1.1 % NH4-N) stays
+        # eligible. recommend and solve_weights hold incidental NH4-N
+        # within the same G23 allowance (10 % of total N).
         nitrate = 84 * 14.4 / 19
         for function in (recommend, solve_weights):
             result = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate, 'N_NH4': 0}, {})
@@ -345,8 +352,9 @@ class AcidSelectionTests(unittest.TestCase):
     def test_four_acids_conserve_charge_and_add_the_correct_nutrients(self):
         args = self.arguments()
         result = plan_acid_options(**args)
-        # All acids preserve the only positive target (Na). Incidental additions
-        # under explicit maxima do not break this accuracy tie; input order does.
+        # All acids preserve the only positive target (Na). Incidental
+        # additions under explicit maxima do not break this accuracy
+        # tie; input order does.
         self.assertEqual(result.selected_product_id, args['products'][0]['id'])
         for candidate in result.candidates:
             self.assertEqual(candidate.status, 'accepted', candidate)

@@ -3,17 +3,21 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Fit 25 C H2PO4- and HPO4-2 conductivity coefficients to Pethybridge et al. (2006) Table III.
+"""Fit 25 C H2PO4- and HPO4-2 conductivity coefficients to Pethybridge
+et al. (2006) Table III.
 
-Decision O1 (design spec section 13). Each Table III point is speciated with FlahaX at
-calculated pH (closed carbon, no phases). The covered species use McCleskey (2012) Eq. 8;
-uncovered minor species (KHPO4-, PO4-3, ...) are left out of the model conductivity and
-their O2 bound share is reported. lambda0 and A of H2PO4- and HPO4-2 are fitted by weighted
-linear least squares (weight 1/kappa^2, i.e. relative residuals) with B fixed at 1.5.
+Decision O1 (design spec section 13). Each Table III point is speciated
+with FlahaX at calculated pH (closed carbon, no phases). The covered
+species use McCleskey (2012) Eq. 8; uncovered minor species (KHPO4-,
+PO4-3, ...) are left out of the model conductivity and their O2 bound
+share is reported. lambda0 and A of H2PO4- and HPO4-2 are fitted by
+weighted linear least squares (weight 1/kappa^2, i.e. relative
+residuals) with B fixed at 1.5.
 
-Prints the supplementary JSON block on stdout; --write stores it in the shipped coefficient
-file; --residuals prints the per-point residual table instead.
-Run with PYTHONPATH="src;." (PowerShell: $env:PYTHONPATH="src;.").
+Prints the supplementary JSON block on stdout; --write stores it in the
+shipped coefficient file; --residuals prints the per-point residual
+table instead. Run with PYTHONPATH="src;." (PowerShell:
+$env:PYTHONPATH="src;.").
 """
 
 import argparse
@@ -28,7 +32,8 @@ from flahax.irrigation_ec import LAMBDA_MAX_PER_CHARGE, _charges, ionic_molal_co
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / 'tests/fixtures/conductivity/pethybridge2006_table3.json'
 DESTINATION = ROOT / 'src/flahax/data/conductivity_mccleskey2012.json'
-# Density of pure water at 25 C, kg/dm3 (recorded constant): mmol/dm3 -> mol/kgw.
+# Density of pure water at 25 C, kg/dm3 (recorded constant): mmol/dm3 ->
+# mol/kgw.
 WATER_DENSITY_KG_DM3 = 0.997047
 B_FIXED = 1.5
 FITTED = ('H2PO4-', 'HPO4-2')
@@ -61,13 +66,15 @@ KHPO4_NOTE = (
 
 
 def points(fixture):
-    """Yield (salt, c mmol/dm3, Lambda, totals mol/kgw, kappa_obs mS/cm) for every Table III
-    row."""
+    """Yield (salt, c mmol/dm3, Lambda, totals mol/kgw, kappa_obs mS/cm)
+    for every Table III row.
+    """
     for c, molar in fixture['KH2PO4']:
         m = c / 1000 / WATER_DENSITY_KG_DM3
         yield 'KH2PO4', c, molar, {'K+': m, 'PO4-3': m}, molar * c / 1000
     for c, molar in fixture['K2HPO4_half']:
-        # Half-formula units: salt molarity c/2, so K+ = c and PO4 = c/2.
+        # Half-formula units: salt molarity c/2, so K+ = c and PO4 =
+        # c/2.
         m = c / 1000 / WATER_DENSITY_KG_DM3
         yield 'K2HPO4_half', c, molar, {'K+': m, 'PO4-3': m / 2}, molar * c / 1000
 
@@ -77,7 +84,9 @@ def _speciate(totals):
 
 
 def _row(state):
-    """Known (covered, non-fitted) kappa, design-row terms, uncovered bound and I for one state."""
+    """Known (covered, non-fitted) kappa, design-row terms, uncovered
+    bound and I for one state.
+    """
     from flahax.irrigation_ec import load_conductivity_coefficients
 
     species_map = load_conductivity_coefficients()['species_map']
@@ -103,7 +112,9 @@ def _row(state):
 
 
 def fit(fixture_path=FIXTURE):
-    """Return (supplementary block, residual rows) from the Table III fixture."""
+    """Return (supplementary block, residual rows) from the Table III
+    fixture.
+    """
     fixture = json.loads(Path(fixture_path).read_text(encoding='utf-8'))
     rows = []
     for salt, c, molar, totals, kappa in points(fixture):
@@ -120,7 +131,8 @@ def fit(fixture_path=FIXTURE):
                 'ionic_strength': strength,
             }
         )
-    # Weighted normal equations, weight 1/kappa^2: minimise sum((model - obs)/obs)^2.
+    # Weighted normal equations, weight 1/kappa^2: minimise sum((model -
+    # obs)/obs)^2.
     normal = [[0.0] * 4 for _ in range(4)]
     rhs = [0.0] * 4
     for r in rows:

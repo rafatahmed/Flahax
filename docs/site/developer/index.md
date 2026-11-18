@@ -31,6 +31,11 @@ flowchart TB
     plan --> OUT
 ```
 
+To reproduce a complete reviewed batch, use the
+[Appendix I example](../agronomist/sonneveld-appendix-i.md) with the
+[profile and saved-session contracts](../reference/file-formats.md#sonneveld-import-profile).
+For integration inputs, follow [Choose a workflow](../start/choose-workflow.md).
+
 ## In this guide
 
 | Page | What it covers |
@@ -40,6 +45,7 @@ flowchart TB
 | [Site planning](site-planning.md) | Interactive and JSON planning commands: water, acids, EC screening and injector sizing |
 | [Conductivity](conductivity.md) | Irrigation EC25 from speciation and its bounds |
 | [Delivery contracts](delivery-contracts.md) and [quantities](delivery-quantities.md) | Typed planning records, units and plan states |
+| [Profile and session formats](../reference/file-formats.md#sonneveld-import-profile) | Units, nested preparation/uncertainty inputs, approval and replay/drift |
 | [Verification](verification.md) | The test suite, the live PHREEQC replay and the distribution checks |
 | [Contributing](contributing.md) | Branches, code style, the changelog and the validation each change needs |
 

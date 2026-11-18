@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Synthetic proposal refusal witnesses, separate from chemistry qualification."""
+"""Synthetic proposal refusal witnesses, separate from chemistry
+qualification.
+"""
 
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+
 from flahax import joint_solver as solver
 from flahax.joint_polishing import block_polish_direction
 
@@ -37,7 +40,9 @@ class WholeMixBoundaryTests(unittest.TestCase):
 
 
 class WholeMixRefusalTests(unittest.TestCase):
-    """Synthetic trial-model boundaries. These are numerical checks, not chemistry fixtures."""
+    """Synthetic trial-model boundaries. These are numerical checks, not
+    chemistry fixtures.
+    """
 
     def trial(self, **changes):
         from flahax.joint_active_set import whole_mix_trial
@@ -108,7 +113,8 @@ class WholeMixRefusalTests(unittest.TestCase):
         self.assertIsNone(self.trial(evaluate=outside_charge))
         self.assertIsNone(self.trial(evaluate=outside_charge, radius=0.1))
 
-        # A useful correction on the last allowed iteration still misses charge.
+        # A useful correction on the last allowed iteration still misses
+        # charge.
         def halves(u, **kwargs):
             charge = 0.5 * (u[1] - 1) + 0.1
             return ({'chargeResidual': charge}, [-1.0, charge], 0.0, 1.0)

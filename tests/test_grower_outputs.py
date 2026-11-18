@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Grower outputs shipped in the package: tank grouping, report, batch sheet and CLI (#79)."""
+"""Grower outputs shipped in the package: tank grouping, report, batch
+sheet and CLI (#79).
+"""
 
 import contextlib
 import io
@@ -45,13 +47,15 @@ from flahax.tank_grouping import (
 )
 from tests.catalogue_history import historical_catalogue
 
-# The 33c5df2 catalogue products and formulas (Chilli (maximumyield), Potassium Chloride, ...).
+# The 33c5df2 catalogue products and formulas (Chilli (maximumyield),
+# Potassium Chloride, ...).
 with historical_catalogue():
     LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
 BY_NAME = {p['name']: p for p in PRODUCTS}
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
-# The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0), for tests re-enabled on it.
+# The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0), for tests
+# re-enabled on it.
 PACKAGED = load_library()
 PACKAGED_PRODUCTS = PACKAGED['salts']
 PACKAGED_FORMULAS = {f['name']: f['targets'] for f in PACKAGED['formulas']}
@@ -136,7 +140,8 @@ class TankGroupingTests(unittest.TestCase):
                 CLASS_RULES + WAIVED_RULES,
             )
         }
-        # Page 65 also keeps magnesium products from phosphates; that separation is removed.
+        # Page 65 also keeps magnesium products from phosphates; that
+        # separation is removed.
         self.assertEqual(found, PAGE_65_NO - MAGNESIUM_PHOSPHATE)
         self.assertEqual(WAIVED_RULES, ())
 
@@ -345,7 +350,8 @@ class ReportTests(unittest.TestCase):
         base = workflow('Tomato (Howard Resh)')
         first = base.recommendation
         stage = base.stages['formulation']
-        # first fit had incidentals, weighed recipe has none: review drops
+        # first fit had incidentals, weighed recipe has none: review
+        # drops
         with mock.patch.object(
             grower_report,
             'unreviewed_reason',
@@ -364,7 +370,8 @@ class ReportTests(unittest.TestCase):
             ('calculated', None),
         )
         self.assertFalse([w for w in s['warnings'] if w.startswith('formulation:')])
-        # first fit clean, weighed recipe has incidentals: review raised, overall status follows
+        # first fit clean, weighed recipe has incidentals: review
+        # raised, overall status follows
         with mock.patch.object(
             grower_report,
             'unreviewed_reason',
@@ -423,8 +430,9 @@ class ReportTests(unittest.TestCase):
 
 
 class IncidentalAssessmentTests(unittest.TestCase):
-    """One assessment of untargeted nutrients: recommend's ammonium allowance, with each source
-    named (#92)."""
+    """One assessment of untargeted nutrients: recommend's ammonium
+    allowance, with each source named (#92).
+    """
 
     TOMATO = 'Tomato (Howard Resh)'
     NITRIC = dict(products=[ACIDS[0]], maximum_reagent_volume_litres=5)
@@ -433,9 +441,10 @@ class IncidentalAssessmentTests(unittest.TestCase):
     def row(recommendation, symbol='N_NH4'):
         return next(r for r in recommendation['incidentalContributions'] if r['symbol'] == symbol)
 
-    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
-    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
-    # candidate is planned.
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so no acid candidate is
+    # planned.
     def test_first_fit_and_refit_rate_ammonium_alike(self):
         self.enterContext(historical_catalogue())
         flow = plan_fertilizer_workflow(
@@ -457,8 +466,9 @@ class IncidentalAssessmentTests(unittest.TestCase):
                 )
             ),
         )
-        # G23: no NH4-N target, so both fits are judged against the same ammonium allowance,
-        # min(10 % of 140 mg/L total N, 21.01) = 14.0 mg/L.
+        # G23: no NH4-N target, so both fits are judged against the same
+        # ammonium allowance, min(10 % of 140 mg/L total N, 21.01) =
+        # 14.0 mg/L.
         self.assertEqual(first['assessment'], 'within_limit')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
         self.assertEqual(first['maximumPpm'], 14.0)
@@ -500,9 +510,10 @@ class IncidentalAssessmentTests(unittest.TestCase):
         self.assertIn('Calcium Nitrate (ag grade)', rows['N_NH4']['source'])
         self.assertNotIn('source', rows['Ca'])
 
-    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
-    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
-    # candidate is planned.
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so no acid candidate is
+    # planned.
     def test_explicit_ammonium_maximum_is_preserved_through_ph_candidates(self):
         self.enterContext(historical_catalogue())
         limits = {'Na': 50, 'N_NH4': 14}
@@ -649,7 +660,8 @@ class BatchCommandTests(unittest.TestCase):
     def test_measured_water_is_used_as_measured_and_consistently(self):
         with tempfile.TemporaryDirectory() as tmp:
             water = Path(tmp) / 'well.json'
-            # Shomar et al. (2024) station 104, as in examples/tomato_advanced.py.
+            # Shomar et al. (2024) station 104, as in
+            # examples/tomato_advanced.py.
             water.write_text(
                 json.dumps(
                     dict(

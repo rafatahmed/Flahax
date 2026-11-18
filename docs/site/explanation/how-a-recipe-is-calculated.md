@@ -1,39 +1,62 @@
 # How a recipe is calculated
 
-FlahaX goes from a crop formula and a water analysis to a recipe, a pH plan and condition-qualified concentrate
-assignments in four stages. Each stage records what it decided and why, and a plan that needs a person's
-judgement says so instead of guessing.
+FlahaX uses crop-feed targets, a water analysis and available products to calculate candidate
+recipes and their pH-reagent requirements. A grower or agronomist reviews the selected recipe
+and its preparation checks. The targets can be supplied directly or derived through
+[Sonneveld target design and approved root-zone feedback](../agronomist/batch-command.md).
 
 ```{mermaid}
 ---
 caption: The recipe and its pH reagent are planned together
 ---
 flowchart TB
-    T[Crop formula targets, mg/L] --> G[Subtract what the water<br/>already supplies]
+    T[Finished-feed targets, mg/L] --> G[Subtract what the water<br/>already supplies]
     W[Water analysis] --> G
     G --> F[Fit: grams per litre of each<br/>available product, never negative]
     F --> P[Equilibrium model:<br/>pH of the mixed recipe]
     P --> D[Acid or base dose<br/>to the target pH]
     D --> N[Count the reagent's own nutrients,<br/>for example nitrate from nitric acid]
     N --> F
-    D --> S[Saturation indices:<br/>does anything precipitate?]
+    D --> S[Saturation indices<br/>assess phase risk]
     S --> K[Concentrate tanks:<br/>compatibility and solubility]
     K --> R[Batch sheet, report<br/>and summary]
+    D --> V[Optional rounded preparation<br/>dry, stock and reagent doses<br/>declared uncertainty and limits]
+    V --> R
 ```
 
 ## 1. Fit the recipe
 
 The water's own nutrients are subtracted from the targets, and FlahaX chooses the grams per litre
 of each available product so that the final solution comes as close to every target as the
-products allow, with no negative amounts (non-negative least squares). A target missed by more
-than 1 % is reported with its reason, for example no product supplies it, or a relaxed search still misses targets. A target-only charge imbalance cannot
-prove a conflict: untargeted counterions may supply the missing charge. Ions you did not target are kept within
-the maximum constraints supplied to the solver. An ammonium allowance is added only
-when explicitly requested; omitting a maximum does not select a crop-practice limit.
+products allow, with nonnegative amounts. Numerical target acceptance uses a relative tolerance
+of 1e-5 for a positive nutrient target and 1e-6 mg/L for a declared zero. A larger deviation
+is reported with its reason and achieved concentration. A target-only charge imbalance cannot
+prove a conflict because untargeted counterions may supply the remaining charge. The fit
+applies the declared maximum concentrations.
+
+For absent or zero ammonium targets, the default incidental NH4-N allowance is the smaller
+of 10% of total target nitrogen and 1.5 mmol/L ammonium. It is reported as `ammoniumLimit`.
+An explicit NH4-N maximum takes precedence. The Python interface can change the fraction
+or disable this allowance. A positive NH4-N target is fitted as its own nitrogen-form target.
 
 Supported formula counterions enter the fit before dose selection. The
 [material inventory](../models/material-inventory.md) records the same analytical
 components used by chemistry, including ligands that are not nutrient targets.
+
+When requested, bounded searches evaluate additional declared products and alternative starts.
+The report retains attempted candidates, failures, budgets and residuals so the grower can
+review an alternative. Exhausting the search budget leaves the search incomplete.
+
+### Numerical acceptance and preparation tolerance
+
+The numerical pH acceptance tolerance is 1e-4 pH units. These solver acceptance values describe
+numerical agreement with the requested targets. The rounded preparation workflow separately
+uses the nutrient and pH tolerances supplied in its configuration.
+
+For example, the worked Appendix I preparation uses ±0.1% for nutrient bounds and ±0.002 pH
+units. It checks the actual rounded dry weights, separate stock volumes and reagent dose
+under the declared uncertainty. The 5% reserve reduces each declared nutrient ceiling in
+that preparation check. Crop suitability remains a grower or agronomist decision.
 
 ## 2. Plan the pH reagent with the recipe
 

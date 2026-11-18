@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Volumetric delivery of declared products with pure-water stock carrier."""
+"""Volumetric delivery of declared products with pure-water stock
+carrier.
+"""
 
 import math
 
@@ -11,7 +13,9 @@ from .ratio_stocks import prepare_stock_delivery, validate_stocks
 
 
 def validate_product_stocks(options, sources, uncertainty):
-    """Require product-mass concentrations and explicit stock density intervals."""
+    """Require product-mass concentrations and explicit stock density
+    intervals.
+    """
     extra = {'basis', 'density_kg_l', 'carrier'}
     if (
         not isinstance(options, dict)
@@ -51,7 +55,9 @@ def validate_product_stocks(options, sources, uncertainty):
 
 
 def prepare_product_stocks(recipe, options, uncertainty):
-    """Round mL doses and retain separate product assay and delivery uncertainty."""
+    """Round mL doses and retain separate product assay and delivery
+    uncertainty.
+    """
     adapter = dict(
         recipe,
         ingredients=[
@@ -100,7 +106,9 @@ def prepare_product_stocks(recipe, options, uncertainty):
 
 
 def product_mass_bounds(row, options):
-    """Combine the delivered product interval with the retained weighing allowance."""
+    """Combine the delivered product interval with the retained weighing
+    allowance.
+    """
     dose = row['grams']
     low, high = row.get('stock_product_mass_bounds_g', (dose, dose))
     error = options['weighing_error_g'] if high > 0 else 0

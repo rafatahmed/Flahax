@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Release metadata and documentation must agree with the package checkout."""
+"""Release metadata and documentation must agree with the package
+checkout.
+"""
 
 from pathlib import Path
 import re
@@ -57,7 +59,8 @@ class ReleaseHygieneTests(unittest.TestCase):
         self.assertEqual(len(flahax.__all__), len(set(flahax.__all__)))
         for name in flahax.__all__:
             self.assertTrue(hasattr(flahax, name), name)
-        # Between releases main carries <next>.devN (#99); the citation names the latest release.
+        # Between releases main carries <next>.devN (#99); the citation
+        # names the latest release.
         cited = project['version']
         if '.dev' in cited:
             changelog = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')

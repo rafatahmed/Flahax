@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The pepper case study: water gap and phosphorus and potassium targets."""
+"""The pepper case study: water gap and phosphorus and potassium
+targets.
+"""
 
 import unittest
 
@@ -13,7 +15,8 @@ from flahax.requirement_fit import met
 
 SALTS = [salt for salt in load_library()["salts"] if assay_conflict(salt) is None]
 
-# Project Test01. Pepper (Howard Resh), season 2026. Water calcium 20 ppm.
+# Project Test01. Pepper (Howard Resh), season 2026. Water calcium 20
+# ppm.
 TARGETS = {
     "N_NO3": 128,
     "P": 58,
@@ -60,7 +63,9 @@ class PepperProof(unittest.TestCase):
             self.assertTrue(met(targets[symbol], row(result, symbol)["final"]), symbol)
 
     def test_forced_map_and_mkp_is_the_pepper_miss(self):
-        """The published run stacked both phosphorus salts. That is not the optimum."""
+        """The published run stacked both phosphorus salts. That is not
+        the optimum.
+        """
 
         def named(fragment):
             return next(salt for salt in SALTS if fragment.lower() in salt["name"].lower())
@@ -75,7 +80,8 @@ class PepperProof(unittest.TestCase):
                 "Magnesium Sulfate",
             )
         ]
-        # Grams reconstructed from the published balance, not from the solver.
+        # Grams reconstructed from the published balance, not from the
+        # solver.
         grams = [0.605, 0.587, 0.549, 0.213, 0.406]
         achieved = forward(salts, grams, WATER)
         _loss, rows = score(achieved, TARGETS)

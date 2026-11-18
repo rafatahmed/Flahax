@@ -21,7 +21,8 @@ from flahax.delivery_contracts import DeliveryError
 from flahax.ph_adjustment import REAGENTS
 from tests.catalogue_history import historical_catalogue
 
-# 33c5df2 catalogue products and formulas (Chilli (maximumyield) is not in the packaged catalogue).
+# 33c5df2 catalogue products and formulas (Chilli (maximumyield) is not
+# in the packaged catalogue).
 with historical_catalogue():
     LIBRARY = load_library()
 FORMULAS = {f['name']: f['targets'] for f in LIBRARY['formulas']}
@@ -64,7 +65,9 @@ def coupled(formula, target_ph=5.8, maxima=None):
 
 
 def amended_ph(candidate):
-    """pH recalculated from scratch: the candidate's recipe in RO water plus its reagent."""
+    """pH recalculated from scratch: the candidate's recipe in RO water
+    plus its reagent.
+    """
     doses = {s['name']: s['gramsPerLitre'] for s in candidate.recommendation['salts']}
     totals = catalogue_dose_totals(doses)
     for basis, n in REAGENTS[candidate.formula][1].items():
@@ -103,7 +106,8 @@ class ReagentDoseTests(unittest.TestCase):
 class CatalogueTests(unittest.TestCase):
     def test_catalogue_offers_five_sourced_reagents(self):
         records = {r['chemicalFormula']: r for r in catalogue_ph_reagents()}
-        # The packaged catalogue adds phosphoric and nitric acid as pH reagents.
+        # The packaged catalogue adds phosphoric and nitric acid as pH
+        # reagents.
         self.assertEqual(set(records), {'KOH', 'KHCO3', 'K2CO3', 'H3PO4', 'HNO3'})
         self.assertEqual(
             (records['KOH']['massFraction'], records['KOH']['densityKgPerL']), (0.45, 1.456)
@@ -121,7 +125,8 @@ class CatalogueTests(unittest.TestCase):
         )
 
     def test_recommend_never_selects_a_ph_reagent_for_a_packaged_formula(self):
-        # The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0), loaded at test time.
+        # The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0),
+        # loaded at test time.
         library = load_library()
         reagents = {s['name'] for s in library['salts'] if s.get('role') == 'ph_reagent'}
         self.assertEqual(
@@ -145,7 +150,8 @@ class CatalogueTests(unittest.TestCase):
 class CoupledWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Preserve this reaction-accounting fixture's historical, now explicit allowance.
+        # Preserve this reaction-accounting fixture's historical, now
+        # explicit allowance.
         cls.enterClassContext(historical_catalogue())
         cls.alkaline = coupled('Tomato (Howard Resh)', maxima={'N_NH4': 14})
         cls.acidic = coupled(
@@ -165,9 +171,10 @@ class CoupledWorkflowTests(unittest.TestCase):
         by_formula = {c.formula: c for c in acids}
         # Phosphoric acid's P is counted as supply: every target is met.
         self.assertTrue(by_formula['H3PO4'].recommendation['feasible'])
-        # Nitric acid adds nitrate-N; calcium comes only from calcium nitrate, so N and Ca conflict
-        # and the miss is explained, not hidden. No upper error bound follows
-        # from primary-only fitting: joint optimality remains a separate contract.
+        # Nitric acid adds nitrate-N; calcium comes only from calcium
+        # nitrate, so N and Ca conflict and the miss is explained, not
+        # hidden. No upper error bound follows from primary-only
+        # fitting: joint optimality remains a separate contract.
         nitric = by_formula['HNO3'].recommendation
         self.assertFalse(nitric['feasible'])
         self.assertEqual({u['symbol'] for u in nitric['unmetTargets']}, {'N_NO3', 'Ca'})
@@ -220,7 +227,8 @@ class CoupledWorkflowTests(unittest.TestCase):
             self.assertTrue(math.isfinite(candidate.reagent_mass_g))
 
     def test_monetite_is_information_and_the_base_dose_is_kept(self):
-        # Chilli with a base: monetite (CaHPO4) is supersaturated; only the dihydrate is a risk.
+        # Chilli with a base: monetite (CaHPO4) is supersaturated; only
+        # the dihydrate is a risk.
         stage = self.acidic.stages['ph_adjustment']
         self.assertNotEqual(stage.status, 'blocked')
         for c in stage.value.candidates:

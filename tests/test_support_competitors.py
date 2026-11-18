@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Competitor adapter contracts with synthetic external engines, not comparison evidence."""
+"""Competitor adapter contracts with synthetic external engines, not
+comparison evidence.
+"""
 
 import contextlib
 import importlib.util
@@ -95,7 +97,8 @@ class CompetitorContractTests(unittest.TestCase):
             ):
                 self.assertIs(irriblend.load(root), fake)
                 self.assertNotIn(str(root), sys.path)
-            # The workbook adapter contract is exercised using a writer stub, not an XLSX claim.
+            # The workbook adapter contract is exercised using a writer
+            # stub, not an XLSX claim.
             writer = Mock()
             writer.__enter__ = Mock(return_value=writer)
             writer.__exit__ = Mock(return_value=False)
@@ -286,7 +289,8 @@ class CompetitorContractTests(unittest.TestCase):
                 ):
                     ec.main()
                 self.assertEqual(json.loads(output.read_text())['catalogue'], report['catalogue'])
-            # Test the actual engine dispatch lambdas without optional packages.
+            # Test the actual engine dispatch lambdas without optional
+            # packages.
             with (
                 patch.object(ec, 'flahax_ec', return_value='a'),
                 patch.object(ec, 'horticalc_ec', return_value='b'),

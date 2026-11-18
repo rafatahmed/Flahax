@@ -5,6 +5,7 @@
 """Tests for flahax.trace_equilibrium."""
 
 import unittest
+
 from flahax.aqueous_model import chemistry
 from flahax import (
     ChMicroProductDose,
@@ -36,9 +37,10 @@ class TraceEquilibriumTests(unittest.TestCase):
     def test_edta_is_not_treated_as_free_trace_metal(self):
         result = solve_ch_micro_equilibrium(ChMicroProductDose(1.0).totals(), 6.0, 0.01)
         self.assertGreater(result.species["Fe(III)-EDTA"], result.species["Fe+3"] * 1e12)
-        # With exactly one ligand equivalent per supplied trace metal, Fe(III)'s
-        # much stronger EDTA stability displaces some Mn. This is the intended
-        # competitive equilibrium, not a free-ion approximation.
+        # With exactly one ligand equivalent per supplied trace metal,
+        # Fe(III)'s much stronger EDTA stability displaces some Mn. This
+        # is the intended competitive equilibrium, not a free-ion
+        # approximation.
         self.assertGreater(result.species["Mn-EDTA"], result.species["Mn+2"])
 
     def test_calcium_competes_for_excess_ligand_only(self):

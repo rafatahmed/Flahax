@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The bare ``flahax`` command: start screen, --version, program name, Ctrl+C (field test
-2026-10-23)."""
+"""The bare ``flahax`` command: start screen, --version, program name,
+Ctrl+C (field test 2026-10-23).
+"""
 
 import contextlib
 import io
@@ -48,8 +49,9 @@ class EntryTests(unittest.TestCase):
         self.assertTrue(out.startswith('usage: flahax '), out[:80])
 
     def test_help_describes_every_command_with_examples_and_links(self):
-        # Command Line Interface Guidelines (clig.dev): every command described, examples,
-        # where to read more and where to report a problem (request 2026-10-23).
+        # Command Line Interface Guidelines (clig.dev): every command
+        # described, examples, where to read more and where to report a
+        # problem (request 2026-10-23).
         _, out, _ = run('--help')
         for command in ('mix', 'batch', 'recommend', 'workflow', 'ec', 'size'):
             with self.subTest(command=command):

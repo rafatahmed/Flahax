@@ -13,26 +13,43 @@
 **Plant-nutrient chemistry engine in Python: fertilizer formulation, aqueous equilibrium
 chemistry and auditable delivery planning.**
 
-FlahaX turns a crop's nutrient formula and your actual water into a fertilizer recipe, then
-checks what that recipe does in solution: what the pH will be, how much acid reaches your target,
-whether anything precipitates, and how the recipe splits into concentrate tanks. Every result
-carries its units and sources, so it can be reviewed and reproduced.
+Growers and agronomists need a practical batch recipe from crop-feed targets, source-water
+analyses and available fertilizers. Water nutrients, pH-reagent contributions, product
+composition and dispensing uncertainty affect the finished feed.
+
+FlahaX formulates candidate recipes, reports achieved nutrients and modeled chemistry, and
+produces traceable preparation quantities for review. Supply targets directly or use Sonneveld
+target design with approved feed corrections from root-zone observations. Evaluate declared
+fertilizer alternatives, then check rounded dry, separate-stock and reagent doses under the
+specified uncertainty and limits.
+
+The grower or agronomist makes the feed and preparation decisions using the calculated results,
+their qualifications and the required measurements.
 
 ```{mermaid}
 ---
-caption: From your water to your tanks
+caption: From declared inputs to a reviewed batch
 ---
 flowchart LR
-    W[Water analysis] --> R[Recipe<br/>grams of each fertilizer]
-    F[Crop formula] --> R
+    accTitle: From declared inputs to a reviewed batch
+    accDescr: Water, feed targets, fertilizers and available pH reagents enter formulation together. Review tank assignments or rounded batch preparation, then the batch sheet, qualifications and required measurements.
+    W[Water analysis] --> R[Formulate recipe with<br/>pH-reagent nutrient accounting]
+    F[Supplied or Sonneveld-designed<br/>finished-feed targets] --> R
     P[Fertilizers you have] --> R
-    R --> H[pH plan<br/>acid or base to the target]
-    T[Target pH] --> H
-    H --> K[Tank A, tank B<br/>and the acid container]
-    K --> S[Batch sheet<br/>and report]
+    T[Target pH and<br/>available pH reagents] --> R
+    R --> K[Tank assignment<br/>or rounded batch preparation]
+    K --> S[Batch sheet and report<br/>review and measure after mixing]
 ```
 
+In words: supply the water, targets and available products, count reagent
+nutrients while formulating, then review the delivery checks and measurements
+needed for the selected preparation. The [workflow chooser](start/choose-workflow.md)
+links each way of supplying those inputs.
+
 ## Choose your path
+
+[Choose a workflow](start/choose-workflow.md) to compare the standard wizard,
+Sonneveld profile review, batch files and Python route. Then follow your audience guide.
 
 ::::{grid} 1 1 3 3
 :gutter: 3
@@ -41,8 +58,8 @@ flowchart LR
 :link: grower/index
 :link-type: doc
 
-Answer five questions with `flahax mix` and get what to weigh into tank A and tank B and how much
-acid to use. No code, no chemistry needed.
+Use the `flahax mix` interview or review an agronomist-prepared Sonneveld profile. Read the
+selected quantities, preparation checks and notes, then record measurements after mixing.
 :::
 
 :::{grid-item-card} Agronomist
@@ -82,9 +99,11 @@ instructions. Measure pH and EC after mixing. See [Scope and limits](explanation
 :hidden:
 
 Install <start/install>
+Choose a workflow <start/choose-workflow>
 Your first batch <start/first-batch>
 Your first recipe in Python <start/first-recipe>
 Migrate saved workflows <start/migration>
+Use FlahaX offline <start/offline>
 ```
 
 ```{toctree}
@@ -94,6 +113,7 @@ Migrate saved workflows <start/migration>
 Overview <grower/index>
 What you need <grower/inputs>
 Run a batch <grower/run-a-batch>
+Review a Sonneveld batch <grower/sonneveld-walkthrough>
 Read the batch sheet <grower/batch-sheet>
 Mix safely <grower/mix-safely>
 ```
@@ -104,6 +124,7 @@ Mix safely <grower/mix-safely>
 
 Overview <agronomist/index>
 A batch from files <agronomist/batch-command>
+Sonneveld Appendix I <agronomist/sonneveld-appendix-i>
 Formulas and products <agronomist/formula-and-products>
 pH, acids and bases <agronomist/ph-and-acids>
 Tanks and solubility <agronomist/tanks-and-solubility>

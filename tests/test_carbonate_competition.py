@@ -5,6 +5,7 @@
 """Carbonate competition (flahax.competition)."""
 
 import unittest
+
 from flahax.competition import carbonate_competition
 
 

@@ -9,13 +9,16 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import math
 from typing import Any, Mapping
+
 from .delivery_contracts import DeliveryError, validate_pump_calibration
 from .delivery_quantities import DurationMinutes, FlowLitresPerMinute, VolumeLitres
 
 
 @dataclass(frozen=True, slots=True)
 class PumpCommand:
-    """A volume for one calibrated pump channel and its run time; the operator verifies it."""
+    """A volume for one calibrated pump channel and its run time; the
+    operator verifies it.
+    """
 
     calibration_id: str
     channel_id: str
@@ -34,7 +37,9 @@ def plan_pump_command(
     as_of: datetime | None = None,
     max_calibration_age_days: float = 30.0,
 ) -> PumpCommand:
-    """Calculate a bounded command; this function performs no device I/O."""
+    """Calculate a bounded command; this function performs no device
+    I/O.
+    """
     if not isinstance(requested_volume, VolumeLitres) or not isinstance(
         available_volume, VolumeLitres
     ):

@@ -2,14 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Integration invariants using production conversion and chemistry paths.
+"""Integration invariants using production conversion and chemistry
+paths.
 
 These checks are separate from the PHREEQC comparator, not independent
-thermodynamic evidence; external reference checks remain in their own suites.
+thermodynamic evidence; external reference checks remain in their own
+suites.
 """
 
 import math
 import unittest
+
 from flahax import (
     load_library,
     DeliveryError,
@@ -66,8 +69,9 @@ class ChemistryAcceptanceTests(unittest.TestCase):
         self.assertEqual(carbonate['K+'], 2 * carbonate['CO3-2'])
 
     def test_near_singular_newton_step_does_not_stall(self):
-        # Cold start at this pH met a near-singular Jacobian (Fe-EDDHA) and raised
-        # 'line search stalled'; a damped least-squares step now recovers.
+        # Cold start at this pH met a near-singular Jacobian (Fe-EDDHA)
+        # and raised 'line search stalled'; a damped least-squares step
+        # now recovers.
         from benchmarks.cases import read_fixture
 
         totals = read_fixture('products/mixed_target_ph_nitric')['runtime_totals']
@@ -78,8 +82,9 @@ class ChemistryAcceptanceTests(unittest.TestCase):
                     self.assertLess(abs(residual), 1e-9 * result.totals[component] + 1e-15)
 
     def test_low_ph_chelate_mixtures_converge(self):
-        # #52: below pH ~5.05 the cold start left Newton crawling toward strongly
-        # complexed free ions (EDTA/DTPA/EDDHA with Fe and Cu) until its iteration limit.
+        # #52: below pH ~5.05 the cold start left Newton crawling toward
+        # strongly complexed free ions (EDTA/DTPA/EDDHA with Fe and Cu)
+        # until its iteration limit.
         from benchmarks.cases import read_fixture
 
         for name in ('products/mixed_products', 'phases/mixed_product_phases'):

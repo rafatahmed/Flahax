@@ -1,0 +1,35 @@
+  F L A H A X   /   MIX   Appendix I                                                     0.6.1.dev0
+  ───────────────────────────────────────────────────────────────────────────────────────────────
+   Tanks    Nutrients    Notes                                                    review required
+
+  All nutrient targets met. Stock solubility was not checked for calcium nitrate tetrahydrate, iron
+  DTPA, boric acid, manganese sulfate monohydrate, zinc sulfate heptahydrate, copper sulfate
+  pentahydrate, sodium molybdate dihydrate, potassium nitrate, ammonium nitrate, monopotassium
+  phosphate, potassium sulfate, sodium sulfate anhydrous, magnesium sulfate heptahydrate.
+  Mixed-stock solubility is unverified.
+  Rounded finished nutrients (elemental mg/L)
+  Nutrient     Target       Nominal      Low          High
+  Ca           113.659      113.646       113.63      113.663
+  Mg           25.0645      25.0615      25.0575      25.0656
+  K            342.721      342.721      342.642      342.801
+  N_NO3        183.424      183.422      183.376      183.469
+  N_NH4          21.01      21.0101      21.0041       21.016
+  P            38.7172      38.7169      38.7068      38.7269
+  S            58.5824      58.5793      58.5641      58.5946
+  Fe          0.837675      0.83765     0.837471     0.837829
+  Mn           0.54938     0.549315     0.549173     0.549457
+  Zn           0.26152     0.261484     0.261409     0.261559
+  B             0.3243     0.324317     0.324235       0.3244
+  Cu         0.0476595    0.0476595    0.0476325    0.0476865
+  Mo          0.047975     0.047977    0.0479428    0.0480112
+
+
+
+
+
+
+
+
+
+  Sheets: appendix-i-output
+  Tab Next view   ↑↓ Scroll   Q Quit

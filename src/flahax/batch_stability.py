@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Measured, time-bounded clarity and dissolved nutrient retention assessment."""
+"""Measured, time-bounded clarity and dissolved nutrient retention
+assessment.
+"""
 
 import copy
 import hashlib
@@ -49,7 +51,9 @@ def _interval(record):
 
 
 def assess_batch_stability(recipe, evidence):
-    """Gate stability on verified preparation, all observations and a complete schedule."""
+    """Gate stability on verified preparation, all observations and a
+    complete schedule.
+    """
     result = {
         "status": "unverified",
         "stable": False,

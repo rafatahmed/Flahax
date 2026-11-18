@@ -76,7 +76,9 @@ class RatioRecipeTests(unittest.TestCase):
             plan_ratio_recipe(**dict(REQUEST, cation_shares=[0, 50, 50]))
 
     def test_grams_reconstruct_targets_and_separate_ph_bisection(self):
-        """Independent search and inventory arithmetic share the production chemistry kernel."""
+        """Independent search and inventory arithmetic share the
+        production chemistry kernel.
+        """
         from flahax.composition import ATOMIC, parse_formula
         from tests.test_steiner_reference import predicted_ph
 

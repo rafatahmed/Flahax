@@ -17,22 +17,28 @@ equilibrium chemistry and auditable delivery planning.**
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23605678.svg)](https://doi.org/10.5281/zenodo.23605678)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
 
-FlahaX turns a crop's nutrient formula and the grower's actual water into a fertilizer recipe,
-then checks what that recipe does in solution: which ions pair up, whether anything
-precipitates, what the pH will be, how much acid reaches a target pH, and how the recipe splits
-into stock tanks and injector flows. Every plan carries its units, model identifiers and source
-hashes, so a result can be reviewed and reproduced.
+Growers and agronomists need to turn crop-feed targets, source-water analyses and available
+fertilizers into a practical batch recipe. Water nutrients, acid or base contributions, product
+composition and dispensing uncertainty affect the finished feed.
 
-FlahaX combines fertilizer formulation, fertilizer-specific aqueous equilibrium chemistry,
-and delivery planning in a dependency-free Python library. Plans include units, model
-identifiers, and source references; selected chemistry calculations are checked against
-PHREEQC reference cases. The [dated competitor comparison](docs/site/evidence/competitor-comparison.md)
-records versions, shared inputs, results, and limitations.
+FlahaX formulates candidate recipes, accounts for the water and pH reagent, and reports achieved
+nutrients, modeled pH, estimated EC and saturation assessments. It supports supplied targets or
+Sonneveld target design with grower-approved feed corrections from root-zone observations.
+Users can evaluate declared fertilizer alternatives and verify rounded dry, separate-stock and
+reagent doses against their preparation tolerances and nutrient ceilings.
+
+The grower or agronomist reviews the result and its qualifications before preparation.
+Tank assignments use the supplied equipment and compatibility evidence. Each plan retains
+units, inputs, model identifiers and source hashes for review and reproduction.
+The [scope and limits](docs/site/explanation/scope-and-limits.md) explain the supported workflows
+and the measurements needed to qualify a prepared batch.
 
 **Who it is for**
 
-- **Growers and agronomists**: `flahax mix` asks five questions and gives tank A, tank B and the
-  acid, with no code.
+- **Growers**: `flahax mix` guides a batch interview or reviews a prepared Sonneveld profile,
+  then displays the selected recipe, rounded preparation where configured, and review notes.
+- **Agronomists**: define targets, review root-zone observations, set nutrient ceilings and
+  uncertainty bounds, and assess the achieved feed and preparation evidence.
 - **Consultants and researchers**: reproducible nutrient-solution chemistry with stated validity
   limits, against real water analyses and real commercial products.
 - **Developers**: a tested, dependency-free engine for nutrition and fertigation software.
@@ -165,6 +171,12 @@ exit 3 for a blocked result. Always inspect the returned qualifications and limi
 The manual can also be read offline from an installed package through `importlib.resources`
 (`flahax/data/USER_GUIDE.md`).
 
+For the current source documentation, [choose a workflow](docs/site/start/choose-workflow.md),
+follow the [grower Sonneveld walkthrough](docs/site/grower/sonneveld-walkthrough.md),
+or review the [complete Appendix I calculation](docs/site/agronomist/sonneveld-appendix-i.md).
+The [profile and session reference](docs/site/reference/file-formats.md#sonneveld-import-profile)
+describes the reusable inputs and saved evidence.
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -188,8 +200,9 @@ with tables, charts, provenance and their limitations.
 
 - The automated test suite includes live replay of every catalogue product, phase and acid case
   against pinned PHREEQC 3.8.6 (USGS).
-- Hosted checks run on Python 3.11, 3.12, 3.13 and 3.14 on Linux, and on Windows and macOS,
-  with clean wheel and source installations.
+- Hosted checks cover Python 3.11, 3.12, 3.13 and 3.14 on Linux, with native
+  coverage on Windows using Python 3.13. Linux compatibility jobs also verify
+  clean wheel and source installations; macOS is outside the current CI matrix.
 - Evidence is recorded per release in the
   [release evidence](https://github.com/rafatahmed/Flahax/blob/main/docs/release-evidence.md).
 

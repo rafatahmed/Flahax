@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax mix`` full-screen wizard: widgets, the screen frame and the prompts.
+"""The ``flahax mix`` full-screen wizard: widgets, the screen frame and
+the prompts.
 
-Widgets and the frame are pure: ``handle`` turns (question, key) into the next question and
-``frame`` turns the wizard state into the lines to draw. Only ``flahax.terminal`` touches the
-console.
+Widgets and the frame are pure: ``handle`` turns (question, key) into
+the next question and ``frame`` turns the wizard state into the lines to
+draw. Only ``flahax.terminal`` touches the console.
 """
 
 from dataclasses import dataclass, field
@@ -58,7 +59,9 @@ HELP = {
 
 @dataclass
 class Question:
-    """One question on screen: its kind, the options or text, and the answer once done."""
+    """One question on screen: its kind, the options or text, and the
+    answer once done.
+    """
 
     kind: str  # 'choice', 'filter', 'ticks' or 'field'
     prompt: str
@@ -75,7 +78,9 @@ class Question:
 
 @dataclass
 class Wizard:
-    """The wizard so far: the current step, the finished answers and the messages to show."""
+    """The wizard so far: the current step, the finished answers and the
+    messages to show.
+    """
 
     step: int = 1
     answers: list = field(default_factory=list)
@@ -84,7 +89,9 @@ class Wizard:
 
 
 def visible(question):
-    """Indices of the options shown: those containing the filter text, ignoring case."""
+    """Indices of the options shown: those containing the filter text,
+    ignoring case.
+    """
     if question.kind == 'choice' or not question.query:
         return list(range(len(question.options)))
     query = question.query.lower()
@@ -92,7 +99,9 @@ def visible(question):
 
 
 def handle(question, key, validate=None):
-    """The question after one key; ENTER finishes it when the answer is acceptable."""
+    """The question after one key; ENTER finishes it when the answer is
+    acceptable.
+    """
     if key is None or question.done:
         return question
     shown = visible(question)
@@ -145,14 +154,18 @@ def handle(question, key, validate=None):
 
 
 def help_for(question):
-    """The key-help template for a question: in a filtered tick list Tab ticks, not Space."""
+    """The key-help template for a question: in a filtered tick list Tab
+    ticks, not Space.
+    """
     if question.kind == 'ticks' and question.query:
         return HELP['ticks-filtered']
     return HELP[question.kind]
 
 
 def cut(text, width, g):
-    """``text`` shortened to ``width`` characters, ending with the ellipsis when cut."""
+    """``text`` shortened to ``width`` characters, ending with the
+    ellipsis when cut.
+    """
     if len(text) <= width:
         return text
     mark = g['ellipsis']
@@ -160,7 +173,9 @@ def cut(text, width, g):
 
 
 def wrap(text, width, lines=3):
-    """``text`` broken at spaces into at most ``lines`` lines (the last may still be long)."""
+    """``text`` broken at spaces into at most ``lines`` lines (the last
+    may still be long).
+    """
     words, out = text.split(), ['']
     for word in words:
         if out[-1] and len(out[-1]) + 1 + len(word) > width and len(out) < lines:
@@ -171,7 +186,9 @@ def wrap(text, width, lines=3):
 
 
 def paint(segments, width, g):
-    """One screen line from (text, style) segments, cut to ``width`` visible characters."""
+    """One screen line from (text, style) segments, cut to ``width``
+    visible characters.
+    """
     out, room = [], width
     for text, style in segments:
         if room <= 0:
@@ -186,7 +203,9 @@ def paint(segments, width, g):
 
 
 def steps_pane(wizard, g):
-    """The left pane: "Your batch" with each finished answer, the current step and the rest."""
+    """The left pane: "Your batch" with each finished answer, the
+    current step and the rest.
+    """
     rows = [[('Your batch', 'accent')]]
     for label, value in wizard.answers:
         rows.append([(f'{g["tick"]} {label}', 'ok')])
@@ -197,7 +216,9 @@ def steps_pane(wizard, g):
 
 
 def step_bar(wizard, g):
-    """The one-column step bar: ticks for finished steps, the marker on the current one."""
+    """The one-column step bar: ticks for finished steps, the marker on
+    the current one.
+    """
     segments = [('  ', None)]
     for number, name in enumerate(STEPS, 1):
         if number < wizard.step:
@@ -210,7 +231,9 @@ def step_bar(wizard, g):
 
 
 def question_rows(wizard, question, width, height, g):
-    """The question area: messages, prompt, filter or field, options and the error line."""
+    """The question area: messages, prompt, filter or field, options and
+    the error line.
+    """
     rows = []
     if wizard.progress:
         rows.extend([[(line, 'ok')] for line in wrap(wizard.progress, width)])
@@ -244,7 +267,9 @@ def question_rows(wizard, question, width, height, g):
 
 
 def frame(wizard, question, width, height, g):
-    """The lines to draw for this wizard state in a ``width`` x ``height`` window."""
+    """The lines to draw for this wizard state in a ``width`` x
+    ``height`` window.
+    """
     if width < MIN_WIDTH or height < MIN_HEIGHT:
         return [SMALL]
     usable = width - 1
@@ -287,25 +312,32 @@ def frame(wizard, question, width, height, g):
 
 
 class TuiPrompts(Prompts):
-    """The ``flahax mix`` questions on the full screen; the five steps call it like ``Prompts``.
+    """The ``flahax mix`` questions on the full screen; the five steps
+    call it like ``Prompts``.
 
-    ``term`` reads keys and draws (``flahax.terminal.Terminal`` or a test double); ``g`` is the
-    glyph set from ``flahax.terminal.glyphs``.
+    ``term`` reads keys and draws (``flahax.terminal.Terminal`` or a
+    test double); ``g`` is the glyph set from
+    ``flahax.terminal.glyphs``.
     """
 
     def __init__(self, term, g):
-        # Not Prompts.__init__: it stores ask and say on the instance, hiding the methods below.
+        # Not Prompts.__init__: it stores ask and say on the instance,
+        # hiding the methods below.
         self.term, self.g, self.wizard = term, g, Wizard()
         self.saved = False  # True once the answers are saved: quitting then only skips the sheets
         self._shown = None
 
     def current_frame(self, question=None):
-        """The lines for the current state at the current window size."""
+        """The lines for the current state at the current window
+        size.
+        """
         width, height = self.term.size()
         return frame(self.wizard, question, width, height, self.g)
 
     def _draw(self, question):
-        """Draw the current frame unless it is already on screen; returns its lines."""
+        """Draw the current frame unless it is already on screen;
+        returns its lines.
+        """
         lines = self.current_frame(question)
         cursor = None
         if question is not None and question.kind == 'field' and lines != [SMALL]:
@@ -359,17 +391,23 @@ class TuiPrompts(Prompts):
                 return question.answer
 
     def say(self, *parts):
-        """Show a message above the next question (kept until it is answered)."""
+        """Show a message above the next question (kept until it is
+        answered).
+        """
         text = ' '.join(str(part) for part in parts).strip()
         if text:
             self.wizard.messages = (self.wizard.messages + [text])[-6:]
 
     def ask(self, prompt):
-        """A raw typed answer (empty allowed), as ``input`` would give it."""
+        """A raw typed answer (empty allowed), as ``input`` would
+        give it.
+        """
         return self._run(Question('field', prompt.rstrip().rstrip(':')))
 
     def text(self, prompt, default=None):
-        """A non-empty answer, or the default on Enter when there is one."""
+        """A non-empty answer, or the default on Enter when there is
+        one.
+        """
 
         def check(text):
             if text.strip():
@@ -382,7 +420,9 @@ class TuiPrompts(Prompts):
         return self._run(Question('field', prompt, hint=hint), check)
 
     def number(self, prompt, default=None, *, blank=False, low=0.0, high=None, positive=False):
-        """A number within the limits; the message shows under the field until it is valid."""
+        """A number within the limits; the message shows under the field
+        until it is valid.
+        """
 
         def check(text):
             return number_answer(text, default, blank=blank, low=low, high=high, positive=positive)
@@ -391,7 +431,9 @@ class TuiPrompts(Prompts):
         return self._run(Question('field', prompt, hint=hint), check)
 
     def choose(self, prompt, options, default=1):
-        """0-based index of the chosen option; the default starts highlighted."""
+        """0-based index of the chosen option; the default starts
+        highlighted.
+        """
         start = 0 if default is None else max(0, min(default - 1, len(options) - 1))
         return self._run(Question('choice', prompt or 'Choose', list(options), selected=start))
 
@@ -408,7 +450,9 @@ class TuiPrompts(Prompts):
         self.wizard.step, self.wizard.progress = index, None
 
     def progress(self, text):
-        """Show ``text`` above the questions of this step until it changes (None hides it)."""
+        """Show ``text`` above the questions of this step until it
+        changes (None hides it).
+        """
         self.wizard.progress = text
 
     def answered(self, label, value):
@@ -417,7 +461,9 @@ class TuiPrompts(Prompts):
 
 
 def calculate(prompts, work):
-    """Run ``work`` on a thread while a spinner shows; Esc asks to quit. Returns its result."""
+    """Run ``work`` on a thread while a spinner shows; Esc asks to quit.
+    Returns its result.
+    """
     outcome = {}
 
     def run():
@@ -446,7 +492,9 @@ def calculate(prompts, work):
 
 
 def show_results(term, g, summary, output, ahead=()):
-    """The results screen until Q or Esc, then Y; ``ahead``: keys typed during the calculation."""
+    """The results screen until Q or Esc, then Y; ``ahead``: keys typed
+    during the calculation.
+    """
     from .mix_results import first_view, handle_results, results_lines  # imports this module
 
     view, scroll, shown, key, ahead = first_view(summary), 0, None, None, list(ahead)
@@ -481,12 +529,15 @@ def run_tui(
     review_availability=False,
     sonneveld_batch=None,
 ):
-    """``flahax mix`` on the full screen; returns the exit code and the lines to print after it.
+    """``flahax mix`` on the full screen; returns the exit code and the
+    lines to print after it.
 
-    The exit code is None when the console cannot show the full screen: ask line by line.
+    The exit code is None when the console cannot show the full screen:
+    ask line by line.
 
-    The answers are saved and the sheets written exactly as in the line mode. The terminal is
-    restored before this returns, also after Ctrl+C or an error.
+    The answers are saved and the sheets written exactly as in the line
+    mode. The terminal is restored before this returns, also after
+    Ctrl+C or an error.
     """
     lines = []
     try:

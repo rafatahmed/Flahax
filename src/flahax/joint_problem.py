@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Immutable joint-problem inputs and fixed-candidate residual evaluation.
+"""Immutable joint-problem inputs and fixed-candidate residual
+evaluation.
 
-No optimizer, new acceptance tolerance, or global feasibility claim is supplied.
-All component coefficients are mol/g product, nutrients g/g product, and doses
-are g/L final solution. Solvent mass denotes the final inventory, not source water.
+No optimizer, new acceptance tolerance, or global feasibility claim is
+supplied. All component coefficients are mol/g product, nutrients g/g
+product, and doses are g/L final solution. Solvent mass denotes the
+final inventory, not source water.
 """
 
 from dataclasses import dataclass, field
@@ -43,11 +45,13 @@ def _profile(value, name, *, components=False):
 
 @dataclass(frozen=True)
 class JointSource:
-    """One permitted product with explicit coefficients and solvent/density data.
+    """One permitted product with explicit coefficients and
+    solvent/density data.
 
-    None components means missing chemistry; an empty map explicitly declares no
-    conserved components. Solvent fraction is declared, never inferred from assay
-    remainder. The caller is responsible for coefficient provenance and product roles.
+    None components means missing chemistry; an empty map explicitly
+    declares no conserved components. Solvent fraction is declared,
+    never inferred from assay remainder. The caller is responsible for
+    coefficient provenance and product roles.
     """
 
     product_id: str
@@ -75,11 +79,13 @@ class JointSource:
 
 @dataclass(frozen=True)
 class JointProblem:
-    """One fixed-target problem with one explicitly offered reagent per candidate.
+    """One fixed-target problem with one explicitly offered reagent per
+    candidate.
 
-    reference_charge_mol_per_kg is the declared charge/proton closure on the same
-    final-solvent basis; it must not be inferred from a nutrient subtotal. Analytical
-    nutrient totals and dissolved/precipitated chemistry remain distinct outputs.
+    reference_charge_mol_per_kg is the declared charge/proton closure on
+    the same final-solvent basis; it must not be inferred from a
+    nutrient subtotal. Analytical nutrient totals and
+    dissolved/precipitated chemistry remain distinct outputs.
     """
 
     fertilizers: tuple[JointSource, ...]
@@ -134,13 +140,16 @@ class JointProblem:
             raise DeliveryError('unknown_phase', 'unsupported phase selection')
 
     def evaluate(self, fertilizer_g_per_litre, reagent_g_per_litre, *, equilibrium_start=None):
-        """Evaluate a supplied dose vector without fitting, clipping or changing targets.
+        """Evaluate a supplied dose vector without fitting, clipping or
+        changing targets.
 
-        Missing fertilizer IDs mean zero. Charge residual and equilibrium residuals
-        are exposed without defining a new pass threshold. Nonconvergence propagates
-        as DeliveryError, never as an accepted or substituted candidate. An optional
-        equilibrium_start only seeds the existing safeguarded equilibrium iteration;
-        callers must still verify the final candidate from a fresh solve.
+        Missing fertilizer IDs mean zero. Charge residual and
+        equilibrium residuals are exposed without defining a new pass
+        threshold. Nonconvergence propagates as DeliveryError, never as
+        an accepted or substituted candidate. An optional
+        equilibrium_start only seeds the existing safeguarded
+        equilibrium iteration; callers must still verify the final
+        candidate from a fresh solve.
         """
         doses = _profile_doses(fertilizer_g_per_litre, self.fertilizers)
         q = _number(reagent_g_per_litre, 'reagent dose')
@@ -161,7 +170,8 @@ class JointProblem:
                         components.get(basis, 0)
                         + coefficient * dose * self.final_volume_litres / self.solvent_mass_kg
                     )
-        # Catch overflow before it enters chemistry or produces a misleading score.
+        # Catch overflow before it enters chemistry or produces a
+        # misleading score.
         concentrations = dict(_profile(concentrations, 'final nutrients'))
         components = dict(_profile(components, 'final components', components=True))
         solvent = _number(solvent, 'declared product solvent')

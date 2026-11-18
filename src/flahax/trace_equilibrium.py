@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Source-versioned CH-micro EDTA, borax, and molybdate equilibrium model.
+"""Source-versioned CH-micro EDTA, borax, and molybdate equilibrium
+model.
 
-The model deliberately represents the declared product components rather than
-turning a trace blend into unchelated free metals.  Constants are from the
-``minteq.v4.dat`` database distributed with USGS PHREEQC 3.8.6.  It is a
-25 C, Davies-domain calculation (``I <= 0.1 mol/kgw``).
+The model deliberately represents the declared product components rather
+than turning a trace blend into unchelated free metals.  Constants are
+from the ``minteq.v4.dat`` database distributed with USGS PHREEQC 3.8.6.
+It is a 25 C, Davies-domain calculation (``I <= 0.1 mol/kgw``).
 """
 
 from __future__ import annotations
@@ -19,12 +20,14 @@ from typing import Mapping
 from .delivery_contracts import DeliveryError
 
 
-# molar masses, g mol-1; used only to convert the declared elemental assay.
+# molar masses, g mol-1; used only to convert the declared elemental
+# assay.
 MOLAR_MASS = {"Fe": 55.845, "Mn": 54.938_044, "Zn": 65.38, "Cu": 63.546, "B": 10.81, "Mo": 95.95}
 METAL_CHARGE = {"Fe+3": 3, "Mn+2": 2, "Zn+2": 2, "Cu+2": 2, "Ca+2": 2, "Mg+2": 2}
-# Charges are derived directly from the reactions in minteq.v4.dat and the
-# checked-in Dtp/Edd extension.  Citrate is native to minteq and is retained
-# here because it is a catalogue ligand, not an invented generic organic ion.
+# Charges are derived directly from the reactions in minteq.v4.dat and
+# the checked-in Dtp/Edd extension.  Citrate is native to minteq and is
+# retained here because it is a catalogue ligand, not an invented
+# generic organic ion.
 COMPLEX_CHARGE = {
     "EDTA": {"Fe+3": -1, "Mn+2": -2, "Zn+2": -2, "Cu+2": -2, "Ca+2": -2, "Mg+2": -2},
     "DTPA": {"Fe+3": -2},
@@ -68,9 +71,9 @@ class ChMicroTotals:
 class ChMicroProductDose:
     """Declared CH-micro assay converted from g product per kg water.
 
-    Product identity (project-declared): Fe-EDTA, Mn-EDTA,
-    Zn-EDTA, Cu-EDTA, borax, and sodium molybdate.  One EDTA ligand per
-    chelated metal is an exact stoichiometric consequence of those names.
+    Product identity (project-declared): Fe-EDTA, Mn-EDTA, Zn-EDTA,
+    Cu-EDTA, borax, and sodium molybdate.  One EDTA ligand per chelated
+    metal is an exact stoichiometric consequence of those names.
     """
 
     product_g_per_kg_water: float
@@ -79,8 +82,8 @@ class ChMicroProductDose:
         _nonnegative(product_g_per_kg_water=self.product_g_per_kg_water)
 
     def totals(self, *, calcium: float = 0.0, magnesium: float = 0.0) -> ChMicroTotals:
-        """Molal micronutrient and EDTA totals from the Ch micro dose, with the calcium and
-        magnesium given.
+        """Molal micronutrient and EDTA totals from the Ch micro dose,
+        with the calcium and magnesium given.
         """
         _nonnegative(calcium=calcium, magnesium=magnesium)
         grams = self.product_g_per_kg_water
@@ -100,7 +103,9 @@ class ChMicroProductDose:
 
 @dataclass(frozen=True, slots=True)
 class TraceEquilibrium:
-    """Mass-balanced EDTA competition and B/Mo acid-base species at fixed pH."""
+    """Mass-balanced EDTA competition and B/Mo acid-base species at
+    fixed pH.
+    """
 
     totals: ChMicroTotals
     ph: float
@@ -121,7 +126,9 @@ def _valid_ph_and_i(ph: float, ionic_strength: float) -> None:
 def solve_ch_micro_equilibrium(
     totals: ChMicroTotals, ph: float, ionic_strength: float
 ) -> TraceEquilibrium:
-    """Fixed-I view of the same simultaneous aqueous mass-action model."""
+    """Fixed-I view of the same simultaneous aqueous mass-action
+    model.
+    """
     if not isinstance(totals, ChMicroTotals):
         raise DeliveryError("invalid_type", "totals must be ChMicroTotals")
     _valid_ph_and_i(ph, ionic_strength)

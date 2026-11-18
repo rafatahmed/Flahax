@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Joint qualification accounting, failure retention and matched acid references."""
+"""Joint qualification accounting, failure retention and matched acid
+references.
+"""
 
 import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
+
 from flahax import JointSource, make_joint_problem
 from tests.test_joint_fit import problem, controls
 from tools.qualify_joint_fit import independent_accounting, qualify_starts, relaxed_objective_bound
@@ -192,8 +195,9 @@ class JointQualificationTests(unittest.TestCase):
             reagent=JointSource('r', {}, {}, density_kg_per_litre=1),
             maximum_reagent_volume_litres=0.001,
         )
-        # Choose a representably interior dose; the tight cap's exact dual value
-        # still gives a useful bound without declaring a rounded violation feasible.
+        # Choose a representably interior dose; the tight cap's exact
+        # dual value still gives a useful bound without declaring a
+        # rounded violation feasible.
         dose = {'k': 0.4999999999999999}
         proof = objective_certificate(p, dose, 0)
         self.assertTrue(verify_objective_certificate(p, dose, 0, proof))
@@ -240,7 +244,8 @@ class JointQualificationTests(unittest.TestCase):
     def test_linearized_charge_dual_search_has_independent_solutions(self):
         from flahax.joint_solver import _charge_constrained_step
 
-        # min (x-b)^2 subject to x=1, x>=0: exact solution is one for either b.
+        # min (x-b)^2 subject to x=1, x>=0: exact solution is one for
+        # either b.
         for b in (0, 2, 10):
             diagnostics = {}
             x, penalty = _charge_constrained_step(
@@ -452,13 +457,15 @@ class JointQualificationTests(unittest.TestCase):
     def test_bounded_linear_steps_against_independent_box_solutions(self):
         from flahax.joint_linear import bounded_lstsq
 
-        # Independent one-dimensional clipping and a coupled two-variable box.
+        # Independent one-dimensional clipping and a coupled
+        # two-variable box.
         self.assertEqual(bounded_lstsq([[1]], [3], [0], [2], 20), [2])
         self.assertEqual(bounded_lstsq([[1]], [-3], [-2], [2], 20), [-2])
         x = bounded_lstsq([[1, 1], [1, -1]], [3, 0], [0, 0], [1, 2], 40)
         self.assertAlmostEqual(x[0], 1, places=12)
         self.assertAlmostEqual(x[1], 1.5, places=12)
-        # A weak column is bounded inside the solve, without shrinking the useful x step.
+        # A weak column is bounded inside the solve, without shrinking
+        # the useful x step.
         x = bounded_lstsq([[1, 0], [0, 1e-12]], [1, 1], [0, 0], [2, 2], 40)
         self.assertAlmostEqual(x[0], 1, places=12)
         self.assertEqual(x[1], 2)
@@ -594,8 +601,8 @@ class JointQualificationTests(unittest.TestCase):
         from flahax import JointProblem, solve_joint_problem
         from tools.qualify_joint_fit import verify_stationarity
 
-        # f=(x-1)^2+(q/2-1)^2, q=x^2: df/dx=x^3-2.
-        # Bisection in Decimal is independent of the solver and its differences.
+        # f=(x-1)^2+(q/2-1)^2, q=x^2: df/dx=x^3-2. Bisection in Decimal
+        # is independent of the solver and its differences.
         with localcontext() as context:
             context.prec = 60
             lower, upper = Decimal(1), Decimal(2)

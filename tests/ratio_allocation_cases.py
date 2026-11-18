@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent allocation witnesses and a bounded public-workflow case matrix.
+"""Independent allocation witnesses and a bounded public-workflow case
+matrix.
 
-The oracle never calls the FlahaX allocator. It shares material interpretation and
-speciation, then solves linear inventory equations by Gaussian elimination and a
-one-dimensional charge bisection. Independent thermodynamics belongs to N2.
+The oracle never calls the FlahaX allocator. It shares material
+interpretation and speciation, then solves linear inventory equations by
+Gaussian elimination and a one-dimensional charge bisection. Independent
+thermodynamics belongs to N2.
 """
 
 from copy import deepcopy
@@ -138,7 +140,9 @@ def cases():
 
 
 def linear_solve(matrix, rhs):
-    """Small independent pivoted elimination, not NNLS or FlahaX root finding."""
+    """Small independent pivoted elimination, not NNLS or FlahaX root
+    finding.
+    """
     rows = [list(a) + [b] for a, b in zip(matrix, rhs)]
     n = len(rhs)
     for j in range(n):
@@ -156,7 +160,9 @@ def linear_solve(matrix, rhs):
 
 
 def independent_witness(req):
-    """Find a nominal feasible witness without invoking recipe allocation."""
+    """Find a nominal feasible witness without invoking recipe
+    allocation.
+    """
     sources = req['products'][:6]
     inv = [material_inventory(p['product']) for p in sources]
     volume = req['volume_litres']
@@ -254,7 +260,9 @@ def independent_witness(req):
 
 
 def infeasibility_certificate(case):
-    """Check a necessary linear condition, independently of the allocator."""
+    """Check a necessary linear condition, independently of the
+    allocator.
+    """
     name, expected, req, explanation = case
     assert expected == 'infeasible'
     wt = req['water']['totals_mol_kg']

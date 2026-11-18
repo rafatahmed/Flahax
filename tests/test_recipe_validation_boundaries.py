@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public recipe requests reject unsupported or inconsistent preparation inputs."""
+"""Public recipe requests reject unsupported or inconsistent preparation
+inputs.
+"""
 
 import math
 import unittest

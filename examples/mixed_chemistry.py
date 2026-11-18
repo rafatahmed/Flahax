@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Explicit fixed-pH mixed catalogue chemistry and a precipitation example."""
+"""Explicit fixed-pH mixed catalogue chemistry and a precipitation
+example.
+"""
 
 from flahax import (
     convert_catalogue_product_dose,
@@ -27,7 +29,8 @@ def run():
         'Sodium Molybdate (Dihydrate)': 0.0001,
         'Urea': 0.005,
     }
-    # Fixed pH is an imposed boundary, not a predicted pH of this recipe.
+    # Fixed pH is an imposed boundary, not a predicted pH of this
+    # recipe.
     mixed = solve_catalogue_product_doses(
         doses, 6.0, water_totals={'Na+': 0.002, 'Cl-': 0.002}, allow_precipitation=False
     )

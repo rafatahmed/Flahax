@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Steiner 1a arithmetic and model regression, with measured pH reported separately."""
+"""Steiner 1a arithmetic and model regression, with measured pH reported
+separately.
+"""
 
 import json
 from pathlib import Path
@@ -40,7 +42,9 @@ def preparations():
 
 
 def predicted_ph(amounts):
-    """Separate charge-balance bisection using the production speciation kernel."""
+    """Separate charge-balance bisection using the production speciation
+    kernel.
+    """
     totals = {name: value / charge / 1000 for name, value, charge in zip(BASIS, amounts, VALENCES)}
     low, high = 3.0, 9.0
     assert solve(totals, low).charge_balance > 0

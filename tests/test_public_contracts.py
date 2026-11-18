@@ -129,8 +129,9 @@ class PublicContractTests(unittest.TestCase):
                 '--output',
                 str(root / 'out'),
             )
-            # Decision 2026-10-30: with the packaged catalogue's acid reagents the run ends
-            # "requires review" (exit 0) and reports the K shortfall the zero maximum forces.
+            # Decision 2026-10-30: with the packaged catalogue's acid
+            # reagents the run ends "requires review" (exit 0) and
+            # reports the K shortfall the zero maximum forces.
             self.assertEqual(result.returncode, 0, result.stderr)
             summary = json.loads((root / 'out/summary.json').read_text(encoding='utf-8'))
             verify_summary(summary)
@@ -190,7 +191,8 @@ class PublicContractTests(unittest.TestCase):
                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src'), FLAHAX_HOME=tmp),
                 timeout=90,
             )
-            # Decision 2026-10-30: "requires review" (exit 0) with the forced K shortfall.
+            # Decision 2026-10-30: "requires review" (exit 0) with the
+            # forced K shortfall.
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
             verify_summary(summary)

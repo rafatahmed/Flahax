@@ -34,8 +34,9 @@ class FertilizerEquilibriumTests(unittest.TestCase):
         fixture = load_reference_fixture(
             Path(__file__).parent / "fixtures" / "phreeqc" / "target_ph_nitric_dose.json"
         )
-        # Historical phreeqc.dat golden case remains bound to its original
-        # reduced kernel; public planning now uses the pinned MINTEQ model.
+        # Historical phreeqc.dat golden case remains bound to its
+        # original reduced kernel; public planning now uses the pinned
+        # MINTEQ model.
         target = solve_legacy_phreeqc_macro(TOTALS, 6.0, allow_precipitation=False)
         dose = plan_legacy_phreeqc_nitric(TOTALS, 7.4, 6.0)
         assert_reference_result(

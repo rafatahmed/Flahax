@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Every error code a user can meet is explained in the shipped user guide (hardening 2/4)."""
+"""Every error code a user can meet is explained in the shipped user
+guide (hardening 2/4).
+"""
 
 from importlib.resources import files
 from pathlib import Path

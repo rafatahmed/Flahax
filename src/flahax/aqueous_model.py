@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""One dependency-free mass-action solver for the pinned 25 C reaction set.
+"""One dependency-free mass-action solver for the pinned 25 C reaction
+set.
 
-Every analytical component and ligand is solved simultaneously in log activity
-space. Phase amounts are additional unknowns; an active-set method enforces
-nonnegative solid amounts and nonpositive SI for every allowed absent phase.
-Redox valences are separate conserved inputs, as in PHREEQC SOLUTION speciation.
+Every analytical component and ligand is solved simultaneously in log
+activity space. Phase amounts are additional unknowns; an active-set
+method enforces nonnegative solid amounts and nonpositive SI for every
+allowed absent phase. Redox valences are separate conserved inputs, as
+in PHREEQC SOLUTION speciation.
 """
 
 from dataclasses import dataclass, field
@@ -15,28 +17,34 @@ from functools import lru_cache
 from importlib.resources import files
 import json
 import math
+
 from .delivery_contracts import DeliveryError
 from .root_finding import shrink_bracket
 
 LN10 = math.log(10.0)
-# Continued-fraction sweeps before Newton when the cold start does not converge (#52).
+# Continued-fraction sweeps before Newton when the cold start does not
+# converge (#52).
 PRESOLVE_SWEEPS = 200
 
 
 @lru_cache(maxsize=1)
 def chemistry():
-    """The packaged 25 °C thermodynamic data (``data/chemistry_25c.json``), loaded once."""
+    """The packaged 25 °C thermodynamic data
+    (``data/chemistry_25c.json``), loaded once.
+    """
     return json.loads(files('flahax').joinpath('data/chemistry_25c.json').read_text())
 
 
 @dataclass(frozen=True)
 class AqueousResult:
-    """A solved solution: totals, pH, ionic strength, species, activities, saturation indices,
-    precipitated phases, residuals and charge balance.
+    """A solved solution: totals, pH, ionic strength, species,
+    activities, saturation indices, precipitated phases, residuals
+    and charge balance.
 
-    model_limitations identifies omitted positive ligand/metal competition and
-    selected profile assumptions. model_domain states the numerical/chemical
-    conventions; a converged result does not establish physical applicability.
+    model_limitations identifies omitted positive ligand/metal
+    competition and selected profile assumptions. model_domain states
+    the numerical/chemical conventions; a converged result does not
+    establish physical applicability.
     """
 
     totals: dict
@@ -56,12 +64,14 @@ class AqueousResult:
 
 
 def model_qualification(totals):
-    """Scope of the pinned equations, not a claim of experimentally verified accuracy.
+    """Scope of the pinned equations, not a claim of experimentally
+    verified accuracy.
 
-    Positive ligand/metal pairs without a complex in the selected reaction set
-    are explicit limitations. A zero input does not activate competition. The
-    list concerns these selected chelators and metals, not every possible omitted
-    reaction. Numerical convergence cannot remove a model-coverage limitation.
+    Positive ligand/metal pairs without a complex in the selected
+    reaction set are explicit limitations. A zero input does not
+    activate competition. The list concerns these selected chelators and
+    metals, not every possible omitted reaction. Numerical convergence
+    cannot remove a model-coverage limitation.
     """
     data = chemistry()
     limitations = []
@@ -109,11 +119,13 @@ def model_qualification(totals):
 
 
 def linear(a, b):
-    """Row-equilibrated elimination; zero pivots fail without an absolute floor.
+    """Row-equilibrated elimination; zero pivots fail without an
+    absolute floor.
 
-    Row scaling preserves the system while avoiding a unit-dependent singularity
-    decision. A small backward residual is checked separately by the nonlinear
-    iteration; this solve alone does not certify forward accuracy or conditioning.
+    Row scaling preserves the system while avoiding a unit-dependent
+    singularity decision. A small backward residual is checked
+    separately by the nonlinear iteration; this solve alone does not
+    certify forward accuracy or conditioning.
     """
     rows = []
     for row, value in zip(a, b):
@@ -141,7 +153,9 @@ def linear(a, b):
 
 
 def _damped_step(evaluate, x, residual, matrix):
-    """Levenberg-Marquardt step that lowers the squared residual, or None."""
+    """Levenberg-Marquardt step that lowers the squared residual, or
+    None.
+    """
     m = len(residual)
     normal = [
         [sum(matrix[r][i] * matrix[r][j] for r in range(m)) for j in range(m)] for i in range(m)
@@ -171,8 +185,10 @@ def _damped_step(evaluate, x, residual, matrix):
 def _continued_fraction(
     logs, totals, bases, records, sparse, ph, strength, sweeps=PRESOLVE_SWEEPS
 ):
-    """Mass-balance pre-iteration (Wigley 1977 continued fraction): rescale each free
-    activity by total/sum, damped by its largest stoichiometric coefficient."""
+    """Mass-balance pre-iteration (Wigley 1977 continued fraction):
+    rescale each free activity by total/sum, damped by its largest
+    stoichiometric coefficient.
+    """
     root = math.sqrt(strength)
 
     def lgamma(z):
@@ -202,10 +218,12 @@ def _continued_fraction(
 
 
 def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, start=None):
-    """Equilibrium at fixed pH. ``start`` (an AqueousResult of a nearby state, such as
-    the previous step of a dose or pH search) only seeds the iteration; the converged
-    state is the same within solver tolerance, and a failed warm start falls back to
-    the cold start below."""
+    """Equilibrium at fixed pH. ``start`` (an AqueousResult of a nearby
+    state, such as the previous step of a dose or pH search) only
+    seeds the iteration; the converged state is the same within
+    solver tolerance, and a failed warm start falls back to the cold
+    start below.
+    """
     if start is not None:
         try:
             return _solve(
@@ -226,8 +244,9 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, sta
     except DeliveryError as exc:
         if exc.code != 'nonconvergent':
             raise
-    # The cold start (every free activity at total/1000) can leave Newton crawling far
-    # from strongly complexed free ions (#52); restart from a continued-fraction estimate.
+    # The cold start (every free activity at total/1000) can leave
+    # Newton crawling far from strongly complexed free ions (#52);
+    # restart from a continued-fraction estimate.
     return _solve(
         totals,
         ph,
@@ -254,7 +273,11 @@ def _solve(
         raise DeliveryError(
             'activity_model_out_of_range', 'Davies model requires I <= 0.1 mol/kgw'
         )
-    totals = {n: v for n, v in totals.items() if v > 0}
+    # A saved JSON round trip or a set-derived inventory can reorder
+    # identical components. Fix the Newton basis (and initial strength
+    # sum) before doing arithmetic so replay retains exact scientific
+    # evidence and identity (#272).
+    totals = {n: totals[n] for n in sorted(totals) if totals[n] > 0}
     bases = list(totals)
     n = len(bases)
     permitted = set(bases) | {'H+', 'H2O'}
@@ -267,7 +290,8 @@ def _solve(
         raise DeliveryError('unknown_phase', 'phase not in the pinned reaction set')
     candidates = {p: all_phases[p] for p in phases if set(all_phases[p]['powers']) <= permitted}
     stoich = [[r['powers'].get(b, 0.0) for b in bases] for r in records]
-    # Each species involves few components; iterate only its non-zero stoichiometry.
+    # Each species involves few components; iterate only its non-zero
+    # stoichiometry.
     sparse = [[(j, v) for j, v in enumerate(s) if v] for s in stoich]
     strength = (
         ionic_strength
@@ -355,8 +379,9 @@ def _solve(
                 count += 1
                 residual, amounts, matrix = evaluate(x, True)
                 norm = max(map(abs, residual), default=0.0)
-                # A warm start can begin inside the tolerance with the previous state's
-                # residual; one Newton step restores the cold path's quadratic finish (#61).
+                # A warm start can begin inside the tolerance with the
+                # previous state's residual; one Newton step restores
+                # the cold path's quadratic finish (#61).
                 if norm < 2e-10 and (iteration or start is None or norm < 1e-14):
                     break
                 step = linear(matrix, [-r for r in residual])
@@ -369,9 +394,10 @@ def _solve(
                         break
                     alpha *= 0.5
                 else:
-                    # A near-singular Jacobian can give a useless Newton direction
-                    # (seen after a cold start with a strong chelate); take a damped
-                    # least-squares step instead. Paths that converge today are unchanged.
+                    # A near-singular Jacobian can give a useless Newton
+                    # direction (seen after a cold start with a strong
+                    # chelate); take a damped least-squares step
+                    # instead. Paths that converge today are unchanged.
                     x = _damped_step(evaluate, x, residual, matrix)
                     if x is None:
                         raise DeliveryError(
@@ -447,9 +473,10 @@ def _solve(
                 ),
             )
         if ionic_strength is None:
-            # Secant step on g(I) = I(speciation at I) - I, which converges superlinearly
-            # whether ion pairing makes g's slope positive or negative; the plain average
-            # (linear, ~35 passes to 1e-12, #61) remains the fallback.
+            # Secant step on g(I) = I(speciation at I) - I, which
+            # converges superlinearly whether ion pairing makes g's
+            # slope positive or negative; the plain average (linear, ~35
+            # passes to 1e-12, #61) remains the fallback.
             gap = updated - strength
             step = (strength + updated) / 2
             if previous is not None and gap != previous[1]:
@@ -458,15 +485,17 @@ def _solve(
                     step = secant
             previous = (strength, gap)
             strength = step
-        # Water activity depends only weakly on itself (through H2O-bearing species).
+        # Water activity depends only weakly on itself (through
+        # H2O-bearing species).
         water = next_water
     raise DeliveryError('nonconvergent', 'ionic strength/water iteration limit')
 
 
 @dataclass(frozen=True)
 class AcidResult:
-    """Nitric acid needed to move a solution from its initial pH to the target, with both solved
-    states; the pH must still be measured after mixing.
+    """Nitric acid needed to move a solution from its initial pH to the
+    target, with both solved states; the pH must still be measured
+    after mixing.
     """
 
     initial: AqueousResult
@@ -476,11 +505,13 @@ class AcidResult:
 
 
 def nitric_target(totals, initial_ph, target_ph, *, phases=()):
-    """Conserve every component, including added nitrate, through the same solve.
+    """Conserve every component, including added nitrate, through the
+    same solve.
 
-    Initial residual charge defines the strong-ion inventory (water alkalinity
-    need not be guessed). HNO3 is neutral as a reagent: the final residual
-    electrical charge equals the initial residual charge, after adding nitrate.
+    Initial residual charge defines the strong-ion inventory (water
+    alkalinity need not be guessed). HNO3 is neutral as a reagent: the
+    final residual electrical charge equals the initial residual charge,
+    after adding nitrate.
     """
     initial = solve(totals, initial_ph, phases=phases)
     if target_ph == initial_ph:
@@ -491,7 +522,8 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     last = [initial]
 
     def at(dose):
-        # Warm-start each dose from the previous solve (#61); only the iteration path changes.
+        # Warm-start each dose from the previous solve (#61); only the
+        # iteration path changes.
         last[0] = solve(
             dict(totals) | {'NO3-': totals.get('NO3-', 0.0) + dose},
             target_ph,
@@ -507,7 +539,8 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     while (f_hi := at(hi).charge_balance - initial.charge_balance) > 0:
         lo, f_lo = hi, f_hi
         hi *= 2
-    # Same final width as 40 bisection steps from [0, hi], in far fewer solves.
+    # Same final width as 40 bisection steps from [0, hi], in far fewer
+    # solves.
     lo, hi = shrink_bracket(
         lambda dose: at(dose).charge_balance - initial.charge_balance,
         lo,

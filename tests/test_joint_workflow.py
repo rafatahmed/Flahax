@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public joint quantities, fresh diagnosis, hard limits and unresolved searches."""
+"""Public joint quantities, fresh diagnosis, hard limits and unresolved
+searches.
+"""
 
 from fractions import Fraction
 import unittest
 from unittest.mock import patch
+
 from flahax import load_library, plan_fertilizer_workflow, VolumeLitres
 from flahax.ph_adjustment import nutrient_salts
 from tests.test_ph_adjustment import ACIDS, RO, amended_ph
@@ -36,9 +39,10 @@ def configuration(pool, product, **changes):
 
 
 class JointWorkflowTests(unittest.TestCase):
-    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
-    # workflow plans no nitric candidate with a target state, so the case this test reproduces
-    # cannot be staged.
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 -
+    # first cluster (Howard Resh) workflow plans no nitric candidate
+    # with a target state, so the case this test reproduces cannot be
+    # staged.
     def test_explicit_joint_rebuilds_actual_recipe_and_zero_reagent(self):
         self.enterContext(historical_catalogue())
         library = load_library()
@@ -101,8 +105,8 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(c.target.ph, 5.8, delta=0.001)
         rows = {r['symbol']: r for r in c.recommendation['rows']}
         self.assertAlmostEqual(rows['K']['final'], 100, places=5)
-        # The fit keeps the label (packaged Potassium Nitrate: 13.0 % N per 38.2 % K), plus
-        # nitric-acid nitrogen.
+        # The fit keeps the label (packaged Potassium Nitrate: 13.0 % N
+        # per 38.2 % K), plus nitric-acid nitrogen.
         self.assertAlmostEqual(
             rows['N_NO3']['final'],
             100 * 13.0 / 38.2 + c.nutrient_contribution['N_NO3'],
@@ -154,7 +158,7 @@ class JointWorkflowTests(unittest.TestCase):
         self.assertGreater(Fraction(evidence['exact_loss_lower_bound']), 0)
         self.assertIsNone(stage.value.selected)
 
-    def test_inventory_evidence_keeps_the_best_pH_qualified_near_fit(self):
+    def test_inventory_evidence_keeps_the_best_ph_qualified_near_fit(self):
         stage = self.positive_case(
             {'check_inventory_relaxation': True},
             controls_change={'loss_tolerance': 2},

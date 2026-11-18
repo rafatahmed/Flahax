@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Commercial-material inventories and a local fixed-ratio allocation."""
+"""Commercial-material inventories and a local fixed-ratio
+allocation.
+"""
 
 from copy import deepcopy
 import math
@@ -21,7 +23,9 @@ VALENCES = (1, 2, 2, 1, 1, 2)
 
 
 def validate_limits(limits):
-    """Explicit analytical nutrient maxima in elemental mg/L, without crop defaults."""
+    """Explicit analytical nutrient maxima in elemental mg/L, without
+    crop defaults.
+    """
     if limits is None:
         return {}
     if not isinstance(limits, dict) or set(limits) - {*LABELS, "Na", "Cl", "N_NH4"}:
@@ -44,7 +48,9 @@ def _checked_profile(values, name):
 
 
 def limit_assessment(elemental, limits):
-    """Use the existing direct ceiling comparison on the analytical inventory."""
+    """Use the existing direct ceiling comparison on the analytical
+    inventory.
+    """
     rows = [
         {"symbol": n, "target": None, "final": elemental.get(n, 0.0)}
         for n in dict.fromkeys(("Na", "Cl", *limits))
@@ -56,7 +62,9 @@ def limit_assessment(elemental, limits):
 
 
 def water_totals(report, volume, mass):
-    """Reconstruct the final-solvent-basis inventory of the source water alone."""
+    """Reconstruct the final-solvent-basis inventory of the source water
+    alone.
+    """
     result = dict(report["background_totals_mol_kg"])
     result.update(
         {b: report["nutrients_mmol_l"][n] * volume / mass / 1000 for n, b in zip(NUTRIENTS, BASIS)}
@@ -65,7 +73,9 @@ def water_totals(report, volume, mass):
 
 
 def elemental_from_totals(totals, volume, mass):
-    """Convert chemistry mol/kg to elemental mg/L on the declared batch basis."""
+    """Convert chemistry mol/kg to elemental mg/L on the declared batch
+    basis.
+    """
     return {k: v * mass / volume * 1000 for k, v in component_nutrient_masses(totals).items()}
 
 
@@ -117,7 +127,9 @@ def _sources(products):
 
 
 def reconstruct_products(sources, grams, water, volume, mass, *, scenario_inventories=False):
-    """Sum declared analytical assays separately from conserved chemistry components."""
+    """Sum declared analytical assays separately from conserved
+    chemistry components.
+    """
     totals = water_totals(water, volume, mass)
     audit = {
         "water": elemental_from_totals(totals, volume, mass),
@@ -186,7 +198,9 @@ def reconstruct_products(sources, grams, water, volume, mass, *, scenario_invent
 
 
 def plan_products(products, cations, anions, ph, strength, volume, mass, water, limits):
-    """Find a nonnegative local candidate; independently reconstruct and qualify it."""
+    """Find a nonnegative local candidate; independently reconstruct and
+    qualify it.
+    """
     sources = _sources(products)
     initial = water_totals(water, volume, mass)
     water_elements = elemental_from_totals(initial, volume, mass)
@@ -194,7 +208,8 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         raise DeliveryError(
             "ratio_limit_exceeded", "Source water exceeds a stated nutrient maximum"
         )
-    # Explicit zero headroom cannot be supplied by any nonnegative product dose.
+    # Explicit zero headroom cannot be supplied by any nonnegative
+    # product dose.
     keep = [
         i
         for i, s in enumerate(sources)
@@ -262,9 +277,10 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         rhs.append(bound / scale)
     factor = volume / mass
     charge_scale = mass / volume * 1000 / strength
-    # Chemically identical dose directions must have the same charge derivative.
-    # Independent finite-difference steps can otherwise break exact redundancy
-    # and make NNLS transfer dose between equivalent products (#248).
+    # Chemically identical dose directions must have the same charge
+    # derivative. Independent finite-difference steps can otherwise
+    # break exact redundancy and make NNLS transfer dose between
+    # equivalent products (#248).
     directions = [
         tuple(sorted(s["inventory"]["components_moles_per_gram"].items())) for s in active
     ]

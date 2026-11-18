@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public candidate reconstruction and acceptance for explicitly joint calculations."""
+"""Public candidate reconstruction and acceptance for explicitly joint
+calculations.
+"""
 
 from collections.abc import Mapping
 from fractions import Fraction
+
 from .delivery_contracts import DeliveryError
 from .joint_optimality import objective_certificate
 from .joint_solver import solve_joint_problem
@@ -37,7 +40,9 @@ def _inventory_evidence(problem, result):
 
 
 def zero_reagent_controls(problem):
-    """Bounded zero-dose recovery policy; no best-fit or stationarity acceptance."""
+    """Bounded zero-dose recovery policy; no best-fit or stationarity
+    acceptance.
+    """
     return dict(
         dose_steps={s.product_id: 1e-4 for s in (*problem.fertilizers, problem.reagent)},
         charge_scale=0.001,
@@ -67,10 +72,12 @@ def joint_candidate(
     config=None,
     residual_charge=0.0,
 ):
-    """Run a joint candidate, or the strictly zero-reagent legacy recovery.
+    """Run a joint candidate, or the strictly zero-reagent legacy
+    recovery.
 
-    No assay remainder is assigned to solvent. A zero-dose recovery fixes the
-    reagent mass to zero, so its solvent coefficient has no material effect.
+    No assay remainder is assigned to solvent. A zero-dose recovery
+    fixes the reagent mass to zero, so its solvent coefficient has no
+    material effect.
     """
     from .ph_adjustment import (
         make_joint_problem,
