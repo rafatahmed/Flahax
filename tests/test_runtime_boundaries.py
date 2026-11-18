@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Outcome-based delivery guard checks for runtime coverage closure (#186)."""
+"""Outcome-based delivery guard checks for runtime coverage closure
+(#186).
+"""
 
 from dataclasses import replace
 import unittest
@@ -25,8 +27,9 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
     def test_incomplete_or_invalid_delivery_inventory(self):
         for recipe in (None, replace(self.args['recipe'], feasible=False)):
             self.rejected('infeasible_recipe', recipe=recipe)
-        # An empty recipe is not rejected (G25), and neither is the water's charge imbalance
-        # (G11): it is planned on the water alone.
+        # An empty recipe is not rejected (G25), and neither is the
+        # water's charge imbalance (G11): it is planned on the water
+        # alone.
         empty = plan_equilibrium_delivery(
             **(self.args | dict(recipe=replace(self.args['recipe'], salts=())))
         )
@@ -74,8 +77,9 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
         from flahax.aqueous_model import solve
         from flahax.product_conversion import catalogue_dose_totals
 
-        # Synthetic complete electrolyte; close its stated chloride against the
-        # initial mixed state just as the existing delivery fixture does.
+        # Synthetic complete electrolyte; close its stated chloride
+        # against the initial mixed state just as the existing delivery
+        # fixture does.
         water = self.args['water_totals'] | {'CO3-2': 0.001}
         totals = catalogue_dose_totals({'Potassium Carbonate': 0.01, 'Potassium Nitrate': 0.02})
         for _ in range(8):
@@ -96,7 +100,9 @@ class EquilibriumDeliveryBoundaryTests(unittest.TestCase):
 
 
 class DeliveryRecordBoundaryTests(unittest.TestCase):
-    """Malformed saved inputs must fail with stable public error codes."""
+    """Malformed saved inputs must fail with stable public error
+    codes.
+    """
 
     def test_record_field_failures(self):
         from flahax import validate_delivery_request
@@ -408,7 +414,8 @@ class AcidOptionBoundaryTests(unittest.TestCase):
                 with self.assertRaises(DeliveryError) as caught:
                     plan_acid_options(**(defaults | override))
                 self.assertEqual(caught.exception.code, code)
-        # A water whose charge no ion balances is planned from charge differences (G11).
+        # A water whose charge no ion balances is planned from charge
+        # differences (G11).
         planned = plan_acid_options(**(defaults | dict(totals={'Na+': 0.002})))
         self.assertEqual(planned.selected_product_id, 'HNO3')
 
@@ -469,7 +476,8 @@ class RenderedResultBoundaryTests(unittest.TestCase):
         from flahax.mix_results import _tank_rows, _nutrient_rows
         from tests.test_mix_tui import UTF8
 
-        # Synthetic rendering fixture; these values do not claim a qualified chemical solution.
+        # Synthetic rendering fixture; these values do not claim a
+        # qualified chemical solution.
         summary = dict(
             status='requires_review',
             ph=None,
@@ -585,7 +593,8 @@ class MultipleCeilingBoundaryTests(unittest.TestCase):
             self.assertTrue(all(g >= 0 for g in result['grams']))
             rows = {r['symbol']: r['final'] for r in result['rows']}
             for symbol in ('K', 'N_NO3', 'Na', 'Cl'):
-                # Independent mass accounting: g/L * assay percent * 10 = mg/L.
+                # Independent mass accounting: g/L * assay percent * 10
+                # = mg/L.
                 expected = sum(
                     g * salt['elements'][symbol] * 10
                     for g, salt in zip(result['grams'], case['salts'])
@@ -603,7 +612,8 @@ class MultipleCeilingBoundaryTests(unittest.TestCase):
         case = json.loads(
             (Path(__file__).parent / 'fixtures/runtime/ceiling_inputs.json').read_text()
         )['cases'][0]
-        # Fault injection of a shortened internal budget tests the incomplete-result contract.
+        # Fault injection of a shortened internal budget tests the
+        # incomplete-result contract.
         with patch.object(engine, 'CEILING_STEPS', 1):
             result = engine._fit_within(case['salts'], case['targets'], {}, 0, case['maxima'])
         verdict = engine._report(result['rows'], result['grams'], [], case['maxima'])
@@ -625,7 +635,8 @@ class CeilingOverflowBoundaryTests(unittest.TestCase):
                 seen.append(args[5]['Na'][1])
             return dict(grams=[0], rows=[dict(symbol='Na', final=next(values))], loss=1)
 
-        # Inject finite fit responses whose secant products overflow; preserve the safeguard.
+        # Inject finite fit responses whose secant products overflow;
+        # preserve the safeguard.
         with patch.object(engine, '_fit', fitted):
             result = engine._fit_within([{}], {'K': 1}, {}, 0, {'Na': 1})
         self.assertTrue(all(math.isfinite(v) for v in seen))

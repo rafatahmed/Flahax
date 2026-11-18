@@ -4,9 +4,10 @@
 # its results are calculations, not dosing instructions.
 """Stock volumes for the two interactive-mix fill modes.
 
-``fill``: the smaller nutrient tank sets the irrigation volume. The separate reagent
-container is refilled as needed at the same injection ratio. ``once``: the grower gives
-the irrigation volume; nutrient stocks must fit their tanks, while reagent refills are allowed.
+``fill``: the smaller nutrient tank sets the irrigation volume. The
+separate reagent container is refilled as needed at the same injection
+ratio. ``once``: the grower gives the irrigation volume; nutrient stocks
+must fit their tanks, while reagent refills are allowed.
 """
 
 import math
@@ -21,9 +22,11 @@ MODES = ('fill', 'once')
 
 @dataclass(frozen=True)
 class StockVolumes:
-    """The irrigation supplied, nutrient stock volumes, first reagent fill and tank capacities.
+    """The irrigation supplied, nutrient stock volumes, first reagent
+    fill and tank capacities.
 
-    The reagent container can require subsequent fills at the same injection ratio.
+    The reagent container can require subsequent fills at the same
+    injection ratio.
     """
 
     irrigation_litres: float
@@ -47,9 +50,11 @@ def _positive(value, label):
 def prepare_stocks(
     *, tank_litres: Mapping, ratio: float, mode: str, irrigation_litres: float | None = None
 ) -> StockVolumes:
-    """Nutrient stock litres and first reagent fill for full tanks or one irrigation.
+    """Nutrient stock litres and first reagent fill for full tanks or
+    one irrigation.
 
-    A smaller reagent container is refilled; only nutrient tanks constrain batch capacity.
+    A smaller reagent container is refilled; only nutrient tanks
+    constrain batch capacity.
     """
     if not isinstance(tank_litres, Mapping):
         raise DeliveryError("invalid_type", "tank_litres must be a mapping")
@@ -66,8 +71,9 @@ def prepare_stocks(
         raise DeliveryError('invalid_value', f'mode must be one of {MODES}, got {mode!r}')
 
     if mode == 'fill':
-        # Assumption: irrigation_litres is ignored in fill mode. Nutrient tanks are prepared to the
-        # smallest capacity directly: (x * ratio) / ratio can round 1 ulp above x.
+        # Assumption: irrigation_litres is ignored in fill mode.
+        # Nutrient tanks are prepared to the smallest capacity directly:
+        # (x * ratio) / ratio can round 1 ulp above x.
         prepared_each = min(capacity['A'], capacity['B'])
         irrigation = _positive(prepared_each * ratio, 'derived irrigation litres')
     else:

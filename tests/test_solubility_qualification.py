@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Exact arithmetic witnesses and adversarial source-qualification controls."""
+"""Exact arithmetic witnesses and adversarial source-qualification
+controls.
+"""
 
 from fractions import Fraction
 from types import SimpleNamespace
@@ -38,7 +40,8 @@ def check(r=None, temperature=20, dose=6, **kwargs):
 
 class ConversionTests(unittest.TestCase):
     def test_independent_rational_mass_balance(self):
-        # Source mass divided by final volume; densities here are synthetic inputs.
+        # Source mass divided by final volume; densities here are
+        # synthetic inputs.
         cases = [
             (25, 'mass_percent', {}, Fraction(300)),
             (25, 'g_per_100g_water', {}, Fraction(240)),
@@ -94,7 +97,8 @@ class SourceTests(unittest.TestCase):
         row = check(temperature=20, dose=5.1)
         self.assertEqual((row.status, row.limit_g_per_l), ('exceeds', 500))
         self.assertIn('510', exceeds_message(row, 20))
-        # 15 C lies between the points: no blending, the lower one on a tie.
+        # 15 C lies between the points: no blending, the lower one on a
+        # tie.
         row = check(temperature=15, dose=3.9)
         self.assertEqual((row.limit_g_per_l, row.source_temperature_c), (400, 10))
 

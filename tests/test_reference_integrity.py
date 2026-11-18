@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Golden evidence cannot be repaired by overwriting or accepting malformed output."""
+"""Golden evidence cannot be repaired by overwriting or accepting
+malformed output.
+"""
 
 import copy
 import json
@@ -48,7 +50,8 @@ class FixtureValidationTests(unittest.TestCase):
             f['expected'] = expected
             with self.assertRaises(DeliveryError):
                 assert_reference_result(f, {'x': 123})
-            # Integer JSON keys become strings; test the in-memory invalid key above.
+            # Integer JSON keys become strings; test the in-memory
+            # invalid key above.
             if isinstance(expected, dict) and 1 in expected.get('values', {}):
                 continue
             with tempfile.TemporaryDirectory() as tmp:

@@ -2,20 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Implicit charge derivatives of the selected, phase-free aqueous equations.
+"""Implicit charge derivatives of the selected, phase-free aqueous
+equations.
 
-Mass-action, component balances, ionic strength and water activity are differentiated
-simultaneously. No chemical coefficient or acceptance threshold is introduced.
+Mass-action, component balances, ionic strength and water activity are
+differentiated simultaneously. No chemical coefficient or acceptance
+threshold is introduced.
 """
 
 import math
 from fractions import Fraction as F
+
 from .aqueous_model import chemistry, LN10
 from .delivery_contracts import DeliveryError
 
 
 def _exact_linear(matrix, rhs):
-    """Solve several right-hand sides without losing small balance contributions."""
+    """Solve several right-hand sides without losing small balance
+    contributions.
+    """
     n = len(matrix)
     count = len(rhs[0])
     rows = [row.copy() + values.copy() for row, values in zip(matrix, rhs)]
@@ -44,14 +49,17 @@ def _exact_linear(matrix, rhs):
 
 
 def equilibrium_charge_gradient(problem, state):
-    """Return d(charge mol/kg solvent)/d(product g/L), in problem source order.
+    """Return d(charge mol/kg solvent)/d(product g/L), in problem source
+    order.
 
-    This differentiates aqueous_model's fixed-pH, variable-I mass-action equations.
-    Positive components use log activities; absent components use their one-sided
-    free-activity limit. The active water-activity floor has zero water derivative.
-    Selected phases and an ambiguous floor boundary are unsupported, not feasible
-    or infeasible conclusions. The supplied equilibrium must be freshly qualified
-    separately; this derivative is not a physical-applicability certificate.
+    This differentiates aqueous_model's fixed-pH, variable-I mass-action
+    equations. Positive components use log activities; absent components
+    use their one-sided free-activity limit. The active water-activity
+    floor has zero water derivative. Selected phases and an ambiguous
+    floor boundary are unsupported, not feasible or infeasible
+    conclusions. The supplied equilibrium must be freshly qualified
+    separately; this derivative is not a physical-applicability
+    certificate.
     """
     sources = (*problem.fertilizers, problem.reagent)
     eq = state.get('equilibrium')
@@ -114,7 +122,8 @@ def equilibrium_charge_gradient(problem, state):
                 if basis in absent and (power < 0 or 0 < power < 1):
                     raise DeliveryError('unresolved_sensitivity', 'singular boundary power')
                 partials.append(F(0))
-        # These are derivatives of the coefficients already used by aqueous_model.
+        # These are derivatives of the coefficients already used by
+        # aqueous_model.
         gamma_prime = -0.509 * z * z * (1 / (2 * root * (1 + root) ** 2) - 0.3) if z else 0.1
         partials += [
             -amount * F(LN10) * F(gamma_prime),
@@ -151,7 +160,8 @@ def equilibrium_charge_gradient(problem, state):
         sum(F(r['charge']) * d[j] for r, d in zip(records, derivatives)) for j in range(dimension)
     ]
     # q^T J^-1 B = z^T B, where J^T z = q. One exact adjoint solve
-    # avoids carrying a separate large rational solution for every product.
+    # avoids carrying a separate large rational solution for every
+    # product.
     adjoint = _exact_linear([list(row) for row in zip(*matrix)], [[q] for q in charge])
     try:
         gradient = [

@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The precipitation screen (decisions G12-G14): risk by evidence, information otherwise.
+"""The precipitation screen (decisions G12-G14): risk by evidence,
+information otherwise.
 
-A phase that forms readily marks the recipe with a precipitation risk. Every other
-supersaturated phase is information with the basis of its constant. Nothing blocks.
+A phase that forms readily marks the recipe with a precipitation risk.
+Every other supersaturated phase is information with the basis of its
+constant. Nothing blocks.
 """
 
 from types import SimpleNamespace

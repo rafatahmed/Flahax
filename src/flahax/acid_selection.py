@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Evaluate user-supplied acid products against the same mixed equilibrium model.
+"""Evaluate user-supplied acid products against the same mixed
+equilibrium model.
 
-No fertilizer target is interpreted as a water-quality measurement. Acid product
-purity, density and provenance are explicit; formulations are never silently
-relaxed to accommodate nutrient-bearing acid additions.
+No fertilizer target is interpreted as a water-quality measurement. Acid
+product purity, density and provenance are explicit; formulations are
+never silently relaxed to accommodate nutrient-bearing acid additions.
 """
 
 from dataclasses import dataclass
@@ -20,8 +21,9 @@ from .nutrient_acceptance import assess_incidental
 from .ph_adjustment import reagent_dose
 from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 
-# Pure, anhydrous acid identities; commercial aqueous products supply their own
-# mass fraction/density. Hydrated citric solids require a separately defined stock.
+# Pure, anhydrous acid identities; commercial aqueous products supply
+# their own mass fraction/density. Hydrated citric solids require a
+# separately defined stock.
 ACIDS = {
     'HNO3': ('NO3-', 63.01284, {'N_NO3': 14.0067}),
     'H3PO4': ('PO4-3', 97.995182, {'P': 30.973762}),
@@ -32,8 +34,9 @@ ACIDS = {
 
 @dataclass(frozen=True)
 class AcidCandidate:
-    """One acid product tried for the pH target: its dose, reagent amount, nutrient contribution
-    and score, or the error code and message why it was not usable.
+    """One acid product tried for the pH target: its dose, reagent
+    amount, nutrient contribution and score, or the error code and
+    message why it was not usable.
     """
 
     product_id: str
@@ -54,8 +57,8 @@ class AcidCandidate:
 
 @dataclass(frozen=True)
 class AcidSelection:
-    """Every acid candidate tried and the selected product (None when none fits); the pH must still
-    be measured after mixing.
+    """Every acid candidate tried and the selected product (None when
+    none fits); the pH must still be measured after mixing.
     """
 
     candidates: tuple
@@ -91,11 +94,13 @@ def plan_acid_options(
     phases=(),
     maximum_concentrations=None,
 ):
-    """Rank accepted single-acid plans by nutrient loss, or respect an explicit ID.
+    """Rank accepted single-acid plans by nutrient loss, or respect an
+    explicit ID.
 
-    Products: id, source, revision, recordedAt, chemicalFormula, massFraction
-    (pure acid mass / aqueous product mass), densityKgPerL. No acid blending,
-    cost optimization, dosing execution or open-CO2 prediction is performed.
+    Products: id, source, revision, recordedAt, chemicalFormula,
+    massFraction (pure acid mass / aqueous product mass), densityKgPerL.
+    No acid blending, cost optimization, dosing execution or open-CO2
+    prediction is performed.
     """
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
@@ -126,8 +131,8 @@ def plan_acid_options(
     if isinstance(phases, (str, bytes)) or not isinstance(phases, Sequence):
         raise DeliveryError('invalid_type', 'phases must be an explicit sequence')
     phases = tuple(phases)
-    # The dose is found from charge differences, so a residual charge in the water is carried,
-    # not refused (decision G11).
+    # The dose is found from charge differences, so a residual charge in
+    # the water is carried, not refused (decision G11).
     initial = solve(totals, initial_ph, phases=phases)
     candidates = []
     for product in products:
@@ -150,7 +155,8 @@ def plan_acid_options(
                     'wrong_reagent_direction', 'acid selection cannot satisfy a base requirement'
                 )
             _, molar_mass, nutrients = ACIDS[formula]
-            # The shared acid/base dose solve (#75); for acids it is the former bracketed search.
+            # The shared acid/base dose solve (#75); for acids it is the
+            # former bracketed search.
             dose, target = reagent_dose(
                 totals, initial_ph, target_ph, formula, phases=phases, initial=initial
             )
@@ -168,7 +174,8 @@ def plan_acid_options(
                 targets,
                 {ion: MilligramsPerLitre(value) for ion, value in contribution.items()},
             )
-            # Only the change the acid makes is judged (G25), against the declared percent.
+            # Only the change the acid makes is judged (G25), against
+            # the declared percent.
             moved = reagent_shift_exceeds(achieved, rows, tolerance)
             if moved:
                 raise DeliveryError(

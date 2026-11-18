@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Interactive ``flahax mix``: five steps, saved items and sessions (interactive mix Task 7)."""
+"""Interactive ``flahax mix``: five steps, saved items and sessions
+(interactive mix Task 7).
+"""
 
 import contextlib
 import io
@@ -33,8 +35,9 @@ END = ['', '1', '']  # pH 5.8; depth 1; session name
 
 
 def water(name, values, *, units='1', alkalinity='1', micro='1', ph='7.5', share='', limits=''):
-    """A new analysis: ``values`` maps lab ion names to one answer or a list of answers (Enter =
-    not measured)."""
+    """A new analysis: ``values`` maps lab ion names to one answer or a
+    list of answers (Enter = not measured).
+    """
     answers = ['2', name, units, alkalinity] + ([micro] if units != '1' else []) + [ph]
     for ion in WATER_IONS:
         entry = values.get(ion, '')
@@ -201,8 +204,8 @@ class MixTests(unittest.TestCase):
         self.assertIn('Ca', warning)
 
     def test_formula_step_lists_every_formula_on_enter(self):
-        # The first field-test session: fertilizer names typed at the formula step, then Enter,
-        # which used to loop.
+        # The first field-test session: fertilizer names typed at the
+        # formula step, then Enter, which used to loop.
         from flahax import load_library
 
         names = [f['name'] for f in load_library()['formulas']]
@@ -222,12 +225,13 @@ class MixTests(unittest.TestCase):
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
         self.assertEqual(summary['title'], 'Tomato (Howard Resh)')
 
-    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes at pH 4.89 on the packaged
-    # catalogue, so it asks for base instead of the nitric acid it scripts.
+    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes
+    # at pH 4.89 on the packaged catalogue, so it asks for base instead
+    # of the nitric acid it scripts.
     def test_do_not_mix_always_says_why(self):
         self.enterContext(historical_catalogue())
-        # Field test 2026-10-23: blocked sheets listed sodium notes while the blocking reason was
-        # empty.
+        # Field test 2026-10-23: blocked sheets listed sodium notes
+        # while the blocking reason was empty.
         code, lines, _ = self.run_mix(
             SPEC + RO + TOMATO + CATALOGUE + ['3', '1', 'no reagents'] + END,
             '--output',
@@ -289,7 +293,8 @@ class MixTests(unittest.TestCase):
         self.assertIn(code, (0, 3), '\n'.join(lines))
         report = (target / 'report.html').read_text(encoding='utf-8')
         summary = json.loads((target / 'summary.json').read_text(encoding='utf-8'))
-        # The titration is used as measured; the imbalance is reported, nothing is closed on it.
+        # The titration is used as measured; the imbalance is reported,
+        # nothing is closed on it.
         self.assertEqual(summary['stages']['chemistry']['status'], 'calculated')
         self.assertIsNone(summary['water']['balance_ion'])
         self.assertNotIn('closed on', report)
@@ -298,7 +303,8 @@ class MixTests(unittest.TestCase):
         self.assertNotIn('HCO3', saved['mg_per_litre'])
 
     def test_second_field_session_by_name_and_readable_grams(self):
-        # Field test 2026-10-23: 100 L tanks with a 10 L acid container, saved as 'tomato stage 1'.
+        # Field test 2026-10-23: 100 L tanks with a 10 L acid container,
+        # saved as 'tomato stage 1'.
         spec = ['100', '100', '10', '', '', '1']
         stage1 = ['1', 'tomato stage.1']
         code, lines, _ = self.run_mix(
@@ -332,8 +338,8 @@ class MixTests(unittest.TestCase):
         self.assertIn("Saved: tomato-stage-1", missing[-1])
 
     def test_sweep_findings_acid_title_repeats(self):
-        # Pre-release sweep 2026-10-23: #112 unknown acid, #114 changed-formula title, #113
-        # repeated notes.
+        # Pre-release sweep 2026-10-23: #112 unknown acid, #114
+        # changed-formula title, #113 repeated notes.
         self.enterContext(historical_catalogue())
         bad = ['1', '2', '1', 'hno3', '60', '1', '1.37', '', 'HNO3 60%', '1', 'my reagents']
         changed = (
@@ -411,8 +417,9 @@ class MixTests(unittest.TestCase):
             [(r['symbol'], r['maximumPpm']) for r in summary['limits']], [('Na', 69.0)]
         )
 
-    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes at pH 4.89 on the packaged
-    # catalogue, so it asks for base instead of the nitric acid it scripts.
+    # 33c5df2 catalogue: the scripted Tomato (Howard Resh) session mixes
+    # at pH 4.89 on the packaged catalogue, so it asks for base instead
+    # of the nitric acid it scripts.
     def test_batch_reads_saved_items(self):
         self.enterContext(historical_catalogue())
         code, lines, _ = self.full(
@@ -439,7 +446,8 @@ class MixTests(unittest.TestCase):
         self.assertIn(code, (0, 3), out.getvalue())
 
     def test_blocked_result_says_do_not_mix_with_the_reason(self):
-        # Source-water Na cannot be removed by selecting sodium-free products.
+        # Source-water Na cannot be removed by selecting sodium-free
+        # products.
         code, lines, _ = self.full(
             water_answers=water(
                 'sodium-over-limit',
@@ -490,8 +498,8 @@ class MixTests(unittest.TestCase):
         self.assertAlmostEqual(
             to_elements({'B': 10}, 'meq', 'HCO3', 'umol')['B'], 0.1081, places=6
         )
-        # mmol/L report, micronutrients in umol/L: nine major ions not measured, alkalinity 1, then
-        # Fe.
+        # mmol/L report, micronutrients in umol/L: nine major ions not
+        # measured, alkalinity 1, then Fe.
         code, lines, script = self.run_mix(
             SPEC + ['2', 'w', '3', '1', '2', '7.5'] + [''] * 9 + ['1']
         )
@@ -614,8 +622,9 @@ class MixTests(unittest.TestCase):
 
 
 def field_test_transcript(*, with_summary=False):
-    """Every prompt and line of the 2026-10-23 field-test session (line mode), temp folder and
-    version hidden."""
+    """Every prompt and line of the 2026-10-23 field-test session (line
+    mode), temp folder and version hidden.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         answers, lines = list(ANSWERS), []
 
@@ -630,7 +639,8 @@ def field_test_transcript(*, with_summary=False):
                 say=lambda *a: lines.append(' '.join(map(str, a))),
             )
         summary = json.loads((Path(tmp) / 'out/summary.json').read_text(encoding='utf-8'))
-    # Paths under the temporary folder use "/" so the transcript is the same on every system.
+    # Paths under the temporary folder use "/" so the transcript is the
+    # same on every system.
     masked = [line.replace(tmp, '<TMP>').replace(__version__, '<VERSION>') for line in lines]
     masked = [line.replace('\\', '/') if '<TMP>' in line else line for line in masked]
     text = '\n'.join(masked) + '\n'
@@ -639,8 +649,9 @@ def field_test_transcript(*, with_summary=False):
 
 class LineModeTranscriptTests(unittest.TestCase):
     def test_plain_transcript_with_explicit_only_ammonium_policy(self):
-        # Historical numerical transcripts stay unchanged. This separate prefix
-        # captures the current menu after preset retirement (#202).
+        # Historical numerical transcripts stay unchanged. This separate
+        # prefix captures the current menu after preset retirement
+        # (#202).
         self.enterContext(historical_catalogue())
         expected = json.loads(
             (FIXTURES / 'current-interview-prefix.json').read_text(encoding='utf-8')

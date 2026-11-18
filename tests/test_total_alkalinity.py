@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent proton inventories, carbon inference and preserved titration inputs."""
+"""Independent proton inventories, carbon inference and preserved
+titration inputs.
+"""
 
 from fractions import Fraction
 import json
@@ -35,7 +37,8 @@ class TotalAlkalinityTests(unittest.TestCase):
         self.assertEqual(result.alkalinity_eq_per_kg, 0.002)
         self.assertNotIn('CO3-2', source)
         self.assertAlmostEqual(total_alkalinity(result.state), 0.002, places=12)
-        # The imbalance is carried as measured, not closed with an ion (decision G11).
+        # The imbalance is carried as measured, not closed with an ion
+        # (decision G11).
         self.assertIsNone(result.balance_ion)
         self.assertEqual(result.residual_charge_eq, result.state.charge_balance)
         self.assertEqual({k: v for k, v in result.totals.items() if k != 'CO3-2'}, source)
@@ -66,7 +69,8 @@ class TotalAlkalinityTests(unittest.TestCase):
         for totals, ph in (({'PO4-3': 0.001}, 8), ({'H3BO3': 0.001}, 9)):
             state = solve(totals, ph, phases=[])
             s = state.species
-            # Species sum independent of runtime reaction powers/reference mapping.
+            # Species sum independent of runtime reaction
+            # powers/reference mapping.
             measured = (
                 s.get('HPO4-2', 0)
                 + 2 * s.get('PO4-3', 0)
@@ -88,7 +92,8 @@ class TotalAlkalinityTests(unittest.TestCase):
         proton_demand = total_alkalinity(high) - total_alkalinity(low)
         self.assertGreater(proton_demand, 0)
         self.assertAlmostEqual(proton_demand, low.charge_balance - high.charge_balance, places=11)
-        # Strong-ion inventory derives from element and electric-charge conservation.
+        # Strong-ion inventory derives from element and electric-charge
+        # conservation.
         constant = totals['Na+'] - totals['Cl-'] - 2 * totals['SO4-2'] - totals['PO4-3']
         for state in (high, low):
             self.assertAlmostEqual(

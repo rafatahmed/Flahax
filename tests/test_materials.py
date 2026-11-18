@@ -28,7 +28,8 @@ from tests.catalogue_history import historical_catalogue, historical_library
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'materials'
 
-# Charge per dissolved component as declared in ion_forms. Neutral solutes are 0.
+# Charge per dissolved component as declared in ion_forms. Neutral
+# solutes are 0.
 CHARGES = {
     'Na+': 1,
     'K+': 1,
@@ -79,7 +80,8 @@ REQUIRED_KEYS = {
 
 class IdentityTests(unittest.TestCase):
     def test_every_catalogue_product_has_exactly_one_identity(self):
-        # Retired 33c5df2 catalogue products keep their records: the frozen catalogue uses them.
+        # Retired 33c5df2 catalogue products keep their records: the
+        # frozen catalogue uses them.
         names = [s['name'] for s in load_library()['salts']]
         frozen = [s['name'] for s in historical_library()['salts']]
         covered = [p for i in load_identities().values() for p in i['products']]
@@ -97,8 +99,9 @@ class IdentityTests(unittest.TestCase):
                     self.assertAlmostEqual(
                         ident['theoretical_analysis'][key], value, places=6, msg=(name, key)
                     )
-        # Potassium Citrate is the only fixture row whose formula (monohydrate
-        # comparator) differs from the shipped anhydrous identity.
+        # Potassium Citrate is the only fixture row whose formula
+        # (monohydrate comparator) differs from the shipped anhydrous
+        # identity.
         self.assertEqual(compared, len(audit) - 1)
 
     def test_calcium_nitrate_is_the_double_salt_and_exercised(self):
@@ -231,10 +234,12 @@ class GradeLotTests(unittest.TestCase):
             'SO3': ATOMIC['S'] / (ATOMIC['S'] + 3 * o),
         }
         elements = {'P2O5': 'P', 'K2O': 'K', 'CaO': 'Ca', 'MgO': 'Mg', 'SO3': 'S'}
-        # Brief values (0.436421, 0.830148, 0.714701, 0.603036, 0.400496) come from older
-        # atomic masses (O 15.9994, S 32.065, Ca 40.08). composition.ATOMIC (O 15.999,
-        # S 32.06, Ca 40.078) gives the from_atomic values, which agree with the brief to 4
-        # places only. Factors are computed from ATOMIC, never hard-coded.
+        # Brief values (0.436421, 0.830148, 0.714701, 0.603036,
+        # 0.400496) come from older atomic masses (O 15.9994, S 32.065,
+        # Ca 40.08). composition.ATOMIC (O 15.999, S 32.06, Ca 40.078)
+        # gives the from_atomic values, which agree with the brief to 4
+        # places only. Factors are computed from ATOMIC, never
+        # hard-coded.
         brief = {
             'P2O5': 0.436421,
             'K2O': 0.830148,
@@ -457,7 +462,8 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'material_mismatch')
 
     def test_off_label_mg_nitrate_is_reconciled_not_flagged(self):
-        # Decision G5: no label is flagged for its charge; the unbalanced part is reported.
+        # Decision G5: no label is flagged for its charge; the
+        # unbalanced part is reported.
         old = grade(
             identity_id='idn-magnesium-nitrate-hexahydrate',
             analysis={'N_NO3': {'typical': 11.0}, 'Mg': {'typical': 9.65}},
@@ -490,7 +496,8 @@ class GradeLotTests(unittest.TestCase):
     def test_charge_residual_not_flagged_for_balanced_or_one_sided_grades(self):
         mkp = grade()
         self.assertIsNone(mkp.charge_residual_percent)  # P only: no cation stated
-        # Chloride carries no nutrient form, so only the cation is stated: no balance to report.
+        # Chloride carries no nutrient form, so only the cation is
+        # stated: no balance to report.
         kcl = grade(identity_id='idn-potassium-chloride', analysis={'K': {'typical': 52.4}})
         self.assertIsNone(kcl.charge_residual_percent)
         self.assertNotIn('identity_inconsistent', mkp.flags)
@@ -507,7 +514,8 @@ class GradeLotTests(unittest.TestCase):
         # Minimum is used for a form with no typical.
         mkp_min = grade(analysis={'K': {'minimum': 28.0}, 'P': {'minimum': 22.7}})
         self.assertIsNotNone(mkp_min.charge_residual_percent)
-        # Chelate metal is carried by the anionic complex; Fe alone has no cation.
+        # Chelate metal is carried by the anionic complex; Fe alone has
+        # no cation.
         self.assertIsNone(
             grade(
                 identity_id='idn-sodium-iron-edta', analysis={'Fe': {'typical': 13.0}}
@@ -515,8 +523,9 @@ class GradeLotTests(unittest.TestCase):
         )
 
     def test_a_range_excluding_theory_is_not_flagged(self):
-        # Decision G5: a label states guaranteed minimums, not stoichiometry; a grade range off
-        # the pure compound (Mg nitrate above it, a 75 % acid or a chelate below it) is used.
+        # Decision G5: a label states guaranteed minimums, not
+        # stoichiometry; a grade range off the pure compound (Mg nitrate
+        # above it, a 75 % acid or a chelate below it) is used.
         theory = load_identities()['idn-magnesium-nitrate-hexahydrate']['theoretical_analysis']
         for identity_id, analysis in (
             (
@@ -657,7 +666,8 @@ class GradeLotTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_composition')
 
     def test_undisclosed_blend_record_doses_in_recommend(self):
-        # Mass balance works from the declared analysis; the record carries no host formula.
+        # Mass balance works from the declared analysis; the record
+        # carries no host formula.
         self.enterContext(historical_catalogue())
         from flahax.engine import recommend
 
@@ -680,7 +690,8 @@ class GradeLotTests(unittest.TestCase):
 
     def test_shipped_product_without_grade_or_lot(self):
         resolved = resolve_material('Mg Nitrate')
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %)
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75
+        # %)
         self.assertEqual(resolved.record['elements'], {'N_NO3': 10.92564, 'Mg': 9.47931})
         self.assertEqual(
             resolved.basis, {'N_NO3': 'identity_theoretical', 'Mg': 'identity_theoretical'}
@@ -700,7 +711,9 @@ class GradeLotTests(unittest.TestCase):
 
 
 class CatalogueMigrationTests(unittest.TestCase):
-    """Task 3: library.json references identities and carries the 2026-10-18 corrections."""
+    """Task 3: library.json references identities and carries the
+    2026-10-18 corrections.
+    """
 
     BASES = {'declared_catalogue', 'identity_theoretical', 'grade_typical'}
 
@@ -746,7 +759,8 @@ class CatalogueMigrationTests(unittest.TestCase):
             self.assertAlmostEqual(salt['elements']['K'], potassium, places=5, msg=name)
             self.assertTrue(salt['source']['url'].endswith(code), name)
         self.assertEqual(salts['Potassium Hydroxide (45% solution)']['densityKgPerL'], 1.456)
-        # The packaged catalogue also marks phosphoric and nitric acid as pH reagents.
+        # The packaged catalogue also marks phosphoric and nitric acid
+        # as pH reagents.
         self.assertEqual(
             [s['name'] for s in salts.values() if s.get('role') == 'ph_reagent'],
             [
@@ -781,11 +795,13 @@ class CatalogueMigrationTests(unittest.TestCase):
     def test_phosphoric_regression(self):
         from flahax.product_conversion import catalogue_dose_totals
 
-        # PO4-3 mol/kg water for 1 g/kg, captured before the 75 % correction
+        # PO4-3 mol/kg water for 1 g/kg, captured before the 75 %
+        # correction
         before = 0.010205411922516871
         after = catalogue_dose_totals({'Phosphoric Acid (75%)': 1.0})['PO4-3']
-        # The old row stored P 31.61 (rounded); the new one is 0.75 x the exact 31.608046,
-        # so the ratio is 23.706035 / 31.61 = 0.749954, i.e. 0.75 to 1e-4 relative.
+        # The old row stored P 31.61 (rounded); the new one is 0.75 x
+        # the exact 31.608046, so the ratio is 23.706035 / 31.61 =
+        # 0.749954, i.e. 0.75 to 1e-4 relative.
         self.assertAlmostEqual(after / before, 23.706035 / 31.61, places=12)
         self.assertAlmostEqual(after / before, 0.75, delta=1e-4)
 
@@ -844,7 +860,9 @@ HAIFA = {'N_NO3': {'typical': 14.4}, 'N_NH4': {'typical': 1.1}, 'Ca': {'typical'
 
 
 def _old_totals(doses):
-    """Pre-Task-5 catalogue_dose_totals: shipped records through their own chemistry."""
+    """Pre-Task-5 catalogue_dose_totals: shipped records through their
+    own chemistry.
+    """
     from flahax.product_conversion import convert_catalogue_product_dose
 
     library = {s['name']: s for s in load_library()['salts']}
@@ -886,7 +904,9 @@ def _old_totals(doses):
 
 
 class ChemistryUseTests(unittest.TestCase):
-    """Task 5: resolved materials in chemistry, undisclosed blends and provenance."""
+    """Task 5: resolved materials in chemistry, undisclosed blends and
+    provenance.
+    """
 
     def ec(self, doses, **kw):
         from flahax.irrigation_ec import DeclaredPureWater, calculate_irrigation_ec
@@ -914,7 +934,8 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertAlmostEqual(user['Ca+2'], shipped['Ca+2'] * 18.5 / 19.0, places=15)
         self.assertNotEqual(user['Ca+2'], shipped['Ca+2'])
         self.assertAlmostEqual(user['NH4+'], shipped['NH4+'], places=15)
-        # Decision G5: less Ca leaves more of the label's nitrate unbalanced; it is set aside.
+        # Decision G5: less Ca leaves more of the label's nitrate
+        # unbalanced; it is set aside.
         elements = material.record['elements']
         surplus = reconcile_label(load_identities()[CAN], elements).unassigned_percent
         self.assertEqual(set(surplus), {'N_NO3'})
@@ -974,7 +995,8 @@ class ChemistryUseTests(unittest.TestCase):
             ),
         )
         got = catalogue_dose_totals({'CH - micro': 2.0}, materials={'CH - micro': blend})
-        # Declared Fe 7 vs 0.6 x 13 = 7.8 implied by the components: reported, not rejected.
+        # Declared Fe 7 vs 0.6 x 13 = 7.8 implied by the components:
+        # reported, not rejected.
         self.assertIn('blend_analysis_unreconciled', blend.flags)
         self.assertAlmostEqual(blend.provenance['blendImpliedAnalysis']['Fe'], 7.8, places=12)
         r = self.ec({'CH - micro': 0.05}, materials={'CH - micro': blend})
@@ -996,7 +1018,8 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertEqual(set(got), set(expected))
         for basis, amount in expected.items():
             self.assertAlmostEqual(got[basis], amount, places=15, msg=basis)
-        # The shipped assumed blend (no listed components) keeps its own chemistry profile.
+        # The shipped assumed blend (no listed components) keeps its own
+        # chemistry profile.
         shipped = resolve_material('CH - micro')
         self.assertEqual(
             catalogue_dose_totals({'CH - micro': 2.0}, materials={'CH - micro': shipped}),
@@ -1026,7 +1049,8 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertEqual(set(shipped['basis'].values()), {'declared_catalogue'})
         self.assertEqual(shipped['analysisBasis'], 'declared_catalogue')
         self.assertEqual(r.audit['identitiesSha256'], SHA)
-        # A shipped product dosed without materials carries its library basis and source document.
+        # A shipped product dosed without materials carries its library
+        # basis and source document.
         plain = self.ec({name: 1.0})
         entry = plain.audit['materials'][name]
         self.assertEqual(entry['analysisBasis'], 'grade_typical')
@@ -1093,8 +1117,9 @@ class ChemistryUseTests(unittest.TestCase):
         self.assertEqual(plain.audit['materials'], explicit.audit['materials'])
 
     def test_user_grade_reaches_ec_with_its_charge_balanced(self):
-        # Controller ruling (Task 3): the retired Mg Nitrate analysis as a user grade. Decision
-        # G5: its unbalanced Mg is set aside before EC, so the 0.1 % assay screen sees none.
+        # Controller ruling (Task 3): the retired Mg Nitrate analysis as
+        # a user grade. Decision G5: its unbalanced Mg is set aside
+        # before EC, so the 0.1 % assay screen sees none.
         from flahax.irrigation_ec import assay_charge_residual
 
         retired = resolve_material(
@@ -1133,7 +1158,9 @@ KNO3 = 'idn-potassium-nitrate'
 
 
 class BandTests(unittest.TestCase):
-    """Task 6: delivered-nutrient band re-evaluates the same doses at band-end assays."""
+    """Task 6: delivered-nutrient band re-evaluates the same doses at
+    band-end assays.
+    """
 
     def banded(self):
         mkp = resolve_material(
@@ -1248,7 +1275,9 @@ class BandTests(unittest.TestCase):
 
 
 class FormulationProvenanceTests(unittest.TestCase):
-    """F1: every salt on a formulation result carries the provenance of its own record."""
+    """F1: every salt on a formulation result carries the provenance of
+    its own record.
+    """
 
     TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
 
@@ -1281,9 +1310,10 @@ class FormulationProvenanceTests(unittest.TestCase):
             for s in load_library()['salts']
         ]
         _, entries = self.entries(library)
-        # Full-library accuracy fitting may select an equivalent alternative.
-        # Also exercise the resolved product as the only available source, with
-        # the same targets, so provenance propagation remains non-vacuous.
+        # Full-library accuracy fitting may select an equivalent
+        # alternative. Also exercise the resolved product as the only
+        # available source, with the same targets, so provenance
+        # propagation remains non-vacuous.
         _, only = self.entries([material.record])
         resolved = only[material.record['id']]
         self.assertEqual(resolved['provenance']['recordId'], f"{material.record['id']}")
@@ -1333,7 +1363,9 @@ class FormulationProvenanceTests(unittest.TestCase):
 
 
 class ChelateSodiumReportTests(unittest.TestCase):
-    """F2: chelate counterion sodium (D2) is reported in rows, never fitted."""
+    """F2: chelate counterion sodium (D2) is reported in rows, never
+    fitted.
+    """
 
     NO_CHELATE_TARGETS = {'N_NO3': 150.0, 'K': 200.0, 'Ca': 120.0, 'P': 40.0, 'Mg': 40.0}
     # Captured from recommend() before F2 (no chelate chosen).
@@ -1446,9 +1478,10 @@ class ChelateSodiumReportTests(unittest.TestCase):
         self.assertEqual(counterion_sodium_mg_per_l(doses), 0)
         self.assertFalse(any(r['symbol'] == 'Na' and r['final'] > 0 for r in result['rows']))
         self.assertFalse(any('counterion sodium' in warning for warning in result['warnings']))
-        # The earlier numeric snapshot above is historical: the primary objective
-        # no longer penalizes incidental sulfate or ammonium. An absent N_UREA is fitted as a
-        # declared zero (D1), so the echoed targets add N_UREA 0.
+        # The earlier numeric snapshot above is historical: the primary
+        # objective no longer penalizes incidental sulfate or ammonium.
+        # An absent N_UREA is fitted as a declared zero (D1), so the
+        # echoed targets add N_UREA 0.
         self.assertEqual(
             {r['symbol']: r['target'] for r in result['rows'] if r['target'] is not None},
             {**self.NO_CHELATE_TARGETS, 'N_UREA': 0},
@@ -1480,7 +1513,8 @@ class ChelateSodiumReportTests(unittest.TestCase):
         full = catalogue_dose_totals({'CH - micro': 1.0})['Na+'] * 22.989769 * 1000.0
         self.assertAlmostEqual(got, full, places=9)  # chelate share plus borax/molybdate sodium
         self.assertAlmostEqual(got, 63.23, places=2)
-        # Standalone borax and sodium molybdate assay Na as an element: no counterion sodium.
+        # Standalone borax and sodium molybdate assay Na as an element:
+        # no counterion sodium.
         self.assertEqual(
             counterion_sodium_mg_per_l(
                 [
@@ -1509,9 +1543,12 @@ class ChelateSodiumReportTests(unittest.TestCase):
 
 
 class WorkflowGradeTests(unittest.TestCase):
-    """Interactive mix Task 3: a supplier label grade passes the chemistry and pH stages."""
+    """Interactive mix Task 3: a supplier label grade passes the
+    chemistry and pH stages.
+    """
 
-    # The only Fe source in Tomato (Howard Resh); magnesium sulfate shares Mg with Mg Nitrate.
+    # The only Fe source in Tomato (Howard Resh); magnesium sulfate
+    # shares Mg with Mg Nitrate.
     NAME = 'Iron II Sulfate (Hepahydrate)'
     NITRIC = dict(
         id='HNO3-example',
@@ -1571,9 +1608,10 @@ class WorkflowGradeTests(unittest.TestCase):
     def doses(recommendation):
         return {s['name']: s['gramsPerLitre'] for s in recommendation['salts']}
 
-    # 33c5df2 catalogue: on the packaged catalogue the Tomato (Howard Resh) feed mixes at pH 4.89
-    # and must be raised to 5.8, so the nitric candidate rejected for Hydroxylapatite that this
-    # test follows does not arise.
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato (Howard
+    # Resh) feed mixes at pH 4.89 and must be raised to 5.8, so the
+    # nitric candidate rejected for Hydroxylapatite that this test
+    # follows does not arise.
     def test_label_grade_enters_chemistry_and_ph(self):
         self.enterContext(historical_catalogue())
         from flahax.product_conversion import catalogue_dose_totals
@@ -1592,13 +1630,15 @@ class WorkflowGradeTests(unittest.TestCase):
             if 'Fe' in {x['name']: x for x in load_library()['salts']}[s['name']]['elements']
         ]
         self.assertEqual(fe_sources, [self.NAME])
-        # Weighed doses are recorded to 1e-6 g/L; both rounding errors bound the ratio check.
+        # Weighed doses are recorded to 1e-6 g/L; both rounding errors
+        # bound the ratio check.
         self.assertAlmostEqual(
             self.doses(graded.recommendation)[self.NAME],
             self.doses(shipped.recommendation)[self.NAME] / 0.97,
             delta=0.5e-6 * (1 + 1 / 0.97),
         )
-        # The conversion used the resolved label assay, not the catalogue assay.
+        # The conversion used the resolved label assay, not the
+        # catalogue assay.
         chemistry = graded.stages['chemistry'].value
         doses = chemistry['product_doses_g_per_kg_water']
         self.assertEqual(chemistry['materials'][self.NAME], material)
@@ -1614,13 +1654,15 @@ class WorkflowGradeTests(unittest.TestCase):
             catalogue_dose_totals(mixed_doses, materials={self.NAME: material})['Fe+2'],
             delta=1e-15,
         )
-        # The graded record id (<catalogue id>+<grade id>) is found as well.
+        # The graded record id (<catalogue id>+<grade id>) is found as
+        # well.
         resolved_id = self.workflow(dict(product, id=material.record['id']))
         self.assertEqual(resolved_id.stages['chemistry'].status, 'calculated')
 
     def test_off_label_grade_enters_chemistry_with_its_charge_balanced(self):
-        # Decision G5: a label 10 % Fe-rich is used; the Fe its sulfate cannot balance is set
-        # aside (Fe+2 = SO4-2 for FeSO4), never refused.
+        # Decision G5: a label 10 % Fe-rich is used; the Fe its sulfate
+        # cannot balance is set aside (Fe+2 = SO4-2 for FeSO4), never
+        # refused.
         from flahax.product_conversion import catalogue_dose_totals
 
         product, material = self.graded(0.97, fe=1.10)
@@ -1641,8 +1683,9 @@ class WorkflowGradeTests(unittest.TestCase):
 
 
 class DeclaredCompoundTests(unittest.TestCase):
-    """Interactive mix Task 4: a compound entered from its data sheet is modelled from its
-    declared ions."""
+    """Interactive mix Task 4: a compound entered from its data sheet is
+    modelled from its declared ions.
+    """
 
     NAME = 'WS NPK 20-20-20 + TE'
     VAN_IPEREN = {
@@ -1652,8 +1695,8 @@ class DeclaredCompoundTests(unittest.TestCase):
         'entered': '2026-10-22',
     }
     NITRIC = WorkflowGradeTests.NITRIC
-    # Tomato (Howard Resh) on the packaged catalogue without the urea-bearing compound (with or
-    # without the Na-bearing products).
+    # Tomato (Howard Resh) on the packaged catalogue without the
+    # urea-bearing compound (with or without the Na-bearing products).
     WITHOUT_UREA = [
         'Ammonium Sulfate',
         'Boric Acid',
@@ -1744,14 +1787,16 @@ class DeclaredCompoundTests(unittest.TestCase):
 
         product, _ = self.product(k2o=10)
         library = load_library()
-        # The compound is the store's only P and K source, so the recipe must dose it.
+        # The compound is the store's only P and K source, so the recipe
+        # must dose it.
         salts = [s for s in library['salts'] if not {'P', 'K'} & set(s['elements'])] + [product]
         tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
-        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
-        # compound (12 % N_UREA) is not selected.
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and
+        # the urea-bearing compound (12 % N_UREA) is not selected.
         undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
-        # G25: Mo, short with Micro Combi Mix 1 by less than 1 %, is short under the numerical
-        # tolerance; the only held-back Mo source, sodium molybdate, replaces the mix.
+        # G25: Mo, short with Micro Combi Mix 1 by less than 1 %, is
+        # short under the numerical tolerance; the only held-back Mo
+        # source, sodium molybdate, replaces the mix.
         with_molybdate = sorted(
             {*self.WITHOUT_UREA, 'Sodium Molybdate (Dihydrate)'} - {'Micro Combi Mix 1'}
         )
@@ -1843,13 +1888,14 @@ class DeclaredCompoundTests(unittest.TestCase):
 
         product, material = self.product()
         library = load_library()
-        # No other Na-bearing product: the Na row is counterion sodium only.
+        # No other Na-bearing product: the Na row is counterion sodium
+        # only.
         salts = [s for s in library['salts'] if not {'P', 'K', 'Na'} & set(s['elements'])] + [
             product
         ]
         tomato = {f['name']: f['targets'] for f in library['formulas']}['Tomato (Howard Resh)']
-        # D1: Tomato declares no urea, so N_UREA is a declared zero and the urea-bearing
-        # compound (12 % N_UREA) is not selected.
+        # D1: Tomato declares no urea, so N_UREA is a declared zero and
+        # the urea-bearing compound (12 % N_UREA) is not selected.
         undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
         self.assertEqual(
             sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
@@ -1870,8 +1916,9 @@ class DeclaredCompoundTests(unittest.TestCase):
             catalogue_dose_totals(doses, materials=chemistry['materials'])['Na+'] * 22.989769e3
         )
         na_row = next(r for r in recommendation['rows'] if r['symbol'] == 'Na')
-        # Each published dose is rounded by at most 0.5 microgram/L (F04 is
-        # tracked separately). Bound its Na effect using each material's assay.
+        # Each published dose is rounded by at most 0.5 microgram/L (F04
+        # is tracked separately). Bound its Na effect using each
+        # material's assay.
         from flahax.product_conversion import material_inventory
 
         rounding_bound = sum(
@@ -1897,8 +1944,9 @@ class DeclaredCompoundTests(unittest.TestCase):
         from flahax.label_reconciliation import chemistry_elements
         from flahax.product_conversion import catalogue_dose_totals
 
-        # The salts enter chemistry with their labels' unbalanced charge set aside (decision
-        # G5); the compound declares what they put in the water.
+        # The salts enter chemistry with their labels' unbalanced charge
+        # set aside (decision G5); the compound declares what they put
+        # in the water.
         shipped = {s['name']: s for s in load_library()['salts']}
         kno3 = chemistry_elements(shipped['Potassium Nitrate'], {'K+': 1, 'NO3-': 1})
         mkp = chemistry_elements(shipped['Potassium Monobasic Phosphate'], {'K+': 1, 'H2PO4-': 1})
@@ -1934,8 +1982,10 @@ class DeclaredCompoundTests(unittest.TestCase):
 
 
 class LabelToleranceTests(unittest.TestCase):
-    """#93: printed labels are rounded and commercial grades are not the pure salt. Decision G5
-    replaced the 1 % limit: the unbalanced charge is reported, never refused."""
+    """#93: printed labels are rounded and commercial grades are not
+    the pure salt. Decision G5 replaced the 1 % limit: the unbalanced
+    charge is reported, never refused.
+    """
 
     def calcinit(self, cao):
         return grade(

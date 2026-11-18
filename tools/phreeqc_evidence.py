@@ -5,11 +5,13 @@
 # its results are calculations, not dosing instructions.
 """Reproducible PHREEQC product evidence; retain successes and failures.
 
-Every case doses products of the packaged catalogue, so the capture exercises the same label
-reconciliation as the engine. A product that leaves the catalogue must leave the cases.
+Every case doses products of the packaged catalogue, so the capture
+exercises the same label reconciliation as the engine. A product that
+leaves the catalogue must leave the cases.
 
-Run with PYTHONPATH=src. No executable or merged database enters the repository.
-Captures are generated artifacts, not hand-authored numerical expectations.
+Run with PYTHONPATH=src. No executable or merged database enters the
+repository. Captures are generated artifacts, not hand-authored
+numerical expectations.
 """
 
 from pathlib import Path
@@ -94,7 +96,9 @@ def sha(path):
 
 
 def merge(base, destination):
-    """Remove only the terminal END in the temporary copy before appending."""
+    """Remove only the terminal END in the temporary copy before
+    appending.
+    """
     original = sha(base)
     text = re.sub(r'(?ms)\nEND\s*\Z', '\n', base.read_text())
     if text.rstrip().endswith('END'):
@@ -124,7 +128,9 @@ def selected(path):
 
 
 def verify_reference_inventory(root=None, manifest=None):
-    """Verify the entire frozen corpus, including budgets and expected JSON."""
+    """Verify the entire frozen corpus, including budgets and expected
+    JSON.
+    """
     root = ROOT / 'tests/fixtures/phreeqc' if root is None else Path(root)
     manifest = ROOT / 'tests/reference_inventory.json' if manifest is None else Path(manifest)
     inventory = json.loads(manifest.read_text())
@@ -135,7 +141,9 @@ def verify_reference_inventory(root=None, manifest=None):
 
 
 def verify_reference_installation(exe, base, merged, inventory):
-    """Require the pinned executable and databases for every current live family."""
+    """Require the pinned executable and databases for every current
+    live family.
+    """
     reference = inventory['live_reference']
     for path, key in [
         (exe, 'executable_sha256'),
@@ -156,14 +164,18 @@ def _capture_path(destination):
 
 
 def new_capture_root(destination):
-    """Reserve a new capture directory; never rewrite a retained evidence tree."""
+    """Reserve a new capture directory; never rewrite a retained
+    evidence tree.
+    """
     destination = _capture_path(destination)
     destination.mkdir(parents=True, exist_ok=False)
     return destination
 
 
 def fixed_ammonium(text):
-    """USGS Amm.dat technique: conserve nitrogen oxidation states in batches."""
+    """USGS Amm.dat technique: conserve nitrogen oxidation states in
+    batches.
+    """
     header = [
         'SOLUTION_MASTER_SPECIES',
         ' Amm AmmH4+ 0 Amm 14.0067',
@@ -271,8 +283,9 @@ def generate(exe, base, cases=None, *, destination):
                 continue
             folder = destination / name
             totals = catalogue_dose_totals(doses)
-            # Explicit background electrolyte permits fixed-pH charge balance
-            # by sodium without assuming unlabelled product counterions.
+            # Explicit background electrolyte permits fixed-pH charge
+            # balance by sodium without assuming unlabelled product
+            # counterions.
             totals['Na+'] = totals.get('Na+', 0.0) + 0.002
             totals['Cl-'] = 0.002
             ph = 7.4 if name == 'mixed_target_ph_nitric' else 6.0
@@ -281,9 +294,10 @@ def generate(exe, base, cases=None, *, destination):
             totals['Na+'] = initial['Na']
             acid = None
             if name == 'mixed_target_ph_nitric':
-                # Fixed oxidation-state acid titration: at the lower pH only
-                # N(5) is charge-adjusted. Its increase is the HNO3 dose. This
-                # avoids batch redox equilibration, not any aqueous reaction.
+                # Fixed oxidation-state acid titration: at the lower pH
+                # only N(5) is charge-adjusted. Its increase is the HNO3
+                # dose. This avoids batch redox equilibration, not any
+                # aqueous reaction.
                 target_name = name + '_target'
                 rows = execute(
                     exe,
@@ -295,9 +309,10 @@ def generate(exe, base, cases=None, *, destination):
                 acid = rows[-1]['N(5)'] - totals['NO3-']
                 if acid <= 0:
                     raise RuntimeError('target requires base, not HNO3')
-                # Batch proof with NHx decoupled from nitrate, following the
-                # documented PHREEQC Amm.dat technique. Reactions/log K are
-                # exact name substitutions of the same pinned nitrogen data.
+                # Batch proof with NHx decoupled from nitrate, following
+                # the documented PHREEQC Amm.dat technique.
+                # Reactions/log K are exact name substitutions of the
+                # same pinned nitrogen data.
                 batch_name = name + '_fix_h'
                 header = [
                     'SOLUTION_MASTER_SPECIES',
@@ -362,7 +377,8 @@ def generate(exe, base, cases=None, *, destination):
                     if p.suffix in ('.pqi', '.sel', '.out', '.screen')
                 },
             }
-            # LF on every OS: fixture JSON is stored byte-exact (.gitattributes).
+            # LF on every OS: fixture JSON is stored byte-exact
+            # (.gitattributes).
             (folder / 'expected.json').write_bytes((json.dumps(data, indent=2) + '\n').encode())
             print(name, 'charge', max(abs(r['pct_err']) for r in rows), 'acid', acid, flush=True)
 

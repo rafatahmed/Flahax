@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Validate an external implementation ledger without treating reproduction as repair.
+"""Validate an external implementation ledger without treating
+reproduction as repair.
 
-The ledger stays outside versioned product sources. This tool never changes task state,
-contacts GitHub, or executes evidence commands. Evidence files are checked by SHA-256.
+The ledger stays outside versioned product sources. This tool never
+changes task state, contacts GitHub, or executes evidence commands.
+Evidence files are checked by SHA-256.
 """
 
 import argparse
@@ -56,7 +58,9 @@ def evidence_errors(record, root, label):
 
 
 def validate(ledger, root):
-    """Return contract errors; an empty list means valid state, not engine acceptance."""
+    """Return contract errors; an empty list means valid state, not
+    engine acceptance.
+    """
     try:
         return _validate(ledger, root)
     except (KeyError, TypeError, AttributeError, OSError, ValueError) as error:

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Historical source claims must not become model validation or acceptance bounds."""
+"""Historical source claims must not become model validation or
+acceptance bounds.
+"""
 
 import copy
 import json

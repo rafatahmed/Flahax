@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Workbook transport rejects unsafe archives and malformed recorded inputs."""
+"""Workbook transport rejects unsafe archives and malformed recorded
+inputs.
+"""
 
 import contextlib
 import copy
@@ -117,7 +119,8 @@ class WorkbookValidationBoundaryTests(unittest.TestCase):
                 load_lab_workbook(self.path)
 
     def test_shared_boolean_and_error_cells_are_not_treated_as_measured_numbers(self):
-        # Genuine OOXML cell types, rather than Python values coerced by a spreadsheet library.
+        # Genuine OOXML cell types, rather than Python values coerced by
+        # a spreadsheet library.
         for kind, value in (('b', '1'), ('e', '#VALUE!'), ('s', '0')):
             write_book(self.path, synthetic_inputs())
             with ZipFile(self.path) as source:

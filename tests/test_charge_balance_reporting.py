@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A water analysis is accepted as measured; its charge imbalance is reported (G10, G11).
+"""A water analysis is accepted as measured; its charge imbalance is
+reported (G10, G11).
 
-No ion is added, removed or adjusted to close it, and no imbalance size rejects it.
+No ion is added, removed or adjusted to close it, and no imbalance size
+rejects it.
 """
 
 import contextlib
@@ -17,7 +19,8 @@ import unittest
 from flahax import balance_water_analysis, calculate_equilibrium_ph
 from flahax.batch_cli import main as batch
 
-# mol/kg water: Na+ is 1.1505 times Cl-, so cations exceed anions by 100 x 0.1505 / 2.1505 = 7.0 %.
+# mol/kg water: Na+ is 1.1505 times Cl-, so cations exceed anions by 100
+# x 0.1505 / 2.1505 = 7.0 %.
 SEVEN_PERCENT = {'Na+': 1.1505e-3, 'Cl-': 1.0e-3, 'CO3-2': 0.0}
 
 
@@ -40,7 +43,8 @@ class WaterImbalanceTests(unittest.TestCase):
         self.assertGreater(water.imbalance_percent, 50)
 
     def test_the_measured_alkalinity_still_gives_the_carbon(self):
-        # 2 meq/kg alkalinity at pH 8.2: carbon comes from the titration, not from a guess.
+        # 2 meq/kg alkalinity at pH 8.2: carbon comes from the
+        # titration, not from a guess.
         totals = {'Na+': 2e-3, 'Cl-': 0.5e-3}
         water = balance_water_analysis(totals, measured_ph=8.2, alkalinity_eq_per_kg=1.5e-3)
         self.assertEqual(water.carbon_source, 'alkalinity')
@@ -113,7 +117,8 @@ class AcidDoseTests(unittest.TestCase):
             summary = json.loads((out / 'summary.json').read_text('utf-8'))
         stages = summary['stages']
         self.assertEqual(stages['chemistry']['status'], 'calculated')
-        # Reagents were evaluated against the target pH (saturation findings are a later PR's).
+        # Reagents were evaluated against the target pH (saturation
+        # findings are a later PR's).
         self.assertNotEqual(stages['ph_adjustment']['error_code'], 'chemistry_required')
         self.assertTrue(summary['ph']['candidates'])
         self.assertNotIn('exceeds the maximum imbalance', json.dumps(summary))

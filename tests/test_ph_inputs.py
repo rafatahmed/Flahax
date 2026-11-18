@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""pH inputs and stated model conditions (decisions G1-G4): no declarations, no guessed pH.
+"""pH inputs and stated model conditions (decisions G1-G4): no
+declarations, no guessed pH.
 
-The pH stage reports what it needs or what the model cannot reach; the recipe is produced in
-every case.
+The pH stage reports what it needs or what the model cannot reach; the
+recipe is produced in every case.
 """
 
 import contextlib
@@ -43,8 +44,9 @@ class PhInputTests(unittest.TestCase):
             self.run_batch(*args)
             return json.loads((Path(tmp) / 'out' / 'summary.json').read_text('utf-8'))
 
-    def test_the_equilibrium_pH_needs_no_completeness_declaration(self):
-        # Ion-free water with 1 mmol/kg KCl: the pH is the neutral one the model calculates.
+    def test_the_equilibrium_ph_needs_no_completeness_declaration(self):
+        # Ion-free water with 1 mmol/kg KCl: the pH is the neutral one
+        # the model calculates.
         state = calculate_equilibrium_ph({'K+': 1e-3, 'Cl-': 1e-3}, phases=[])
         self.assertAlmostEqual(state.ph, 7.0, places=1)
         self.assertAlmostEqual(state.charge_balance, 0, delta=1e-12)
@@ -54,7 +56,8 @@ class PhInputTests(unittest.TestCase):
         balanced = calculate_equilibrium_ph(totals, phases=[])
         residual = calculate_equilibrium_ph(totals, phases=[], residual_charge=1e-4)
         self.assertAlmostEqual(residual.charge_balance, 1e-4, delta=1e-11)
-        # Charge the ions do not carry is an excess of cations: fewer anions are needed.
+        # Charge the ions do not carry is an excess of cations: fewer
+        # anions are needed.
         self.assertLess(residual.ph, balanced.ph)
 
     def test_a_residual_charge_must_be_a_finite_number(self):

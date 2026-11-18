@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Byte identities and canonical manifest format; no chemistry calculations."""
+"""Byte identities and canonical manifest format; no chemistry
+calculations.
+"""
 
 import hashlib
 import json
@@ -13,7 +15,9 @@ SOURCE_NAMES = ('minteq.v4.dat', 'flahax-chelates-25c.dat', 'flahax-phases-25c.d
 
 
 def manifest_digest(sources):
-    """SHA-256 of UTF-8 JSON, filename order, sorted keys, compact separators, no newline."""
+    """SHA-256 of UTF-8 JSON, filename order, sorted keys, compact
+    separators, no newline.
+    """
     raw = json.dumps(
         sorted(sources, key=lambda row: row['filename']),
         sort_keys=True,
@@ -25,7 +29,9 @@ def manifest_digest(sources):
 
 
 def describe_sources(raw_sources, *, allow_unpinned=False):
-    """Describe exact consumed bytes; unpinned synthetic inputs require explicit opt-in."""
+    """Describe exact consumed bytes; unpinned synthetic inputs require
+    explicit opt-in.
+    """
     pinned = {row['filename']: row for row in json.loads(MANIFEST.read_bytes())}
     result = []
     for name in SOURCE_NAMES:
@@ -48,7 +54,9 @@ def describe_sources(raw_sources, *, allow_unpinned=False):
 
 
 def verify_sources(data, raw_sources):
-    """Return integrity errors for the complete consumed-input manifest and legacy alias."""
+    """Return integrity errors for the complete consumed-input manifest
+    and legacy alias.
+    """
     errors = []
     if hashlib.sha256(raw_sources['minteq.v4.dat']).hexdigest() != data['database_sha256']:
         errors.append('base database hash differs from pinned model')

@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Automatic separation into the A/B tank layout, never mixture-solubility approval.
+"""Automatic separation into the A/B tank layout, never
+mixture-solubility approval.
 
-Tank A holds the calcium products and every micronutrient product; the phosphates, magnesium
-sulfate and the other macro sulfates go in tank B. The kept rules separate calcium from
-phosphate and calcium from sulfate among macro products, and micronutrients from phosphate.
-Equipment cannot waive them. Caller rules add separations; reagent products retain their own
-channel.
+Tank A holds the calcium products and every micronutrient product; the
+phosphates, magnesium sulfate and the other macro sulfates go in tank B.
+The kept rules separate calcium from phosphate and calcium from sulfate
+among macro products, and micronutrients from phosphate. Equipment
+cannot waive them. Caller rules add separations; reagent products retain
+their own channel.
 """
 
 from dataclasses import dataclass
@@ -22,12 +24,14 @@ SOURCE = (
     'mixing rules'
 )
 MICRONUTRIENTS = frozenset({'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'})
-# Elements a micronutrient product may carry besides its micronutrients (counter-ions).
+# Elements a micronutrient product may carry besides its micronutrients
+# (counter-ions).
 _MICRO_COMPANIONS = frozenset({'S', 'Na', 'Cl'})
 STRONG_ACIDS = frozenset({'HNO3', 'H3PO4', 'H2SO4'})
 
-# (class, class, reason): the page 63/65 rules, for macro products only. A micronutrient product
-# goes to tank A and is screened against phosphate alone (MICRO_PHOSPHATE).
+# (class, class, reason): the page 63/65 rules, for macro products only.
+# A micronutrient product goes to tank A and is screened against
+# phosphate alone (MICRO_PHOSPHATE).
 CLASS_RULES = (
     (
         'calcium',
@@ -39,7 +43,8 @@ CLASS_RULES = (
 WAIVED_RULES = ()
 MAX_TANKS = 2  # The A/B layout: the tanks `mix` and `batch` offer by default.
 
-# Page 65 products, for labelling only: catalogue name -> Yara name. Grouping uses the class rules.
+# Page 65 products, for labelling only: catalogue name -> Yara name.
+# Grouping uses the class rules.
 ANALOGUE = {
     'Urea': 'Urea',
     'Ammonium Nitrate': 'AM NITRA',
@@ -54,8 +59,8 @@ ANALOGUE = {
     'Mg Nitrate': 'KRISTA-MAG',
     'Magnesium Sulfate (Heptahydrate)': 'KRISTA-MgS',
 }
-# Page 65 footnotes on compatible pairs: (*) solubility as potassium sulfate, (**) as magnesium
-# sulfate.
+# Page 65 footnotes on compatible pairs: (*) solubility as potassium
+# sulfate, (**) as magnesium sulfate.
 FOOTNOTES = {
     frozenset({'KRISTA-K', 'AS'}): 'mixture solubility as potassium sulfate (p. 65 *)',
     frozenset({'KRISTA-MAG', 'KRISTA-SOP'}): 'mixture solubility as magnesium sulfate (p. 65 **)',
@@ -77,7 +82,9 @@ TANK_A_RULE = (
 
 @dataclass(frozen=True)
 class TankProduct:
-    """A product placed in a tank: its final-solution dose and why it is there."""
+    """A product placed in a tank: its final-solution dose and why it is
+    there.
+    """
 
     product_id: str
     name: str
@@ -87,7 +94,9 @@ class TankProduct:
 
 @dataclass(frozen=True)
 class ConcentrateTank:
-    """One concentrate tank: its products, whether acid may go in, and notes."""
+    """One concentrate tank: its products, whether acid may go in, and
+    notes.
+    """
 
     name: str
     products: tuple
@@ -95,14 +104,16 @@ class ConcentrateTank:
     notes: tuple = ()
 
     def stock_grams_per_litre(self, injection_ratio):
-        """Concentrate strength of each product at 1:injection_ratio (not solubility-checked)."""
+        """Concentrate strength of each product at 1:injection_ratio
+        (not solubility-checked).
+        """
         return {p.name: p.grams_per_litre * injection_ratio for p in self.products}
 
 
 @dataclass(frozen=True)
 class TankGrouping:
-    """Products grouped into tanks, the pH reagent channel, the pairs kept apart and the pairs a
-    waived rule lets share a tank.
+    """Products grouped into tanks, the pH reagent channel, the pairs
+    kept apart and the pairs a waived rule lets share a tank.
     """
 
     tanks: tuple
@@ -118,7 +129,9 @@ class TankGrouping:
 
 
 def product_classes(record):
-    """Chemical classes of a product record from its elemental analysis and formula."""
+    """Chemical classes of a product record from its elemental analysis
+    and formula.
+    """
     elements = {k for k, v in (record.get('elements') or {}).items() if v}
     classes = set()
     for element, label in (
@@ -146,16 +159,20 @@ def _class_conflict(a, b, rules=CLASS_RULES):
 
 
 def _magnesium_sulfate(classes):
-    """A macro magnesium sulfate product: it joins the phosphates in tank B."""
+    """A macro magnesium sulfate product: it joins the phosphates in
+    tank B.
+    """
     return {'magnesium', 'sulfate'} <= classes and 'micronutrient' not in classes
 
 
 def default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z'):
-    """The default table as ``compatibilityRule`` records for ``plan_stocks``.
+    """The default table as ``compatibilityRule`` records for
+    ``plan_stocks``.
 
-    One "separate" record per incompatible pair among ``products`` (catalogue or
-    grade records with ``id``, ``elements`` and optional ``formula``). Micronutrient
-    products retain elemental separation screens; no small-dose waiver applies.
+    One "separate" record per incompatible pair among ``products``
+    (catalogue or grade records with ``id``, ``elements`` and optional
+    ``formula``). Micronutrient products retain elemental separation
+    screens; no small-dose waiver applies.
     """
     records = [p for p in products if p.get('role') != PH_REAGENT]
     rules = []
@@ -184,13 +201,15 @@ def default_compatibility_rules(products, *, recorded_at='2026-10-22T00:00:00Z')
 
 
 def group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=100000):
-    """Find a minimum-tank separation assignment; no mixture approval is implied.
+    """Find a minimum-tank separation assignment; no mixture approval is
+    implied.
 
-    With max_tanks=None, report the required equipment rather than waive a rule.
-    An explicit tank count is a hard equipment limit. Search is deterministic and
-    bounded; exhaustion is reported separately from proven incompatibility.
-    Reagent products use a separate channel. Every separation is conservative
-    even outside its source temperature envelope; it never becomes permission.
+    With max_tanks=None, report the required equipment rather than waive
+    a rule. An explicit tank count is a hard equipment limit. Search is
+    deterministic and bounded; exhaustion is reported separately from
+    proven incompatibility. Reagent products use a separate channel.
+    Every separation is conservative even outside its source temperature
+    envelope; it never becomes permission.
     """
     if (max_tanks is not None and (type(max_tanks) is not int or max_tanks < 1)) or (
         type(max_search_nodes) is not int or max_search_nodes < 1
@@ -250,7 +269,8 @@ def group_tanks(salts, products, *, rules=(), max_tanks=None, max_search_nodes=1
             raise DeliveryError('stock_search_limit', 'assignment search budget exhausted')
         if index == len(rows):
             return [g[:] for g in groups]
-        # Magnesium sulfate goes with the phosphates (tank B) when no rule says otherwise.
+        # Magnesium sulfate goes with the phosphates (tank B) when no
+        # rule says otherwise.
         order = (
             sorted(groups, key=lambda g: not any('phosphate' in rows[j][2] for j in g))
             if _magnesium_sulfate(rows[index][2])

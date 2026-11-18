@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Adversarial qualification of references, not new runtime tolerances."""
+"""Adversarial qualification of references, not new runtime
+tolerances.
+"""
 
 import ast
 import copy
@@ -84,7 +86,8 @@ class ExactOracleTests(unittest.TestCase):
             low, h = F(lo), F(hi)
             c, k, kw = F('0.01'), F('1e-5'), F('1e-14')
 
-            # Independent polynomial form (positive denominator cleared).
+            # Independent polynomial form (positive denominator
+            # cleared).
             def polynomial(x):
                 return x**3 + k * x * x - (k * c + kw) * x - k * kw
 
@@ -204,7 +207,8 @@ class ReferenceOracleTests(unittest.TestCase):
         data = json.loads((root / 'expected.json').read_text())
         for name, digest in data['hashes'].items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest)
-        # Compare final sodium-balanced inventory, not the initial Na charge input.
+        # Compare final sodium-balanced inventory, not the initial Na
+        # charge input.
         row = data['selected_rows'][-1]
         result = solve(data['runtime_totals'], row['pH'], phases=(), temperature_c=25)
         record = self.record()

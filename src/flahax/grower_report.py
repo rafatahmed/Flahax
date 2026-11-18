@@ -2,16 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Grower outputs from a workflow result: a summary, an HTML report and a batch sheet (#79).
+"""Grower outputs from a workflow result: a summary, an HTML report and
+a batch sheet (#79).
 
-``summarize_batch`` reads a ``plan_fertilizer_workflow`` result and returns plain
-JSON-ready data; ``render_report`` and ``render_batch_sheet`` turn that summary into
-self-contained HTML (inline CSS and SVG; no script, font or network access). Every
-number comes from the workflow; nothing is typed in. These are planning documents,
-not dosing instructions: measure EC and pH after mixing.
+``summarize_batch`` reads a ``plan_fertilizer_workflow`` result and
+returns plain JSON-ready data; ``render_report`` and
+``render_batch_sheet`` turn that summary into self-contained HTML
+(inline CSS and SVG; no script, font or network access). Every number
+comes from the workflow; nothing is typed in. These are planning
+documents, not dosing instructions: measure EC and pH after mixing.
 """
 
 from .canonical_result import result_statuses, seal_summary, verify_summary
+
 from copy import deepcopy
 from dataclasses import asdict
 from decimal import Decimal
@@ -38,18 +41,23 @@ DISPLAY_ZERO = 1e-9  # Existing display rounding only; never a solver or accepta
 
 
 def litres(value):
-    """A volume a grower can measure: one decimal from 10 L, three below (never '0 L' for a small
-    batch)."""
+    """A volume a grower can measure: one decimal from 10 L, three below
+    (never '0 L' for a small batch).
+    """
     return dose_number(value, 1 if value >= 10 else 3)
 
 
 def display_residue(value):
-    """Whether a positive displayed quantity falls below the existing display-zero precision."""
+    """Whether a positive displayed quantity falls below the existing
+    display-zero precision.
+    """
     return 0 < value < DISPLAY_ZERO
 
 
 def grams(value):
-    """A weight a grower can read on a scale: never '0 g' for a product that is in the recipe."""
+    """A weight a grower can read on a scale: never '0 g' for a product
+    that is in the recipe.
+    """
     if display_residue(value):
         return f'numerical residue: {value:.6g} g'
     digits = 1 if value >= 10 else 2 if value >= 0.1 else 3
@@ -58,12 +66,16 @@ def grams(value):
 
 
 def below_checklist_precision(value):
-    """Detect a positive mass below the dry checklist's 0.001 g reporting increment."""
+    """Detect a positive mass below the dry checklist's 0.001 g
+    reporting increment.
+    """
     return 0 < value < 0.001
 
 
 def checklist_grams(value):
-    """Show an unresolved small dose as a diagnostic on preparation checklists."""
+    """Show an unresolved small dose as a diagnostic on preparation
+    checklists.
+    """
     if below_checklist_precision(value) and not display_residue(value):
         return f'{value:.6g} g (below 0.001 g)'
     return grams(value)
@@ -80,8 +92,8 @@ def text(value):
 
 
 def number(value, digits=4):
-    """A readable number: "Not available" for None, scientific notation below 0.0001, otherwise
-    grouped with trailing zeros removed.
+    """A readable number: "Not available" for None, scientific notation
+    below 0.0001, otherwise grouped with trailing zeros removed.
     """
     if value is None:
         return 'Not available'
@@ -95,7 +107,9 @@ def number(value, digits=4):
 
 
 def table(headers, rows, caption):
-    """An HTML table with a caption, header row and escaped cells, in a scrolling wrapper."""
+    """An HTML table with a caption, header row and escaped cells, in a
+    scrolling wrapper.
+    """
     return (
         '<div class="table-scroll"><table><caption>'
         + text(caption)
@@ -111,7 +125,9 @@ def table(headers, rows, caption):
 
 
 def bars(title, labels, series, unit):
-    """Zero-based grouped bars with direct value labels and a visible axis."""
+    """Zero-based grouped bars with direct value labels and a visible
+    axis.
+    """
     colors = ['#116c73', '#879bb0', '#e3a128']
     values = [
         v
@@ -180,8 +196,10 @@ def bars(title, labels, series, unit):
 
 
 def nitrogen_notes(summary):
-    """Plain lines for the nutrient table: the ammonium allowance when it applies (G23) and total
-    N when the formula declares nitrogen (D1)."""
+    """Plain lines for the nutrient table: the ammonium allowance when
+    it applies (G23) and total N when the formula declares nitrogen
+    (D1).
+    """
     formulation = summary['formulation']
     notes = []
     allowance = formulation.get('ammonium_allowance')
@@ -215,8 +233,9 @@ def _stage(stage):
 
 
 def _water_and_limits(workflow, recipe):
-    """Laboratory and modelled water side by side, and every declared limit decided on the
-    laboratory basis."""
+    """Laboratory and modelled water side by side, and every declared
+    limit decided on the laboratory basis.
+    """
     basis = getattr(workflow, 'water_basis', None)
     water = dict(
         decision_basis='laboratory analysis',
@@ -266,7 +285,9 @@ def _water_and_limits(workflow, recipe):
 
 
 def _extra_tank_note(grouping, available):
-    """Say which pair, and which rule, needs a tank beyond the ``available`` ones."""
+    """Say which pair, and which rule, needs a tank beyond the
+    ``available`` ones.
+    """
     names = [[p.name for p in t.products] for t in grouping.tanks]
     why = {frozenset((a, b)): reason for a, b, reason in grouping.separations}
     extra = names[available][0]
@@ -285,7 +306,9 @@ def _extra_tank_note(grouping, available):
 
 
 def _joint_record(result):
-    """The joint fit of one reagent, without its dose maps: status, caveats and charge residual."""
+    """The joint fit of one reagent, without its dose maps: status,
+    caveats and charge residual.
+    """
     if result is None:
         return None
     return {
@@ -320,13 +343,14 @@ def summarize_batch(
 ):
     """Plain data for a grower report and batch sheet.
 
-    ``workflow`` is a ``plan_fertilizer_workflow`` result with a final volume;
-    ``products`` are the product records it was planned with (they give the tank
-    grouping its chemistry); ``rules`` are extra ``compatibilityRule`` records. When
-    a pH plan is selected its refitted recipe, which counts the reagent's nutrients,
-    is the recipe to weigh. Each concentrate is compared with that product's own
-    solubility value (catalogue data first, then the historical table), in the value's basis,
-    and a product without data is not checked.
+    ``workflow`` is a ``plan_fertilizer_workflow`` result with a final
+    volume; ``products`` are the product records it was planned with
+    (they give the tank grouping its chemistry); ``rules`` are extra
+    ``compatibilityRule`` records. When a pH plan is selected its
+    refitted recipe, which counts the reagent's nutrients, is the recipe
+    to weigh. Each concentrate is compared with that product's own
+    solubility value (catalogue data first, then the historical table),
+    in the value's basis, and a product without data is not checked.
     """
     if requested_ec_ms_cm is not None and (
         isinstance(requested_ec_ms_cm, bool)
@@ -346,7 +370,8 @@ def summarize_batch(
     ph_stage = workflow.stages.get('ph_adjustment')
     plan = ph_stage.value if ph_stage is not None else None
     chosen = plan.selected if plan is not None else None
-    # Rejected-candidate diagnostics must never replace the weighed recipe state.
+    # Rejected-candidate diagnostics must never replace the weighed
+    # recipe state.
     rejected = None
     if plan is not None and chosen is None:
         rejected = next(
@@ -359,7 +384,8 @@ def summarize_batch(
         recipe = plan.unadjusted_recommendation
     else:
         recipe = workflow.recommendation
-    # Report target misses and incidental contributions from the weighed recipe. Preserve blocks.
+    # Report target misses and incidental contributions from the weighed
+    # recipe. Preserve blocks.
     form = stages['formulation']
     if form['status'] in ('calculated', 'requires_review'):
         reason = (
@@ -390,8 +416,8 @@ def summarize_batch(
                 joint=_joint_record(c.joint_result),
             )
 
-        # mixed_ph: the weighed recipe without its reagent (the refit when a reagent is chosen,
-        # #107).
+        # mixed_ph: the weighed recipe without its reagent (the refit
+        # when a reagent is chosen, #107).
         weighed = (
             chosen.mixed.ph
             if chosen is not None and chosen.mixed is not None
@@ -409,8 +435,8 @@ def summarize_batch(
             skipped=[candidate(c) for c in plan.candidates if c.status == 'not_applicable'],
         )
     elif ph_stage is not None and ph_stage.error_code in PH_NOT_PLANNED:
-        # A product that cannot be modelled: the nutrients stand, no reagent is planned; the sheet
-        # names it.
+        # A product that cannot be modelled: the nutrients stand, no
+        # reagent is planned; the sheet names it.
         ph = dict(
             status=ph_stage.status,
             direction=None,
@@ -603,8 +629,9 @@ def summarize_batch(
             f'use.'
         )
     elif ph_stage is not None:
-        # These batches have a structural tank assignment only. A usable pH plan
-        # therefore starts under review; actual hard-limit failures below can still block it.
+        # These batches have a structural tank assignment only. A usable
+        # pH plan therefore starts under review; actual hard-limit
+        # failures below can still block it.
         status = (
             'requires_review'
             if ph_stage.status in ('calculated', 'requires_review')
@@ -621,8 +648,9 @@ def summarize_batch(
         warnings.append('pH was not planned: measure it after mixing and adjust before use.')
 
     water, limits = _water_and_limits(workflow, recipe)
-    # Final acceptance of the recipe to weigh, on the laboratory basis (#84): a hard limit always
-    # blocks, and a decision the charge balancing alone would change asks for review; review never
+    # Final acceptance of the recipe to weigh, on the laboratory basis
+    # (#84): a hard limit always blocks, and a decision the charge
+    # balancing alone would change asks for review; review never
     # downgrades a block.
     if any(row['decision'] == 'exceeds_limit' for row in limits):
         status = 'blocked'
@@ -634,8 +662,8 @@ def summarize_batch(
             )
         if row['balancingChangesDecision'] and not any(row['note'] in w for w in warnings):
             warnings.append(row['note'])
-    # A stock that does not dissolve at the entered temperature blocks; nothing here lowers a block
-    # (#84).
+    # A stock that does not dissolve at the entered temperature blocks;
+    # nothing here lowers a block (#84).
     if len(grouping.tanks) > available_tanks:
         status = 'blocked'
         warnings.append(_extra_tank_note(grouping, available_tanks))
@@ -689,8 +717,8 @@ def summarize_batch(
                 if r['assessment'] == 'requires_review'
             ],
             ion_balance=recipe['targetIonBalance'],
-            # The ammonium allowance (G23), shown with its basis, and total N as the
-            # reported sum of the three forms (D1).
+            # The ammonium allowance (G23), shown with its basis, and
+            # total N as the reported sum of the three forms (D1).
             ammonium_allowance=recipe.get('ammoniumLimit'),
             total_n=recipe.get('totalN'),
         ),
@@ -724,8 +752,9 @@ def summarize_batch(
         ],
     )
 
-    # Stage evidence must describe the same final recipe as the visible stage messages.
-    # Keep alternative evaluations and the original workflow evidence unchanged.
+    # Stage evidence must describe the same final recipe as the visible
+    # stage messages. Keep alternative evaluations and the original
+    # workflow evidence unchanged.
     volumetric = workflow.stages.get('volumetric_stocks')
     if volumetric is not None:
         summary['volumetric_stocks'] = deepcopy(volumetric.value)
@@ -809,7 +838,9 @@ STATUS_TEXT = {
 
 
 def remedy_section(summary):
-    """Show evaluated alternatives separately from conditional next actions."""
+    """Show evaluated alternatives separately from conditional next
+    actions.
+    """
     remedies = summary.get('remedies') or {}
     rows = [(r['id'], r['status'], r['next_action']) for r in remedies.get('requirements', [])]
     rows += [(r['id'], r['status'], r['next_action']) for r in remedies.get('options', [])]
@@ -857,7 +888,9 @@ _NUTRIENT_NAMES = {
 
 
 def _magnitude(value):
-    """Four significant digits, in decimal notation even for a small nonzero miss."""
+    """Four significant digits, in decimal notation even for a small
+    nonzero miss.
+    """
     return format(Decimal(format(abs(value), '.4g')), 'f')
 
 
@@ -928,12 +961,16 @@ def _review_reason(summary):
 
 
 def percentage(value, digits=2, suffix="%"):
-    """Format a relative difference without inventing a percentage for zero targets."""
+    """Format a relative difference without inventing a percentage for
+    zero targets.
+    """
     return 'undefined (zero target)' if value is None else f'{value:+.{digits}f}{suffix}'
 
 
 def dose_number(value, digits=2):
-    """Preserve a positive dose when fixed-point display would round it to zero."""
+    """Preserve a positive dose when fixed-point display would round it
+    to zero.
+    """
     shown = number(value, digits)
     if value is not None and value > 0 and float(shown.replace(',', '')) == 0:
         return f'{value:.6g}'
@@ -941,7 +978,9 @@ def dose_number(value, digits=2):
 
 
 def ec_text(ec, *, about=False):
-    """The EC a result can state: one value for an estimate, 'low-high' for a range, else None."""
+    """The EC a result can state: one value for an estimate, 'low-high'
+    for a range, else None.
+    """
     if not ec or ec.get('status') not in ('estimated', 'range') or not ec.get('ec25_range_ms_cm'):
         return None
     low, high = ec['ec25_range_ms_cm']
@@ -955,7 +994,9 @@ def ec_text(ec, *, about=False):
 
 
 def requested_ec_note(requested, ec):
-    """How a requested EC (mS/cm) sits against the estimated range, or None without a request."""
+    """How a requested EC (mS/cm) sits against the estimated range, or
+    None without a request.
+    """
     if requested is None or not ec or not ec.get('ec25_range_ms_cm'):
         return None
     low, high = ec['ec25_range_ms_cm']
@@ -966,7 +1007,9 @@ def requested_ec_note(requested, ec):
 
 
 def status_explanations(summary):
-    """Explain independent status scopes without changing calculation or acceptance flags."""
+    """Explain independent status scopes without changing calculation or
+    acceptance flags.
+    """
     explanations = {}
     numerical = (summary.get('statuses') or {}).get('numerical')
     if numerical == 'stationary_point':
@@ -992,7 +1035,9 @@ def status_explanations(summary):
 
 
 def qualification_lines(summary):
-    """Keep model applicability and physical validation distinct from feasibility."""
+    """Keep model applicability and physical validation distinct from
+    feasibility.
+    """
     lines = [
         'Planning calculation; physical validation is not established by this report.',
     ]
@@ -1024,7 +1069,9 @@ def qualification_lines(summary):
 
 
 def evidence_section(summary):
-    """Embed escaped, full-precision evidence without scripts or network resources."""
+    """Embed escaped, full-precision evidence without scripts or network
+    resources.
+    """
     import json
 
     lines = ''.join(f'<li>{text(line)}</li>' for line in qualification_lines(summary))
@@ -1039,7 +1086,9 @@ def evidence_section(summary):
 
 
 def result_reference(summary):
-    """Render the calculation content identity or explicitly label an unbound legacy view."""
+    """Render the calculation content identity or explicitly label an
+    unbound legacy view.
+    """
     identity = summary.get('calculation_identity') or {}
     return (
         '<p class="small">Calculation reference: '
@@ -1065,7 +1114,9 @@ def _card(label, value, note):
 
 
 def reagent_amount(candidate):
-    """Display a supported liquid volume, otherwise retain the reagent mass."""
+    """Display a supported liquid volume, otherwise retain the reagent
+    mass.
+    """
     if candidate['volume_ml_per_batch'] is None:
         if candidate['mass_g_per_batch'] is None:
             return 'Not available'
@@ -1099,7 +1150,9 @@ def _joint_verdict(summary):
 
 
 def reagent_preparation(summary):
-    """Split the total liquid reagent dose into refills at the shared injection ratio."""
+    """Split the total liquid reagent dose into refills at the shared
+    injection ratio.
+    """
     ph, volumes = summary.get('ph') or {}, summary.get('volumes')
     chosen = ph.get('selected') or {}
     dose = chosen.get('volume_ml_per_batch')
@@ -1136,7 +1189,9 @@ def reagent_preparation(summary):
 
 
 def reagent_preparation_lines(summary):
-    """Describe per-fill quantities separately from the total batch reagent quantity."""
+    """Describe per-fill quantities separately from the total batch
+    reagent quantity.
+    """
     if summary.get('status') == 'blocked':
         return []
     plan = reagent_preparation(summary)
@@ -1606,7 +1661,9 @@ def _unchecked_line(s):
 
 
 def rounded_dose_rows(delivered):
-    """Product, dose and units shared by the rounded sheet and terminal."""
+    """Product, dose and units shared by the rounded sheet and
+    terminal.
+    """
     rows = [
         (name, number(mass, 6), 'g dry product')
         for name, mass in delivered['dry_product_grams'].items()
@@ -1632,7 +1689,9 @@ def rounded_dose_rows(delivered):
 
 
 def volumetric_stock_section(summary):
-    """Show only the delivered quantities for the rounded preparation option."""
+    """Show only the delivered quantities for the rounded preparation
+    option.
+    """
     stage = summary['stages']['volumetric_stocks']
     delivered = summary['volumetric_stocks']
     heading = '<section><h2>Rounded batch doses</h2>'

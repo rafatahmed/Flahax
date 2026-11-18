@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ``flahax`` command. Growers start with ``flahax mix``; with JSON piped in, it writes a
-recommendation."""
+"""The ``flahax`` command. Growers start with ``flahax mix``; with JSON
+piped in, it writes a recommendation.
+"""
 
 import json
 import sys
@@ -47,7 +48,9 @@ Report a problem: {ISSUES}
 
 
 def main() -> int:
-    """The ``flahax`` console entry point; Ctrl+C prints "Stopped." and exits with 130."""
+    """The ``flahax`` console entry point; Ctrl+C prints "Stopped." and
+    exits with 130.
+    """
     try:
         return _main()
     except KeyboardInterrupt:

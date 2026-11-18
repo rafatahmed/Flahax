@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Native console witnesses and controlled terminal lifecycle regressions (#182)."""
+"""Native console witnesses and controlled terminal lifecycle
+regressions (#182).
+"""
 
 import io
 import json
@@ -168,7 +170,8 @@ class PlatformInterfaceTests(unittest.TestCase):
             self.assertIsNone(term._restore)
 
     def test_windows_console_mode_failures_are_explicit(self):
-        # Import under the real OS before simulating the Windows adapter branch.
+        # Import under the real OS before simulating the Windows adapter
+        # branch.
         import ctypes.wintypes  # noqa: F401
         from flahax.terminal import TerminalUnavailable
 
@@ -287,11 +290,14 @@ class NativePlatformTests(unittest.TestCase):
 
 
 def assert_restored_termios(case, before, after, platform, pendin):
-    """Compare configuration, allowing only Darwin's kernel-owned pending-input bit."""
+    """Compare configuration, allowing only Darwin's kernel-owned
+    pending-input bit.
+    """
     expected, actual = list(before), list(after)
     if platform == 'darwin':
-        # XNU tty.c sets PENDIN when ICANON is restored, even for an empty queue.
-        # Do not flush input or change production cleanup to satisfy this witness.
+        # XNU tty.c sets PENDIN when ICANON is restored, even for an
+        # empty queue. Do not flush input or change production cleanup
+        # to satisfy this witness.
         expected[3] &= ~pendin
         actual[3] &= ~pendin
     case.assertEqual(actual, expected)
@@ -328,7 +334,9 @@ class TermiosRestorationWitnessTests(unittest.TestCase):
 
 
 def posix_pty_witness():
-    """Exercise a real PTY in an isolated session, ignoring its teardown hangup."""
+    """Exercise a real PTY in an isolated session, ignoring its teardown
+    hangup.
+    """
     import signal
 
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -371,7 +379,9 @@ def posix_pty_witness():
 
 
 def windows_console_witness():
-    """Exercise real Win32 console handles in an isolated hidden child console."""
+    """Exercise real Win32 console handles in an isolated hidden child
+    console.
+    """
     import ctypes
     from ctypes import wintypes
     from flahax.terminal import _kernel32
@@ -442,7 +452,8 @@ def windows_console_witness():
                     )
                     assert written.value == 1
                     assert term.read_key(0.5) == 'م'
-                    # Printable U+00E0 is not the legacy extended-key prefix.
+                    # Printable U+00E0 is not the legacy extended-key
+                    # prefix.
                     for char in ('à', 'H'):
                         event = Input(1, Event(key=Key(True, 1, 0, 0, char, 0)))
                         assert kernel.WriteConsoleInputW(
@@ -473,7 +484,8 @@ def windows_console_witness():
                         handles[0], ctypes.byref(event), 1, ctypes.byref(written)
                     )
                     assert [term.read_key(0.1) for _ in range(3)] == ['à', 'à', 'à']
-                    # Windows delivers an Alt+numpad character on Alt release.
+                    # Windows delivers an Alt+numpad character on Alt
+                    # release.
                     event = Input(1, Event(key=Key(False, 1, 0x12, 0, 'à', 0)))
                     assert kernel.WriteConsoleInputW(
                         handles[0], ctypes.byref(event), 1, ctypes.byref(written)
@@ -482,7 +494,8 @@ def windows_console_witness():
                     from flahax.mix_tui import TuiPrompts
                     from flahax.terminal import glyphs
 
-                    # Exercise the real mix widgets through the native reader.
+                    # Exercise the real mix widgets through the native
+                    # reader.
                     for char in 'àHPKMx\b\r':
                         event = Input(1, Event(key=Key(True, 1, 0, 0, char, 0)))
                         assert kernel.WriteConsoleInputW(
@@ -496,7 +509,8 @@ def windows_console_witness():
                             handles[0], ctypes.byref(event), 1, ctypes.byref(written)
                         )
                     assert prompts.choose('Formula', ['first', 'second', 'third']) == 2
-                    # Releases and non-key records must not become text or stop polling.
+                    # Releases and non-key records must not become text
+                    # or stop polling.
                     event = Input(1, Event(key=Key(False, 1, 0x41, 0, 'a', 0)))
                     assert kernel.WriteConsoleInputW(
                         handles[0], ctypes.byref(event), 1, ctypes.byref(written)

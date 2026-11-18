@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Immutable, unit-bearing quantities and final-solution recipe adaptation.
+"""Immutable, unit-bearing quantities and final-solution recipe
+adaptation.
 
-All planning arithmetic uses base units (g, L, mg/L, °C, and min) and retains
-full floating-point precision. Presentation rounding belongs to a caller after
-constraint checks have completed.
+All planning arithmetic uses base units (g, L, mg/L, °C, and min) and
+retains full floating-point precision. Presentation rounding belongs to
+a caller after constraint checks have completed.
 """
 
 from __future__ import annotations
@@ -59,11 +60,13 @@ class VolumeLitres:
 
 @dataclass(frozen=True, slots=True)
 class SolventBasis:
-    """Final solution volume and final solvent-water mass, including carrier/hydrate water.
+    """Final solution volume and final solvent-water mass, including
+    carrier/hydrate water.
 
-    Neither density nor volume alone determines solvent mass. A stated final inventory
-    already includes water supplied by reagents and dissolved hydrates; never add it twice.
-    These are accounting inputs, not independently verified measurements.
+    Neither density nor volume alone determines solvent mass. A stated
+    final inventory already includes water supplied by reagents and
+    dissolved hydrates; never add it twice. These are accounting inputs,
+    not independently verified measurements.
     """
 
     final_volume_litres: float
@@ -77,10 +80,12 @@ class SolventBasis:
 
     @classmethod
     def from_solution_mass(cls, final_volume_litres, density_kg_per_litre, nonwater_mass_kg):
-        """Subtract all nonwater mass from density times final solution volume.
+        """Subtract all nonwater mass from density times final solution
+        volume.
 
-        Nonwater mass includes solutes, reagent solute and any suspended material.
-        An elemental nutrient sum is not a complete nonwater mass measurement.
+        Nonwater mass includes solutes, reagent solute and any suspended
+        material. An elemental nutrient sum is not a complete nonwater
+        mass measurement.
         """
         volume = _value(final_volume_litres, 'final_volume_litres', minimum=0, strict=True)
         density = _value(density_kg_per_litre, 'density_kg_per_litre', minimum=0, strict=True)
@@ -96,10 +101,12 @@ class SolventBasis:
         reagent_carrier_water_kg,
         dissolved_hydrate_water_kg,
     ):
-        """Sum disjoint, explicitly quantified water contributions after dissolution.
+        """Sum disjoint, explicitly quantified water contributions after
+        dissolution.
 
-        Unknown carrier or hydrate water must not be passed as zero. This does not
-        infer dissolution, hydrate stoichiometry or reagent purity from nutrient assays.
+        Unknown carrier or hydrate water must not be passed as zero.
+        This does not infer dissolution, hydrate stoichiometry or
+        reagent purity from nutrient assays.
         """
         entries = dict(
             source_water_kg=source_water_kg,
@@ -109,7 +116,9 @@ class SolventBasis:
         return cls(final_volume_litres, sum(_value(v, k, minimum=0) for k, v in entries.items()))
 
     def mg_per_litre_to_molality(self, concentration, molar_mass):
-        """Convert mg/L of a stated component to mol/kg solvent water."""
+        """Convert mg/L of a stated component to mol/kg solvent
+        water.
+        """
         mg = _value(concentration, 'concentration mg/L', minimum=0)
         mw = _value(molar_mass, 'molar mass g/mol', minimum=0, strict=True)
         return mg * self.final_volume_litres / (1000 * mw * self.water_mass_kg)
@@ -121,7 +130,9 @@ class SolventBasis:
         return molal * mw * 1000 * self.water_mass_kg / self.final_volume_litres
 
     def grams_per_litre_to_grams_per_kg_water(self, dose):
-        """Normalize product mass by final solvent mass without a density assumption."""
+        """Normalize product mass by final solvent mass without a
+        density assumption.
+        """
         return _value(dose, 'dose g/L', minimum=0) * self.final_volume_litres / self.water_mass_kg
 
 
@@ -137,7 +148,9 @@ class GramsPerLitre:
 
 @dataclass(frozen=True, slots=True)
 class MilligramsPerLitre:
-    """A concentration in milligrams per litre, finite and not negative."""
+    """A concentration in milligrams per litre, finite and not
+    negative.
+    """
 
     value: float
 
@@ -147,7 +160,9 @@ class MilligramsPerLitre:
 
 @dataclass(frozen=True, slots=True)
 class MilliEquivalentsPerLitre:
-    """A concentration in milliequivalents per litre, finite and not negative."""
+    """A concentration in milliequivalents per litre, finite and not
+    negative.
+    """
 
     value: float
 
@@ -193,7 +208,9 @@ class DurationMinutes:
 
 @dataclass(frozen=True, slots=True)
 class InjectionRatio:
-    """Final-solution litres produced per one litre of injected stock."""
+    """Final-solution litres produced per one litre of injected
+    stock.
+    """
 
     value: float
 
@@ -205,8 +222,8 @@ class InjectionRatio:
 
 @dataclass(frozen=True, slots=True)
 class SaltDose:
-    """One fertilizer in the recipe: its dose in the final solution and the mass for the whole
-    volume.
+    """One fertilizer in the recipe: its dose in the final solution and
+    the mass for the whole volume.
     """
 
     salt_id: str
@@ -219,8 +236,9 @@ class SaltDose:
 class FinalSolutionRecipe:
     """A recommendation expressed for a concrete final batch volume.
 
-    ``feasible`` is True when the recipe can be planned: it breaks no declared maximum. A
-    recipe that misses a target is still a recipe; its deviations are reported (G25).
+    ``feasible`` is True when the recipe can be planned: it breaks no
+    declared maximum. A recipe that misses a target is still a recipe;
+    its deviations are reported (G25).
     """
 
     final_volume: VolumeLitres
@@ -236,12 +254,14 @@ class FinalSolutionRecipe:
 def final_solution_recipe(
     recommendation: Mapping[str, Any], final_volume: VolumeLitres
 ) -> FinalSolutionRecipe:
-    """Adapt a FlahaX recommendation to exact salt masses for a final batch.
+    """Adapt a FlahaX recommendation to exact salt masses for a final
+    batch.
 
-    The function consumes ``result['salts']``, ``feasible`` and ``limitViolations``.
-    The recipe can be planned unless it breaks a declared maximum: a missed target is a
-    reported deviation, not a block (G25). Without a ``limitViolations`` list the
-    ``feasible`` flag is kept as given. It does not reinterpret the solver's nutrient
+    The function consumes ``result['salts']``, ``feasible`` and
+    ``limitViolations``. The recipe can be planned unless it breaks a
+    declared maximum: a missed target is a reported deviation, not a
+    block (G25). Without a ``limitViolations`` list the ``feasible``
+    flag is kept as given. It does not reinterpret the solver's nutrient
     balance or round doses.
     """
     if not isinstance(recommendation, Mapping):
@@ -288,7 +308,9 @@ def elemental_contribution(
     elemental_mass_fractions: Mapping[str, Any],
     final_volume: VolumeLitres,
 ) -> dict[str, MilligramsPerLitre]:
-    """Convert a reagent's elemental mass fractions into final ppm additions."""
+    """Convert a reagent's elemental mass fractions into final ppm
+    additions.
+    """
     if not isinstance(reagent_mass, MassGrams):
         raise DeliveryError("invalid_type", "reagent_mass must be a MassGrams value")
     if not isinstance(final_volume, VolumeLitres):
@@ -323,7 +345,9 @@ def rescore_with_reagent(
     targets: Mapping[str, Any],
     contribution: Mapping[str, MilligramsPerLitre],
 ) -> tuple[float, list[dict]]:
-    """Add a reagent's ppm contribution and score the resulting ion balance."""
+    """Add a reagent's ppm contribution and score the resulting ion
+    balance.
+    """
     try:
         final = validate_profile(dict(achieved), "achieved")
         clean_targets = validate_profile(dict(targets), "targets")
@@ -351,12 +375,14 @@ def rescore_weighed_recipe(
     *,
     maximum_concentrations: Mapping[str, Any] | None = None,
 ) -> dict:
-    """Recalculate nutrient results from actual masses without fitting new doses.
+    """Recalculate nutrient results from actual masses without fitting
+    new doses.
 
-    ``masses`` maps product IDs to weighed grams. Omitted products contribute zero.
-    Supply the original targets, water and effective maxima, including any caller
-    ammonium policy. Feasibility is recalculated; no planned flag is inherited.
-    This nutrient assessment does not establish pH, stock or physical suitability.
+    ``masses`` maps product IDs to weighed grams. Omitted products
+    contribute zero. Supply the original targets, water and effective
+    maxima, including any caller ammonium policy. Feasibility is
+    recalculated; no planned flag is inherited. This nutrient assessment
+    does not establish pH, stock or physical suitability.
     """
     if not isinstance(final_volume, VolumeLitres):
         raise DeliveryError('invalid_type', 'final_volume must be a VolumeLitres value')

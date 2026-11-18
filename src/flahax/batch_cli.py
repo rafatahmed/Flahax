@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""``flahax batch``: one formula and one water to a report, a batch sheet and a JSON summary (#79).
+"""``flahax batch``: one formula and one water to a report, a batch
+sheet and a JSON summary (#79).
 
 Water is ``ro`` (no ions) or a JSON file::
 
@@ -10,34 +11,39 @@ Water is ``ro`` (no ions) or a JSON file::
      "mg_per_litre": {"Ca": 244, "Mg": 100.8, "K": 44.2, "Na": 680, "Cl": 1280.4,
                       "S": 241.4, "N_NO3": 3.47, "HCO3": 197}}
 
-Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
-the legacy equivalent-carbon input in mg/L as HCO3, not titrated alkalinity.
-For a titration use signed ``alkalinity_meq_per_litre`` instead of HCO3.
-Iron is taken as Fe(III), the form in aerated water.
-Explicit final solvent mass/volume or solution density/nonwater mass define the
-concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
+Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N);
+``HCO3`` is the legacy equivalent-carbon input in mg/L as HCO3, not
+titrated alkalinity. For a titration use signed
+``alkalinity_meq_per_litre`` instead of HCO3. Iron is taken as Fe(III),
+the form in aerated water. Explicit final solvent mass/volume or
+solution density/nonwater mass define the concentration basis. Legacy
+inputs report an unquantified 1 kg solvent/L assumption.
 
-A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
-water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
-measured-pH chemistry needs ``HCO3`` (0 if none). Optional keys:
-``"below_detection": {"Mn": 0.01}`` (detection limits, mg/L; taken as zero, never
-adjusted).
+A value of 0 is a measured zero and stays zero (``"Cl": 0`` for
+chloride-free water, ``"HCO3": 0`` for carbon-free water); an omitted
+ion is not measured, and measured-pH chemistry needs ``HCO3`` (0 if
+none). Optional keys: ``"below_detection": {"Mn": 0.01}`` (detection
+limits, mg/L; taken as zero, never adjusted).
 
-Nutrient targets and concentration limits use the analysis exactly as entered.
-For the chemistry only (pH, saturation, EC, reagent dose) the analysis is
-speciated at its measured pH exactly as measured: its charge imbalance is
-reported, and no ion is added, removed or adjusted to close it. The report shows
-the imbalance and never lets it pass or fail a limit (#84).
+Nutrient targets and concentration limits use the analysis exactly as
+entered. For the chemistry only (pH, saturation, EC, reagent dose) the
+analysis is speciated at its measured pH exactly as measured: its charge
+imbalance is reported, and no ion is added, removed or adjusted to close
+it. The report shows the imbalance and never lets it pass or fail a
+limit (#84).
 
-Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
-the final solution); unspecified limits are not checked. The packaged pH products
-(KOH 45%, KHCO3, K2CO3, H3PO4 75%, HNO3 65%) are always evaluated; pass your own
-acid's certificate values with ``--acid``.
+Limits are never assumed: declare each maximum with ``--limit
+Cl=106.35`` (mg/L in the final solution); unspecified limits are not
+checked. The packaged pH products (KOH 45%, KHCO3, K2CO3, H3PO4 75%,
+HNO3 65%) are always evaluated; pass your own acid's certificate values
+with ``--acid``.
 """
 
 import argparse
+
 from .canonical_result import seal_summary
 from .sonneveld import design_targets
+
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -63,7 +69,8 @@ from .product_conversion import MOLAR_MASS
 from .ph_adjustment import REAGENTS
 from .stock_volumes import prepare_stocks
 
-# Water analysis key -> (basis, grams per mole of the reported quantity).
+# Water analysis key -> (basis, grams per mole of the reported
+# quantity).
 WATER_KEYS = {
     'Ca': ('Ca+2', MOLAR_MASS['Ca']),
     'Mg': ('Mg+2', MOLAR_MASS['Mg']),
@@ -85,7 +92,9 @@ WATER_KEYS = {
 
 
 def read_json(path, what):
-    """A JSON file's content, or a DeliveryError that names the file and the line (#117)."""
+    """A JSON file's content, or a DeliveryError that names the file and
+    the line (#117).
+    """
     try:
         text = Path(path).read_text(encoding='utf-8-sig')
     except FileNotFoundError:
@@ -106,8 +115,9 @@ def read_json(path, what):
 
 
 def number_in(name, low, high=None, *, above=True):
-    """An argparse type: a finite number above ``low`` (or at least, with ``above=False``) and at
-    most ``high``."""
+    """An argparse type: a finite number above ``low`` (or at least,
+    with ``above=False``) and at most ``high``.
+    """
 
     def parse(text):
         try:
@@ -146,7 +156,9 @@ def _mg(key, value, what='water value'):
 
 
 def water_basis(data):
-    """Return a final solvent basis and its disclosed input/uncertainty status."""
+    """Return a final solvent basis and its disclosed input/uncertainty
+    status.
+    """
     keys = {'water_mass_kg', 'final_volume_litres', 'density_kg_per_litre', 'nonwater_mass_kg'}
     present = keys.intersection(data)
     if not present:
@@ -184,7 +196,9 @@ def water_basis(data):
 
 
 def read_water(spec):
-    """(label, nutrient mg/L, equilibrium configuration) from ``ro`` or a JSON file."""
+    """(label, nutrient mg/L, equilibrium configuration) from ``ro`` or
+    a JSON file.
+    """
     if spec.lower() == 'ro':
         return (
             'RO water, no ions',
@@ -251,7 +265,8 @@ def read_water(spec):
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
         totals[basis] = totals.get(basis, 0) + solvent.mg_per_litre_to_molality(mg, grams)
-    # Nutrients straight from the laboratory analysis; the workflow balances it for chemistry only.
+    # Nutrients straight from the laboratory analysis; the workflow
+    # balances it for chemistry only.
     nutrients = {key: float(mg) for key, mg in data['mg_per_litre'].items() if key != 'HCO3'}
     analysis_id = str(data.get('id', Path(spec).stem))
     label = f'{analysis_id}: laboratory analysis, measured pH {data["measured_ph"]}'
@@ -279,11 +294,13 @@ def read_water(spec):
 
 
 def blend(label, water, chemistry, percent):
-    """The analysed water as ``percent`` of the batch water, the rest ion-free (desalinated or RO).
+    """The analysed water as ``percent`` of the batch water, the rest
+    ion-free (desalinated or RO).
 
-    Nutrients and limits scale the laboratory analysis; the chemistry dilutes its
-    measured-pH record (#84). If the analysis cannot be closed, the chemistry is
-    left out with the reason, and nutrient accounting goes on.
+    Nutrients and limits scale the laboratory analysis; the chemistry
+    dilutes its measured-pH record (#84). If the analysis cannot be
+    closed, the chemistry is left out with the reason, and nutrient
+    accounting goes on.
     """
     if chemistry.get('measured_ph') is None:
         raise DeliveryError(
@@ -295,7 +312,8 @@ def blend(label, water, chemistry, percent):
     source_basis = chemistry.get('concentration_basis', water_basis({})[1])
     source_ratio = source_basis['water_kg_per_litre']
     mixed_ratio = fraction * source_ratio + (1 - fraction)
-    # The share is volumetric; the molal dilution is the source solvent mass share.
+    # The share is volumetric; the molal dilution is the source solvent
+    # mass share.
     molal_fraction = fraction * source_ratio / mixed_ratio
     basis_audit = dict(source_basis, water_kg_per_litre=mixed_ratio)
     if percent != 100:
@@ -334,7 +352,9 @@ def blend(label, water, chemistry, percent):
 
 
 def limit_entry(spec):
-    """``SYMBOL=MG_PER_L``: a maximum concentration in the final solution."""
+    """``SYMBOL=MG_PER_L``: a maximum concentration in the final
+    solution.
+    """
     symbol, _, value = spec.partition('=')
     if not symbol.strip() or not value.strip():
         raise argparse.ArgumentTypeError(
@@ -350,7 +370,9 @@ ACID_FORMULAS = {f.upper(): f for f, (direction, *_) in REAGENTS.items() if dire
 
 
 def acid_record(spec):
-    """Parse a supplier certificate, optionally including its declared solvent mass fraction."""
+    """Parse a supplier certificate, optionally including its declared
+    solvent mass fraction.
+    """
     parts = spec.split(':')
     if len(parts) not in (3, 4, 5):
         raise DeliveryError(
@@ -404,8 +426,8 @@ def acid_record(spec):
 
 
 def choose_formula(library, formula, crop):
-    """The packaged formula name chosen by ``--formula`` (exact) or ``--crop`` (must match one
-    name); raises DeliveryError otherwise.
+    """The packaged formula name chosen by ``--formula`` (exact) or
+    ``--crop`` (must match one name); raises DeliveryError otherwise.
     """
     names = [f['name'] for f in library['formulas']]
     if formula:
@@ -426,11 +448,12 @@ def choose_formula(library, formula, crop):
 
 @dataclass
 class BatchOptions:
-    """The ``flahax batch`` flags, plus the interactive mix's tanks, fill mode, temperature and
-    depth.
+    """The ``flahax batch`` flags, plus the interactive mix's tanks,
+    fill mode, temperature and depth.
 
-    With ``tank_litres`` (keys A, B and acid) the batch volume is the irrigation the
-    stocks supply (``stock_volumes.prepare_stocks``) and ``volume`` is not used.
+    With ``tank_litres`` (keys A, B and acid) the batch volume is the
+    irrigation the stocks supply (``stock_volumes.prepare_stocks``) and
+    ``volume`` is not used.
     """
 
     water: str
@@ -463,8 +486,9 @@ class BatchOptions:
     reagents: str | None = None
 
 
-# Batch search controls. The loss threshold is an exact-fit shortcut. A constrained
-# local solution can finish by stationarity even when nutrient targets are missed.
+# Batch search controls. The loss threshold is an exact-fit shortcut. A
+# constrained local solution can finish by stationarity even when
+# nutrient targets are missed.
 JOINT_CONTROLS = dict(
     charge_scale=0.001,
     charge_tolerance=2e-12,
@@ -485,8 +509,9 @@ JOINT_DOSE_STEP_G_PER_L = 1e-4
 def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_cap=None):
     """The explicit joint-fit configuration for every offered reagent.
 
-    Only declared solvent fractions enter the joint problem. Liquid mass caps use their
-    recorded densities. Dry solids use a separately declared mass cap.
+    Only declared solvent fractions enter the joint problem. Liquid mass
+    caps use their recorded densities. Dry solids use a separately
+    declared mass cap.
     """
     if solid_cap is not None and (
         isinstance(solid_cap, bool)
@@ -520,7 +545,8 @@ def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_c
                 )
             masses[identity] = 1000 * cap_litres * density
         else:
-            # Neither a known solid nor a liquid with a verifiable volume cap.
+            # Neither a known solid nor a liquid with a verifiable
+            # volume cap.
             continue
         if identity not in solvents:
             fallbacks[identity] = 'joint fit needs a declared solvent fraction'
@@ -543,9 +569,11 @@ def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_c
 
 
 def left_out_products(library, products, confirmed_products=()):
-    """One declared remedy per catalogue fertilizer the grower's product list leaves out.
+    """One declared remedy per catalogue fertilizer the grower's product
+    list leaves out.
 
-    Only excluded catalogue IDs explicitly confirmed by the grower are rerun.
+    Only excluded catalogue IDs explicitly confirmed by the grower are
+    rerun.
     """
     present = {p['id'] for p in products}
     extras = [p for p in nutrient_salts(library['salts']) if p['id'] not in present]
@@ -602,8 +630,9 @@ def _product_records(records, label):
 
 
 def run_batch(options):
-    """The batch summary (``summarize_batch``); with tanks, ``summary['volumes']`` gives the stock
-    volumes."""
+    """The batch summary (``summarize_batch``); with tanks,
+    ``summary['volumes']`` gives the stock volumes.
+    """
     volumes = None
     if options.tank_litres is not None:
         volumes = prepare_stocks(
@@ -782,15 +811,17 @@ def render(summary):
 
 
 def render_saved_result(record):
-    """Validate an archived result/consent before rendering its original qualified outputs."""
+    """Validate an archived result/consent before rendering its original
+    qualified outputs.
+    """
     from .result_acceptance import load_result
 
     return render(load_result(record)['summary'])
 
 
 def build(args):
-    """Run the batch for parsed ``flahax batch`` arguments; returns the rendered terminal text and
-    the summary.
+    """Run the batch for parsed ``flahax batch`` arguments; returns the
+    rendered terminal text and the summary.
     """
     summary = run_batch(
         BatchOptions(

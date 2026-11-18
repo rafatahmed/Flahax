@@ -3,14 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Tomato capability report and grower batch sheets (offline HTML, no dependencies).
+"""Tomato capability report and grower batch sheets (offline HTML, no
+dependencies).
 
 Run from the repository root:
     python -m examples.tomato_report --output build/tomato-report
 
-Creates tomato-report.html (charts and tables for both examples) and one printable
-batch sheet per example. Every value comes from tomato_simple.run() and
-tomato_advanced.run(); nothing is typed in by hand. Existing paths are never overwritten.
+Creates tomato-report.html (charts and tables for both examples) and one
+printable batch sheet per example. Every value comes from
+tomato_simple.run() and tomato_advanced.run(); nothing is typed in by
+hand. Existing paths are never overwritten.
 """
 
 import argparse
@@ -479,7 +481,9 @@ def sheets(simple, advanced):
 
 
 def ec_display(e, *, about=False):
-    """The EC an example result can state: one value, 'low-high' for a range, or n/a."""
+    """The EC an example result can state: one value, 'low-high' for a
+    range, or n/a.
+    """
     return (
         ec_text({'status': e['status'], 'ec25_range_ms_cm': e['range_ms_cm']}, about=about)
         or 'n/a'

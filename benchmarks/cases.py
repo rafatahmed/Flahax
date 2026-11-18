@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Fixed Benchmark v1 inputs, independent scoring, and correctness gates."""
+"""Fixed Benchmark v1 inputs, independent scoring, and correctness
+gates.
+"""
 
 import hashlib
 import json
@@ -14,8 +16,9 @@ FIXTURES = ROOT / "tests/fixtures/phreeqc"
 VERSION = "benchmark-v1"
 TARGETS = {"N_NO3": 128, "P": 58, "K": 211, "Ca": 104, "Mg": 40, "S": 54}
 WATERS = {"zero_nutrients": {}, "calcium_20_mg_l": {"Ca": 20}}
-# Analytic numerical systems, not fertilizer identities. Each reference receives
-# precisely these rows and RHS; no library filtering or regularization is hidden.
+# Analytic numerical systems, not fertilizer identities. Each reference
+# receives precisely these rows and RHS; no library filtering or
+# regularization is hidden.
 NNLS_CASES = {
     "exact": ([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], [2.0, 3.0, 5.0]),
     "infeasible": ([[1.0], [1.0]], [1.0, 3.0]),
@@ -49,10 +52,12 @@ def objective(matrix, rhs, weights):
 
 
 def evaluate_recipe(products, result, targets, water, *, absolute_mg_l=0.01, relative=0.01):
-    """Reconstruct target nutrients from returned rounded doses, not solver rows.
+    """Reconstruct target nutrients from returned rounded doses, not
+    solver rows.
 
-    Catalogue-assay evaluator: unassayed counterions are outside this target-fit
-    scorecard. They remain separately reported by the public workflow.
+    Catalogue-assay evaluator: unassayed counterions are outside this
+    target-fit scorecard. They remain separately reported by the public
+    workflow.
     """
     by_id = {p["id"]: p for p in products}
     delivered = dict(water)
@@ -100,7 +105,9 @@ def solve_fixture(data):
 
 
 def evaluate_chemistry(data, result, acid=None):
-    """Quantity-specific comparisons using the existing fixture's tolerances."""
+    """Quantity-specific comparisons using the existing fixture's
+    tolerances.
+    """
     row, tol = data["selected_rows"][-1], data["tolerances"]
     checks = []
 
@@ -121,7 +128,8 @@ def evaluate_chemistry(data, result, acid=None):
     for component, residual in result.residuals.items():
         check("conservation:" + component, residual, 0.0, 1e-15 + 1e-9 * result.totals[component])
     check("ionic_strength_mol_kgw", result.ionic_strength, row["mu"], 1e-9, 0.03)
-    # pH is prescribed for these captures, not an independently solved pH test.
+    # pH is prescribed for these captures, not an independently solved
+    # pH test.
     check("prescribed_pH", result.ph, row["pH"], 1e-12)
     for key, expected in row.items():
         if key.startswith("m_"):
@@ -156,7 +164,8 @@ def evaluate_chemistry(data, result, acid=None):
             tol["phase_relative"],
         )
         si = result.saturation_indices.get(phase)
-        # Inapplicable phases may be absent when their components are absent.
+        # Inapplicable phases may be absent when their components are
+        # absent.
         if si is not None:
             checks.append(
                 {

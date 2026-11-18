@@ -2,21 +2,26 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Rational objective-gap certificates for a relaxation of the joint problem."""
+"""Rational objective-gap certificates for a relaxation of the joint
+problem.
+"""
 
 from fractions import Fraction as F
+
 from .engine import nnls
 from .joint_problem import _profile_doses, _number
 
 
 def objective_certificate(problem, fertilizer_doses, reagent_dose):
-    """Bound objective suboptimality without assuming nonlinear convexity.
+    """Bound objective suboptimality without assuming nonlinear
+    convexity.
 
-    Charge and phase equations are dropped, retaining all linear hard bounds.
-    Any feasible joint point is feasible for this relaxation. A verified dual
-    value therefore bounds the joint optimum from below. Rational arithmetic
-    refers to the actual binary input values, not rounded decimal displays.
-    The reported gap is an exact fraction; floating values are for display only.
+    Charge and phase equations are dropped, retaining all linear hard
+    bounds. Any feasible joint point is feasible for this relaxation. A
+    verified dual value therefore bounds the joint optimum from below.
+    Rational arithmetic refers to the actual binary input values, not
+    rounded decimal displays. The reported gap is an exact fraction;
+    floating values are for display only.
     """
     doses = _profile_doses(fertilizer_doses, problem.fertilizers)
     q = _number(reagent_dose, 'reagent dose')
@@ -56,8 +61,9 @@ def objective_certificate(problem, fertilizer_doses, reagent_dose):
     else:
         columns = list(zip(*a))
         gradient = [2 * sum(v * r for v, r in zip(col, residual)) for col in columns]
-        # Numerical multipliers only propose a certificate. Nonnegativity and
-        # every dual inequality are enforced below with exact rational arithmetic.
+        # Numerical multipliers only propose a certificate.
+        # Nonnegativity and every dual inequality are enforced below
+        # with exact rational arithmetic.
         try:
             multipliers = nnls(
                 [[float(row[j]) for row, _ in bounds] for j in range(len(x))],

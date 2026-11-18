@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Workflow stages preserve missing-input and rejection outcomes (#186)."""
+"""Workflow stages preserve missing-input and rejection outcomes
+(#186).
+"""
 
 import unittest
+
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
 from tests.test_ph_planning import inputs
 from tests.test_ph_adjustment import RO, ACIDS
@@ -92,12 +95,14 @@ class WorkflowBoundaryTests(unittest.TestCase):
         for supplied, code in [([], 'invalid_type'), (water, 'inconsistent_water_analysis')]:
             result = self.workflow(titration=config | {'water_analysis': supplied})
             self.assertEqual(result.stages['titration'].error_code, code)
-        # G25: a K maximum of 0 forces a K shortfall, a reported deviation, not a block.
+        # G25: a K maximum of 0 forces a K shortfall, a reported
+        # deviation, not a block.
         result = self.workflow(titration=config, maximum_concentrations={'K': 0})
         self.assertEqual(result.stages['formulation'].status, 'requires_review')
         self.assertEqual(result.stages['formulation'].message, 'targets missed: K -100 %')
         self.assertEqual(result.stages['titration'].error_code, 'inconsistent_water_analysis')
-        # Only a broken declared maximum blocks: water sodium 5 mg/L above a 1 mg/L maximum.
+        # Only a broken declared maximum blocks: water sodium 5 mg/L
+        # above a 1 mg/L maximum.
         result = plan_fertilizer_workflow(
             self.salts,
             {'K': 10},
@@ -128,13 +133,15 @@ class WorkflowBoundaryTests(unittest.TestCase):
                 'invalid_value',
             ),
             ({'K': 10}, {'maximum_concentrations': {'N_NO3': 5}}, 'nutrient_limit_exceeded'),
-            # The reagent's own nitrate moves N_NO3 by more than a declared 1 % (G25).
+            # The reagent's own nitrate moves N_NO3 by more than a
+            # declared 1 % (G25).
             (
                 {'N_NO3': 10},
                 {'titration': config | {'maximum_nutrient_error_percent': 1}},
                 'nutrient_tolerance_exceeded',
             ),
-            # No percent declared: no chosen-number gate, the reagent's nitrate is reported.
+            # No percent declared: no chosen-number gate, the reagent's
+            # nitrate is reported.
             ({'N_NO3': 10}, {}, None),
         ]:
             kwargs = dict(titration=config, final_volume=VolumeLitres(100)) | changes
@@ -142,7 +149,8 @@ class WorkflowBoundaryTests(unittest.TestCase):
             self.assertEqual(result.stages['titration'].error_code, expected)
 
     def test_titration_never_blocks_on_a_deviation_the_formulation_accepts(self):
-        # G25: the titration stage judges only the change its reagent makes.
+        # G25: the titration stage judges only the change its reagent
+        # makes.
         water, curve, reagent = inputs()
         config = dict(
             water_analysis=water,
@@ -198,7 +206,8 @@ class GradeIdentityBoundaryTests(unittest.TestCase):
         from tests.test_measured_water import STATION_104
 
         balanced = balance_water_analysis(STATION_104, measured_ph=7.8)
-        # Synthetic boundary case: balanced Na would cross a laboratory decision.
+        # Synthetic boundary case: balanced Na would cross a laboratory
+        # decision.
         row = dict(symbol='Na', target=None, final=1, deltaPct=None)
         value = SimpleNamespace(rows=[row])
         chemistry = dict(
@@ -260,8 +269,8 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         config = dict(
             products=ACIDS, maximum_nutrient_error_percent=1, maximum_reagent_volume_litres=1e-20
         )
-        # Only a broken declared maximum (water sodium 46 mg/L above 10 mg/L) blocks with
-        # infeasible_recipe (G25).
+        # Only a broken declared maximum (water sodium 46 mg/L above 10
+        # mg/L) blocks with infeasible_recipe (G25).
         sodium = 0.002 * 22.98977 * 1000  # Na+ 0.002 mol/kg, as in the chemistry water
         salty = self.config | dict(water_totals={'Na+': 0.002, 'CO3-2': 0.001})
         for water, equilibrium, maxima, expected in [
@@ -299,12 +308,14 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         return {c.product_id: c.error_code for c in stage.value.candidates}
 
     def test_acid_selection_judges_only_the_change_the_acid_makes(self):
-        # G25: K -100 % (forced by a K maximum of 0) is the recipe's deviation, not the acid's.
+        # G25: K -100 % (forced by a K maximum of 0) is the recipe's
+        # deviation, not the acid's.
         for percent in (None, 1):
             stage = self.candidates({'K': 10}, percent, {'K': 0})
             self.assertEqual(self.codes(stage), {'HNO3-example': None, 'H3PO4-example': None})
-        # K 10 with N_NO3 5 misses both by more than 1 %; with a declared 1 % the acids pass
-        # (nitric adds 0.0033 mg/L N_NO3, 0.067 % of 5), with a declared 0.01 % nitric fails.
+        # K 10 with N_NO3 5 misses both by more than 1 %; with a
+        # declared 1 % the acids pass (nitric adds 0.0033 mg/L N_NO3,
+        # 0.067 % of 5), with a declared 0.01 % nitric fails.
         stage = self.candidates({'K': 10, 'N_NO3': 5}, 1)
         self.assertEqual(self.codes(stage), {'HNO3-example': None, 'H3PO4-example': None})
         stage = self.candidates({'K': 10, 'N_NO3': 5}, 0.01)
@@ -312,8 +323,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
             self.codes(stage),
             {'HNO3-example': 'nutrient_tolerance_exceeded', 'H3PO4-example': None},
         )
-        # Nitric pushes N_NO3 from 3.4031 (K 10 x 13.0 / 38.2, the packaged Potassium Nitrate
-        # label) past a declared 3.4033 mg/L maximum.
+        # Nitric pushes N_NO3 from 3.4031 (K 10 x 13.0 / 38.2, the
+        # packaged Potassium Nitrate label) past a declared 3.4033 mg/L
+        # maximum.
         stage = self.candidates({'K': 10}, None, {'N_NO3': 3.4033})
         self.assertEqual(self.codes(stage)['HNO3-example'], 'nutrient_limit_exceeded')
 
@@ -346,7 +358,8 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         ).stages['nitric']
 
     def test_nitric_judges_only_the_change_the_acid_makes(self):
-        # K 10 with N_NO3 5 misses both by more than 1 % (G25): not the nitric acid's doing.
+        # K 10 with N_NO3 5 misses both by more than 1 % (G25): not the
+        # nitric acid's doing.
         for percent in (None, 1):
             stage = self.nitric({'K': 10, 'N_NO3': 5}, percent)
             self.assertIn(stage.status, ('calculated', 'requires_review'), stage.message)
@@ -359,8 +372,9 @@ class WorkflowAcceptanceBoundaryTests(unittest.TestCase):
         self.assertEqual((stage.status, stage.error_code), ('blocked', 'nutrient_limit_exceeded'))
 
     def test_nitric_plans_on_water_alone_when_the_accepted_recipe_is_empty(self):
-        # K maximum 0: no product may be dosed, the formulation stage accepts the empty recipe
-        # with K -100 % reported, and the nitric stage plans on the water alone (G25).
+        # K maximum 0: no product may be dosed, the formulation stage
+        # accepts the empty recipe with K -100 % reported, and the
+        # nitric stage plans on the water alone (G25).
         stage = self.nitric({'K': 10}, None, {'K': 0})
         self.assertIn(stage.status, ('calculated', 'requires_review'), stage.message)
         self.assertIsNone(stage.error_code)
@@ -464,7 +478,8 @@ class AssumedWaterReviewBoundaryTests(unittest.TestCase):
             ),
             maximum_concentrations={'N_NO3': 20, 'Na': 50, 'Cl': 50, 'P': 1},
         )
-        # No closure is assumed: the imbalance is carried, so nothing here asks for review.
+        # No closure is assumed: the imbalance is carried, so nothing
+        # here asks for review.
         self.assertEqual(flow.stages['chemistry'].status, 'calculated', flow.stages['chemistry'])
         for name in ('nitric', 'acid_selection'):
             self.assertIn(flow.stages[name].status, ('calculated', 'requires_review'))

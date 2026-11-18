@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Label reconciliation (decision G5, option a, 2026-10-31): only unbalanced charge is set aside.
+"""Label reconciliation (decision G5, option a, 2026-10-31): only
+unbalanced charge is set aside.
 
-Chemistry uses the label amounts as declared, except the charge the compound's ions cannot
-balance: it is taken from the excess side's declared ions in proportion to their charge and
-reported as not assigned to an ion. The nutrient fit keeps the label.
+Chemistry uses the label amounts as declared, except the charge the
+compound's ions cannot balance: it is taken from the excess side's
+declared ions in proportion to their charge and reported as not assigned
+to an ion. The nutrient fit keeps the label.
 """
 
 import unittest
@@ -28,11 +30,13 @@ from flahax.product_conversion import MOLAR_MASS, convert_material_dose, materia
 
 IDENTITIES = load_identities()
 KNO3 = IDENTITIES['idn-potassium-nitrate']
-# The identity's theory, from composition.theoretical_assay('KNO3') with O 15.999.
+# The identity's theory, from composition.theoretical_assay('KNO3') with
+# O 15.999.
 THEORY_N = KNO3['theoretical_analysis']['N_NO3']  # 13.854028604775376
 THEORY_K = KNO3['theoretical_analysis']['K']  # 38.67213309331171
 LABEL = {'N_NO3': 13.0, 'K': 38.2}
-# KNO3 label: K+ and NO3- equivalents per 100 g; the cation surplus comes off K.
+# KNO3 label: K+ and NO3- equivalents per 100 g; the cation surplus
+# comes off K.
 K_EQ, N_EQ = 38.2 / ATOMIC['K'], 13.0 / ATOMIC['N']
 KNO3_SURPLUS_K = (K_EQ - N_EQ) / K_EQ * 38.2  # 1.9118022089428666
 KNO3_IMBALANCE = 100 * (K_EQ - N_EQ) / (K_EQ + N_EQ)  # 2.5665840571221237
@@ -51,8 +55,9 @@ class ReconcileLabelTests(unittest.TestCase):
         )
 
     def test_pure_compound_label_balances_exactly(self):
-        # 38.672.../39.0983 and 13.854.../14.0067 are both 100 / formula mass: the net charge
-        # is exactly 0.0 in floating point, so nothing is unassigned and no note is shown.
+        # 38.672.../39.0983 and 13.854.../14.0067 are both 100 / formula
+        # mass: the net charge is exactly 0.0 in floating point, so
+        # nothing is unassigned and no note is shown.
         pure = {'N_NO3': THEORY_N, 'K': THEORY_K}
         self.assertEqual(
             reconcile_label(KNO3, pure),
@@ -104,7 +109,8 @@ class ReconcileLabelTests(unittest.TestCase):
                 )
 
     def test_a_chelate_label_stating_its_sodium_is_balanced_against_the_complex(self):
-        # NaFe(III)EDTA: one Na+ per Fe(III)-EDTA- complex; a label stating both balances.
+        # NaFe(III)EDTA: one Na+ per Fe(III)-EDTA- complex; a label
+        # stating both balances.
         iron = IDENTITIES['idn-sodium-iron-edta']
         sodium = 13.0 / ATOMIC['Fe'] * ATOMIC['Na']
         self.assertEqual(reconcile_label(iron, {'Fe': 13.0, 'Na': sodium}).unassigned_percent, {})
@@ -129,7 +135,8 @@ class ReconcileLabelTests(unittest.TestCase):
             label_note(KNO3, LABEL),
             'label analysis differs from KNO₃: 1.91 % K not assigned to an ion',
         )
-        # A surplus that rounds to 0.00 % shows no note; the value stays in the result.
+        # A surplus that rounds to 0.00 % shows no note; the value stays
+        # in the result.
         copper = IDENTITIES['idn-copper-sulfate-pentahydrate']
         label = {'S': 12.84, 'Cu': 25.45}
         self.assertIsNone(label_note(copper, label))
@@ -144,11 +151,13 @@ class ChemistryUsesTheBalancedLabelTests(unittest.TestCase):
         ions = {'K+': 1, 'NO3-': 1}
         balanced = {'N_NO3': 13, 'K': 38.2 - KNO3_SURPLUS_K}
         self.assertEqual(chemistry_elements(self.product, ions), balanced)
-        # A record without an identity is balanced against its own ions; so is a single grade.
+        # A record without an identity is balanced against its own ions;
+        # so is a single grade.
         self.assertEqual(chemistry_elements({'elements': LABEL}, ions), balanced)
         graded = {'elements': LABEL, 'grade': {'identity_id': KNO3['id']}}
         self.assertEqual(chemistry_elements(graded, ions), balanced)
-        # A disclosed blend's grade names no compound identity: its own ions decide.
+        # A disclosed blend's grade names no compound identity: its own
+        # ions decide.
         disclosed = {
             'elements': LABEL,
             'grade': {'composition': 'disclosed', 'identity_id': KNO3['id']},
@@ -169,7 +178,9 @@ class ChemistryUsesTheBalancedLabelTests(unittest.TestCase):
 
 
 class PackagedCatalogueTests(unittest.TestCase):
-    """The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0) has no identity_inconsistent."""
+    """The packaged catalogue (Flaha Agri Tech Analysis Ver 0.0) has no
+    identity_inconsistent.
+    """
 
     def test_every_product_resolves_with_chemistry_and_no_flag(self):
         for product in load_library()['salts']:

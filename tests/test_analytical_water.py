@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#84: targets and limits use the laboratory analysis; the charge-balanced water is chemistry
-only."""
+"""#84: targets and limits use the laboratory analysis; the
+charge-balanced water is chemistry
+only.
+"""
 
 import contextlib
 import copy
@@ -34,7 +36,8 @@ from tests.catalogue_history import historical_catalogue
 from tests.test_equilibrium_delivery import arguments
 from tests.test_measured_water import STATION_104
 
-# The 33c5df2 catalogue products and formulas these workflow tests were written against.
+# The 33c5df2 catalogue products and formulas these workflow tests were
+# written against.
 with historical_catalogue():
     LIBRARY = load_library()
 PRODUCTS = LIBRARY['salts']
@@ -43,7 +46,9 @@ CLOSED = dict(carbon_boundary='closed', phases=[])
 
 
 def measured_at_own_ph(totals):
-    """A composition and the pH it actually has, as a laboratory would report it."""
+    """A composition and the pH it actually has, as a laboratory would
+    report it.
+    """
     return calculate_equilibrium_ph(totals, **CLOSED).ph
 
 
@@ -118,8 +123,9 @@ class BalanceBeforeAdjustingTests(unittest.TestCase):
         self.assertEqual(b.carbon_source, 'none')
 
     def test_fixed_zero_chloride_and_carbon_are_never_adjusted(self):
-        # 1% more potassium than nitrate: out of balance, chloride measured zero (#100). The
-        # imbalance is reported; neither chloride nor the carbon is changed to close it (G11).
+        # 1% more potassium than nitrate: out of balance, chloride
+        # measured zero (#100). The imbalance is reported; neither
+        # chloride nor the carbon is changed to close it (G11).
         water = {'K+': 0.00505, 'NO3-': 0.005, 'CO3-2': 0.0002, 'Cl-': 0.0}
         kept = balance_water_analysis(water, measured_ph=7)
         self.assertEqual((kept.balance_ion, kept.reconciliation), (None, 'imbalance_reported'))
@@ -153,9 +159,10 @@ class WorkflowLimitTests(unittest.TestCase):
             **extra,
         )
 
-    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
-    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
-    # stages does not arise.
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so the acid case it stages
+    # does not arise.
     def test_a_laboratory_exceedance_blocks_even_when_the_model_passes(self):
         self.enterContext(historical_catalogue())
         nine = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(
@@ -167,17 +174,20 @@ class WorkflowLimitTests(unittest.TestCase):
         summary = summarize_batch(workflow, PRODUCTS, title='t', water_label='w')
         self.assertEqual(summary['status'], 'blocked')
         self.assertEqual(summary['limits'][0]['decision'], 'exceeds_limit')
-        # The chemistry takes the analysis as measured: no balancing can change a decision.
+        # The chemistry takes the analysis as measured: no balancing can
+        # change a decision.
         self.assertFalse(summary['limits'][0]['balancingChangesDecision'])
 
-    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS.
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2
+    # PRODUCTS/FORMULAS.
     def test_a_laboratory_pass_is_a_pass_on_the_model_basis_too(self):
         self.enterContext(historical_catalogue())
         eight = balance_water_analysis(STATION_104, measured_ph=7.8).diluted(0.08)
         workflow = self.plan(eight, {'Na': 58})
         self.assertTrue(workflow.recommendation['feasible'])
         self.assertFalse(workflow.recommendation['limitViolations'])
-        # Laboratory and model inventories agree, so no limit is flagged for the balancing.
+        # Laboratory and model inventories agree, so no limit is flagged
+        # for the balancing.
         self.assertNotIn('formulation', workflow.water_basis['findings'])
         self.assertEqual(workflow.water_basis['adjustmentPpm'], {})
 
@@ -196,8 +206,8 @@ class WorkflowLimitTests(unittest.TestCase):
                 self.assertEqual(
                     workflow.stages['chemistry'].error_code, 'contradictory_water_inputs'
                 )
-        # Nutrient mg/L that disagree with the laboratory analysis are caught by the consistency
-        # check.
+        # Nutrient mg/L that disagree with the laboratory analysis are
+        # caught by the consistency check.
         workflow = plan_fertilizer_workflow(
             PRODUCTS,
             FORMULAS['Tomato (Howard Resh)'],
@@ -208,9 +218,10 @@ class WorkflowLimitTests(unittest.TestCase):
         )
         self.assertEqual(workflow.stages['chemistry'].error_code, 'inconsistent_water_analysis')
 
-    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
-    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
-    # stages does not arise.
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so the acid case it stages
+    # does not arise.
     def test_a_chloride_free_recipe_keeps_chloride_zero_throughout(self):
         self.enterContext(historical_catalogue())
         water = {'K+': 0.0005, 'NO3-': 0.0005, 'Cl-': 0.0, 'CO3-2': 0.0}
@@ -230,12 +241,14 @@ class WorkflowLimitTests(unittest.TestCase):
         self.assertIn('no adjustment was needed', render_report(summary))
         self.assertEqual([row['analyticalPpm'] for row in summary['limits']], [0.0])
 
-    # 33c5df2 catalogue: its fixtures are this module's 33c5df2 PRODUCTS/FORMULAS, and the packaged
-    # Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so the acid case it
-    # stages does not arise.
+    # 33c5df2 catalogue: its fixtures are this module's 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so the acid case it stages
+    # does not arise.
     def test_no_reagent_needed_still_gets_the_final_limit_check(self):
         self.enterContext(historical_catalogue())
-        # Salty water already over its own declared chloride maximum; target pH = the mix's own pH.
+        # Salty water already over its own declared chloride maximum;
+        # target pH = the mix's own pH.
         water = {'Cl': 50.0, 'Na': 50 * 22.98977 / 35.45}
         totals = {'Cl-': 50 / 35.45e3, 'Na+': 50 / 35.45e3}
 
@@ -367,11 +380,13 @@ class BatchCommandTests(unittest.TestCase):
                     str(out) + '2',
                 )
 
-    # 33c5df2 catalogue: the packaged Tomato (Howard Resh) fit leaves search_incomplete rows
-    # (conflicting targets N_NO3, P, K, Ca, Mg, S), which this test asserts are absent.
+    # 33c5df2 catalogue: the packaged Tomato (Howard Resh) fit leaves
+    # search_incomplete rows (conflicting targets N_NO3, P, K, Ca, Mg,
+    # S), which this test asserts are absent.
     def test_water_share_blends_the_analysis_with_ion_free_water(self):
         self.enterContext(historical_catalogue())
-        # The grower walkthrough (#80): the station 104 well as 8% and 9% of the batch water.
+        # The grower walkthrough (#80): the station 104 well as 8% and
+        # 9% of the batch water.
         with tempfile.TemporaryDirectory() as tmp:
             water = self.write(
                 tmp,

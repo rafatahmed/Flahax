@@ -4,7 +4,8 @@
 # its results are calculations, not dosing instructions.
 """Immutable calculation snapshots and content-bound export copies.
 
-Hashes identify content, not authenticity, scientific validity or authorization.
+Hashes identify content, not authenticity, scientific validity or
+authorization.
 """
 
 from dataclasses import dataclass, fields, is_dataclass
@@ -62,22 +63,30 @@ def _sources():
 
 @dataclass(frozen=True, slots=True)
 class CanonicalResult:
-    """Immutable JSON snapshot of inputs, source fingerprints and completed workflow state."""
+    """Immutable JSON snapshot of inputs, source fingerprints and
+    completed workflow state.
+    """
 
     payload: str
 
     @property
     def result_id(self):
-        """SHA-256 of this exact snapshot, independent of dictionary insertion order."""
+        """SHA-256 of this exact snapshot, independent of dictionary
+        insertion order.
+        """
         return hashlib.sha256(self.payload.encode('utf-8')).hexdigest()
 
     def to_dict(self):
-        """Return a detached export copy; modifying it cannot change the snapshot."""
+        """Return a detached export copy; modifying it cannot change the
+        snapshot.
+        """
         return json.loads(self.payload)
 
     @classmethod
     def capture(cls, workflow, inputs):
-        """Capture completed stage values, selected candidates and original supplied inputs."""
+        """Capture completed stage values, selected candidates and
+        original supplied inputs.
+        """
         from . import __version__
 
         return cls(
@@ -93,7 +102,9 @@ class CanonicalResult:
         )
 
     def verify(self, workflow, products):
-        """Reject changed calculation state or changed records for supplied product IDs."""
+        """Reject changed calculation state or changed records for
+        supplied product IDs.
+        """
         record = self.to_dict()
         if _json(workflow) != _json(record['workflow']):
             raise DeliveryError('canonical_result_mismatch', 'workflow changed after calculation')
@@ -110,7 +121,8 @@ class CanonicalResult:
 
 
 def _export_value(value):
-    # Match the existing public JSON convention while retaining Python tuple types.
+    # Match the existing public JSON convention while retaining Python
+    # tuple types.
     if isinstance(value, dict):
         return {k: _export_value(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -123,14 +135,18 @@ def _export_value(value):
 
 
 def seal_summary(summary):
-    """Bind a final export copy to its content; return a detached JSON-compatible mapping."""
+    """Bind a final export copy to its content; return a detached
+    JSON-compatible mapping.
+    """
     result = _export_value(deepcopy({k: v for k, v in summary.items() if k != 'export_identity'}))
     result['export_identity'] = dict(schema_version=1, sha256=_digest(result))
     return result
 
 
 def verify_summary(summary):
-    """Reject changed bound exports; legacy unbound dictionaries have no identity claim."""
+    """Reject changed bound exports; legacy unbound dictionaries have no
+    identity claim.
+    """
     identity = summary.get('export_identity')
     if identity is None and (summary.get('calculation_identity') or {}).get('status') == 'bound':
         raise DeliveryError('canonical_result_mismatch', 'bound export identity is missing')
@@ -142,7 +158,9 @@ def verify_summary(summary):
 
 
 def result_statuses(summary):
-    """Expose independent computational qualifications without promoting overall readiness."""
+    """Expose independent computational qualifications without promoting
+    overall readiness.
+    """
     stages = summary['stages']
     chemistry = summary.get('chemistry')
     stocks = summary['tanks']

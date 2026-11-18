@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A product label reconciled with its compound's charges (decision G5, option a, 2026-10-31).
+"""A product label reconciled with its compound's charges (decision G5,
+option a, 2026-10-31).
 
-A label states guaranteed minimums, not exact stoichiometry: potassium nitrate 13-0-46
-(13.0 % N, 38.2 % K) carries more potassium charge than nitrate charge. Chemistry uses the
-label amounts as declared, except the charge that does not balance: it is taken from the
-excess side's declared ions in proportion to each ion's charge contribution and reported as
-not assigned to an ion. A label that balances is used unchanged. The nutrient fit keeps the
-label.
+A label states guaranteed minimums, not exact stoichiometry: potassium
+nitrate 13-0-46 (13.0 % N, 38.2 % K) carries more potassium charge than
+nitrate charge. Chemistry uses the label amounts as declared, except the
+charge that does not balance: it is taken from the excess side's
+declared ions in proportion to each ion's charge contribution and
+reported as not assigned to an ion. A label that balances is used
+unchanged. The nutrient fit keeps the label.
 """
 
 from __future__ import annotations
@@ -22,14 +24,17 @@ from .material_chemistry import COMPLEXES, ION_TABLE, NUTRIENT_CHARGES
 
 _N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _SUBSCRIPTS = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
-# Hydroxide is the proton deficit the charge balance closes (material_chemistry._IMPLICIT).
+# Hydroxide is the proton deficit the charge balance closes
+# (material_chemistry._IMPLICIT).
 _IMPLICIT = frozenset({'OH-'})
 
 
 @dataclass(frozen=True)
 class LabelReconciliation:
-    """``unassigned_percent``: the declared surplus (% w/w) no ion carries; ``imbalance_percent``:
-    100 x net charge / total charge of the declared ions; ``basis``: how it was taken."""
+    """``unassigned_percent``: the declared surplus (% w/w) no ion
+    carries; ``imbalance_percent``: 100 x net charge / total charge
+    of the declared ions; ``basis``: how it was taken.
+    """
 
     unassigned_percent: dict
     imbalance_percent: float
@@ -48,7 +53,9 @@ def _mean_charges(ion_forms: Mapping) -> dict:
 
 
 def _unstated(ion: str, declared) -> bool:
-    """A charged ion whose nutrient the label does not state: it closes the balance."""
+    """A charged ion whose nutrient the label does not state: it closes
+    the balance.
+    """
     if ion in COMPLEXES:
         return COMPLEXES[ion][1] not in declared
     if ion in _IMPLICIT or ion not in ION_TABLE or ION_TABLE[ion][1] == 0:
@@ -57,9 +64,11 @@ def _unstated(ion: str, declared) -> bool:
 
 
 def reconcile_label(identity: Mapping, elements: Mapping) -> LabelReconciliation | None:
-    """The charge of a label that its compound's ions cannot balance; None for a blend.
+    """The charge of a label that its compound's ions cannot balance;
+    None for a blend.
 
-    A blend (no formula or no theoretical analysis) has no defined compound to balance against.
+    A blend (no formula or no theoretical analysis) has no defined
+    compound to balance against.
     """
     if not identity.get('formula') or not identity.get('theoretical_analysis'):
         return None
@@ -69,13 +78,16 @@ def reconcile_label(identity: Mapping, elements: Mapping) -> LabelReconciliation
 def charge_surplus(ion_forms: Mapping, elements: Mapping) -> LabelReconciliation:
     """The declared charge that the compound's ions (ion -> count) cannot balance.
 
-    Each declared nutrient carries moles = % / atomic mass times its ions' mean charge per atom.
-    The net charge is taken from the side in excess, from each declared ion in proportion to its
-    charge contribution. A label leaving a charged ion unstated (Mn-EDTA's sodium, a carbonate)
-    or stating one side only (KOH, an acid, urea) is closed by that ion: nothing is unassigned.
-    The balance is exact: a net charge that is not exactly zero in floating point is reported.
+    Each declared nutrient carries moles = % / atomic mass times its
+    ions' mean charge per atom. The net charge is taken from the side in
+    excess, from each declared ion in proportion to its charge
+    contribution. A label leaving a charged ion unstated (Mn-EDTA's
+    sodium, a carbonate) or stating one side only (KOH, an acid, urea)
+    is closed by that ion: nothing is unassigned. The balance is exact:
+    a net charge that is not exactly zero in floating point is reported.
     """
-    # A stated zero is declared: a calcium nitrate label with N 0 leaves all its Ca unbalanced.
+    # A stated zero is declared: a calcium nitrate label with N 0 leaves
+    # all its Ca unbalanced.
     declared = {key: float(value) for key, value in elements.items()}
     if any(_unstated(ion, declared) for ion in ion_forms):
         return LabelReconciliation({}, 0.0, 'an unstated ion closes the charge balance')
@@ -93,8 +105,9 @@ def charge_surplus(ion_forms: Mapping, elements: Mapping) -> LabelReconciliation
         return LabelReconciliation({}, 0.0, 'the declared charges balance')
     imbalance = 100.0 * net / sum(abs(eq) for eq in equivalents.values())
     excess = {key: eq for key, eq in equivalents.items() if eq * net > 0}
-    # Each excess ion gives up net x (its share of the excess charge); in mass that is the
-    # same fraction, net / excess charge, of its declared %.
+    # Each excess ion gives up net x (its share of the excess charge);
+    # in mass that is the same fraction, net / excess charge, of its
+    # declared %.
     share = net / sum(excess.values())
     word = 'cations' if net > 0 else 'anions'
     return LabelReconciliation(
@@ -117,10 +130,11 @@ def _identity(record: Mapping) -> Mapping | None:
 
 
 def chemistry_elements(record: Mapping, ion_forms: Mapping) -> dict:
-    """The analysis chemistry uses: the label without the charge its ions cannot balance.
+    """The analysis chemistry uses: the label without the charge its
+    ions cannot balance.
 
-    ``ion_forms`` are the material's ions (its chemistry profile). A record whose identity is a
-    blend keeps its label.
+    ``ion_forms`` are the material's ions (its chemistry profile). A
+    record whose identity is a blend keeps its label.
     """
     elements = dict(record['elements'])
     identity = _identity(record)
@@ -140,7 +154,8 @@ def _formula(formula: str) -> str:
 
 
 def label_note(identity: Mapping, elements: Mapping) -> str | None:
-    """The grower's note on a label; None when no surplus shows at two decimals.
+    """The grower's note on a label; None when no surplus shows at two
+    decimals.
 
     The full values stay in ``reconcile_label``.
     """

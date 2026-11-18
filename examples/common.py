@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Example records are fictional, never manufacturer or laboratory evidence."""
+"""Example records are fictional, never manufacturer or laboratory
+evidence.
+"""
 
 from dataclasses import asdict, is_dataclass
 import json
@@ -35,10 +37,11 @@ def rejection(action):
 
 
 def serializable(value):
-    """Presentation format only, not a versioned FlahaX persistence contract.
+    """Presentation format only, not a versioned FlahaX persistence
+    contract.
 
-    Negative infinite SI means an absent phase component. Represent it as text
-    rather than emitting invalid JSON Infinity tokens.
+    Negative infinite SI means an absent phase component. Represent it
+    as text rather than emitting invalid JSON Infinity tokens.
     """
     if is_dataclass(value):
         return serializable(asdict(value))
@@ -56,7 +59,9 @@ def show(value):
 
 
 def ec_summary(value):
-    """Render a qualified estimate: one value, a low-high range, or unavailable. No midpoint."""
+    """Render a qualified estimate: one value, a low-high range, or
+    unavailable. No midpoint.
+    """
     ec = value['ec25_ms_cm']
     ph = value['ph']
     low, high = value.get('range_ms_cm') or (None, None)

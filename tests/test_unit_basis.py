@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent concentration and solvent inventories; no litre=kilogram identity."""
+"""Independent concentration and solvent inventories; no litre=kilogram
+identity.
+"""
 
 from fractions import Fraction
 import json
@@ -65,8 +67,9 @@ class UnitBasisTests(unittest.TestCase):
             return read_water(str(path))
 
     def test_independent_inventory_over_varied_mass_volume_and_density(self):
-        # Construct known moles and solvent inventory FIRST, then obtain concentration.
-        # Rational arithmetic is independent of the float conversion implementation.
+        # Construct known moles and solvent inventory FIRST, then obtain
+        # concentration. Rational arithmetic is independent of the float
+        # conversion implementation.
         for volume in (Fraction('0.25'), Fraction(1), Fraction(137)):
             for density in (Fraction('0.95'), Fraction('1.05'), Fraction('1.3')):
                 for solute_fraction in (Fraction(0), Fraction('0.01'), Fraction('0.2')):
@@ -89,8 +92,9 @@ class UnitBasisTests(unittest.TestCase):
                         )
 
     def test_source_reagent_and_hydrate_water_are_counted_once(self):
-        # 900 g source solvent + 100 g reagent at 60% solute + 60 g product
-        # containing 20 g dissolved hydrate water: 960 g water, 100 g nonwater.
+        # 900 g source solvent + 100 g reagent at 60% solute + 60 g
+        # product containing 20 g dissolved hydrate water: 960 g water,
+        # 100 g nonwater.
         ledger = SolventBasis.from_water_ledger(
             1, source_water_kg=0.9, reagent_carrier_water_kg=0.04, dissolved_hydrate_water_kg=0.02
         )

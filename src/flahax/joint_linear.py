@@ -2,17 +2,22 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bounded linear least-squares trial steps, with explicit iteration budgets."""
+"""Bounded linear least-squares trial steps, with explicit iteration
+budgets.
+"""
 
 import math
+
 from .engine import _lstsq, ROUNDOFF
 
 
 def bounded_lstsq(matrix, rhs, lower, upper, budget):
-    """Active-set box least squares; rank failure cannot certify joint feasibility.
+    """Active-set box least squares; rank failure cannot certify joint
+    feasibility.
 
-    The box is a trust region, not a newly imposed bound on the joint problem.
-    The dual roundoff test uses the existing NNLS per-column arithmetic scale.
+    The box is a trust region, not a newly imposed bound on the joint
+    problem. The dual roundoff test uses the existing NNLS per-column
+    arithmetic scale.
     """
     n = len(lower)
     cols = list(zip(*matrix))

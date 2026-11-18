@@ -6,6 +6,7 @@
 """One synthetic water -> recipe -> equilibrium -> acid -> stocks -> pump plan."""
 
 from datetime import datetime, timezone
+
 from flahax import (
     VolumeLitres,
     InjectionRatio,
@@ -25,8 +26,9 @@ def run():
         record(formula, chemicalFormula=formula, massFraction=0.5, densityKgPerL=1.2)
         for formula in ('HNO3', 'H3PO4')
     ]
-    # Separate reagent records: the comparative candidates use arbitrary 50%
-    # products; the legacy HNO3 delivery adapter uses nitrate-N assay instead.
+    # Separate reagent records: the comparative candidates use arbitrary
+    # 50% products; the legacy HNO3 delivery adapter uses nitrate-N
+    # assay instead.
     nitric = record(
         'nitric-delivery',
         name='Synthetic nitric acid',
@@ -102,8 +104,9 @@ def run():
         [command],
         {'modelVersion': 'synthetic-example'},
     )
-    # No qualified stock-mixture model is supplied: retain a draft for review.
-    # Deliberately do not manufacture an operator-approved state or execute I/O.
+    # No qualified stock-mixture model is supplied: retain a draft for
+    # review. Deliberately do not manufacture an operator-approved state
+    # or execute I/O.
     return dict(
         assumptions=[
             'Synthetic pure-water/KNO3 scenario; not pepper chemistry.',

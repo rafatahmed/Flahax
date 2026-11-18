@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Single-product stock solubility from measured data; never a mixed-stock approval.
+"""Single-product stock solubility from measured data; never a
+mixed-stock approval.
 
-A product's own catalogue ``physicalProperties.waterSolubility`` is the first source, the
-historical table the second; a product with neither is ``not_checked``. Each source value is
-used as measured: its basis and both temperatures are reported and nothing is interpolated or
-converted. A value in a unit the check does not know is ``not_checked``.
+A product's own catalogue ``physicalProperties.waterSolubility`` is the
+first source, the historical table the second; a product with neither is
+``not_checked``. Each source value is used as measured: its basis and
+both temperatures are reported and nothing is interpolated or converted.
+A value in a unit the check does not know is ``not_checked``.
 """
 
 from collections.abc import Mapping
@@ -28,7 +30,9 @@ NO_DATA = 'no solubility data'
 
 @dataclass(frozen=True)
 class SolubilityRow:
-    """One product against its source value: basis and both temperatures stated."""
+    """One product against its source value: basis and both temperatures
+    stated.
+    """
 
     tank: str
     product: str
@@ -66,11 +70,13 @@ def source_concentration_g_per_l(
     water_density_g_per_ml=None,
     product_to_solute_mass_ratio=1.0,
 ):
-    """Convert source concentration to product-equivalent g/L of final solution.
+    """Convert source concentration to product-equivalent g/L of final
+    solution.
 
-    Density is mandatory for mass/water bases; no density-one assumption is
-    supplied. The explicit product/solute mass ratio handles hydrate equivalents.
-    This arithmetic does not establish grade, temperature or density applicability.
+    Density is mandatory for mass/water bases; no density-one assumption
+    is supplied. The explicit product/solute mass ratio handles hydrate
+    equivalents. This arithmetic does not establish grade, temperature
+    or density applicability.
     """
     value = _number(value, 'source concentration')
     ratio = _number(product_to_solute_mass_ratio, 'product/solute mass ratio', positive=True)
@@ -99,7 +105,9 @@ def source_concentration_g_per_l(
 
 
 def load_solubility_table(path=TABLE_PATH):
-    """The historical records, unchanged: product, temperature points and source."""
+    """The historical records, unchanged: product, temperature points
+    and source.
+    """
     path = Path(path)
     if not path.is_file():
         return []
@@ -125,7 +133,9 @@ def _points(points):
 
 
 def limit_at(points, temperature_c):
-    """Algebraic linear interpolation of a point list; the stock check does not use it."""
+    """Algebraic linear interpolation of a point list; the stock check
+    does not use it.
+    """
     temperature_c = _number(temperature_c, 'temperature')
     points = _points(points)
     for temperature, concentration in points:
@@ -139,9 +149,11 @@ def limit_at(points, temperature_c):
 
 
 def _catalogue_source(record):
-    """(g/L, basis, source temperature, reason) from ``physicalProperties.waterSolubility``.
+    """(g/L, basis, source temperature, reason) from
+    ``physicalProperties.waterSolubility``.
 
-    ``None`` when the record holds no such value; a ``None`` g/L with a reason when it is unusable.
+    ``None`` when the record holds no such value; a ``None`` g/L with a
+    reason when it is unusable.
     """
     data = (record.get('physicalProperties') or {}).get('waterSolubility')
     if not isinstance(data, Mapping):
@@ -158,7 +170,9 @@ def _catalogue_source(record):
 
 
 def _table_source(record, temperature_c):
-    """The historical point nearest the tank temperature (the lower one on a tie); no blending."""
+    """The historical point nearest the tank temperature (the lower one
+    on a tie); no blending.
+    """
     t, g = min(_points(record.get('points')), key=lambda p: (abs(p[0] - temperature_c), p[0]))
     return g, SOLUTION_BASIS, t, None
 
@@ -178,12 +192,15 @@ def _source_label(record):
 def check_stock_solubility(
     tanks, ratio, temperature_c, *, table=None, product_grades=None, products=None
 ):
-    """Compare each product's stock with its own solubility value, in the value's own basis.
+    """Compare each product's stock with its own solubility value, in
+    the value's own basis.
 
-    ``products`` are catalogue records; their ``physicalProperties.waterSolubility`` is the
-    first source, ``table`` (default: the historical table) the second. Status is ``ok``,
-    ``exceeds`` (it blocks) or ``not_checked`` ("no solubility data"). ``product_grades`` is
-    accepted for callers and does not select a value. No row approves a mixed stock.
+    ``products`` are catalogue records; their
+    ``physicalProperties.waterSolubility`` is the first source,
+    ``table`` (default: the historical table) the second. Status is
+    ``ok``, ``exceeds`` (it blocks) or ``not_checked`` ("no solubility
+    data"). ``product_grades`` is accepted for callers and does not
+    select a value. No row approves a mixed stock.
     """
     ratio = _number(ratio, 'injection ratio', positive=True)
     temperature = _number(temperature_c, 'temperature')
@@ -253,7 +270,9 @@ def check_stock_solubility(
 
 
 def exceeds_message(row, temperature_c):
-    """Describe a single-product exceedance, without claiming mixture dissolution failure."""
+    """Describe a single-product exceedance, without claiming mixture
+    dissolution failure.
+    """
     if row.status != 'exceeds' or row.limit_g_per_l is None:
         raise DeliveryError(
             'unqualified_solubility_limit', 'only single-product exceedances have this message'

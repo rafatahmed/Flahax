@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Real released joint-fit fallback must diagnose its actual final recipe.
+"""Real released joint-fit fallback must diagnose its actual final
+recipe.
 
-No chemistry is mocked. The original packaged formula and full inventory are used.
-This consistency test does not certify global optimality or physical mixability.
+No chemistry is mocked. The original packaged formula and full inventory
+are used. This consistency test does not certify global optimality or
+physical mixability.
 """
 
 import unittest
@@ -15,9 +17,10 @@ from tests.catalogue_history import historical_catalogue
 
 
 class JointAuditRegressionTests(unittest.TestCase):
-    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
-    # workflow plans no nitric candidate with a target state, so the case this test reproduces
-    # cannot be staged.
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 -
+    # first cluster (Howard Resh) workflow plans no nitric candidate
+    # with a target state, so the case this test reproduces cannot be
+    # staged.
     def test_product_switch_diagnosis_matches_final_nutrient_rows(self):
         self.enterContext(historical_catalogue())
         library = load_library()

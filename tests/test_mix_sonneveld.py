@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Regression for the complete Appendix I workflow through the mix wizard."""
+"""Regression for the complete Appendix I workflow through the mix
+wizard.
+"""
 
 import json
 import os
@@ -26,13 +28,17 @@ from tests.test_mix_tui import IdleTerm, entry
 
 
 def appendix_profile():
-    """Load the downloadable, self-contained walkthrough inputs exercised by the wizard."""
+    """Load the downloadable, self-contained walkthrough inputs
+    exercised by the wizard.
+    """
     path = Path(__file__).resolve().parents[1] / 'examples' / 'sonneveld-appendix-i.json'
     return json.loads(path.read_text(encoding='utf-8'))
 
 
 class ReviewTerm(IdleTerm):
-    """Wait for calculation before sending keys for the adoption prompt."""
+    """Wait for calculation before sending keys for the adoption
+    prompt.
+    """
 
     def read_key(self, timeout=0.1):
         if self.frames and any('Calculating the recipe' in row for row in self.frames[-1]):

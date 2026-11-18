@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Check an external requirement inventory against the current public source surface."""
+"""Check an external requirement inventory against the current public
+source surface.
+"""
 
 import argparse
 import ast
@@ -26,7 +28,9 @@ def source_surface(root):
 
 
 def validate(register, surface):
-    """Check inventory completeness, not whether the recorded requirements are implemented."""
+    """Check inventory completeness, not whether the recorded
+    requirements are implemented.
+    """
     errors = []
     try:
         requirements = register['requirements']

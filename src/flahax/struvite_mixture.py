@@ -7,6 +7,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import math
+
 from .ammonia import ammonia_speciation
 from .delivery_contracts import DeliveryError
 from .equilibrium import LOG_BETA_CASO4_25C, davies_gamma
@@ -24,8 +25,8 @@ from .phosphate import orthophosphate_speciation
 
 @dataclass(frozen=True, slots=True)
 class StruviteMixtureSpeciation:
-    """Free magnesium, ammonium and phosphate and the struvite saturation index of a mixture at a
-    pH.
+    """Free magnesium, ammonium and phosphate and the struvite
+    saturation index of a mixture at a pH.
     """
 
     magnesium_molal: float
@@ -42,8 +43,8 @@ class StruviteMixtureSpeciation:
 
 @dataclass(frozen=True, slots=True)
 class ChargeBalancedStruviteMixture:
-    """A struvite mixture solved for charge balance, with the gypsum check when calcium and sulfate
-    are present.
+    """A struvite mixture solved for charge balance, with the gypsum
+    check when calcium and sulfate are present.
     """
 
     ph: float
@@ -61,9 +62,10 @@ def _calcium_sulfate_free_totals(
 ) -> tuple[float, float, float]:
     """Conserve Ca/SO4 totals with neutral CaSO4(aq) at fixed I."""
     gamma = davies_gamma(2, ionic_strength)
-    # Solve for the free amount of the limiting component. Rationalizing the
-    # positive quadratic root avoids subtracting nearly equal numbers. Unlike
-    # the former fixed-point iteration, this cannot silently return a cycle.
+    # Solve for the free amount of the limiting component. Rationalizing
+    # the positive quadratic root avoids subtracting nearly equal
+    # numbers. Unlike the former fixed-point iteration, this cannot
+    # silently return a cycle.
     limiting, excess = min(calcium_total, sulfate_total), abs(calcium_total - sulfate_total)
     constant = 10.0**LOG_BETA_CASO4_25C * gamma**2
     linear = 1 + constant * excess
@@ -80,7 +82,9 @@ def struvite_mixture_speciation(
     ph: float,
     ionic_strength: float,
 ) -> StruviteMixtureSpeciation:
-    """Solve Mg/P and NHx mass balances at supplied pH and ionic strength."""
+    """Solve Mg/P and NHx mass balances at supplied pH and ionic
+    strength.
+    """
     values = (
         magnesium_molal,
         ammoniacal_nitrogen_molal,

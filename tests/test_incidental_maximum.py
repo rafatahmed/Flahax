@@ -2,19 +2,24 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A stated maximum lets an incidental ion be used up to that limit, never past it silently."""
+"""A stated maximum lets an incidental ion be used up to that limit,
+never past it silently.
+"""
 
 import unittest
+
 from flahax.engine import InputError
 
 from flahax import load_library, recommend
 from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
-# The 33c5df2 catalogue products, which include Calcium Chloride (Dihydrate).
+# The 33c5df2 catalogue products, which include Calcium Chloride
+# (Dihydrate).
 with historical_catalogue():
     LIBRARY = load_library()
-# Synthetic conflicting Ca/nitrate requirements; not a crop recommendation.
+# Synthetic conflicting Ca/nitrate requirements; not a crop
+# recommendation.
 FORMULA = {'targets': {'N_NO3': 60, 'Ca': 160}}
 
 
@@ -71,7 +76,8 @@ class IncidentalMaximumTests(unittest.TestCase):
                     self.assertEqual(result["limitViolations"], [])
 
     def test_violation_is_never_silent(self):
-        # A tiny limit the fit cannot fully honour must surface as a violation.
+        # A tiny limit the fit cannot fully honour must surface as a
+        # violation.
         result = recommend(
             LIBRARY["salts"], FORMULA["targets"], {}, maximum_concentrations={"Cl": 1e-6}
         )
@@ -80,9 +86,9 @@ class IncidentalMaximumTests(unittest.TestCase):
             self.assertEqual(result["limitViolations"][0]["symbol"], "Cl")
 
     def test_a_ceiling_the_water_already_breaks_is_reported_not_a_solver_failure(self):
-        # #86: 9% of Shomar et al. (2024) station 104 brings 115.2 mg/L Cl, over a 106.35 mg/L
-        # (3 mmol/L) ceiling, while the Na ceiling binds. This raised "NNLS did not reach
-        # optimality".
+        # #86: 9% of Shomar et al. (2024) station 104 brings 115.2 mg/L
+        # Cl, over a 106.35 mg/L (3 mmol/L) ceiling, while the Na
+        # ceiling binds. This raised "NNLS did not reach optimality".
         well = {
             'Ca': 244,
             'Mg': 100.8,
@@ -96,8 +102,9 @@ class IncidentalMaximumTests(unittest.TestCase):
         tomato = next(
             f["targets"] for f in LIBRARY["formulas"] if f["name"] == "Tomato (Howard Resh)"
         )
-        # The Cl mechanism is compared without the G23 ammonium allowance: with it, Tomato has
-        # several exact optima (loss ~1e-30) and the two fits may pick different ones.
+        # The Cl mechanism is compared without the G23 ammonium
+        # allowance: with it, Tomato has several exact optima (loss
+        # ~1e-30) and the two fits may pick different ones.
         result = recommend(
             LIBRARY["salts"],
             tomato,
@@ -110,7 +117,8 @@ class IncidentalMaximumTests(unittest.TestCase):
         self.assertAlmostEqual(
             final(result, "Cl"), 1280.4 * 0.09, places=9
         )  # the products add none
-        # It is the infinite-multiplier limit: the fit without any chloride product.
+        # It is the infinite-multiplier limit: the fit without any
+        # chloride product.
         reference = recommend(
             [s for s in LIBRARY["salts"] if not s["elements"].get("Cl")],
             tomato,
@@ -120,8 +128,9 @@ class IncidentalMaximumTests(unittest.TestCase):
         )
         self.assertEqual(result["salts"], reference["salts"])
         self.assertEqual(result["loss"], reference["loss"])
-        # With the default allowance (Tomato total N 140 -> 14.0 mg/L) the water's chloride is
-        # still reported, not a solver failure, and incidental NH4-N stays within 14.0 mg/L.
+        # With the default allowance (Tomato total N 140 -> 14.0 mg/L)
+        # the water's chloride is still reported, not a solver failure,
+        # and incidental NH4-N stays within 14.0 mg/L.
         allowed = recommend(
             LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
         )

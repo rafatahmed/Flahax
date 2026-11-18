@@ -4,9 +4,10 @@
 # its results are calculations, not dosing instructions.
 """Charge-balanced pH from analytical totals, not nutrient ppm.
 
-The caller supplies the closed-carbon/fixed-valence inventory. No missing ion,
-alkalinity, CO2 reservoir or balancing salt is invented. The inner mass-action
-model and phase policy are identical to the fixed-pH solver.
+The caller supplies the closed-carbon/fixed-valence inventory. No
+missing ion, alkalinity, CO2 reservoir or balancing salt is invented.
+The inner mass-action model and phase policy are identical to the
+fixed-pH solver.
 """
 
 import math
@@ -19,13 +20,16 @@ from .delivery_contracts import DeliveryError
 def calculate_equilibrium_ph(
     totals, *, phases, temperature_c=25.0, carbon_boundary='closed', residual_charge=0.0
 ):
-    """Return AqueousResult at the net charge ``residual_charge`` within the Davies domain.
+    """Return AqueousResult at the net charge ``residual_charge`` within
+    the Davies domain.
 
-    ``residual_charge`` (eq/kg water) is the charge the measured water carried that no ion
-    accounts for: the solve reproduces it instead of forcing zero, so a measured imbalance is
-    neither hidden nor corrected with an invented ion (decision G11). Zero means a balanced
-    solution. A nutrient table alone gives no carbon: the caller supplies the carbon inventory
-    (``CO3-2``, zero for measured carbon-free water). Charge adjustment changes only pH.
+    ``residual_charge`` (eq/kg water) is the charge the measured water
+    carried that no ion accounts for: the solve reproduces it instead of
+    forcing zero, so a measured imbalance is neither hidden nor
+    corrected with an invented ion (decision G11). Zero means a balanced
+    solution. A nutrient table alone gives no carbon: the caller
+    supplies the carbon inventory (``CO3-2``, zero for measured
+    carbon-free water). Charge adjustment changes only pH.
     """
     if carbon_boundary != 'closed':
         raise DeliveryError(
@@ -63,7 +67,8 @@ def calculate_equilibrium_ph(
     last = []
 
     def at(ph):
-        # Warm-start from the previous pH step (#61); the bracket sequence is unchanged.
+        # Warm-start from the previous pH step (#61); the bracket
+        # sequence is unchanged.
         last[:] = [
             solve(
                 dict(totals),
@@ -75,8 +80,9 @@ def calculate_equilibrium_ph(
         ]
         return last[0]
 
-    # Start near neutral to avoid unnecessarily evaluating extreme acidic/basic
-    # states outside the Davies range. No out-of-domain solve is extrapolated.
+    # Start near neutral to avoid unnecessarily evaluating extreme
+    # acidic/basic states outside the Davies range. No out-of-domain
+    # solve is extrapolated.
     def off(result):
         return result.charge_balance - residual_charge
 

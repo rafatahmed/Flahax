@@ -2,16 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ammonium allowance (G23): incidental NH4-N up to min(10% of total N, 1.5 mmol/L)."""
+"""The ammonium allowance (G23): incidental NH4-N up to min(10% of total
+N, 1.5 mmol/L).
+"""
 
 import unittest
+
 from flahax.engine import InputError
 
 from flahax import load_library, recommend
 from tests.catalogue_history import historical_catalogue
 
-# Formulas and products of the 33c5df2 catalogue: Chilli (maximumyield) is not in the packaged
-# catalogue (Flaha Agri Tech Analysis Ver 0.0).
+# Formulas and products of the 33c5df2 catalogue: Chilli (maximumyield)
+# is not in the packaged catalogue (Flaha Agri Tech Analysis Ver 0.0).
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
@@ -34,7 +37,8 @@ def total_n(targets):
 
 class AmmoniumLimitTests(unittest.TestCase):
     def test_default_is_the_ammonium_allowance_with_its_basis(self):
-        # Packaged Tomato (Howard Resh): N_NO3 140, N_NH4 0 -> min(14, 21.01) = 14 mg/L (G23, G24).
+        # Packaged Tomato (Howard Resh): N_NO3 140, N_NH4 0 -> min(14,
+        # 21.01) = 14 mg/L (G23, G24).
         targets = formula("Tomato (Howard Resh)", PACKAGED)["targets"]
         self.assertEqual((targets["N_NO3"], targets["N_NH4"]), (140, 0))
         result = recommend(PACKAGED["salts"], targets, {})
@@ -53,8 +57,9 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertEqual(result["ammoniumLimit"]["absoluteCapMgPerL"], CAP)
         self.assertLessEqual(final(result, "N_NH4"), CAP)
 
-    # Runs on the frozen pre-2026-10-29 catalogue: the packaged one has no Chilli
-    # (maximumyield), and its Tomato (Howard Resh) cannot be met exactly (N_NO3 +1.86 %).
+    # Runs on the frozen pre-2026-10-29 catalogue: the packaged one has
+    # no Chilli (maximumyield), and its Tomato (Howard Resh) cannot be
+    # met exactly (N_NO3 +1.86 %).
     def test_target_exact_recipes_now_pass_within_the_limit(self):
         for name in ("Chilli (maximumyield)", "Tomato (Howard Resh)"):
             with self.subTest(formula=name):
@@ -73,7 +78,8 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertEqual(default["salts"], without["salts"])
 
     def test_explicit_zero_ammonium_target_is_no_requirement(self):
-        # G24: N_NH4 = 0 sets no row and no ban; the allowance applies as when it is absent.
+        # G24: N_NH4 = 0 sets no row and no ban; the allowance applies
+        # as when it is absent.
         absent = formula("Chilli (maximumyield)")["targets"]
         self.assertNotIn("N_NH4", absent)
         targets = dict(absent, N_NH4=0)

@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Reagent validation and failed demand searches must not imply acceptance."""
+"""Reagent validation and failed demand searches must not imply
+acceptance.
+"""
 
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
+
 from flahax import DeliveryError
 from flahax import ph_adjustment as ph
 from tests.test_ph_adjustment import ACIDS
@@ -55,7 +58,8 @@ class ReagentBoundaryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'unsupported_reagent')
 
     def test_demand_search_wrong_sign_and_unbracketed_response_refuse(self):
-        # Injected response functions isolate bracketing controls, not real chemistry.
+        # Injected response functions isolate bracketing controls, not
+        # real chemistry.
         for charge, code in [(-1, 'wrong_reagent_direction'), (1, 'nonconvergent')]:
             with patch.object(ph, 'solve', return_value=SimpleNamespace(charge_balance=charge)):
                 with self.assertRaises(DeliveryError) as caught:
@@ -82,7 +86,8 @@ class CoupledBracketingBoundaryTests(unittest.TestCase):
             count[0] += 1
             return 10.0 ** count[0], mixed
 
-        # An intentionally impossible response isolates the bounded search refusal.
+        # An intentionally impossible response isolates the bounded
+        # search refusal.
         with patch.object(ph, 'recommend', return_value={}):
             with patch.object(ph, 'reagent_dose', increasing):
                 with self.assertRaises(DeliveryError) as caught:

@@ -4,8 +4,9 @@
 # its results are calculations, not dosing instructions.
 """Titration-bounded pH planning for a prepared final nutrient solution.
 
-This module calculates an initial acid/base dose from a measured curve. It
-never operates equipment and always marks post-mix measurement as required.
+This module calculates an initial acid/base dose from a measured curve.
+It never operates equipment and always marks post-mix measurement as
+required.
 """
 
 from __future__ import annotations
@@ -40,7 +41,9 @@ def alkalinity_meq_per_litre(value: MilligramsPerLitre) -> MilliEquivalentsPerLi
 
 @dataclass(frozen=True, slots=True)
 class PhPlan:
-    """A bounded initial pH-adjustment plan with re-scored nutrient balance."""
+    """A bounded initial pH-adjustment plan with re-scored nutrient
+    balance.
+    """
 
     water_analysis_id: str
     titration_curve_id: str
@@ -104,10 +107,12 @@ def plan_ph(
     achieved: Mapping[str, Any],
     targets: Mapping[str, Any],
 ) -> PhPlan:
-    """Calculate a bounded initial dose and re-score its nutrient addition.
+    """Calculate a bounded initial dose and re-score its nutrient
+    addition.
 
-    The source water must include measured pH and alkalinity. The measured
-    curve, not a generic acid formula, determines the dose at the target pH.
+    The source water must include measured pH and alkalinity. The
+    measured curve, not a generic acid formula, determines the dose at
+    the target pH.
     """
     if not isinstance(final_volume, VolumeLitres):
         raise DeliveryError("invalid_type", "final_volume must be a VolumeLitres value")

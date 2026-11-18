@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Historical source evidence and advisory coverage, separate from chemical acceptance."""
+"""Historical source evidence and advisory coverage, separate from
+chemical acceptance.
+"""
 
 import copy
 import json
@@ -19,15 +21,19 @@ def _article():
 
 
 def article_evidence():
-    """Return an independent copy of the cited source statements and ambiguities."""
+    """Return an independent copy of the cited source statements and
+    ambiguities.
+    """
     return copy.deepcopy(_article())
 
 
 def historical_context(*, strength_range, ph_range, cation_shares, anion_shares):
-    """Describe source coverage without fitting pH or changing a solver acceptance gate.
+    """Describe source coverage without fitting pH or changing a solver
+    acceptance gate.
 
-    Inputs are validated recipe/search quantities. Range warnings are conservative
-    historical applicability notices, not a new validated chemistry domain.
+    Inputs are validated recipe/search quantities. Range warnings are
+    conservative historical applicability notices, not a new validated
+    chemistry domain.
     """
     low, high = strength_range
     ph_low, ph_high = ph_range
@@ -104,7 +110,9 @@ def historical_context(*, strength_range, ph_range, cation_shares, anion_shares)
 
 
 def recipe_historical_context(recipe):
-    """Include ideal, rounded and available uncertainty strengths in source notices."""
+    """Include ideal, rounded and available uncertainty strengths in
+    source notices.
+    """
     strengths = [recipe['counted_mmol_l']]
     rounded = recipe.get('rounded_verification', {})
     if rounded.get('counted_mmol_l') is not None:

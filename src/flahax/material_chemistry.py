@@ -4,11 +4,12 @@
 # its results are calculations, not dosing instructions.
 """A material is what it puts in the water: its dissolved ions.
 
-A compound has a fixed structure, so its formula or its stated ions define it (MKP is
-KH2PO4, Fe-EDTA is Na+ and the Fe(III)-EDTA complex). A blend has none, so its analysis by
-nutrient form defines it (a declared-ions grade, materials.py). The catalogue's products are
-pre-filled materials: their ions are their identities' ``ion_forms``. Nothing here reads a
-product name (decision 2026-10-22).
+A compound has a fixed structure, so its formula or its stated ions
+define it (MKP is KH2PO4, Fe-EDTA is Na+ and the Fe(III)-EDTA complex).
+A blend has none, so its analysis by nutrient form defines it (a
+declared-ions grade, materials.py). The catalogue's products are
+pre-filled materials: their ions are their identities' ``ion_forms``.
+Nothing here reads a product name (decision 2026-10-22).
 """
 
 from __future__ import annotations
@@ -25,7 +26,8 @@ from .delivery_contracts import DeliveryError
 
 UNDEFINED = 'give its formula, its ions, or its analysis by nutrient form'
 
-# Fertilizer ions: atoms, charge, and the nutrient form (assay key) each carries one atom of.
+# Fertilizer ions: atoms, charge, and the nutrient form (assay key) each
+# carries one atom of.
 ION_TABLE = {
     'NH4+': ({'N': 1, 'H': 4}, 1, 'N_NH4'),
     'K+': ({'K': 1}, 1, 'K'),
@@ -50,7 +52,8 @@ ION_TABLE = {
     'B(OH)4-': ({'B': 1, 'O': 4, 'H': 4}, -1, 'B'),
     'B(OH)3': ({'B': 1, 'O': 3, 'H': 3}, 0, 'B'),
     'H3PO4': ({'H': 3, 'P': 1, 'O': 4}, 0, 'P'),
-    # A strong acid, fully dissociated in water (H+ + NO3-); its proton is implicit, as H3PO4's.
+    # A strong acid, fully dissociated in water (H+ + NO3-); its proton
+    # is implicit, as H3PO4's.
     'HNO3': ({'H': 1, 'N': 1, 'O': 3}, 0, 'N_NO3'),
     'CO(NH2)2': ({'C': 1, 'O': 1, 'N': 2, 'H': 4}, 0, 'N_UREA'),
     'citrate': ({'C': 6, 'H': 5, 'O': 7}, -3, None),
@@ -61,8 +64,8 @@ LIGANDS = {
     'DTPA': ({'C': 14, 'H': 18, 'N': 3, 'O': 10}, -5),
     'o,o-EDDHA': ({'C': 18, 'H': 16, 'N': 2, 'O': 6}, -4),
 }
-# Chelate complexes: agent, chelated metal, charge. D2: DTPA and o,o-EDDHA are defined for iron
-# only.
+# Chelate complexes: agent, chelated metal, charge. D2: DTPA and
+# o,o-EDDHA are defined for iron only.
 COMPLEXES = {
     'Fe(III)-EDTA': ('EDTA', 'Fe', -1),
     'Mn-EDTA': ('EDTA', 'Mn', -2),
@@ -84,7 +87,8 @@ NUTRIENT_CHARGES = {
     **{ion: (n, z) for ion, (_, z, n) in ION_TABLE.items() if n},
     **{ion: (metal, z) for ion, (_, metal, z) in COMPLEXES.items()},
 }
-# Converted-totals key of each nutrient form (product_conversion.convert_product_dose).
+# Converted-totals key of each nutrient form
+# (product_conversion.convert_product_dose).
 _TOTALS_KEY = {
     'N_NO3': 'nitrate',
     'N_NH4': 'ammonium',
@@ -94,15 +98,17 @@ _TOTALS_KEY = {
     'B': 'boron',
     'Mo': 'molybdate',
 }
-# Ions without a nutrient of their own, when the analysis leaves them to the charge balance.
+# Ions without a nutrient of their own, when the analysis leaves them to
+# the charge balance.
 _UNSTATED_KEY = {'Na+': 'sodium', 'CO3-2': 'carbonate', 'HCO3-': 'carbonate', 'citrate': 'citrate'}
 _LIGAND_IONS = frozenset({'citrate'})
-# Hydroxide is the proton deficit the charge balance closes, as the implicit protons of acids are
-# (#75).
+# Hydroxide is the proton deficit the charge balance closes, as the
+# implicit protons of acids are (#75).
 _IMPLICIT = frozenset({'OH-'})
 _MICRO_CATIONS = frozenset({'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'})
 _CHELATE_FAMILY = {'EDTA': 'edta_chelate', 'DTPA': 'dtpa_chelate', 'o,o-EDDHA': 'eddha_chelate'}
-# A chelate blend names the sodium salts beside its complexes (D2: borax, sodium molybdate).
+# A chelate blend names the sodium salts beside its complexes (D2:
+# borax, sodium molybdate).
 _BLEND_SALTS = {
     'B(OH)4-': ('borax', 'borax'),
     'B(OH)3': ('boric_acid', 'boric acid'),
@@ -123,7 +129,9 @@ def _charge(ion: str) -> float:
 
 
 def chelate(ions: Mapping, agent: str) -> dict:
-    """Ions with every metal ``agent`` chelates replaced by its complex, in place."""
+    """Ions with every metal ``agent`` chelates replaced by its complex,
+    in place.
+    """
     if agent not in LIGANDS:
         raise DeliveryError('invalid_value', f'chelating agent must be one of {list(LIGANDS)}')
     if not any((agent, ion) in _CHELATED or COMPLEXES.get(ion, ('',))[0] == agent for ion in ions):
@@ -134,7 +142,9 @@ def chelate(ions: Mapping, agent: str) -> dict:
 
 
 def _pair_ligands(ions: dict) -> dict | None:
-    """A formula's ligands bound to its metals (one metal per ligand); None if they do not pair."""
+    """A formula's ligands bound to its metals (one metal per ligand);
+    None if they do not pair.
+    """
     for agent in LIGANDS:
         ligands = ions.pop(agent, 0)
         if not ligands:
@@ -146,7 +156,9 @@ def _pair_ligands(ions: dict) -> dict | None:
 
 
 def _decompose(atoms: dict) -> list[dict]:
-    """Every way to write ``atoms`` as table ions, ligands and water with zero net charge."""
+    """Every way to write ``atoms`` as table ions, ligands and water
+    with zero net charge.
+    """
     pool = [(ion, need, z) for ion, (need, z, _) in ION_TABLE.items()]
     pool += [(agent, need, z) for agent, (need, z) in LIGANDS.items()]
     candidates = [c for c in pool if set(c[1]) <= set(atoms)] + [('H2O', {'H': 2, 'O': 1}, 0)]
@@ -186,7 +198,8 @@ def _formula_ions(text: str) -> tuple | None:
     solutions = _decompose({e: int(n) for e, n in parsed['atoms'].items()})
     if not solutions:
         return None
-    # Hydroxide only where nothing else balances (KOH), not borax as 2 NaOH + 4 H3BO3.
+    # Hydroxide only where nothing else balances (KOH), not borax as 2
+    # NaOH + 4 H3BO3.
     fewest = min(s.get('OH-', 0) for s in solutions)
     solutions = [s for s in solutions if s.get('OH-', 0) == fewest]
     ions = [{k: v for k, v in s.items() if k != 'H2O'} for s in solutions]
@@ -197,9 +210,11 @@ def _formula_ions(text: str) -> tuple | None:
 
 
 def ions_from_formula(formula) -> dict | None:
-    """Ions per formula unit of a compound's formula (hydrate water dropped), or None.
+    """Ions per formula unit of a compound's formula (hydrate water
+    dropped), or None.
 
-    None when the text is not a formula, or cannot be written as fertilizer ions in one way.
+    None when the text is not a formula, or cannot be written as
+    fertilizer ions in one way.
     """
     if not isinstance(formula, str) or not formula.strip():
         return None
@@ -208,7 +223,9 @@ def ions_from_formula(formula) -> dict | None:
 
 
 def formula_problem(formula) -> str:
-    """Why a formula cannot define a material, in words a grower can act on."""
+    """Why a formula cannot define a material, in words a grower can act
+    on.
+    """
     text = formula.strip() if isinstance(formula, str) else ''
     if not text:
         return UNDEFINED
@@ -232,7 +249,9 @@ def formula_problem(formula) -> str:
 
 
 def _checked_ions(name: str, ions, agent: str | None = None) -> dict:
-    """Known ions with positive counts (metals of ``agent`` chelated) that balance."""
+    """Known ions with positive counts (metals of ``agent`` chelated)
+    that balance.
+    """
     if not isinstance(ions, Mapping) or not ions:
         raise DeliveryError(
             'invalid_composition', f'{name}: ions must map ion to count per formula unit'
@@ -269,7 +288,8 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
     complexes = [ion for ion in ions if ion in COMPLEXES]
     agents = list(dict.fromkeys(COMPLEXES[ion][0] for ion in complexes))
     if complexes:
-        # B(OH)3 beside B(OH)4- is borax's own acid half; alone it is boric acid.
+        # B(OH)3 beside B(OH)4- is borax's own acid half; alone it is
+        # boric acid.
         others = [
             ion
             for ion in ions
@@ -316,10 +336,11 @@ def _profile(name: str, ions: dict, status: str | None) -> ProductChemistry:
 
 
 def _check_analysis(name: str, ions: dict, elements) -> None:
-    """One rule for every material: its analysis states only nutrients its ions carry.
+    """One rule for every material: its analysis states only nutrients
+    its ions carry.
 
-    A label off its compound's proportions is reconciled, not refused (decision G5,
-    label_reconciliation).
+    A label off its compound's proportions is reconciled, not refused
+    (decision G5, label_reconciliation).
     """
     if not isinstance(elements, Mapping):
         return
@@ -371,7 +392,9 @@ def _resolve(key: str) -> ProductChemistry:
 
 
 def _declared(name: str, record: Mapping, grade: Mapping) -> ProductChemistry:
-    """A blend defined by its analysis: the declared-ions path (interactive mix Task 4)."""
+    """A blend defined by its analysis: the declared-ions path
+    (interactive mix Task 4).
+    """
     from .materials import declared_ions_check, make_grade
     from .product_conversion import declared_ion_totals
 
@@ -388,15 +411,18 @@ def _declared(name: str, record: Mapping, grade: Mapping) -> ProductChemistry:
 
 
 def material_chemistry(record: Mapping, *, check: bool = True) -> ProductChemistry:
-    """The chemistry of a material record, from what it puts in the water.
+    """The chemistry of a material record, from what it puts in the
+    water.
 
-    In order: (1) a ``declared_ions`` grade: its analysis (Task 4); (2) ``ions``, a mapping of
-    ion to count per formula unit (e.g. ``{"K+": 1, "H2PO4-": 1}``), with an optional
-    ``chelating_agent`` that turns its metals into their complexes; (2b) the ``ion_forms`` of
-    its identity (``identityId``, or a single grade's ``identity_id``): the catalogue's data;
-    (3) ``formula``, parsed into fertilizer ions plus hydrate water; otherwise
-    ``material_undefined``. With ``check``, the ``elements`` of a record that is not a grade
-    must fit its ions (the grade's own analysis is checked by ``make_grade``).
+    In order: (1) a ``declared_ions`` grade: its analysis (Task 4); (2)
+    ``ions``, a mapping of ion to count per formula unit (e.g. ``{"K+":
+    1, "H2PO4-": 1}``), with an optional ``chelating_agent`` that turns
+    its metals into their complexes; (2b) the ``ion_forms`` of its
+    identity (``identityId``, or a single grade's ``identity_id``): the
+    catalogue's data; (3) ``formula``, parsed into fertilizer ions plus
+    hydrate water; otherwise ``material_undefined``. With ``check``, the
+    ``elements`` of a record that is not a grade must fit its ions (the
+    grade's own analysis is checked by ``make_grade``).
     """
     if not isinstance(record, Mapping):
         raise DeliveryError('invalid_type', 'a material must be a mapping')
@@ -429,7 +455,9 @@ def material_chemistry(record: Mapping, *, check: bool = True) -> ProductChemist
 
 
 def chemistry_ions(chemistry: ProductChemistry) -> dict:
-    """A chemistry profile's ions; a profile built without them falls back to its components."""
+    """A chemistry profile's ions; a profile built without them falls
+    back to its components.
+    """
     if chemistry.ions:
         return dict(chemistry.ions)
     components = (
@@ -444,12 +472,15 @@ def chemistry_ions(chemistry: ProductChemistry) -> dict:
 
 
 def unstated_amounts(ions: Mapping, totals: Mapping) -> tuple[dict, dict]:
-    """(counterions, ligands) in mol/kg water that the analysis leaves to the ions.
+    """(counterions, ligands) in mol/kg water that the analysis leaves
+    to the ions.
 
-    ``totals`` are the stated amounts by converted key (convert_product_dose). A complex
-    brings its ligand, one per chelated metal. The one charged ion the analysis does not
-    state closes the charge balance; chelated metals are summed per complex charge first,
-    then the other ions follow in order. Hydroxide stays implicit, like an acid's protons.
+    ``totals`` are the stated amounts by converted key
+    (convert_product_dose). A complex brings its ligand, one per
+    chelated metal. The one charged ion the analysis does not state
+    closes the charge balance; chelated metals are summed per complex
+    charge first, then the other ions follow in order. Hydroxide stays
+    implicit, like an acid's protons.
     """
     ligands: dict = {}
     by_charge: dict = {}

@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Recipe-matched empirical EC at 25 C; no universal concentrated-stock law.
+"""Recipe-matched empirical EC at 25 C; no universal concentrated-stock
+law.
 
-Calibration surfaces contain measured TOTAL EC, not additive ion contributions.
-Interpolation is bounded in water EC and recipe strength. A missing profile
-never becomes a fabricated prediction. No device I/O or EC-driven reformulation.
+Calibration surfaces contain measured TOTAL EC, not additive ion
+contributions. Interpolation is bounded in water EC and recipe strength.
+A missing profile never becomes a fabricated prediction. No device I/O
+or EC-driven reformulation.
 """
 
 from dataclasses import dataclass, field
@@ -35,7 +37,8 @@ def _number(value, name, *, positive=False):
 def water_ec25(*, ec_ms_cm=None, tds_ppm=None, tds_factor=None):
     """TDS is a meter-equivalent value: ppm = factor * EC in microS/cm.
 
-    No conversion of gravimetrically measured dissolved-solids mass is implied.
+    No conversion of gravimetrically measured dissolved-solids mass is
+    implied.
     """
     if (ec_ms_cm is None) == (tds_ppm is None):
         raise DeliveryError(
@@ -71,10 +74,12 @@ def _recipe(stocks, channel):
 
 
 def ec_recipe_key(stocks, channel='irrigation', *, reagent_doses_g_per_l=None):
-    """Bind calibration to dose, identity, shipped assays and separate reagents.
+    """Bind calibration to dose, identity, shipped assays and separate
+    reagents.
 
-    Changing a product, dose or included reagent requires a new profile. Caller
-    provenance must additionally identify commercial grades/lots and protocol.
+    Changing a product, dose or included reagent requires a new profile.
+    Caller provenance must additionally identify commercial grades/lots
+    and protocol.
     """
     reagents = {} if reagent_doses_g_per_l is None else reagent_doses_g_per_l
     if not isinstance(reagents, dict) or any(
@@ -94,8 +99,8 @@ def ec_recipe_key(stocks, channel='irrigation', *, reagent_doses_g_per_l=None):
 
 @dataclass(frozen=True)
 class ECPrediction:
-    """An EC estimate in mS/cm from an irrigation profile, with its uncertainty, or the error code
-    and message why none was made.
+    """An EC estimate in mS/cm from an irrigation profile, with its
+    uncertainty, or the error code and message why none was made.
     """
 
     status: str
@@ -116,8 +121,9 @@ class ECPrediction:
 
 @dataclass(frozen=True)
 class ECDeliveryPlan:
-    """Predicted EC, injection volumes and pump commands for an existing recipe, with the audit
-    record and the limits of an empirical EC estimate.
+    """Predicted EC, injection volumes and pump commands for an existing
+    recipe, with the audit record and the limits of an empirical EC
+    estimate.
     """
 
     water_ec_ms_cm: float
@@ -240,12 +246,14 @@ def plan_ec_delivery(
     available_volumes=None,
     as_of=None,
 ):
-    """Estimate each stock and the combined final solution independently.
+    """Estimate each stock and the combined final solution
+    independently.
 
-    The configured source must be represented by the profiles, even if another
-    source has the same EC. Calibration strength 1 is the stock-plan recipe in
-    g/L of final solution; stock strength is the physical injection ratio.
-    Pump plans are optional and require all used tank calibrations/inventories.
+    The configured source must be represented by the profiles, even if
+    another source has the same EC. Calibration strength 1 is the
+    stock-plan recipe in g/L of final solution; stock strength is the
+    physical injection ratio. Pump plans are optional and require all
+    used tank calibrations/inventories.
     """
     if not isinstance(stocks, StockPlan):
         raise DeliveryError('invalid_type', 'stocks must be a StockPlan')

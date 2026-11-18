@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent equation, provenance and explicitly limited model-domain checks."""
+"""Independent equation, provenance and explicitly limited model-domain
+checks.
+"""
 
 from copy import deepcopy
 from fractions import Fraction
@@ -69,9 +71,10 @@ class ReactionQualificationTests(unittest.TestCase):
         self.assertIn('aqueous/FeDtp-2: source_equation', wrong_eq['errors'])
 
     def test_fixed_activity_parameter_sensitivity_for_every_reaction(self):
-        # At fixed activities, +log10(2) in a formation beta doubles a species
-        # activity; in a dissolution beta it lowers SI by log10(2). This is a
-        # derivative identity, not a bound on coupled composition uncertainty.
+        # At fixed activities, +log10(2) in a formation beta doubles a
+        # species activity; in a dissolution beta it lowers SI by
+        # log10(2). This is a derivative identity, not a bound on
+        # coupled composition uncertainty.
         logs = {b: -4.0 for b in chemistry()['bases']}
         logs.update({'H+': -6.0, 'H2O': math.log10(0.999)})
         delta = math.log10(2)
@@ -142,7 +145,8 @@ class ModelDomainTests(unittest.TestCase):
             with self.assertRaises(DeliveryError) as caught:
                 solve({}, **({'ph': 7} | kwargs))
             self.assertEqual(caught.exception.code, code)
-        # The numerical pH interval does not override the ionic-strength boundary.
+        # The numerical pH interval does not override the ionic-strength
+        # boundary.
         for ph in (0, 14):
             with self.assertRaises(DeliveryError) as caught:
                 solve({}, ph)
@@ -196,8 +200,9 @@ class ReactionEvaluationTests(unittest.TestCase):
             return r.activities['H2BO3-'] / r.activities['H3BO3']
 
         self.assertAlmostEqual(ratio(perturbed) / ratio(baseline), 2, places=9)
-        # A phase-constant perturbation affects its SI without changing an
-        # aqueous-only calculation. Copies exist only in memory for this test.
+        # A phase-constant perturbation affects its SI without changing
+        # an aqueous-only calculation. Copies exist only in memory for
+        # this test.
         totals = {'Ca+2': 1e-4, 'CO3-2': 1e-4}
         baseline = solve(totals, 7)
         altered = deepcopy(chemistry())

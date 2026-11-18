@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Legacy report inputs cannot promote missing evidence or failed constraints."""
+"""Legacy report inputs cannot promote missing evidence or failed
+constraints.
+"""
 
 import unittest
 from unittest.mock import patch
+
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
 from flahax import grower_report as report
 from flahax.stock_solubility import SolubilityRow
@@ -21,7 +24,8 @@ class ReportBoundaryTests(unittest.TestCase):
             6.5,
             final_volume=VolumeLitres(100),
         )
-        # Explicit legacy fixture: mutated stages have no canonical identity.
+        # Explicit legacy fixture: mutated stages have no canonical
+        # identity.
         self.flow.canonical_result = None
 
     def summary(self, flow=None, **kw):

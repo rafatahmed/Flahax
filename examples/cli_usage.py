@@ -3,11 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Call the JSON CLI without shell quoting or installing a console executable."""
+"""Call the JSON CLI without shell quoting or installing a console
+executable.
+"""
 
 import json
 import subprocess
 import sys
+
 from .common import catalogue, show
 
 

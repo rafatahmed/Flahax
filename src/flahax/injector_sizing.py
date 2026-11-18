@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Volume/flow design requirements; no fabricated equipment curves or control."""
+"""Volume/flow design requirements; no fabricated equipment curves or
+control.
+"""
 
 from collections.abc import Mapping
 
@@ -21,10 +23,11 @@ def size_injection_requirements(
 ):
     """Use final batch volume OR active irrigated area * gross depth.
 
-    Channel fields: final_litres_per_stock_litre, available_stock_litres.
-    Ratios use FINAL volume, not motive-water volume; output both definitions.
-    One mm over one m2 is one litre. Area is the concurrently irrigated zone,
-    not necessarily the whole farm. Gross depth already includes losses.
+    Channel fields: final_litres_per_stock_litre,
+    available_stock_litres. Ratios use FINAL volume, not motive-water
+    volume; output both definitions. One mm over one m2 is one litre.
+    Area is the concurrently irrigated zone, not necessarily the whole
+    farm. Gross depth already includes losses.
     """
     if equipment_type not in ('dosing_pump', 'venturi', 'dosatron'):
         raise DeliveryError('unknown_equipment_type', 'choose dosing_pump, venturi or dosatron')

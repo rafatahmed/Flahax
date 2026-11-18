@@ -54,16 +54,17 @@ usage: flahax mix [-h] [--output OUTPUT] [--plain] [--review-reagents]
 
 ``flahax mix``: five steps, then tank A, tank B and the pH reagent.
 
-    flahax mix                    ask the five steps, save the answers, write the sheets
-    flahax mix sessions/NAME      run a saved session again without questions
-    flahax mix --plain            ask line by line instead of the full-screen wizard
+    flahax mix                    ask the five steps, save the answers,
+    write the sheets flahax mix sessions/NAME      run a saved session
+    again without questions flahax mix --plain            ask line by
+    line instead of the full-screen wizard
 
-Steps: 1/5 specification (tanks, injection ratio, temperature, how stock is
-prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5 available
-acids and bases and target pH. Defaults are shown in brackets; Enter keeps them.
-Typed items are saved
-under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and only
-once every step is answered: Ctrl+C or end of input saves nothing.
+Steps: 1/5 specification (tanks, injection ratio, temperature, how stock
+is prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5
+available acids and bases and target pH. Defaults are shown in brackets;
+Enter keeps them. Typed items are saved under ``$FLAHAX_HOME`` (else
+``~/.flahax``) as files ``flahax batch`` reads, and only once every step
+is answered: Ctrl+C or end of input saves nothing.
 
 positional arguments:
   session               a saved session, e.g. tomato-ro (flahax mix sessions lists them)
@@ -96,7 +97,8 @@ usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
                     [--max-solid-reagent-grams MAX_SOLID_REAGENT_GRAMS] [--products PRODUCTS]
                     [--reagents REAGENTS] [--rules RULES] [--output OUTPUT]
 
-``flahax batch``: one formula and one water to a report, a batch sheet and a JSON summary (#79).
+``flahax batch``: one formula and one water to a report, a batch
+sheet and a JSON summary (#79).
 
 Water is ``ro`` (no ions) or a JSON file::
 
@@ -104,29 +106,32 @@ Water is ``ro`` (no ions) or a JSON file::
      "mg_per_litre": {"Ca": 244, "Mg": 100.8, "K": 44.2, "Na": 680, "Cl": 1280.4,
                       "S": 241.4, "N_NO3": 3.47, "HCO3": 197}}
 
-Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N); ``HCO3`` is
-the legacy equivalent-carbon input in mg/L as HCO3, not titrated alkalinity.
-For a titration use signed ``alkalinity_meq_per_litre`` instead of HCO3.
-Iron is taken as Fe(III), the form in aerated water.
-Explicit final solvent mass/volume or solution density/nonwater mass define the
-concentration basis. Legacy inputs report an unquantified 1 kg solvent/L assumption.
+Elements are mg/L of the element (S as S, N_NO3 and N_NH4 as N);
+``HCO3`` is the legacy equivalent-carbon input in mg/L as HCO3, not
+titrated alkalinity. For a titration use signed
+``alkalinity_meq_per_litre`` instead of HCO3. Iron is taken as Fe(III),
+the form in aerated water. Explicit final solvent mass/volume or
+solution density/nonwater mass define the concentration basis. Legacy
+inputs report an unquantified 1 kg solvent/L assumption.
 
-A value of 0 is a measured zero and stays zero (``"Cl": 0`` for chloride-free
-water, ``"HCO3": 0`` for carbon-free water); an omitted ion is not measured, and
-measured-pH chemistry needs ``HCO3`` (0 if none). Optional keys:
-``"below_detection": {"Mn": 0.01}`` (detection limits, mg/L; taken as zero, never
-adjusted).
+A value of 0 is a measured zero and stays zero (``"Cl": 0`` for
+chloride-free water, ``"HCO3": 0`` for carbon-free water); an omitted
+ion is not measured, and measured-pH chemistry needs ``HCO3`` (0 if
+none). Optional keys: ``"below_detection": {"Mn": 0.01}`` (detection
+limits, mg/L; taken as zero, never adjusted).
 
-Nutrient targets and concentration limits use the analysis exactly as entered.
-For the chemistry only (pH, saturation, EC, reagent dose) the analysis is
-speciated at its measured pH exactly as measured: its charge imbalance is
-reported, and no ion is added, removed or adjusted to close it. The report shows
-the imbalance and never lets it pass or fail a limit (#84).
+Nutrient targets and concentration limits use the analysis exactly as
+entered. For the chemistry only (pH, saturation, EC, reagent dose) the
+analysis is speciated at its measured pH exactly as measured: its charge
+imbalance is reported, and no ion is added, removed or adjusted to close
+it. The report shows the imbalance and never lets it pass or fail a
+limit (#84).
 
-Limits are never assumed: declare each maximum with ``--limit Cl=106.35`` (mg/L in
-the final solution); unspecified limits are not checked. The packaged pH products
-(KOH 45%, KHCO3, K2CO3, H3PO4 75%, HNO3 65%) are always evaluated; pass your own
-acid's certificate values with ``--acid``.
+Limits are never assumed: declare each maximum with ``--limit
+Cl=106.35`` (mg/L in the final solution); unspecified limits are not
+checked. The packaged pH products (KOH 45%, KHCO3, K2CO3, H3PO4 75%,
+HNO3 65%) are always evaluated; pass your own acid's certificate values
+with ``--acid``.
 
 options:
   -h, --help            show this help message and exit

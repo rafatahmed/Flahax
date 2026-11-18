@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Reproduce phosphate fitting with Decimal QR and independent coefficient transcription.
+"""Reproduce phosphate fitting with Decimal QR and independent
+coefficient transcription.
 
-Shares the aqueous speciation model, but neither the production normal-equation
-solver nor its design-row/equation implementation. This verifies numerical fitting,
-not independent chemistry or measured fertilizer-mixture accuracy. No files are edited.
+Shares the aqueous speciation model, but neither the production
+normal-equation solver nor its design-row/equation implementation. This
+verifies numerical fitting, not independent chemistry or measured
+fertilizer-mixture accuracy. No files are edited.
 """
 
 from decimal import Decimal, localcontext
@@ -20,10 +22,13 @@ FIXTURES = Path(__file__).resolve().parents[1] / 'tests/fixtures/conductivity'
 
 
 def phosphate_refit():
-    """Return four fitted coefficients from a 50-digit QR least-squares calculation."""
+    """Return four fitted coefficients from a 50-digit QR least-squares
+    calculation.
+    """
     fixture = json.loads((FIXTURES / 'pethybridge2006_table3_independent.json').read_text())
     table = json.loads((FIXTURES / 'mccleskey2012_table1_independent.json').read_text())['ions']
-    # The reference fixture uses conductivity ion names for these non-fitted species.
+    # The reference fixture uses conductivity ion names for these
+    # non-fitted species.
     rows, targets = [], []
     with localcontext() as ctx:
         ctx.prec = 50
@@ -77,7 +82,9 @@ def phosphate_refit():
 
 
 def withheld_kcl():
-    """Report reference differences; no empirical acceptance tolerance is invented."""
+    """Report reference differences; no empirical acceptance tolerance
+    is invented.
+    """
     from flahax.irrigation_ec import calculate_ec_from_totals, ionic_molal_conductivity
 
     fixture = json.loads((FIXTURES / 'iupac2001_kcl_table1.json').read_text())
@@ -90,7 +97,8 @@ def withheld_kcl():
             ph_mode='calculated',
             phase_policy='dissolved',
         )
-        # Algebraic Table 1 check, distinct from a qualified public mixture result.
+        # Algebraic Table 1 check, distinct from a qualified public
+        # mixture result.
         algebraic = m * sum(ionic_molal_conductivity(ion, m) for ion in ('K+', 'Cl-'))
         results.append(
             {

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Each nitrogen form is its own target; total N is their reported sum (D1, G23, G24)."""
+"""Each nitrogen form is its own target; total N is their reported sum
+(D1, G23, G24).
+"""
 
 from html import escape
 import math
@@ -124,13 +126,16 @@ class PepperAmmoniumRowTests(unittest.TestCase):
 
 
 class AmmoniumDeviationTests(unittest.TestCase):
-    """Review Focus 5: calcium nitrate's ammonium above a positive NH4-N target is a deviation."""
+    """Review Focus 5: calcium nitrate's ammonium above a positive NH4-N
+    target is a deviation.
+    """
 
     def test_ammonium_above_its_target_is_a_deviation_not_a_ban(self):
         calcium = next(s for s in SALTS if s['name'] == CALCIUM_NITRATE)
         rate = {k: v * 10.0 for k, v in calcium['elements'].items()}  # mg/L per g/L
-        # Ca and NO3 targets at the dose where calcium nitrate's NH4-N is 15a; with three equal
-        # relative-error rows the least-squares dose then gives NH4-N 15a(2 + a)/(2 + a^2) = 16.
+        # Ca and NO3 targets at the dose where calcium nitrate's NH4-N
+        # is 15a; with three equal relative-error rows the least-squares
+        # dose then gives NH4-N 15a(2 + a)/(2 + a^2) = 16.
         a = (30 - math.sqrt(772)) / 2
         dose = 15 * a / rate['N_NH4']
         targets = {'Ca': rate['Ca'] * dose, 'N_NO3': rate['N_NO3'] * dose, 'N_NH4': 15}
@@ -146,11 +151,14 @@ class AmmoniumDeviationTests(unittest.TestCase):
 
 
 class Lettuce2Tests(unittest.TestCase):
-    """Lettuce 2 (Howard Resh), packaged catalogue, empty water: each form has its own row.
+    """Lettuce 2 (Howard Resh), packaged catalogue, empty water: each
+    form has its own row.
 
-    The formula is 4 % charge-imbalanced, so the least-squares fit cannot meet every target;
-    the deviations below are those the fit reports. Mo is met by sodium molybdate, which
-    recovery admits because Mo is short of its target under the numerical tolerance (G25).
+    The formula is 4 % charge-imbalanced, so the least-squares fit
+    cannot meet every target; the deviations below are those the fit
+    reports. Mo is met by sodium molybdate, which recovery admits
+    because Mo is short of its target under the numerical tolerance
+    (G25).
     """
 
     @classmethod
@@ -194,7 +202,9 @@ def nitrogen_sum(rows):
 
 
 class TotalNAfterReagentTests(unittest.TestCase):
-    """Total N is recomputed from the final rows: water, products and the pH reagent."""
+    """Total N is recomputed from the final rows: water, products and
+    the pH reagent.
+    """
 
     def test_rebuilt_rows_recompute_total_n(self):
         pool = nutrient_salts(SALTS)
@@ -211,8 +221,9 @@ class TotalNAfterReagentTests(unittest.TestCase):
         self.assertEqual(blended['totalN']['target'], 140)
 
     def test_summary_total_n_counts_nitric_acid_nitrogen(self):
-        # A single theoretical KNO3 product (no catalogue identity) and nitric acid, planned
-        # jointly to pH 5.8; the selected recipe is the one the summary weighs.
+        # A single theoretical KNO3 product (no catalogue identity) and
+        # nitric acid, planned jointly to pH 5.8; the selected recipe is
+        # the one the summary weighs.
         kno3 = dict(
             id='kno3-theory',
             name='Potassium nitrate (theoretical)',
@@ -249,7 +260,9 @@ class TotalNAfterReagentTests(unittest.TestCase):
 
 
 class LegacyBlendAllowanceTests(unittest.TestCase):
-    """A rebuilt (blended) recipe is assessed against the same ammonium allowance."""
+    """A rebuilt (blended) recipe is assessed against the same ammonium
+    allowance.
+    """
 
     def test_blended_recipe_keeps_the_allowance(self):
         pool = nutrient_salts(SALTS)
@@ -262,9 +275,10 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
         self.assertEqual((ammonium['maximumPpm'], ammonium['assessment']), (14.0, 'within_limit'))
         self.assertEqual(blended['ammoniumLimit']['mgPerL'], 14.0)
 
-    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 - first cluster (Howard Resh)
-    # workflow plans no nitric candidate with a target state, so the case this test reproduces
-    # cannot be staged.
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato Stage.2 -
+    # first cluster (Howard Resh) workflow plans no nitric candidate
+    # with a target state, so the case this test reproduces cannot be
+    # staged.
     def test_legacy_nitric_candidate_has_no_ammonium_review(self):
         self.enterContext(historical_catalogue())
         library = load_library()
@@ -292,7 +306,9 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
 
 
 class SolveWeightsAllowanceTests(unittest.TestCase):
-    """solve_weights applies the same allowance as recommend, with the same reporting."""
+    """solve_weights applies the same allowance as recommend, with the
+    same reporting.
+    """
 
     def test_same_rule_as_recommend(self):
         calcium = next(s for s in SALTS if s['name'] == CALCIUM_NITRATE)
@@ -334,7 +350,9 @@ class SolveWeightsAllowanceTests(unittest.TestCase):
 
 
 class GrowerNitrogenLinesTests(unittest.TestCase):
-    """The allowance and total N are printed under the nutrient table of every grower output."""
+    """The allowance and total N are printed under the nutrient table of
+    every grower output.
+    """
 
     ALLOWANCE = (
         'Incidental NH4-N allowed up to 14 mg/L (10 % of total N, cap 21.01 mg/L): '

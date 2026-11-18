@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Sequential pH plans report the nutrients in their actual returned doses."""
+"""Sequential pH plans report the nutrients in their actual returned
+doses.
+"""
 
 import math
 import json
@@ -49,7 +51,8 @@ class SequentialAccountingTests(unittest.TestCase):
     def test_report_counts_the_actual_nitric_dose(self):
         candidate, pool = acid_plan()
         by_id = {p['id']: p for p in pool}
-        # g/batch / 1000 L * 1000 mg/g; nitric acid carries one nitrogen per molecule.
+        # g/batch / 1000 L * 1000 mg/g; nitric acid carries one nitrogen
+        # per molecule.
         nitrogen = candidate.reagent_mass_g * 0.65 * 14.0067 / 63.01284
         nitrogen += math.fsum(
             s['gramsPerLitre'] * by_id[s['id']]['elements'].get('N_NO3', 0) * 10

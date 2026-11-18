@@ -6,7 +6,8 @@
 
 Source: SQM Ultrasol Macronutrients brochure, 165357805552.pdf, page 2.
 Values are EC at 1 g/L and 25 C. Exact commercial names are intentional:
-these coefficients must not silently replace generic catalogue identities.
+these coefficients must not silently replace generic catalogue
+identities.
 """
 
 from collections.abc import Mapping
@@ -22,8 +23,9 @@ SOURCE = {
     'reference_g_per_litre': 1.0,
     'reference_temperature_c': 25.0,
 }
-# The brochure prints 1.2 for Magsul, but this conflicts with the ion calculation.
-# Retain that evidence without treating it as a usable or corrected anchor.
+# The brochure prints 1.2 for Magsul, but this conflicts with the ion
+# calculation. Retain that evidence without treating it as a usable or
+# corrected anchor.
 _DISPUTED = {
     'Ultrasol Magsul': {
         'status': 'disputed',
@@ -54,13 +56,14 @@ def estimate_manufacturer_ec(
 ):
     """Approximate EC25 = source-water EC25 + sum(dose * brochure anchor).
 
-    A no-new-measurements, pre-acid screening estimate. Linearity/additivity
-    are assumptions, not manufacturer validation. A total fertilizer loading
-    cap of 1 g/L is a conservative software policy, NOT a validated range.
-    No uncertainty bound or model for concentrated A/B stocks is asserted.
-    Unknown or disputed products never disappear into a falsely complete total.
-    Positive Magsul doses return disputed_product_ec_evidence; its published
-    value is retained as disputed evidence, not replaced by a model prediction.
+    A no-new-measurements, pre-acid screening estimate.
+    Linearity/additivity are assumptions, not manufacturer validation. A
+    total fertilizer loading cap of 1 g/L is a conservative software
+    policy, NOT a validated range. No uncertainty bound or model for
+    concentrated A/B stocks is asserted. Unknown or disputed products
+    never disappear into a falsely complete total. Positive Magsul doses
+    return disputed_product_ec_evidence; its published value is retained
+    as disputed evidence, not replaced by a model prediction.
     """
     if not isinstance(doses_g_per_litre, Mapping):
         raise DeliveryError('invalid_type', 'doses must map exact commercial product names to g/L')

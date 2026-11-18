@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#68: binding ceilings are met as constraints, and NNLS optimality is tested per column."""
+"""#68: binding ceilings are met as constraints, and NNLS optimality
+is tested per column.
+"""
 
 import unittest
 
@@ -14,7 +16,8 @@ from tests.catalogue_history import historical_catalogue
 with historical_catalogue():
     LIBRARY = load_library()
 SALTS = LIBRARY["salts"]
-# Generic Grow needs more ammonium than this explicitly requested fraction permits.
+# Generic Grow needs more ammonium than this explicitly requested
+# fraction permits.
 GROW = next(f for f in LIBRARY["formulas"] if f["name"] == "Generic Grow (maximumyield)")
 
 
@@ -24,8 +27,9 @@ def final(result, symbol):
 
 class NnlsOptimalityTests(unittest.TestCase):
     def test_a_large_row_does_not_hide_a_small_column(self):
-        # The second column's dual weight (1e-8) was below the old global tolerance
-        # 10 max(m, n) eps |A| |b| (about 4.4e-7), so NNLS stopped with x2 = 0.
+        # The second column's dual weight (1e-8) was below the old
+        # global tolerance 10 max(m, n) eps |A| |b| (about 4.4e-7), so
+        # NNLS stopped with x2 = 0.
         x = nnls([[1e4, 0.0], [0.0, 1e-4]], [1e4, 1e-4])
         self.assertAlmostEqual(x[0], 1.0, places=12)
         self.assertAlmostEqual(x[1], 1.0, places=9)
@@ -51,8 +55,9 @@ class CeilingConstraintTests(unittest.TestCase):
         self.assertLessEqual(final(result, "N_NH4"), limit)
 
     def test_result_does_not_depend_on_the_starting_point(self):
-        # The old 1024-weight penalty fixed doses only to ~4e-3 g/L, so warm and cold
-        # starts disagreed. Compare nutrient fit: equivalent allocations are allowed.
+        # The old 1024-weight penalty fixed doses only to ~4e-3 g/L, so
+        # warm and cold starts disagreed. Compare nutrient fit:
+        # equivalent allocations are allowed.
         limit = recommend(SALTS, GROW["targets"], {}, max_ammonium_fraction=0.10)["ammoniumLimit"][
             "mgPerL"
         ]

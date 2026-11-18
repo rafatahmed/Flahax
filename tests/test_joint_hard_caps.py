@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Provably unusable sources must not dominate the public joint search."""
+"""Provably unusable sources must not dominate the public joint
+search.
+"""
 
 import json
 from pathlib import Path
@@ -120,7 +122,8 @@ class JointHardCapTests(unittest.TestCase):
         self.assertAlmostEqual(
             results[0]['evaluation']['loss'], results[1]['evaluation']['loss'], delta=1e-8
         )
-        # A loose relative work guard, not an iteration or numerical tolerance change.
+        # A loose relative work guard, not an iteration or numerical
+        # tolerance change.
         self.assertLessEqual(
             results[1]['diagnostics']['evaluations'],
             5 * results[0]['diagnostics']['evaluations'],

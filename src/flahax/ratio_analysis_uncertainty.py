@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Analytical box bounds and disclosed chemistry sampling for commercial recipes."""
+"""Analytical box bounds and disclosed chemistry sampling for commercial
+recipes.
+"""
 
 from copy import deepcopy
 import math
@@ -17,7 +19,9 @@ from .ratio_water import BASIS, account_water
 
 
 def validate_analysis_uncertainty(options, volume, products, water):
-    """Validate a separate, explicit uncertainty contract for material inventories."""
+    """Validate a separate, explicit uncertainty contract for material
+    inventories.
+    """
     elemental = isinstance(options, dict) and options.get("mode") == "water_product_elemental"
     assay_field = "product_element_factors" if elemental else "product_assay_factors"
     required = {
@@ -160,9 +164,10 @@ def _water_input(recipe):
 
 
 def _ratio_extreme(groups, nutrient, offset, maximum):
-    # A linear-fractional function over independent interval contributions has
-    # extrema at endpoints. The zero of max/min(N-rD) finds the bound without
-    # enumerating the Cartesian product; each source endpoint is chosen separately.
+    # A linear-fractional function over independent interval
+    # contributions has extrema at endpoints. The zero of max/min(N-rD)
+    # finds the bound without enumerating the Cartesian product; each
+    # source endpoint is chosen separately.
     low, high = 0.0, 1.0
 
     def choice(group, r):
@@ -191,7 +196,9 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
 
 
 def verify_analysis_uncertainty(recipe, options):
-    """Bound linear inventory quantities and sample nonlinear chemistry without refitting."""
+    """Bound linear inventory quantities and sample nonlinear chemistry
+    without refitting.
+    """
     elemental = options["mode"] == "water_product_elemental"
     physical = options["water_mass_model"] == "closed_batch_mass_balance"
     nominal = recipe["rounded_verification"]

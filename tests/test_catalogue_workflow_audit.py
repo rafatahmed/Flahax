@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Regression for #204: screening must not silently enable review-only solids."""
+"""Regression for #204: screening must not silently enable review-only
+solids.
+"""
 
 from types import SimpleNamespace
 import unittest
@@ -88,8 +90,9 @@ class PhaseAuditTests(unittest.TestCase):
         )
         library['formulas'] = [f for f in library['formulas'] if f['name'] == 'DEFAULT']
         self.assertEqual(len(library['formulas']), 1)
-        # A label off its compound's proportions is reconciled, so it no longer makes a product
-        # unsupported; an analysis that states a nutrient the product's ions do not carry does.
+        # A label off its compound's proportions is reconciled, so it no
+        # longer makes a product unsupported; an analysis that states a
+        # nutrient the product's ions do not carry does.
         potassium_nitrate = next(s for s in library['salts'] if s['name'] == 'Potassium Nitrate')
         potassium_nitrate['elements'] = {**potassium_nitrate['elements'], 'Zn': 0.1}
         report = audit(library)

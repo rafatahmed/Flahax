@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Audit controls for unit bases, domain/qualification propagation and published claims.
+"""Audit controls for unit bases, domain/qualification propagation and
+published claims.
 
-These are minimum counterexamples, not complete scientific closure tests. An assertion
-about lost metadata or an unsupported statement does not establish physical accuracy.
+These are minimum counterexamples, not complete scientific closure
+tests. An assertion about lost metadata or an unsupported statement does
+not establish physical accuracy.
 """
 
 from fractions import Fraction
@@ -72,7 +74,8 @@ class ScientificAuditRegressionTests(unittest.TestCase):
                 try:
                     configurations.append(read_water(str(path))[2])
                 except DeliveryError as error:
-                    # Explicit rejection is honest until the input contract supports this basis.
+                    # Explicit rejection is honest until the input
+                    # contract supports this basis.
                     self.assertTrue(
                         any(
                             word in str(error).lower()
@@ -85,10 +88,11 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         )
 
     def test_f07_known_zero_carbon_cannot_be_overwritten_by_total_alkalinity(self):
-        # The scalar is a declared synthetic assay, not a verified equilibrium state.
-        # A contradictory or unsupported analysis may be rejected; known zero carbon
-        # must not silently change. The independent proton-inventory witness is in
-        # test_audit_oracles; it does not assert this helper input is charge-balanced.
+        # The scalar is a declared synthetic assay, not a verified
+        # equilibrium state. A contradictory or unsupported analysis may
+        # be rejected; known zero carbon must not silently change. The
+        # independent proton-inventory witness is in test_audit_oracles;
+        # it does not assert this helper input is charge-balanced.
         try:
             inferred = _carbon_for_alkalinity(
                 {'PO4-3': 0.001, 'CO3-2': 0.0}, 8, 0.0008859033379310278, []
@@ -116,9 +120,10 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             'the empirical-fit domain is narrower than the speciation domain',
         )
 
-    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
-    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
-    # candidate is planned.
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so no acid candidate is
+    # planned.
     def test_f09_grower_summary_preserves_ec_qualification(self):
         self.enterContext(historical_catalogue())
         from tests.test_grower_outputs import PRODUCTS, workflow
@@ -131,7 +136,8 @@ class ScientificAuditRegressionTests(unittest.TestCase):
             captured.append(computed)
             return computed
 
-        # Observe the actual calculation; do not replace its chemistry or its result.
+        # Observe the actual calculation; do not replace its chemistry
+        # or its result.
         with patch('flahax.grower_report.calculate_ec_from_totals', side_effect=capture):
             summary = summarize_batch(result, PRODUCTS, title='Audit', water_label='RO')
         self.assertIsNotNone(summary['ec'])
@@ -173,8 +179,9 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         self.assertNotIn('no measurement behind it', bases)
 
     def test_f12_ammonium_maximum_is_declared_with_its_basis(self):
-        # G23: with no NH4-N requirement the allowance min(10 % of total N, 1.5 mmol/L) applies
-        # and is reported with its basis; None leaves no ammonium maximum.
+        # G23: with no NH4-N requirement the allowance min(10 % of total
+        # N, 1.5 mmol/L) applies and is reported with its basis; None
+        # leaves no ammonium maximum.
         products = [
             dict(
                 id='synthetic',
@@ -196,9 +203,10 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         self.assertIsNone(none['ammoniumLimit'])
 
     def test_f13_omitted_ligand_competition_is_not_silently_qualified(self):
-        # The pinned model has DTPA protonation and Fe-DTPA, but no Cu-DTPA reaction.
-        # This is an admission/diagnosis control, not a predicted Cu-DTPA concentration.
-        # Expanding the reaction set requires separately reviewed parameters and tests.
+        # The pinned model has DTPA protonation and Fe-DTPA, but no
+        # Cu-DTPA reaction. This is an admission/diagnosis control, not
+        # a predicted Cu-DTPA concentration. Expanding the reaction set
+        # requires separately reviewed parameters and tests.
         try:
             result = calculate_equilibrium_ph(
                 {'Dtp-5': 0.001, 'Cu+2': 0.001, 'Na+': 0.003},

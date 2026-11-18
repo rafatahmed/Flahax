@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent graph-coloring witnesses and synthetic mixture-domain controls."""
+"""Independent graph-coloring witnesses and synthetic mixture-domain
+controls.
+"""
 
 from itertools import combinations, product
 import unittest
+
 from flahax import DeliveryError, InjectionRatio, StockTank, TemperatureCelsius, VolumeLitres
 from flahax.stock_planning import plan_stocks
 from flahax.tank_grouping import group_tanks
@@ -13,7 +16,9 @@ from tests.test_stock_planning import recipe, limits, record
 
 
 def synthetic_model(tank, temperature):
-    """A synthetic interface witness, never physical mixture evidence."""
+    """A synthetic interface witness, never physical mixture
+    evidence.
+    """
     return dict(
         status='compatible',
         model_id='synthetic-only',
@@ -109,11 +114,13 @@ class AssignmentTests(unittest.TestCase):
         ]
         rows = [dict(id=p['id'], name=p['name'], gramsPerLitre=0.00001) for p in products]
         result = group_tanks(rows, products)
-        # A tiny dose waives nothing: calcium stays apart from the sulfate and the phosphate.
+        # A tiny dose waives nothing: calcium stays apart from the
+        # sulfate and the phosphate.
         self.assertEqual(len(result.tanks), 2)
         self.assertNotEqual(result.tank_of('calcium'), result.tank_of('magnesium sulfate'))
         self.assertNotEqual(result.tank_of('calcium'), result.tank_of('phosphate'))
-        # A micronutrient sulfate goes with the calcium, magnesium sulfate with the phosphate.
+        # A micronutrient sulfate goes with the calcium, magnesium
+        # sulfate with the phosphate.
         self.assertEqual(result.tank_of('calcium'), result.tank_of('micro sulfate'))
         self.assertEqual(result.tank_of('magnesium sulfate'), result.tank_of('phosphate'))
         self.assertEqual(len(group_tanks(rows, products, max_tanks=2).tanks), 2)
@@ -130,7 +137,8 @@ class MixtureTests(unittest.TestCase):
 
     def test_qualified_alternative_preserves_exact_mass(self):
         def common_ion_witness(tank, temperature):
-            # Synthetic pair rejection tests the interface, not a physical constant.
+            # Synthetic pair rejection tests the interface, not a
+            # physical constant.
             result = synthetic_model(tank, temperature)
             if len(tank.salts) > 1:
                 result['status'] = 'incompatible'

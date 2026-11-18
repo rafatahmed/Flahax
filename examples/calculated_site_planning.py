@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""No-new-measurements EC screening and equipment requirement arithmetic."""
+"""No-new-measurements EC screening and equipment requirement
+arithmetic.
+"""
 
 from flahax import estimate_manufacturer_ec, size_injection_requirements
 from .common import show

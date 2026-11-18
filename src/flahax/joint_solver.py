@@ -2,15 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Safeguarded local joint search; numerical candidates are not accepted plans.
+"""Safeguarded local joint search; numerical candidates are not accepted
+plans.
 
-Numerical scales, sensitivity criteria, stopping criteria and budgets are supplied
-explicitly. No new production tolerance or global optimality certificate is defined.
+Numerical scales, sensitivity criteria, stopping criteria and budgets
+are supplied explicitly. No new production tolerance or global
+optimality certificate is defined.
 """
 
 import math
 from collections.abc import Mapping
 from fractions import Fraction as F
+
 from .joint_problem import JointProblem, _number, _profile_doses
 from .delivery_contracts import DeliveryError
 from .engine import nnls
@@ -58,7 +61,9 @@ def _constraints(problem, scales):
 
 
 def _fraction(point, direction, constraints):
-    """Largest feasible fraction up to one; step inside rounded upper boundaries."""
+    """Largest feasible fraction up to one; step inside rounded upper
+    boundaries.
+    """
     alpha = 1.0
     for row, bound in constraints:
         slope = sum(a * d for a, d in zip(row, direction))
@@ -71,11 +76,13 @@ def _fraction(point, direction, constraints):
 def _charge_constrained_step(
     matrix, rhs, tolerance, budget, lower=None, upper=None, diagnostics=None
 ):
-    """Solve a nonnegative linearized least-squares problem with charge equality.
+    """Solve a nonnegative linearized least-squares problem with charge
+    equality.
 
-    A scalar dual search changes the charge-row aim. Its monotone response is
-    bracketed before bisection. Failure is only a local-step failure. The returned
-    L1 merit weight exceeds the recovered equality multiplier in scaled units.
+    A scalar dual search changes the charge-row aim. Its monotone
+    response is bracketed before bisection. Failure is only a local-step
+    failure. The returned L1 merit weight exceeds the recovered equality
+    multiplier in scaled units.
     """
 
     def linear_solve(a, b):
@@ -116,8 +123,9 @@ def _charge_constrained_step(
             step *= 2
         else:
             raise ValueError('linearized charge equality not bracketed')
-        # A residual that passes feasibility may still leave a poor multiplier
-        # near stationarity. Use the supplied budget and retain the closest point.
+        # A residual that passes feasibility may still leave a poor
+        # multiplier near stationarity. Use the supplied budget and
+        # retain the closest point.
         best = min([left, right, (target, gap, proposal)], key=lambda item: abs(item[1]))
         for _ in range(2 * budget):
             aim = (left[0] + right[0]) / 2
@@ -142,7 +150,9 @@ def _charge_constrained_step(
 
 
 def _stationarity(point, value, matrix, constraints, relative_tolerance, active_tolerance):
-    """First-order KKT evidence only; not a minimum or global-optimality proof."""
+    """First-order KKT evidence only; not a minimum or global-optimality
+    proof.
+    """
     gradient = [
         2 * math.fsum(row[j] * r for row, r in zip(matrix[:-1], value[1][:-1]))
         for j in range(len(point))
@@ -207,8 +217,9 @@ def _implicit_matrix(problem, value, scales, charge_scale):
 
 
 def _chemical_widths(problem, value, scales, radius):
-    # These are local trust widths, not hard product restrictions. They update
-    # with the current analytical inventory and permit growth from zero doses.
+    # These are local trust widths, not hard product restrictions. They
+    # update with the current analytical inventory and permit growth
+    # from zero doses.
     totals = value[0]['equilibrium'].totals
     widths = []
     for source, scale in zip((*problem.fertilizers, problem.reagent), scales):
@@ -238,7 +249,9 @@ def _polish_direction(
     evaluate,
     active_tolerance=0.0,
 ):
-    """Positive-curvature coordinate Newton proposal on the charge manifold."""
+    """Positive-curvature coordinate Newton proposal on the charge
+    manifold.
+    """
     n = len(point)
     gradient = [
         2 * math.fsum(row[j] * r for row, r in zip(matrix[:-1], value[1][:-1])) for j in range(n)
@@ -320,29 +333,36 @@ def solve_joint_problem(
     curvature_block=False,
     whole_mix=False,
 ):
-    """Search one immutable JointProblem from an explicitly supplied start.
+    """Search one immutable JointProblem from an explicitly supplied
+    start.
 
-    dose_steps maps every fertilizer/reagent ID to a positive g/L finite-difference
-    scale. trust_radius bounds the infinity norm of steps in those scaled variables.
-    Charge controls are mol/kg solvent; loss_tolerance bounds the original summed
-    squared relative nutrient errors. sensitivity_tolerance is relative agreement
-    of differences at h and h/2. All controls are caller inputs, not scientific defaults.
+    dose_steps maps every fertilizer/reagent ID to a positive g/L
+    finite-difference scale. trust_radius bounds the infinity norm of
+    steps in those scaled variables. Charge controls are mol/kg solvent;
+    loss_tolerance bounds the original summed squared relative nutrient
+    errors. sensitivity_tolerance is relative agreement of differences
+    at h and h/2. All controls are caller inputs, not scientific
+    defaults.
 
-    whole_mix optionally tries a constrained simultaneous step when recent stationarity
-    checks stall. Its linear model never supplies a success certificate.
+    whole_mix optionally tries a constrained simultaneous step when
+    recent stationarity checks stall. Its linear model never supplies a
+    success certificate.
 
-    Optional objective_gap_tolerance bounds the certified absolute objective gap,
-    not the nutrient loss. Optional stationarity_tolerance (relative KKT residual)
-    and active_bound_tolerance (distance in scaled variables) must be supplied
-    together. They enable local first-order stationarity, not a minimum proof.
-    These modes use linearized charge equality, adaptive derivative probes and
-    an L1 merit weight above the equality multiplier outside charge feasibility.
-    Feasible comparisons use exact nutrient loss plus the signed charge multiplier
-    term to avoid masking progress with charge roundoff. All are opt-in caller policy.
+    Optional objective_gap_tolerance bounds the certified absolute
+    objective gap, not the nutrient loss. Optional
+    stationarity_tolerance (relative KKT residual) and
+    active_bound_tolerance (distance in scaled variables) must be
+    supplied together. They enable local first-order stationarity, not a
+    minimum proof. These modes use linearized charge equality, adaptive
+    derivative probes and an L1 merit weight above the equality
+    multiplier outside charge feasibility. Feasible comparisons use
+    exact nutrient loss plus the signed charge multiplier term to avoid
+    masking progress with charge roundoff. All are opt-in caller policy.
 
-    Returns numerical_candidate only after fresh final residual/constraint checks;
-    accepted is always False pending separate model/phase/acceptance qualification.
-    Exhaustion, bad trials, failed sensitivities and stalled local searches return
+    Returns numerical_candidate only after fresh final
+    residual/constraint checks; accepted is always False pending
+    separate model/phase/acceptance qualification. Exhaustion, bad
+    trials, failed sensitivities and stalled local searches return
     search_incomplete, never a global infeasibility or optimality claim.
     """
     if not isinstance(whole_mix, bool) or (
@@ -389,9 +409,10 @@ def solve_joint_problem(
     doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [_number(reagent_dose, 'reagent dose')]
     point = [_number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
     constraints = _constraints(problem, scales)
-    # Nonnegative sources of a nutrient with no remaining allowance are fixed
-    # at zero. Keep them out of local proposals, not merely the final line search:
-    # one forbidden positive coordinate would otherwise shorten the whole step to zero.
+    # Nonnegative sources of a nutrient with no remaining allowance are
+    # fixed at zero. Keep them out of local proposals, not merely the
+    # final line search: one forbidden positive coordinate would
+    # otherwise shorten the whole step to zero.
     fixed_zero = {
         j
         for row, bound in constraints
@@ -504,7 +525,8 @@ def solve_joint_problem(
         )
 
     def finish(u, value, reason, stationary=None):
-        # Fresh evaluation, not a report copied from an endpoint or derivative probe.
+        # Fresh evaluation, not a report copied from an endpoint or
+        # derivative probe.
         final = evaluate(u, cold=True) if value is not None else None
         if (
             sensitivity_method == 'equilibrium'
@@ -512,8 +534,9 @@ def solve_joint_problem(
             and abs(value[0]['chargeResidual']) <= charge_tolerance
             and abs(final[0]['chargeResidual']) > charge_tolerance
         ):
-            # A warm equilibrium seed can hide inner-solve roundoff in charge.
-            # Correct on cold states only, then rebuild every final certificate.
+            # A warm equilibrium seed can hide inner-solve roundoff in
+            # charge. Correct on cold states only, then rebuild every
+            # final certificate.
             origin = u.copy()
             for _ in range(max_backtracks):
                 try:
@@ -630,9 +653,10 @@ def solve_joint_problem(
         def merit(value):
             if penalty is None:
                 return value[2]
-            # On the already feasible manifold, the signed Lagrangian cancels
-            # first-order objective changes caused by charge-rounding corrections.
-            # Final charge and stationarity checks retain their original limits.
+            # On the already feasible manifold, the signed Lagrangian
+            # cancels first-order objective changes caused by
+            # charge-rounding corrections. Final charge and stationarity
+            # checks retain their original limits.
             if (
                 'chargeMultiplier' in linear
                 and abs(value[0]['chargeResidual']) <= charge_tolerance
@@ -652,8 +676,9 @@ def solve_joint_problem(
                 if u == point:
                     return
                 result = evaluate(u)
-                # A second-order charge correction avoids rejecting a useful
-                # tangent step solely because the equality is nonlinear.
+                # A second-order charge correction avoids rejecting a
+                # useful tangent step solely because the equality is
+                # nonlinear.
                 if correct_charge and result is not None:
                     for _ in range(max_backtracks):
                         if abs(result[0]['chargeResidual']) <= charge_tolerance:
@@ -699,9 +724,10 @@ def solve_joint_problem(
                         + multiplier
                         * sum(F(a) * (F(y) - F(x)) for a, x, y in zip(matrix[-1], point, u))
                     )
-                    # Explore model descent within the caller's feasible charge
-                    # band when residual precision masks the merit improvement.
-                    # Both endpoints and the final KKT check retain their limits.
+                    # Explore model descent within the caller's feasible
+                    # charge band when residual precision masks the
+                    # merit improvement. Both endpoints and the final
+                    # KKT check retain their limits.
                     allowance = 2 * abs(multiplier) * F(charge_tolerance) / F(charge_scale)
                     improves = predicted < 0 and merit(result) - merit(current) <= allowance
                     if improves:
@@ -717,9 +743,10 @@ def solve_joint_problem(
             except (DeliveryError, ValueError, OverflowError) as error:
                 diagnostics['lastError'] = str(error)
                 diagnostics['sensitivityFailures'] += 1
-                # A tiny positive dose may sit in mass-action clipping while its
-                # exact nonnegative boundary has a well-defined one-sided limit.
-                # This is a re-evaluated candidate, never an unconditional snap.
+                # A tiny positive dose may sit in mass-action clipping
+                # while its exact nonnegative boundary has a
+                # well-defined one-sided limit. This is a re-evaluated
+                # candidate, never an unconditional snap.
                 recovered = None
                 if active_bound_tolerance is not None:
                     for j in sorted(range(n), key=lambda k: point[k]):
@@ -789,9 +816,10 @@ def solve_joint_problem(
                     reliable = False
                     diagnostics['unreliableColumns'].append(identifiers[j])
                 else:
-                    # Nutrient balances are linear in the declared product doses.
-                    # Differentiate those coefficients directly; only charge needs
-                    # numerical probes. Subtraction would lose small gradient changes.
+                    # Nutrient balances are linear in the declared
+                    # product doses. Differentiate those coefficients
+                    # directly; only charge needs numerical probes.
+                    # Subtraction would lose small gradient changes.
                     nutrient_column = [
                         1000
                         * sources[j].nutrients.get(row['symbol'], 0)
@@ -804,9 +832,10 @@ def solve_joint_problem(
             matrix = [list(row) for row in zip(*columns)]
         rhs = [sum(a * x for a, x in zip(row, point)) - r for row, r in zip(matrix, current[1])]
         linear = {}
-        # Restore the nonlinear charge equality before testing stationarity.
-        # This changes the actual reagent dose and re-evaluates every residual;
-        # it never rescales targets or substitutes a failed undosed recipe.
+        # Restore the nonlinear charge equality before testing
+        # stationarity. This changes the actual reagent dose and
+        # re-evaluates every residual; it never rescales targets or
+        # substitutes a failed undosed recipe.
         if (
             (objective_gap_tolerance is not None or stationarity_tolerance is not None)
             and abs(current[0]['chargeResidual']) > charge_tolerance
@@ -840,9 +869,10 @@ def solve_joint_problem(
                     )
                 )
                 continue
-        # A bound reagent cannot always restore charge on its own. In the
-        # explicit equilibrium path, allow fertilizer coordinates to restore
-        # feasibility before asking nutrient merit to select an optimum.
+        # A bound reagent cannot always restore charge on its own. In
+        # the explicit equilibrium path, allow fertilizer coordinates to
+        # restore feasibility before asking nutrient merit to select an
+        # optimum.
         if (
             sensitivity_method == 'equilibrium'
             and reliable
@@ -867,8 +897,9 @@ def solve_joint_problem(
                         break
                     alpha /= 2
             if restorations:
-                # Prefer low nutrient loss among steps that halve the charge
-                # error; otherwise take the largest actual charge reduction.
+                # Prefer low nutrient loss among steps that halve the
+                # charge error; otherwise take the largest actual charge
+                # reduction.
                 sufficient = [
                     pair
                     for pair in restorations
@@ -1029,12 +1060,14 @@ def solve_joint_problem(
                         trial(block[0], correct_charge=True)
                 if not candidates:
                     trial(direction, correct_charge=True)
-                # Compare curvature polishing with the full coupled proposal.
-                # Taking every improving coordinate step immediately can prevent
-                # progress along the other, correlated fertilizer directions.
+                # Compare curvature polishing with the full coupled
+                # proposal. Taking every improving coordinate step
+                # immediately can prevent progress along the other,
+                # correlated fertilizer directions.
                 linear['coordinateNewton'] = identifiers[index]
-                # Periodically revisit all coupled directions rather than paying
-                # for a full bounded subproblem after each local improvement.
+                # Periodically revisit all coupled directions rather
+                # than paying for a full bounded subproblem after each
+                # local improvement.
                 if candidates and (iteration + 1) % n:
                     point, current = min(candidates, key=lambda pair: merit(pair[1]))
                     diagnostics['history'].append(
@@ -1090,7 +1123,8 @@ def solve_joint_problem(
             diagnostics['lastError'] = str(exc)
         diagnostics['linearSolves'].append(linear)
         if not candidates:
-            # Coordinate and cap-tangent exchanges avoid making rank failure a verdict.
+            # Coordinate and cap-tangent exchanges avoid making rank
+            # failure a verdict.
             for j in range(n):
                 for sign in (-1, 1):
                     trial([sign * radius if i == j else 0.0 for i in range(n)])

@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Kernel contracts: independent balances, domain guards and injected solver failures.
+"""Kernel contracts: independent balances, domain guards and injected
+solver failures.
 
-Fault injection verifies rejection/retry contracts, not chemical accuracy.
-Legacy checks retain their explicitly limited reaction systems.
+Fault injection verifies rejection/retry contracts, not chemical
+accuracy. Legacy checks retain their explicitly limited reaction
+systems.
 """
 
 import math
@@ -131,7 +133,8 @@ class KernelDomainTests(unittest.TestCase):
 
 class KernelInvariantTests(unittest.TestCase):
     def test_acid_form_conservation_and_scaling(self):
-        # At I=0 activities equal molalities; at the NH4 pKa both forms are equal.
+        # At I=0 activities equal molalities; at the NH4 pKa both forms
+        # are equal.
         half = ammonia_speciation(0.002, 9.252, 0)
         self.assertAlmostEqual(half.ammonium_molal, 0.001, places=15)
         self.assertAlmostEqual(half.ammonia_molal, 0.001, places=15)
@@ -163,8 +166,9 @@ class KernelInvariantTests(unittest.TestCase):
         phases = ('Calcite', 'Gypsum', 'Hydroxylapatite', 'Struvite')
         result = aq.solve(totals, 8, phases=phases)
         reverse = aq.solve(dict(reversed(list(totals.items()))), 8, phases=tuple(reversed(phases)))
-        # Balance is independently accumulated from exported species and reaction
-        # stoichiometry, never from result.residuals or the solver's diagnostic norm.
+        # Balance is independently accumulated from exported species and
+        # reaction stoichiometry, never from result.residuals or the
+        # solver's diagnostic norm.
         records = aq.chemistry()['aqueous']
         minerals = {r['name']: r for r in aq.chemistry()['phases']}
         for base, total in totals.items():
@@ -304,7 +308,8 @@ class KernelFailureTests(unittest.TestCase):
             with self.assertRaisesRegex(DeliveryError, 'requires base'):
                 aq.nitric_target({}, 7, 6)
 
-        # Synthetic linear charge law: tests bracketing independently of chemistry.
+        # Synthetic linear charge law: tests bracketing independently of
+        # chemistry.
         def state(totals, ph, **kwargs):
             return SimpleNamespace(charge_balance=0 if ph == 7 else 0.005 - totals.get('NO3-', 0))
 
@@ -336,7 +341,8 @@ class RetainedPairBalanceTests(unittest.TestCase):
                 self.assertAlmostEqual(free_sulfate + pair, sulfate, delta=1e-15)
                 k = 10**2.14 * davies_gamma(2, strength) ** 2
                 self.assertAlmostEqual(pair, k * free_ca * free_sulfate, delta=1e-14)
-                # Independent bisection with Decimal arithmetic on the pair amount.
+                # Independent bisection with Decimal arithmetic on the
+                # pair amount.
                 with localcontext() as context:
                     context.prec = 60
                     c, s, coefficient = map(Decimal, map(str, (ca, sulfate, k)))
@@ -351,10 +357,12 @@ class RetainedPairBalanceTests(unittest.TestCase):
 
 
 class KernelIterationPathTests(unittest.TestCase):
-    """Reduced budgets exercise finite termination paths, not numerical accuracy.
+    """Reduced budgets exercise finite termination paths, not numerical
+    accuracy.
 
-    Module-local range injection leaves all other module loops unchanged.
-    Retained kernels must also reject exhausted iteration budgets.
+    Module-local range injection leaves all other module loops
+    unchanged. Retained kernels must also reject exhausted iteration
+    budgets.
     """
 
     @staticmethod
@@ -420,8 +428,8 @@ class KernelIterationPathTests(unittest.TestCase):
         self.assertGreater(acid.nitric_acid_molal, 0)
 
     def test_legacy_phase_selection_tiny_amount_and_missing_inventory(self):
-        # Synthetic SI response isolates phase selection and ledger bookkeeping;
-        # it is not presented as a thermodynamic test.
+        # Synthetic SI response isolates phase selection and ledger
+        # bookkeeping; it is not presented as a thermodynamic test.
         totals = fe.FertilizerTotals(calcium=1, carbonate=1)
 
         def state(current, ph):

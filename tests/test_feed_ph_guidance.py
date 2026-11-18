@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Caller-selected pH is not judged against an embedded agronomic range."""
+"""Caller-selected pH is not judged against an embedded agronomic
+range.
+"""
 
 import unittest
 

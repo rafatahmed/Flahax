@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Execute current site examples and keep migration/version boundaries explicit."""
+"""Execute current site examples and keep migration/version boundaries
+explicit.
+"""
 
 import contextlib
 import io
@@ -20,7 +22,9 @@ SITE = ROOT / 'docs/site'
 
 class DocumentationMigrationTests(unittest.TestCase):
     def test_current_site_python_examples(self):
-        """Every current executable fence runs independently without caller globals."""
+        """Every current executable fence runs independently without
+        caller globals.
+        """
         count = 0
         for page in sorted(SITE.rglob('*.md')):
             if any(part in page.parts for part in ('_static', 'audit', 'evidence')):

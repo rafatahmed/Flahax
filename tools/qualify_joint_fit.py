@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent accounting and multistart evidence for an explicit joint problem.
+"""Independent accounting and multistart evidence for an explicit joint
+problem.
 
-This is a qualification utility, not a production acceptance policy. Controls are
-supplied by the caller. It retains unsuccessful starts and never certifies global
-optimality from a local solver status or from agreement between starting points.
+This is a qualification utility, not a production acceptance policy.
+Controls are supplied by the caller. It retains unsuccessful starts and
+never certifies global optimality from a local solver status or from
+agreement between starting points.
 """
 
 from fractions import Fraction
@@ -17,11 +19,13 @@ from flahax.delivery_contracts import DeliveryError
 
 
 def independent_accounting(problem, doses, reagent_dose):
-    """Exact rational arithmetic on the supplied binary input coefficients.
+    """Exact rational arithmetic on the supplied binary input
+    coefficients.
 
-    The water-only excess is a valid objective lower bound because every source
-    coefficient and dose is nonnegative. It omits charge and other constraints,
-    so a nonzero gap is not evidence that a better feasible recipe exists.
+    The water-only excess is a valid objective lower bound because every
+    source coefficient and dose is nonnegative. It omits charge and
+    other constraints, so a nonzero gap is not evidence that a better
+    feasible recipe exists.
     """
     sources = (*problem.fertilizers, problem.reagent)
     amounts = [doses.get(s.product_id, 0) for s in problem.fertilizers] + [reagent_dose]
@@ -55,11 +59,13 @@ def independent_accounting(problem, doses, reagent_dose):
 
 
 def relaxed_objective_bound(problem):
-    """Exact dual certificate for a nutrient-only nonnegative relaxation.
+    """Exact dual certificate for a nutrient-only nonnegative
+    relaxation.
 
-    Drop charge, phase and upper constraints. NNLS supplies a proposed residual;
-    rational arithmetic shifts it into the dual-feasible cone. Only the verified
-    dual value is a lower bound; the numerical NNLS objective is never used as one.
+    Drop charge, phase and upper constraints. NNLS supplies a proposed
+    residual; rational arithmetic shifts it into the dual-feasible cone.
+    Only the verified dual value is a lower bound; the numerical NNLS
+    objective is never used as one.
     """
     from flahax.engine import nnls
 
@@ -88,7 +94,9 @@ def relaxed_objective_bound(problem):
 
 
 def verify_objective_certificate(problem, doses, reagent_dose, proof):
-    """Check a supplied rational dual witness without running an optimizer."""
+    """Check a supplied rational dual witness without running an
+    optimizer.
+    """
     try:
         f = Fraction
         products = [*problem.fertilizers, problem.reagent]
@@ -158,9 +166,11 @@ def verify_objective_certificate(problem, doses, reagent_dose, proof):
 
 
 def verify_stationarity(problem, result, controls):
-    """Recheck KKT residuals using exact nutrient gradients and independent charge derivatives.
+    """Recheck KKT residuals using exact nutrient gradients and
+    independent charge derivatives.
 
-    This verifies a local first-order claim only. It does not certify a minimum.
+    This verifies a local first-order claim only. It does not certify a
+    minimum.
     """
     from flahax.joint_solver import _constraints
     from flahax.joint_optimality import objective_certificate
@@ -282,10 +292,12 @@ def verify_stationarity(problem, result, controls):
 
 
 def qualify_starts(problem, starts, controls):
-    """Record every start, independent residuals and a conservative completion gate.
+    """Record every start, independent residuals and a conservative
+    completion gate.
 
-    A numerical candidate is not accepted for production. The gate checks every
-    supplied start; it cannot hide a failed start by selecting the best one.
+    A numerical candidate is not accepted for production. The gate
+    checks every supplied start; it cannot hide a failed start by
+    selecting the best one.
     """
     if not starts:
         raise ValueError('at least one explicit start is required')

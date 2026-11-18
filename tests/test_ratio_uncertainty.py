@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Preparation uncertainty must participate in recipe and search acceptance."""
+"""Preparation uncertainty must participate in recipe and search
+acceptance.
+"""
 
 import unittest
 from unittest.mock import patch
@@ -95,8 +97,8 @@ class RatioUncertaintyTests(unittest.TestCase):
         self.assertEqual(result["uncertainty_verification"]["status"], "incomplete")
 
     def test_purity_and_weighing_bounds_include_koh_potassium(self):
-        # Use endpoints for this fast corner accounting test; the real example
-        # verifies every interior grid point too.
+        # Use endpoints for this fast corner accounting test; the real
+        # example verifies every interior grid point too.
         from flahax.ratio_uncertainty import verify_uncertainty
 
         result = plan_ratio_recipe(**dict(OPTIONS, counted_mmol_l=1.7))

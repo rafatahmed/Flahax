@@ -5,6 +5,7 @@
 """Tests for flahax.competition."""
 
 import unittest
+
 from flahax.competition import calcium_sulfate_struvite_competition
 
 

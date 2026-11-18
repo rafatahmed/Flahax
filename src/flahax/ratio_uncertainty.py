@@ -16,7 +16,9 @@ from .product_conversion import MOLAR_MASS
 
 
 def validate_uncertainty(options, volume, *, stock_mode=False):
-    """Require explicit finite preparation bounds and acceptance tolerances."""
+    """Require explicit finite preparation bounds and acceptance
+    tolerances.
+    """
     required = {
         "weighing_error_g",
         "purity_fraction",
@@ -68,10 +70,12 @@ def validate_uncertainty(options, volume, *, stock_mode=False):
 
 
 def verify_uncertainty(recipe, options, *, effective_bounds=None):
-    """Evaluate effective-dose interval corners at both volume bounds and the pH grid.
+    """Evaluate effective-dose interval corners at both volume bounds
+    and the pH grid.
 
-    Dose/purity products have exact endpoint bounds. Nonlinear chemistry is sampled
-    at corners; this does not prove extrema over the continuous uncertainty box.
+    Dose/purity products have exact endpoint bounds. Nonlinear chemistry
+    is sampled at corners; this does not prove extrema over the
+    continuous uncertainty box.
     """
     nominal = recipe["rounded_verification"]
     result = {

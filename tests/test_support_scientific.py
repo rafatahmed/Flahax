@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Remaining scientific helper boundaries, without changing model data or tolerances."""
+"""Remaining scientific helper boundaries, without changing model data
+or tolerances.
+"""
 
 import contextlib
 import io

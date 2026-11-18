@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A separate reagent container does not shrink the nutrient stock batch."""
+"""A separate reagent container does not shrink the nutrient stock
+batch.
+"""
 
 import unittest
 from copy import deepcopy
@@ -109,7 +111,8 @@ class IndependentReagentCapacityTests(unittest.TestCase):
             self.assertNotIn('Each full fill:', render(summary))
 
     def test_impossible_liquid_concentrate_is_not_a_preparation_instruction(self):
-        # Synthetic legacy report input tests rendering without claiming a valid recipe.
+        # Synthetic legacy report input tests rendering without claiming
+        # a valid recipe.
         summary = deepcopy(self.summary)
         summary.pop('export_identity')
         summary.pop('calculation_identity')
@@ -120,7 +123,8 @@ class IndependentReagentCapacityTests(unittest.TestCase):
             self.assertNotIn('Each full fill:', output)
 
     def test_otherwise_usable_batch_reports_reagent_stock_overflow_as_blocked_delivery(self):
-        # Tiny nutrient stock concentration avoids a fertilizer-solubility block at this ratio.
+        # Tiny nutrient stock concentration avoids a
+        # fertilizer-solubility block at this ratio.
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             products = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']

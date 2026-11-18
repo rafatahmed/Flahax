@@ -9,6 +9,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+
 from flahax import DeliveryError, load_library
 from flahax import mix_cli as cli
 from flahax.mix_store import Store
@@ -103,7 +104,8 @@ class InterviewBoundaryTests(unittest.TestCase):
             supplier='Supplier', title='Sheet', issued='2026-10-27', entered='2026-10-27'
         )
         p.number.side_effect = lambda label, *a, **k: 100 if label.startswith('Ca,') else 0
-        # Decision G5: a label off its compound is added; its unbalanced charge is noted.
+        # Decision G5: a label off its compound is added; its unbalanced
+        # charge is noted.
         added = cli.add_single(p, library['salts'])
         self.assertEqual(added['elements'], {'N_NO3': 0.0, 'N_NH4': 0.0, 'Ca': 100.0})
         p.say.assert_any_call(
@@ -178,7 +180,8 @@ class SavedInputBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             store = Store(tmp)
             session = self.session() | {'water': 'missing'}
-            # Simulates the file disappearing after the prior verification read.
+            # Simulates the file disappearing after the prior
+            # verification read.
             with patch.object(cli, 'verify_session'):
                 with self.assertRaises(DeliveryError) as caught:
                     cli.options_for(store, session)
@@ -194,7 +197,8 @@ class SavedInputBoundaryTests(unittest.TestCase):
 
 class TerminalSummaryBoundaryTests(unittest.TestCase):
     def summary(self):
-        # Unbound legacy rendering fixture, never a scientific acceptance certificate.
+        # Unbound legacy rendering fixture, never a scientific
+        # acceptance certificate.
         return dict(
             status='requires_review',
             title='Synthetic rendering fixture',

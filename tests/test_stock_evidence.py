@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Synthetic records exercise the gate; they are not measured laboratory evidence."""
+"""Synthetic records exercise the gate; they are not measured laboratory
+evidence.
+"""
 
 import copy
 import unittest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 from functools import lru_cache
+
 from flahax.ph_evidence import preparation_fingerprint
 
 from flahax import plan_ratio_recipe, search_ratio_recipe
@@ -27,7 +30,9 @@ def reference_recipe():
 
 
 def records():
-    """Synthetic, deliberately labeled examples for validator tests only."""
+    """Synthetic, deliberately labeled examples for validator tests
+    only.
+    """
     now = datetime.now(timezone.utc)
     today = now.date()
     common = dict(
@@ -131,8 +136,9 @@ def records():
 class StockEvidenceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Real nominal chemistry, synthetic passing uncertainty status for isolated
-        # record tests. Integration below separately exercises the actual checker.
+        # Real nominal chemistry, synthetic passing uncertainty status
+        # for isolated record tests. Integration below separately
+        # exercises the actual checker.
         cls.recipe = plan_ratio_recipe(**dict(OPTIONS, counted_mmol_l=1.7))
         cls.recipe["stock_delivery"] = prepare_stock_delivery(cls.recipe, STOCKS, 0.05)
         cls.recipe["uncertainty_verification"] = {
@@ -274,8 +280,9 @@ class StockEvidenceTests(unittest.TestCase):
     def test_actual_api_and_cli_gate(self):
         from flahax.planning_cli import execute
 
-        # Zero errors make real chemistry integration inexpensive; record bounds
-        # are also zero here solely for this synthetic integration fixture.
+        # Zero errors make real chemistry integration inexpensive;
+        # record bounds are also zero here solely for this synthetic
+        # integration fixture.
         evidence = records()
         for row in evidence["assays"]:
             row["absolute_uncertainty_g_l"] = 0

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Ingredient-fraction bounds with correlated assays and derived counterions."""
+"""Ingredient-fraction bounds with correlated assays and derived
+counterions.
+"""
 
 from copy import deepcopy
 import itertools
@@ -21,7 +23,9 @@ def is_blend(entry):
 
 
 def ingredients(row):
-    """Resolve the same catalogue ingredients consumed by material chemistry."""
+    """Resolve the same catalogue ingredients consumed by material
+    chemistry.
+    """
     grade = make_grade(row["product"].get("grade"))
     if grade.composition != "disclosed" or not grade.components or grade.impurity_limits:
         raise DeliveryError(
@@ -43,7 +47,9 @@ def ingredients(row):
 
 
 def inventory_at(row, parts, fractions):
-    """Retain declared assays separately from component-derived nutrient quantities."""
+    """Retain declared assays separately from component-derived nutrient
+    quantities.
+    """
     chemical, labels = {}, {}
     for identity, _, inv in parts:
         fraction = fractions[identity]
@@ -71,7 +77,9 @@ def inventory_at(row, parts, fractions):
 
 
 def validate_blend(row, entry):
-    """Reject incomplete fraction boxes, mass excess and inconsistent nominal assays."""
+    """Reject incomplete fraction boxes, mass excess and inconsistent
+    nominal assays.
+    """
     if set(entry) != {"source", "mass_fraction_bounds"}:
         raise DeliveryError("invalid_blend_bounds", "Supply source and mass_fraction_bounds only")
     parts = ingredients(row)
@@ -116,7 +124,9 @@ def validate_blend(row, entry):
 
 
 def blend_vertices(row, options, dimension):
-    """Enumerate ingredient/dose vertices without separating correlated elements."""
+    """Enumerate ingredient/dose vertices without separating correlated
+    elements.
+    """
     entry = options["product_element_factors"][row["name"]]
     parts = ingredients(row)
     name = row["name"]
@@ -151,7 +161,9 @@ def blend_vertices(row, options, dimension):
 
 
 def sampled_inventory(row, entry, values):
-    """Rebuild each scenario from its ingredient fractions, including inferred nutrients."""
+    """Rebuild each scenario from its ingredient fractions, including
+    inferred nutrients.
+    """
     fractions = {
         i: values.get("ingredient." + row["name"] + "." + i, (p[0] + p[1]) / 2)
         for i, p in entry["mass_fraction_bounds"].items()
@@ -160,7 +172,9 @@ def sampled_inventory(row, entry, values):
 
 
 def bound_evidence(row, entry):
-    """Retain the ingredient inventory basis and identified inferred nutrients."""
+    """Retain the ingredient inventory basis and identified inferred
+    nutrients.
+    """
     return dict(
         grade=deepcopy(row["product"]["grade"]),
         mass_fraction_bounds=deepcopy(entry["mass_fraction_bounds"]),

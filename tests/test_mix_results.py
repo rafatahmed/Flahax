@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Tests for flahax.mix_results: the Tanks, Nutrients and Notes views agree with the sheet."""
+"""Tests for flahax.mix_results: the Tanks, Nutrients and Notes views
+agree with the sheet.
+"""
 
 import copy
 import html
@@ -37,7 +39,9 @@ def sheet_text(summary, depth):
 
 
 def unbound_summary(actual):
-    """Detach an explicitly synthetic mutable display fixture from calculation identity."""
+    """Detach an explicitly synthetic mutable display fixture from
+    calculation identity.
+    """
     result = copy.deepcopy(actual)
     result.pop('export_identity', None)
     result.pop('calculation_identity', None)
@@ -45,7 +49,9 @@ def unbound_summary(actual):
 
 
 def presentation_summary(actual):
-    """Synthetic renderer state, never a chemistry result or mixing approval."""
+    """Synthetic renderer state, never a chemistry result or mixing
+    approval.
+    """
     summary = copy.deepcopy(actual)
     summary.pop('export_identity', None)  # Synthetic presentation, no calculation claim.
     summary.pop('calculation_identity', None)
@@ -173,7 +179,8 @@ class ResultViewTests(unittest.TestCase):
         summary['ph']['selected']['direction'] = 'base'
         tanks = '\n'.join(screen(summary, 0))
         self.assertIn('pH reagent', tanks)
-        # Product names such as Boric Acid are legitimate; check the reagent heading.
+        # Product names such as Boric Acid are legitimate; check the
+        # reagent heading.
         self.assertNotRegex(tanks, r'\u250c[^\n]* Acid ')
 
     def test_results_encode_on_a_latin1_console(self):
@@ -199,7 +206,8 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('\x1b[93m', status_line(presentation_summary(self.summary)))
 
     def test_no_faint_text(self):
-        # The key help ("Q Quit") and the inactive tab names must stay readable (field trial).
+        # The key help ("Q Quit") and the inactive tab names must stay
+        # readable (field trial).
         for view in range(3):
             lines = results_lines(self.summary, view, 100, 40, 0, UTF8, 'out')
             self.assertFalse(any('\x1b[2m' in line for line in lines), view)

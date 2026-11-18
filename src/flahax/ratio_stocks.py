@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Separate assayed-stock specifications and rounded volumetric delivery."""
+"""Separate assayed-stock specifications and rounded volumetric
+delivery.
+"""
 
 import math
 
@@ -10,7 +12,9 @@ from .delivery_contracts import DeliveryError
 
 
 def validate_stocks(options, formulae):
-    """Reject ambiguous stock concentrations, dose precision and error bounds."""
+    """Reject ambiguous stock concentrations, dose precision and error
+    bounds.
+    """
     required = {
         "concentrations_g_l",
         "concentration_relative_error",
@@ -42,7 +46,9 @@ def validate_stocks(options, formulae):
 
 
 def prepare_stock_delivery(recipe, options, volume_error):
-    """Convert ideal compound masses to rounded stock doses and effective bounds."""
+    """Convert ideal compound masses to rounded stock doses and
+    effective bounds.
+    """
     rows, bounds = [], []
     error = options["dose_error_ml"]
     relative = options["concentration_relative_error"]
@@ -50,7 +56,8 @@ def prepare_stock_delivery(recipe, options, volume_error):
         formula = ingredient["formula"]
         concentration = options["concentrations_g_l"][formula]
         dose = round(1000 * ingredient["grams"] / concentration, options["dose_decimals"])
-        # An omitted dose has no dispensing event. Positive doses must exceed error.
+        # An omitted dose has no dispensing event. Positive doses must
+        # exceed error.
         dose_error = error if ingredient["grams"] > 0 else 0
         if dose < dose_error:
             raise DeliveryError(

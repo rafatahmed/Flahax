@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Synthetic native labels exercise provenance; actual tiny-program arcs exercise merging."""
+"""Synthetic native labels exercise provenance; actual tiny-program arcs
+exercise merging.
+"""
 
 import contextlib
 import copy
@@ -93,7 +95,8 @@ class NativeCoverageTests(unittest.TestCase):
             run_attempt='1',
         )
         inputs = root / 'inputs'
-        # Measuring a tiny program in subprocesses avoids replacing the outer test collector.
+        # Measuring a tiny program in subprocesses avoids replacing the
+        # outer test collector.
         script = """
 import coverage, pathlib, runpy, sys
 inputs = pathlib.Path(sys.argv[1])

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent zero/maximum controls; synthetic assays are mathematical inputs."""
+"""Independent zero/maximum controls; synthetic assays are mathematical
+inputs.
+"""
 
 from fractions import Fraction
 import math
@@ -44,7 +46,8 @@ class RequirementConstraintTests(unittest.TestCase):
                 )
 
     def test_water_cannot_be_removed_to_satisfy_zero(self):
-        # A declared zero is met within 1e-6 mg/L (G25): 2e-6 mg/L of water sodium breaks it.
+        # A declared zero is met within 1e-6 mg/L (G25): 2e-6 mg/L of
+        # water sodium breaks it.
         for value in (2e-6, 1):
             result = recommend(
                 [product('clean', K=10)], {'K': 100, 'Na': 0}, {'Na': value}, ridge=0

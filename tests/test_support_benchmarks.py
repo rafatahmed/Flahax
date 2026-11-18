@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Benchmark harness checks separate actual numerical comparisons from injected failures."""
+"""Benchmark harness checks separate actual numerical comparisons from
+injected failures.
+"""
 
 import contextlib
 import importlib.util
@@ -26,7 +28,8 @@ class BenchmarkHarnessTests(unittest.TestCase):
         chemistry = baseline.chemistry()
         self.assertGreater(chemistry['attempted'], 0)
         self.assertEqual(chemistry['attempted'], len(chemistry['cases']))
-        # Failed model comparisons are retained, not relabeled as reference agreement.
+        # Failed model comparisons are retained, not relabeled as
+        # reference agreement.
         self.assertEqual(chemistry['passed'], sum(c['passes'] for c in chemistry['cases']))
         library = __import__('flahax').load_library()
         with patch(
@@ -72,7 +75,8 @@ class BenchmarkHarnessTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, 'injected'),
         ):
             cases.require_chemistry(data, result)
-        # An absent phase is a supported scorer boundary, independent of solver behavior.
+        # An absent phase is a supported scorer boundary, independent of
+        # solver behavior.
         data['phases'].append('absent')
         data['selected_rows'][-1]['absent'] = 0
         report = cases.evaluate_chemistry(data, result)

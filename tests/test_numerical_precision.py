@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent scale, conditioning and termination controls for numerical rules."""
+"""Independent scale, conditioning and termination controls for
+numerical rules.
+"""
 
 from fractions import Fraction as F
 import math
@@ -74,8 +76,9 @@ class RootPrecisionTests(unittest.TestCase):
 
             lo, hi = shrink_bracket(charge, 1e-10, charge(1e-10), 1, charge(1), relative=1e-12)
             exact_lo, exact_hi = acid_bracket(total, ka, digits=80)
-            # Endpoint width plus eight ulps covers evaluation rounding in this
-            # controlled polynomial family; no production threshold is changed.
+            # Endpoint width plus eight ulps covers evaluation rounding
+            # in this controlled polynomial family; no production
+            # threshold is changed.
             error = abs(F.from_float((lo + hi) / 2) - F(exact_hi))
             budget = F.from_float(hi - lo + 8 * math.ulp(float(exact_hi)))
             self.assertLessEqual(error, budget)
@@ -162,8 +165,9 @@ class LinearPrecisionTests(unittest.TestCase):
 
 class ChemistryTerminationTests(unittest.TestCase):
     def test_component_order_preserves_exact_equilibrium_evidence(self):
-        # Minimized Appendix I replay failure (#272): identical Fe-DTPA totals
-        # reached Newton in a different order after the saved JSON round trip.
+        # Minimized Appendix I replay failure (#272): identical Fe-DTPA
+        # totals reached Newton in a different order after the saved
+        # JSON round trip.
         totals = {'Dtp-5': 1.4999552332348466e-5, 'Fe+3': 1.4999552332348466e-5}
         expected = solve(totals, 5.499143184162676)
         self.assertEqual(solve(dict(reversed(list(totals.items()))), expected.ph), expected)

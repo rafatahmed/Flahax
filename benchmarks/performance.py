@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""ASV timings: setup/validation outside timing; invalid results fail teardown."""
+"""ASV timings: setup/validation outside timing; invalid results fail
+teardown.
+"""
 
 import subprocess
 import sys
@@ -17,7 +19,8 @@ class Import:
     warmup_time = 0
 
     def time_fresh_process_import(self):
-        # Includes interpreter/process startup; OS filesystem cache is NOT cold.
+        # Includes interpreter/process startup; OS filesystem cache is
+        # NOT cold.
         subprocess.run(
             [sys.executable, "-c", "import flahax"],
             check=True,
@@ -140,8 +143,9 @@ class Equilibrium:
         return self.result.iterations
 
     def track_search_solves(self, fixture):
-        # Total equilibrium solves per call; an acid target runs a search, so its
-        # final-state iterations alone understate the work.
+        # Total equilibrium solves per call; an acid target runs a
+        # search, so its final-state iterations alone understate the
+        # work.
         from flahax import aqueous_model
 
         original, count = aqueous_model.solve, [0]
@@ -194,8 +198,9 @@ class Delivery:
     timeout = 180
 
     def setup(self):
-        # Existing synthetic composed workflow; includes record construction.
-        # Root is needed for examples in isolated ASV environments.
+        # Existing synthetic composed workflow; includes record
+        # construction. Root is needed for examples in isolated ASV
+        # environments.
         from .cases import ROOT
 
         if str(ROOT) not in sys.path:

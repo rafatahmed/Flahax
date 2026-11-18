@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bind native CI coverage to one clean candidate and fail on any exact coverage gap."""
+"""Bind native CI coverage to one clean candidate and fail on any exact
+coverage gap.
+"""
 
 import argparse
 from collections import Counter
@@ -204,7 +206,8 @@ def aggregate(root, inputs, output, expected):
     write(output / 'gate.json', result)
     if not result['passed']:
         raise ValueError('exact coverage gate failed; inspect gate.json')
-    # Reporting only: source roots shorten names and can collide across directories.
+    # Reporting only: source roots shorten names and can collide across
+    # directories.
     c.set_option('run:source', [])
     c.xml_report(
         morfs=[str(Path(p)) for p in current['files']], outfile=str(output / 'coverage.xml')
@@ -238,7 +241,9 @@ def aggregate(root, inputs, output, expected):
 
 
 def validate_xml_files(xml, report):
-    """Require exact repository paths, statement hits and branch counts for every file."""
+    """Require exact repository paths, statement hits and branch counts
+    for every file.
+    """
     files = {name.replace('\\', '/'): data for name, data in report['files'].items()}
     classes = xml.findall('.//class')
     names = [item.attrib['filename'] for item in classes]

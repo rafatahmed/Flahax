@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Bind measured batch pH and calibration evidence to a specific preparation."""
+"""Bind measured batch pH and calibration evidence to a specific
+preparation.
+"""
 
 import hashlib
 import json
@@ -13,7 +15,9 @@ from .stock_evidence import _common, _number, _text, _within
 
 
 def preparation_fingerprint(recipe, evidence):
-    """Identify physical dosing instructions and model bounds, excluding pH records."""
+    """Identify physical dosing instructions and model bounds, excluding
+    pH records.
+    """
     material = {
         "version": 1,
         "volume_litres": recipe["volume_litres"],
@@ -60,7 +64,9 @@ def _timestamp(record, key, now):
 
 
 def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
-    """Require contained pH error interval and applicable, chronological records."""
+    """Require contained pH error interval and applicable, chronological
+    records.
+    """
     check = {"status": "missing" if evidence is None else "failed"}
     if evidence is None:
         return check, {"code": "missing_batch_ph_evidence"}

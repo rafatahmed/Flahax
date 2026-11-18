@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Narrow orthophosphate acid/base speciation from PHREEQC `phreeqc.dat`.
+"""Narrow orthophosphate acid/base speciation from PHREEQC
+`phreeqc.dat`.
 
-This module calculates only the four uncomplexed orthophosphate forms at a
-specified pH and ionic strength. It is a building block, not a fertilizer
-compatibility decision: Ca/Mg complexes, counter-ions, solids, and a charge
-balance solve are intentionally outside this function.
+This module calculates only the four uncomplexed orthophosphate forms at
+a specified pH and ionic strength. It is a building block, not a
+fertilizer compatibility decision: Ca/Mg complexes, counter-ions,
+solids, and a charge balance solve are intentionally outside this
+function.
 """
 
 from __future__ import annotations
@@ -27,7 +29,9 @@ LOG_BETA_H3PO4_25C = 21.721
 
 @dataclass(frozen=True, slots=True)
 class OrthophosphateSpeciation:
-    """Uncomplexed phosphate species at a specified pH and ionic strength."""
+    """Uncomplexed phosphate species at a specified pH and ionic
+    strength.
+    """
 
     total_phosphate_molal: float
     ph: float
@@ -45,12 +49,14 @@ class OrthophosphateSpeciation:
 def orthophosphate_speciation(
     total_phosphate_molal: float, ph: float, ionic_strength: float
 ) -> OrthophosphateSpeciation:
-    """Distribute total uncomplexed orthophosphate among four protonation states.
+    """Distribute total uncomplexed orthophosphate among four
+    protonation states.
 
     The calculation uses ``a_H = 10**(-pH)`` and the PHREEQC mass-action
-    reactions ``PO4-3 + nH+ = H_nPO4``. Davies coefficients convert activity
-    to molality. The declared domain is 0 <= ionic strength <= 0.1 mol/kgw;
-    outside it, this reduced Davies model is deliberately rejected.
+    reactions ``PO4-3 + nH+ = H_nPO4``. Davies coefficients convert
+    activity to molality. The declared domain is 0 <= ionic strength <=
+    0.1 mol/kgw; outside it, this reduced Davies model is deliberately
+    rejected.
     """
     for name, value in (
         ("total phosphate", total_phosphate_molal),

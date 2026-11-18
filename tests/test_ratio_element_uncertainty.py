@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent label assays must not silently remain correlated or bypass chemistry."""
+"""Independent label assays must not silently remain correlated or
+bypass chemistry.
+"""
 
 import copy
 import json
@@ -86,7 +88,8 @@ class ElementAssayUncertaintyTests(unittest.TestCase):
     def test_product_mass_correlation_is_preserved_in_analytical_bounds(self):
         from flahax.ratio_analysis_uncertainty import _ratio_extreme
 
-        # Four feasible dose/assay vertices; the numerator and denominator share dose.
+        # Four feasible dose/assay vertices; the numerator and
+        # denominator share dose.
         groups = [
             (
                 'one',
@@ -146,7 +149,8 @@ class ElementAssayUncertaintyTests(unittest.TestCase):
         req['maximum_concentrations']['Na'] = nominal['elemental_mg_l']['Na'] * 1.00001
         opts = elemental_options(req, 0.99)
         opts['weighing_error_g'] = 0.001
-        # Water and final volume are fixed here; only independently bounded products change.
+        # Water and final volume are fixed here; only independently
+        # bounded products change.
         result = plan_ratio_recipe(**dict(req, uncertainty=opts))
         check = result['uncertainty_verification']
         self.assertIn('sodium_chloride_limits', check['failed_checks'])

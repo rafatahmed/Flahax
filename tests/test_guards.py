@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Composition guards: assays match their formulas and total N is refused."""
+"""Composition guards: assays match their formulas and total N is
+refused.
+"""
 
 import math
 import unittest
@@ -48,7 +50,8 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Calcium Carbonate", names)
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertTrue(result["feasible"])
-        # Every target met within the numerical tolerance (G25), on the unrounded values.
+        # Every target met within the numerical tolerance (G25), on the
+        # unrounded values.
         for row in result["rows"]:
             if row["target"] is not None:
                 self.assertTrue(met(row["target"], row["final"]), row["symbol"])
@@ -64,8 +67,9 @@ class CompositionGuards(unittest.TestCase):
         self.assertNotIn("Sodium Borate (Decahydrate) (borax)", names)
         self.assertIn("Sodium Molybdate (Dihydrate)", names)
         self.assertFalse(result["feasible"])
-        # Residual magnitude changes with the declared objective; exclusion
-        # policy and the known sulfur deficit are the contract here.
+        # Residual magnitude changes with the declared objective;
+        # exclusion policy and the known sulfur deficit are the contract
+        # here.
         self.assertFalse(any("Potassium Chloride" in note for note in result["warnings"]))
         sulfur = next(row for row in result["rows"] if row["symbol"] == "S")
         self.assertLess(sulfur["deltaPct"], -30)
@@ -83,8 +87,9 @@ class CompositionGuards(unittest.TestCase):
         self.assertIn("Na", {item["symbol"] for item in result["undesiredIons"]})
 
     def test_hydrate_formula_drift_is_reported_from_the_stored_assay(self):
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate
-        # is now Mg(NO3)2.6H2O theory and no longer drifts; the retired row keeps the hydrate case.
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75
+        # %): the shipped Mg Nitrate is now Mg(NO3)2.6H2O theory and no
+        # longer drifts; the retired row keeps the hydrate case.
         retired = {
             "name": "Mg Nitrate",
             "formula": "Mg(NO3)2",
@@ -93,7 +98,8 @@ class CompositionGuards(unittest.TestCase):
         self.assertTrue(assay_drift(retired).startswith("Mg Nitrate"))
         notes = {salt["name"]: assay_drift(salt) for salt in load_library()["salts"]}
         self.assertIsNone(notes["Mg Nitrate"])
-        # The 75 % acid is dosed from its stored solution assay, below the H3PO4 formula value.
+        # The 75 % acid is dosed from its stored solution assay, below
+        # the H3PO4 formula value.
         self.assertIn("P assay 23.706% vs formula 31.61%", notes["Phosphoric Acid (75%)"])
 
     def test_chloride_salts_are_used_only_with_consent(self):
@@ -112,7 +118,8 @@ class CompositionGuards(unittest.TestCase):
 
 class LeastSquares(unittest.TestCase):
     def test_householder_solves_a_known_system(self):
-        # Columns [1, 1, 0] and [0, 1, 1], observation [1, 2, 1] -> [1, 1].
+        # Columns [1, 1, 0] and [0, 1, 1], observation [1, 2, 1] -> [1,
+        # 1].
         solution = _lstsq([[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]], [1.0, 2.0, 1.0])
         self.assertAlmostEqual(solution[0], 1.0, places=8)
         self.assertAlmostEqual(solution[1], 1.0, places=8)
@@ -122,8 +129,9 @@ class LeastSquares(unittest.TestCase):
         return sum((sum(a * w for a, w in zip(row, x)) - b) ** 2 for row, b in zip(matrix, rhs))
 
     def test_nnls_does_not_stop_early_on_near_dependent_columns(self):
-        # Benchmark v1 near_dependent case (#36): the unique optimum is [1, 1] with
-        # objective ~0. A fixed 1e-10 stopping threshold stopped at objective 1.5e-12.
+        # Benchmark v1 near_dependent case (#36): the unique optimum is
+        # [1, 1] with objective ~0. A fixed 1e-10 stopping threshold
+        # stopped at objective 1.5e-12.
         matrix = [[1.0, 1.0], [1.0, 1.000001], [0.0, 0.000001]]
         rhs = [2.0, 2.000001, 0.000001]
         x = nnls(matrix, rhs)

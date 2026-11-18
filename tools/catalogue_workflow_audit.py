@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Diagnostic minimax audit; does not change production targets or acceptance limits.
+"""Diagnostic minimax audit; does not change production targets or
+acceptance limits.
 
-Run with PYTHONPATH=src and SciPy installed. Chemistry is assessed at natural pH,
-without reagents. Review-only saturation never automatically enables a solid.
+Run with PYTHONPATH=src and SciPy installed. Chemistry is assessed at
+natural pH, without reagents. Review-only saturation never automatically
+enables a solid.
 """
 
 import argparse
@@ -64,7 +66,8 @@ def fit(products, original):
         raise ValueError(solved.message)
     alternate = linprog(objective, A_ub=rows, b_ub=bounds, bounds=(0, None), method='highs-ipm')
     assert alternate.success and abs(alternate.fun - solved.fun) < 1e-7
-    # Minimum total product mass breaks equally optimal nutrient-fit ties.
+    # Minimum total product mass breaks equally optimal nutrient-fit
+    # ties.
     chosen = linprog(
         np.r_[np.ones(len(products)), 0],
         A_ub=rows,
@@ -93,8 +96,9 @@ def fit(products, original):
 
 
 def phase_screen(totals):
-    # Never turn reported supersaturation into automatic solid allocation.
-    # The runtime policy owns the precipitation screen: risk phases and information.
+    # Never turn reported supersaturation into automatic solid
+    # allocation. The runtime policy owns the precipitation screen: risk
+    # phases and information.
     state = calculate_equilibrium_ph(totals, carbon_boundary='closed', phases=[])
     assessment = assess_saturation(state)
     return {

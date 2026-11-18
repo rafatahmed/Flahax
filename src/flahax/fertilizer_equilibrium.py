@@ -5,8 +5,8 @@
 """Bounded 25 °C fertilizer-ion equilibrium and precipitation screening.
 
 This is a dependency-free reduced model for a fully stated macronutrient
-solution.  It deliberately uses analytical totals and named reactions; product
-names and unspecified chelates are never inferred as free ions.
+solution.  It deliberately uses analytical totals and named reactions;
+product names and unspecified chelates are never inferred as free ions.
 """
 
 from __future__ import annotations
@@ -42,7 +42,9 @@ MAX_IONIC_STRENGTH = 0.1
 
 @dataclass(frozen=True, slots=True)
 class FertilizerTotals:
-    """Analytical molal totals for the supported 25 °C aqueous system."""
+    """Analytical molal totals for the supported 25 °C aqueous
+    system.
+    """
 
     calcium: float = 0.0
     magnesium: float = 0.0
@@ -66,7 +68,9 @@ class FertilizerTotals:
 
 @dataclass(frozen=True, slots=True)
 class FertilizerEquilibrium:
-    """Species, activities, saturation indices, and equilibrium allocations."""
+    """Species, activities, saturation indices, and equilibrium
+    allocations.
+    """
 
     totals: FertilizerTotals
     ph: float
@@ -84,7 +88,9 @@ class FertilizerEquilibrium:
 
 @dataclass(frozen=True, slots=True)
 class NitricAcidTargetPlan:
-    """Closed-carbon initial acid requirement at a requested target pH."""
+    """Closed-carbon initial acid requirement at a requested target
+    pH.
+    """
 
     initial: FertilizerEquilibrium
     target: FertilizerEquilibrium
@@ -125,7 +131,9 @@ def _phosphate_complexes(
     g2: float,
     g3: float,
 ) -> dict[str, float]:
-    """Fixed-point mass balance for the declared Ca/Mg/Na phosphate complexes."""
+    """Fixed-point mass balance for the declared Ca/Mg/Na phosphate
+    complexes.
+    """
     if not phosphate:
         return {name: 0.0 for name in ("ca", "mg", "po4", "hpo4", "h2po4", "hap_si")}
     h = 10.0**-ph
@@ -199,7 +207,8 @@ def _at_fixed_ionic_strength(
     phosphate_result = None
     pair = 0.0
     # The historical reference needs more than 20 sweeps to meet 1e-14.
-    # Budget increased without relaxing that balance-update criterion (#168).
+    # Budget increased without relaxing that balance-update criterion
+    # (#168).
     for _ in range(100):
         if totals.phosphate:
             phosphate_result = _phosphate_complexes(
@@ -347,9 +356,9 @@ def solve_legacy_phreeqc_macro(
 ) -> FertilizerEquilibrium:
     """Solve the declared 25 °C system at a specified pH.
 
-    ``allow_precipitation`` applies named equilibrium allocations only for
-    supersaturated phases. It is an equilibrium amount, not a kinetic or
-    storage-stability prediction.
+    ``allow_precipitation`` applies named equilibrium allocations only
+    for supersaturated phases. It is an equilibrium amount, not a
+    kinetic or storage-stability prediction.
     """
     if not isinstance(totals, FertilizerTotals):
         raise DeliveryError("invalid_type", "totals must be FertilizerTotals")
@@ -378,9 +387,10 @@ def solve_legacy_phreeqc_macro(
                         high = middle
                 amount = high
                 if amount > 1e-15:
-                    # The aqueous mixture starts with no newly formed solid.
-                    # A positive final phase inventory is precipitation under
-                    # PhaseAllocation's documented sign convention.
+                    # The aqueous mixture starts with no newly formed
+                    # solid. A positive final phase inventory is
+                    # precipitation under PhaseAllocation's documented
+                    # sign convention.
                     allocations.append(phase_allocation(phase, 0.0, amount))
                     current = _remove_for_phase(current, phase, amount)
                     changed = True
@@ -419,7 +429,9 @@ def _alkalinity(result: FertilizerEquilibrium) -> float:
 def plan_legacy_phreeqc_nitric(
     totals: FertilizerTotals, initial_ph: float, target_ph: float, *, trace_totals=None
 ) -> NitricAcidTargetPlan:
-    """Historical reduced phreeqc.dat fixture only; not mixed-product planning."""
+    """Historical reduced phreeqc.dat fixture only; not mixed-product
+    planning.
+    """
     if trace_totals is not None:
         raise DeliveryError(
             'unsupported_legacy_input', 'use plan_nitric_acid_target for trace chemistry'
@@ -433,7 +445,9 @@ def plan_legacy_phreeqc_nitric(
 
 
 def solve_fertilizer_equilibrium(totals, ph, *, allow_precipitation=True):
-    """Public macro entry point; uses the same model as product/mixed solves."""
+    """Public macro entry point; uses the same model as product/mixed
+    solves.
+    """
     from .mixed_equilibrium import solve_mixed_fertilizer_equilibrium
 
     return solve_mixed_fertilizer_equilibrium(
@@ -442,7 +456,9 @@ def solve_fertilizer_equilibrium(totals, ph, *, allow_precipitation=True):
 
 
 def plan_nitric_acid_target(totals, initial_ph, target_ph, *, trace_totals=None):
-    """Nitric acid adds conserved nitrate in the full mixed aqueous model."""
+    """Nitric acid adds conserved nitrate in the full mixed aqueous
+    model.
+    """
     from .aqueous_model import nitric_target
     from .mixed_equilibrium import analytical_basis
 

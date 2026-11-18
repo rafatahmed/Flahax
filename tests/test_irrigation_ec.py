@@ -32,7 +32,8 @@ from flahax.measured_water import balance_water_analysis
 from tests.catalogue_history import historical_catalogue
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'conductivity'
-# 1/136.09 mol/kgw KH2PO4 at calculated pH: K+, H+ and (M2b) H2PO4- / HPO4-2 contributions.
+# 1/136.09 mol/kgw KH2PO4 at calculated pH: K+, H+ and (M2b) H2PO4- /
+# HPO4-2 contributions.
 KH2PO4_SUBTOTAL = 0.738
 
 
@@ -58,7 +59,8 @@ class CoefficientTests(unittest.TestCase):
             self.assertIn(ion, data['ions'])
 
     def test_eq8_at_25c_by_hand(self):
-        # K+: l0 = 0.003046*625 + 1.261*25 + 40.70 = 74.12875; A = 49.22375; B = 1.5
+        # K+: l0 = 0.003046*625 + 1.261*25 + 40.70 = 74.12875; A =
+        # 49.22375; B = 1.5
         self.assertAlmostEqual(ionic_molal_conductivity('K+', 0.0), 74.12875, places=9)
         self.assertAlmostEqual(
             ionic_molal_conductivity('K+', 0.01), 74.12875 - 49.22375 * 0.1 / 1.15, places=9
@@ -89,7 +91,8 @@ class TotalsTests(unittest.TestCase):
     def test_kcl_001_is_estimated_by_hand_value(self):
         r = self.calc({'K+': 0.01, 'Cl-': 0.01})
         self.assertEqual(r.status, 'estimated')
-        # Hand value 1.42343 for K+/Cl- plus pure-water H+/OH- (about 5.5e-5).
+        # Hand value 1.42343 for K+/Cl- plus pure-water H+/OH- (about
+        # 5.5e-5).
         self.assertAlmostEqual(r.ec25_ms_cm, 1.42349, places=4)
         self.assertEqual(r.qualifier, QUALIFIER)
         self.assertEqual(r.audit['conductivity_units'], 'mS kg cm-1 mol-1 x mol/kgw')
@@ -99,7 +102,8 @@ class TotalsTests(unittest.TestCase):
     def test_neutral_pair_carries_no_current_and_hydroxo_pair_is_unknown(self):
         m = 1 / 246.47
         r = self.calc({'Mg+2': m, 'SO4-2': m})
-        # Was ('partial', 'missing_species_contributions'); now a range (decision G7).
+        # Was ('partial', 'missing_species_contributions'); now a range
+        # (decision G7).
         self.assertEqual((r.status, r.reason, r.bounded), ('range', None, True))
         self.assertIn('MgOH+', [s['name'] for s in r.missing_species])
         low, high = r.ec25_range_ms_cm
@@ -111,8 +115,8 @@ class TotalsTests(unittest.TestCase):
     def test_phosphate_is_a_range_and_missing_species_named(self):
         m = 1 / 136.09
         r = self.calc({'K+': m, 'PO4-3': m})
-        # M2b: H2PO4- is covered (subtotal was 0.524); the minor pair KHPO4- remains unknown and
-        # is bounded, which gives the range.
+        # M2b: H2PO4- is covered (subtotal was 0.524); the minor pair
+        # KHPO4- remains unknown and is bounded, which gives the range.
         self.assertEqual((r.status, r.reason, r.bounded), ('range', None, True))
         self.assertIsNone(r.ec25_ms_cm)
         self.assertIn(
@@ -124,7 +128,8 @@ class TotalsTests(unittest.TestCase):
 
     def test_ionic_strength_envelope(self):
         self.assertEqual(self.calc({'K+': 0.0995, 'Cl-': 0.0995}).status, 'estimated')
-        # At 0.1: totals found by bisection give speciated I within 1e-6 of 0.1.
+        # At 0.1: totals found by bisection give speciated I within 1e-6
+        # of 0.1.
         at = self.calc({'K+': 0.09999975, 'Cl-': 0.09999975})
         self.assertEqual(at.status, 'estimated')
         self.assertLessEqual(at.ionic_strength, 0.1)
@@ -161,8 +166,8 @@ class TotalsTests(unittest.TestCase):
         self.assertEqual(est.status, 'estimated')
         self.assertIsNone(est.unrecorded_counterions_eq_per_kgw)
         self.assertIsNone(self.calc(tot).unrecorded_counterions_eq_per_kgw)
-        # Supplied pH: the charge the recorded ions and the assay residual do not explain is
-        # reported and bounded.
+        # Supplied pH: the charge the recorded ions and the assay
+        # residual do not explain is reported and bounded.
         o5 = self.calc(tot, ph_mode='supplied', ph=7.0, assay_charge_residual_eq_per_kgw=1e-4)
         self.assertEqual((o5.status, o5.reason), ('range', None))
         self.assertEqual(
@@ -239,8 +244,9 @@ class TotalsTests(unittest.TestCase):
 
 
 class BoundTests(unittest.TestCase):
-    """Unknown contributions are bounded at LAMBDA_MAX_PER_CHARGE, never replaced by a value
-    (decision G7)."""
+    """Unknown contributions are bounded at LAMBDA_MAX_PER_CHARGE, never
+    replaced by a value (decision G7).
+    """
 
     KH2PO4 = {'K+': 1 / 136.09, 'PO4-3': 1 / 136.09}
 
@@ -340,8 +346,9 @@ class BoundTests(unittest.TestCase):
             self.assertIsNone(r.audit['uncovered_bound_ms_cm'])
 
     def test_all_shipped_formulas_report_a_range_beyond_the_phosphate_fit_domain(self):
-        # Historical raw failures are retained in conductivity-qualification/tests.log.
-        # F08's independent oracle forbids an unqualified out-of-fit prediction.
+        # Historical raw failures are retained in
+        # conductivity-qualification/tests.log. F08's independent oracle
+        # forbids an unqualified out-of-fit prediction.
         from flahax.engine import load_library, recommend
 
         library = load_library()
@@ -373,18 +380,22 @@ class BoundTests(unittest.TestCase):
 
 
 def _assert_close_tree(case, got, want, path='supplementary'):
-    """Equal structure; numbers within 1e-7 relative (1e-9 absolute floor), everything else equal.
+    """Equal structure; numbers within 1e-7 relative (1e-9 absolute
+    floor), everything else equal.
 
-    The fit speciates through calculated pH, which returns the midpoint of a bisection
-    bracket up to 1e-7 pH wide; any change in the solver's iteration path (#61) moves
-    the refit in the ninth digit, far below the ~1e-4 precision of Table III."""
+    The fit speciates through calculated pH, which returns the midpoint
+    of a bisection bracket up to 1e-7 pH wide; any change in the
+    solver's iteration path (#61) moves the refit in the ninth digit,
+    far below the ~1e-4 precision of Table III.
+    """
     if isinstance(want, dict):
         case.assertEqual(set(got), set(want), path)
         for key in want:
             _assert_close_tree(case, got[key], want[key], f'{path}.{key}')
     elif isinstance(want, (int, float)) and not isinstance(want, bool):
-        # Percentages (fit residuals, gaps to other lambda0 sources) inherit the 1e-7
-        # relative bound of the conductivities they compare: 1e-5 percentage points.
+        # Percentages (fit residuals, gaps to other lambda0 sources)
+        # inherit the 1e-7 relative bound of the conductivities they
+        # compare: 1e-5 percentage points.
         floor = 1e-5 if path.endswith('percent') else 1e-9
         case.assertAlmostEqual(got, want, delta=max(floor, 1e-7 * abs(want)), msg=path)
     else:
@@ -392,7 +403,9 @@ def _assert_close_tree(case, got, want, path='supplementary'):
 
 
 class PhosphateCoefficientTests(unittest.TestCase):
-    """M2b, decision O1: H2PO4- and HPO4-2 fitted to Pethybridge et al. (2006) Table III."""
+    """M2b, decision O1: H2PO4- and HPO4-2 fitted to Pethybridge et al.
+    (2006) Table III.
+    """
 
     KH2PO4 = {'K+': 1 / 136.09, 'PO4-3': 1 / 136.09}
 
@@ -448,7 +461,8 @@ class PhosphateCoefficientTests(unittest.TestCase):
         names = {s['name'] for s in r.missing_species}
         self.assertNotIn('H2PO4-', names)
         self.assertNotIn('HPO4-2', names)
-        # Only minor species remain: each under 0.1 % of total phosphate.
+        # Only minor species remain: each under 0.1 % of total
+        # phosphate.
         self.assertTrue(names)
         for s in r.missing_species:
             self.assertLess(s['molal'], 1e-3 * self.KH2PO4['PO4-3'], s['name'])
@@ -460,7 +474,7 @@ class PhosphateCoefficientTests(unittest.TestCase):
             r.audit['phosphate_fit_max_ionic_strength'], self.shipped['fit']['max_ionic_strength']
         )
 
-    def test_supplementary_not_in_mcCleskey_table(self):
+    def test_supplementary_not_in_mccleskey_table(self):
         data = load_conductivity_coefficients()
         self.assertEqual(len(data['ions']), 28)
         for ion in ('H2PO4-', 'HPO4-2'):
@@ -469,7 +483,8 @@ class PhosphateCoefficientTests(unittest.TestCase):
         self.assertEqual(self.shipped['source']['table'], 'III')
         self.assertEqual(self.shipped['source']['doi'], '10.1007/s10953-005-9003-z')
         self.assertIn('Pethybridge', self.shipped['source']['citation'])
-        # The citation comes from the fixture (confirmed against the PDF in step 3b).
+        # The citation comes from the fixture (confirmed against the PDF
+        # in step 3b).
         fixture = json.loads(
             (FIXTURES / 'pethybridge2006_table3.json').read_text(encoding='utf-8')
         )
@@ -515,10 +530,11 @@ PURE = DeclaredPureWater('ro-test')
 
 
 class CatalogueTests(unittest.TestCase):
-    # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the shipped Mg Nitrate is
-    # now Mg(NO3)2.6H2O theory and charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these
-    # totals for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw (0.5532 %); the O5 tests
-    # below keep it.
+    # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %):
+    # the shipped Mg Nitrate is now Mg(NO3)2.6H2O theory and
+    # charge-balanced. The retired row (N_NO3 11 / Mg 9.65) gave these
+    # totals for 1 g/kg water, a declared residual of +8.7368e-5 eq/kgw
+    # (0.5532 %); the O5 tests below keep it.
     OLD_MG_NITRATE_1G = {'Mg+2': 0.003970376465747789, 'NO3-': 0.007853384451726673}
     OLD_MG_NITRATE_1G_RESIDUAL = {
         'eq_per_kgw': 8.736847976890429e-05,
@@ -526,7 +542,8 @@ class CatalogueTests(unittest.TestCase):
     }
 
     def test_mg_nitrate_assay_residual(self):
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): was 0.5532 %, now ~0.
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75
+        # %): was 0.5532 %, now ~0.
         self.assertAlmostEqual(
             assay_charge_residual({'Mg Nitrate': 1.0})['percent'], 0.0, places=3
         )
@@ -535,8 +552,9 @@ class CatalogueTests(unittest.TestCase):
         self.assertAlmostEqual(100 * net / absolute, 0.5532, places=3)
 
     def test_residual_is_reported_by_mode_and_never_a_gate(self):
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the retired Mg Nitrate
-        # totals and residual are passed explicitly.
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75
+        # %): the retired Mg Nitrate totals and residual are passed
+        # explicitly.
         residual = self.OLD_MG_NITRATE_1G_RESIDUAL
         kw = dict(
             solution_id='r',
@@ -551,10 +569,11 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual((s.status, s.reason), ('range', None))
 
     def test_declared_form_percent_is_reported_not_gated(self):
-        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75 %): the mix below
-        # (0.40 old Mg Nitrate + 1.0 MgSO4.7H2O + 0.5 K2SO4) had a declared residual of 0.0914 %;
-        # its totals and residual are now passed explicitly to keep the declared-percent gate
-        # covered.
+        # 2026-10-18 catalogue correction (Mg Nitrate D1 / phosphoric 75
+        # %): the mix below (0.40 old Mg Nitrate + 1.0 MgSO4.7H2O + 0.5
+        # K2SO4) had a declared residual of 0.0914 %; its totals and
+        # residual are now passed explicitly to keep the
+        # declared-percent gate covered.
         totals = {
             'Mg+2': 0.005644929026949188,
             'SO4-2': 0.0069279475982532744,
@@ -573,7 +592,8 @@ class CatalogueTests(unittest.TestCase):
         r = calculate_ec_from_totals(totals, assay_charge_residual_percent=declared, **kw)
         self.assertEqual(r.status, speciated.status)  # the residual never decides the status
         self.assertAlmostEqual(r.assay_charge_residual['percent'], 0.0914, places=4)
-        # The catalogue path still records the declared-form percent it gated on.
+        # The catalogue path still records the declared-form percent it
+        # gated on.
         doses = {
             'Mg Nitrate': 0.40,
             'Magnesium Sulfate (Heptahydrate)': 1.0,
@@ -635,9 +655,10 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(none.audit['reagent_additions_molal'], {})
 
     def test_chelate_residual_reported_not_crash(self):
-        # 2026-10-18 chelate sodium counterions (D2): was not_supported /
-        # assay_charge_residual_too_large (declared percent < -0.1) because the
-        # chelate sodium was missing; the residual is still reported in the audit.
+        # 2026-10-18 chelate sodium counterions (D2): was not_supported
+        # / assay_charge_residual_too_large (declared percent < -0.1)
+        # because the chelate sodium was missing; the residual is still
+        # reported in the audit.
         r = calculate_irrigation_ec(
             {'Iron EDTA': 0.05, 'Potassium Nitrate': 0.5},
             recipe_id='r',
@@ -653,7 +674,8 @@ class CatalogueTests(unittest.TestCase):
         )
 
     def test_borax_declared_residual_near_zero(self):
-        # Borax boron is declared at -0.5 per B (Na2B4O7 -> 2 Na+ + 2 B(OH)4- + 2 B(OH)3).
+        # Borax boron is declared at -0.5 per B (Na2B4O7 -> 2 Na+ + 2
+        # B(OH)4- + 2 B(OH)3).
         r = assay_charge_residual({'Sodium Borate (Decahydrate) (borax)': 1.0})
         self.assertLessEqual(abs(r['percent']), 0.1)
 
@@ -771,7 +793,8 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(
             r.assay_charge_residual['percent'], r.audit['assay_charge_residual_declared_percent']
         )
-        # Material provenance travels from the plan into the EC audit, as a copy.
+        # Material provenance travels from the plan into the EC audit,
+        # as a copy.
         self.assertEqual(r.audit['materials'], self.plan.audit['materials'])
         self.assertIsNot(r.audit['materials'], self.plan.audit['materials'])
         self.assertEqual(r.audit['identitiesSha256'], self.plan.audit['identitiesSha256'])
@@ -837,8 +860,9 @@ class ComparisonTests(unittest.TestCase):
         self.assertIsNone(c['within_range'])
         self.assertIsNone(c['ec25_range_ms_cm'])
 
-    # M2a O2 bound: the K+/PO4-3 totals used here are now a bounded estimate, so the
-    # partial prediction is an unrecorded-counterions case (KCl at supplied pH 4).
+    # M2a O2 bound: the K+/PO4-3 totals used here are now a bounded
+    # estimate, so the partial prediction is an unrecorded-counterions
+    # case (KCl at supplied pH 4).
     PARTIAL = dict(solution_id='kcl-ph4', ph_mode='supplied', ph=4.0, phase_policy='dissolved')
 
     def test_refusals(self):  # Review Focus 5
@@ -898,8 +922,8 @@ class BandChemistryTests(unittest.TestCase):
 
     @staticmethod
     def _material(name, identity_id, product, nutrients):
-        # Each nutrient moves by the same fraction at its band ends, so both ends stay charge
-        # balanced.
+        # Each nutrient moves by the same fraction at its band ends, so
+        # both ends stay charge balanced.
         analysis = {
             key: {'minimum': v * 0.98, 'typical': v, 'maximum': v * 1.02}
             for key, v in nutrients.items()
@@ -1000,8 +1024,8 @@ class BandChemistryTests(unittest.TestCase):
         self.assertLess(subtotals['nominal'], subtotals['maximum'])
 
     def test_band_end_outside_domain(self):
-        # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are inside the I < 0.1 domain,
-        # maximum is not.
+        # Empirical doses: nominal I 0.0982 and minimum I 0.0963 are
+        # inside the I < 0.1 domain, maximum is not.
         doses = {'Potassium Nitrate': 4.4, 'Potassium Sulfate': 3.6}
         result = calculate_irrigation_ec_band(doses, materials=self._materials(), **self.PURE)
         self.assertEqual(result['nominal'].status, 'estimated')

@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Incomplete conductivity, joint assay scenarios and uncertainty provenance."""
+"""Incomplete conductivity, joint assay scenarios and uncertainty
+provenance.
+"""
 
 from dataclasses import asdict
 import json
@@ -107,9 +109,10 @@ class CoverageTests(unittest.TestCase):
                 )
             self.assertEqual(caught.exception.code, 'invalid_ec_scenarios')
 
-    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2 PRODUCTS/FORMULAS, and the
-    # packaged Tomato (Howard Resh) recipe mixes at pH 4.89, below the 5.8 target, so no acid
-    # candidate is planned.
+    # 33c5df2 catalogue: its fixtures are test_grower_outputs' 33c5df2
+    # PRODUCTS/FORMULAS, and the packaged Tomato (Howard Resh) recipe
+    # mixes at pH 4.89, below the 5.8 target, so no acid candidate is
+    # planned.
     def test_grower_outputs_retain_qualifications(self):
         self.enterContext(historical_catalogue())
         from flahax.grower_report import summarize_batch, render_report, render_batch_sheet

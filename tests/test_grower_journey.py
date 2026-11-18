@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The grower journey end to end: ``batch`` plans the recipe and its pH reagent together."""
+"""The grower journey end to end: ``batch`` plans the recipe and its pH
+reagent together.
+"""
 
 import contextlib
 import io
@@ -30,7 +32,9 @@ def tomato(**changes):
 
 
 def check_grower_outputs(case, summary, report, sheet):
-    """Check observable output contracts against the reported calculation quantities."""
+    """Check observable output contracts against the reported
+    calculation quantities.
+    """
     from html import unescape
     import math
     import re
@@ -203,7 +207,8 @@ class ReagentQualificationTests(unittest.TestCase):
 
         pool = [next(p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate')]
         solid = next(p for p in catalogue_ph_reagents() if p['chemicalFormula'] == 'KHCO3')
-        # Synthetic density to distinguish a computable volume from the unit used to weigh a solid.
+        # Synthetic density to distinguish a computable volume from the
+        # unit used to weigh a solid.
         solid = dict(solid, densityKgPerL=1.2)
         config = joint_configuration(pool, [solid], 1000, 5, 100)
         flow = plan_fertilizer_workflow(
@@ -818,7 +823,8 @@ class SavedCucumberAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             store = Store(Path(temp) / 'home')
             store.save('acids', 'hno3-65', certificate)
-            # Replay the saved grower view, then request full output for the same inputs.
+            # Replay the saved grower view, then request full output for
+            # the same inputs.
             for depth in (original['depth'], 3):
                 with self.subTest(depth=depth):
                     migrated = migrate_session(
@@ -839,7 +845,8 @@ class SavedCucumberAcceptanceTests(unittest.TestCase):
                     self.assertIn('Review required', sheet)
                     self.assertIn(summary['ph']['selected']['product'], sheet)
                     self.assertEqual(summary['title'], 'Cucumber (Howard Resh)')
-                    # The 1000 L nutrient tanks supply the run; refill the 100 L reagent tank.
+                    # The 1000 L nutrient tanks supply the run; refill
+                    # the 100 L reagent tank.
                     self.assertEqual(summary['batch_litres'], 100000)
                     self.assertEqual(
                         summary['volumes']['prepared_litres'], {'A': 1000, 'B': 1000, 'acid': 100}
@@ -864,7 +871,8 @@ class SavedCucumberAcceptanceTests(unittest.TestCase):
 class ConsoleTests(unittest.TestCase):
     def test_a_solid_reagent_prints_its_mass_not_a_missing_volume(self):
         out = io.StringIO()
-        # Exercise the console with a selected solid independently of catalogue ranking.
+        # Exercise the console with a selected solid independently of
+        # catalogue ranking.
         summary = dict(
             title='solid test',
             status='requires_review',

@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Drive Horticalc (pinned v0.6.7, commit db4e68c) with the FlahaX catalogue.
+"""Drive Horticalc (pinned v0.6.7, commit db4e68c) with the FlahaX
+catalogue.
 
-Horticalc stores composition as forms: N as elemental N per form (NO3, NH4,
-UREA), P/K/Ca/Mg/Na as oxides, S as SO4, Si as SiO2, traces as elements. The
-translation inverts Horticalc's own conversion rules with its own molar masses,
-so the round trip is exact; `validate_translation` proves it before any solve.
+Horticalc stores composition as forms: N as elemental N per form (NO3,
+NH4, UREA), P/K/Ca/Mg/Na as oxides, S as SO4, Si as SiO2, traces as
+elements. The translation inverts Horticalc's own conversion rules with
+its own molar masses, so the round trip is exact; `validate_translation`
+proves it before any solve.
 """
 
 from horticalc import chemistry
@@ -22,7 +24,8 @@ PIN = {
 }
 N_FORMS = {"N_NO3": "NO3", "N_NH4": "NH4", "N_UREA": "UREA"}
 CONFIGS = {
-    # Shipped defaults: total-N objective only; S, Na and Cl report-only.
+    # Shipped defaults: total-N objective only; S, Na and Cl
+    # report-only.
     "as_shipped": {},
     # Aligned with FlahaX's objective: each N form and S are objectives.
     "aligned": {"nitrogen_objective_mode": "n_forms_only", "s_objective_enabled": True},
@@ -59,7 +62,9 @@ def translate(salts, mm=None):
 
 
 def validate_translation(salts, ferts, mm=None):
-    """Largest relative difference over all element contributions at 1 g/L."""
+    """Largest relative difference over all element contributions at 1
+    g/L.
+    """
     from horticalc.solver import _fertilizer_element_contrib_per_g
 
     mm = mm or load_molar_masses()
@@ -73,7 +78,9 @@ def validate_translation(salts, ferts, mm=None):
 
 
 def solve(ferts, targets, water, config, mm=None):
-    """Return {name: g/L} for one formula and water under a Horticalc configuration."""
+    """Return {name: g/L} for one formula and water under a Horticalc
+    configuration.
+    """
     recipe = {
         "liters": 1.0,
         "osmosis_percent": 0,

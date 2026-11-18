@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Delivery planning properties: determinism and conservation of volume."""
+"""Delivery planning properties: determinism and conservation of
+volume.
+"""
 
 import unittest
+
 from flahax import VolumeLitres
 from flahax.delivery_quantities import final_solution_recipe, InjectionRatio, TemperatureCelsius
 from flahax.stock_planning import StockTank, plan_stocks

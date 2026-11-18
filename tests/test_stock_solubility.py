@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Stock solubility from measured data: catalogue value first, historical table second."""
+"""Stock solubility from measured data: catalogue value first,
+historical table second.
+"""
 
 import unittest
 
@@ -41,7 +43,9 @@ def own_record(**water_solubility):
 
 
 class CatalogueValueTests(unittest.TestCase):
-    """The packaged catalogue's measured values, in their own basis (G16-G18)."""
+    """The packaged catalogue's measured values, in their own basis
+    (G16-G18).
+    """
 
     def test_edta_chelates_are_compared_with_their_20c_values_at_a_25c_tank(self):
         for name, limit in (('Mn EDTA', 400), ('Iron EDTA', 45)):

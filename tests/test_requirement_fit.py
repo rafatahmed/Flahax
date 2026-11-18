@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""A requirement is met only within the numerical tolerance (G25): 1e-5 relative, 1e-6 mg/L
-for a declared zero, 1e-4 pH. A missed target is a reported deviation, not a block."""
+"""A requirement is met only within the numerical tolerance (G25): 1e-5
+relative, 1e-6 mg/L for a declared zero, 1e-4 pH. A missed target is
+a reported deviation, not a block.
+"""
 
 import unittest
 
@@ -52,12 +54,14 @@ class ToleranceTests(unittest.TestCase):
 
 
 class Lettuce2DeviationTests(unittest.TestCase):
-    """Lettuce 2 (Howard Resh), packaged catalogue, empty water: P finishes 0.32 % short.
+    """Lettuce 2 (Howard Resh), packaged catalogue, empty water: P
+    finishes 0.32 % short.
 
-    The former 1 % band counted that as met; under the numerical tolerance it is a deviation,
-    listed in unmetTargets and in the formulation stage. Mo, 0.0056 % short with Micro Combi
-    Mix 1 (inside the former band), is short under the tolerance, so the only held-back Mo
-    source, sodium molybdate, is admitted and meets it.
+    The former 1 % band counted that as met; under the numerical
+    tolerance it is a deviation, listed in unmetTargets and in the
+    formulation stage. Mo, 0.0056 % short with Micro Combi Mix 1 (inside
+    the former band), is short under the tolerance, so the only
+    held-back Mo source, sodium molybdate, is admitted and meets it.
     """
 
     @classmethod
@@ -125,7 +129,8 @@ class WorkflowDeviationTests(unittest.TestCase):
         self.assertTrue(batch.value.feasible)
 
     def test_a_broken_maximum_still_blocks(self):
-        # Water sodium 30 mg/L above a declared 20 mg/L maximum: no recipe can remove it.
+        # Water sodium 30 mg/L above a declared 20 mg/L maximum: no
+        # recipe can remove it.
         flow = plan_fertilizer_workflow(
             SALTS,
             LETTUCE,
@@ -152,7 +157,9 @@ class WorkflowDeviationTests(unittest.TestCase):
 
 
 class DeclaredZeroTests(unittest.TestCase):
-    """A declared zero is met within 1e-6 mg/L everywhere (G25): urea from the water."""
+    """A declared zero is met within 1e-6 mg/L everywhere (G25): urea
+    from the water.
+    """
 
     def flow(self, targets, urea):
         return plan_fertilizer_workflow(
@@ -323,8 +330,10 @@ class StageMessageTests(unittest.TestCase):
 
 
 class PhBandTests(unittest.TestCase):
-    """Potassium sulfate alone in RO water mixes at pH 7.0083: a target 5e-4 away plans a
-    reagent whose dose converges on the target; 5e-5 away is met and plans none (G25)."""
+    """Potassium sulfate alone in RO water mixes at pH 7.0083: a target
+    5e-4 away plans a reagent whose dose converges on the target;
+    5e-5 away is met and plans none (G25).
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -355,7 +364,8 @@ class PhBandTests(unittest.TestCase):
         )
 
     def test_the_mixed_ph(self):
-        # Was 6.5447 while the label's 0.0044 % sulfate surplus acted as implicit acid (G5).
+        # Was 6.5447 while the label's 0.0044 % sulfate surplus acted as
+        # implicit acid (G5).
         self.assertAlmostEqual(self.mixed, 7.0083, places=4)
 
     def test_five_ten_thousandths_away_plans_a_converged_reagent(self):

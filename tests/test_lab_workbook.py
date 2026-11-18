@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Real XLSX transport and synthetic lab records; never experimental evidence."""
+"""Real XLSX transport and synthetic lab records; never experimental
+evidence.
+"""
 
 import copy
 import importlib.util
@@ -31,7 +33,9 @@ SHEETS = [
 
 
 def write_book(path, edits):
-    """Mutate only temporary test copies of the actual distributed workbook."""
+    """Mutate only temporary test copies of the actual distributed
+    workbook.
+    """
     with ZipFile(TEMPLATE) as source, ZipFile(path, 'w') as dest:
         for name in source.namelist():
             data = source.read(name)
@@ -64,7 +68,9 @@ def write_book(path, edits):
 
 
 def synthetic_inputs():
-    """Independent, explicitly synthetic inputs for a completed seven-day study."""
+    """Independent, explicitly synthetic inputs for a completed
+    seven-day study.
+    """
     now = datetime.now(timezone.utc).replace(microsecond=0)
     base = now - timedelta(days=8)
     epoch = datetime(1899, 12, 30, tzinfo=timezone.utc)

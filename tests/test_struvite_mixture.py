@@ -5,6 +5,7 @@
 """Tests for flahax.struvite_mixture."""
 
 import unittest
+
 from flahax.struvite_mixture import (
     solve_charge_balanced_struvite_mixture,
     struvite_mixture_speciation,

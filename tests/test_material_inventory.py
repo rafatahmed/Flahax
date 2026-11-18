@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent mass/stoichiometric checks of pre-fit material accounting (#164)."""
+"""Independent mass/stoichiometric checks of pre-fit material accounting
+(#164).
+"""
 
 from copy import deepcopy
 import unittest
@@ -38,7 +40,8 @@ class MaterialInventoryTests(unittest.TestCase):
         product = self.products['Iron EDTA']
         original = deepcopy(product)
         inventory = material_inventory(product)
-        # Label Fe=13%; Na:Fe:EDTA is 1:1:1. No chemistry/solver function supplies the oracle.
+        # Label Fe=13%; Na:Fe:EDTA is 1:1:1. No chemistry/solver
+        # function supplies the oracle.
         moles = 0.13 / 55.845
         self.assertAlmostEqual(inventory['nutrient_percent']['Na'], moles * 22.989769 * 100)
         self.assertAlmostEqual(inventory['components_moles_per_gram']['Edta-4'], moles)
@@ -62,8 +65,10 @@ class MaterialInventoryTests(unittest.TestCase):
                 self.assertEqual(inv['status'], 'supported_components')
                 chemical = component_nutrient_masses(inv['components_moles_per_gram'])
                 fitted = forward([product], [1])
-                # Decision G5: the fit keeps the label; chemistry sets aside the label's
-                # unbalanced charge (label_reconciliation), so they differ by exactly that.
+                # Decision G5: the fit keeps the label; chemistry sets
+                # aside the label's unbalanced charge
+                # (label_reconciliation), so they differ by exactly
+                # that.
                 identity = load_identities()[product['identityId']]
                 result = reconcile_label(identity, product['elements'])
                 surplus = result.unassigned_percent if result else {}
@@ -72,7 +77,8 @@ class MaterialInventoryTests(unittest.TestCase):
                     self.assertAlmostEqual(fitted[ion], expected, delta=1e-10)
 
     def test_water_products_and_reagents_add_on_same_basis(self):
-        # 2 L final solution, 1.5 kg water; 0.4 g FeEDTA and 0.003 mol HNO3.
+        # 2 L final solution, 1.5 kg water; 0.4 g FeEDTA and 0.003 mol
+        # HNO3.
         water = {'Na+': 0.001, 'NO3-': 0.002}
         water_ppm = nutrient_mg_per_litre(water, 1.5, 2)
         reagent_ppm = nutrient_mg_per_litre({'NO3-': 0.003 / 1.5}, 1.5, 2)

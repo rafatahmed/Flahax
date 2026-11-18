@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The worked example in "A batch from files" (#80, was the growers page) matches flahax batch."""
+"""The worked example in "A batch from files" (#80, was the growers
+page) matches flahax batch.
+"""
 
 import contextlib
 import io
@@ -44,9 +46,10 @@ def run(tmp, *argv):
 
 
 class GrowersPageTests(unittest.TestCase):
-    # 33c5df2 catalogue: the page's Tomato (Howard Resh) runs on the packaged catalogue leave
-    # search_incomplete rows and mix at pH 4.89, below the 5.8 target, so the eight and nine
-    # percent cases it documents do not arise.
+    # 33c5df2 catalogue: the page's Tomato (Howard Resh) runs on the
+    # packaged catalogue leave search_incomplete rows and mix at pH
+    # 4.89, below the 5.8 target, so the eight and nine percent cases it
+    # documents do not arise.
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -69,7 +72,8 @@ class GrowersPageTests(unittest.TestCase):
         self.assertEqual((code, summary['status']), (0, 'requires_review'))
         self.assertIn('Historical 0.6.0 figures', self.page)
         self.assertIn('not current mixing instructions', self.page)
-        # The A/B layout: magnesium sulfate shares tank B with the phosphate.
+        # The A/B layout: magnesium sulfate shares tank B with the
+        # phosphate.
         self.assertEqual(len(summary['tanks']['tanks']), 2)
         tanks = {p['name']: t['name'] for t in summary['tanks']['tanks'] for p in t['products']}
         self.assertEqual(
@@ -84,7 +88,8 @@ class GrowersPageTests(unittest.TestCase):
         self.assertTrue(s['ph']['candidates'])
         self.assertFalse(any(c['status'] == 'rejected' for c in s['ph']['candidates']))
         limits = {row['symbol']: row['analyticalPpm'] for row in s['limits']}
-        # Product chloride may add to the measured water, up to the explicit cap.
+        # Product chloride may add to the measured water, up to the
+        # explicit cap.
         self.assertGreaterEqual(limits['Cl'], WELL['mg_per_litre']['Cl'] * 0.08)
         self.assertLessEqual(limits['Cl'], 106.35)
         self.assertLessEqual(limits['Na'], 68.97)

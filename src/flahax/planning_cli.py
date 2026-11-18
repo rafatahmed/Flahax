@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""JSON and interactive adapters; no standard water, acid grade or pump model."""
+"""JSON and interactive adapters; no standard water, acid grade or pump
+model.
+"""
 
 from dataclasses import asdict, is_dataclass
 import json
@@ -19,7 +21,9 @@ from .injector_sizing import size_injection_requirements
 
 
 def serializable(value):
-    """The value as plain JSON types; non-finite floats become strings."""
+    """The value as plain JSON types; non-finite floats become
+    strings.
+    """
     if is_dataclass(value):
         return serializable(asdict(value))
     if isinstance(value, dict):
@@ -32,10 +36,12 @@ def serializable(value):
 
 
 def recommend_request(payload):
-    """Adapt a strict recommendation JSON object to the Python nutrient-fit contract.
+    """Adapt a strict recommendation JSON object to the Python
+    nutrient-fit contract.
 
-    Legacy allowIons/allowCarbonates names remain supported, but cannot be mixed
-    with their snake-case counterparts. Unknown fields fail instead of being ignored.
+    Legacy allowIons/allowCarbonates names remain supported, but cannot
+    be mixed with their snake-case counterparts. Unknown fields fail
+    instead of being ignored.
     """
     from .engine import recommend
 
@@ -104,8 +110,9 @@ def _stock_config(stocks):
 
 
 def execute(command, payload):
-    """Run one planning command (``workflow``, ``ec`` or ``size``) on a JSON payload; raises
-    DeliveryError for an unknown command or field.
+    """Run one planning command (``workflow``, ``ec`` or ``size``) on a
+    JSON payload; raises DeliveryError for an unknown command or
+    field.
     """
     if not isinstance(payload, dict):
         raise DeliveryError('invalid_type', 'expected a JSON object')
@@ -226,7 +233,9 @@ def _json(label, *, optional=False):
 
 
 def interactive(command):
-    """Prompts go to stderr so stdout remains one machine-readable JSON result."""
+    """Prompts go to stderr so stdout remains one machine-readable JSON
+    result.
+    """
     if command == 'workflow':
         path = _ask('Path to fertilizer JSON array (your actual product records)')
         payload = dict(

@@ -4,8 +4,9 @@
 # its results are calculations, not dosing instructions.
 """Explicit catalogue-equilibrium to reviewed delivery-plan boundary.
 
-Fixed final solvent mass/volume projection, not automatic dilution or hardware
-control. The caller supplies measured initial pH and complete analytical water.
+Fixed final solvent mass/volume projection, not automatic dilution or
+hardware control. The caller supplies measured initial pH and complete
+analytical water.
 """
 
 from dataclasses import dataclass
@@ -42,8 +43,9 @@ def _number(value, name, *, positive=False):
 
 @dataclass(frozen=True)
 class EquilibriumPhPlan:
-    """An acid dose for the target pH, solved by equilibrium for one recipe and water, with the
-    reagent amount, nutrient contribution, audit and warnings.
+    """An acid dose for the target pH, solved by equilibrium for one
+    recipe and water, with the reagent amount, nutrient contribution,
+    audit and warnings.
     """
 
     recipe: FinalSolutionRecipe
@@ -83,20 +85,24 @@ def plan_equilibrium_delivery(
     maximum_concentrations=None,
     analytical_water_totals=None,
 ):
-    """Convert molal HNO3 into assay-qualified mass/volume and rescore nutrients.
+    """Convert molal HNO3 into assay-qualified mass/volume and rescore
+    nutrients.
 
-    `water_mass_kg` is the explicitly defined final solvent inventory, including
-    reagent carrier water; final recipe volume is the make-up volume. No density
-    or g/L == g/kg approximation is made. `phases` is the explicit equilibrium
-    policy; positive target SI or solid formation prohibits delivery validation.
+    `water_mass_kg` is the explicitly defined final solvent inventory,
+    including reagent carrier water; final recipe volume is the make-up
+    volume. No density or g/L == g/kg approximation is made. `phases` is
+    the explicit equilibrium policy; positive target SI or solid
+    formation prohibits delivery validation.
 
-    `water_totals` drive the acid dose. Nutrient rows, target deviations and
-    maximum concentrations use `analytical_water_totals`, the laboratory analysis
-    (#84). Pass a `BalancedWaterAnalysis` as `water_totals` and both come from it;
-    a plain mapping without `analytical_water_totals` is taken as the analysis
-    itself, as before.
+    `water_totals` drive the acid dose. Nutrient rows, target deviations
+    and maximum concentrations use `analytical_water_totals`, the
+    laboratory analysis (#84). Pass a `BalancedWaterAnalysis` as
+    `water_totals` and both come from it; a plain mapping without
+    `analytical_water_totals` is taken as the analysis itself, as
+    before.
     """
-    # An empty recipe the formulation stage accepted is planned on the water alone (G25).
+    # An empty recipe the formulation stage accepted is planned on the
+    # water alone (G25).
     if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible:
         raise DeliveryError('infeasible_recipe', 'a feasible FinalSolutionRecipe is required')
     water_mass = _number(water_mass_kg, 'water_mass_kg', positive=True)
@@ -111,7 +117,8 @@ def plan_equilibrium_delivery(
     if not isinstance(reagent_channel_id, str) or not reagent_channel_id.strip():
         raise DeliveryError('missing_field', 'a dedicated reagent_channel_id is required')
     if isinstance(water_totals, BalancedWaterAnalysis):
-        # A balanced record carries its own laboratory analysis: never substitute the model for it.
+        # A balanced record carries its own laboratory analysis: never
+        # substitute the model for it.
         if (
             analytical_water_totals is not None
             and dict(analytical_water_totals) != water_totals.analytical_totals
@@ -142,7 +149,8 @@ def plan_equilibrium_delivery(
         raise DeliveryError('invalid_type', 'maximum_reagent_volume must be VolumeLitres')
     if not isinstance(targets, Mapping) or not targets:
         raise DeliveryError('missing_field', 'nonempty nutrient targets are required')
-    # Validate nutrient symbols/values before the expensive equilibrium solve.
+    # Validate nutrient symbols/values before the expensive equilibrium
+    # solve.
     rescore_with_reagent({}, targets, {})
     assay = validate_product_assay(reagent)
     if reagent.get('chemicalFormula') != 'HNO3' or assay['kind'] != 'acid':
@@ -154,7 +162,8 @@ def plan_equilibrium_delivery(
     if 'densityKgPerL' not in assay:
         raise DeliveryError('missing_measurement', 'reagent densityKgPerL is required')
     fraction = assay['elements']['N_NO3'] / 100.0
-    # Nitrogen mass fraction cannot exceed pure HNO3's stoichiometric value.
+    # Nitrogen mass fraction cannot exceed pure HNO3's stoichiometric
+    # value.
     if fraction > MOLAR_MASS['N'] / 63.01284:
         raise DeliveryError('inconsistent_assay', 'nitrate-N assay exceeds pure HNO3')
     density = assay['densityKgPerL']
@@ -191,11 +200,13 @@ def plan_equilibrium_delivery(
             'dose_limit_exceeded', 'nitric acid volume exceeds the supplied limit or final volume'
         )
     contribution = elemental_contribution(mass, {'N_NO3': fraction}, recipe.final_volume)
-    # Nutrient accounting on the laboratory analysis; the dose above used the chemistry inventory.
+    # Nutrient accounting on the laboratory analysis; the dose above
+    # used the chemistry inventory.
     water_ppm = nutrient_mg_per_litre(analytical, water_mass, recipe.final_volume.value)
     achieved = forward(selected, grams_per_litre, water_ppm)
     loss, rows = rescore_with_reagent(achieved, targets, contribution)
-    # Only the change the nitric acid makes is judged (G25), against the declared percent.
+    # Only the change the nitric acid makes is judged (G25), against the
+    # declared percent.
     moved = reagent_shift_exceeds(achieved, rows, tolerance)
     if moved:
         raise DeliveryError(

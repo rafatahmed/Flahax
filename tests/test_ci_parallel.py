@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""CI partitions retain every public unittest case and its class fixtures."""
+"""CI partitions retain every public unittest case and its class
+fixtures.
+"""
 
 import contextlib
 import io
@@ -23,7 +25,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class ParallelRunnerTests(unittest.TestCase):
     def test_worker_timeout_is_reported_before_executor_cleanup(self):
-        # Fault injection: a subprocess deadline, not a simulated chemistry result.
+        # Fault injection: a subprocess deadline, not a simulated
+        # chemistry result.
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder) / 'result.json'
             messages = io.StringIO()
@@ -97,8 +100,9 @@ class ParallelRunnerTests(unittest.TestCase):
     def test_worker_also_runs_without_an_active_measurement(self):
         import coverage
 
-        # Fault injection: keep the outer test measurement alive while exposing
-        # the public no-active-collector state to the worker launcher.
+        # Fault injection: keep the outer test measurement alive while
+        # exposing the public no-active-collector state to the worker
+        # launcher.
         with (
             tempfile.TemporaryDirectory(dir=ROOT) as folder,
             patch.object(coverage.Coverage, 'current', return_value=None),
@@ -258,7 +262,8 @@ class ParallelRunnerTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as caught:
                 runpy.run_path(str(Path(ci_parallel.__file__)), run_name='__main__')
         self.assertEqual(caught.exception.code, 0)
-        # Fault injection: command dispatch preserves an unsuccessful runner result.
+        # Fault injection: command dispatch preserves an unsuccessful
+        # runner result.
         with (
             patch.object(sys, 'argv', ['runner', '--output', 'out']),
             patch.object(ci_parallel, 'run', return_value=1),

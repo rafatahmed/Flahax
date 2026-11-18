@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Commercial assay, reagent and incidental-ion conservation at fixed ratios."""
+"""Commercial assay, reagent and incidental-ion conservation at fixed
+ratios.
+"""
 
 import copy
 import unittest
@@ -33,7 +35,8 @@ def products(fraction=0.5):
 
 def contaminated_products():
     records = products()
-    # Independently specified mass fractions: KNO3 plus NaCl contamination.
+    # Independently specified mass fractions: KNO3 plus NaCl
+    # contamination.
     records[4]['product'] = dict(
         name='Synthetic contaminated nitrate',
         ions={'K+': 1, 'NO3-': 1, 'Na+': 0.02, 'Cl-': 0.02},
@@ -44,7 +47,8 @@ def contaminated_products():
             'Cl': 0.709 / 102.27079538 * 50,
         },
     )
-    # KOH + sodium hydroxide; Na must be counted even when delivered as reagent.
+    # KOH + sodium hydroxide; Na must be counted even when delivered as
+    # reagent.
     records[5]['product'] = dict(
         name='Synthetic sodium-bearing base',
         ions={'K+': 1, 'Na+': 0.01, 'OH-': 1.01},
@@ -189,7 +193,8 @@ class RatioProductTests(unittest.TestCase):
     def test_rounding_rechecks_product_sodium_not_just_nutrient_ratios(self):
         opts = dict(REQUEST, products=contaminated_products(), ph_range=[6.28, 6.32])
         precise = plan_ratio_recipe(**opts)
-        # Force a delivered mass increase while retaining the exact analytical limit.
+        # Force a delivered mass increase while retaining the exact
+        # analytical limit.
         from flahax.ratio_verification import verify_rounded_recipe, DEFAULT_PHASES
 
         precise['maximum_concentrations'] = {'Na': precise['elemental_mg_l']['Na']}
@@ -211,7 +216,8 @@ class RatioProductTests(unittest.TestCase):
 
     def test_assay_and_model_difference_remains_visible(self):
         supplied = products()
-        # The existing reconciliation keeps excess assay K out of chemistry.
+        # The existing reconciliation keeps excess assay K out of
+        # chemistry.
         supplied[4]['product']['elements']['K'] *= 1.01
         result = plan_ratio_recipe(**dict(REQUEST, products=supplied))
         self.assertGreater(result['analytical_minus_chemistry_mg_l']['K'], 0)

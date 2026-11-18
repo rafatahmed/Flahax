@@ -7,14 +7,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import math
+
 from .delivery_contracts import DeliveryError
 from .struvite import struvite_saturation_index
 
 
 @dataclass(frozen=True, slots=True)
 class CalciumSulfateStruviteCompetition:
-    """Gypsum and struvite saturation indices in a mixed calcium, sulfate, magnesium, ammonium and
-    phosphate solution.
+    """Gypsum and struvite saturation indices in a mixed calcium,
+    sulfate, magnesium, ammonium and phosphate solution.
     """
 
     gypsum_si: float
@@ -23,8 +24,8 @@ class CalciumSulfateStruviteCompetition:
 
 @dataclass(frozen=True, slots=True)
 class CarbonateCompetition:
-    """Calcite, gypsum and struvite saturation indices when carbonate competes for calcium and
-    magnesium.
+    """Calcite, gypsum and struvite saturation indices when carbonate
+    competes for calcium and magnesium.
     """
 
     calcite_si: float
@@ -39,7 +40,9 @@ def calcium_sulfate_struvite_competition(
     ammonium_activity: float,
     phosphate_activity: float,
 ) -> CalciumSulfateStruviteCompetition:
-    """Compare gypsum and struvite SI at supplied free-ion activities."""
+    """Compare gypsum and struvite SI at supplied free-ion
+    activities.
+    """
     values = (
         calcium_activity,
         sulfate_activity,
@@ -63,7 +66,9 @@ def carbonate_competition(
     ammonium_activity: float,
     phosphate_activity: float,
 ) -> CarbonateCompetition:
-    """Compare calcite, gypsum, and struvite SI from free-ion activities."""
+    """Compare calcite, gypsum, and struvite SI from free-ion
+    activities.
+    """
     base = calcium_sulfate_struvite_competition(
         calcium_activity,
         sulfate_activity,

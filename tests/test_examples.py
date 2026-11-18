@@ -10,15 +10,18 @@ import unittest
 from examples.run_all import SCENARIOS, markdown
 from examples.common import serializable
 from examples.visual_report import render_html, bars
+
 import xml.etree.ElementTree as ET
 import re
+
 from tests.catalogue_history import historical_catalogue
 
 
 class CapabilityExamplesTests(unittest.TestCase):
-    # 33c5df2 catalogue: examples/run_all.py's scenarios dose 33c5df2 products (Phosphoric Acid
-    # (75%) in the pepper tank review, CH - micro) and the packaged Pepper (Howard Resh) misses
-    # N_NO3, P, K and Ca.
+    # 33c5df2 catalogue: examples/run_all.py's scenarios dose 33c5df2
+    # products (Phosphoric Acid (75%) in the pepper tank review, CH -
+    # micro) and the packaged Pepper (Howard Resh) misses N_NO3, P, K
+    # and Ca.
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -28,14 +31,16 @@ class CapabilityExamplesTests(unittest.TestCase):
         workflow = self.results['pepper']['workflow']
         self.assertEqual(workflow['nutrient_gap']['Ca'], 84)
         self.assertEqual(workflow['stages']['chemistry']['status'], 'needs_input')
-        # G25: missed targets are reported deviations; only a broken maximum blocks.
+        # G25: missed targets are reported deviations; only a broken
+        # maximum blocks.
         self.assertEqual(workflow['stages']['formulation']['status'], 'requires_review')
         self.assertEqual(
             workflow['stages']['formulation']['message'], 'targets missed: Mn -100 %, Mo -100 %'
         )
         rows = {r['symbol']: r['final'] for r in workflow['recommendation']['rows']}
-        # G24: N_NH4 0 is no ammonium requirement; calcium nitrate's NH4-N stays within the
-        # G23 allowance min(10 % of 128 mg/L total N, 21.01) = 12.8 mg/L.
+        # G24: N_NH4 0 is no ammonium requirement; calcium nitrate's
+        # NH4-N stays within the G23 allowance min(10 % of 128 mg/L
+        # total N, 21.01) = 12.8 mg/L.
         self.assertAlmostEqual(rows['N_NH4'], 4.8632, places=4)
         self.assertEqual(rows['Na'], 0)
         self.assertEqual(workflow['recommendation']['ammoniumLimit']['mgPerL'], 12.8)

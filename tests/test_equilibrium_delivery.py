@@ -51,8 +51,9 @@ def arguments():
     doses = {'Potassium Carbonate': 0.01, 'Potassium Nitrate': 0.02}
     water = {'Na+': 0.002, 'Cl-': 0.002}
     totals = catalogue_dose_totals(doses)
-    # Deliberately specified complete synthetic water, not an automatic adapter
-    # correction. The adapter must reject an unbalanced supplied inventory.
+    # Deliberately specified complete synthetic water, not an automatic
+    # adapter correction. The adapter must reject an unbalanced supplied
+    # inventory.
     for _ in range(8):
         water['Cl-'] += solve(totals | water, 7.4).charge_balance
     return dict(
@@ -97,7 +98,8 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             next(row['final'] for row in p.rows if row['symbol'] == 'N_NO3')
             - p.nutrient_contribution['N_NO3'].value
         )
-        # The packaged Potassium Nitrate label states N 13.0 % (the 33c5df2 one 13.856 %).
+        # The packaged Potassium Nitrate label states N 13.0 % (the
+        # 33c5df2 one 13.856 %).
         self.assertAlmostEqual(before, 0.02 * 0.95 * 13.0 * 10, places=10)
         self.assertTrue(p.post_mix_measurement_required)
         self.assertEqual(len(p.audit['chemistrySha256']), 64)
@@ -162,8 +164,9 @@ class EquilibriumDeliveryTests(unittest.TestCase):
         self.assertTrue(plan.commands[0].requires_operator_verification)
 
     def test_a_recipe_deviation_is_not_the_acid_s_doing(self):
-        # K 1 against a 12.72 mg/L K recipe: the deviation is the recipe's, reported by the
-        # formulation stage; the nitric acid adds no K, so the plan stands (G25).
+        # K 1 against a 12.72 mg/L K recipe: the deviation is the
+        # recipe's, reported by the formulation stage; the nitric acid
+        # adds no K, so the plan stands (G25).
         plan = plan_equilibrium_delivery(**(self.args | {'targets': {'K': 1.0}}))
         k = next(row for row in plan.rows if row['symbol'] == 'K')
         self.assertEqual(k['target'], 1.0)
@@ -186,7 +189,8 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             {'target_ph': 8.0},
             {'water_totals': {'Na+': 0.01, 'Cl-': 0.001}},
             {'targets': {'K': 0.0}, 'maximum_concentrations': {'K': 0.0}},
-            # The nitric acid's own nitrate moves N_NO3 by more than a declared 1e-6 % (G25).
+            # The nitric acid's own nitrate moves N_NO3 by more than a
+            # declared 1e-6 % (G25).
             {
                 'targets': {'K': 12.72, 'N_NO3': 0.02 * 0.95 * 13.856 * 10},
                 'maximum_nutrient_error_percent': 1e-6,
@@ -234,7 +238,8 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             )
 
     def test_user_grade_record_fails_closed_not_shipped_assay(self):
-        # A grade's record has its own id, so the plan cannot mistake it for the shipped product.
+        # A grade's record has its own id, so the plan cannot mistake it
+        # for the shipped product.
         from flahax import make_grade, recommend, resolve_material
 
         grade = make_grade(
@@ -289,8 +294,9 @@ class EquilibriumDeliveryTests(unittest.TestCase):
             data['nitric_acid_molal'],
             delta=2e-6 + 0.03 * data['nitric_acid_molal'],
         )
-        # Numerical dose is unchanged. Hydroxylapatite and MnHPO4 are information, not warnings,
-        # and no readily forming phase is supersaturated, so the plan carries no risk label.
+        # Numerical dose is unchanged. Hydroxylapatite and MnHPO4 are
+        # information, not warnings, and no readily forming phase is
+        # supersaturated, so the plan carries no risk label.
         information = [row[0] for row in assess_saturation(p.equilibrium.target)['information']]
         self.assertEqual(information, ['Hydroxylapatite', 'MnHPO4'])
         self.assertFalse([w for w in p.warnings if 'precipitation risk' in w.lower()])

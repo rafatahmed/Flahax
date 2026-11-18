@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#61: ionic-strength convergence and warm starts change the iteration path, not the state."""
+"""#61: ionic-strength convergence and warm starts change the
+iteration path, not the state.
+"""
 
 import json
 import unittest
@@ -67,8 +69,9 @@ class WarmStartTests(unittest.TestCase):
 
 class IonicStrengthConvergenceTests(unittest.TestCase):
     def test_strong_electrolyte_converges_in_few_newton_iterations(self):
-        # Gypsum-saturated solution near I = 0.055: the averaged update needed ~47 outer
-        # passes (102 Newton iterations); the secant step needs a fraction of that.
+        # Gypsum-saturated solution near I = 0.055: the averaged update
+        # needed ~47 outer passes (102 Newton iterations); the secant
+        # step needs a fraction of that.
         data = fixture('phases/gypsum')
         result = solve(
             data['runtime_totals'], data['selected_rows'][-1]['pH'], phases=data['phases']

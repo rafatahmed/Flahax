@@ -3,12 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Package a #40 competitor run as a static evidence snapshot for the docs site.
+"""Package a #40 competitor run as a static evidence snapshot for the
+docs site.
 
-No benchmark is run here. The three track outputs (formulation.json, chemistry.json,
-ec.json) are copied byte for byte, an environment record is added, and everything is
-bundled in evidence.zip with SHA-256 checksums. Run it with the competitor
-environment's Python on the machine that measured, so the environment record is true.
+No benchmark is run here. The three track outputs (formulation.json,
+chemistry.json, ec.json) are copied byte for byte, an environment record
+is added, and everything is bundled in evidence.zip with SHA-256
+checksums. Run it with the competitor environment's Python on the
+machine that measured, so the environment record is true.
 """
 
 import argparse
@@ -32,7 +34,9 @@ def git(*args):
 
 
 def measured_commit(commit):
-    """Full hash of `commit`, refusing it unless HEAD still runs the same measured code."""
+    """Full hash of `commit`, refusing it unless HEAD still runs the
+    same measured code.
+    """
     full = git("rev-parse", commit)
     subprocess.run(("git", "merge-base", "--is-ancestor", full, "HEAD"), cwd=ROOT, check=True)
     if git("diff", "--name-only", full, "HEAD", "--", *MEASURED_PATHS):

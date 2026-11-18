@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Dependency-free loader and comparator for checked-in PHREEQC golden fixtures.
+"""Dependency-free loader and comparator for checked-in PHREEQC golden
+fixtures.
 
-Fixtures are test evidence, not a PHREEQC runtime integration. Each carries the
-reference input, expected selected outputs, source URL, database identity, and
-numeric tolerance used to compare a future FlahaX equilibrium solver.
+Fixtures are test evidence, not a PHREEQC runtime integration. Each
+carries the reference input, expected selected outputs, source URL,
+database identity, and numeric tolerance used to compare a future FlahaX
+equilibrium solver.
 """
 
 from __future__ import annotations
@@ -51,7 +53,9 @@ def _validate_expected(expected):
 
 
 def load_reference_fixture(path: str | Path) -> dict:
-    """Load and validate one checked-in PHREEQC golden-fixture document."""
+    """Load and validate one checked-in PHREEQC golden-fixture
+    document.
+    """
     fixture_path = Path(path)
     try:
         source = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -87,7 +91,9 @@ def load_reference_fixture(path: str | Path) -> dict:
 
 
 def assert_reference_result(fixture: Mapping[str, Any], actual: Mapping[str, Any]) -> None:
-    """Raise AssertionError when a solver output differs from a golden fixture."""
+    """Raise AssertionError when a solver output differs from a golden
+    fixture.
+    """
     if not isinstance(fixture, Mapping) or not isinstance(actual, Mapping):
         raise TypeError("fixture and actual must be mappings")
     expected = fixture.get("expected")

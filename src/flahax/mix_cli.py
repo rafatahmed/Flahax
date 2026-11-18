@@ -4,16 +4,17 @@
 # its results are calculations, not dosing instructions.
 """``flahax mix``: five steps, then tank A, tank B and the pH reagent.
 
-    flahax mix                    ask the five steps, save the answers, write the sheets
-    flahax mix sessions/NAME      run a saved session again without questions
-    flahax mix --plain            ask line by line instead of the full-screen wizard
+    flahax mix                    ask the five steps, save the answers,
+    write the sheets flahax mix sessions/NAME      run a saved session
+    again without questions flahax mix --plain            ask line by
+    line instead of the full-screen wizard
 
-Steps: 1/5 specification (tanks, injection ratio, temperature, how stock is
-prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5 available
-acids and bases and target pH. Defaults are shown in brackets; Enter keeps them.
-Typed items are saved
-under ``$FLAHAX_HOME`` (else ``~/.flahax``) as files ``flahax batch`` reads, and only
-once every step is answered: Ctrl+C or end of input saves nothing.
+Steps: 1/5 specification (tanks, injection ratio, temperature, how stock
+is prepared), 2/5 water analysis, 3/5 crop formula, 4/5 fertilizers, 5/5
+available acids and bases and target pH. Defaults are shown in brackets;
+Enter keeps them. Typed items are saved under ``$FLAHAX_HOME`` (else
+``~/.flahax``) as files ``flahax batch`` reads, and only once every step
+is answered: Ctrl+C or end of input saves nothing.
 """
 
 import argparse
@@ -74,7 +75,8 @@ CHELATES = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
 
 
 def number_answer(answer, default, *, blank=False, low=0.0, high=None, positive=False):
-    """(value, None) for an acceptable typed number, else (None, the message to show).
+    """(value, None) for an acceptable typed number, else (None, the
+    message to show).
 
     Enter gives the default, or None when ``blank`` allows it.
     """
@@ -99,13 +101,17 @@ def number_answer(answer, default, *, blank=False, low=0.0, high=None, positive=
 
 
 class Prompts:
-    """The questions of ``flahax mix``; ``ask`` reads an answer and ``say`` prints."""
+    """The questions of ``flahax mix``; ``ask`` reads an answer and
+    ``say`` prints.
+    """
 
     def __init__(self, ask, say):
         self.ask, self.say = ask, say
 
     def text(self, prompt, default=None):
-        """A non-empty answer, or the default on Enter when there is one."""
+        """A non-empty answer, or the default on Enter when there is
+        one.
+        """
         while True:
             shown = '' if default is None else f' [{default or "none"}]'
             answer = self.ask(f'{prompt}{shown}: ').strip()
@@ -116,8 +122,8 @@ class Prompts:
             self.say('  This one is needed.')
 
     def number(self, prompt, default=None, *, blank=False, low=0.0, high=None, positive=False):
-        """A finite number within the limits, asked again until valid; Enter gives the default, or
-        None when ``blank`` allows it.
+        """A finite number within the limits, asked again until valid;
+        Enter gives the default, or None when ``blank`` allows it.
         """
         while True:
             shown = (
@@ -136,7 +142,9 @@ class Prompts:
             self.say(error)
 
     def choose(self, prompt, options, default=1):
-        """0-based index of the chosen option; with ``default=None`` Enter asks again."""
+        """0-based index of the chosen option; with ``default=None``
+        Enter asks again.
+        """
         if prompt:
             self.say(prompt)
         for i, option in enumerate(options, 1):
@@ -150,7 +158,9 @@ class Prompts:
             self.say(f'  Choose 1 to {len(options)}.')
 
     def search(self, prompt, names):
-        """Part of a name narrows the list; Enter shows every name to choose from by number."""
+        """Part of a name narrows the list; Enter shows every name to
+        choose from by number.
+        """
         while True:
             query = (
                 self.ask(f'{prompt} (part of the name; Enter lists all {len(names)}): ')
@@ -166,7 +176,9 @@ class Prompts:
             self.say(f'  Nothing matches {query!r}; press Enter to see the whole list.')
 
     def pick_many(self, prompt, names):
-        """0-based indices of the names chosen, in the order typed and without repeats."""
+        """0-based indices of the names chosen, in the order typed and
+        without repeats.
+        """
         for i, name in enumerate(names, 1):
             self.say(f'  {i:2}  {name}')
         while True:
@@ -180,19 +192,25 @@ class Prompts:
             self.say(f'  Use numbers 1 to {len(names)}.')
 
     def step(self, index, heading=None):
-        """Step ``index`` of five begins; the line mode shows ``heading`` when there is one."""
+        """Step ``index`` of five begins; the line mode shows
+        ``heading`` when there is one.
+        """
         if heading:
             self.say(heading)
 
     def answered(self, label, value):
-        """A finished step's short answer; the line mode shows nothing."""
+        """A finished step's short answer; the line mode shows
+        nothing.
+        """
 
     def progress(self, text):
-        """Progress within a step, such as the lab values typed so far; the line mode is silent."""
+        """Progress within a step, such as the lab values typed so far;
+        the line mode is silent.
+        """
 
     def new_name(self, store, kind, prompt, default=None):
-        """A name for a new saved item; an existing name is used only when the user chooses to
-        replace it.
+        """A name for a new saved item; an existing name is used only
+        when the user chooses to replace it.
         """
         while True:
             self.typed = self.text(prompt, default)
@@ -207,7 +225,9 @@ class Prompts:
                 return name
 
     def document(self, supplier):
-        """The supplier, title and issue date of a data sheet or certificate."""
+        """The supplier, title and issue date of a data sheet or
+        certificate.
+        """
         while True:
             issued = self.text('Date on the sheet (YYYY-MM-DD)')
             try:
@@ -224,8 +244,9 @@ class Prompts:
 
 
 def ask_spec(p):
-    """Step 1: tank and acid container sizes, injection ratio, stock temperature and how the stock
-    is prepared, as ``prepare_stocks`` options.
+    """Step 1: tank and acid container sizes, injection ratio, stock
+    temperature and how the stock is prepared, as ``prepare_stocks``
+    options.
     """
     p.step(1, '1/5 Specification')
     a = p.number('Tank A capacity, L', 1000, positive=True)
@@ -278,8 +299,8 @@ def ask_spec(p):
 
 
 def ask_water(p, store, pending):
-    """Step 2: the water (RO, saved or new), its share and the concentration limits; returns
-    (reference, share, limits).
+    """Step 2: the water (RO, saved or new), its share and the
+    concentration limits; returns (reference, share, limits).
     """
     p.step(2, '2/5 Water analysis')
     saved = store.list('waters')
@@ -304,8 +325,8 @@ def ask_water(p, store, pending):
 
 
 def ask_formula(p, store, pending, library):
-    """Step 3: the crop formula (packaged, changed, saved or typed); returns (reference, targets,
-    title).
+    """Step 3: the crop formula (packaged, changed, saved or typed);
+    returns (reference, targets, title).
     """
     p.step(3, '3/5 Crop formula: the nutrient targets in mg/L (your fertilizers come in step 4)')
     saved = store.list('formulas')
@@ -351,16 +372,19 @@ def ask_formula(p, store, pending, library):
 
 
 def ask_notes(p):
-    """Data-sheet compatibility notes, kept with the grade for the full report; ';' separates
-    several."""
+    """Data-sheet compatibility notes, kept with the grade for the full
+    report; ';' separates several.
+    """
     answer = p.text("Notes from the data sheet, e.g. 'tank pH above 4' (Enter = none)", '')
     return [note.strip() for note in answer.split(';') if note.strip()]
 
 
 def add_single(p, catalogue):
-    """A single-compound fertilizer from its label, or None when the label cannot be graded.
+    """A single-compound fertilizer from its label, or None when the
+    label cannot be graded.
 
-    A label off its compound is added with a note of the surplus no ion carries (decision G5).
+    A label off its compound is added with a note of the surplus no ion
+    carries (decision G5).
     """
     names = {s['name']: s for s in catalogue}
     identities = [i for i in load_identities().values() if any(n in names for n in i['products'])]
@@ -405,8 +429,8 @@ def add_single(p, catalogue):
 
 
 def add_compound(p):
-    """A compound fertilizer modelled from its data-sheet composition, or None when it cannot be
-    resolved.
+    """A compound fertilizer modelled from its data-sheet composition,
+    or None when it cannot be resolved.
     """
     name = p.text('Product name on the data sheet')
     supplier = p.text('Supplier')
@@ -454,7 +478,9 @@ def add_compound(p):
 
 
 def ask_products(p, store, pending, library):
-    """Step 4: the fertilizers available; returns (reference, products)."""
+    """Step 4: the fertilizers available; returns (reference,
+    products).
+    """
     p.step(4, '4/5 Fertilizers available')
     catalogue, saved = library['salts'], store.list('stores')
     pick = p.choose('Fertilizers', ['The whole catalogue'] + saved + ['Tick what I have'])
@@ -482,7 +508,9 @@ def ask_products(p, store, pending, library):
 
 
 def ask_reagents(p, store, pending):
-    """Select the available pH products just like the available fertilizers."""
+    """Select the available pH products just like the available
+    fertilizers.
+    """
     from .batch_cli import acid_record
 
     catalogue = catalogue_ph_reagents()
@@ -553,7 +581,9 @@ def ask_reagents(p, store, pending):
 
 
 def ask_acids(p, store, pending):
-    """Names of the acids chosen for the pH plan, saved or entered from a certificate."""
+    """Names of the acids chosen for the pH plan, saved or entered from
+    a certificate.
+    """
     chosen, saved = [], store.list('acids')
     while True:
         offer = [s for s in saved if s not in chosen]
@@ -595,7 +625,9 @@ def ask_acids(p, store, pending):
 
 
 def options_for(store, session):
-    """``BatchOptions`` from a session; every saved item it names must exist."""
+    """``BatchOptions`` from a session; every saved item it names must
+    exist.
+    """
 
     check_session(session, "saved answers")
     if 'reagent_store' not in session:
@@ -647,7 +679,9 @@ def options_for(store, session):
 
 
 def review_reagents(p, store, name, session):
-    """Explicitly review availability and save new answers without rewriting the old record."""
+    """Explicitly review availability and save new answers without
+    rewriting the old record.
+    """
     verify_session(store, session)
     pending = []
     p.say(
@@ -672,7 +706,9 @@ def review_reagents(p, store, name, session):
 
 
 def interview(p, store):
-    """The five steps; returns (session name, session, items to save). Nothing is written here."""
+    """The five steps; returns (session name, session, items to save).
+    Nothing is written here.
+    """
     library, pending = load_library(), []
     spec = ask_spec(p)
     tanks = spec['tank_litres']
@@ -727,8 +763,9 @@ def _is_number(value):
 
 
 def check_session(data, path):
-    """The session read from ``path`` if it has the fields ``flahax mix`` writes, each of the
-    right type; raises DeliveryError ``invalid_session`` naming the file and the field.
+    """The session read from ``path`` if it has the fields ``flahax
+    mix`` writes, each of the right type; raises DeliveryError
+    ``invalid_session`` naming the file and the field.
     """
 
     def bad(problem):
@@ -799,8 +836,9 @@ def load_session(path):
 
 
 def find_session(store, spec):
-    """A session file by path, or by its saved name typed any way ('Tomato Stage.1' finds
-    tomato-stage-1)."""
+    """A session file by path, or by its saved name typed any way
+    ('Tomato Stage.1' finds tomato-stage-1).
+    """
     for candidate in (
         Path(spec),
         Path(spec + '.json'),
@@ -825,7 +863,9 @@ def find_session(store, spec):
 
 
 def summarize(summary, say):
-    """The grower depth in the terminal: status and reasons, tanks, grams and the acid."""
+    """The grower depth in the terminal: status and reasons, tanks,
+    grams and the acid.
+    """
     from .canonical_result import verify_summary
 
     verify_summary(summary)
@@ -897,7 +937,9 @@ def summarize(summary, say):
 
 
 def output_folder(output, name):
-    """The folder for the sheets: ``output`` or ./flahax-mix-<name>, numbered if it exists."""
+    """The folder for the sheets: ``output`` or ./flahax-mix-<name>,
+    numbered if it exists.
+    """
     folder = Path(output) if output else Path.cwd() / f'flahax-mix-{name}'
     stem, n = folder, 1
     while folder.exists():
@@ -907,7 +949,9 @@ def output_folder(output, name):
 
 
 def write_sheets(summary, session, output):
-    """Write the batch sheet, the summary and (full depth) the report; returns the file names."""
+    """Write the batch sheet, the summary and (full depth) the report;
+    returns the file names.
+    """
     depth = session.get('depth', 1)
     if 'volumetric_stocks' in summary:
         files = render(summary)
@@ -925,7 +969,9 @@ def write_sheets(summary, session, output):
 
 
 def saved_line(store, name):
-    """The line that says where the answers were saved and how to run them again."""
+    """The line that says where the answers were saved and how to run
+    them again.
+    """
     return (
         f'Saved the answers as {store.path("sessions", name)}; next time: flahax mix '
         f'sessions/{name}'
@@ -933,15 +979,17 @@ def saved_line(store, name):
 
 
 def use_tui(plain, ask, say, stdin=None, stdout=None):
-    """True when ``flahax mix`` should open the full-screen wizard instead of the line mode."""
+    """True when ``flahax mix`` should open the full-screen wizard
+    instead of the line mode.
+    """
     if plain or ask is not input or say is not print:
         return False
     return supported(stdin or sys.stdin, stdout or sys.stdout)
 
 
 def main(argv=None, *, ask=input, say=print, store=None):
-    """The ``flahax mix`` command: interview or saved session, then the sheets; returns the process
-    exit code.
+    """The ``flahax mix`` command: interview or saved session, then the
+    sheets; returns the process exit code.
     """
     parser = argparse.ArgumentParser(
         prog='flahax mix',

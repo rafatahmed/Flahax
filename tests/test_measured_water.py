@@ -18,8 +18,8 @@ from flahax import (
 from flahax.product_conversion import MOLAR_MASS
 from tests.test_water_workflow import products, TARGETS
 
-# Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, Table S1, station 104
-# (mg/L; IC is inorganic carbon as C). Measured pH 7.80.
+# Shomar et al. (2024), Groundwater, doi:10.1111/gwat.13411, Table S1,
+# station 104 (mg/L; IC is inorganic carbon as C). Measured pH 7.80.
 STATION_104 = {
     'Na+': 680 / 22.98977e3,
     'K+': 44.2 / 39.0983e3,
@@ -139,7 +139,8 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
             products(), targets, ppm, 6.0, final_volume=VolumeLitres(100), equilibrium=equilibrium
         )
         chemistry = result.stages['chemistry']
-        # Taken as measured: the imbalance is carried, nothing is closed on an ion.
+        # Taken as measured: the imbalance is carried, nothing is closed
+        # on an ion.
         self.assertEqual(chemistry.status, 'calculated', chemistry.message)
         balance = chemistry.value['water_balance']
         self.assertEqual(balance.reconciliation, 'imbalance_reported')
@@ -167,7 +168,9 @@ class MeasuredWaterWorkflowTests(unittest.TestCase):
 
 
 class NoChlorideTests(unittest.TestCase):
-    """Measured titration stays fixed; nothing is adjusted to close the charge."""
+    """Measured titration stays fixed; nothing is adjusted to close the
+    charge.
+    """
 
     def analysis(self, **extra):
         totals = {'Ca+2': 1.6e-3, 'NO3-': 1e-3, **extra}

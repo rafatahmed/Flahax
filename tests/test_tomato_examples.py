@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Tomato examples: the statements their report and batch sheets make must hold."""
+"""Tomato examples: the statements their report and batch sheets make
+must hold.
+"""
 
 import re
 import unittest
@@ -27,8 +29,9 @@ def compatible(tank):
 
 
 class SimpleTomatoTests(unittest.TestCase):
-    # 33c5df2 catalogue: examples/tomato_simple.py's recipe fails its every-target check on the
-    # packaged Tomato (Howard Resh) formula (a target missed by about 1.9 %).
+    # 33c5df2 catalogue: examples/tomato_simple.py's recipe fails its
+    # every-target check on the packaged Tomato (Howard Resh) formula (a
+    # target missed by about 1.9 %).
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -53,8 +56,9 @@ class SimpleTomatoTests(unittest.TestCase):
 
 
 class AdvancedTomatoTests(unittest.TestCase):
-    # 33c5df2 catalogue: on the packaged catalogue the Tomato feed mixes at pH 4.89, so phosphoric
-    # acid is never dosed and the over-acidification withdrawal this class follows does not arise.
+    # 33c5df2 catalogue: on the packaged catalogue the Tomato feed mixes
+    # at pH 4.89, so phosphoric acid is never dosed and the
+    # over-acidification withdrawal this class follows does not arise.
     @classmethod
     def setUpClass(cls):
         cls.enterClassContext(historical_catalogue())
@@ -66,9 +70,10 @@ class AdvancedTomatoTests(unittest.TestCase):
         self.assertLessEqual(chosen['Na'], limits['Na'])
         self.assertLessEqual(chosen['Cl'], limits['Cl'])
         self.assertGreater(blends[25]['Cl'], limits['Cl'])
-        # Decided on the laboratory analysis (#84): 8% passes, 9% fails on its measured chloride
-        # (115.2 mg/L). The chemistry takes the analysis as measured (G11), so the model basis
-        # shows the same chloride.
+        # Decided on the laboratory analysis (#84): 8% passes, 9% fails
+        # on its measured chloride (115.2 mg/L). The chemistry takes the
+        # analysis as measured (G11), so the model basis shows the same
+        # chloride.
         self.assertEqual(self.r['blend_percent'], 8)
         self.assertAlmostEqual(chosen['Na'], 54.4, places=1)
         self.assertAlmostEqual(chosen['Cl'], 102.4, places=1)
@@ -129,7 +134,8 @@ class TomatoReportTests(unittest.TestCase):
         for name, html in files.items():
             self.assertTrue(html.startswith('<!doctype html>'), name)
             self.assertNotIn('<script', html)
-            # Offline: no external resource (the SVG namespace URI is an identifier, not a fetch).
+            # Offline: no external resource (the SVG namespace URI is an
+            # identifier, not a fetch).
             self.assertIsNone(re.search(r'(src|href)="https?:|url\(https?:|@import', html), name)
             self.assertNotIn('>None<', html)
             self.assertNotIn('nan', html.lower().replace('nanostructured', ''))
@@ -137,7 +143,8 @@ class TomatoReportTests(unittest.TestCase):
         for salt in serializable(tomato_advanced.run())['recipe']['salts']:
             self.assertIn(salt['name'], sheet)
         self.assertIn('<svg', files['tomato-report.html'])
-        # Micronutrients and chelates have a tank: A, with calcium (FlahaX rule, #79).
+        # Micronutrients and chelates have a tank: A, with calcium
+        # (FlahaX rule, #79).
         self.assertNotIn('Not in table', sheet)
         self.assertIn('<td>A</td><td>Mn EDTA</td>', sheet)
 

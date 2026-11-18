@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Explicit content-bound consent; never a scientific or operational waiver."""
+"""Explicit content-bound consent; never a scientific or operational
+waiver.
+"""
 
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -24,10 +26,12 @@ def _bound(summary):
 
 
 def accept_result(summary, *, actor, reason):
-    """Record explicit consent to this exact proposal, without changing any result status.
+    """Record explicit consent to this exact proposal, without changing
+    any result status.
 
-    Actor is caller-supplied attribution, not authenticated identity. Consent does
-    not waive constraints, certify EC, or authorize physical delivery.
+    Actor is caller-supplied attribution, not authenticated identity.
+    Consent does not waive constraints, certify EC, or authorize
+    physical delivery.
     """
     fingerprint = _bound(summary)
     if not all(isinstance(v, str) and v.strip() for v in (actor, reason)):
@@ -44,7 +48,9 @@ def accept_result(summary, *, actor, reason):
 
 
 def verify_acceptance(summary, acceptance):
-    """Reject stale or malformed consent. Success leaves every calculation guard intact."""
+    """Reject stale or malformed consent. Success leaves every
+    calculation guard intact.
+    """
     fingerprint = _bound(summary)
     keys = {
         'schema_version',
@@ -81,7 +87,9 @@ def verify_acceptance(summary, acceptance):
 
 
 def save_result(summary, acceptance=None):
-    """Build a detached versioned archive; no acceptance is inferred by saving."""
+    """Build a detached versioned archive; no acceptance is inferred by
+    saving.
+    """
     _bound(summary)
     if acceptance is not None:
         verify_acceptance(summary, acceptance)
@@ -90,7 +98,9 @@ def save_result(summary, acceptance=None):
 
 
 def load_result(record):
-    """Validate a saved result and return its detached payload, preserving old provenance."""
+    """Validate a saved result and return its detached payload,
+    preserving old provenance.
+    """
     if (
         not isinstance(record, dict)
         or set(record) != {'schema_version', 'payload', 'sha256'}

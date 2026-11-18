@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Approved fault injection tests rejection guards, not thermodynamic accuracy.
+"""Approved fault injection tests rejection guards, not thermodynamic
+accuracy.
 
-Internal faults are injected deliberately; assertions observe public recipe/search
-results. Real-input numerical validation remains in the separate acceptance tests.
+Internal faults are injected deliberately; assertions observe public
+recipe/search results. Real-input numerical validation remains in the
+separate acceptance tests.
 """
 
 import copy

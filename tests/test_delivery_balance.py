@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent dilution identities and adversarial delivery boundaries."""
+"""Independent dilution identities and adversarial delivery
+boundaries.
+"""
 
 from dataclasses import replace
 from fractions import Fraction
@@ -128,7 +130,8 @@ class DeliveryBalanceTests(unittest.TestCase):
             mixture_model=synthetic_model,
         )
         water, curve, reagent = inputs()
-        # Curve endpoint: exactly 1.2 meq/L / 10000 meq/L reagent at 120 L.
+        # Curve endpoint: exactly 1.2 meq/L / 10000 meq/L reagent at 120
+        # L.
         ph = plan_ph(
             water,
             curve,
@@ -193,7 +196,8 @@ class DeliveryBalanceTests(unittest.TestCase):
         self.assertEqual(draft.state, 'draft')
         with self.assertRaises(DeliveryError):
             transition_plan(draft, 'validated')
-        # A manually replaced approval state cannot bypass delivery completeness.
+        # A manually replaced approval state cannot bypass delivery
+        # completeness.
         with self.assertRaises(DeliveryError):
             transition_plan(replace(draft, state='validated'), 'operator-approved')
 

@@ -49,6 +49,10 @@ each release, with numbers, sources and decisions, are in
 
 ### Changed
 
+- Define the Python style policy and its compatibility/notation exceptions; wrap flowing
+  comments and docstrings, separate import groups without reordering evaluation, normalize
+  test/helper names and refresh generated API/CLI references without changing calculations (#273).
+
 - Fit N_NO3, N_NH4 and N_UREA each as its own target; total N is their reported sum. Absent
   N_UREA is a declared zero; N_NH4 0 is no requirement, not a ban, and incidental NH4-N is held
   within min(10 % of total N, 1.5 mmol/L), basis Dutch soilless practice (De Kreij, Voogt et

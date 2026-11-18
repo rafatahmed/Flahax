@@ -3,15 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#40 formulation track: FlahaX vs Horticalc vs Irriblend-DSW (the authors' optimiser) and an LP
+"""#40 formulation track: FlahaX vs Horticalc vs Irriblend-DSW (the
+authors' optimiser) and an LP
 after its method.
 
-Every engine receives the same FlahaX nutrient catalogue (pH reagents excluded), 26 shipped
-formulas
-and two waters. Each returned recipe is re-scored by the Benchmark v1 evaluator
-(catalogue assays, max(0.01 mg/L, 1%) tolerance), so no reporting convention of
-any engine enters the scores. Timings are the best of `REPEATS` calls on the same
-machine: FlahaX single fit vs Horticalc (one fit each) and FlahaX's recommend()
+Every engine receives the same FlahaX nutrient catalogue (pH reagents
+excluded), 26 shipped formulas and two waters. Each returned recipe is
+re-scored by the Benchmark v1 evaluator (catalogue assays, max(0.01
+mg/L, 1%) tolerance), so no reporting convention of any engine enters
+the scores. Timings are the best of `REPEATS` calls on the same machine:
+FlahaX single fit vs Horticalc (one fit each) and FlahaX's recommend()
 pipeline are reported separately.
 
 Run with the pinned competitor environment (see README.md).
@@ -30,18 +31,20 @@ from flahax.composition import assay_conflict
 
 REPEATS = 3
 EXACT_PERCENT = 1e-3
-# Agronomic limits for the second scoreboard (#40). A recipe is "acceptable" when every
-# positive target is within the Benchmark v1 tolerance AND:
-# - incidental Cl <= 3 mmol/L (106.35 mg/L): raw-water cap for open systems with drain,
-#   De Kreij, Voogt & Baas (2003), PPO Brochure 191, p. 6;
-# - incidental NH4-N <= min(10% of total target N, 1.5 mmol/L): FlahaX default (#54),
-#   from Dutch soilless practice (5-15% of N, at most 1-1.5 mmol/L);
-# - incidental Na <= 3 mmol/L (68.97 mg/L): same De Kreij raw-water cap;
-# - no micronutrient above twice its target (FlahaX design choice; no published bound).
+# Agronomic limits for the second scoreboard (#40). A recipe is
+# "acceptable" when every positive target is within the Benchmark v1
+# tolerance AND: - incidental Cl <= 3 mmol/L (106.35 mg/L): raw-water
+# cap for open systems with drain, De Kreij, Voogt & Baas (2003), PPO
+# Brochure 191, p. 6; - incidental NH4-N <= min(10% of total target N,
+# 1.5 mmol/L): FlahaX default (#54), from Dutch soilless practice (5-15%
+# of N, at most 1-1.5 mmol/L); - incidental Na <= 3 mmol/L (68.97 mg/L):
+# same De Kreij raw-water cap; - no micronutrient above twice its target
+# (FlahaX design choice; no published bound).
 CL_LIMIT = 3.0 * 35.45
 NA_LIMIT = 3.0 * 22.989769
 MICRO = ("Fe", "Mn", "Zn", "Cu", "B", "Mo")
-# Macronutrient scoreboard: the targets every engine models (Irriblend-DSW has no micronutrients).
+# Macronutrient scoreboard: the targets every engine models
+# (Irriblend-DSW has no micronutrients).
 MACRO = ("N_NO3", "N_NH4", "N_UREA", "P", "K", "Ca", "Mg", "S")
 
 
@@ -55,11 +58,13 @@ def timed(call):
 
 
 def irriblend_method(products, targets, water):
-    """Independent LP after Gallego-Elvira et al. (2021), kept beside the authors' code (#40):
-    exact NO3-N, NH4-N, P, K and
-    micronutrients; Ca, Mg and S at or above target; minimise total grams (the catalogue
-    has no prices, so equal cost per gram). Not the authors' code. Returns None when
-    infeasible, as the published method does."""
+    """Independent LP after Gallego-Elvira et al. (2021), kept beside
+    the authors' code (#40): exact NO3-N, NH4-N, P, K and
+    micronutrients; Ca, Mg and S at or above target; minimise total
+    grams (the catalogue has no prices, so equal cost per gram). Not
+    the authors' code. Returns None when infeasible, as the published
+    method does.
+    """
     import numpy as np
     from scipy.optimize import linprog
 
@@ -101,7 +106,9 @@ def score(salts, recipe, targets, water):
 
 
 def incidental(salts, recipe, targets, water):
-    """Delivered incidental Cl, Na, NH4-N (mg/L) and micronutrient overshoot ratio."""
+    """Delivered incidental Cl, Na, NH4-N (mg/L) and micronutrient
+    overshoot ratio.
+    """
     by_id = {s["id"]: s for s in salts}
 
     def delivered(ion):
@@ -266,7 +273,8 @@ def main():
     args = parser.parse_args()
     report = run()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    # scipy/numpy scalars (int64, bool_, float64) serialise as plain Python numbers.
+    # scipy/numpy scalars (int64, bool_, float64) serialise as plain
+    # Python numbers.
     args.output.write_text(
         json.dumps(report, indent=2, default=lambda v: v.item()), encoding="utf-8"
     )

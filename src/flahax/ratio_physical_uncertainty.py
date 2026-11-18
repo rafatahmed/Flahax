@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Closed-batch mass balance with explicit solvent and quantity intervals."""
+"""Closed-batch mass balance with explicit solvent and quantity
+intervals.
+"""
 
 from copy import deepcopy
 import itertools
@@ -14,7 +16,9 @@ from .product_conversion import MOLAR_MASS, component_nutrient_masses
 
 
 def validate_physical(options, sources, water):
-    """Validate complete absolute intervals; never infer density from chemistry."""
+    """Validate complete absolute intervals; never infer density from
+    chemistry.
+    """
     p = options.get("physical_preparation")
     keys = {
         "solution_density_kg_l",
@@ -73,8 +77,9 @@ def validate_physical(options, sources, water):
         raise DeliveryError(
             "invalid_physical_uncertainty", "Source-water bounds must include the nominal quantity"
         )
-    # A necessary lower bound using known nutrient elements only, not a complete
-    # dissolved-solids estimate (oxygen, hydrogen and unknown solutes are omitted).
+    # A necessary lower bound using known nutrient elements only, not a
+    # complete dissolved-solids estimate (oxygen, hydrogen and unknown
+    # solutes are omitted).
     elemental_mass = sum(component_nutrient_masses(water["totals_mol_kg"]).values()) / 1000
     max_elements = elemental_mass * (1 + options["water_relative_error"])
     if max_elements > 1 / p["source_water_solvent_fraction"][1] - 1 + 1e-12:
@@ -96,7 +101,9 @@ def validate_physical(options, sources, water):
 
 
 def water_vertices(water, options, dimension):
-    """Keep one source-water quantity shared by all water constituent assays."""
+    """Keep one source-water quantity shared by all water constituent
+    assays.
+    """
     masses = options["physical_preparation"]["source_water_mass_kg"]
     dimension("source_water.mass", *masses)
     keys = [k for k in (*BASIS, "Na+", "Cl-", "NH4+") if water["totals_mol_kg"].get(k, 0) > 0]
@@ -123,7 +130,9 @@ def water_vertices(water, options, dimension):
 
 
 def mass_bounds(recipe, options, dimension):
-    """Bound solvent and pure make-up mass for the fixed rounded product doses."""
+    """Bound solvent and pure make-up mass for the fixed rounded product
+    doses.
+    """
     p = options["physical_preparation"]
     dimension("solution.density", *p["solution_density_kg_l"])
     dimension("source_water.solvent_fraction", *p["source_water_solvent_fraction"])
@@ -155,7 +164,9 @@ def mass_bounds(recipe, options, dimension):
 
 
 def scenario_mass(sources, doses, options, values, volume):
-    """Conserve total mass, separating solvent from declared non-solvent material."""
+    """Conserve total mass, separating solvent from declared non-solvent
+    material.
+    """
     p = options["physical_preparation"]
 
     def value(key, pair):

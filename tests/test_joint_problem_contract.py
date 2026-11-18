@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent arithmetic witnesses for one joint nutrient/chemistry problem."""
+"""Independent arithmetic witnesses for one joint nutrient/chemistry
+problem.
+"""
 
 from fractions import Fraction
 import unittest
@@ -80,8 +82,9 @@ class JointContractTests(unittest.TestCase):
             water={}, targets={'K': 0}, target_ph=7, reference_charge_mol_per_kg=0.002
         )
         r = p.evaluate({}, 0)
-        # The explicit closure offset is subtracted once, independently of the
-        # pinned water dissociation constant (pH 7 is not assumed exactly neutral).
+        # The explicit closure offset is subtracted once, independently
+        # of the pinned water dissociation constant (pH 7 is not assumed
+        # exactly neutral).
         self.assertEqual(r['chargeResidual'], r['equilibrium'].charge_balance - 0.002)
         self.assertEqual(r['equilibrium'].ph, 7)
         self.assertEqual(r['status'], 'requires_joint_acceptance')
@@ -262,7 +265,8 @@ class JointContractTests(unittest.TestCase):
             doses.append(r['componentsMolPerKg']['NO3-'])
             self.assertAlmostEqual(doses[-1], data['acid_molal'], places=18)
             state = r['equilibrium']
-            # Existing product-reference ionic-strength and conservation criteria.
+            # Existing product-reference ionic-strength and conservation
+            # criteria.
             reference = data['selected_rows'][-1]['mu']
             self.assertAlmostEqual(state.ionic_strength, reference, delta=0.03 * reference + 1e-9)
             for component, residual in state.residuals.items():

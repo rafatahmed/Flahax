@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Partition the complete unittest inventory without splitting shared fixtures.
+"""Partition the complete unittest inventory without splitting shared
+fixtures.
 
-Weights are scheduling hints from Linux run 43774097468, not test-selection rules
-or performance guarantees. New tests receive a default weight and still execute.
+Weights are scheduling hints from Linux run 43774097468, not
+test-selection rules or performance guarantees. New tests receive a
+default weight and still execute.
 """
 
 from collections import defaultdict
@@ -87,8 +89,9 @@ def execute(item):
     command = [sys.executable]
     coverage = sys.modules.get('coverage')
     if coverage is not None and coverage.Coverage.current() is not None:
-        # Coverage-aware tests disable automatic subprocess saving when they
-        # construct Coverage objects. An explicit runner always saves its data.
+        # Coverage-aware tests disable automatic subprocess saving when
+        # they construct Coverage objects. An explicit runner always
+        # saves its data.
         command += ['-m', 'coverage', 'run']
     command += ['-m', 'tools.ci_parallel', '--output', str(output), '--group', *ids]
     with output.with_suffix('.log').open('w', encoding='utf-8') as log:

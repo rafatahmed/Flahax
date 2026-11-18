@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""#40 competitor harness: the parts that run without the competitor packages."""
+"""#40 competitor harness: the parts that run without the competitor
+packages.
+"""
 
 import json
 import unittest
@@ -25,8 +27,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class IupacStandardTests(unittest.TestCase):
     def test_table_1_matches_the_table_2_polynomial(self):
-        # Pratt et al. (2001) Eq. 5 with the Table 2 parameters (ITS-90) reproduces the
-        # Table 1 values at 25 C: an internal check of the transcription.
+        # Pratt et al. (2001) Eq. 5 with the Table 2 parameters (ITS-90)
+        # reproduces the Table 1 values at 25 C: an internal check of
+        # the transcription.
         table2 = {
             0.01: (7.72921e-2, 2.30846e-3, 1.07715e-5, -5.84094e-8),
             0.1: (0.711685, 2.09002e-2, 8.99144e-5, -5.07124e-7),
@@ -98,7 +101,9 @@ if __name__ == "__main__":
 
 
 class IrriblendTranslationTests(unittest.TestCase):
-    """The catalogue in Irriblend-DSW's 'ferts' convention (mmol/g, phosphate as H2PO4-)."""
+    """The catalogue in Irriblend-DSW's 'ferts' convention (mmol/g,
+    phosphate as H2PO4-).
+    """
 
     def setUp(self):
         self.enterContext(historical_catalogue())

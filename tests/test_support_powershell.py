@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Exercise provisioning control flow with simulated commands, never an installer."""
+"""Exercise provisioning control flow with simulated commands, never an
+installer.
+"""
 
 from pathlib import Path
 import shutil
@@ -17,8 +19,9 @@ SHELL = shutil.which('pwsh') or shutil.which('powershell')
 @unittest.skipUnless(SHELL, 'PowerShell interpreter unavailable')
 class ProvisioningContractTests(unittest.TestCase):
     def test_pinned_provisioning_success_and_refusals(self):
-        # All filesystem probes, hashes, download and process commands are replaced.
-        # Only the GitHub environment output is written, inside this temporary folder.
+        # All filesystem probes, hashes, download and process commands
+        # are replaced. Only the GitHub environment output is written,
+        # inside this temporary folder.
         script = r"""
 param([string]$Target, [string]$OutputPath)
 $ErrorActionPreference = 'Stop'

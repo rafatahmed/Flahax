@@ -21,7 +21,8 @@ class FillModeTests(unittest.TestCase):
         self.assertEqual(volumes.capacity_litres, {'A': 20, 'B': 20, 'acid': 20})
 
     def test_smallest_tank_limits_irrigation_and_larger_tank_is_part_filled(self):
-        # Review Focus 2: B holds 30 L but only 20 L of it can be prepared.
+        # Review Focus 2: B holds 30 L but only 20 L of it can be
+        # prepared.
         volumes = prepare_stocks(
             tank_litres={'A': 20, 'B': 30, 'acid': 20}, ratio=100, mode='fill'
         )
@@ -87,7 +88,7 @@ class OnceModeTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
-    def assertInvalid(self, **overrides):
+    def assert_invalid(self, **overrides):
         arguments = dict(tank_litres={'A': 20, 'B': 20, 'acid': 20}, ratio=100, mode='fill')
         arguments.update(overrides)
         with self.assertRaises(DeliveryError) as raised:
@@ -97,23 +98,23 @@ class ValidationTests(unittest.TestCase):
     def test_capacity_must_be_positive_finite(self):
         for bad in (0, -5, float('nan'), float('inf'), True, None, 'twenty'):
             with self.subTest(bad=bad):
-                self.assertInvalid(tank_litres={'A': bad, 'B': 20, 'acid': 20})
+                self.assert_invalid(tank_litres={'A': bad, 'B': 20, 'acid': 20})
 
     def test_ratio_must_be_positive_finite(self):
         for bad in (0, -100, float('nan'), float('inf'), True):
             with self.subTest(bad=bad):
-                self.assertInvalid(ratio=bad)
+                self.assert_invalid(ratio=bad)
 
     def test_mode_must_be_known(self):
-        self.assertInvalid(mode='weekly')
+        self.assert_invalid(mode='weekly')
 
     def test_once_needs_positive_irrigation(self):
         for bad in (None, 0, -1, float('nan')):
             with self.subTest(bad=bad):
-                self.assertInvalid(mode='once', irrigation_litres=bad)
+                self.assert_invalid(mode='once', irrigation_litres=bad)
 
     def test_tanks_must_be_a_b_and_acid(self):
-        self.assertInvalid(tank_litres={'A': 20, 'B': 20})
+        self.assert_invalid(tank_litres={'A': 20, 'B': 20})
 
 
 if __name__ == '__main__':

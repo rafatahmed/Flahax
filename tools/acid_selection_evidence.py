@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Capture additional single-acid references without changing existing evidence.
+"""Capture additional single-acid references without changing existing
+evidence.
 
-Run: python tools/acid_selection_evidence.py --output NEW_DIRECTORY
-Uses the existing external pinned installation and temporary database merge.
+Run: python tools/acid_selection_evidence.py --output NEW_DIRECTORY Uses
+the existing external pinned installation and temporary database merge.
 """
 
 import json

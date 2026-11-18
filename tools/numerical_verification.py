@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Independent, deliberately small numerical oracles; no production imports.
+"""Independent, deliberately small numerical oracles; no production
+imports.
 
-Rational inputs are interpreted as supplied decimal text, not binary float bits.
-Box least squares uses exhaustive faces, not the runtime optimization algorithm.
-The acid oracle brackets a monotone charge equation using exact rational signs.
-Reference comparisons require declared matched conditions and provenance; they
-cannot authenticate those declarations or establish experimental accuracy.
+Rational inputs are interpreted as supplied decimal text, not binary
+float bits. Box least squares uses exhaustive faces, not the runtime
+optimization algorithm. The acid oracle brackets a monotone charge
+equation using exact rational signs. Reference comparisons require
+declared matched conditions and provenance; they cannot authenticate
+those declarations or establish experimental accuracy.
 """
 
 from decimal import Decimal, localcontext
@@ -22,7 +24,9 @@ def rational(value):
 
 
 def linear_solution(matrix, rhs):
-    """Solve a square rational system by elimination; return None if singular."""
+    """Solve a square rational system by elimination; return None if
+    singular.
+    """
     n = len(rhs)
     rows = [list(row) + [value] for row, value in zip(matrix, rhs)]
     for col in range(n):
@@ -40,13 +44,15 @@ def linear_solution(matrix, rhs):
 
 
 def box_least_squares(matrix, target, lower, upper):
-    """Minimize sum((A x - b)**2) over a finite box, at most six variables.
+    """Minimize sum((A x - b)**2) over a finite box, at most six
+    variables.
 
-    Return an exact optimizer, squared residual and gradient A.T(Ax-b). Singular
-    faces are skipped: a compact box always has an optimum on a face whose free
-    columns are independent. Degenerate optima need not have unique coordinates.
-    Weighted problems can be supplied as already scaled rows. This is not a
-    general inequality, integer, nonlinear, or unbounded optimization oracle.
+    Return an exact optimizer, squared residual and gradient A.T(Ax-b).
+    Singular faces are skipped: a compact box always has an optimum on a
+    face whose free columns are independent. Degenerate optima need not
+    have unique coordinates. Weighted problems can be supplied as
+    already scaled rows. This is not a general inequality, integer,
+    nonlinear, or unbounded optimization oracle.
     """
     a = [list(map(rational, row)) for row in matrix]
     b, lo, hi = (list(map(rational, v)) for v in (target, lower, upper))
@@ -85,10 +91,11 @@ def box_least_squares(matrix, target, lower, upper):
 def acid_bracket(total, ka, kw='1e-14', *, digits=80):
     """Bracket H for ideal monoprotic acid plus water on a decimal grid.
 
-    Solve H - Kw/H - Ka*C/(Ka+H) = 0. Its derivative is strictly positive.
-    Return Decimal endpoints separated by at most 10**(-digits), with exact
-    rational sign checks. This ideal, unbuffered system is not a Davies solution.
-    The precision range 16..200 is a harness resource limit, not chemistry policy.
+    Solve H - Kw/H - Ka*C/(Ka+H) = 0. Its derivative is strictly
+    positive. Return Decimal endpoints separated by at most
+    10**(-digits), with exact rational sign checks. This ideal,
+    unbuffered system is not a Davies solution. The precision range
+    16..200 is a harness resource limit, not chemistry policy.
     """
     c, k, water = map(rational, (total, ka, kw))
     if c < 0 or k <= 0 or water <= 0:
@@ -111,10 +118,12 @@ def acid_bracket(total, ka, kw='1e-14', *, digits=80):
 
 
 def error_account(actual, expected, *, absolute, relative):
-    """Account exactly for |actual-reference| <= absolute + relative*|reference|.
+    """Account exactly for |actual-reference| <= absolute +
+    relative*|reference|.
 
-    Tolerances must be justified by the caller. Zero-reference relative error is
-    undefined (None). No division floor, hidden tolerance, or NaN pass is allowed.
+    Tolerances must be justified by the caller. Zero-reference relative
+    error is undefined (None). No division floor, hidden tolerance, or
+    NaN pass is allowed.
     """
     a, e, atol, rtol = map(rational, (actual, expected, absolute, relative))
     if atol < 0 or rtol < 0:
@@ -148,12 +157,14 @@ CONDITIONS = frozenset(
 
 
 def compare_reference(actual, expected, budgets):
-    """Compare nonempty quantity maps only after matching declared conditions.
+    """Compare nonempty quantity maps only after matching declared
+    conditions.
 
-    Each record requires conditions, values, method, and nonempty sha256 provenance
-    mapping. Shared hashes are reported, not treated as independent parameter
-    evidence. Different methods are allowed and retained, with caller-owned budgets.
-    Provenance file bytes must be verified separately by the capture/replay runner.
+    Each record requires conditions, values, method, and nonempty sha256
+    provenance mapping. Shared hashes are reported, not treated as
+    independent parameter evidence. Different methods are allowed and
+    retained, with caller-owned budgets. Provenance file bytes must be
+    verified separately by the capture/replay runner.
     """
     for record in (actual, expected):
         if set(record['conditions']) != CONDITIONS or not record['method']:

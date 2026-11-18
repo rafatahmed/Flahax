@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Distribution verifier orchestration: synthetic archives and simulated subprocess results.
+"""Distribution verifier orchestration: synthetic archives and simulated
+subprocess results.
 
-These tests validate refusal and provenance, not clean installed-package correctness.
-The separate distribution verification stage performs real builds and installs.
+These tests validate refusal and provenance, not clean installed-package
+correctness. The separate distribution verification stage performs real
+builds and installs.
 """
 
 import contextlib

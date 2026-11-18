@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Generic thermodynamic entities for the growing fertilizer-chemistry model.
+"""Generic thermodynamic entities for the growing fertilizer-chemistry
+model.
 
-The records are deliberately data-driven: a phase is defined by its dissolved
-species stoichiometry and a source-specific log K. This module contains no
-unsourced fertilizer constants and no product-name chemistry.
+The records are deliberately data-driven: a phase is defined by its
+dissolved species stoichiometry and a source-specific log K. This module
+contains no unsourced fertilizer constants and no product-name
+chemistry.
 """
 
 from __future__ import annotations
@@ -20,7 +22,9 @@ from .delivery_contracts import DeliveryError
 
 @dataclass(frozen=True, slots=True)
 class MineralPhase:
-    """A dissolution phase with log K for one named database and temperature."""
+    """A dissolution phase with log K for one named database and
+    temperature.
+    """
 
     name: str
     dissolved_species: Mapping[str, float]

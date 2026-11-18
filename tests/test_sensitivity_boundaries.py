@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Sensitivity refusal witnesses; injected states are not chemistry certificates."""
+"""Sensitivity refusal witnesses; injected states are not chemistry
+certificates.
+"""
 
 from dataclasses import replace
 from fractions import Fraction
 import unittest
 from unittest.mock import patch
+
 from flahax import DeliveryError
 from flahax import joint_sensitivity as sensitivity
 from flahax.joint_workflow import joint_candidate
@@ -52,7 +55,8 @@ class SensitivityBoundaryTests(unittest.TestCase):
                 self.assert_refused(self.state, message)
 
     def test_corrupt_adjoint_cannot_escape_as_finite_sensitivity(self):
-        # Fault injection at the linear-solver boundary, not a physical equilibrium.
+        # Fault injection at the linear-solver boundary, not a physical
+        # equilibrium.
         for value in (Fraction(10**1000), float('inf')):
             with patch.object(
                 sensitivity,

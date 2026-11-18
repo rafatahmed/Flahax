@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Measured-water iteration failure witnesses for runtime coverage closure (#186)."""
+"""Measured-water iteration failure witnesses for runtime coverage
+closure (#186).
+"""
 
 import unittest
 from unittest.mock import patch
+
 from flahax import DeliveryError
 from flahax import measured_water as water
 

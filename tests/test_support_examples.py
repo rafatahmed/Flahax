@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Public example commands and docs hooks preserve partial results and output files."""
+"""Public example commands and docs hooks preserve partial results and
+output files.
+"""
 
 import contextlib
 import io
@@ -93,7 +95,8 @@ class ExampleCommandTests(unittest.TestCase):
                 run_all.main()
             self.assertEqual(e.exception.code, 2)
             self.assertEqual(before, {p.name: p.read_bytes() for p in target.iterdir()})
-            # The real scenarios were checked above; this branch checks stdout serialization.
+            # The real scenarios were checked above; this branch checks
+            # stdout serialization.
             with (
                 patch.object(run_all, 'SCENARIOS', {'small': lambda: {'assumptions': []}}),
                 patch.object(sys, 'argv', ['run_all']),

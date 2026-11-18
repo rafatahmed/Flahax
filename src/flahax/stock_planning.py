@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""Conservative, data-driven stock-tank planning for a final FlahaX recipe.
+"""Conservative, data-driven stock-tank planning for a final FlahaX
+recipe.
 
-The planner does not infer chemistry from a product name. Every product needs
-a supplied temperature-qualified solubility limit, and any co-storage ban must
-come from a versioned compatibility-rule record.
+The planner does not infer chemistry from a product name. Every product
+needs a supplied temperature-qualified solubility limit, and any
+co-storage ban must come from a versioned compatibility-rule record.
 """
 
 from __future__ import annotations
@@ -56,7 +57,9 @@ class StockSaltDose:
 
 @dataclass(frozen=True, slots=True)
 class StockTankPlan:
-    """One stock tank: its volume and the fertilizers dissolved in it."""
+    """One stock tank: its volume and the fertilizers dissolved in
+    it.
+    """
 
     tank: StockTank
     stock_volume: VolumeLitres
@@ -65,7 +68,9 @@ class StockTankPlan:
 
 @dataclass(frozen=True, slots=True)
 class StockPlan:
-    """A capacity-checked assignment with explicit mixture qualification and search status."""
+    """A capacity-checked assignment with explicit mixture qualification
+    and search status.
+    """
 
     recipe: FinalSolutionRecipe
     injection_ratio: InjectionRatio
@@ -116,15 +121,18 @@ def _compatible(groups: list[list[str]], rules: tuple[dict, ...]) -> bool:
     for group in groups:
         members = set(group)
         for rule in rules:
-            # A "separate" rule with multiple listed products means no two of
-            # that group may be co-stored in the same concentrated tank.
+            # A "separate" rule with multiple listed products means no
+            # two of that group may be co-stored in the same
+            # concentrated tank.
             if len(members.intersection(rule["productIds"])) >= 2:
                 return False
     return True
 
 
 def _assess_mixture(tank, temperature, model):
-    """Validate caller model evidence against this exact stock and its domain."""
+    """Validate caller model evidence against this exact stock and its
+    domain.
+    """
     if model is None:
         return dict(status='not_supported', reason='no qualified mixture model')
     raw = model(tank, temperature)
@@ -192,13 +200,14 @@ def plan_stocks(
 ) -> StockPlan:
     """Assign a feasible recipe to compatible concentrated-stock tanks.
 
-    Stock concentration is ``final_g_per_litre * injection_ratio`` and each
-    used tank holds ``final_volume / injection_ratio``. The planner chooses the
-    first qualified assignment using the fewest tanks, then tank-id order.
-    Without a reviewed mixture model, return a structural requires_review plan,
-    never mixing approval. The callable receives (StockTankPlan, temperature)
-    and must report matched product IDs, basis, source, review and domain bounds.
-    Search evaluates alternatives after mixture rejection; exhaustion is explicit.
+    Stock concentration is ``final_g_per_litre * injection_ratio`` and
+    each used tank holds ``final_volume / injection_ratio``. The planner
+    chooses the first qualified assignment using the fewest tanks, then
+    tank-id order. Without a reviewed mixture model, return a structural
+    requires_review plan, never mixing approval. The callable receives
+    (StockTankPlan, temperature) and must report matched product IDs,
+    basis, source, review and domain bounds. Search evaluates
+    alternatives after mixture rejection; exhaustion is explicit.
     """
     if not isinstance(recipe, FinalSolutionRecipe):
         raise DeliveryError("invalid_type", "recipe must be a FinalSolutionRecipe value")
