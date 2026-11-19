@@ -157,7 +157,7 @@ __all__ = [
     "load_identities",
     "identity_for_product",
 ]
-__version__ = "0.7.0"
+__version__ = '0.7.1.dev0'
 
 from .ratio_recipe import plan_ratio_recipe
 from .ratio_search import search_ratio_recipe
