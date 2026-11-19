@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use FlahaX, cite the version used. This checkout prepares unpublished 0.7.0; no new version DOI or release date is assigned. Credit the data sources listed under references."
+message: "If you use FlahaX, cite the version used. Version 0.7.0 has declared release date 2026-11-19. The concept DOI covers all versions; use a version DOI only when that archive is verified. Credit the data sources listed under references."
 title: "FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning"
 abstract: >-
   FlahaX turns crop-feed targets, source-water analyses and available products
@@ -33,6 +33,7 @@ contact:
     email: rafat.khashan82@gmail.com
     affiliation: Flaha Agri Tech
 version: 0.7.0
+date-released: '2026-11-19'
 doi: 10.5281/zenodo.23605678
 identifiers:
   - type: doi
@@ -69,6 +70,7 @@ preferred-citation:
       affiliation: Flaha Agri Tech
       orcid: https://orcid.org/0009-0009-4692-4552
   year: 2026
+  date-released: '2026-11-19'
   version: 0.7.0
   url: https://github.com/rafatahmed/Flahax
   repository-code: https://github.com/rafatahmed/Flahax

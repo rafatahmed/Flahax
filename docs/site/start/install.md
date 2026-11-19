@@ -10,9 +10,10 @@ python -m venv .venv
 python -m pip install flahax
 ```
 
-Pin the published version for reproducible work, for example `python -m pip install flahax==0.6.0`.
-This source checkout prepares **0.7.0, not yet published**; install it from a reviewed
-checkout with `python -m pip install .`. A PyPI install does not select this candidate.
+Version **0.7.0** has declared artifact date **2026-11-19**. Install a reviewed
+checkout with `python -m pip install .`. Once the version is available on PyPI, pin
+it with `python -m pip install flahax==0.7.0`. Check registry availability and
+`flahax --version`; do not silently substitute another version.
 
 ## Check what is installed
 

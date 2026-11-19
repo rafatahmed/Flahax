@@ -7,9 +7,9 @@ from its predecessor. Detailed notes retain sources, limitations and migration.
 
 ## [Unreleased]
 
-No additional changes beyond the unpublished 0.7.0 candidate are recorded.
+No changes recorded since 0.7.0.
 
-## [0.7.0] - not yet released
+## [0.7.0] - 2026-11-19
 
 A recipe-design and verification update for growers and agronomists: Sonneveld
 feed targets, broader fertilizer search, practical rounded product stocks and
