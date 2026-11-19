@@ -47,20 +47,22 @@ For changes from published recipes to this development checkout, see the
 [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html).
 Recalculate and review saved results; acceptance does not transfer to changed inputs or sources.
 
-**Prepared version: 0.7.0, not yet published.** Use the source checkout for this
-candidate. The latest verified PyPI publication during preparation is 0.6.0;
-its DOI and artifacts do not identify this candidate. See the
-[0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
+**Version 0.7.0 — 2026-11-19.** This is the artifact's declared release date.
+Registry uploads and version-specific archive records are verified separately in the
+[release evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
+See the [0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
 
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
-From a reviewed 0.7.0 candidate source checkout, install with `python -m pip install .`.
-To use the separately published 0.6.0 instead:
+From a reviewed source checkout, install with `python -m pip install .`.
+After 0.7.0 is available on PyPI, install its exact version:
 
 ```bash
-python -m pip install flahax==0.6.0
+python -m pip install flahax==0.7.0
 ```
+
+Verify availability before installation; do not substitute another version silently.
 
 Pin the version for reproducible work; `python -m pip install flahax` installs the latest
 release. To upgrade, and to check what is installed:
@@ -249,9 +251,10 @@ Live PHREEQC replay and distribution verification are described in
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, unpublished candidate)
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, 2026-11-19)
 [Computer software]. Cite the reviewed source revision as well as the version.
-The 0.6.0 version DOI identifies the historical publication, not this candidate.
+The 0.6.0 version DOI identifies that historical publication. Use a 0.7.0 version DOI only
+after its archive is verified.
 
 ```bibtex
 @software{alkhashan2026flahax,

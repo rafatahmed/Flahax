@@ -9,9 +9,12 @@ which revision, and with what result. Newest first.
 [below](#060-publication-2026-10-24). This index summarizes recorded publications;
 it is not a new registry or hosted-CI verification.
 
-The checkout is **0.7.0**, an unpublished preparation candidate. No 0.7.0
-publication date, tag, artifact upload or version DOI is recorded. Historical CI,
-reference replay and package checks do not certify this modified checkout.
+The checkout is **0.7.0**, with declared artifact date **2026-11-19**;
+it is still unpublished in this log. No 0.7.0 upload receipt, release tag or
+version DOI is recorded. Main 2349603 passed all 26 hosted Test jobs in
+[run 44422283816](https://github.com/rafatahmed/Flahax/actions/runs/44422283816).
+Final release-wording edits require their own exact-revision and artifact
+qualification. The artifact date is not evidence of registry publication.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.
 See the [migration guide](../start/migration.md) and

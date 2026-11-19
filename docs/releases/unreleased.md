@@ -1,6 +1,6 @@
 # Unreleased development notes
 
-The current prepared version is **0.7.0, not yet published**. Its coherent final
+Version **0.7.0** has declared artifact date **2026-11-19**. Its coherent final
 change summary is in the [0.7.0 release notes](0.7.0.md), with the
 [changelog](../../CHANGELOG.md) and [migration guide](../site/start/migration.md).
 No additional changes after that candidate are recorded here.

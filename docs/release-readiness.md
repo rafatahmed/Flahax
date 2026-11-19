@@ -1,43 +1,38 @@
 # Release readiness
 
-## Current preparation — 0.7.0, not yet published
+## Current artifact finalization — 0.7.0, 2026-11-19
 
-The checkout identifies itself as **0.7.0**, an unpublished preparation candidate.
-See the [0.7.0 notes](releases/0.7.0.md), [changelog](../CHANGELOG.md) and
-[migration guide](site/start/migration.md). No release date, tag, version DOI,
-GitHub Release or package upload is established by preparing this version.
+The checkout identifies itself as **0.7.0**, with declared artifact release date
+**2026-11-19**. See the [release notes](releases/0.7.0.md),
+[changelog](../CHANGELOG.md) and [migration guide](site/start/migration.md).
+Finalized metadata does not assert a release tag, registry upload or version DOI.
 
-The baseline main d520bd7 passed all 26 jobs in
-[run 44314323686](https://github.com/rafatahmed/Flahax/actions/runs/44314323686),
-including exact native coverage, Python 3.11-3.14, required pinned PHREEQC,
-strict documentation and clean development wheel/sdist installations.
-That is supporting baseline evidence, not CI for the modified 0.7.0 candidate.
-The final source still needs its own hosted checks and artifact qualification.
+Main 2349603 passed all 26 jobs in
+[run 44422283816](https://github.com/rafatahmed/Flahax/actions/runs/44422283816):
+Python 3.11-3.14, Linux/Windows native coverage, pinned live PHREEQC, strict
+documentation and clean wheel/sdist installs. #276/#277/#278/#280/#282 are closed.
+This finalization changes wording and dates only. Its exact revision and final
+artifacts still need qualification; baseline CI is not a substitute for that.
 
 | Item | Current disposition |
 |---|---|
-| Documentation and migration | Release-preparation corrections address #276/#277; the final notes explain Sonneveld, product search, rounded stocks, uncertainty, approvals and TUI migration. Validation must be bound to the resulting candidate. |
-| Metadata and citation | 0.7.0 is prepared as unpublished; no new version DOI/date is invented. Published 0.6.0 attribution remains distinct. |
-| Computational qualification (#200/#42) | Recorded computational scopes are complete; current exact-candidate regressions/reference evidence remain necessary. |
-| Catalogue and scientific claims (#201/#161) | Completed scoped audits retain unresolved attribution and model/data limits. |
-| Grower software acceptance (#231) | Hands-on software cases explicitly accepted on 2026-11-08 for their recorded revision. New implementer/automated checks do not fabricate independent grower trials. |
+| Documentation and migration | Final change summary, audience paths and migration guidance align to 0.7.0. Historical records remain preserved. |
+| Metadata and citation | Artifact date 2026-11-19; no new version DOI or upload receipt invented. Historical 0.6.0 attribution remains distinct. |
+| Computational qualification (#200/#42) | Recorded scopes complete; current source baseline passes required reference/coverage checks. Final revision checks remain necessary. |
+| Catalogue and scientific claims (#201/#161) | Completed scoped audits retain attribution and model/data limitations. |
+| Grower software acceptance (#231) | Recorded software trial accepted on 2026-11-08; automated checks do not fabricate additional grower trials. |
 | Physical validation (#41) | Independent assays, preparation/calibration and finished-feed measurements remain unfinished; no physical-accuracy or dosing-certification claim. |
-| Final release qualification | Exact 0.7.0 candidate CI, strict metadata, wheel/sdist installs and delivered assets/examples, source/artifact hashes and review remain required. |
-| Publication | Requires separate explicit authorization and the protected workflow in [Publishing](publishing.md). No publication is authorized by this page. |
+| Final release qualification | Exact finalized revision, strict metadata, clean installs, delivered assets/examples and source/artifact identities must pass before tagging/upload. |
+| Publication | Separate explicit authorization and protected workflow in [Publishing](publishing.md); actual receipts go in [release evidence](site/evidence/release-evidence.md). |
 
-Issue #234 is closed completed software work and explicitly plans no release;
-it is not a future release authorization. #42 is a completed computational
-campaign, not the unfinished physical programme in #41. Do not reopen those
-accepted scopes based on obsolete readiness text.
+Issue #234 is completed software work and plans no release; it is not release
+authorization. #42 is a completed computational campaign, distinct from #41.
+Packaged water profiles are examples, not laboratory measurements. Physical
+evidence limits claims; it does not create a blanket refusal to formulate a
+recipe or release a clearly scoped planning prototype.
 
-The packaged water profiles are examples, not laboratory measurements. Feed
-and root-zone targets, numerical acceptance, rounded-preparation tolerances
-and agronomic suitability are distinct. Physical evidence limits claims; its
-absence does not invent a new blanket refusal to formulate a recipe or release
-a clearly scoped planning prototype.
-
-Historical records below retain their revisions, publication facts and scoped
-remaining work as written at the time. They are not the current release status.
+Historical records below retain their original revisions, publication facts
+and scoped remaining work. They are not the current release status.
 
 ## Historical release records
 

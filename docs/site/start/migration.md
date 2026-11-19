@@ -1,6 +1,6 @@
 # Migrate saved workflows
 
-This guide applies to the **0.7.0 unpublished candidate**, upgrading from 0.6.0
+This guide applies to the **0.7.0 release**, upgrading from 0.6.0
 or an intermediate development checkout. No 0.7.0 package upload is claimed. The latest
 publication recorded in [release evidence](../evidence/release-evidence.md) is 0.6.0.
 Historical tests and benchmark downloads describe their own revisions.
