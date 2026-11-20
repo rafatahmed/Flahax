@@ -122,8 +122,22 @@ Dashboard settings, recorded here because they live outside the repository:
 - Pull request preview builds are on.
 - Tags v0.1.0 to v0.4.0 stay inactive.
 - An automation rule activates `v*` tags from the next release.
-- The default version is `latest` until that release, then `stable`.
+- The default version is `stable` (set and verified for 0.7.0 on 2026-11-19);
+  `latest` continues to track development on `main`.
 - Never put a Read the Docs token in the repository.
+
+## Checklist (0.7.0)
+
+- [x] Align/finalize release metadata, manual, changelog and citation (2026-11-19).
+- [x] Pass exact finalization PR #284 and main 8787877 CI (all 26 jobs).
+- [x] Obtain explicit maintainer authorization for tag, release and package publication.
+- [x] Publish v0.7.0; protected publisher 44436111286 passes all eight jobs.
+- [x] Review artifact hashes and approve the existing pypi deployment protection gate.
+- [x] Verify actual PyPI/GitHub file hashes and fresh published wheel/sdist installs.
+- [x] Verify installed grower/Appendix I/replay/uncertainty journeys; retain physical limits.
+- [x] Verify Zenodo 10.5281/zenodo.24356739 and exact-tag/stable documentation.
+- [x] Record actual publication receipts and version DOI in this follow-up.
+- [ ] Integrate the locally prepared 0.7.1.dev0 bookkeeping branch through PR/CI.
 
 ## Checklist (0.6.0)
 
@@ -192,6 +206,12 @@ inspect Markdown presentation as well: `twine check --strict` alone does not
 check Markdown links or demonstrate that a package was uploaded.
 
 ## Release history
+
+- **0.7.0**, 2026-11-19: published from `8787877`, tag `v0.7.0`, through
+  [protected run 44436111286](https://github.com/rafatahmed/Flahax/actions/runs/44436111286).
+  Actual wheel/sdist hashes match GitHub assets; fresh PyPI installations and
+  Appendix I journeys pass. Zenodo version DOI: 10.5281/zenodo.24356739;
+  tagged/stable docs verified. See [publication evidence](site/evidence/release-evidence.md#070-publication-2026-11-19).
 
 - **0.6.0**, 2026-10-24: published through the hardened workflow (run `40032809873`) from
   `03e03ef`, after the finalize step (#156); the deployment was approved by the maintainer, verified by

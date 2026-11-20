@@ -93,7 +93,7 @@ class ReleaseLifecycleTests(unittest.TestCase):
             data.mkdir(parents=True)
             site = root / 'docs/site'
             (site / 'evidence').mkdir(parents=True)
-            version = flahax.__version__
+            version = '9.8.7'  # Stable release fixture, even on a development checkout.
             (data / 'USER_GUIDE.md').write_text(
                 f'**Version:** {version}, {wording}\n\n### Historical release changes\n',
                 encoding='utf-8',
@@ -106,7 +106,10 @@ class ReleaseLifecycleTests(unittest.TestCase):
                 evidence += f'\n## {version} publication\nVerified upload receipt.\n'
             (site / 'evidence/release-evidence.md').write_text(evidence, encoding='utf-8')
             result = unittest.TestResult()
-            with patch.dict(globals(), ROOT=root, SITE=site):
+            with (
+                patch.dict(globals(), ROOT=root, SITE=site),
+                patch.object(flahax, '__version__', version),
+            ):
                 DocumentationMigrationTests(
                     'test_manual_current_version_is_not_historical_release'
                 ).run(result)

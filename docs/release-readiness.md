@@ -1,38 +1,33 @@
 # Release readiness
 
-## Current artifact finalization — 0.7.0, 2026-11-19
+## Published 0.7.0 and development 0.7.1.dev0
 
-The checkout identifies itself as **0.7.0**, with declared artifact release date
-**2026-11-19**. See the [release notes](releases/0.7.0.md),
-[changelog](../CHANGELOG.md) and [migration guide](site/start/migration.md).
-Finalized metadata does not assert a release tag, registry upload or version DOI.
+Published **0.7.0** (2026-11-19), tag `v0.7.0`, identifies
+`8787877cac626251cba2ff0a049958a6a25cef71`. See the
+[publication receipts](site/evidence/release-evidence.md#070-publication-2026-11-19),
+[release notes](releases/0.7.0.md) and [migration guide](site/start/migration.md).
+The version DOI is [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
 
-Main 2349603 passed all 26 jobs in
-[run 44422283816](https://github.com/rafatahmed/Flahax/actions/runs/44422283816):
-Python 3.11-3.14, Linux/Windows native coverage, pinned live PHREEQC, strict
-documentation and clean wheel/sdist installs. #276/#277/#278/#280/#282 are closed.
-This finalization changes wording and dates only. Its exact revision and final
-artifacts still need qualification; baseline CI is not a substitute for that.
+This checkout opens **0.7.1.dev0**, unpublished development. It is not a new
+release and does not inherit qualification for changed source. The local
+bookkeeping branch still needs its own committed-head hosted checks and review.
+No numerical chemistry, reference data or recipe targets change in this step.
 
 | Item | Current disposition |
 |---|---|
-| Documentation and migration | Final change summary, audience paths and migration guidance align to 0.7.0. Historical records remain preserved. |
-| Metadata and citation | Artifact date 2026-11-19; no new version DOI or upload receipt invented. Historical 0.6.0 attribution remains distinct. |
-| Computational qualification (#200/#42) | Recorded scopes complete; current source baseline passes required reference/coverage checks. Final revision checks remain necessary. |
-| Catalogue and scientific claims (#201/#161) | Completed scoped audits retain attribution and model/data limitations. |
-| Grower software acceptance (#231) | Recorded software trial accepted on 2026-11-08; automated checks do not fabricate additional grower trials. |
-| Physical validation (#41) | Independent assays, preparation/calibration and finished-feed measurements remain unfinished; no physical-accuracy or dosing-certification claim. |
-| Final release qualification | Exact finalized revision, strict metadata, clean installs, delivered assets/examples and source/artifact identities must pass before tagging/upload. |
-| Publication | Separate explicit authorization and protected workflow in [Publishing](publishing.md); actual receipts go in [release evidence](site/evidence/release-evidence.md). |
+| Released source and CI | Main 8787877 passes 26 Test jobs; protected publisher 44436111286 passes all eight jobs. |
+| Delivered artifacts | Actual PyPI downloads match the validated build/GitHub assets; fresh wheel/sdist installs pass examples, APIs/resources and CLI checks. |
+| Installed workflows | Fresh PyPI grower/Appendix I import/replay, uncertainty intervals, sodium reserve and explicit changed-sample review pass; qualification remains software-only. |
+| Archive/documentation | Version DOI/source identity and successful tagged/stable RTD builds match 8787877; stable is default. |
+| Development identity | Project/runtime/manual/generated API reference identify 0.7.1.dev0. Citation and published installation guidance retain 0.7.0. |
+| Completed software findings | #276/#277/#278/#280/#282 closed; lifecycle fixture follow-up #285 accompanies this branch. |
+| Physical validation (#41) | Independent preparation/assay/crop evidence remains separate; no physical-accuracy or dosing-certification claim. |
+| Future publication | This bookkeeping creates no tag or upload. Any later release requires its own qualification and explicit approval. |
 
-Issue #234 is completed software work and plans no release; it is not release
-authorization. #42 is a completed computational campaign, distinct from #41.
-Packaged water profiles are examples, not laboratory measurements. Physical
-evidence limits claims; it does not create a blanket refusal to formulate a
-recipe or release a clearly scoped planning prototype.
-
-Historical records below retain their original revisions, publication facts
-and scoped remaining work. They are not the current release status.
+Recorded grower software acceptance (#231) and completed computational campaign
+#42 retain their scope; neither becomes independent physical validation.
+Packaged profiles remain examples, not laboratory measurements.
+Historical records below retain their original revisions and publication facts.
 
 ## Historical release records
 

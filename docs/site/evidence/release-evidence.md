@@ -4,17 +4,11 @@ This page is the release log: for each FlahaX version, what was checked, on
 which revision, and with what result. Newest first.
 
 :::{note}
-**Current release: 0.6.0**, the latest publication recorded on this page, dated
-2026-10-24. Its exact tagged revision, checks and artifact hashes are recorded
-[below](#060-publication-2026-10-24). This index summarizes recorded publications;
-it is not a new registry or hosted-CI verification.
-
-The checkout is **0.7.0**, with declared artifact date **2026-11-19**;
-it is still unpublished in this log. No 0.7.0 upload receipt, release tag or
-version DOI is recorded. Main 2349603 passed all 26 hosted Test jobs in
-[run 44422283816](https://github.com/rafatahmed/Flahax/actions/runs/44422283816).
-Final release-wording edits require their own exact-revision and artifact
-qualification. The artifact date is not evidence of registry publication.
+**Current published release: 0.7.0**, dated 2026-11-19.
+The exact tag, publisher, artifact hashes and installed checks are recorded
+[below](#070-publication-2026-11-19). This checkout is **0.7.1.dev0**, unpublished
+development. Published 0.7.0 evidence applies to its tagged revision and actual
+artifacts; it does not certify later development changes.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.
 See the [migration guide](../start/migration.md) and
@@ -30,11 +24,60 @@ They are kept here because the records cite them.
 
 | Version | Date | Status | Record |
 |---|---|---|---|
-| 0.6.0 | 2026-10-24 | Published, latest recorded | [Publication](#060-publication-2026-10-24) |
+| 0.7.0 | 2026-11-19 | Published, latest recorded | [Publication](#070-publication-2026-11-19) |
+| 0.6.0 | 2026-10-24 | Published | [Publication](#060-publication-2026-10-24) |
 | 0.5.0 | 2026-10-20 | Published | [Publication](#050-publication-2026-10-20) |
 | 0.4.0 | 2026-10-17 | Published | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
+
+## 0.7.0 publication (2026-11-19)
+
+Published under explicit maintainer authorization. Annotated tag `v0.7.0`
+identifies `8787877cac626251cba2ff0a049958a6a25cef71` (merge of #284).
+[Main CI 44431956285](https://github.com/rafatahmed/Flahax/actions/runs/44431956285)
+passed all 26 jobs; the tagged
+[publisher 44436111286](https://github.com/rafatahmed/Flahax/actions/runs/44436111286)
+passed all eight jobs, including the four Python-version unit/clean-install jobs,
+pinned live PHREEQC, build and protected PyPI deployment. Protection settings
+were retained. GitHub Release was published at 01:20:07 UTC (04:20:07 Riyadh).
+
+| Published artifact | Bytes | SHA-256 | PyPI upload (UTC, 2026-11-19) |
+|---|---:|---|---|
+| `flahax-0.7.0-py3-none-any.whl` | 471177 | `51d4700acff32a315b52d08d06e06e0b4a5e089301fd0aff4f49f6a8016daae9` | 2026-11-19T02:29:59.281909Z |
+| `flahax-0.7.0.tar.gz` | 6712183 | `ed9775b42135e07ad9eaa53788612d5fe157459cdae79a572ed78257212d01a6` | 2026-11-19T02:30:01.173910Z |
+
+Actual PyPI downloads match the validated build byte-for-byte, and the GitHub
+Release asset digests match. Metadata: 0.7.0, Python >=3.11, Apache-2.0, no
+runtime dependencies; neither file is yanked. Fresh independent installations
+directly from the published wheel and sdist pass all nine manual examples per
+install, API/resource checks and both CLI entry points.
+
+The fresh PyPI-installed grower/Appendix I journey passes first/repeat batch,
+1,000 L at pH 5.5 without sodium nitrate, all 13 declared nutrient intervals,
+pH tolerance, sodium reserve, self-contained byte-identical replay after deleting
+the imported profile, explicit changed-sample review, original preservation,
+tampered-session refusal and exact offline copies. The illustrative recipe
+remains `requires_review`; this software check is not physical preparation or
+independent laboratory/crop validation.
+
+Release jobs each report 1,851 cases including skips: Python 3.11 skips 32;
+3.12 skips 31; 3.13 and 3.14 each skip 30. No errors/failures. These are not
+1,851 passes per version. Full native coverage/support-dependency evidence and
+required reference checks are retained in the separate exact-main CI run.
+
+Zenodo version DOI: [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
+It archives the GitHub source ZIP, not the wheel/sdist. The recorded MD5 matches;
+source ZIP SHA-256 is
+`bb4f05331a251b40905aa2d52aa6dd8e46280c3f8fa994535192a4606e325fc3`.
+The archive identity files match the exact tag.
+
+Read the Docs [tagged build 36000739](https://app.readthedocs.org/projects/flahax/builds/36000739/)
+and [stable build 36000621](https://app.readthedocs.org/projects/flahax/builds/36000621/)
+passed on `8787877`. Version v0.7.0 is active, stable is the default, and the
+root redirects to stable; live install pages show 0.7.0 and 2026-11-19.
+Native Firefox control was unavailable; in-app browser activation succeeded
+after maintainer sign-in. No source tag or uploaded artifact was rewritten.
 
 ## 0.6.0 publication (2026-10-24)
 

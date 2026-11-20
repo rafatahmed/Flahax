@@ -12,7 +12,7 @@ equilibrium chemistry and auditable delivery planning.**
 [![Python](https://img.shields.io/pypi/pyversions/flahax)](https://pypi.org/project/flahax/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/rafatahmed/Flahax/blob/main/LICENSE)
 [![Tests](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/rafatahmed/Flahax/actions/workflows/test.yml)
-[![Documentation](https://readthedocs.org/projects/flahax/badge/?version=latest)](https://flahax.readthedocs.io/en/latest/)
+[![Documentation](https://readthedocs.org/projects/flahax/badge/?version=stable)](https://flahax.readthedocs.io/en/stable/)
 [![codecov](https://codecov.io/gh/rafatahmed/Flahax/branch/main/graph/badge.svg)](https://codecov.io/gh/rafatahmed/Flahax)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23605678.svg)](https://doi.org/10.5281/zenodo.23605678)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/flahax?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/flahax)
@@ -47,16 +47,20 @@ For changes from published recipes to this development checkout, see the
 [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html).
 Recalculate and review saved results; acceptance does not transfer to changed inputs or sources.
 
-**Version 0.7.0 — 2026-11-19.** This is the artifact's declared release date.
-Registry uploads and version-specific archive records are verified separately in the
-[release evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
+**Published release: 0.7.0 (2026-11-19).**
+[PyPI wheel and source package](https://pypi.org/project/flahax/0.7.0/),
+[version DOI](https://doi.org/10.5281/zenodo.24356739) and
+[current publication evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
 See the [0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
+
+**This source checkout: 0.7.1.dev0**, unpublished development after 0.7.0.
+The release DOI identifies the published archive, not this development checkout.
 
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
 From a reviewed source checkout, install with `python -m pip install .`.
-After 0.7.0 is available on PyPI, install its exact version:
+Install the published version from PyPI:
 
 ```bash
 python -m pip install flahax==0.7.0
@@ -253,8 +257,8 @@ Live PHREEQC replay and distribution verification are described in
 
 Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, 2026-11-19)
 [Computer software]. Cite the reviewed source revision as well as the version.
-The 0.6.0 version DOI identifies that historical publication. Use a 0.7.0 version DOI only
-after its archive is verified.
+Published 0.7.0: [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
+For development checkouts, include the development version and exact source revision.
 
 ```bibtex
 @software{alkhashan2026flahax,
@@ -262,6 +266,7 @@ after its archive is verified.
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
   version = {0.7.0},
+  doi     = {10.5281/zenodo.24356739},
   url     = {https://github.com/rafatahmed/Flahax},
   license = {Apache-2.0}
 }
