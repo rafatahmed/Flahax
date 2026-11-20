@@ -223,7 +223,7 @@ class ScientificAuditRegressionTests(unittest.TestCase):
 
     def test_f14_release_banner_agrees_with_its_own_publication_records(self):
         text = (ROOT / 'docs/site/evidence/release-evidence.md').read_text(encoding='utf-8')
-        current = re.search(r'Current release: ([0-9]+\.[0-9]+\.[0-9]+)', text)
+        current = re.search(r'Current published release: ([0-9]+\.[0-9]+\.[0-9]+)', text)
         publications = re.findall(r'^## ([0-9]+\.[0-9]+\.[0-9]+) publication', text, re.M)
         self.assertIsNotNone(current)
         self.assertTrue(publications)
