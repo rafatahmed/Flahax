@@ -22,9 +22,12 @@ def products():
 
 
 class ProductNameCollisionTests(unittest.TestCase):
-    def test_direct_fit_rejects_ambiguous_product_names(self):
-        with self.assertRaisesRegex(InputError, 'Ambiguous product name'):
-            solve_weights(products(), {'K': 150, 'N_NO3': 40, 'P': 25}, {})
+    def test_direct_fit_preserves_distinct_ids_without_name_resolution(self):
+        result = solve_weights(products(), {'K': 150, 'N_NO3': 40, 'P': 25}, {})
+        self.assertEqual(
+            {p['id'] for p in result['salts']},
+            {'custom-collision-0', 'custom-collision-1'},
+        )
 
     def test_direct_chemistry_rejects_both_sequence_and_mapping_collisions(self):
         pair = products()
