@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Mapping
 
 # Ions the mass balance knows. Total "N" is absent on purpose: nitrate
 # and ammonium are different rows, and a single N figure cannot be split
@@ -146,6 +147,22 @@ def imbalance_note(balance: dict) -> str | None:
         f"cations {balance['cationsMeqPerL']:.2f} vs anions {balance['anionsMeqPerL']:.2f} "
         f"meq/L ({balance['imbalancePercent']:+.1f} %)."
     )
+
+
+def product_name_collision(products) -> str | None:
+    """Describe an ambiguous exact product name before name-based dose resolution."""
+    seen = {}
+    for product in products:
+        if not isinstance(product, Mapping) or not isinstance(product.get('name'), str):
+            continue  # Existing input validation owns malformed records.
+        name = product['name']
+        if name in seen:
+            return (
+                f'Ambiguous product name {name!r}: product IDs {seen[name]!r} and '
+                f'{product.get("id")!r}; supply distinct product names.'
+            )
+        seen[name] = product.get('id')
+    return None
 
 
 class InputError(ValueError):

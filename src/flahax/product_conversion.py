@@ -19,6 +19,7 @@ import math
 from typing import Mapping
 
 from .catalogue_chemistry import ProductChemistry, chemistry_for_product
+from .composition import product_name_collision
 from .delivery_contracts import DeliveryError
 from .label_reconciliation import chemistry_elements
 from .material_chemistry import chemistry_ions, material_chemistry, unstated_amounts
@@ -331,7 +332,10 @@ def _named(products) -> dict:
     """
     if products is None:
         return {}
-    records = products.values() if isinstance(products, Mapping) else products
+    records = list(products.values() if isinstance(products, Mapping) else products)
+    collision = product_name_collision(records)
+    if collision:
+        raise DeliveryError('ambiguous_product_name', collision)
     named = {}
     for record in records:
         if not isinstance(record, Mapping) or not isinstance(record.get('name'), str):

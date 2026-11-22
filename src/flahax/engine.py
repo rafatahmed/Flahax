@@ -33,6 +33,7 @@ from .composition import (
     NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
+    product_name_collision,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
@@ -661,6 +662,9 @@ def solve_weights(
     totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
+    collision = product_name_collision(salts)
+    if collision:
+        raise InputError(collision)
     targets = fitted_targets(validate_profile(targets, "targets"))
     water = validate_profile(water or {}, "water")
     for salt in salts:
@@ -1267,6 +1271,9 @@ def recommend(
             candidates.
     """
     _validate_ridge(ridge)
+    collision = product_name_collision(library)
+    if collision:
+        raise InputError(collision)
     targets = validate_profile(targets, "targets")
     if not targets:
         raise InputError("targets are required")
