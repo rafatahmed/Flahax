@@ -16,30 +16,35 @@ from flahax import (
 )
 
 
+def phosphate_workflow():
+    products = [p for p in load_library()['salts'] if p['formula'] == 'KH2PO4']
+    reagents = [p for p in catalogue_ph_reagents() if p['chemicalFormula'] == 'KOH']
+    workflow = plan_fertilizer_workflow(
+        products,
+        {'K': 150, 'N_NO3': 40, 'P': 25},
+        {},
+        5.8,
+        final_volume=VolumeLitres(1000),
+        equilibrium=dict(
+            water_totals={},
+            water_mass_kg=1000,
+            water_analysis_id='declared-ion-free',
+            carbon_boundary='closed',
+            temperature_c=25,
+            phases=[],
+        ),
+        ph_adjustment=dict(
+            products=reagents,
+            maximum_reagent_volume_litres=5,
+            correct_mixed_ph=True,
+        ),
+    )
+    return products, reagents, workflow
+
+
 class SelectedReagentAccountingTests(unittest.TestCase):
     def test_reported_potassium_reconstructs_from_selected_base_and_fertilizer(self):
-        products = [p for p in load_library()['salts'] if p['formula'] == 'KH2PO4']
-        reagents = [p for p in catalogue_ph_reagents() if p['chemicalFormula'] == 'KOH']
-        workflow = plan_fertilizer_workflow(
-            products,
-            {'K': 150, 'N_NO3': 40, 'P': 25},
-            {},
-            5.8,
-            final_volume=VolumeLitres(1000),
-            equilibrium=dict(
-                water_totals={},
-                water_mass_kg=1000,
-                water_analysis_id='declared-ion-free',
-                carbon_boundary='closed',
-                temperature_c=25,
-                phases=[],
-            ),
-            ph_adjustment=dict(
-                products=reagents,
-                maximum_reagent_volume_litres=5,
-                correct_mixed_ph=True,
-            ),
-        )
+        products, reagents, workflow = phosphate_workflow()
         summary = summarize_batch(
             workflow,
             products,
@@ -65,6 +70,15 @@ class SelectedReagentAccountingTests(unittest.TestCase):
         )
         reported = next(r['final'] for r in summary['formulation']['rows'] if r['symbol'] == 'K')
         self.assertAlmostEqual(float(fertilizer + reagent), reported, delta=1e-10)
+
+    def test_reassessment_preserves_the_recorded_search_method_and_attempts(self):
+        products, _, workflow = phosphate_workflow()
+        plan = workflow.stages['ph_adjustment'].value
+        search = plan.selected.recommendation['substitutionSearch']
+        self.assertEqual(
+            search['method'], plan.unadjusted_recommendation['substitutionSearch']['method']
+        )
+        self.assertEqual(search['attemptedProductIds'], [[products[0]['id']]])
 
 
 if __name__ == '__main__':
