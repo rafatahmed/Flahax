@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import lru_cache
 from importlib.resources import files
 
 from .composition import (
@@ -87,6 +88,23 @@ def load_library() -> dict:
     """
     text = files("flahax").joinpath("data/library.json").read_text(encoding="utf-8")
     return json.loads(text)
+
+
+@lru_cache(maxsize=4)
+def _salts_by_name(loader) -> dict:
+    return {str(salt["name"]): salt for salt in loader()["salts"]}
+
+
+def catalogue_salts_by_name() -> dict:
+    """Catalogue salt records keyed by product name; shared, so treat as read-only.
+
+    ``load_library`` re-reads and re-parses the packaged JSON on every call; the optimiser's
+    inner loops look products up thousands of times per solve. The index is built once per
+    loader. It is keyed on the loader, not the module, so a test that substitutes a different
+    catalogue by replacing ``load_library`` gets its own index and never sees this one.
+    Product names are unique in every shipped and historical catalogue.
+    """
+    return _salts_by_name(load_library)
 
 
 def ppm_per_gram(percent: float) -> float:

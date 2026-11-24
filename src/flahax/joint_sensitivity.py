@@ -130,22 +130,30 @@ def equilibrium_charge_gradient(problem, state):
             amount * F(powers.get('H2O', 0)) / F(water),
         ]
         derivatives.append(partials)
-    matrix = [
-        [
-            sum(F(r['powers'].get(b, 0)) * d[j] for r, d in zip(records, derivatives))
-            for j in range(dimension)
-        ]
-        for b in bases
-    ]
+    # Each species touches few components and most partials are exactly zero, so the matrix
+    # is accumulated from the non-zero terms only. The arithmetic is exact rational, so
+    # leaving out zero terms (and summing in a different order) changes no value.
+    row_of = {b: i for i, b in enumerate(bases)}
+    matrix = [[F(0)] * dimension for _ in bases]
+    charge_square = [F(0)] * dimension
+    charge = [F(0)] * dimension
+    derivative_sum = [F(0)] * dimension
+    for r, d in zip(records, derivatives):
+        live = [(j, v) for j, v in enumerate(d) if v]
+        for b, power in r['powers'].items():
+            if power and b in row_of:
+                row, weight = matrix[row_of[b]], F(power)
+                for j, v in live:
+                    row[j] += weight * v
+        z = F(r['charge'])
+        for j, v in live:
+            charge_square[j] += z**2 * v / 2
+            charge[j] += z * v
+            derivative_sum[j] += v
+    matrix.append([F(j == n) - charge_square[j] for j in range(dimension)])
     matrix.append(
         [
-            F(j == n) - sum(F(r['charge']) ** 2 * d[j] / 2 for r, d in zip(records, derivatives))
-            for j in range(dimension)
-        ]
-    )
-    matrix.append(
-        [
-            F(j == n + 1) + (0 if floor else sum(d[j] for d in derivatives) / F(55.5084))
+            F(j == n + 1) + (0 if floor else derivative_sum[j] / F(55.5084))
             for j in range(dimension)
         ]
     )
@@ -156,9 +164,6 @@ def equilibrium_charge_gradient(problem, state):
         ]
         for b in bases
     ] + [[F(0)] * len(sources) for _ in range(2)]
-    charge = [
-        sum(F(r['charge']) * d[j] for r, d in zip(records, derivatives)) for j in range(dimension)
-    ]
     # q^T J^-1 B = z^T B, where J^T z = q. One exact adjoint solve
     # avoids carrying a separate large rational solution for every
     # product.

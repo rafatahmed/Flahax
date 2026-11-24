@@ -797,12 +797,13 @@ def make_lot(record: Mapping) -> Lot:
 
 
 def _shipped_salt(name: str) -> dict:
-    from .engine import load_library  # deferred: the engine may later import this module
+    """The catalogue record for a product name (treat as read-only: it is shared)."""
+    from .engine import catalogue_salts_by_name  # deferred: the engine may import this module
 
-    for salt in load_library()['salts']:
-        if salt['name'] == name:
-            return salt
-    raise DeliveryError('unknown_product', f'no catalogue record for {name!r}')
+    try:
+        return catalogue_salts_by_name()[name]
+    except (KeyError, TypeError):  # TypeError: an unhashable name matches no record
+        raise DeliveryError('unknown_product', f'no catalogue record for {name!r}') from None
 
 
 def _unique(items) -> tuple:
