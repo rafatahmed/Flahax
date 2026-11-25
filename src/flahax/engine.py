@@ -124,7 +124,7 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
     Invalid nutrient maps raise InputError. This is nutrient accounting,
     not an acid/base analysis.
     """
-    targets = validate_profile(targets, "targets")
+    targets = validate_profile(targets, "targets", total_n=True)
     water = validate_profile(water or {}, "water")
     gap = {}
     for symbol in dict.fromkeys([*targets, *water]):
