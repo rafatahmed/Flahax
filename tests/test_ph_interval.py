@@ -9,6 +9,8 @@ a mix already inside the interval needs no reagent, and a mix outside it is move
 the nearest bound, the smallest change that qualifies. The point target is unchanged.
 """
 
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -184,6 +186,21 @@ class PhIntervalInterfaceTests(unittest.TestCase):
                 with self.assertRaises(DeliveryError) as raised:
                     run_batch(BatchOptions(**(base | changes)))
                 self.assertEqual(raised.exception.code, 'invalid_value')
+
+    def test_the_command_refuses_a_point_with_an_interval_or_half_an_interval(self):
+        base = ['--formula', 'Tomato (Howard Resh)', '--water', 'ro']
+        for extra in (
+            ['--ph', '5.8', '--ph-min', '5.7', '--ph-max', '6.0'],
+            ['--ph-min', '5.7'],
+            ['--ph-max', '6.0'],
+        ):
+            with self.subTest(extra=extra):
+                with (
+                    contextlib.redirect_stderr(io.StringIO()),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    main(base + extra)
+                self.assertEqual(raised.exception.code, 2)
 
     def test_the_command_takes_an_interval(self):
         with tempfile.TemporaryDirectory() as temp:

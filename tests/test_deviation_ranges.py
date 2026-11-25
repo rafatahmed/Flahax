@@ -12,7 +12,7 @@ never relaxes an explicit zero target or a hard maximum, and a miss widens nothi
 
 import unittest
 
-from flahax import DeliveryError, InputError, load_library, recommend
+from flahax import DeliveryError, InputError, VolumeLitres, load_library, recommend
 from flahax.deviation_ranges import classify, effective_ranges, normalize_ranges
 
 TARGETS = {'K': 100.0, 'Ca': 50.0, 'N_NO3': 80.0, 'Mg': 0.0}
@@ -72,6 +72,13 @@ class EffectiveRangeTests(unittest.TestCase):
             with self.subTest(spec=spec):
                 with self.assertRaises(DeliveryError):
                     effective_ranges(spec, TARGETS)
+
+    def test_overrides_must_be_mappings(self):
+        for spec in (dict(overrides='K'), dict(overrides={'K': 5})):
+            with self.subTest(spec=spec):
+                with self.assertRaises(DeliveryError) as raised:
+                    effective_ranges(spec, TARGETS)
+                self.assertEqual(raised.exception.code, 'invalid_type')
 
     def test_the_mode_defaults_to_assess(self):
         self.assertEqual(normalize_ranges(dict(percent=5))['mode'], 'assess')
@@ -234,6 +241,30 @@ class WorkflowRangeTests(unittest.TestCase):
     def test_an_invalid_setting_is_refused_before_any_fitting(self):
         with self.assertRaises(DeliveryError):
             self.plan(5.8, deviation_ranges=dict(percent=-1))
+
+    def test_a_missed_required_range_never_lifts_a_blocked_status(self):
+        from flahax import plan_fertilizer_workflow, summarize_batch
+        from tests.test_ph_interval import EQUILIBRIUM, PRODUCTS, REAGENTS
+
+        flow = plan_fertilizer_workflow(
+            PRODUCTS,
+            {'K': 150, 'N_NO3': 40, 'P': 25},
+            {'Na': 100.0},  # the water alone is above the declared maximum: blocked
+            5.8,
+            final_volume=VolumeLitres(1000),
+            equilibrium=EQUILIBRIUM,
+            ph_adjustment=dict(
+                products=REAGENTS, maximum_reagent_volume_litres=5, correct_mixed_ph=True
+            ),
+            maximum_concentrations={'Na': 5.0},
+            deviation_ranges=dict(percent=0.0, mode='require'),
+        )
+        summary = summarize_batch(flow, PRODUCTS, title='T', water_label='RO')
+        self.assertEqual(summary['status'], 'blocked')
+        self.assertEqual(summary['deviation_ranges']['requirement']['status'], 'search_incomplete')
+        self.assertTrue(
+            any('required deviation range is not met' in w for w in summary['warnings'])
+        )
 
 
 class RangeInterfaceTests(unittest.TestCase):
