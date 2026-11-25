@@ -61,6 +61,30 @@ The usual nutrient stock channels, with calcium and micronutrients in A and sulf
 phosphates in B. Actual layouts depend on separation constraints, equipment and mixture evidence.
 _Avoid_: Part A / Part B, Stock 1 / Stock 2
 
+**Stock assignment**:
+The grouping of a recipe's products into concentrate tanks so that no separation rule is broken, found without any
+mixture approval. It uses the fewest tanks and does not depend on how many tanks the grower has.
+_Avoid_: Tank grouping, Tank assignment, Separation assignment
+
+**Required tanks**:
+The number of tanks the stock assignment needs (`tanks.required_tanks`), set by the separation rules alone.
+_Avoid_: Tank count, Tanks needed
+
+**Available tanks**:
+The tanks the grower declares (`--available-tanks`, `tanks.available_tanks`). When none are declared two are assumed
+and the summary says so (`available_tanks_declared` false).
+_Avoid_: Tank count, Owned tanks
+
+**Equipment fit**:
+Whether the available tanks, and their declared capacities, hold the required tanks' stock (`tanks.equipment.fit`).
+A mismatch is reported and blocks; the recipe and the equipment are never changed to make it fit.
+_Avoid_: Tank check, Capacity gate
+
+**Single-product solubility**:
+A product's own recorded solubility compared with its stock concentration. It is never mixed-stock approval, and its
+qualification lists what stays unverified: the mixture, and the temperature when the value was recorded at another one.
+_Avoid_: Solubility check, Mixture solubility
+
 **Sonneveld target design**:
 The A–D calculation from a crop/system baseline, explicit nutrient corrections and irrigation
 EC to finished-feed targets.
