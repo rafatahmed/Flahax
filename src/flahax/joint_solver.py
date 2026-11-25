@@ -31,8 +31,8 @@ def _constraints(problem, scales):
     limits.update({k: 0.0 for k, t in problem.targets.items() if t == 0})
     rows += [
         (
-            [1000 * s.nutrients.get(k, 0) * h for s, h in zip(sources, scales)],
-            limit - problem.water.get(k, 0),
+            [1000 * s.fraction(k) * h for s, h in zip(sources, scales)],
+            limit - problem.water_at(k),
         )
         for k, limit in limits.items()
     ]
@@ -209,7 +209,7 @@ def _implicit_matrix(problem, value, scales, charge_scale):
     sources = (*problem.fertilizers, problem.reagent)
     matrix = [
         [
-            1000 * source.nutrients.get(row['symbol'], 0) * scale / row['target']
+            1000 * source.fraction(row['symbol']) * scale / row['target']
             for source, scale in zip(sources, scales)
         ]
         for row in value[0]['rows']
@@ -429,11 +429,11 @@ def solve_joint_problem(
         exact_model = [
             (
                 [
-                    (j, F(1000) * F(source.nutrients.get(k, 0)) / F(target))
+                    (j, F(1000) * F(source.fraction(k)) / F(target))
                     for j, source in enumerate(sources)
-                    if source.nutrients.get(k, 0)
+                    if source.fraction(k)
                 ],
-                (F(target) - F(problem.water.get(k, 0))) / F(target),
+                (F(target) - F(problem.water_at(k))) / F(target),
             )
             for k, target in problem.targets.items()
             if target > 0
@@ -846,10 +846,7 @@ def solve_joint_problem(
                     # directly; only charge needs numerical probes.
                     # Subtraction would lose small gradient changes.
                     nutrient_column = [
-                        1000
-                        * sources[j].nutrients.get(row['symbol'], 0)
-                        * scales[j]
-                        / row['target']
+                        1000 * sources[j].fraction(row['symbol']) * scales[j] / row['target']
                         for row in current[0]['rows']
                         if row['target'] is not None and row['target'] > 0
                     ]
