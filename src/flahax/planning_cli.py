@@ -171,6 +171,7 @@ def execute(command, payload):
         'equilibrium',
         'acids',
         'maximum_concentrations',
+        'deviation_ranges',
         'remedy_options',
         'max_remedy_evaluations',
     }
@@ -209,6 +210,7 @@ def execute(command, payload):
         acids=payload.get('acids'),
         stocks=stocks,
         maximum_concentrations=payload.get('maximum_concentrations'),
+        deviation_ranges=payload.get('deviation_ranges'),
         remedy_options=options,
         max_remedy_evaluations=payload.get('max_remedy_evaluations', 20),
     )

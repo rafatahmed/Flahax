@@ -28,6 +28,12 @@ _Avoid_: Acid, base, adjuster
 The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
+**Acceptable deviation range**:
+A range a user declares around a positive target (a symmetric percentage, with per-nutrient shortage and excess in percent or
+mg/L). None is a default. Assess classifies the result against it; Require constrains the search by it. It never relaxes a zero
+target or a declared maximum, and a miss is reported, not widened.
+_Avoid_: Tolerance, allowance, default range
+
 **Acceptable pH interval**:
 A pair `(low, high)` given as the target pH. It is judged against its bounds: a mix inside needs no reagent, a mix outside
 is moved to the nearest bound. No midpoint is ever used.

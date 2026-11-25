@@ -690,7 +690,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None, deviation_ranges: 'dict | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -738,6 +738,17 @@ Args:
         ammoniumLimit reports the limit with its basis. A declared
         N_NH4 maximum always replaces the preset. Untargeted
         nutrients do not enter the objective.
+    deviation_ranges: Optional acceptable deviation ranges for
+        positive targets: ``percent`` (symmetric), ``overrides`` (a
+        nutrient's ``shortage_percent``, ``shortage_mg_per_l``,
+        ``excess_percent`` or ``excess_mg_per_l``) and ``mode``.
+        ``assess`` (default) classifies the result against the ranges
+        and changes nothing; ``require`` fits with each upper bound as
+        a hard maximum and raises the weight of a nutrient below its
+        lower bound, keeping the candidate and naming the unmet
+        requirement if a bound is not reached. Reported as
+        ``deviationRanges``. None sets no range; a range never relaxes
+        a zero target or a declared maximum.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -994,13 +1005,13 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>, ph_interval: tuple | None = None) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>, ph_interval: tuple | None = None, deviation_ranges: dict | None = None) -> None
 ```
 
 The recommendation, water, nutrient gap and pH target, with each
 stage's result; the pH must still be measured after mixing.
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`, `ph_interval`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`, `ph_interval`, `deviation_ranges`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -1020,7 +1031,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None, deviation_ranges=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages

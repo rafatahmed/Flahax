@@ -86,7 +86,8 @@ The same from files in one command, for scripts.
 usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
                     --sonneveld-targets SONNEVELD_TARGETS] [--preview-targets] [--list-formulas]
                     [--water WATER] [--water-share PERCENT] [--volume VOLUME] [--ph PH]
-                    [--ph-min PH_MIN] [--ph-max PH_MAX] [--ratio RATIO]
+                    [--ph-min PH_MIN] [--ph-max PH_MAX] [--range-percent RANGE_PERCENT]
+                    [--range SYMBOL=SHORTAGE:EXCESS] [--require-ranges] [--ratio RATIO]
                     [--available-tanks AVAILABLE_TANKS] [--fit-equipment] [--tank-capacity LITRES]
                     [--ec EC] [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
@@ -152,6 +153,14 @@ options:
   --ph-min PH_MIN       lowest acceptable feed pH; with --ph-max the target is this interval,
                         judged against its bounds, and no midpoint is used
   --ph-max PH_MAX       highest acceptable feed pH (see --ph-min)
+  --range-percent RANGE_PERCENT
+                        acceptable deviation, in percent either side of every positive target; no
+                        default, so no range is used unless you give one
+  --range SYMBOL=SHORTAGE:EXCESS
+                        a nutrient's own range, each side as 5% or 3mg (mg/L), for example K=2%:5%
+                        or Ca=:4mg; an empty side keeps --range-percent
+  --require-ranges      constrain the fit by the ranges (default: only assess the result against
+                        them); a zero target and a declared maximum are never relaxed
   --ratio RATIO         final litres per litre of concentrate (default 100)
   --available-tanks AVAILABLE_TANKS
                         concentrate tanks you have (default: two assumed, and the report says so)

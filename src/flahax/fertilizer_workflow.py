@@ -29,6 +29,7 @@ from .material_chemistry import material_chemistry
 from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
+from .deviation_ranges import normalize_ranges
 from .ph_adjustment import normalize_target_ph, plan_coupled_ph
 from .requirement_fit import PH_TOLERANCE, declared_error_percent, met, reagent_shift_exceeds
 from .nutrient_acceptance import (
@@ -90,6 +91,8 @@ class FertilizerWorkflow:
     # The acceptable pH interval (low, high) when one was given instead of a point
     # (contract Q31); target_ph is then None until the pH stage names the bound it aims at.
     ph_interval: tuple | None = None
+    # The user's acceptable deviation ranges (contract Q26); None when none were given.
+    deviation_ranges: dict | None = None
 
 
 # Stages that plan a reagent to one pH point. They do not pick a point from an interval.
@@ -331,6 +334,7 @@ def plan_fertilizer_workflow(
     max_remedy_evaluations=20,
     volumetric_stocks=None,
     equipment_check=None,
+    deviation_ranges=None,
 ):
     """Run available stages; expose missing inputs and rejected stages
     separately.
@@ -366,8 +370,13 @@ def plan_fertilizer_workflow(
     collision = product_name_collision(salts)
     if collision:
         raise InputError(collision)
+    normalize_ranges(deviation_ranges)  # refuse an invalid setting before any fitting
     recommendation = recommend(
-        salts, targets, water, maximum_concentrations=maximum_concentrations
+        salts,
+        targets,
+        water,
+        maximum_concentrations=maximum_concentrations,
+        deviation_ranges=deviation_ranges,
     )
     # One assessment: the user's limits plus the ammonium allowance
     # recommend applied (#92).
@@ -383,7 +392,12 @@ def plan_fertilizer_workflow(
     if recommendation['limitViolations']:
         recommendation['feasible'] = False
     output = FertilizerWorkflow(
-        recommendation, water, gap_for(targets, water), point, ph_interval=ph_interval
+        recommendation,
+        water,
+        gap_for(targets, water),
+        point,
+        ph_interval=ph_interval,
+        deviation_ranges=deviation_ranges,
     )
     stages = output.stages
 
@@ -979,6 +993,8 @@ def plan_fertilizer_workflow(
     )
     if volumetric_stocks is not None:
         request['volumetric_stocks'] = volumetric_stocks
+    if deviation_ranges is not None:
+        request['deviation_ranges'] = deviation_ranges
     if equipment_check is not None:
         if not callable(equipment_check):
             raise DeliveryError('invalid_type', 'equipment_check must be callable')

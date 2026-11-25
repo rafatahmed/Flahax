@@ -301,6 +301,8 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `missing_field` | A required input is absent (targets, reagent records, a document field). | Add the named field. |
 | `unknown_field` | A key is not recognised, for example an unsupported water key. | Use the keys the message lists. |
 | `out_of_range` | A physical input is outside what the model accepts (pH, ionic strength, concentrations). | Check units and values; FlahaX does not extrapolate. |
+| `range_without_positive_target` | A deviation range was declared for a nutrient with no positive target; a range never relaxes a zero target. | Declare a positive target for it, or remove the range. |
+| `unsupported_ph_interval` | A stage that plans a reagent to one pH (nitric, titration, acid selection) was given a pH interval. | Use `ph_adjustment`, or give one `target_ph`; no point is chosen for you. |
 | `unknown_ion` | A nutrient or ion symbol is not one FlahaX knows. | Use N_NO3, N_NH4, P, K, Ca, Mg, S, Fe, Mn, Zn, Cu, B, Mo, Na, Cl. |
 | `invalid_ions` | A water or nutrient profile for a quantity conversion is not a valid map of ion symbols to mg/L. | Correct the profile the message names. |
 | `ambiguous_unit` | A quantity could be read two ways, such as total N. | Split it as the message says (N_NO3 and N_NH4). |

@@ -481,6 +481,9 @@ class BatchOptions:
     ph: float = 5.8
     ph_min: float | None = None
     ph_max: float | None = None
+    range_percent: float | None = None
+    ranges: list = field(default_factory=list)
+    require_ranges: bool = False
     ratio: float = 100
     acid: list = field(default_factory=list)
     limit: list = field(default_factory=list)
@@ -659,6 +662,42 @@ def _target_ph(options):
     return (options.ph_min, options.ph_max)
 
 
+def parse_range(text):
+    """``SYMBOL=SHORTAGE:EXCESS`` to ``(symbol, override)``. Each side is ``5%`` or ``3mg``
+    (mg/L); an empty side keeps the symmetric percentage, if any.
+    """
+    symbol, _, sides = str(text).partition('=')
+    shortage, colon, excess = sides.partition(':')
+    if not symbol.strip() or not colon:
+        raise DeliveryError('invalid_value', f'range {text!r} must look like K=2%:5% or Ca=:4mg')
+    override = {}
+    for side, token in (('shortage', shortage), ('excess', excess)):
+        token = token.strip()
+        if not token:
+            continue
+        unit, digits = ('percent', token[:-1]) if token.endswith('%') else (None, token)
+        if token.endswith('mg'):
+            unit, digits = 'mg_per_l', token[:-2]
+        if unit is None:
+            raise DeliveryError('invalid_value', f'range side {token!r} needs % or mg')
+        try:
+            override[f'{side}_{unit}'] = float(digits)
+        except ValueError:
+            raise DeliveryError('invalid_value', f'range side {token!r} is not a number') from None
+    return symbol.strip(), override
+
+
+def _deviation_ranges(options):
+    """The ``deviation_ranges`` setting the options ask for, or None."""
+    if options.range_percent is None and not options.ranges:
+        return None
+    return dict(
+        percent=options.range_percent,
+        overrides=dict(parse_range(item) for item in options.ranges),
+        mode='require' if options.require_ranges else 'assess',
+    )
+
+
 def run_batch(options):
     """The batch summary (``summarize_batch``); with tanks,
     ``summary['volumes']`` gives the stock volumes.
@@ -791,6 +830,7 @@ def run_batch(options):
         ),
         remedy_options=remedies,
         equipment_check=equipment_check,
+        deviation_ranges=_deviation_ranges(options),
         max_remedy_evaluations=len(options.confirmed_products)
         + (options.alternative_search_budget if alternative_products else 0),
     )
@@ -887,6 +927,9 @@ def build(args):
             ph=5.8 if args.ph is None else args.ph,
             ph_min=args.ph_min,
             ph_max=args.ph_max,
+            range_percent=args.range_percent,
+            ranges=args.range,
+            require_ranges=args.require_ranges,
             ratio=args.ratio,
             acid=args.acid,
             limit=args.limit,
@@ -963,6 +1006,26 @@ def main(argv=None):
         '--ph-max',
         type=number_in('--ph-max', 0, 14, above=False),
         help='highest acceptable feed pH (see --ph-min)',
+    )
+    parser.add_argument(
+        '--range-percent',
+        type=number_in('--range-percent', 0, above=False),
+        help='acceptable deviation, in percent either side of every positive target; no '
+        'default, so no range is used unless you give one',
+    )
+    parser.add_argument(
+        '--range',
+        action='append',
+        default=[],
+        metavar='SYMBOL=SHORTAGE:EXCESS',
+        help='a nutrient\'s own range, each side as 5%% or 3mg (mg/L), for example K=2%%:5%% or '
+        'Ca=:4mg; an empty side keeps --range-percent',
+    )
+    parser.add_argument(
+        '--require-ranges',
+        action='store_true',
+        help='constrain the fit by the ranges (default: only assess the result against them); '
+        'a zero target and a declared maximum are never relaxed',
     )
     parser.add_argument(
         '--ratio',

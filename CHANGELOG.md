@@ -13,6 +13,7 @@ Development checkout: 0.7.1.dev0.
 
 - Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with a nitrate and a positive ammonium target it must agree with their sum (an absent urea counts as zero); with other forms both are scored and `totalN.overlapForms` lists the overlap (#291).
 - `flahax batch` takes `--available-tanks` and `--tank-capacity`; the report lists the tanks the recipe needs against yours, and a tank too small for its stock blocks without changing the recipe (#293).
+- Acceptable deviation ranges, none by default: `deviation_ranges` on `recommend` and the workflow, and `--range-percent`, `--range` and `--require-ranges` on `flahax batch`. Assess classifies the result; Require constrains the fit and keeps an unmet candidate. A zero target or declared maximum is never relaxed (#305).
 - `target_ph` accepts an acceptable interval `(low, high)` (`--ph-min` and `--ph-max` on `flahax batch`): a mix inside needs no reagent, otherwise the plan aims at the nearest bound, never a midpoint; single-purpose pH stages refuse an interval (#304).
 - `--fit-equipment` and `available_product_search(on_equipment_miss=True)` search other products for a recipe that fits the declared tanks; tanks and separation rules never change, and the mode and equipment are saved in `remedies` (#294).
 - A saved result keeps `supplied_inputs`, bound to its input fingerprint, and `saved_input_differences` names what a recalculation changed (#297).

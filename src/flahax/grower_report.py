@@ -14,6 +14,7 @@ documents, not dosing instructions: measure EC and pH after mixing.
 """
 
 from .canonical_result import result_statuses, seal_summary, verify_summary
+from .deviation_ranges import assessment as range_assessment
 
 from copy import deepcopy
 from dataclasses import asdict
@@ -843,6 +844,24 @@ def summarize_batch(
             warnings.append(exceeds_message(row, temperature_c))
         elif row.status != 'ok':
             warnings.append(f'{row.product}: solubility not checked ({row.reason}).')
+    deviation = range_assessment(
+        workflow.deviation_ranges,
+        {r['symbol']: r['target'] for r in recipe['rows'] if r['target'] is not None},
+        {r['symbol']: r['final'] for r in recipe['rows']},
+    )
+    requirement = (deviation or {}).get('requirement')
+    if requirement and requirement['status'] != 'met':
+        # The final recipe, with the reagent, is judged against the required ranges.
+        if status != 'blocked':
+            status = 'requires_review'
+        warnings.append(
+            'A required deviation range is not met: '
+            + ', '.join(
+                f'{u["symbol"]} is {u["position"]} its range by {u["outsideBy"]:.3g} mg/L'
+                for u in requirement['unmet']
+            )
+            + '. No range was widened.'
+        )
     sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
         remedies=deepcopy(workflow.remedies),
@@ -852,6 +871,7 @@ def summarize_batch(
         batch_litres=litres,
         target_ph=workflow.target_ph,
         target_ph_interval=list(workflow.ph_interval) if workflow.ph_interval else None,
+        deviation_ranges=deviation,
         status=status,
         water=water,
         limits=limits,
@@ -1442,6 +1462,38 @@ def _reagent_line(summary):
     )
 
 
+def ranges_table(summary):
+    """The user's acceptable deviation ranges against the delivered recipe, or nothing."""
+    ranges = summary.get('deviation_ranges')
+    if not ranges:
+        return ''
+
+    def bound(value):
+        return 'open' if value is None else number(value, 3)
+
+    mode = (
+        'Required: the fit was constrained by these ranges.'
+        if ranges['mode'] == 'require'
+        else 'Assessed only: the fit was not changed.'
+    )
+    return table(
+        ['Nutrient', 'Target mg/L', 'Range mg/L', 'Delivered mg/L', 'Position'],
+        [
+            (
+                r['symbol'],
+                number(r['target'], 3),
+                f'{bound(r["low"])} to {bound(r["high"])}',
+                number(r['final'], 3),
+                r['position']
+                if r['position'] == 'inside'
+                else f'{r["position"]} by {number(r["outsideBy"], 3)}',
+            )
+            for r in ranges['assessment']
+        ],
+        f'Acceptable deviation ranges you declared. {mode}',
+    )
+
+
 def render_report(summary):
     """Self-contained HTML report from ``summarize_batch``."""
     verify_summary(summary)
@@ -1537,6 +1589,7 @@ def render_report(summary):
             'Nutrient fit, including what the water and the pH reagent bring',
         )
         + nitrogen_paragraphs(s)
+        + ranges_table(s)
         + (
             (
                 '<p>Missed targets:</p><ul>'
