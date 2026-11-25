@@ -86,8 +86,9 @@ The same from files in one command, for scripts.
 usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
                     --sonneveld-targets SONNEVELD_TARGETS] [--preview-targets] [--list-formulas]
                     [--water WATER] [--water-share PERCENT] [--volume VOLUME] [--ph PH]
-                    [--ratio RATIO] [--available-tanks AVAILABLE_TANKS] [--tank-capacity LITRES]
-                    [--ec EC] [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
+                    [--ratio RATIO] [--available-tanks AVAILABLE_TANKS] [--fit-equipment]
+                    [--tank-capacity LITRES] [--ec EC]
+                    [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
                     [--volumetric-stocks VOLUMETRIC_STOCKS]
                     [--alternative-products ALTERNATIVE_PRODUCTS]
@@ -151,6 +152,8 @@ options:
   --ratio RATIO         final litres per litre of concentrate (default 100)
   --available-tanks AVAILABLE_TANKS
                         concentrate tanks you have (default: two assumed, and the report says so)
+  --fit-equipment       when the recipe does not fit your tanks, search --alternative-products for
+                        one that does (your equipment and the separation rules are never changed)
   --tank-capacity LITRES
                         capacity of a tank in litres; repeat once per tank, in tank order
   --ec EC               requested EC25 in mS/cm, compared with the estimated range (never

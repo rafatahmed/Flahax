@@ -14,15 +14,23 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from flahax.batch_cli import BatchOptions, main, run_batch
+from flahax import VolumeLitres, load_library, plan_fertilizer_workflow, summarize_batch
+from flahax.batch_cli import main
 from flahax.delivery_contracts import DeliveryError
 
 NITRIC = 'HNO3:0.65:1.39:Nitric acid 65%'
 BASE = dict(water='ro', formula='Tomato (Howard Resh)', acid=[NITRIC], volume=1000, ratio=100)
 
 
-def batch(**changes):
-    return run_batch(BatchOptions(**(BASE | changes)))
+LIBRARY = load_library()
+SALTS = LIBRARY['salts']
+TOMATO = {f['name']: f['targets'] for f in LIBRARY['formulas']}['Tomato (Howard Resh)']
+FLOW = plan_fertilizer_workflow(SALTS, TOMATO, {}, 5.8, final_volume=VolumeLitres(1000))
+
+
+def summary(**changes):
+    """The report for one recipe without pH planning: fast, for input handling."""
+    return summarize_batch(FLOW, SALTS, title='T', water_label='RO', **changes)
 
 
 def doses(summary):
@@ -36,7 +44,7 @@ def doses(summary):
 class DeclaredTankCountTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.by_count = {n: batch(available_tanks=n) for n in (1, 2, 3)}
+        cls.by_count = {n: summary(available_tanks=n) for n in (1, 2, 3)}
 
     def test_the_declared_count_is_reported_as_declared(self):
         for n, summary in self.by_count.items():
@@ -60,24 +68,24 @@ class DeclaredTankCountTests(unittest.TestCase):
         self.assertEqual(second_tank_notes(self.by_count[3]), [])
 
     def test_undeclared_equipment_is_disclosed_not_silently_assumed(self):
-        tanks = batch()['tanks']
+        tanks = summary()['tanks']
         self.assertEqual(tanks['available_tanks'], 2)
         self.assertFalse(tanks['available_tanks_declared'])
 
 
 class DeclaredCapacityTests(unittest.TestCase):
     def test_capacities_that_hold_the_stock_fit(self):
-        summary = batch(available_tanks=2, tank_capacities=[20, 20])
-        fit = summary['tanks']['equipment']['fit']
+        report = summary(available_tanks=2, tank_capacities_litres=[20, 20])
+        fit = report['tanks']['equipment']['fit']
         self.assertEqual([row['tank'] for row in fit], ['A', 'B'])
         self.assertEqual([row['stock_litres'] for row in fit], [10.0, 10.0])
         self.assertEqual([row['capacity_litres'] for row in fit], [20.0, 20.0])
         self.assertTrue(all(row['fits'] for row in fit))
-        self.assertFalse([w for w in summary['warnings'] if 'cannot hold' in w])
+        self.assertFalse([w for w in report['warnings'] if 'cannot hold' in w])
 
     def test_a_tank_too_small_is_explained_and_the_recipe_is_kept(self):
-        fits = batch(available_tanks=2, tank_capacities=[20, 20])
-        small = batch(available_tanks=2, tank_capacities=[5, 20])
+        fits = summary(available_tanks=2, tank_capacities_litres=[20, 20])
+        small = summary(available_tanks=2, tank_capacities_litres=[5, 20])
         fit = small['tanks']['equipment']['fit']
         self.assertEqual([row['fits'] for row in fit], [False, True])
         notes = [w for w in small['warnings'] if 'cannot hold' in w]
@@ -91,13 +99,13 @@ class DeclaredCapacityTests(unittest.TestCase):
         for capacities in ([20], [20, 0], [20, -1], [20, float('nan')], [20, True]):
             with self.subTest(capacities=capacities):
                 with self.assertRaises(DeliveryError) as raised:
-                    batch(available_tanks=2, tank_capacities=capacities)
+                    summary(available_tanks=2, tank_capacities_litres=capacities)
                 self.assertEqual(raised.exception.code, 'invalid_value')
 
     def test_capacities_without_a_count_use_their_length(self):
-        summary = batch(tank_capacities=[20, 20, 20])
-        self.assertEqual(summary['tanks']['available_tanks'], 3)
-        self.assertTrue(summary['tanks']['available_tanks_declared'])
+        tanks = summary(tank_capacities_litres=[20, 20, 20])['tanks']
+        self.assertEqual(tanks['available_tanks'], 3)
+        self.assertTrue(tanks['available_tanks_declared'])
 
 
 class EquipmentFlagTests(unittest.TestCase):

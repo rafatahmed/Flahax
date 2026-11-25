@@ -286,6 +286,99 @@ def _water_and_limits(workflow, recipe):
     return water, limits
 
 
+def declared_tanks(available_tanks, tank_capacities_litres):
+    """``(available tanks, capacities in litres, declared)``: the tanks a
+    grower states, validated; two tanks are assumed, and ``declared`` is
+    false, when none are stated (D3).
+    """
+    capacities = _tank_capacities(tank_capacities_litres)
+    declared = available_tanks is not None or bool(capacities)
+    if available_tanks is None:
+        available_tanks = len(capacities) or 2
+    if type(available_tanks) is not int or available_tanks < 1:
+        raise DeliveryError('invalid_value', 'available_tanks must be a positive integer')
+    if capacities and len(capacities) != available_tanks:
+        raise DeliveryError(
+            'invalid_value',
+            f'{len(capacities)} tank capacities were given for {available_tanks} available tanks',
+        )
+    return available_tanks, capacities, declared
+
+
+class EquipmentCheck:
+    """Judge a workflow's recipe against the declared equipment, as the
+    batch report does, so the equipment search can see a miss (D4).
+
+    Called with a workflow, it returns None when the recipe fits or
+    ``{error_code, message}`` for the first problem: too many tanks, a
+    tank too small for its stock, or a stock above its recorded
+    solubility. ``declaration`` is the saved record of the equipment.
+    """
+
+    def __init__(
+        self,
+        products,
+        *,
+        rules,
+        injection_ratio,
+        temperature_c,
+        available_tanks,
+        tank_capacities_litres,
+        batch_litres,
+    ):
+        tanks, capacities, declared = declared_tanks(available_tanks, tank_capacities_litres)
+        self._products = products
+        self._rules = rules
+        self._ratio = injection_ratio
+        self._temperature = temperature_c
+        self._tanks = tanks
+        self._capacities = capacities
+        self._litres = batch_litres
+        self.declaration = dict(
+            available_tanks=tanks,
+            available_tanks_declared=declared,
+            tank_capacities_litres=capacities,
+            injection_ratio=injection_ratio,
+            temperature_c=temperature_c,
+            batch_litres=batch_litres,
+        )
+
+    def __call__(self, workflow):
+        """None when the workflow's recipe fits the equipment, else the first problem."""
+        from .evaluated_remedies import _recommendation
+
+        try:
+            salts = _recommendation(workflow)['salts']
+            grouping = group_tanks(salts, self._products, rules=self._rules)
+        except DeliveryError as exc:
+            return dict(error_code=exc.code, message=str(exc))
+        if len(grouping.tanks) > self._tanks:
+            return dict(
+                error_code='too_many_tanks', message=_extra_tank_note(grouping, self._tanks)
+            )
+        stock_litres = self._litres / self._ratio
+        for tank, capacity in zip(grouping.tanks, self._capacities):
+            if stock_litres > capacity:
+                return dict(
+                    error_code='tank_too_small',
+                    message=f'Tank {tank.name} cannot hold {stock_litres:g} L of stock.',
+                )
+        rows = check_stock_solubility(
+            grouping.tanks,
+            self._ratio,
+            self._temperature,
+            table=load_solubility_table(),
+            products=self._products,
+        )
+        for row in rows:
+            if row.status == 'exceeds':
+                return dict(
+                    error_code='solubility_exceeded',
+                    message=exceeds_message(row, self._temperature),
+                )
+        return None
+
+
 def _tank_capacities(values):
     """The declared tank capacities in litres, validated, as floats."""
     if values is None:
@@ -559,17 +652,7 @@ def summarize_batch(
         except DeliveryError as exc:
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
 
-    capacities = _tank_capacities(tank_capacities_litres)
-    declared = available_tanks is not None or bool(capacities)
-    if available_tanks is None:
-        available_tanks = len(capacities) or 2
-    if type(available_tanks) is not int or available_tanks < 1:
-        raise DeliveryError('invalid_value', 'available_tanks must be a positive integer')
-    if capacities and len(capacities) != available_tanks:
-        raise DeliveryError(
-            'invalid_value',
-            f'{len(capacities)} tank capacities were given for {available_tanks} available tanks',
-        )
+    available_tanks, capacities, declared = declared_tanks(available_tanks, tank_capacities_litres)
     grouping = group_tanks(recipe['salts'], products, rules=rules)
     solubility = check_stock_solubility(
         grouping.tanks,

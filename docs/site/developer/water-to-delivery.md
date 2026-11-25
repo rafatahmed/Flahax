@@ -419,8 +419,11 @@ fits lists `equipment:fit` in `resolved_requirements`. Without the option nothin
 searched. `workflow.remedies.mode` records `analyze_supplied_doses` when no scenario was
 evaluated and `find_suitable_doses` when one was, and `declared_equipment` records the
 tanks (id and litres), injection ratio, temperature and the number of rules and limits,
-so a saved result shows the equipment the search was held to. The `flahax batch` command
-checks equipment in its report after the workflow, so this search is not run from it.
+so a saved result shows the equipment the search was held to. A caller that judges equipment
+itself, as `flahax batch` does in its report, passes `equipment_check` to
+`plan_fertilizer_workflow`: a callable that takes the workflow and returns None when the recipe
+fits or `{error_code, message}`; an object with a `declaration` attribute has that record saved
+as `declared_equipment` and, in the saved inputs, as `equipment_declaration`.
 
 The search covers only the supplied scenarios and product bundles. It does not
 combine separate options automatically, enumerate the whole market, prove a

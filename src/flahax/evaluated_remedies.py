@@ -45,7 +45,7 @@ def _recommendation(workflow):
     )
 
 
-def unresolved_requirements(workflow):
+def unresolved_requirements(workflow, request=None):
     """Return next actions for every unmet nutrient, hard limit and
     unfinished workflow stage.
     """
@@ -78,13 +78,13 @@ def unresolved_requirements(workflow):
                 ),
             )
         )
-    if equipment_unfit(workflow):
-        stage = workflow.stages['stocks']
+    problem = equipment_problem(workflow, request)
+    if problem is not None:
         requirements.append(
             dict(
                 id='equipment:fit',
                 status='blocked',
-                evidence=dict(error_code=stage.error_code, message=stage.message),
+                evidence=dict(error_code=problem['error_code'], message=problem['message']),
                 next_action=(
                     'Search other product combinations for the declared equipment, or declare '
                     'different equipment; no separation rule is waived.'
@@ -111,13 +111,26 @@ def unresolved_requirements(workflow):
     return requirements
 
 
-def equipment_unfit(workflow):
-    """True when the declared equipment cannot hold the recipe: the
-    stocks stage failed with an error, not merely lacking mixture
-    evidence.
+def equipment_problem(workflow, request=None):
+    """``{error_code, message}`` when the declared equipment cannot hold
+    the recipe, else None: the stocks stage failed with an error or has an
+    unverified solubility (not merely lacking mixture evidence), or the
+    request's ``equipment_check`` reports a problem.
     """
     stage = workflow.stages.get('stocks')
-    return stage is not None and stage.error_code is not None
+    if stage is not None and stage.error_code is not None:
+        return dict(error_code=stage.error_code, message=stage.message)
+    if stage is not None and getattr(stage.value, 'unverified', ()):
+        # A stock whose solubility is not verified at the temperature has not been
+        # shown to fit; keeping its quantities is not resolving the equipment.
+        return dict(error_code='solubility_unverified', message=stage.message)
+    check = (request or {}).get('equipment_check')
+    return check(workflow) if check is not None else None
+
+
+def equipment_unfit(workflow, request=None):
+    """True when the declared equipment cannot hold the recipe."""
+    return equipment_problem(workflow, request) is not None
 
 
 def declared_equipment(request):
@@ -126,7 +139,8 @@ def declared_equipment(request):
     """
     stocks = request.get('stocks')
     if not isinstance(stocks, Mapping):
-        return None
+        declaration = getattr(request.get('equipment_check'), 'declaration', None)
+        return dict(declaration) if declaration is not None else None
     tanks = [
         dict(
             tank_id=getattr(t, 'tank_id', None), capacity_litres=getattr(t.capacity, 'value', None)
@@ -450,9 +464,9 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
             raise DeliveryError('invalid_remedy', 'remedy IDs must be unique and kinds supported')
         seen.add(option['id'])
     preferences = _preferences(options)
-    baseline = unresolved_requirements(workflow)
+    baseline = unresolved_requirements(workflow, request)
     nutrient_miss = any(r["id"].startswith("nutrient:") for r in baseline)
-    equipment_miss = equipment_unfit(workflow)
+    equipment_miss = equipment_unfit(workflow, request)
     baseline_ids = {r['id'] for r in baseline}
     results, evaluations, skipped = [], 0, False
     scored = {}
@@ -511,7 +525,7 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
                 )
                 retry_sources = True
             else:
-                remaining = unresolved_requirements(candidate)
+                remaining = unresolved_requirements(candidate, candidate_request)
                 retry_sources = any(r['id'].startswith('nutrient:') for r in remaining)
                 resolved = sorted(baseline_ids - {r['id'] for r in remaining})
                 result.update(

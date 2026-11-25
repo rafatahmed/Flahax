@@ -56,6 +56,7 @@ from .delivery_quantities import SolventBasis, VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
 from .grower_report import (
+    EquipmentCheck,
     reagent_amount,
     reagent_preparation,
     render_batch_sheet,
@@ -488,6 +489,7 @@ class BatchOptions:
     tank_litres: dict | None = None
     available_tanks: int | None = None
     tank_capacities: list | None = None
+    fit_equipment: bool = False
     mode: str = 'fill'
     irrigation_litres: float | None = None
     temperature_c: float = 25
@@ -711,6 +713,23 @@ def run_batch(options):
         if options.alternative_products is not None
         else []
     )
+    if options.fit_equipment and not alternative_products:
+        raise DeliveryError(
+            'invalid_value', '--fit-equipment searches the --alternative-products; supply them'
+        )
+    equipment_check = (
+        EquipmentCheck(
+            products,
+            rules=rules,
+            injection_ratio=options.ratio,
+            temperature_c=options.temperature_c,
+            available_tanks=options.available_tanks,
+            tank_capacities_litres=options.tank_capacities,
+            batch_litres=volume,
+        )
+        if options.fit_equipment
+        else None
+    )
     if alternative_products:
         from .evaluated_remedies import available_product_search
 
@@ -724,7 +743,9 @@ def run_batch(options):
         remedies.insert(
             0,
             available_product_search(
-                alternative_products, preferences=options.alternative_search_preferences
+                alternative_products,
+                preferences=options.alternative_search_preferences,
+                on_equipment_miss=options.fit_equipment,
             ),
         )
     additional_ids = [*options.confirmed_products, *(p['id'] for p in alternative_products)]
@@ -758,6 +779,7 @@ def run_batch(options):
             else None
         ),
         remedy_options=remedies,
+        equipment_check=equipment_check,
         max_remedy_evaluations=len(options.confirmed_products)
         + (options.alternative_search_budget if alternative_products else 0),
     )
@@ -870,6 +892,7 @@ def build(args):
             rules=args.rules,
             available_tanks=args.available_tanks,
             tank_capacities=args.tank_capacity,
+            fit_equipment=args.fit_equipment,
         )
     )
     return render(summary), summary
@@ -928,6 +951,12 @@ def main(argv=None):
         '--available-tanks',
         type=int_at_least('--available-tanks', 1),
         help='concentrate tanks you have (default: two assumed, and the report says so)',
+    )
+    parser.add_argument(
+        '--fit-equipment',
+        action='store_true',
+        help='when the recipe does not fit your tanks, search --alternative-products for '
+        'one that does (your equipment and the separation rules are never changed)',
     )
     parser.add_argument(
         '--tank-capacity',

@@ -1020,7 +1020,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages

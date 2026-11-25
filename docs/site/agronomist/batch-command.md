@@ -161,6 +161,11 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
   equipment: the report shows the tanks the recipe needs, whether yours are enough, and
   any tank too small for its stock. Without these options two tanks are assumed and the
   summary says the equipment was not declared.
+- `--fit-equipment`, with `--alternative-products`, searches those products for a recipe that
+  fits your declared tanks when the first recipe does not. Your tanks, injection ratio and the
+  separation rules are never changed, nothing is searched without the flag, and the summary
+  records the search mode and the equipment it was held to (`remedies.mode`,
+  `remedies.declared_equipment`).
 
 All options are listed in [batch report, sheet and tanks](reading-results.md).
 
