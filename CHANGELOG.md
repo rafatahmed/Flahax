@@ -11,6 +11,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Added
 
+- The summary and report list the dissolved species and any predicted precipitate apart from the nutrient totals, and state that meeting a target does not establish that nutrients stay dissolved or available (`chemistry.species_mol_per_kg`, `chemistry.precipitated_mol_per_kg`) (#312).
 - Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with a nitrate and a positive ammonium target it must agree with their sum (an absent urea counts as zero); with other forms both are scored and `totalN.overlapForms` lists the overlap (#291).
 - `flahax batch` takes `--available-tanks` and `--tank-capacity`; the report lists the tanks the recipe needs against yours, and a tank too small for its stock blocks without changing the recipe (#293).
 - Acceptable deviation ranges, none by default: `deviation_ranges` on `recommend` and the workflow, and `--range-percent`, `--range` and `--require-ranges` on `flahax batch`. Assess classifies the result; Require constrains the fit and keeps an unmet candidate. A zero target or declared maximum is never relaxed (#305).
