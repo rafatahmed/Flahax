@@ -62,8 +62,10 @@ assert result.stages['chemistry'].status == 'needs_input'
 ```
 
 Each `WorkflowStage` exposes `status`, `value`, `required_inputs`, `error_code`
-and `message`. Status is `calculated`, `requires_review`, `needs_input` or
-`blocked`. A calculated stage is not a validated hardware delivery plan.
+and `message`. Status is `calculated`, `requires_review`, `needs_input`, `blocked`
+or `not_calculated` (the model's range is exceeded, for example an ionic strength
+above 0.1 mol/kg). Any other status is refused when the stage is made. A calculated
+stage is not a validated hardware delivery plan.
 Earlier calculated stages remain available when a later stage is blocked.
 
 `final_volume=VolumeLitres(...)` enables batch conversion. Additional keyword

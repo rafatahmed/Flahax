@@ -42,6 +42,10 @@ from .nutrient_acceptance import (
 # Chemistry a later stage may build on: calculated, or calculated with a
 # point for review.
 USABLE = ('calculated', 'requires_review')
+# Every status a workflow stage can have: calculated, calculated with a point for
+# review, waiting for an input, stopped by an error or a limit, or outside the
+# model's range (not calculated).
+STAGE_STATUSES = ('calculated', 'requires_review', 'needs_input', 'blocked', 'not_calculated')
 
 
 @dataclass
@@ -55,6 +59,13 @@ class WorkflowStage:
     required_inputs: tuple = ()
     error_code: str | None = None
     message: str | None = None
+
+    def __post_init__(self):
+        if self.status not in STAGE_STATUSES:
+            raise DeliveryError(
+                'invalid_value',
+                f'stage status must be one of {STAGE_STATUSES}, got {self.status!r}',
+            )
 
 
 @dataclass
