@@ -34,6 +34,25 @@ class TotalNitrogenRowsTests(unittest.TestCase):
             {'N': 150.0, 'N_NO3': 100.0, 'N_UREA': 0},
         )
 
+    def test_an_absent_urea_is_zero_so_nitrate_and_ammonium_determine_the_total(self):
+        # Total N is nitrate + ammonium + urea; urea that is not asked for is a zero
+        # requirement, not an unknown, so the total is fully determined.
+        self.assertEqual(
+            nitrogen_rows({'N': 130.0, 'N_NO3': 100.0, 'N_NH4': 30.0}),
+            {'N_NO3': 100.0, 'N_NH4': 30.0, 'N_UREA': 0},
+        )
+
+    def test_a_total_that_disagrees_with_nitrate_plus_ammonium_plus_zero_urea_is_rejected(self):
+        with self.assertRaisesRegex(InputError, 'total N 150.*= 130'):
+            fitted_targets({'N': 150.0, 'N_NO3': 100.0, 'N_NH4': 30.0})
+
+    def test_a_zero_ammonium_target_is_no_requirement_and_does_not_determine_the_total(self):
+        # Decision G24: an explicit zero N_NH4 asks for nothing, so ammonium may supply the rest.
+        self.assertEqual(
+            nitrogen_rows({'N': 150.0, 'N_NO3': 140.0, 'N_NH4': 0.0}),
+            {'N': 150.0, 'N_NO3': 140.0, 'N_UREA': 0},
+        )
+
     def test_forms_that_determine_total_are_scored_once(self):
         forms = {'N_NO3': 100.0, 'N_NH4': 30.0, 'N_UREA': 20.0}
         self.assertEqual(

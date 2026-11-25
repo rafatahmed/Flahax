@@ -189,18 +189,21 @@ def nitrogen_rows(targets) -> dict:
     Total N ("N", elemental mg/L) is a target too. Alone it is one row
     over the sum of the three forms and imposes no form split; the urea
     safeguard still holds, so urea products stay out unless urea is
-    declared. When the three forms are all declared they determine the
-    total: they are scored once and the declared total must agree with
-    their sum. When only some forms are declared with the total, both
-    are scored (the overlap is reported by total_n_report) and no other
-    form target is invented. A total below the declared forms, or a
-    total that disagrees with the three forms, raises InputError before
-    any fitting.
+    declared. Total N is nitrate + ammonium + urea, and urea that is not
+    asked for is a zero requirement, not an unknown. So a declared
+    nitrate and a positive ammonium determine the total (urea is
+    declared or zero): the forms are scored once and the declared total
+    must agree with their sum. An explicit zero N_NH4 asks for nothing
+    (decision G24), so it does not determine the total. When the forms
+    leave the total open, both are scored (the overlap is reported by
+    total_n_report) and no other form target is invented. A total below
+    the declared forms, or a total that disagrees with forms that
+    determine it, raises InputError before any fitting.
     """
     total = targets.get("N")
     if total is None and not any(form in targets for form in NITROGEN_FORMS):
         return {}
-    determined = all(form in targets for form in NITROGEN_FORMS)
+    determined = "N_NO3" in targets and targets.get("N_NH4", 0) > 0
     if total is not None:
         declared = total_nitrogen(targets)
         slack = TOTAL_NITROGEN_TOLERANCE * max(abs(total), 1.0)

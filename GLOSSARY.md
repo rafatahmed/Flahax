@@ -29,9 +29,10 @@ The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
 **Total nitrogen target**:
-Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea. Alone it imposes no form split; with all three forms it must
-agree with their sum; with some forms both are scored and the overlap is reported. It is a target only, never water, a
-maximum or an assay.
+Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea; urea that is not asked for is a zero requirement, not an
+unknown. Alone it imposes no form split. With a nitrate target and a positive ammonium target the forms determine it and it
+must agree with their sum; otherwise both are scored and the overlap is reported. It is a target only, never water, a maximum
+or an assay.
 _Avoid_: Total N conversion, N split
 
 **Ammonium allowance**:

@@ -219,9 +219,10 @@ the products that carry it; chloride products are never used without one.
 
 **Nitrogen forms and the ammonium allowance.** `N_NO3`, `N_NH4` and `N_UREA` are
 each their own fitted target; `result["totalN"]` reports their sum. Total `N` may be
-a target too: alone it is one row over the three forms with no form split; with all
-three forms they are scored once and the total is checked for consistency; with some
-forms both are scored and `totalN["overlapForms"]` lists the overlap (`totalN["fitted"]`
+a target too: alone it is one row over the three forms with no form split; total N is
+nitrate + ammonium + urea, with an absent urea counted as zero, so a nitrate target and
+a positive ammonium target determine it, are scored once and the total is checked for
+consistency; with other forms both are scored and `totalN["overlapForms"]` lists the overlap (`totalN["fitted"]`
 is true when the total is its own row). An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no
 ammonium requirement (no row, no ban) and, by default, no ammonium maximum:
 the ammonium the products bring is reported. Passing `max_ammonium_fraction`

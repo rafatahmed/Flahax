@@ -11,7 +11,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Added
 
-- Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with all three forms it must agree with their sum; with some forms both are scored and `totalN.overlapForms` lists the overlap (#291).
+- Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with a nitrate and a positive ammonium target it must agree with their sum (an absent urea counts as zero); with other forms both are scored and `totalN.overlapForms` lists the overlap (#291).
 - `flahax batch` takes `--available-tanks` and `--tank-capacity`; the report lists the tanks the recipe needs against yours, and a tank too small for its stock blocks without changing the recipe (#293).
 - `--fit-equipment` and `available_product_search(on_equipment_miss=True)` search other products for a recipe that fits the declared tanks; tanks and separation rules never change, and the mode and equipment are saved in `remedies` (#294).
 - A saved result keeps `supplied_inputs`, bound to its input fingerprint, and `saved_input_differences` names what a recalculation changed (#297).
@@ -24,6 +24,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Fixed
 
+- Total nitrogen counts an absent urea as a zero requirement: a declared nitrate and a positive ammonium now determine the total, a total that disagrees with them is rejected before fitting (for example `N` 150 with `N_NO3` 100 and `N_NH4` 30), and a consistent total is scored once (#303).
 - Coupled recipes are assessed at the emitted reagent dose, and search provenance survives dose reassessment (#288).
 - Each solubility row states that it is a single-product value and whether its temperature is verified; a value recorded at another temperature is flagged, not silently accepted (#295).
 - The glossary defines stock assignment, required and available tanks, equipment fit and single-product solubility (#296).
