@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 
 from .composition import ATOMIC
 from .ph_evidence import check_batch_ph
-from .stock_evidence import _number, _text, _within
+from .inputs import number
+from .stock_evidence import _text, _within
 
 
 def _time(raw, now):
@@ -44,7 +45,10 @@ def _interval(record):
         _text(record, key)
     if record["uncertainty_basis"] != "total_bounded_error":
         raise ValueError("Measurement errors must include bias and calibration uncertainty")
-    value, error = _number(record, "value"), _number(record, "absolute_uncertainty")
+    value, error = (
+        number(record.get("value"), "value"),
+        number(record.get("absolute_uncertainty"), "absolute_uncertainty"),
+    )
     if not math.isfinite(value + error):
         raise ValueError("Measurement interval must be finite")
     return max(0.0, value - error), value + error
@@ -120,12 +124,17 @@ def assess_batch_stability(recipe, evidence):
             or any(b <= a for a, b in zip(hours, hours[1:]))
         ):
             raise ValueError("Sampling schedule must start at zero and strictly increase")
-        delay = _number(policy, "maximum_delay_hours")
+        delay = number(policy.get("maximum_delay_hours"), "maximum_delay_hours")
         if delay >= min(b - a for a, b in zip(hours, hours[1:])):
             raise ValueError("Sampling windows cannot overlap")
-        turbidity_limit = _number(policy, "maximum_turbidity_ntu")
-        retention = _number(policy, "minimum_retention_fraction", positive=True)
-        initial_tolerance = _number(policy, "initial_nutrient_relative_tolerance")
+        turbidity_limit = number(policy.get("maximum_turbidity_ntu"), "maximum_turbidity_ntu")
+        retention = number(
+            policy.get("minimum_retention_fraction"), "minimum_retention_fraction", positive=True
+        )
+        initial_tolerance = number(
+            policy.get("initial_nutrient_relative_tolerance"),
+            "initial_nutrient_relative_tolerance",
+        )
         if retention > 1 or initial_tolerance >= 1:
             raise ValueError("Retention must be <=1 and initial tolerance <1")
         protocol = evidence["protocol"]
@@ -141,7 +150,7 @@ def assess_batch_stability(recipe, evidence):
             raise ValueError("A complete observation and material-accounting protocol is required")
         for key in ("protocol_id", "source", "storage_conditions"):
             _text(protocol, key)
-        if _number(protocol, "filter_pore_um", positive=True) > 0.45:
+        if number(protocol.get("filter_pore_um"), "filter_pore_um", positive=True) > 0.45:
             raise ValueError(
                 "Dissolved analyses require a consistent filter of 0.45 micrometres or finer"
             )
