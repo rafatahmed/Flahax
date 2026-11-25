@@ -70,7 +70,8 @@ _Avoid_: Declaration, assumption to confirm
 
 **Tank A / Tank B**:
 The usual nutrient stock channels, with calcium and micronutrients in A and sulfates and
-phosphates in B. Actual layouts depend on separation constraints, equipment and mixture evidence.
+phosphates in B. This is a usual layout, not a limit: the assignment may use more than two tanks (named A, B, C and so on),
+and the effective assignment is in the result (`tanks.tanks`). Layouts depend on separation constraints and mixture evidence.
 _Avoid_: Part A / Part B, Stock 1 / Stock 2
 
 **Stock assignment**:
