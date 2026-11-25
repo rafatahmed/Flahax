@@ -40,7 +40,7 @@ its required evidence, alternative search and the downstream validation gate.
 
 ## Required evidence
 
-Every salt in the recipe needs a sourced solubility-limit record that covers the requested temperature:
+Every salt in the recipe should have a sourced solubility-limit record that covers the requested temperature:
 
 ```text
 productId
@@ -55,10 +55,15 @@ Every incompatibility must be an explicit `separate` compatibility-rule record. 
 The planner rejects:
 
 - an infeasible nutrient recipe;
-- a missing or temperature-out-of-range solubility limit;
 - a required concentration above its limit;
 - a tank smaller than required stock volume; and
 - an assignment that violates all available separation constraints.
+
+A salt with no limit that covers the requested temperature does not stop the plan. Its stock
+concentration and tank assignment are kept, the plan stays `requires_review`, nothing is approved,
+and `StockPlan.unverified` lists it as `{salt_id, aspect: 'solubility_limit',
+requested_temperature_c, recorded_ranges_c}`; the recorded ranges are empty when the product has
+no record at all. Only a limit that is known and exceeded raises `solubility_exceeded`.
 
 ## Deterministic assignment
 

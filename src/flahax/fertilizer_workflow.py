@@ -866,6 +866,14 @@ def plan_fertilizer_workflow(
             stock_stage.message = (
                 'Separation assignment only; stock mixture applicability is unqualified.'
             )
+            unverified = stock_stage.value.unverified
+            if unverified:
+                names = ', '.join(u['salt_id'] for u in unverified)
+                celsius = stock_stage.value.temperature.value
+                stock_stage.message += (
+                    f' No recorded solubility limit covers {celsius:g} °C for {names}; '
+                    'the quantities are kept and unverified.'
+                )
 
     output.maximum_concentrations = dict(maximum_concentrations or {})
     chemistry_stage = stages.get('chemistry')

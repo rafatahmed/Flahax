@@ -330,7 +330,11 @@ class WaterWorkflowTests(unittest.TestCase):
             ),
         )
         self.assertEqual(result.stages['titration'].status, 'requires_review')
-        self.assertEqual(result.stages['stocks'].error_code, 'missing_solubility_limit')
+        stocks = result.stages['stocks']
+        self.assertIsNone(stocks.error_code)
+        self.assertEqual(stocks.status, 'requires_review')
+        self.assertIn('No recorded solubility limit', stocks.message)
+        self.assertEqual({u['aspect'] for u in stocks.value.unverified}, {'solubility_limit'})
 
 
 class AcidSelectionTests(unittest.TestCase):

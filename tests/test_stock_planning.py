@@ -99,16 +99,20 @@ class StockPlanning(unittest.TestCase):
             )
         self.assertEqual(caught.exception.code, "infeasible_recipe")
 
-        with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(
-                recipe(),
-                InjectionRatio(100),
-                [StockTank("A", VolumeLitres(2))],
-                [],
-                limits(),
-                TemperatureCelsius(40),
-            )
-        self.assertEqual(caught.exception.code, "missing_solubility_limit")
+        # Outside every recorded range the quantities are kept and the missing
+        # evidence is stated, never approved (Q21).
+        stock = plan_stocks(
+            recipe(),
+            InjectionRatio(100),
+            [StockTank("A", VolumeLitres(2))],
+            [],
+            limits(),
+            TemperatureCelsius(40),
+        )
+        self.assertEqual(
+            [u["aspect"] for u in stock.unverified], ["solubility_limit", "solubility_limit"]
+        )
+        self.assertFalse(stock.mixture_approved)
 
     def test_limit_capacity_and_assignment_fail_closed(self):
         with self.assertRaises(DeliveryError) as caught:

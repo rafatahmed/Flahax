@@ -362,7 +362,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | Code | Meaning | What to do |
 |---|---|---|
 | `capacity_exceeded` | Every tank is smaller than the stock volume needed. | Use larger tanks or a higher injection ratio. |
-| `solubility_exceeded` / `missing_solubility_limit` | A stock exceeds its solubility, or has no limit at that temperature (stock planner). | Dilute (lower ratio), warm the stock room, or supply the limit. |
+| `solubility_exceeded` | A stock exceeds its recorded solubility (stock planner). A product with no limit at the requested temperature is kept and listed as unverified, not rejected. | Dilute (lower ratio), warm the stock room, or supply the limit. |
 | `no_stock_assignment` | No tank arrangement satisfies the compatibility rules. | Add a tank or change products. |
 | `invalid_ratio` / `ambiguous_volume` / `unknown_equipment_type` | Injection sizing inputs are inconsistent. | Correct the ratio, give one volume form, choose dosing_pump, venturi or dosatron. |
 | `dry_tank_risk` / `out_of_calibration_range` | The stock cannot supply the planned injection, or the pump is asked outside its calibration. | Prepare more stock or recalibrate. |

@@ -83,6 +83,17 @@ class StockPlan:
     mixture_assessments: tuple[dict, ...] = ()
     assignments_evaluated: int = 0
     search_complete: bool = True
+    unverified: tuple[dict, ...] = ()
+
+
+def _recorded_ranges(limits, product_id):
+    """Temperature ranges of the recorded limits for a product."""
+    ranges = []
+    for raw in limits:
+        limit = validate_solubility_limit(raw)
+        if limit['productId'] == product_id:
+            ranges.append([limit['temperatureMinC'], limit['temperatureMaxC']])
+    return sorted(ranges)
 
 
 def _validated_tanks(tanks: Iterable[StockTank]) -> tuple[StockTank, ...]:
@@ -229,14 +240,24 @@ def plan_stocks(
     stock_volume = VolumeLitres(recipe.final_volume.value / injection_ratio.value)
 
     prepared = []
+    unverified = []
+    solubility_limits = tuple(solubility_limits)
     for salt in recipe.salts:
         limit = limits.get(salt.salt_id)
-        if limit is None:
-            raise DeliveryError(
-                "missing_solubility_limit",
-                f"{salt.salt_id} has no solubility limit at {temperature.value:g} °C",
-            )
         concentration = GramsPerLitre(salt.dose.value * injection_ratio.value)
+        if limit is None:
+            # The evidence does not cover this temperature: keep the quantity,
+            # say what is unverified, and approve nothing on it.
+            unverified.append(
+                dict(
+                    salt_id=salt.salt_id,
+                    aspect='solubility_limit',
+                    requested_temperature_c=temperature.value,
+                    recorded_ranges_c=_recorded_ranges(solubility_limits, salt.salt_id),
+                )
+            )
+            prepared.append((salt, concentration, None))
+            continue
         if concentration.value > limit["maxGramsPerLitre"]:
             raise DeliveryError(
                 "solubility_exceeded",
@@ -255,6 +276,7 @@ def plan_stocks(
         return StockPlan(
             recipe, injection_ratio, temperature, (), tuple(rule["id"] for rule in rules), ()
         )
+    unverified = tuple(unverified)
 
     fallback = None
     evaluated = 0
@@ -283,18 +305,20 @@ def plan_stocks(
                 for i, g in enumerate(groups)
             )
             assessments = tuple(_assess_mixture(t, temperature, mixture_model) for t in built)
-            approved = all(a['status'] == 'compatible' for a in assessments)
+            approved = not unverified and all(a['status'] == 'compatible' for a in assessments)
             candidate = StockPlan(
                 recipe,
                 injection_ratio,
                 temperature,
                 built,
                 tuple(r['id'] for r in rules),
-                tuple(limit_id for g in groups for _, _, limit_id in g),
+                tuple(limit_id for g in groups for _, _, limit_id in g if limit_id is not None),
                 approved,
                 'qualified' if approved else 'requires_review',
                 assessments,
                 evaluated,
+                True,
+                unverified,
             )
             if approved:
                 return candidate

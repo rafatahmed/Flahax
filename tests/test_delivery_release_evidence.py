@@ -148,14 +148,15 @@ class DeliveryReleaseEvidence(unittest.TestCase):
         )
         self.assertAlmostEqual(slow_command.runtime.value, 2 * baseline_command.runtime.value)
 
-    def test_temperature_outside_a_sourced_solubility_range_fails_closed(self):
-        with self.assertRaises(DeliveryError) as caught:
-            plan_stocks(
-                recipe(),
-                InjectionRatio(100),
-                [StockTank("A", VolumeLitres(2)), StockTank("B", VolumeLitres(2))],
-                [rule()],
-                limits(),
-                TemperatureCelsius(40),
-            )
-        self.assertEqual(caught.exception.code, "missing_solubility_limit")
+    def test_temperature_outside_a_sourced_solubility_range_is_kept_unverified(self):
+        stock = plan_stocks(
+            recipe(),
+            InjectionRatio(100),
+            [StockTank("A", VolumeLitres(2)), StockTank("B", VolumeLitres(2))],
+            [rule()],
+            limits(),
+            TemperatureCelsius(40),
+        )
+        self.assertEqual(stock.status, "requires_review")
+        self.assertEqual(len(stock.unverified), 2)
+        self.assertEqual(stock.solubility_limit_ids, ())
