@@ -88,6 +88,34 @@ def _validate(register, root, evidence_root, require_qualified):
     return errors
 
 
+def outcomes(register, root, evidence_root):
+    """Two separate outcomes, never one standing in for the other (P5).
+
+    ``fully_classified``: every inventory entry is mapped, current and given a
+    well-formed disposition (no missing, duplicate or stale entries).
+    ``scientifically_qualified``: additionally, no group is an inherited,
+    unqualified decision; every group is structural or has passing, hash-bound
+    qualification evidence. Classification alone never implies qualification.
+    """
+    errors = validate(register, root, evidence_root)
+    strict = validate(register, root, evidence_root, require_qualified=True)
+    unqualified = (
+        []
+        if errors
+        else sorted(
+            name
+            for name, group in register['groups'].items()
+            if group['disposition'] == 'retain_unqualified'
+        )
+    )
+    return dict(
+        fully_classified=not errors,
+        scientifically_qualified=not strict,
+        unqualified_groups=unqualified,
+        errors=errors,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('register', type=Path)
@@ -95,11 +123,12 @@ def main():
     parser.add_argument('--require-qualified', action='store_true')
     args = parser.parse_args()
     register = json.loads(args.register.read_text(encoding='utf-8'))
-    errors = validate(
-        register, args.root, args.register.parent, require_qualified=args.require_qualified
+    report = outcomes(register, args.root, args.register.parent)
+    print(json.dumps(report, indent=2))
+    failed = not report['fully_classified'] or (
+        args.require_qualified and not report['scientifically_qualified']
     )
-    print(json.dumps({'valid': not errors, 'errors': errors}, indent=2))
-    return int(bool(errors))
+    return int(failed)
 
 
 if __name__ == '__main__':
