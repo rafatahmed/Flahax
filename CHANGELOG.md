@@ -11,6 +11,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Added
 
+- Every result and report states that no real-mixture predictive accuracy is claimed, and `docs/physical-validation-protocol.md` drafts the staged physical validation that issue #41 asks to have reviewed; it authorizes no laboratory work (#314).
 - The summary and report list the dissolved species and any predicted precipitate apart from the nutrient totals, and state that meeting a target does not establish that nutrients stay dissolved or available (`chemistry.species_mol_per_kg`, `chemistry.precipitated_mol_per_kg`) (#312).
 - Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with a nitrate and a positive ammonium target it must agree with their sum (an absent urea counts as zero); with other forms both are scored and `totalN.overlapForms` lists the overlap (#291).
 - `flahax batch` takes `--available-tanks` and `--tank-capacity`; the report lists the tanks the recipe needs against yours, and a tank too small for its stock blocks without changing the recipe (#293).
