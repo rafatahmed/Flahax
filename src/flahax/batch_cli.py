@@ -479,6 +479,8 @@ class BatchOptions:
     water_share: float | None = None
     volume: float = 1000
     ph: float = 5.8
+    ph_min: float | None = None
+    ph_max: float | None = None
     ratio: float = 100
     acid: list = field(default_factory=list)
     limit: list = field(default_factory=list)
@@ -648,6 +650,15 @@ def _product_records(records, label):
     return records
 
 
+def _target_ph(options):
+    """The pH the batch aims at: ``ph``, or the interval ``(ph_min, ph_max)`` when given."""
+    if options.ph_min is None and options.ph_max is None:
+        return options.ph
+    if options.ph_min is None or options.ph_max is None:
+        raise DeliveryError('invalid_value', 'a pH interval needs both ph_min and ph_max')
+    return (options.ph_min, options.ph_max)
+
+
 def run_batch(options):
     """The batch summary (``summarize_batch``); with tanks,
     ``summary['volumes']`` gives the stock volumes.
@@ -755,7 +766,7 @@ def run_batch(options):
         products,
         targets,
         water,
-        options.ph,
+        _target_ph(options),
         final_volume=VolumeLitres(volume),
         equilibrium=None
         if chemistry is None
@@ -873,7 +884,9 @@ def build(args):
             sonneveld_targets=args.sonneveld_targets,
             water_share=args.water_share,
             volume=args.volume,
-            ph=args.ph,
+            ph=5.8 if args.ph is None else args.ph,
+            ph_min=args.ph_min,
+            ph_max=args.ph_max,
             ratio=args.ratio,
             acid=args.acid,
             limit=args.limit,
@@ -938,8 +951,18 @@ def main(argv=None):
     parser.add_argument(
         '--ph',
         type=number_in('--ph', 0, 14, above=False),
-        default=5.8,
         help='target feed pH (default 5.8)',
+    )
+    parser.add_argument(
+        '--ph-min',
+        type=number_in('--ph-min', 0, 14, above=False),
+        help='lowest acceptable feed pH; with --ph-max the target is this interval, judged '
+        'against its bounds, and no midpoint is used',
+    )
+    parser.add_argument(
+        '--ph-max',
+        type=number_in('--ph-max', 0, 14, above=False),
+        help='highest acceptable feed pH (see --ph-min)',
     )
     parser.add_argument(
         '--ratio',
@@ -1038,6 +1061,10 @@ def main(argv=None):
         '--output', help='new directory for report.html, batch-sheet.html and summary.json'
     )
     args = parser.parse_args(argv)
+    if args.ph is not None and (args.ph_min is not None or args.ph_max is not None):
+        parser.error('--ph is one pH; use either --ph or --ph-min with --ph-max, not both')
+    if (args.ph_min is None) != (args.ph_max is None):
+        parser.error('--ph-min and --ph-max go together')
     if args.list_formulas:
         print('\n'.join(f['name'] for f in load_library()['formulas']))
         return 0

@@ -17,6 +17,7 @@ import re
 
 from .requirement_fit import met
 from .grower_report import (
+    ph_goal,
     SHEET_STYLE,
     STATUS_WORDS,
     _limit_rows,
@@ -198,7 +199,7 @@ def _check_card(summary):
     expected = f'{ec_text(ec, about=True)} mS/cm' if ec_text(ec) else 'measure'
     return (
         '<div class="card"><h2>Check after mixing</h2><table><tbody>'
-        f'<tr><td>pH</td><td>expect {number(summary["target_ph"], 2)}</td><td><span '
+        f'<tr><td>pH</td><td>expect {ph_goal(summary)}</td><td><span '
         f'class="fill"></span></td></tr>'
         f'<tr><td>EC</td><td>{text(expected)}</td><td><span '
         f'class="fill"></span></td></tr></tbody></table></div>'
@@ -309,7 +310,7 @@ def render_mix_sheet(summary, depth=1):
         f'&middot; '
         f'{number(supplied, 0)} L of irrigation at 1:{s["tanks"]["injection_ratio"]:g} &middot; '
         f'pH '
-        f'{number(s["target_ph"], 2)} &middot; {text(s["water_label"])}</div>'
+        f'{ph_goal(s)} &middot; {text(s["water_label"])}</div>'
         f'<div class="box {css}"><b>{text(STATUS_WORDS[s["status"]].capitalize())}.</b>'
         + (f' {text(_review_reason(s))}' if s['status'] == 'requires_review' else '')
         + (f'<ul class="small">{notes}</ul>' if notes else '')

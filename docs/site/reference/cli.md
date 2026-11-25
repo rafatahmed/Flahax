@@ -86,9 +86,9 @@ The same from files in one command, for scripts.
 usage: flahax batch [-h] [--formula FORMULA | --crop CROP | --targets TARGETS |
                     --sonneveld-targets SONNEVELD_TARGETS] [--preview-targets] [--list-formulas]
                     [--water WATER] [--water-share PERCENT] [--volume VOLUME] [--ph PH]
-                    [--ratio RATIO] [--available-tanks AVAILABLE_TANKS] [--fit-equipment]
-                    [--tank-capacity LITRES] [--ec EC]
-                    [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
+                    [--ph-min PH_MIN] [--ph-max PH_MAX] [--ratio RATIO]
+                    [--available-tanks AVAILABLE_TANKS] [--fit-equipment] [--tank-capacity LITRES]
+                    [--ec EC] [--acid FORMULA:FRACTION:DENSITY[:NAME[:SOLVENT_FRACTION]]]
                     [--limit SYMBOL=MG_PER_L] [--max-reagent-litres MAX_REAGENT_LITRES]
                     [--volumetric-stocks VOLUMETRIC_STOCKS]
                     [--alternative-products ALTERNATIVE_PRODUCTS]
@@ -149,6 +149,9 @@ options:
                         ion-free (desalinated or RO); default 100
   --volume VOLUME       final batch litres (default 1000)
   --ph PH               target feed pH (default 5.8)
+  --ph-min PH_MIN       lowest acceptable feed pH; with --ph-max the target is this interval,
+                        judged against its bounds, and no midpoint is used
+  --ph-max PH_MAX       highest acceptable feed pH (see --ph-min)
   --ratio RATIO         final litres per litre of concentrate (default 100)
   --available-tanks AVAILABLE_TANKS
                         concentrate tanks you have (default: two assumed, and the report says so)

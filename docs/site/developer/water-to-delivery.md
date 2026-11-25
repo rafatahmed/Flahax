@@ -243,6 +243,19 @@ Potassium Carbonate); acids are supplied by the user with the assay and density
 from the supplier's certificate. A supersaturated phase never rejects a plan; it is
 reported (next section).
 
+### An acceptable pH interval
+
+`target_ph` may be a pair `(low, high)` (a list in the JSON workflow) instead of one number. The
+interval is judged against its bounds and no midpoint is used: a mix already inside it needs no
+reagent (`direction` is `none`, `target_ph` is the mix's own pH), and a mix outside it is moved to
+the nearest bound, the smallest change that qualifies. `PhAdjustmentPlan.interval` and
+`FertilizerWorkflow.ph_interval` hold the pair, `workflow.target_ph` is the bound the plan aimed at
+(None until `ph_adjustment` has run) and the summary carries `target_ph_interval` and
+`ph.interval`. A zero-width interval is the point target. Only `ph_adjustment` accepts an interval:
+`nitric`, `titration` and `acid_selection` plan a reagent to one pH, so they report
+`unsupported_ph_interval` and choose no point. `low` above `high`, or a value outside 0 to 14, is
+refused.
+
 ## Saturation indices and acceptance
 
 A positive saturation index is a thermodynamic finding, not a precipitation rate, and

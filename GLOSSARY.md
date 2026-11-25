@@ -28,6 +28,11 @@ _Avoid_: Acid, base, adjuster
 The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
+**Acceptable pH interval**:
+A pair `(low, high)` given as the target pH. It is judged against its bounds: a mix inside needs no reagent, a mix outside
+is moved to the nearest bound. No midpoint is ever used.
+_Avoid_: Target range midpoint, pH setpoint range
+
 **Total nitrogen target**:
 Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea; urea that is not asked for is a zero requirement, not an
 unknown. Alone it imposes no form split. With a nitrate target and a positive ammonium target the forms determine it and it

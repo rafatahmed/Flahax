@@ -29,7 +29,7 @@ from .material_chemistry import material_chemistry
 from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
-from .ph_adjustment import plan_coupled_ph
+from .ph_adjustment import normalize_target_ph, plan_coupled_ph
 from .requirement_fit import PH_TOLERANCE, declared_error_percent, met, reagent_shift_exceeds
 from .nutrient_acceptance import (
     assess_incidental,
@@ -87,6 +87,13 @@ class FertilizerWorkflow:
     water_basis: dict | None = None
     canonical_result: CanonicalResult | None = None
     remedies: dict = field(default_factory=dict)
+    # The acceptable pH interval (low, high) when one was given instead of a point
+    # (contract Q31); target_ph is then None until the pH stage names the bound it aims at.
+    ph_interval: tuple | None = None
+
+
+# Stages that plan a reagent to one pH point. They do not pick a point from an interval.
+POINT_PH_STAGES = ('nitric', 'titration', 'acid_selection')
 
 
 def _positive(value, name):
@@ -350,13 +357,7 @@ def plan_fertilizer_workflow(
     """
     if not isinstance(water, Mapping):
         raise DeliveryError('missing_field', 'explicit water nutrient concentrations are required')
-    if (
-        isinstance(target_ph, bool)
-        or not isinstance(target_ph, (int, float))
-        or not math.isfinite(target_ph)
-        or not 0 <= target_ph <= 14
-    ):
-        raise DeliveryError('out_of_range', 'target_ph must be finite in [0,14]')
+    point, ph_interval = normalize_target_ph(target_ph)
     for config in (equilibrium, nitric, titration, stocks, acids, ph_adjustment):
         if config is not None and not isinstance(config, Mapping):
             raise DeliveryError('invalid_type', 'stage configurations must be mappings')
@@ -381,10 +382,22 @@ def plan_fertilizer_workflow(
     )
     if recommendation['limitViolations']:
         recommendation['feasible'] = False
-    output = FertilizerWorkflow(recommendation, water, gap_for(targets, water), float(target_ph))
+    output = FertilizerWorkflow(
+        recommendation, water, gap_for(targets, water), point, ph_interval=ph_interval
+    )
     stages = output.stages
 
     def run(name, action):
+        if ph_interval is not None and name in POINT_PH_STAGES:
+            stages[name] = WorkflowStage(
+                'blocked',
+                error_code='unsupported_ph_interval',
+                message=(
+                    f'{name} plans a reagent to one pH, not an interval; use ph_adjustment '
+                    'or give a single target_ph. No point was chosen from the interval.'
+                ),
+            )
+            return None
         try:
             value = action()
         except DeliveryError as exc:
@@ -782,7 +795,7 @@ def plan_fertilizer_workflow(
                     salts,
                     targets,
                     water,
-                    target_ph,
+                    ph_interval if ph_interval is not None else target_ph,
                     products=ph_adjustment['products'],
                     mix=mix,
                     water_mass_kg=mass,
@@ -799,6 +812,10 @@ def plan_fertilizer_workflow(
             )
             _not_planned(stages['ph_adjustment'])
             if plan is not None:
+                if ph_interval is not None:
+                    # The bound the plan aimed at (or the mix's own pH when it was inside
+                    # the interval); target_ph itself stays the interval that was asked.
+                    output.target_ph = plan.target_ph
                 chosen = plan.selected
                 if chosen is None and plan.direction == 'none' and not plan.candidates:
                     recommendation = plan.unadjusted_recommendation
@@ -923,7 +940,7 @@ def plan_fertilizer_workflow(
                     equilibrium,
                     final_volume.value,
                     targets,
-                    target_ph,
+                    output.target_ph if ph_interval is not None else target_ph,
                     maximum_concentrations,
                     volumetric_stocks,
                     reagent_maximum=reagent_maximum,

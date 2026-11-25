@@ -994,13 +994,13 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>, ph_interval: tuple | None = None) -> None
 ```
 
 The recommendation, water, nutrient gap and pH target, with each
 stage's result; the pH must still be measured after mixing.
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`, `ph_interval`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -1631,13 +1631,13 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve
 ### `PhAdjustmentPlan`
 
 ```text
-PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None) -> None
+PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None, interval: tuple | None = None) -> None
 ```
 
 Every pH reagent tried and the selected one; the pH must still be
 measured after mixing.
 
-Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`.
+Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`, `interval`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
 

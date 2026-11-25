@@ -92,6 +92,27 @@ def text(value):
     return escape(str(value), quote=True)
 
 
+def ph_goal(summary, digits=2):
+    """The pH the batch is planned to: a point, or "low to high" for an acceptable interval."""
+    interval = summary.get('target_ph_interval')
+    if interval:
+        return f'{number(interval[0], digits)} to {number(interval[1], digits)}'
+    return number(summary['target_ph'], digits)
+
+
+def _interval_record(interval, plan=None):
+    """The summary's account of an acceptable pH interval, or None for a point target."""
+    if not interval:
+        return None
+    return dict(
+        low=interval[0],
+        high=interval[1],
+        aimed_at=None if plan is None else plan.target_ph,
+        reagent_needed=None if plan is None else plan.direction != 'none',
+        rule='Nearest bound, never a midpoint; a mix already inside needs no reagent.',
+    )
+
+
 def number(value, digits=4):
     """A readable number: "Not available" for None, scientific notation
     below 0.0001, otherwise grouped with trailing zeros removed.
@@ -554,6 +575,7 @@ def summarize_batch(
             unadjusted_ph=plan.unadjusted_ph,
             mixed_ph=weighed,
             target_ph=plan.target_ph,
+            interval=_interval_record(plan.interval, plan),
             selected=candidate(chosen) if chosen is not None else None,
             candidates=[candidate(c) for c in plan.candidates if c.status != 'not_applicable'],
             skipped=[candidate(c) for c in plan.candidates if c.status == 'not_applicable'],
@@ -567,6 +589,7 @@ def summarize_batch(
             unadjusted_ph=None,
             mixed_ph=None,
             target_ph=workflow.target_ph,
+            interval=_interval_record(workflow.ph_interval),
             selected=None,
             candidates=[],
             message=ph_stage.message,
@@ -828,6 +851,7 @@ def summarize_batch(
         flahax_version=__version__,
         batch_litres=litres,
         target_ph=workflow.target_ph,
+        target_ph_interval=list(workflow.ph_interval) if workflow.ph_interval else None,
         status=status,
         water=water,
         limits=limits,
@@ -1388,8 +1412,14 @@ def _reagent_line(summary):
     chosen = ph['selected']
     if ph.get('direction') == 'none':
         return (
-            f'The feed mixes at pH {number(ph["unadjusted_ph"], 2)}, within tolerance of '
-            f'{number(ph["target_ph"], 2)}. No pH reagent is needed.'
+            f'The feed mixes at pH {number(ph["unadjusted_ph"], 2)}, '
+            + (
+                f'inside the acceptable interval {number(ph["interval"]["low"], 2)} to '
+                f'{number(ph["interval"]["high"], 2)}. '
+                if ph.get('interval')
+                else f'within tolerance of {number(ph["target_ph"], 2)}. '
+            )
+            + 'No pH reagent is needed.'
         )
     if chosen is None and ph['unadjusted_ph'] is None:
         return (
@@ -1428,7 +1458,13 @@ def render_report(summary):
         + ' &middot; batch report</div>'
         f'<h1>{text(s["title"])}</h1><p>Water: {text(s["water_label"])}. Batch '
         f'{number(s["batch_litres"], 0)} L, '
-        f'target pH {number(s["target_ph"], 2)}.</p>'
+        f'target pH {ph_goal(s)}.'
+        + (
+            f' The plan aims at the nearest bound, {number(s["target_ph"], 2)}, not a midpoint.'
+            if s.get('target_ph_interval') and s.get('target_ph') is not None
+            else ''
+        )
+        + '</p>'
         '<div class="cards">'
         + _card('Plan', s['status'].replace('_', ' '), plan_note)
         + _card(
@@ -1909,7 +1945,7 @@ def render_batch_sheet(summary):
             'EC25 (mS/cm)',
             f'{ec_text(ec, about=True)} (experimental)' if ec_text(ec) else 'measure',
         ),
-        ('pH', number(s['target_ph'], 2)),
+        ('pH', ph_goal(s)),
     ]
     check_rows = ''.join(
         f'<tr><td>{text(k)}</td><td>{text(v)}</td><td><span class="fill"></span></td></tr>'

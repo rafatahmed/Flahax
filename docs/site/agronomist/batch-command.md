@@ -156,6 +156,9 @@ flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 
   both product lists.
 - `--volume` sets the batch size (default 1000 L), `--ph` the target pH
   (default 5.8) and `--ratio` the injection ratio (default 1:100).
+- `--ph-min` with `--ph-max` gives an acceptable pH interval instead of one `--ph`. A feed that mixes
+  inside the interval needs no reagent; otherwise the plan aims at the nearest bound, never a midpoint.
+  Give both or neither, and not together with `--ph`. The interactive `flahax mix` takes one pH.
 - `--available-tanks` states how many concentrate tanks you have and `--tank-capacity`
   (repeated once per tank, in litres) their sizes. The recipe does not change with the
   equipment: the report shows the tanks the recipe needs, whether yours are enough, and
