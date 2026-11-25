@@ -25,7 +25,7 @@ import math
 from . import __version__
 from .delivery_contracts import DeliveryError
 from .fertilizer_workflow import PH_NOT_PLANNED, missed_message, unreviewed_reason
-from .requirement_fit import met
+from .requirement_fit import RELATIVE_TOLERANCE, ZERO_TARGET_TOLERANCE_MG_PER_L, met
 from .irrigation_ec import QUALIFIER, calculate_ec_from_totals
 from .saturation_policy import assess_saturation, risk_warnings
 from .stock_solubility import (
@@ -836,6 +836,9 @@ def summarize_batch(
             targets_met=all(
                 met(r['target'], r['final']) for r in recipe['rows'] if r['target'] is not None
             ),
+            match_criterion=dict(
+                relative=RELATIVE_TOLERANCE, zero_target_mg_per_l=ZERO_TARGET_TOLERANCE_MG_PER_L
+            ),
             salts=[
                 dict(
                     id=s['id'],
@@ -1167,12 +1170,18 @@ def status_explanations(summary):
         )
     formulation = summary.get('formulation') or {}
     if 'targets_met' in formulation:
+        criterion = formulation.get('match_criterion') or dict(
+            relative=RELATIVE_TOLERANCE, zero_target_mg_per_l=ZERO_TARGET_TOLERANCE_MG_PER_L
+        )
+        rule = (
+            f'A target is met within {criterion["relative"]:g} of the target '
+            f'(relative), or {criterion["zero_target_mg_per_l"]:g} mg/L for a declared zero.'
+        )
         explanations['formulation'] = (
-            'All nutrient targets meet their configured tolerances; '
-            'other review reasons remain separate.'
+            f'All nutrient targets are met. {rule} Other review reasons remain separate.'
             if formulation['targets_met']
-            else 'Nutrient targets are not all met; '
-            'this does not prove that no recipe can meet them.'
+            else f'Nutrient targets are not all met. {rule} '
+            'This does not prove that no recipe can meet them.'
         )
     if any(r.get('status') == 'search_incomplete' for r in formulation.get('unmet', [])):
         explanations['nutrients'] = (

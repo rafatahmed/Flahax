@@ -28,6 +28,10 @@ flahax batch --formula "Tomato (Howard Resh)" --water ro --acid HNO3:0.60:1.37 -
 that matches exactly one formula name and lists the matches otherwise. Use
 `--targets my-targets.json` for your own mg/L targets (N_NO3 and N_NH4 as N).
 
+A nutrient target counts as met within 1e-05 of the target (relative), or within 1e-06 mg/L
+for a declared zero. These are numerical comparison limits, not agronomic allowances. The
+report prints them, and `summary.json` records them in `formulation.match_criterion`.
+
 | Option | Meaning | Default |
 |---|---|---|
 | `--water` | `ro` (no ions) or a water-analysis JSON file (below) | required |
