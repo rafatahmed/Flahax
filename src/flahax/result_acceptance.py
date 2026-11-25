@@ -97,6 +97,43 @@ def save_result(summary, acceptance=None):
     return dict(schema_version=1, payload=payload, sha256=_digest(payload))
 
 
+def _flatten(value, prefix=''):
+    """Leaf values of nested supplied inputs by dotted path; a list of
+    records with ids is keyed by id.
+    """
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield from _flatten(item, f'{prefix}.{key}' if prefix else str(key))
+    elif (
+        isinstance(value, list)
+        and value
+        and all(isinstance(item, dict) and 'id' in item for item in value)
+    ):
+        for item in value:
+            yield from _flatten(item, f'{prefix}.{item["id"]}')
+    else:
+        yield prefix, value
+
+
+def saved_input_differences(saved, recalculated):
+    """What differs between the inputs of two results: a list of
+    ``{path, saved, recalculated}`` sorted by path (Q27).
+
+    Both results must carry their supplied inputs; an older saved result
+    without them cannot be compared.
+    """
+    for name, result in (('saved', saved), ('recalculated', recalculated)):
+        if not isinstance(result, dict) or 'supplied_inputs' not in result:
+            raise DeliveryError('missing_field', f'the {name} result has no saved inputs')
+    before = dict(_flatten(saved['supplied_inputs']))
+    after = dict(_flatten(recalculated['supplied_inputs']))
+    return [
+        dict(path=path, saved=before.get(path), recalculated=after.get(path))
+        for path in sorted(before.keys() | after.keys())
+        if before.get(path) != after.get(path)
+    ]
+
+
 def load_result(record):
     """Validate a saved result and return its detached payload,
     preserving old provenance.
@@ -115,5 +152,14 @@ def load_result(record):
         or record['sha256'] != _digest(payload)
     ):
         raise DeliveryError('invalid_saved_result', 'saved result content changed')
+    summary = payload['summary']
+    identity = summary.get('calculation_identity') if isinstance(summary, dict) else None
+    if (
+        isinstance(summary, dict)
+        and 'supplied_inputs' in summary
+        and isinstance(identity, dict)
+        and identity.get('input_sha256') != _digest(summary['supplied_inputs'])
+    ):
+        raise DeliveryError('invalid_saved_result', 'saved inputs do not match their fingerprint')
     save_result(payload['summary'], payload['acceptance'])
     return deepcopy(payload)

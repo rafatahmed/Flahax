@@ -845,6 +845,9 @@ def summarize_batch(
         from .canonical_result import _digest
 
         snapshot = canonical.to_dict()
+        # The supplied inputs and product assays are saved with the result
+        # and bound by input_sha256 (Q27).
+        summary['supplied_inputs'] = snapshot['inputs']
         summary['calculation_identity'].update(
             input_sha256=_digest(snapshot['inputs']),
             source_sha256=_digest(snapshot['sources']),

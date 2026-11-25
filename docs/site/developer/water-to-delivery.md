@@ -457,6 +457,16 @@ returns a detached payload. `Store.save('results', name, archive)` and
 result. Historical results preserve their historical source identities; rendering
 is not recalculation against the current engine.
 
+The summary keeps `supplied_inputs`: the targets, water, volume, pH, limits, equipment and
+every product record with its assay, exactly as supplied. `calculation_identity.input_sha256`
+is the hash of that object, and `load_result` rejects a saved result whose inputs no longer
+match it. Results saved before this field existed still load, but carry no inputs.
+`saved_input_differences(saved, recalculated)` (from `flahax.result_acceptance`) lists each
+input path that differs between two results as `{path, saved, recalculated}`, so a
+recalculation with changes names what changed; it needs both results to carry their inputs.
+The equipment the stock check used and its defaults are in `tanks`, and the search mode and
+declared equipment are in `remedies`.
+
 New saved mix sessions retain their answer fields and add `saved_state` with
 `schema_version=1`, `inputs_sha256`, named-item `references` fingerprints and
 package `sources` fingerprints. Execution rejects changed answers, referenced
