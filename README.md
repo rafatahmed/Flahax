@@ -198,7 +198,7 @@ describes the reusable inputs and saved evidence.
 | A feature is missing after installing from GitHub | Reinstall with `--force-reinstall --no-deps` (see Installation above) and check `flahax --version`. |
 | `flahax` is not recognised as a command | Run `python -m flahax`, or add the folder pip names in its "user installation" warning to your PATH. |
 | `flahax mix` asks line by line instead of full screen | Run it in Windows Terminal, PowerShell, `cmd` or a Linux or macOS terminal; an editor's output panel or Git Bash is not a full-screen console. |
-| An error code such as `invalid_json` or `charge_imbalance_exceeded` | Every code is explained in the manual's [error reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md#error-code-reference). |
+| An error code such as `invalid_value` or `invalid_type` | Every code is explained in the manual's [error reference](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md#error-code-reference). |
 
 More in the manual's
 [troubleshooting section](https://github.com/rafatahmed/Flahax/blob/main/src/flahax/data/USER_GUIDE.md#8-errors-and-troubleshooting).
