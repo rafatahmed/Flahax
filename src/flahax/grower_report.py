@@ -951,6 +951,9 @@ def summarize_batch(
             'A positive saturation index is a precipitation risk, not a predicted rate.',
             'Closed carbon: the mixed tank does not exchange CO2 with air.',
             'Chemistry at 25 °C only.',
+            'No real-mixture predictive accuracy is claimed: results are calculations checked '
+            'against reference models, and any accuracy claim needs measured evidence '
+            '(issue #41).',
             'Meeting a nutrient target does not establish that nutrients remain dissolved or '
             'available; the dissolved-target calculation is not supported, so dissolved species '
             'and predicted precipitate are reported apart from the totals.',
