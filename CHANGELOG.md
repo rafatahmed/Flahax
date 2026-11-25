@@ -27,6 +27,7 @@ Development checkout: 0.7.1.dev0.
 - Coupled recipes are assessed at the emitted reagent dose, and search provenance survives dose reassessment (#288).
 - Each solubility row states that it is a single-product value and whether its temperature is verified; a value recorded at another temperature is flagged, not silently accepted (#295).
 - The glossary defines stock assignment, required and available tanks, equipment fit and single-product solubility (#296).
+- Workflow stage statuses are one documented set (`calculated`, `requires_review`, `needs_input`, `blocked`, `not_calculated`) and a stage with any other status is refused; the developer guide no longer omits `not_calculated` (#300).
 - The README troubleshooting row cites the error codes the CLI emits (#287).
 - Catalogue lookups, the sensitivity matrix and cold-solve memory no longer make the full test suite take about an hour (#289).
 
