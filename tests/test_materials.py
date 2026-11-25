@@ -1697,7 +1697,10 @@ class DeclaredCompoundTests(unittest.TestCase):
     NITRIC = WorkflowGradeTests.NITRIC
     # Tomato (Howard Resh) on the packaged catalogue without the
     # urea-bearing compound (with or without the Na-bearing products).
+    # D1: with no ammonium maximum, ammonium nitrate is among the nitrate
+    # sources and its NH4-N is reported for review.
     WITHOUT_UREA = [
+        'Ammonium Nitrate',
         'Ammonium Sulfate',
         'Boric Acid',
         'Calcium Nitrate (ag grade)',
@@ -1794,14 +1797,8 @@ class DeclaredCompoundTests(unittest.TestCase):
         # D1: Tomato declares no urea, so N_UREA is a declared zero and
         # the urea-bearing compound (12 % N_UREA) is not selected.
         undeclared = plan_fertilizer_workflow(salts, tomato, {}, 5.8)
-        # G25: Mo, short with Micro Combi Mix 1 by less than 1 %, is
-        # short under the numerical tolerance; the only held-back Mo
-        # source, sodium molybdate, replaces the mix.
-        with_molybdate = sorted(
-            {*self.WITHOUT_UREA, 'Sodium Molybdate (Dihydrate)'} - {'Micro Combi Mix 1'}
-        )
         self.assertEqual(
-            sorted(s['name'] for s in undeclared.recommendation['salts']), with_molybdate
+            sorted(s['name'] for s in undeclared.recommendation['salts']), self.WITHOUT_UREA
         )
         # With a declared urea target the compound can be dosed.
         targets = dict(tomato, N_UREA=12)
