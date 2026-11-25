@@ -667,16 +667,17 @@ def solve_weights(
     water: dict | None = None,
     ridge: float = 0.0,
     *,
-    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
+    max_ammonium_fraction: float | None = None,
 ) -> dict:
     """Fit nonnegative g/L by positive-target squared relative error.
     ridge must be zero.
 
     Nitrogen forms and the ammonium allowance follow ``recommend``: each
-    form is its own row, a zero N_NH4 sets no row and no ban, and
-    incidental NH4-N is held within min(max_ammonium_fraction x total
-    target N, 1.5 mmol/L), reported in ammoniumLimit with its basis.
-    totalN reports the sum of the forms.
+    form is its own row, a zero N_NH4 sets no row and no ban, and no
+    ammonium maximum is added unless max_ammonium_fraction selects the
+    allowance preset: incidental NH4-N is then held within
+    min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in
+    ammoniumLimit with its basis. totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
     targets = fitted_targets(validate_profile(targets, "targets"))
@@ -725,6 +726,21 @@ def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> d
         "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L,
         "basis": AMMONIUM_BASIS,
     }
+
+
+def ammonium_allowance_preset(targets: dict, fraction: float = AMMONIUM_FRACTION) -> dict | None:
+    """The optional ammonium allowance preset for ``targets``, as a
+    disclosed record, without applying it.
+
+    Returns the same record ``ammoniumLimit`` carries (mgPerL,
+    fractionOfTotalN, absoluteCapMgPerL, basis), or None when the
+    targets already state NH4-N or have no nitrogen. To apply it, pass
+    ``max_ammonium_fraction=fraction`` to ``recommend`` or declare
+    ``maximum_concentrations={'N_NH4': record['mgPerL']}``.
+    """
+    return ammonium_allowance(
+        fitted_targets(validate_profile(dict(targets), "targets")), {}, fraction
+    )
 
 
 def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
@@ -1210,7 +1226,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
-    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
+    max_ammonium_fraction: float | None = None,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -1245,15 +1261,18 @@ def recommend(
             constraint, and any excess that cannot be removed is
             reported in limitViolations with feasible False. Omitted
             keeps the default.
-        max_ammonium_fraction: When targets declare no NH4-N requirement
-            (N_NH4 absent or 0) and no N_NH4 maximum is given,
+        max_ammonium_fraction: Selects the optional ammonium allowance
+            preset. Omitted (None), nothing limits incidental NH4-N: an
+            absent or zero N_NH4 target is no requirement and no
+            maximum. Given a number in [0, 1], and when targets declare
+            no NH4-N requirement and no N_NH4 maximum is given,
             incidental NH4-N may reach this share of the total target N
             (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L NH4
-            (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The default
-            AMMONIUM_FRACTION (0.10) follows Dutch soilless practice
-            (G23); ammoniumLimit reports it with its basis. None adds no
-            ammonium maximum. Untargeted nutrients do not enter the
-            objective.
+            (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). AMMONIUM_FRACTION
+            (0.10) is the Dutch soilless practice value (G23);
+            ammoniumLimit reports the limit with its basis. A declared
+            N_NH4 maximum always replaces the preset. Untargeted
+            nutrients do not enter the objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,

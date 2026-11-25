@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Disclaimer: planning software provided without warranty (Apache-2.0, section 7);
 # its results are calculations, not dosing instructions.
-"""The ammonium allowance (G23): incidental NH4-N up to min(10% of total
-N, 1.5 mmol/L).
+"""The optional ammonium allowance preset (G23): incidental NH4-N up to
+min(10% of total N, 1.5 mmol/L), applied only when selected. By default an
+absent or zero N_NH4 target is no requirement and no maximum (D1).
 """
 
 import unittest
 
-from flahax.engine import InputError
+from flahax.engine import InputError, ammonium_allowance_preset
 
 from flahax import load_library, recommend
 from tests.catalogue_history import historical_catalogue
@@ -36,19 +37,29 @@ def total_n(targets):
 
 
 class AmmoniumLimitTests(unittest.TestCase):
-    def test_default_is_the_ammonium_allowance_with_its_basis(self):
-        # Packaged Tomato (Howard Resh): N_NO3 140, N_NH4 0 -> min(14,
-        # 21.01) = 14 mg/L (G23, G24).
+    def test_default_adds_no_ammonium_maximum_and_the_preset_is_selected_explicitly(self):
+        # Packaged Tomato (Howard Resh): N_NO3 140, N_NH4 0. By default no
+        # ammonium maximum applies (D1); selecting the preset gives
+        # min(14, 21.01) = 14 mg/L with its basis (G23, G24).
         targets = formula("Tomato (Howard Resh)", PACKAGED)["targets"]
         self.assertEqual((targets["N_NO3"], targets["N_NH4"]), (140, 0))
-        result = recommend(PACKAGED["salts"], targets, {})
-        self.assertEqual(result["ammoniumLimit"]["fractionOfTotalN"], 0.10)
-        self.assertEqual(result["ammoniumLimit"]["mgPerL"], 14.0)
-        self.assertEqual(result["ammoniumLimit"]["absoluteCapMgPerL"], CAP)
-        self.assertEqual(result["ammoniumLimit"]["basis"], BASIS)
-        explicit = recommend(PACKAGED["salts"], targets, {}, max_ammonium_fraction=0.10)
-        self.assertEqual(explicit["ammoniumLimit"], result["ammoniumLimit"])
-        self.assertEqual(explicit["salts"], result["salts"])
+        default = recommend(PACKAGED["salts"], targets, {})
+        self.assertIsNone(default["ammoniumLimit"])
+        preset = recommend(PACKAGED["salts"], targets, {}, max_ammonium_fraction=0.10)
+        self.assertEqual(preset["ammoniumLimit"]["fractionOfTotalN"], 0.10)
+        self.assertEqual(preset["ammoniumLimit"]["mgPerL"], 14.0)
+        self.assertEqual(preset["ammoniumLimit"]["absoluteCapMgPerL"], CAP)
+        self.assertEqual(preset["ammoniumLimit"]["basis"], BASIS)
+        self.assertLessEqual(final(preset, "N_NH4"), 14.0 + 1e-12)
+        self.assertEqual(ammonium_allowance_preset(targets), preset["ammoniumLimit"])
+        declared = recommend(
+            PACKAGED["salts"], targets, {}, maximum_concentrations={"N_NH4": 14.0}
+        )
+        self.assertIsNone(declared["ammoniumLimit"])
+
+    def test_preset_is_none_when_the_targets_state_ammonium_or_no_nitrogen(self):
+        self.assertIsNone(ammonium_allowance_preset({"K": 100}))
+        self.assertIsNone(ammonium_allowance_preset({"N_NO3": 100, "N_NH4": 10}))
 
     def test_fraction_is_capped_at_one_and_a_half_millimolar(self):
         targets = formula("Chilli (maximumyield)")["targets"]  # total N 320 -> 32 > 21.01
@@ -74,23 +85,32 @@ class AmmoniumLimitTests(unittest.TestCase):
         self.assertGreater(targets["N_NH4"], 0)
         default = recommend(SALTS, targets, {})
         without = recommend(SALTS, targets, {}, max_ammonium_fraction=None)
+        selected = recommend(SALTS, targets, {}, max_ammonium_fraction=0.10)
         self.assertIsNone(default["ammoniumLimit"])
+        self.assertIsNone(selected["ammoniumLimit"])
         self.assertEqual(default["salts"], without["salts"])
+        self.assertEqual(default["salts"], selected["salts"])
 
     def test_explicit_zero_ammonium_target_is_no_requirement(self):
-        # G24: N_NH4 = 0 sets no row and no ban; the allowance applies
-        # as when it is absent.
+        # G24: N_NH4 = 0 sets no row and no ban, as when it is absent; the
+        # optional allowance, when selected, applies to both alike.
         absent = formula("Chilli (maximumyield)")["targets"]
         self.assertNotIn("N_NH4", absent)
         targets = dict(absent, N_NH4=0)
-        result = recommend(SALTS, targets, {})
+        self.assertIsNone(recommend(SALTS, targets, {})["ammoniumLimit"])
+        self.assertEqual(
+            recommend(SALTS, targets, {})["salts"], recommend(SALTS, absent, {})["salts"]
+        )
+        result = recommend(SALTS, targets, {}, max_ammonium_fraction=0.10)
         self.assertEqual(result["ammoniumLimit"]["mgPerL"], CAP)
         self.assertGreater(final(result, "N_NH4"), 0)
         self.assertLessEqual(final(result, "N_NH4"), CAP)
         self.assertEqual(
             [row["target"] for row in result["rows"] if row["symbol"] == "N_NH4"], [None]
         )
-        self.assertEqual(result["salts"], recommend(SALTS, absent, {})["salts"])
+        self.assertEqual(
+            result["salts"], recommend(SALTS, absent, {}, max_ammonium_fraction=0.10)["salts"]
+        )
 
     def test_explicit_maximum_overrides_the_fraction(self):
         targets = formula("Chilli (maximumyield)")["targets"]

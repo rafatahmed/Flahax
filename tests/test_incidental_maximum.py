@@ -128,11 +128,15 @@ class IncidentalMaximumTests(unittest.TestCase):
         )
         self.assertEqual(result["salts"], reference["salts"])
         self.assertEqual(result["loss"], reference["loss"])
-        # With the default allowance (Tomato total N 140 -> 14.0 mg/L)
-        # the water's chloride is still reported, not a solver failure,
-        # and incidental NH4-N stays within 14.0 mg/L.
+        # With the optional allowance selected (Tomato total N 140 ->
+        # 14.0 mg/L) the water's chloride is still reported, not a solver
+        # failure, and incidental NH4-N stays within 14.0 mg/L.
         allowed = recommend(
-            LIBRARY["salts"], tomato, water, maximum_concentrations={"Na": 68.97, "Cl": 106.35}
+            LIBRARY["salts"],
+            tomato,
+            water,
+            maximum_concentrations={"Na": 68.97, "Cl": 106.35},
+            max_ammonium_fraction=0.10,
         )
         self.assertEqual(allowed["ammoniumLimit"]["mgPerL"], 14.0)
         self.assertEqual([v["symbol"] for v in allowed["limitViolations"]], ["Cl"])

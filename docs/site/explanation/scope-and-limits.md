@@ -68,7 +68,7 @@ Single-product solubility data alone leaves a shared stock mixture unqualified.
 Products without applicable data are identified in the result.
 
 User-declared nutrient maxima apply as supplied. When no ammonium requirement is declared,
-the default recipe fit additionally applies its reported incidental-ammonium allowance.
+no ammonium maximum is added unless the optional incidental-ammonium allowance is selected.
 Review the limits actually used before selecting a candidate.
 
 ## Validation status and review actions

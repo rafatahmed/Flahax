@@ -93,13 +93,13 @@ on its own (decision D1). Total N is the sum of the three forms; it is reported 
 - A positive `N_NH4` target is fitted independently. An absent or zero target
   is removed from the fitted nitrogen rows and does not prohibit ammonium.
 
-**Ammonium allowance.** If `N_NH4` is absent or zero in the targets and no explicit
-ammonium maximum is supplied, the
-configured default, when total target nitrogen is positive, permits up to the
-smaller of 10% of total target nitrogen
-and 21.01005 mg/L as N (1.5 mmol/L). A positive ammonium target prevents
-this generated allowance. An explicit maximum supplies its own limit;
-`max_ammonium_fraction=None` disables the generated maximum.
+**Ammonium allowance (optional).** If `N_NH4` is absent or zero in the targets, there is no
+ammonium requirement and, by default, no ammonium maximum: the ammonium the products bring is
+reported for review. The allowance is a preset you select with `max_ammonium_fraction=0.10`
+(or by declaring the resulting maximum yourself): when total target nitrogen is positive it permits
+up to the smaller of that share of total target nitrogen and 21.01005 mg/L as N (1.5 mmol/L), and
+`ammoniumLimit` reports it with its basis. A positive ammonium target prevents the preset. An
+explicit maximum supplies its own limit.
 
 The result's practice attribution is not a crop-specific agronomic qualification.
 The [2016 nutrient-solution handbook, printed p.16](https://www.nmi-agro.nl/wp-content/uploads/2020/04/160905_manual_nutrient_solutions_digital_en-8mb.pdf#page=16)

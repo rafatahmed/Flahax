@@ -111,9 +111,11 @@ write them in mg/L (N_NO3 and N_NH4 as N) and pass the file with `--targets`:
 This worked example explicitly chooses an NH4-N maximum of 14 mg/L, including
 the RO comparisons below. It is an illustrative caller constraint, not a crop
 recommendation. Supply limits appropriate to your own requirements. Without a
-declared NH4-N maximum, a formula with no NH4-N target (absent or 0) gets the
-ammonium allowance min(10% of total N, 1.5 mmol/L), Dutch soilless practice
-(De Kreij, Voogt et al.); a declared maximum takes precedence.
+declared NH4-N maximum, a formula with no NH4-N target (absent or 0) has no
+ammonium limit and its incidental NH4-N is reported for review. To apply the
+optional allowance min(10% of total N, 1.5 mmol/L), Dutch soilless practice
+(De Kreij, Voogt et al.), declare it, for example `--limit N_NH4=14` for a
+total target N of 140 mg/L.
 
 ```bash
 flahax batch --formula "Tomato (Howard Resh)" --water well.json --water-share 8 --acid "HNO3:0.60:1.37:Nitric acid 60%" --limit Na=68.97 --limit Cl=106.35 --limit N_NH4=14 --output tomato-batch

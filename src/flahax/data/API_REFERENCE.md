@@ -690,7 +690,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -726,15 +726,18 @@ Args:
         constraint, and any excess that cannot be removed is
         reported in limitViolations with feasible False. Omitted
         keeps the default.
-    max_ammonium_fraction: When targets declare no NH4-N requirement
-        (N_NH4 absent or 0) and no N_NH4 maximum is given,
+    max_ammonium_fraction: Selects the optional ammonium allowance
+        preset. Omitted (None), nothing limits incidental NH4-N: an
+        absent or zero N_NH4 target is no requirement and no
+        maximum. Given a number in [0, 1], and when targets declare
+        no NH4-N requirement and no N_NH4 maximum is given,
         incidental NH4-N may reach this share of the total target N
         (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L NH4
-        (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The default
-        AMMONIUM_FRACTION (0.10) follows Dutch soilless practice
-        (G23); ammoniumLimit reports it with its basis. None adds no
-        ammonium maximum. Untargeted nutrients do not enter the
-        objective.
+        (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). AMMONIUM_FRACTION
+        (0.10) is the Dutch soilless practice value (G23);
+        ammoniumLimit reports the limit with its basis. A declared
+        N_NH4 maximum always replaces the preset. Untargeted
+        nutrients do not enter the objective.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -770,17 +773,18 @@ Source module: `flahax.engine`. Import with `from flahax import recommend`.
 ### `solve_weights`
 
 ```text
-solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0, *, max_ammonium_fraction: 'float | None' = 0.1) -> 'dict'
+solve_weights(salts: 'list[dict]', targets: 'dict', water: 'dict | None' = None, ridge: 'float' = 0.0, *, max_ammonium_fraction: 'float | None' = None) -> 'dict'
 ```
 
 Fit nonnegative g/L by positive-target squared relative error.
 ridge must be zero.
 
 Nitrogen forms and the ammonium allowance follow ``recommend``: each
-form is its own row, a zero N_NH4 sets no row and no ban, and
-incidental NH4-N is held within min(max_ammonium_fraction x total
-target N, 1.5 mmol/L), reported in ammoniumLimit with its basis.
-totalN reports the sum of the forms.
+form is its own row, a zero N_NH4 sets no row and no ban, and no
+ammonium maximum is added unless max_ammonium_fraction selects the
+allowance preset: incidental NH4-N is then held within
+min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in
+ammoniumLimit with its basis. totalN reports the sum of the forms.
 
 Source module: `flahax.engine`. Import with `from flahax import solve_weights`.
 

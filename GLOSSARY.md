@@ -29,8 +29,9 @@ The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
 **Ammonium allowance**:
-The default incidental NH₄-N ceiling when the NH₄ target is absent or zero, set to the smaller
-of 10% of total target nitrogen and 1.5 mmol/L ammonium. A declared NH₄-N maximum takes precedence.
+An optional preset, off by default, that caps incidental NH₄-N when the NH₄ target is absent or zero at the smaller
+of 10% of total target nitrogen and 1.5 mmol/L ammonium. An absent or zero NH₄ target is otherwise no requirement and no
+maximum. A declared NH₄-N maximum takes precedence over the preset.
 _Avoid_: Ammonium ban, zero ammonium
 
 **Precipitation risk**:

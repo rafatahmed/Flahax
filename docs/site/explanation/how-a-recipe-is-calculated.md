@@ -34,10 +34,11 @@ is reported with its reason and achieved concentration. A target-only charge imb
 prove a conflict because untargeted counterions may supply the remaining charge. The fit
 applies the declared maximum concentrations.
 
-For absent or zero ammonium targets, the default incidental NH4-N allowance is the smaller
-of 10% of total target nitrogen and 1.5 mmol/L ammonium. It is reported as `ammoniumLimit`.
-An explicit NH4-N maximum takes precedence. The Python interface can change the fraction
-or disable this allowance. A positive NH4-N target is fitted as its own nitrogen-form target.
+An absent or zero ammonium target is no requirement and, by default, no maximum; the incidental
+NH4-N is reported for review. The Python interface can select an optional allowance, the smaller
+of a share of total target nitrogen (0.10 is the documented value) and 1.5 mmol/L ammonium, reported
+as `ammoniumLimit`. An explicit NH4-N maximum takes precedence. A positive NH4-N target is fitted
+as its own nitrogen-form target.
 
 Supported formula counterions enter the fit before dose selection. The
 [material inventory](../models/material-inventory.md) records the same analytical
