@@ -649,6 +649,16 @@ def summarize_batch(
             final_ph=state.ph,
             phase_assessment=assessment,
             ionic_strength=state.ionic_strength,
+            # Dissolved species and predicted precipitate, apart from the nutrient totals (Q12).
+            species_mol_per_kg=dict(
+                sorted(
+                    ((name, amount) for name, amount in state.species.items() if amount > 1e-12),
+                    key=lambda item: -item[1],
+                )
+            ),
+            precipitated_mol_per_kg={
+                name: amount for name, amount in state.precipitated.items() if amount > 0
+            },
             risk=[dict(phase=p, si=si) for p, si in assessment['risk']],
             information=[
                 dict(phase=p, si=si, basis=basis) for p, si, basis in assessment['information']
@@ -941,6 +951,9 @@ def summarize_batch(
             'A positive saturation index is a precipitation risk, not a predicted rate.',
             'Closed carbon: the mixed tank does not exchange CO2 with air.',
             'Chemistry at 25 °C only.',
+            'Meeting a nutrient target does not establish that nutrients remain dissolved or '
+            'available; the dissolved-target calculation is not supported, so dissolved species '
+            'and predicted precipitate are reported apart from the totals.',
             '1 L of solution is taken as 1 kg of water.',
         ],
     )
@@ -1650,6 +1663,23 @@ def render_report(summary):
             f'final '
             f'{number(chem["final_ph"], 2)}; ionic strength {number(chem["ionic_strength"], 4)} '
             f'mol/kg.</p>'
+            + table(
+                ['Species', 'mol/kg water'],
+                [
+                    (name, f'{amount:.3e}')
+                    for name, amount in list(chem['species_mol_per_kg'].items())[:12]
+                ],
+                'Dissolved species, largest first (the twelve largest); nutrient totals are above',
+            )
+            + (
+                table(
+                    ['Phase', 'mol/kg water'],
+                    [(n, f'{a:.3e}') for n, a in chem['precipitated_mol_per_kg'].items()],
+                    'Predicted precipitate',
+                )
+                if chem['precipitated_mol_per_kg']
+                else '<p>No precipitate is predicted at this pH and composition.</p>'
+            )
             + table(
                 ['Phase', 'Saturation index', 'Reading'],
                 [
