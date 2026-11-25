@@ -15,10 +15,13 @@ A value in a unit the check does not know is ``not_checked``.
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 import json
-import math
 from pathlib import Path
 
 from .delivery_contracts import DeliveryError
+from .inputs import number
+
+SOLUBILITY_INPUT = 'invalid_solubility_input'
+
 
 TABLE_PATH = Path(__file__).with_name('data') / 'solubility.json'
 SINGLE_SALT = 'single-product check; the mixed tank is not assessed'
@@ -48,20 +51,6 @@ class SolubilityRow:
     mixture_approved: bool = False
 
 
-def _number(value, name, *, positive=False):
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, (int, float))
-        or not math.isfinite(value)
-        or (positive and value <= 0)
-    ):
-        raise DeliveryError(
-            'invalid_solubility_input',
-            f'{name} must be finite' + (' and positive' if positive else ''),
-        )
-    return float(value)
-
-
 def source_concentration_g_per_l(
     value,
     basis,
@@ -78,14 +67,21 @@ def source_concentration_g_per_l(
     equivalents. This arithmetic does not establish grade, temperature
     or density applicability.
     """
-    value = _number(value, 'source concentration')
-    ratio = _number(product_to_solute_mass_ratio, 'product/solute mass ratio', positive=True)
+    value = number(value, 'source concentration', minimum=None, code=SOLUBILITY_INPUT)
+    ratio = number(
+        product_to_solute_mass_ratio,
+        'product/solute mass ratio',
+        positive=True,
+        code=SOLUBILITY_INPUT,
+    )
     if value < 0:
         raise DeliveryError('invalid_solubility_input', 'source concentration must be nonnegative')
     if basis == 'g_per_l_solution':
         result = value * ratio
     else:
-        density = _number(solution_density_g_per_ml, 'solution density', positive=True)
+        density = number(
+            solution_density_g_per_ml, 'solution density', positive=True, code=SOLUBILITY_INPUT
+        )
         if basis == 'mass_percent':
             if value > 100:
                 raise DeliveryError('invalid_solubility_input', 'mass percent cannot exceed 100')
@@ -93,15 +89,22 @@ def source_concentration_g_per_l(
         elif basis == 'g_per_100g_water':
             fraction = value / (100 + value)
         elif basis == 'g_per_l_water':
-            water_density = _number(water_density_g_per_ml, 'water density', positive=True)
-            denominator = _number(1000 * water_density + value, 'water-basis denominator')
+            water_density = number(
+                water_density_g_per_ml, 'water density', positive=True, code=SOLUBILITY_INPUT
+            )
+            denominator = number(
+                1000 * water_density + value,
+                'water-basis denominator',
+                minimum=None,
+                code=SOLUBILITY_INPUT,
+            )
             fraction = value / denominator
         else:
             raise DeliveryError(
                 'invalid_solubility_basis', 'unsupported source concentration basis'
             )
         result = 1000 * density * fraction * ratio
-    return _number(result, 'converted concentration')
+    return number(result, 'converted concentration', minimum=None, code=SOLUBILITY_INPUT)
 
 
 def load_solubility_table(path=TABLE_PATH):
@@ -123,7 +126,10 @@ def _points(points):
             raise DeliveryError(
                 'invalid_solubility_table', 'each point must contain temperature and concentration'
             )
-        t, g = (_number(pair[0], 'temperature'), _number(pair[1], 'concentration'))
+        t, g = (
+            number(pair[0], 'temperature', minimum=None, code=SOLUBILITY_INPUT),
+            number(pair[1], 'concentration', minimum=None, code=SOLUBILITY_INPUT),
+        )
         if g < 0 or any(t == old[0] for old in result):
             raise DeliveryError(
                 'invalid_solubility_table', 'negative concentration or duplicate temperature'
@@ -136,7 +142,7 @@ def limit_at(points, temperature_c):
     """Algebraic linear interpolation of a point list; the stock check
     does not use it.
     """
-    temperature_c = _number(temperature_c, 'temperature')
+    temperature_c = number(temperature_c, 'temperature', minimum=None, code=SOLUBILITY_INPUT)
     points = _points(points)
     for temperature, concentration in points:
         if temperature_c == temperature:
@@ -144,7 +150,12 @@ def limit_at(points, temperature_c):
     for (t0, g0), (t1, g1) in zip(points, points[1:]):
         if t0 < temperature_c < t1:
             weight = (temperature_c - t0) / (t1 - t0)
-            return _number((1 - weight) * g0 + weight * g1, 'interpolated concentration')
+            return number(
+                (1 - weight) * g0 + weight * g1,
+                'interpolated concentration',
+                minimum=None,
+                code=SOLUBILITY_INPUT,
+            )
     return None
 
 
@@ -202,8 +213,8 @@ def check_stock_solubility(
     data"). ``product_grades`` is accepted for callers and does not
     select a value. No row approves a mixed stock.
     """
-    ratio = _number(ratio, 'injection ratio', positive=True)
-    temperature = _number(temperature_c, 'temperature')
+    ratio = number(ratio, 'injection ratio', positive=True, code=SOLUBILITY_INPUT)
+    temperature = number(temperature_c, 'temperature', minimum=None, code=SOLUBILITY_INPUT)
     grades = {} if product_grades is None else product_grades
     if not isinstance(grades, Mapping):
         raise DeliveryError('invalid_solubility_input', 'product grades must be a mapping')
@@ -230,10 +241,14 @@ def check_stock_solubility(
     found = []
     for tank in tanks:
         for product in tank.products:
-            dose = _number(product.grams_per_litre, 'product dose')
+            dose = number(
+                product.grams_per_litre, 'product dose', minimum=None, code=SOLUBILITY_INPUT
+            )
             if dose < 0:
                 raise DeliveryError('invalid_solubility_input', 'product dose must be nonnegative')
-            stock = _number(dose * ratio, 'stock concentration')
+            stock = number(
+                dose * ratio, 'stock concentration', minimum=None, code=SOLUBILITY_INPUT
+            )
             value = basis = source = source_t = None
             reason = NO_DATA
             own = catalogue.get(product.name)

@@ -28,6 +28,7 @@ from typing import Any
 
 from .composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from .delivery_contracts import DeliveryError
+from .inputs import number
 
 _RESOURCE = 'data/material_identities.json'
 _RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
@@ -315,16 +316,6 @@ def _text(record: Mapping, key: str, label: str) -> str:
     return value
 
 
-def _number(value: Any, label: str, *, ceiling: float | None = 100.0) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise DeliveryError('invalid_value', f'{label}: {value!r} is not a number')
-    number = float(value)
-    if not math.isfinite(number) or number < 0 or (ceiling is not None and number > ceiling):
-        bound = f'within 0..{ceiling:g} %' if ceiling is not None else 'finite and non-negative'
-        raise DeliveryError('invalid_value', f'{label}: {value!r} must be {bound}')
-    return number
-
-
 def _document(record: Mapping, label: str) -> DocumentReference:
     raw = record.get('document')
     if not isinstance(raw, Mapping):
@@ -383,7 +374,7 @@ def _elemental(values: Any, label: str, conversions: dict) -> dict:
             raise DeliveryError(
                 'invalid_value', f'{label}: {element} stated twice (elemental and oxide)'
             )
-        out[element] = _number(raw, f'{label} {key}') * factor
+        out[element] = number(raw, f'{label} {key}', maximum=100.0, code='invalid_value') * factor
     return out
 
 
@@ -565,7 +556,10 @@ def make_grade(record: Mapping) -> Grade:
             if any(element in bands[band] for band in _BANDS):
                 raise DeliveryError('invalid_value', f'{label}: {element} stated twice')
             for band, raw in stated.items():
-                bands[band][element] = _number(raw, f'{label} {key} {band}') * factor
+                bands[band][element] = (
+                    number(raw, f'{label} {key} {band}', maximum=100.0, code='invalid_value')
+                    * factor
+                )
             ordered = [
                 bands[band][element]
                 for band in ('minimum', 'typical', 'maximum')
@@ -580,7 +574,7 @@ def make_grade(record: Mapping) -> Grade:
     if not isinstance(impurities, Mapping):
         raise DeliveryError('invalid_value', f'{label}: impurity_limits must be a mapping')
     impurity_limits = {
-        str(key): _number(value, f'{label} impurity {key}', ceiling=None)
+        str(key): number(value, f'{label} impurity {key}', code='invalid_value')
         for key, value in impurities.items()
     }
 
