@@ -1020,7 +1020,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages
@@ -1073,7 +1073,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2, requested_ec_ms_cm=None)
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=None, tank_capacities_litres=None, requested_ec_ms_cm=None)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -1086,6 +1086,13 @@ refitted recipe, which counts the reagent's nutrients, is the recipe
 to weigh. Each concentrate is compared with that product's own
 solubility value (catalogue data first, then the historical table),
 in the value's basis, and a product without data is not checked.
+
+``available_tanks`` and ``tank_capacities_litres`` declare the
+equipment (D3). Undeclared, two tanks are assumed and the summary
+says so (``available_tanks_declared`` false). Capacities are listed
+in tank order, one per available tank; a tank that cannot hold its
+stock volume is reported and blocks, and the recipe and equipment
+are never changed to make it fit.
 
 Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 
@@ -2103,13 +2110,13 @@ Source module: `flahax.result_acceptance`. Import with `from flahax import verif
 ### `StockPlan`
 
 ```text
-StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True) -> None
+StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True, unverified: 'tuple[dict, ...]' = ()) -> None
 ```
 
 A capacity-checked assignment with explicit mixture qualification
 and search status.
 
-Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`.
+Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`, `unverified`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockPlan`.
 

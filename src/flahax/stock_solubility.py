@@ -264,9 +264,58 @@ def check_stock_solubility(
                     basis,
                     source_t,
                     temperature,
+                    _qualification(status, source_t, temperature),
                 )
             )
     return found
+
+
+def _qualification(status, source_temperature_c, tank_temperature_c):
+    """What the row's verdict does and does not establish (D5, D6).
+
+    Every verdict is a single-product value, never a mixed-stock result.
+    The value is used at the tank temperature as recorded, without
+    extrapolation; a source temperature that differs from the tank's,
+    or is not stated, is listed as unverified.
+    """
+    unverified = ['mixture']
+    if status == 'not_checked':
+        unverified.insert(0, 'solubility value')
+        matched = None
+    elif source_temperature_c is None:
+        unverified.insert(0, 'temperature')
+        matched = None
+    else:
+        matched = source_temperature_c == tank_temperature_c
+        if not matched:
+            unverified.insert(0, 'temperature')
+    return dict(
+        scope='single_product',
+        temperature_matched=matched,
+        source_temperature_c=source_temperature_c,
+        tank_temperature_c=tank_temperature_c,
+        unverified=unverified,
+    )
+
+
+def unverified_temperature_note(rows, temperature_c):
+    """One sentence naming the products whose solubility value is not
+    verified at the tank temperature, or None when every checked value is.
+    """
+    named = []
+    for row in rows:
+        if 'temperature' not in row.qualification.get('unverified', ()):
+            continue
+        source = row.source_temperature_c
+        recorded = 'source temperature not stated' if source is None else f'{source:g} °C'
+        named.append(f'{row.product} ({recorded})')
+    if not named:
+        return None
+    return (
+        f'Solubility values for {", ".join(dict.fromkeys(named))} were recorded at a different '
+        f'temperature than the tank: not verified at {temperature_c:g} °C. They are used as '
+        'recorded, not extrapolated.'
+    )
 
 
 def exceeds_message(row, temperature_c):

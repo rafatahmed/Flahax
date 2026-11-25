@@ -410,6 +410,21 @@ Inspect `resolved_requirements`, `introduced_requirements` and
 `remaining_requirements`, plus the immutable candidate `snapshot` and
 `calculation_id`. These results do not imply delivery or physical approval.
 
+**Equipment-aware search.** `available_product_search(products, on_equipment_miss=True)`
+also runs when the declared equipment cannot hold the recipe: the stocks stage failed
+with an error such as `too_many_tanks`, `tank_too_small` or `solubility_exceeded`, which
+adds the requirement `equipment:fit`. Every candidate keeps the declared tanks, injection
+ratio, temperature and separation rules; only the products change, and a candidate that
+fits lists `equipment:fit` in `resolved_requirements`. Without the option nothing is
+searched. `workflow.remedies.mode` records `analyze_supplied_doses` when no scenario was
+evaluated and `find_suitable_doses` when one was, and `declared_equipment` records the
+tanks (id and litres), injection ratio, temperature and the number of rules and limits,
+so a saved result shows the equipment the search was held to. A caller that judges equipment
+itself, as `flahax batch` does in its report, passes `equipment_check` to
+`plan_fertilizer_workflow`: a callable that takes the workflow and returns None when the recipe
+fits or `{error_code, message}`; an object with a `declaration` attribute has that record saved
+as `declared_equipment` and, in the saved inputs, as `equipment_declaration`.
+
 The search covers only the supplied scenarios and product bundles. It does not
 combine separate options automatically, enumerate the whole market, prove a
 minimum-cost equipment solution or select a manufacturer model. Budget skips and
@@ -444,6 +459,16 @@ returns a detached payload. `Store.save('results', name, archive)` and
 `batch_cli.render_saved_result(archive)` to validate before rendering an archived
 result. Historical results preserve their historical source identities; rendering
 is not recalculation against the current engine.
+
+The summary keeps `supplied_inputs`: the targets, water, volume, pH, limits, equipment and
+every product record with its assay, exactly as supplied. `calculation_identity.input_sha256`
+is the hash of that object, and `load_result` rejects a saved result whose inputs no longer
+match it. Results saved before this field existed still load, but carry no inputs.
+`saved_input_differences(saved, recalculated)` (from `flahax.result_acceptance`) lists each
+input path that differs between two results as `{path, saved, recalculated}`, so a
+recalculation with changes names what changed; it needs both results to carry their inputs.
+The equipment the stock check used and its defaults are in `tanks`, and the search mode and
+declared equipment are in `remedies`.
 
 New saved mix sessions retain their answer fields and add `saved_state` with
 `schema_version=1`, `inputs_sha256`, named-item `references` fingerprints and

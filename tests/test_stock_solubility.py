@@ -90,7 +90,9 @@ class CatalogueValueTests(unittest.TestCase):
 
     def test_grades_do_not_select_a_value(self):
         row = check('Potassium Nitrate', 1.0, product_grades={'Potassium Nitrate': 'G1'})
-        self.assertEqual((row.limit_g_per_l, row.qualification), (316, {}))
+        self.assertEqual(row.limit_g_per_l, 316)
+        self.assertEqual(row.qualification, check('Potassium Nitrate', 1.0).qualification)
+        self.assertEqual(row.qualification['scope'], 'single_product')
         with self.assertRaises(DeliveryError):
             check('Potassium Nitrate', 1.0, product_grades=['G1'])
 

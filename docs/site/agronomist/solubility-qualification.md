@@ -30,6 +30,14 @@ labelled so (it is slightly higher than a "g/L solution" value). Where a source 
 no volume basis the row says "volume basis unspecified by source". `mixture_approved` is
 always `False`.
 
+Each row's `qualification` states what the verdict does not establish: `scope` is
+`single_product`, `temperature_matched` is true only when the value's source temperature
+equals the tank temperature (null when the source states none), and `unverified` lists
+`temperature` when it does not match and always `mixture`. A mismatch never changes the
+check or the doses: the value is used as recorded, not extrapolated, and the batch
+warnings name each product and its source temperature as "not verified at" the tank
+temperature.
+
 When a table gives several temperatures, the point nearest the tank temperature is used
 (the lower one on a tie). The table values are grams of product per litre of solution at
 an assumed density of 1 g/mL, and the row says so.
