@@ -84,8 +84,19 @@ Selection follows the table, per nutrient. Other flags:
 
 A formula declares nitrogen by form: `N_NO3` (nitrate-N), `N_NH4` (ammonium-N) and
 `N_UREA` (urea-N), each in mg/L as N. Each declared form is its own target and is fitted
-on its own (decision D1). Total N is the sum of the three forms; it is reported as
-`totalN` (target, final and difference), never fitted.
+on its own (decision D1). Total N, the sum of the three forms, is reported as `totalN`
+(target, final and difference).
+
+Total N can also be a target, written `N` (mg/L as N), alone or with forms (decision D2):
+
+- `N` alone is one requirement on the sum of the three forms. It imposes no form split, and
+  a urea-bearing product is still not used unless the formula declares urea.
+- `N` with all three forms: the forms are scored once and the declared total is checked
+  against their sum. A disagreement is an error before any fitting.
+- `N` with only some forms: both are scored and `totalN.overlapForms` lists the forms
+  scored beside the total. No other form target is invented; the selected products decide
+  the unspecified forms. Forms that add up to more than `N` are an error.
+- `N` is accepted in targets only, not in water, maxima or product assays.
 
 - `N_NO3` is fitted to its declared value.
 - `N_UREA` absent means 0: a declared zero, met within 1e-6 mg/L. A urea-bearing

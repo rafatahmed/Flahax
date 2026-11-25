@@ -14,7 +14,7 @@ from pathlib import Path
 import unittest
 
 from flahax import load_library, recommend
-from flahax.composition import ATOMIC, ATOMIC_CONVENTION, InputError, theoretical_assay
+from flahax.composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from flahax.delivery_contracts import DeliveryError
 from flahax.materials import OXIDE_FACTORS, _check, load_identities, resolve_material
 from flahax.product_conversion import MOLAR_MASS
@@ -112,9 +112,12 @@ class MaterialConventionTests(unittest.TestCase):
         self.assertEqual(provenance['sourceStatus'], 'declared_unattributed')
         self.assertEqual(provenance['atomicMassConvention'], ATOMIC_CONVENTION)
 
-    def test_total_nitrogen_is_not_silently_split(self):
-        with self.assertRaises(InputError):
-            recommend(load_library()['salts'], {'N': 100})
+    def test_total_nitrogen_is_a_target_and_is_not_split_into_forms(self):
+        result = recommend(load_library()['salts'], {'N': 100})
+        rows = {r['symbol']: r for r in result['rows']}
+        self.assertEqual(rows['N']['target'], 100)
+        self.assertIsNone(rows['N_NO3']['target'])
+        self.assertIsNone(rows['N_NH4']['target'])
 
 
 if __name__ == '__main__':

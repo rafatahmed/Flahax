@@ -31,6 +31,7 @@ from .composition import (
     imbalance_note,
     is_carbonate,
     total_nitrogen,
+    target_total_nitrogen,
     NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
@@ -425,6 +426,8 @@ def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
     """
     loss = 0.0
     rows = []
+    if "N" in targets and "N" not in achieved:
+        achieved = {**achieved, "N": total_nitrogen(achieved)}
     symbols = list(dict.fromkeys([*targets.keys(), *achieved.keys()]))
     for symbol in symbols:
         target = targets.get(symbol)
@@ -450,6 +453,22 @@ def _nutrients(product):
     return (inventory if inventory is not None else material_inventory(product))[
         'nutrient_percent'
     ]
+
+
+def _supply(nutrients: dict, symbol: str) -> float:
+    """Percent of a symbol in a product's nutrient inventory; total N
+    ("N") is the sum of its three nitrogen forms.
+    """
+    if symbol == "N":
+        return math.fsum(nutrients.get(form, 0.0) for form in NITROGEN_FORMS)
+    return nutrients.get(symbol, 0.0)
+
+
+def _background(water: dict, symbol: str) -> float:
+    """Water concentration of a symbol; total N is the sum of the forms."""
+    if symbol == "N":
+        return total_nitrogen(water)
+    return float(water.get(symbol) or 0.0)
 
 
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
@@ -500,8 +519,8 @@ def _fit(
     rhs = []
     for symbol in symbols:
         target = targets.get(symbol)
-        rates = [ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) for salt in salts]
-        background = float(water.get(symbol) or 0.0)
+        rates = [ppm_per_gram(_supply(_nutrients(salt), symbol)) for salt in salts]
+        background = _background(water, symbol)
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
@@ -680,7 +699,7 @@ def solve_weights(
     ammoniumLimit with its basis. totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
-    targets = fitted_targets(validate_profile(targets, "targets"))
+    targets = fitted_targets(validate_profile(targets, "targets", total_n=True))
     water = validate_profile(water or {}, "water")
     for salt in salts:
         conflict = assay_conflict(salt)
@@ -713,7 +732,7 @@ def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> d
         or not 0 <= fraction <= 1
     ):
         raise InputError("max_ammonium_fraction must be a number in [0, 1]")
-    total_n = total_nitrogen(targets)
+    total_n = target_total_nitrogen(targets)
     # A positive N_NH4 target keeps its own row; absent or 0 gets the
     # allowance (G23).
     if total_n <= 0 or "N_NH4" in targets or "N_NH4" in maxima:
@@ -739,7 +758,7 @@ def ammonium_allowance_preset(targets: dict, fraction: float = AMMONIUM_FRACTION
     ``maximum_concentrations={'N_NH4': record['mgPerL']}``.
     """
     return ammonium_allowance(
-        fitted_targets(validate_profile(dict(targets), "targets")), {}, fraction
+        fitted_targets(validate_profile(dict(targets), "targets", total_n=True)), {}, fraction
     )
 
 
@@ -770,6 +789,8 @@ def _still_within(new_rows: list[dict], old_rows: list[dict]) -> bool:
 
 
 def _supplies(salt: dict, symbol: str) -> bool:
+    if symbol == "N":
+        return total_nitrogen(salt["elements"]) > 0
     return float(salt["elements"].get(symbol) or 0.0) > 0
 
 
@@ -988,9 +1009,10 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         return set(kept)
     matrix, rhs = [], []
     for symbol, target in kept.items():
-        matrix.append([ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) / target for salt in salts])
-        rhs.append((target - float(water.get(symbol) or 0.0)) / target)
+        matrix.append([ppm_per_gram(_supply(_nutrients(salt), symbol)) / target for salt in salts])
+        rhs.append((target - _background(water, symbol)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
+    achieved["N"] = total_nitrogen(achieved)
     return {
         symbol for symbol, target in kept.items() if not met(target, achieved.get(symbol, 0.0))
     }
@@ -1179,19 +1201,29 @@ def _provenance(record: dict) -> dict:
 
 
 def total_n_report(rows: list[dict], targets: dict) -> dict:
-    """Total N reported as the sum of the three forms in the final rows
-    (water, products and any reagent); it is never a fitted row (D1).
-    The target is None when no form is declared.
+    """Total N as the sum of the three forms in the final rows (water,
+    products and any reagent), against the declared total or the sum of
+    the declared forms (D1, D2). The target is None when neither a form
+    nor a total is declared. fitted is True when the total is its own
+    row; overlapForms then lists the forms scored beside it (the urea
+    safeguard's zero is not an overlap).
     """
-    target = total_nitrogen(targets) if any(form in targets for form in NITROGEN_FORMS) else None
+    declared = "N" in targets or any(form in targets for form in NITROGEN_FORMS)
+    target = target_total_nitrogen(targets) if declared else None
     final = total_nitrogen({row["symbol"]: row["final"] for row in rows})
+    fitted = "N" in targets
     return {
         "target": target,
         "final": final,
         "deltaPct": 100.0 * (final - target) / target if target else None,
         "unit": "mg/L as N",
         "forms": list(NITROGEN_FORMS),
-        "fitted": False,
+        "fitted": fitted,
+        "overlapForms": [
+            form
+            for form in NITROGEN_FORMS
+            if fitted and form in targets and (form != "N_UREA" or targets[form] > 0)
+        ],
     }
 
 
@@ -1304,7 +1336,7 @@ def recommend(
             candidates.
     """
     _validate_ridge(ridge)
-    targets = validate_profile(targets, "targets")
+    targets = validate_profile(targets, "targets", total_n=True)
     if not targets:
         raise InputError("targets are required")
     # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is

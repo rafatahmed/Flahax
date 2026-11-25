@@ -348,7 +348,7 @@ def plan_fertilizer_workflow(
     for config in (equilibrium, nitric, titration, stocks, acids, ph_adjustment):
         if config is not None and not isinstance(config, Mapping):
             raise DeliveryError('invalid_type', 'stage configurations must be mappings')
-    targets = validate_profile(dict(targets), 'targets')
+    targets = validate_profile(dict(targets), 'targets', total_n=True)
     water = validate_profile(dict(water), 'water')
     collision = product_name_collision(salts)
     if collision:
