@@ -17,7 +17,7 @@ from types import MappingProxyType
 import math
 
 from .aqueous_model import chemistry, solve
-from .composition import NITROGEN_FORMS, validate_profile
+from .composition import NITROGEN_FORMS, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
 from .engine import score
 from .product_conversion import component_nutrient_masses
@@ -31,7 +31,7 @@ def _number(value, name, *, positive=False, signed=False):
     return float(value)
 
 
-def _profile(value, name, *, components=False, total_n=False):
+def _profile(value, name, *, components=False, targets=False):
     if not isinstance(value, Mapping):
         raise DeliveryError('invalid_type', f'{name} must be an object')
     values = {k: _number(v, name) for k, v in value.items()}
@@ -39,7 +39,7 @@ def _profile(value, name, *, components=False, total_n=False):
         if set(values) - set(chemistry()['bases']):
             raise DeliveryError('unknown_component', f'{name} contains unsupported components')
     else:
-        values = validate_profile(values, name, total_n=total_n)
+        values = (validate_targets if targets else validate_profile)(values, name)
     return MappingProxyType(values)
 
 
@@ -119,7 +119,7 @@ class JointProblem:
             raise DeliveryError('duplicate_product', 'fertilizer/reagent IDs must be distinct')
         for name in ('targets', 'water', 'maximum_concentrations'):
             object.__setattr__(
-                self, name, _profile(getattr(self, name), name, total_n=name == 'targets')
+                self, name, _profile(getattr(self, name), name, targets=name == 'targets')
             )
         if not self.targets:
             raise DeliveryError('missing_field', 'targets are required')

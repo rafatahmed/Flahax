@@ -13,7 +13,7 @@ from collections.abc import Mapping
 
 from .calculated_ph import calculate_equilibrium_ph
 from .canonical_result import CanonicalResult
-from .composition import InputError, product_name_collision, validate_profile
+from .composition import InputError, product_name_collision, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis, VolumeLitres, final_solution_recipe
 from .engine import recommend, gap_for, load_library
@@ -365,7 +365,7 @@ def plan_fertilizer_workflow(
     for config in (equilibrium, nitric, titration, stocks, acids, ph_adjustment):
         if config is not None and not isinstance(config, Mapping):
             raise DeliveryError('invalid_type', 'stage configurations must be mappings')
-    targets = validate_profile(dict(targets), 'targets', total_n=True)
+    targets = validate_targets(dict(targets), 'targets')
     water = validate_profile(dict(water), 'water')
     collision = product_name_collision(salts)
     if collision:

@@ -13,7 +13,7 @@ is reported; no other form target is invented.
 import unittest
 
 from flahax import InputError, load_library, recommend, solve_weights
-from flahax.composition import fitted_targets, nitrogen_rows, validate_profile
+from flahax.composition import fitted_targets, nitrogen_rows, validate_profile, validate_targets
 from flahax.requirement_fit import met
 
 SALTS = load_library()['salts']
@@ -71,7 +71,7 @@ class TotalNitrogenRowsTests(unittest.TestCase):
         self.assertNotIn('N', nitrogen_rows({'N': 0.0}))
 
     def test_total_is_accepted_for_targets_only(self):
-        self.assertEqual(validate_profile({'N': 5.0}, 'targets', total_n=True), {'N': 5.0})
+        self.assertEqual(validate_targets({'N': 5.0}, 'targets'), {'N': 5.0})
         with self.assertRaises(InputError):
             validate_profile({'N': 5.0}, 'water')
 

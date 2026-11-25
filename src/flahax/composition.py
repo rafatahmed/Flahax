@@ -272,28 +272,46 @@ def _finite(value) -> float:
     return number
 
 
-def validate_profile(profile: dict, label: str, *, total_n: bool = False) -> dict[str, float]:
+def validate_profile(profile: dict, label: str) -> dict[str, float]:
     """Return a copy of a ppm map, or raise InputError.
 
-    total_n admits the total-N symbol "N" in a formula's targets; every
-    other map (water, maxima, assays) still rejects it.
+    For water, maxima and assays. The total-N symbol "N" is a target only, so it is always
+    rejected here; validate a targets map with ``validate_targets``.
     """
     if not isinstance(profile, dict):
         raise InputError(f"{label} must be a map of ion symbol to ppm")
     clean: dict[str, float] = {}
     for symbol, raw in profile.items():
-        if symbol == "N" and not total_n:
+        if symbol == "N":
             raise InputError(
                 f"{label} uses N. Nitrate and ammonium are N_NO3 and N_NH4; "
                 "a total-N figure is a target only, never water, a maximum or an assay."
             )
-        if symbol not in IONS and symbol != "N":
+        if symbol not in IONS:
             raise InputError(f"{label} has unknown ion {symbol}")
         number = _finite(raw)
         if number < 0:
             raise InputError(f"{label} {symbol} is {number}, which is below 0 ppm")
         clean[symbol] = number
     return clean
+
+
+def validate_targets(targets: dict, label: str = "targets") -> dict[str, float]:
+    """Return a copy of a targets map, or raise InputError.
+
+    The one way to validate targets: every ion symbol plus the total-N symbol "N". Targets
+    are never validated with ``validate_profile``, so no caller has to remember a flag.
+    """
+    if not isinstance(targets, dict):
+        raise InputError(f"{label} must be a map of ion symbol to ppm")
+    total = targets.get("N")
+    rest = validate_profile({s: v for s, v in targets.items() if s != "N"}, label)
+    if total is None:
+        return rest
+    number = _finite(total)
+    if number < 0:
+        raise InputError(f"{label} N is {number}, which is below 0 ppm")
+    return {**{s: rest[s] for s in targets if s != "N"}, "N": number}
 
 
 def _split_terms(text: str) -> list[str]:
