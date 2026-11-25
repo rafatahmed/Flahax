@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import math
 from typing import Any, Mapping
 
-from .composition import IONS, InputError, assay_conflict, validate_profile
+from .composition import IONS, InputError, assay_conflict, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
 from .engine import _report, forward, score
 
@@ -350,7 +350,7 @@ def rescore_with_reagent(
     """
     try:
         final = validate_profile(dict(achieved), "achieved")
-        clean_targets = validate_profile(dict(targets), "targets", total_n=True)
+        clean_targets = validate_targets(dict(targets), "targets")
     except (TypeError, InputError) as exc:
         raise DeliveryError("invalid_ions", str(exc)) from exc
     if not isinstance(contribution, Mapping):
@@ -414,7 +414,7 @@ def rescore_weighed_recipe(
         )
     ):
         raise DeliveryError('invalid_type', 'targets, water and maxima must be objects')
-    clean_targets = validate_profile(dict(targets), 'targets', total_n=True)
+    clean_targets = validate_targets(dict(targets), 'targets')
     if not clean_targets:
         raise InputError('targets are required')
     clean_water = validate_profile(dict(water or {}), 'water')

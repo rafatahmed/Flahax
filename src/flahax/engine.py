@@ -35,6 +35,7 @@ from .composition import (
     NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
+    validate_targets,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
@@ -124,7 +125,7 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
     Invalid nutrient maps raise InputError. This is nutrient accounting,
     not an acid/base analysis.
     """
-    targets = validate_profile(targets, "targets", total_n=True)
+    targets = validate_targets(targets, "targets")
     water = validate_profile(water or {}, "water")
     gap = {}
     for symbol in dict.fromkeys([*targets, *water]):
@@ -716,7 +717,7 @@ def solve_weights(
     ammoniumLimit with its basis. totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
-    targets = fitted_targets(validate_profile(targets, "targets", total_n=True))
+    targets = fitted_targets(validate_targets(targets, "targets"))
     water = validate_profile(water or {}, "water")
     for salt in salts:
         conflict = assay_conflict(salt)
@@ -775,7 +776,7 @@ def ammonium_allowance_preset(targets: dict, fraction: float = AMMONIUM_FRACTION
     ``maximum_concentrations={'N_NH4': record['mgPerL']}``.
     """
     return ammonium_allowance(
-        fitted_targets(validate_profile(dict(targets), "targets", total_n=True)), {}, fraction
+        fitted_targets(validate_targets(dict(targets), "targets")), {}, fraction
     )
 
 
@@ -1395,7 +1396,7 @@ def recommend(
             candidates.
     """
     _validate_ridge(ridge)
-    targets = validate_profile(targets, "targets", total_n=True)
+    targets = validate_targets(targets, "targets")
     if not targets:
         raise InputError("targets are required")
     # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is

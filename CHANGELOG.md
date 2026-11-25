@@ -22,6 +22,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- Targets are validated by one function, `validate_targets`; `validate_profile` is only for water, maxima and assays and no longer takes the `total_n` flag that let an entry point keep the old rule (#316).
 - A total-nitrogen target (`N`) now reaches the workflow and the batch command; it was accepted by `recommend` only (#311).
 - `tools/check_numeric_review.py` reports `fully_classified` and `scientifically_qualified` as separate outcomes and no longer prints one `valid` flag, so a complete audit cannot be read as scientific qualification (#309).
 - The batch report and `plan_stocks` qualify a solubility value through one function (`qualify_single_product`): `verified` only where the recorded temperature range and the concentration basis support it, otherwise the gap is named. `StockPlan.qualification` is new and a solubility-limit record may state an optional `basis` (#307).
