@@ -1073,7 +1073,7 @@ Source module: `flahax.grower_report`. Import with `from flahax import render_re
 ### `summarize_batch`
 
 ```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=2, requested_ec_ms_cm=None)
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=None, tank_capacities_litres=None, requested_ec_ms_cm=None)
 ```
 
 Plain data for a grower report and batch sheet.
@@ -1086,6 +1086,13 @@ refitted recipe, which counts the reagent's nutrients, is the recipe
 to weigh. Each concentrate is compared with that product's own
 solubility value (catalogue data first, then the historical table),
 in the value's basis, and a product without data is not checked.
+
+``available_tanks`` and ``tank_capacities_litres`` declare the
+equipment (D3). Undeclared, two tanks are assumed and the summary
+says so (``available_tanks_declared`` false). Capacities are listed
+in tank order, one per available tank; a tank that cannot hold its
+stock volume is reported and blocks, and the recipe and equipment
+are never changed to make it fit.
 
 Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 

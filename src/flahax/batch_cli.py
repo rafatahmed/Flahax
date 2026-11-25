@@ -114,6 +114,21 @@ def read_json(path, what):
         ) from None
 
 
+def int_at_least(name, low):
+    """An argparse type: a whole number of at least ``low``."""
+
+    def parse(text):
+        try:
+            value = int(text)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'{name} {text!r} is not a whole number') from None
+        if value < low:
+            raise argparse.ArgumentTypeError(f'{name} must be at least {low}, not {text}')
+        return value
+
+    return parse
+
+
 def number_in(name, low, high=None, *, above=True):
     """An argparse type: a finite number above ``low`` (or at least,
     with ``above=False``) and at most ``high``.
@@ -471,6 +486,8 @@ class BatchOptions:
     products: str | None = None
     rules: str | None = None
     tank_litres: dict | None = None
+    available_tanks: int | None = None
+    tank_capacities: list | None = None
     mode: str = 'fill'
     irrigation_litres: float | None = None
     temperature_c: float = 25
@@ -752,6 +769,8 @@ def run_batch(options):
         injection_ratio=options.ratio,
         rules=rules,
         temperature_c=options.temperature_c,
+        available_tanks=options.available_tanks,
+        tank_capacities_litres=options.tank_capacities,
         requested_ec_ms_cm=options.ec,
     )
     if target_design is not None:
@@ -849,6 +868,8 @@ def build(args):
             products=args.products,
             reagents=args.reagents,
             rules=args.rules,
+            available_tanks=args.available_tanks,
+            tank_capacities=args.tank_capacity,
         )
     )
     return render(summary), summary
@@ -902,6 +923,18 @@ def main(argv=None):
         type=number_in('--ratio', 0),
         default=100,
         help='final litres per litre of concentrate (default 100)',
+    )
+    parser.add_argument(
+        '--available-tanks',
+        type=int_at_least('--available-tanks', 1),
+        help='concentrate tanks you have (default: two assumed, and the report says so)',
+    )
+    parser.add_argument(
+        '--tank-capacity',
+        action='append',
+        type=number_in('--tank-capacity', 0),
+        metavar='LITRES',
+        help='capacity of a tank in litres; repeat once per tank, in tank order',
     )
     parser.add_argument(
         '--ec',

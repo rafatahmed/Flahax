@@ -179,6 +179,7 @@ def result_statuses(summary):
         ec=(summary.get('ec') or {}).get('status', 'not_assessed'),
         stock='blocked'
         if stocks['required_tanks'] > stocks['available_tanks']
+        or any(not row['fits'] for row in stocks.get('equipment', {}).get('fit', ()))
         or any(row['status'] == 'exceeds' for row in summary['solubility'])
         else 'requires_review',
         delivery='not_validated',

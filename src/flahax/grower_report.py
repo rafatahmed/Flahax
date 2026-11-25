@@ -285,6 +285,27 @@ def _water_and_limits(workflow, recipe):
     return water, limits
 
 
+def _tank_capacities(values):
+    """The declared tank capacities in litres, validated, as floats."""
+    if values is None:
+        return []
+    if isinstance(values, (str, bytes)) or not hasattr(values, '__iter__'):
+        raise DeliveryError('invalid_type', 'tank capacities must be a list of litres')
+    capacities = []
+    for value in values:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or value <= 0
+        ):
+            raise DeliveryError(
+                'invalid_value', f'a tank capacity must be a positive finite number, got {value!r}'
+            )
+        capacities.append(float(value))
+    return capacities
+
+
 def _extra_tank_note(grouping, available):
     """Say which pair, and which rule, needs a tank beyond the
     ``available`` ones.
@@ -339,7 +360,8 @@ def summarize_batch(
     injection_ratio=100,
     rules=(),
     temperature_c=25,
-    available_tanks=2,
+    available_tanks=None,
+    tank_capacities_litres=None,
     requested_ec_ms_cm=None,
 ):
     """Plain data for a grower report and batch sheet.
@@ -352,6 +374,13 @@ def summarize_batch(
     to weigh. Each concentrate is compared with that product's own
     solubility value (catalogue data first, then the historical table),
     in the value's basis, and a product without data is not checked.
+
+    ``available_tanks`` and ``tank_capacities_litres`` declare the
+    equipment (D3). Undeclared, two tanks are assumed and the summary
+    says so (``available_tanks_declared`` false). Capacities are listed
+    in tank order, one per available tank; a tank that cannot hold its
+    stock volume is reported and blocks, and the recipe and equipment
+    are never changed to make it fit.
     """
     if requested_ec_ms_cm is not None and (
         isinstance(requested_ec_ms_cm, bool)
@@ -529,8 +558,17 @@ def summarize_batch(
         except DeliveryError as exc:
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
 
+    capacities = _tank_capacities(tank_capacities_litres)
+    declared = available_tanks is not None or bool(capacities)
+    if available_tanks is None:
+        available_tanks = len(capacities) or 2
     if type(available_tanks) is not int or available_tanks < 1:
         raise DeliveryError('invalid_value', 'available_tanks must be a positive integer')
+    if capacities and len(capacities) != available_tanks:
+        raise DeliveryError(
+            'invalid_value',
+            f'{len(capacities)} tank capacities were given for {available_tanks} available tanks',
+        )
     grouping = group_tanks(recipe['salts'], products, rules=rules)
     solubility = check_stock_solubility(
         grouping.tanks,
@@ -543,6 +581,8 @@ def summarize_batch(
         source=grouping.source,
         required_tanks=len(grouping.tanks),
         available_tanks=available_tanks,
+        available_tanks_declared=declared,
+        equipment=dict(capacities_litres=capacities, fit=[]),
         mixture_approved=False,
         injection_ratio=injection_ratio,
         temperature_c=temperature_c,
@@ -668,6 +708,24 @@ def summarize_batch(
     if len(grouping.tanks) > available_tanks:
         status = 'blocked'
         warnings.append(_extra_tank_note(grouping, available_tanks))
+    stock_litres = litres / injection_ratio
+    for tank, capacity in zip(grouping.tanks, capacities):
+        fits = stock_litres <= capacity
+        tanks['equipment']['fit'].append(
+            dict(
+                tank=tank.name,
+                stock_litres=stock_litres,
+                capacity_litres=capacity,
+                fits=fits,
+            )
+        )
+        if not fits:
+            status = 'blocked'
+            warnings.append(
+                f'Tank {tank.name} cannot hold {stock_litres:g} L of stock at '
+                f'1:{injection_ratio:g}; its declared capacity is {capacity:g} L. The recipe '
+                'is unchanged; use a larger tank or a different injection ratio.'
+            )
     warnings.append('Tank separation is a structural assignment, not qualified mixture approval.')
     for row in solubility:
         if row.status == 'exceeds':
