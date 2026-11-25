@@ -20,6 +20,8 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- A total-nitrogen target (`N`) now reaches the workflow and the batch command; it was accepted by `recommend` only (#311).
+- `tools/check_numeric_review.py` reports `fully_classified` and `scientifically_qualified` as separate outcomes and no longer prints one `valid` flag, so a complete audit cannot be read as scientific qualification (#309).
 - The batch report and `plan_stocks` qualify a solubility value through one function (`qualify_single_product`): `verified` only where the recorded temperature range and the concentration basis support it, otherwise the gap is named. `StockPlan.qualification` is new and a solubility-limit record may state an optional `basis` (#307).
 - The glossary no longer implies a fixed A/B: the stock assignment may use more than two tanks and the result lists every one (`tanks.tanks`) (#308).
 - An absent or zero `N_NH4` target is no requirement and no maximum. The ammonium allowance is now an opt-in preset (`max_ammonium_fraction`), so default recipes may use ammonium nitrate and report NH4-N for review (#290).

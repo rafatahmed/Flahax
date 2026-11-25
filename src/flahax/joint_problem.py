@@ -17,7 +17,7 @@ from types import MappingProxyType
 import math
 
 from .aqueous_model import chemistry, solve
-from .composition import validate_profile
+from .composition import NITROGEN_FORMS, validate_profile
 from .delivery_contracts import DeliveryError
 from .engine import score
 from .product_conversion import component_nutrient_masses
@@ -31,7 +31,7 @@ def _number(value, name, *, positive=False, signed=False):
     return float(value)
 
 
-def _profile(value, name, *, components=False):
+def _profile(value, name, *, components=False, total_n=False):
     if not isinstance(value, Mapping):
         raise DeliveryError('invalid_type', f'{name} must be an object')
     values = {k: _number(v, name) for k, v in value.items()}
@@ -39,7 +39,7 @@ def _profile(value, name, *, components=False):
         if set(values) - set(chemistry()['bases']):
             raise DeliveryError('unknown_component', f'{name} contains unsupported components')
     else:
-        values = validate_profile(values, name)
+        values = validate_profile(values, name, total_n=total_n)
     return MappingProxyType(values)
 
 
@@ -75,6 +75,12 @@ class JointSource:
             )
         if self.density_kg_per_litre is not None:
             _number(self.density_kg_per_litre, 'density', positive=True)
+
+    def fraction(self, symbol):
+        """Mass fraction of a nutrient; total N (``N``) is the sum of the nitrogen forms."""
+        if symbol == 'N':
+            return sum(self.nutrients.get(form, 0) for form in NITROGEN_FORMS)
+        return self.nutrients.get(symbol, 0)
 
 
 @dataclass(frozen=True)
@@ -112,7 +118,9 @@ class JointProblem:
         if len({s.product_id for s in sources}) != len(sources):
             raise DeliveryError('duplicate_product', 'fertilizer/reagent IDs must be distinct')
         for name in ('targets', 'water', 'maximum_concentrations'):
-            object.__setattr__(self, name, _profile(getattr(self, name), name))
+            object.__setattr__(
+                self, name, _profile(getattr(self, name), name, total_n=name == 'targets')
+            )
         if not self.targets:
             raise DeliveryError('missing_field', 'targets are required')
         if self.water_components is not None:
@@ -138,6 +146,12 @@ class JointProblem:
         object.__setattr__(self, 'phases', tuple(self.phases))
         if set(self.phases) - {p['name'] for p in chemistry()['phases']}:
             raise DeliveryError('unknown_phase', 'unsupported phase selection')
+
+    def water_at(self, symbol):
+        """Water concentration; total N (``N``) is the sum of the nitrogen forms."""
+        if symbol == 'N':
+            return sum(self.water.get(form, 0) for form in NITROGEN_FORMS)
+        return self.water.get(symbol, 0)
 
     def evaluate(self, fertilizer_g_per_litre, reagent_g_per_litre, *, equilibrium_start=None):
         """Evaluate a supplied dose vector without fitting, clipping or

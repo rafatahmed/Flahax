@@ -15,7 +15,7 @@ import sys
 import tempfile
 import unittest
 
-from tools.check_numeric_review import validate
+from tools.check_numeric_review import outcomes, validate
 from tools.inventory_numeric_decisions import inventory
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -99,6 +99,63 @@ class NumericReviewTests(unittest.TestCase):
         self.assertEqual(self.errors(require_qualified=True), [])
         proof.write_text('{"passed": false}')
         self.assertTrue(self.errors())
+
+    def outcome(self, register=None):
+        return outcomes(register or self.register, self.root, self.root)
+
+    def test_classification_and_qualification_are_separate_outcomes(self):
+        result = self.outcome()
+        self.assertTrue(result['fully_classified'])
+        self.assertFalse(result['scientifically_qualified'])
+        self.assertEqual(result['unqualified_groups'], ['domain'])
+        self.assertEqual(result['errors'], [])
+
+    def test_a_stale_inventory_is_neither_classified_nor_qualified(self):
+        self.source.write_text('LIMIT = 0.2\ndef check(x):\n    return x <= LIMIT\n')
+        result = self.outcome()
+        self.assertFalse(result['fully_classified'])
+        self.assertFalse(result['scientifically_qualified'])
+        self.assertTrue(result['errors'])
+
+    def test_qualification_needs_passing_evidence_not_only_a_disposition(self):
+        group = self.register['groups']['domain']
+        group['disposition'] = 'qualified'
+        self.assertFalse(self.outcome()['scientifically_qualified'])
+        proof = self.root / 'proof.json'
+        proof.write_text('{"passed": true}')
+        group['qualification'] = dict(
+            path=proof.name,
+            sha256=hashlib.sha256(proof.read_bytes()).hexdigest(),
+            independent_method='Independent bounded reference comparison',
+            applicability='Only this explicit fixture domain',
+            reviewer='test',
+            exit_code=0,
+        )
+        result = self.outcome()
+        self.assertTrue(result['fully_classified'])
+        self.assertTrue(result['scientifically_qualified'])
+        self.assertEqual(result['unqualified_groups'], [])
+
+    def test_the_cli_reports_both_outcomes_and_no_single_valid_flag(self):
+        path = self.root / 'register.json'
+        path.write_text(json.dumps(self.register))
+        run = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / 'tools/check_numeric_review.py'),
+                str(path),
+                '--root',
+                str(self.root),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        report = json.loads(run.stdout)
+        self.assertTrue(report['fully_classified'])
+        self.assertFalse(report['scientifically_qualified'])
+        self.assertNotIn('valid', report)
+        self.assertEqual(run.returncode, 0)  # classification alone does not fail the default run
 
     def test_cli_checks_the_same_boundary(self):
         path = self.root / 'register.json'

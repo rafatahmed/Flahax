@@ -144,6 +144,11 @@ python tools/check_numeric_review.py PATH_TO_REVIEW_REGISTER
 python tools/check_numeric_review.py PATH_TO_REVIEW_REGISTER --require-qualified
 ```
 
+The report has two separate outcomes: `fully_classified` (every entry mapped, current and
+dispositioned) and `scientifically_qualified` (no inherited, unqualified group remains).
+The first never implies the second, and there is no single `valid` flag. The default run
+fails only on classification; `--require-qualified` also fails on the second.
+
 The first command verifies complete, current inventory mapping and recorded semantic
 dispositions. Groups may contain scientific, numerical, policy and input decisions
 together where expressions combine them. The exact expressions, assignments and
