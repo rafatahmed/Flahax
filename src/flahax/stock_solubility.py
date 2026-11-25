@@ -264,36 +264,55 @@ def check_stock_solubility(
                     basis,
                     source_t,
                     temperature,
-                    _qualification(status, source_t, temperature),
+                    qualify_single_product(
+                        status,
+                        None if source_t is None else (source_t, source_t),
+                        temperature,
+                        basis,
+                        source_temperature_c=source_t,
+                    ),
                 )
             )
     return found
 
 
-def _qualification(status, source_temperature_c, tank_temperature_c):
-    """What the row's verdict does and does not establish (D5, D6).
+def qualify_single_product(
+    status, source_range_c, tank_temperature_c, basis, *, source_temperature_c=None
+):
+    """What one product's solubility verdict does and does not establish
+    (D5, D6, Q21, Q23). The batch report and the stock-planning API both
+    qualify through this function, so they cannot disagree.
 
     Every verdict is a single-product value, never a mixed-stock result.
-    The value is used at the tank temperature as recorded, without
-    extrapolation; a source temperature that differs from the tank's,
-    or is not stated, is listed as unverified.
+    ``source_range_c`` is the ``(low, high)`` temperature range the value
+    was recorded over (a single point is ``(t, t)``); ``None`` when it is
+    not stated. The value is used as recorded, without extrapolation. It
+    is ``verified`` only when a value exists, the tank temperature lies in
+    the recorded range and the concentration basis is stated. Anything
+    else is named in ``unverified``.
     """
-    unverified = ['mixture']
+    unverified = []
+    matched = None
     if status == 'not_checked':
-        unverified.insert(0, 'solubility value')
-        matched = None
-    elif source_temperature_c is None:
-        unverified.insert(0, 'temperature')
-        matched = None
+        unverified.append('solubility value')
     else:
-        matched = source_temperature_c == tank_temperature_c
-        if not matched:
-            unverified.insert(0, 'temperature')
+        if source_range_c is None:
+            unverified.append('temperature')
+        else:
+            matched = source_range_c[0] <= tank_temperature_c <= source_range_c[1]
+            if not matched:
+                unverified.append('temperature')
+        if not basis:
+            unverified.append('concentration basis')
+    unverified.append('mixture')
     return dict(
         scope='single_product',
+        verified=status != 'not_checked' and matched is True and bool(basis),
         temperature_matched=matched,
         source_temperature_c=source_temperature_c,
+        source_temperature_range_c=None if source_range_c is None else list(source_range_c),
         tank_temperature_c=tank_temperature_c,
+        basis=basis or None,
         unverified=unverified,
     )
 

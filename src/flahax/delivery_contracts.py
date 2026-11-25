@@ -214,13 +214,17 @@ def validate_solubility_limit(payload: Any) -> dict:
     )
     if concentration == 0:
         _error("out_of_range", "solubilityLimit.maxGramsPerLitre must be greater than 0")
-    return {
+    clean = {
         **record,
         "productId": _text(source.get("productId"), "solubilityLimit.productId"),
         "maxGramsPerLitre": concentration,
         "temperatureMinC": minimum,
         "temperatureMaxC": maximum,
     }
+    if source.get("basis") is not None:
+        # What the g/L is a concentration of (Q23); absent means it is not verified.
+        clean["basis"] = _text(source.get("basis"), "solubilityLimit.basis")
+    return clean
 
 
 def validate_titration_curve(payload: Any) -> dict:

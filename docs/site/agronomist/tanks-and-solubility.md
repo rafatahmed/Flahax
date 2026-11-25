@@ -47,8 +47,11 @@ productId
 maxGramsPerLitre
 temperatureMinC
 temperatureMaxC
+basis (optional: what the g/L is a concentration of)
 source, revision, recordedAt
 ```
+
+The batch report and `plan_stocks` qualify each value through one function. A value is labelled `verified` only when the tank temperature lies in its recorded range and its basis is stated; anything else is listed under `unverified` (`temperature`, `concentration basis`, `solubility value`) and the mixture is always unverified. The quantities never change.
 
 Every incompatibility must be an explicit `separate` compatibility-rule record. For a multi-product rule, no two listed products may share a concentrated tank. This is deliberately stricter than assuming a rule applies only to one named pair.
 

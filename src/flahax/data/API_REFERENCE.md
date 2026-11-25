@@ -2121,13 +2121,13 @@ Source module: `flahax.result_acceptance`. Import with `from flahax import verif
 ### `StockPlan`
 
 ```text
-StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True, unverified: 'tuple[dict, ...]' = ()) -> None
+StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True, unverified: 'tuple[dict, ...]' = (), qualification: 'tuple[dict, ...]' = ()) -> None
 ```
 
 A capacity-checked assignment with explicit mixture qualification
 and search status.
 
-Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`, `unverified`.
+Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`, `unverified`, `qualification`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockPlan`.
 
