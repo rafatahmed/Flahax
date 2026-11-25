@@ -7,7 +7,22 @@ from its predecessor. Detailed notes retain sources, limitations and migration.
 
 ## [Unreleased]
 
-Development checkout: 0.7.1.dev0. No user-facing changes recorded since 0.7.0.
+Development checkout: 0.7.1.dev0.
+
+### Added
+
+- Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with all three forms it must agree with their sum; with some forms both are scored and `totalN.overlapForms` lists the overlap (#291).
+
+### Changed
+
+- An absent or zero `N_NH4` target is no requirement and no maximum. The ammonium allowance is now an opt-in preset (`max_ammonium_fraction`), so default recipes may use ammonium nitrate and report NH4-N for review (#290).
+- Products sharing an exact name are rejected as `ambiguous_product_name` before dose resolution (#288).
+
+### Fixed
+
+- Coupled recipes are assessed at the emitted reagent dose, and search provenance survives dose reassessment (#288).
+- The README troubleshooting row cites the error codes the CLI emits (#287).
+- Catalogue lookups, the sensitivity matrix and cold-solve memory no longer make the full test suite take about an hour (#289).
 
 ## [0.7.0] - 2026-11-19
 
