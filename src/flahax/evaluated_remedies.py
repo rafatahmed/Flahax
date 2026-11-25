@@ -78,6 +78,19 @@ def unresolved_requirements(workflow):
                 ),
             )
         )
+    if equipment_unfit(workflow):
+        stage = workflow.stages['stocks']
+        requirements.append(
+            dict(
+                id='equipment:fit',
+                status='blocked',
+                evidence=dict(error_code=stage.error_code, message=stage.message),
+                next_action=(
+                    'Search other product combinations for the declared equipment, or declare '
+                    'different equipment; no separation rule is waived.'
+                ),
+            )
+        )
     for name, stage in workflow.stages.items():
         if stage.status != 'calculated':
             action = (
@@ -96,6 +109,39 @@ def unresolved_requirements(workflow):
                 )
             )
     return requirements
+
+
+def equipment_unfit(workflow):
+    """True when the declared equipment cannot hold the recipe: the
+    stocks stage failed with an error, not merely lacking mixture
+    evidence.
+    """
+    stage = workflow.stages.get('stocks')
+    return stage is not None and stage.error_code is not None
+
+
+def declared_equipment(request):
+    """The equipment the scenario declared, as saved plain data (Q27);
+    None when no stock equipment was declared.
+    """
+    stocks = request.get('stocks')
+    if not isinstance(stocks, Mapping):
+        return None
+    tanks = [
+        dict(
+            tank_id=getattr(t, 'tank_id', None), capacity_litres=getattr(t.capacity, 'value', None)
+        )
+        for t in stocks.get('tanks') or ()
+        if hasattr(t, 'capacity')
+    ]
+    return dict(
+        tanks=tanks,
+        injection_ratio=getattr(stocks.get('injection_ratio'), 'value', None),
+        temperature_c=getattr(stocks.get('temperature'), 'value', None),
+        compatibility_rule_count=len(stocks.get('compatibility_rules') or ()),
+        solubility_limit_count=len(stocks.get('solubility_limits') or ()),
+        mixture_model_supplied=stocks.get('mixture_model') is not None,
+    )
 
 
 def _changes(option, request):
@@ -157,9 +203,16 @@ def _changes(option, request):
     return deepcopy(dict(changes)), None
 
 
-def available_product_search(products, *, preferences=('relative_residual',)):
+def available_product_search(
+    products, *, preferences=('relative_residual',), on_equipment_miss=False
+):
     """Try a confirmed expanded pool, then individual additions within
     the scenario budget.
+
+    The search runs on a nutrient miss. With ``on_equipment_miss`` it
+    also runs when the declared equipment cannot hold the recipe (the
+    stocks stage failed with an error); every candidate keeps that
+    equipment and every separation rule, and only the products change.
 
     Preferences apply in the supplied order after tolerance attainment.
     Supported metrics are relative_residual, incidental_mg_l and
@@ -170,6 +223,7 @@ def available_product_search(products, *, preferences=('relative_residual',)):
         kind='catalogue',
         available=True,
         on_nutrient_miss=True,
+        on_equipment_miss=on_equipment_miss,
         source_search=True,
         preferences=preferences,
         changes={'products': products},
@@ -398,12 +452,23 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
     preferences = _preferences(options)
     baseline = unresolved_requirements(workflow)
     nutrient_miss = any(r["id"].startswith("nutrient:") for r in baseline)
+    equipment_miss = equipment_unfit(workflow)
     baseline_ids = {r['id'] for r in baseline}
     results, evaluations, skipped = [], 0, False
     scored = {}
     queue = [(option, None) for option in options]
     for option, adjustment in queue:
-        if option.get('on_nutrient_miss') is True and not nutrient_miss:
+        gated = [
+            flag
+            for flag, miss in (
+                ('on_nutrient_miss', nutrient_miss),
+                ('on_equipment_miss', equipment_miss),
+            )
+            if option.get(flag) is True
+        ]
+        if gated and not any(
+            (nutrient_miss if flag == 'on_nutrient_miss' else equipment_miss) for flag in gated
+        ):
             continue
         changes, needed = _changes(option, request)
         result = dict(
@@ -486,6 +551,8 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
         if evaluations
         else 'needs_input',
         scope='Supplied alternatives only; no global proof or automatic adoption.',
+        mode='find_suitable_doses' if evaluations else 'analyze_supplied_doses',
+        declared_equipment=declared_equipment(request),
         evaluations=evaluations,
         max_evaluations=max_evaluations,
         requirements=baseline,

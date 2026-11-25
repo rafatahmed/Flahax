@@ -410,6 +410,18 @@ Inspect `resolved_requirements`, `introduced_requirements` and
 `remaining_requirements`, plus the immutable candidate `snapshot` and
 `calculation_id`. These results do not imply delivery or physical approval.
 
+**Equipment-aware search.** `available_product_search(products, on_equipment_miss=True)`
+also runs when the declared equipment cannot hold the recipe: the stocks stage failed
+with an error such as `too_many_tanks`, `tank_too_small` or `solubility_exceeded`, which
+adds the requirement `equipment:fit`. Every candidate keeps the declared tanks, injection
+ratio, temperature and separation rules; only the products change, and a candidate that
+fits lists `equipment:fit` in `resolved_requirements`. Without the option nothing is
+searched. `workflow.remedies.mode` records `analyze_supplied_doses` when no scenario was
+evaluated and `find_suitable_doses` when one was, and `declared_equipment` records the
+tanks (id and litres), injection ratio, temperature and the number of rules and limits,
+so a saved result shows the equipment the search was held to. The `flahax batch` command
+checks equipment in its report after the workflow, so this search is not run from it.
+
 The search covers only the supplied scenarios and product bundles. It does not
 combine separate options automatically, enumerate the whole market, prove a
 minimum-cost equipment solution or select a manufacturer model. Budget skips and
