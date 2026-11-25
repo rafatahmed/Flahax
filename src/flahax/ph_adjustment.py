@@ -792,15 +792,15 @@ def _couple(
     supply = dict(water)
     for ion, mg in contribution(dose).items():
         supply[ion] = supply.get(ion, 0.0) + mg
-    # An identity reassessment must not drop the search history.
-    search = recommendation.get('substitutionSearch')
+    # An identity reassessment must not drop the search history. Every
+    # recommendation carries it (engine.recommend and the joint workflow set it).
+    search = recommendation['substitutionSearch']
     recommendation = _assess_recipe(
         pool, targets, supply, recommendation, recommendation['salts'], maximum_concentrations
     )
-    if search is not None:
-        recommendation['substitutionSearch'] = dict(
-            search, status='candidate_found' if recommendation['feasible'] else 'search_incomplete'
-        )
+    recommendation['substitutionSearch'] = dict(
+        search, status='candidate_found' if recommendation['feasible'] else 'search_incomplete'
+    )
     grams = dose * mass * molar_mass / fraction
     litres = grams / (1000 * density) if density else None
     over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (
