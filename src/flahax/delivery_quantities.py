@@ -350,7 +350,7 @@ def rescore_with_reagent(
     """
     try:
         final = validate_profile(dict(achieved), "achieved")
-        clean_targets = validate_profile(dict(targets), "targets")
+        clean_targets = validate_profile(dict(targets), "targets", total_n=True)
     except (TypeError, InputError) as exc:
         raise DeliveryError("invalid_ions", str(exc)) from exc
     if not isinstance(contribution, Mapping):
@@ -414,7 +414,7 @@ def rescore_weighed_recipe(
         )
     ):
         raise DeliveryError('invalid_type', 'targets, water and maxima must be objects')
-    clean_targets = validate_profile(dict(targets), 'targets')
+    clean_targets = validate_profile(dict(targets), 'targets', total_n=True)
     if not clean_targets:
         raise InputError('targets are required')
     clean_water = validate_profile(dict(water or {}), 'water')

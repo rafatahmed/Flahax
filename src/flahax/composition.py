@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Mapping
 
 # Ions the mass balance knows. Total "N" is absent on purpose: nitrate
 # and ammonium are different rows, and a single N figure cannot be split
-# safely.
+# safely. A formula may still declare total N as a target (see
+# nitrogen_rows); water, maxima and product assays may not.
 IONS = frozenset(
     {
         "N_NO3",
@@ -148,33 +150,80 @@ def imbalance_note(balance: dict) -> str | None:
     )
 
 
+def product_name_collision(products) -> str | None:
+    """Describe an ambiguous exact product name before name-based dose resolution."""
+    seen = {}
+    for product in products:
+        if not isinstance(product, Mapping) or not isinstance(product.get('name'), str):
+            continue  # Existing input validation owns malformed records.
+        name = product['name']
+        if name in seen:
+            return (
+                f'Ambiguous product name {name!r}: product IDs {seen[name]!r} and '
+                f'{product.get("id")!r}; supply distinct product names.'
+            )
+        seen[name] = product.get('id')
+    return None
+
+
 class InputError(ValueError):
     """The caller passed a profile or a salt the balance cannot use."""
 
 
 NITROGEN_FORMS = ("N_NO3", "N_NH4", "N_UREA")
+# A declared total and the sum of its forms agree within this relative
+# amount (decimal input such as 150 against 100 + 30 + 20).
+TOTAL_NITROGEN_TOLERANCE = 1e-6
 
 
 def nitrogen_rows(targets) -> dict:
-    """The nitrogen requirements fitted for a formula (decision D1,
-    gates G23 and G24).
+    """The nitrogen requirements fitted for a formula (decisions D1 and
+    D2, gates G23 and G24).
 
     Each form is its own requirement on the elemental-N basis: N_NO3 as
     declared, N_UREA as declared or 0 when absent (a declared zero, with
     no allowance), and N_NH4 only when it is declared above 0. An absent
-    or zero N_NH4 is no ammonium requirement at all: no row and no ban,
-    and the ammonium allowance applies to incidental NH4-N. Total N, the
-    sum of the three forms, is reported, never fitted as a row of its
-    own. A formula that declares no nitrogen form has no nitrogen rows.
+    or zero N_NH4 is no ammonium requirement at all: no row and no ban.
+    A formula that declares no nitrogen form has no nitrogen rows.
+
+    Total N ("N", elemental mg/L) is a target too. Alone it is one row
+    over the sum of the three forms and imposes no form split; the urea
+    safeguard still holds, so urea products stay out unless urea is
+    declared. When the three forms are all declared they determine the
+    total: they are scored once and the declared total must agree with
+    their sum. When only some forms are declared with the total, both
+    are scored (the overlap is reported by total_n_report) and no other
+    form target is invented. A total below the declared forms, or a
+    total that disagrees with the three forms, raises InputError before
+    any fitting.
     """
-    if not any(form in targets for form in NITROGEN_FORMS):
+    total = targets.get("N")
+    if total is None and not any(form in targets for form in NITROGEN_FORMS):
         return {}
+    determined = all(form in targets for form in NITROGEN_FORMS)
+    if total is not None:
+        declared = total_nitrogen(targets)
+        slack = TOTAL_NITROGEN_TOLERANCE * max(abs(total), 1.0)
+        if determined and abs(total - declared) > slack:
+            raise InputError(
+                f"targets declare total N {total:g} mg/L but N_NO3 + N_NH4 + N_UREA = "
+                f"{declared:g} mg/L; declare either the total or consistent forms"
+            )
+        if declared - total > slack:
+            raise InputError(
+                f"targets declare nitrogen forms summing to {declared:g} mg/L, which "
+                f"exceed the declared total N of {total:g} mg/L"
+            )
     rows = {}
+    if total is not None and not determined and total > 0:
+        rows["N"] = total
     if "N_NO3" in targets:
         rows["N_NO3"] = targets["N_NO3"]
     if targets.get("N_NH4", 0) > 0:
         rows["N_NH4"] = targets["N_NH4"]
     rows["N_UREA"] = targets.get("N_UREA", 0)
+    if total == 0 and "N_NO3" not in targets:
+        rows["N_NO3"] = 0  # a declared zero total admits no nitrate product either
     return rows
 
 
@@ -187,7 +236,9 @@ def fitted_targets(targets) -> dict:
     declared.
     """
     nitrogen = nitrogen_rows(targets)
-    fitted = {s: v for s, v in targets.items() if s not in NITROGEN_FORMS or s in nitrogen}
+    fitted = {
+        s: v for s, v in targets.items() if (s not in NITROGEN_FORMS and s != "N") or s in nitrogen
+    }
     fitted.update(nitrogen)
     return fitted
 
@@ -197,6 +248,15 @@ def total_nitrogen(profile) -> float:
     in the profile's units.
     """
     return math.fsum(float(profile.get(form) or 0.0) for form in NITROGEN_FORMS)
+
+
+def target_total_nitrogen(targets) -> float:
+    """Total N a formula asks for: the declared total when the targets
+    carry one, otherwise the sum of the declared forms.
+    """
+    if targets.get("N") is not None:
+        return float(targets["N"])
+    return total_nitrogen(targets)
 
 
 def _finite(value) -> float:
@@ -209,18 +269,22 @@ def _finite(value) -> float:
     return number
 
 
-def validate_profile(profile: dict, label: str) -> dict[str, float]:
-    """Return a copy of a ppm map, or raise InputError."""
+def validate_profile(profile: dict, label: str, *, total_n: bool = False) -> dict[str, float]:
+    """Return a copy of a ppm map, or raise InputError.
+
+    total_n admits the total-N symbol "N" in a formula's targets; every
+    other map (water, maxima, assays) still rejects it.
+    """
     if not isinstance(profile, dict):
         raise InputError(f"{label} must be a map of ion symbol to ppm")
     clean: dict[str, float] = {}
     for symbol, raw in profile.items():
-        if symbol == "N":
+        if symbol == "N" and not total_n:
             raise InputError(
                 f"{label} uses N. Nitrate and ammonium are N_NO3 and N_NH4; "
-                "a total-N figure is not split automatically."
+                "a total-N figure is a target only, never water, a maximum or an assay."
             )
-        if symbol not in IONS:
+        if symbol not in IONS and symbol != "N":
             raise InputError(f"{label} has unknown ion {symbol}")
         number = _finite(raw)
         if number < 0:

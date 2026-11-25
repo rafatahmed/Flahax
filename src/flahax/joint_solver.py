@@ -19,6 +19,10 @@ from .delivery_contracts import DeliveryError
 from .engine import nnls
 
 
+# Distinct cold evaluations kept per search; beyond this the search simply re-solves.
+_OUTCOME_LIMIT = 8192
+
+
 def _constraints(problem, scales):
     sources = (*problem.fertilizers, problem.reagent)
     n = len(sources)
@@ -453,6 +457,13 @@ def solve_joint_problem(
     )
 
     equilibrium_seed = None
+    # The search revisits points: coordinate and tangent exchanges clamp to the same bound,
+    # and a stalled iteration repeats earlier trials. A solve that starts cold depends only
+    # on the doses, so its outcome (a state, or the code that rejected it) is kept for the
+    # life of this search. Warm starts depend on the seed and are never kept. A request that
+    # asks for ``cold=True`` is a fresh recheck of a candidate and is never answered from
+    # memory. The counters below still count every request, so the diagnostics do not change.
+    outcomes: dict = {}
 
     def evaluate(u, *, cold=False):
         diagnostics['evaluations'] += 1
@@ -460,6 +471,16 @@ def solve_joint_problem(
             diagnostics['rejectedTrials'] += 1
             diagnostics['lastError'] = 'linear_constraint'
             return None
+        warm = sensitivity_method == 'equilibrium' and not cold and equilibrium_seed is not None
+        key = None if warm else tuple(u)
+        known = outcomes.get(key) if key is not None and not cold else None
+        if known is not None:
+            if isinstance(known, str):
+                diagnostics['rejectedTrials'] += 1
+                diagnostics['lastError'] = known
+                return None
+            state, residual, merit, exact = known
+            return state, list(residual), merit, exact
         try:
             x = [v * h for v, h in zip(u, scales)]
             inputs = dict(zip(identifiers[:-1], x[:-1]))
@@ -489,10 +510,14 @@ def solve_joint_problem(
                     (sum(a * rational_doses[j] for j, a in row) - target) ** 2
                     for row, target in exact_model
                 )
-            return state, residual, merit, exact
+            if key is not None and len(outcomes) < _OUTCOME_LIMIT:
+                outcomes[key] = (state, residual, merit, exact)
+            return state, list(residual), merit, exact
         except (DeliveryError, OverflowError) as exc:
             diagnostics['rejectedTrials'] += 1
             diagnostics['lastError'] = getattr(exc, 'code', type(exc).__name__)
+            if key is not None and len(outcomes) < _OUTCOME_LIMIT:
+                outcomes[key] = diagnostics['lastError']
             return None
 
     def certificate(u):

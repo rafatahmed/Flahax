@@ -21,9 +21,10 @@ their positive-target fit calculation and report additional fields:
 
 Percentage deviation from zero remains `None`, not infinity or a fabricated
 percentage. An explicit `maximum_concentrations={'N_NH4': 0}` does prohibit
-ammonium. Without a declared maximum, incidental ammonium is assessed against
-the ammonium allowance that `recommend` reports in `ammoniumLimit`
-(min(10% of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.)).
+ammonium. Without a declared maximum, incidental ammonium has no limit and is
+reported for review; the optional allowance that `recommend` reports in `ammoniumLimit`
+when `max_ammonium_fraction` selects it (min(10% of total N, 1.5 mmol/L), Dutch soilless
+practice (De Kreij, Voogt et al.)) is not applied by default.
 The optimizer's existing objective is unchanged; maxima are post-solve checks,
 not a new constrained optimization algorithm. A rejected recipe is not proof
 that every alternative recipe is infeasible.
@@ -31,9 +32,8 @@ that every alternative recipe is infeasible.
 With the supplied pepper targets, twelve selected catalogue products and
 water Ca 20 mg/L, the regression recipe has approximately 4.845193 mg/L NH4-N
 and 0.047919 mg/L Na. Each positive target missed beyond the numerical tolerance
-(1e-5 relative) is a reported deviation; the NH4-N is assessed
-against the ammonium allowance (min(10% of total N, 1.5 mmol/L), Dutch soilless
-practice (De Kreij, Voogt et al.)) and the Na requires review. These are catalogue-assay calculations, not a dosing
+(1e-5 relative) is a reported deviation; the NH4-N is reported as an incidental
+contribution with no declared maximum, and the Na requires review. These are catalogue-assay calculations, not a dosing
 authorization. Since the 2026-10-18 catalogue correction, `Phosphoric Acid (75%)`
 lists 23.706035% P (a 75% w/w aqueous product, dosed by product mass) and
 Mg Nitrate is Mg(NO3)2·6H2O theory; the actual grade of each product still
@@ -52,12 +52,12 @@ result = plan_fertilizer_workflow(
     water={'Ca': 20}, target_ph=6.5,
 )
 assert result.nutrient_gap['Ca'] == 84
-# N_NH4 0 is no ammonium requirement: calcium nitrate stays eligible, and its NH4-N is held
-# within min(10 % of total N, 1.5 mmol/L), Dutch soilless practice (De Kreij, Voogt et al.).
-assert result.stages['formulation'].status == 'calculated'
+# N_NH4 0 is no ammonium requirement and no maximum: calcium nitrate stays eligible, and its
+# NH4-N is reported for review (select the optional allowance with max_ammonium_fraction).
+assert result.stages['formulation'].status == 'requires_review'
 (ammonium,) = result.recommendation['incidentalContributions']
-assert ammonium['symbol'] == 'N_NH4' and ammonium['assessment'] == 'within_limit'
-assert ammonium['ppm'] <= result.recommendation['ammoniumLimit']['mgPerL']
+assert ammonium['symbol'] == 'N_NH4' and ammonium['assessment'] == 'requires_review'
+assert ammonium['maximumPpm'] is None and result.recommendation['ammoniumLimit'] is None
 assert result.stages['chemistry'].status == 'needs_input'
 ```
 

@@ -19,6 +19,7 @@ import math
 from typing import Mapping
 
 from .catalogue_chemistry import ProductChemistry, chemistry_for_product
+from .composition import product_name_collision
 from .delivery_contracts import DeliveryError
 from .label_reconciliation import chemistry_elements
 from .material_chemistry import chemistry_ions, material_chemistry, unstated_amounts
@@ -331,7 +332,10 @@ def _named(products) -> dict:
     """
     if products is None:
         return {}
-    records = products.values() if isinstance(products, Mapping) else products
+    records = list(products.values() if isinstance(products, Mapping) else products)
+    collision = product_name_collision(records)
+    if collision:
+        raise DeliveryError('ambiguous_product_name', collision)
     named = {}
     for record in records:
         if not isinstance(record, Mapping) or not isinstance(record.get('name'), str):
@@ -365,9 +369,9 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, 
     ``ph_not_planned_for_product``. An undisclosed blend raises
     ``composition_undisclosed``; nothing is computed for the rest.
     """
-    from .engine import load_library
+    from .engine import catalogue_salts_by_name
 
-    catalogue = {str(item["name"]): item for item in load_library()["salts"]}
+    catalogue = catalogue_salts_by_name()
     library = {**catalogue, **_named(products)}
     resolved = _check_materials(doses, materials)
     units = []
@@ -525,9 +529,9 @@ def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None, product
     ``products`` supplies material records by name, for materials the
     catalogue does not hold; see ``catalogue_dose_contributions``.
     """
-    from .engine import load_library
+    from .engine import catalogue_salts_by_name
 
-    library = {p['name']: p for p in load_library()['salts']} | _named(products)
+    library = catalogue_salts_by_name() | _named(products)
     resolved = _check_materials(doses, materials)
     result = {}
     for name, dose in doses.items():

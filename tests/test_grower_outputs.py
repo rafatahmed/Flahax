@@ -466,26 +466,25 @@ class IncidentalAssessmentTests(unittest.TestCase):
                 )
             ),
         )
-        # G23: no NH4-N target, so both fits are judged against the same
-        # ammonium allowance, min(10 % of 140 mg/L total N, 21.01) =
-        # 14.0 mg/L.
-        self.assertEqual(first['assessment'], 'within_limit')
+        # G23/D1: no NH4-N target and no maximum, so no allowance is applied
+        # and both fits send their NH4-N for review alike.
+        self.assertEqual(first['assessment'], 'requires_review')
         self.assertEqual(first['maximumPpm'], refit['maximumPpm'])
-        self.assertEqual(first['maximumPpm'], 14.0)
-        self.assertEqual(refit['assessment'], 'within_limit')
+        self.assertIsNone(first['maximumPpm'])
+        self.assertEqual(refit['assessment'], 'requires_review')
         self.assertEqual(
             [
                 r['symbol']
                 for r in flow.recommendation['incidentalContributions']
                 if r['assessment'] == 'requires_review'
             ],
-            ['Na'],
-        )  # no Na maximum was declared
+            ['N_NH4', 'Na'],
+        )  # no NH4-N or Na maximum was declared
         summary = summarize_batch(flow, PRODUCTS, title='Tomato', water_label='RO')
         message = summary['stages']['formulation'].get('message') or ''
         self.assertIn('Na', message)
-        self.assertNotIn('N_NH4', message)
-        self.assertEqual(summary['formulation']['ammonium_allowance']['mgPerL'], 14.0)
+        self.assertIn('N_NH4', message)
+        self.assertIsNone(summary['formulation']['ammonium_allowance'])
 
     def test_each_incidental_names_the_products_that_supply_it(self):
         flow = plan_fertilizer_workflow(

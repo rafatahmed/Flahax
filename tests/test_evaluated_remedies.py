@@ -126,7 +126,7 @@ class EvaluatedRemediesTests(unittest.TestCase):
 
     def test_joint_start_from_original_mix_uses_the_same_budget_and_limits(self):
         nitrate = next(p for p in load_library()['salts'] if p['formula'] == 'KNO3')
-        extra = dict(nitrate, id='extra-nitrate')
+        extra = dict(nitrate, id='extra-nitrate', name='Potassium Nitrate (extra)')
         acid = ACIDS[0]
         config = configuration([nitrate], acid, loss_tolerance=2.0)
         config['additional_product_steps'] = {extra['id']: 1e-4}

@@ -82,7 +82,7 @@ This is a numerical demonstration, not a universal crop prescription. Review eve
 | Acid density | kg/L; nitrate-N assay is elemental N percent, not HNO3 percent |
 | `InjectionRatio` | Final litres per litre of stock |
 
-Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets; generic total `N` is not accepted. Each form is its own fitted target; `totalN` reports their sum and is never fitted. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no ammonium requirement: incidental NH4-N is held within the ammonium allowance described in section 11. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
+Use separate `N_NO3`, `N_NH4` and supported `N_UREA` targets, total `N` (mg/L as N), or both. Each form is its own fitted target; `totalN` reports their sum. Total `N` alone is one requirement with no form split; with all three forms the forms are scored once and the total must agree with their sum; with some forms both are scored and `totalN.overlapForms` lists the overlap. Total `N` is a target only, never water, a maximum or an assay. An absent `N_UREA` is a declared zero. An absent or zero `N_NH4` is no ammonium requirement and no ammonium maximum: incidental NH4-N is reported, and the optional ammonium allowance described in section 11 is applied only when you select it. Other supported symbols include P, K, Ca, Mg, S, Fe, Mn, Zn, B, Cu, Mo, Na and Cl. An omitted target is different from an explicit zero. Sodium, chloride and carbonate product selection is conservative by default; explicit allowances do not waive chemistry or safety checks.
 
 `result['salts']` contains selected products and doses. `result['rows']` contains
 `symbol`, `target`, `final` and `deltaPct`. Use identity-bearing `salts` records
@@ -296,6 +296,7 @@ Every `DeliveryError` carries one of these codes; its message names the value or
 | `invalid_value` | A number or text is out of its allowed range or form (for example a negative volume, a pH outside 0-14, a duplicate ID). | Correct the named value. |
 | `invalid_session` | A saved `flahax mix` session file is damaged or was edited by hand: it is not a JSON object, or a field is missing or of the wrong type. | Fix the named field, or run `flahax mix` again to make a new session. |
 | `reagent_selection_required` | An older mix session did not record which pH reagents are available. | Run `flahax mix sessions/NAME --review-reagents` to select available acids and bases and save new answers. Changed inputs or model sources still require their separate review. |
+| `ambiguous_product_name` | Two supplied products share a display name used to resolve chemistry doses. The message identifies both product IDs. | Give the products distinct names before running the workflow or chemistry conversion. Pure nutrient fitting retains distinct IDs. |
 | `invalid_type` | A value has the wrong kind (a list where a mapping is needed, text where a number is needed). | Supply the kind the message names. |
 | `missing_field` | A required input is absent (targets, reagent records, a document field). | Add the named field. |
 | `unknown_field` | A key is not recognised, for example an unsupported water key. | Use the keys the message lists. |
@@ -482,8 +483,8 @@ hashes and result identity are distinct identifiers.
   requirement); omitted targets are incidental. A missed target is a reported
   deviation, not a block; only a broken declared maximum blocks. Reagent stages judge
   only their reagent's own change; `maximum_nutrient_error_percent` is optional, with
-  no default. Declare nutrient maximums explicitly. The ammonium
-  allowance min(10% of total N, 1.5 mmol/L) applies by default (`ammoniumLimit`).
+  no default. Declare nutrient maximums explicitly. The optional ammonium
+  allowance min(10% of total N, 1.5 mmol/L) applies only when selected (`ammoniumLimit`).
 - Remove nonzero ridge; dose size and incidental nutrients are not fitting penalties.
   Keep product IDs with doses rather than zipping a filtered result to the catalogue.
 - Supply an explicit nonempty product array to the JSON recipe CLI. Unknown input
@@ -563,12 +564,13 @@ carry NH4 (calcium nitrate) stay eligible. The NH4 they add is reported as an
 incidental contribution in absolute mg/L, never relabelled as zero.
 Use `maximum_concentrations` to enforce explicit hard caps. Do not silently
 relax those caps or replace the product assay to obtain a feasible fit.
-When targets declare no NH4-N requirement (N_NH4 absent or 0), `recommend` holds
-incidental NH4-N within min(`max_ammonium_fraction` × total target N, 1.5 mmol/L
-NH4 = 21.01 mg/L N). The default fraction is 0.10, following Dutch soilless
-practice (De Kreij, Voogt et al.); `ammoniumLimit` records the limit, the
-fraction, the cap and that basis. `None` adds no ammonium maximum. A positive
-NH4 target or an explicit N_NH4 maximum takes precedence over the allowance.
+When targets declare no NH4-N requirement (N_NH4 absent or 0), `recommend` adds no
+ammonium maximum and reports the NH4-N the products bring. Passing
+`max_ammonium_fraction=0.10` selects the optional allowance, which holds incidental
+NH4-N within min(`max_ammonium_fraction` × total target N, 1.5 mmol/L NH4 = 21.01 mg/L N),
+following Dutch soilless practice (De Kreij, Voogt et al.); `ammoniumLimit` records the
+limit, the fraction, the cap and that basis. A positive NH4 target or an explicit N_NH4
+maximum takes precedence over the allowance.
 
 ### Reading misses, limits and provenance
 

@@ -527,8 +527,13 @@ class CatalogueFitTests(unittest.TestCase):
             self.assertLessEqual(joint['stationarityResidual'], 1e-6)
         rows = summary['formulation']['rows']
         if formula == 'Strawberry Drip Irrigation (schundler.com)':
+            # D1: no ammonium maximum is applied by default, so the NH4-N
+            # the fit brings (91.5 mg/L here) is shown and sent for review.
             ammonium = next(r for r in rows if r['symbol'] == 'N_NH4')
-            self.assertLessEqual(ammonium['final'], 8.0)
+            self.assertIsNone(ammonium['target'])
+            self.assertGreater(ammonium['final'], 8.0)
+            self.assertIn('N_NH4', summary['formulation']['incidental_review'])
+            self.assertIsNone(summary['formulation']['ammonium_allowance'])
         targets_met = all(met(r['target'], r['final']) for r in rows if r['target'] is not None)
         self.assertEqual(summary['formulation']['targets_met'], targets_met)
         if not targets_met:

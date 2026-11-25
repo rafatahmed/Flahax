@@ -211,9 +211,10 @@ def nitrogen_notes(summary):
         )
     total = formulation.get('total_n')
     if total and total['target'] is not None:
+        status = 'a declared target' if total.get('fitted') else 'reported, not a target'
         notes.append(
             f'Total N: {number(total["final"], 2)} mg/L '
-            '(sum of NO3-N, NH4-N and urea-N; reported, not a target)'
+            f'(sum of NO3-N, NH4-N and urea-N; {status})'
         )
     return notes
 
@@ -718,7 +719,7 @@ def summarize_batch(
             ],
             ion_balance=recipe['targetIonBalance'],
             # The ammonium allowance (G23), shown with its basis, and
-            # total N as the reported sum of the three forms (D1).
+            # total N as the sum of the three forms (D1, D2).
             ammonium_allowance=recipe.get('ammoniumLimit'),
             total_n=recipe.get('totalN'),
         ),

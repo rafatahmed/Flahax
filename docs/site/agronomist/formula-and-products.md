@@ -84,8 +84,19 @@ Selection follows the table, per nutrient. Other flags:
 
 A formula declares nitrogen by form: `N_NO3` (nitrate-N), `N_NH4` (ammonium-N) and
 `N_UREA` (urea-N), each in mg/L as N. Each declared form is its own target and is fitted
-on its own (decision D1). Total N is the sum of the three forms; it is reported as
-`totalN` (target, final and difference), never fitted.
+on its own (decision D1). Total N, the sum of the three forms, is reported as `totalN`
+(target, final and difference).
+
+Total N can also be a target, written `N` (mg/L as N), alone or with forms (decision D2):
+
+- `N` alone is one requirement on the sum of the three forms. It imposes no form split, and
+  a urea-bearing product is still not used unless the formula declares urea.
+- `N` with all three forms: the forms are scored once and the declared total is checked
+  against their sum. A disagreement is an error before any fitting.
+- `N` with only some forms: both are scored and `totalN.overlapForms` lists the forms
+  scored beside the total. No other form target is invented; the selected products decide
+  the unspecified forms. Forms that add up to more than `N` are an error.
+- `N` is accepted in targets only, not in water, maxima or product assays.
 
 - `N_NO3` is fitted to its declared value.
 - `N_UREA` absent means 0: a declared zero, met within 1e-6 mg/L. A urea-bearing
@@ -93,13 +104,13 @@ on its own (decision D1). Total N is the sum of the three forms; it is reported 
 - A positive `N_NH4` target is fitted independently. An absent or zero target
   is removed from the fitted nitrogen rows and does not prohibit ammonium.
 
-**Ammonium allowance.** If `N_NH4` is absent or zero in the targets and no explicit
-ammonium maximum is supplied, the
-configured default, when total target nitrogen is positive, permits up to the
-smaller of 10% of total target nitrogen
-and 21.01005 mg/L as N (1.5 mmol/L). A positive ammonium target prevents
-this generated allowance. An explicit maximum supplies its own limit;
-`max_ammonium_fraction=None` disables the generated maximum.
+**Ammonium allowance (optional).** If `N_NH4` is absent or zero in the targets, there is no
+ammonium requirement and, by default, no ammonium maximum: the ammonium the products bring is
+reported for review. The allowance is a preset you select with `max_ammonium_fraction=0.10`
+(or by declaring the resulting maximum yourself): when total target nitrogen is positive it permits
+up to the smaller of that share of total target nitrogen and 21.01005 mg/L as N (1.5 mmol/L), and
+`ammoniumLimit` reports it with its basis. A positive ammonium target prevents the preset. An
+explicit maximum supplies its own limit.
 
 The result's practice attribution is not a crop-specific agronomic qualification.
 The [2016 nutrient-solution handbook, printed p.16](https://www.nmi-agro.nl/wp-content/uploads/2020/04/160905_manual_nutrient_solutions_digital_en-8mb.pdf#page=16)

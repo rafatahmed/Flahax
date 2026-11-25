@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import lru_cache
 from importlib.resources import files
 
 from .composition import (
@@ -30,6 +31,7 @@ from .composition import (
     imbalance_note,
     is_carbonate,
     total_nitrogen,
+    target_total_nitrogen,
     NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
@@ -87,6 +89,23 @@ def load_library() -> dict:
     """
     text = files("flahax").joinpath("data/library.json").read_text(encoding="utf-8")
     return json.loads(text)
+
+
+@lru_cache(maxsize=4)
+def _salts_by_name(loader) -> dict:
+    return {str(salt["name"]): salt for salt in loader()["salts"]}
+
+
+def catalogue_salts_by_name() -> dict:
+    """Catalogue salt records keyed by product name; shared, so treat as read-only.
+
+    ``load_library`` re-reads and re-parses the packaged JSON on every call; the optimiser's
+    inner loops look products up thousands of times per solve. The index is built once per
+    loader. It is keyed on the loader, not the module, so a test that substitutes a different
+    catalogue by replacing ``load_library`` gets its own index and never sees this one.
+    Product names are unique in every shipped and historical catalogue.
+    """
+    return _salts_by_name(load_library)
 
 
 def ppm_per_gram(percent: float) -> float:
@@ -407,6 +426,8 @@ def score(achieved: dict, targets: dict) -> tuple[float, list[dict]]:
     """
     loss = 0.0
     rows = []
+    if "N" in targets and "N" not in achieved:
+        achieved = {**achieved, "N": total_nitrogen(achieved)}
     symbols = list(dict.fromkeys([*targets.keys(), *achieved.keys()]))
     for symbol in symbols:
         target = targets.get(symbol)
@@ -432,6 +453,22 @@ def _nutrients(product):
     return (inventory if inventory is not None else material_inventory(product))[
         'nutrient_percent'
     ]
+
+
+def _supply(nutrients: dict, symbol: str) -> float:
+    """Percent of a symbol in a product's nutrient inventory; total N
+    ("N") is the sum of its three nitrogen forms.
+    """
+    if symbol == "N":
+        return math.fsum(nutrients.get(form, 0.0) for form in NITROGEN_FORMS)
+    return nutrients.get(symbol, 0.0)
+
+
+def _background(water: dict, symbol: str) -> float:
+    """Water concentration of a symbol; total N is the sum of the forms."""
+    if symbol == "N":
+        return total_nitrogen(water)
+    return float(water.get(symbol) or 0.0)
 
 
 def forward(salts: list[dict], grams: list[float], water: dict | None = None) -> dict:
@@ -482,8 +519,8 @@ def _fit(
     rhs = []
     for symbol in symbols:
         target = targets.get(symbol)
-        rates = [ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) for salt in salts]
-        background = float(water.get(symbol) or 0.0)
+        rates = [ppm_per_gram(_supply(_nutrients(salt), symbol)) for salt in salts]
+        background = _background(water, symbol)
         if target is not None and target > 0:
             matrix.append([rate / target for rate in rates])
             rhs.append((target - background) / target)
@@ -649,19 +686,20 @@ def solve_weights(
     water: dict | None = None,
     ridge: float = 0.0,
     *,
-    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
+    max_ammonium_fraction: float | None = None,
 ) -> dict:
     """Fit nonnegative g/L by positive-target squared relative error.
     ridge must be zero.
 
     Nitrogen forms and the ammonium allowance follow ``recommend``: each
-    form is its own row, a zero N_NH4 sets no row and no ban, and
-    incidental NH4-N is held within min(max_ammonium_fraction x total
-    target N, 1.5 mmol/L), reported in ammoniumLimit with its basis.
-    totalN reports the sum of the forms.
+    form is its own row, a zero N_NH4 sets no row and no ban, and no
+    ammonium maximum is added unless max_ammonium_fraction selects the
+    allowance preset: incidental NH4-N is then held within
+    min(max_ammonium_fraction x total target N, 1.5 mmol/L), reported in
+    ammoniumLimit with its basis. totalN reports the sum of the forms.
     """
     _validate_ridge(ridge)
-    targets = fitted_targets(validate_profile(targets, "targets"))
+    targets = fitted_targets(validate_profile(targets, "targets", total_n=True))
     water = validate_profile(water or {}, "water")
     for salt in salts:
         conflict = assay_conflict(salt)
@@ -694,7 +732,7 @@ def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> d
         or not 0 <= fraction <= 1
     ):
         raise InputError("max_ammonium_fraction must be a number in [0, 1]")
-    total_n = total_nitrogen(targets)
+    total_n = target_total_nitrogen(targets)
     # A positive N_NH4 target keeps its own row; absent or 0 gets the
     # allowance (G23).
     if total_n <= 0 or "N_NH4" in targets or "N_NH4" in maxima:
@@ -707,6 +745,21 @@ def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> d
         "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L,
         "basis": AMMONIUM_BASIS,
     }
+
+
+def ammonium_allowance_preset(targets: dict, fraction: float = AMMONIUM_FRACTION) -> dict | None:
+    """The optional ammonium allowance preset for ``targets``, as a
+    disclosed record, without applying it.
+
+    Returns the same record ``ammoniumLimit`` carries (mgPerL,
+    fractionOfTotalN, absoluteCapMgPerL, basis), or None when the
+    targets already state NH4-N or have no nitrogen. To apply it, pass
+    ``max_ammonium_fraction=fraction`` to ``recommend`` or declare
+    ``maximum_concentrations={'N_NH4': record['mgPerL']}``.
+    """
+    return ammonium_allowance(
+        fitted_targets(validate_profile(dict(targets), "targets", total_n=True)), {}, fraction
+    )
 
 
 def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
@@ -736,6 +789,8 @@ def _still_within(new_rows: list[dict], old_rows: list[dict]) -> bool:
 
 
 def _supplies(salt: dict, symbol: str) -> bool:
+    if symbol == "N":
+        return total_nitrogen(salt["elements"]) > 0
     return float(salt["elements"].get(symbol) or 0.0) > 0
 
 
@@ -954,9 +1009,10 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
         return set(kept)
     matrix, rhs = [], []
     for symbol, target in kept.items():
-        matrix.append([ppm_per_gram(_nutrients(salt).get(symbol, 0.0)) / target for salt in salts])
-        rhs.append((target - float(water.get(symbol) or 0.0)) / target)
+        matrix.append([ppm_per_gram(_supply(_nutrients(salt), symbol)) / target for salt in salts])
+        rhs.append((target - _background(water, symbol)) / target)
     achieved = forward(salts, nnls(matrix, rhs), water)
+    achieved["N"] = total_nitrogen(achieved)
     return {
         symbol for symbol, target in kept.items() if not met(target, achieved.get(symbol, 0.0))
     }
@@ -1145,19 +1201,29 @@ def _provenance(record: dict) -> dict:
 
 
 def total_n_report(rows: list[dict], targets: dict) -> dict:
-    """Total N reported as the sum of the three forms in the final rows
-    (water, products and any reagent); it is never a fitted row (D1).
-    The target is None when no form is declared.
+    """Total N as the sum of the three forms in the final rows (water,
+    products and any reagent), against the declared total or the sum of
+    the declared forms (D1, D2). The target is None when neither a form
+    nor a total is declared. fitted is True when the total is its own
+    row; overlapForms then lists the forms scored beside it (the urea
+    safeguard's zero is not an overlap).
     """
-    target = total_nitrogen(targets) if any(form in targets for form in NITROGEN_FORMS) else None
+    declared = "N" in targets or any(form in targets for form in NITROGEN_FORMS)
+    target = target_total_nitrogen(targets) if declared else None
     final = total_nitrogen({row["symbol"]: row["final"] for row in rows})
+    fitted = "N" in targets
     return {
         "target": target,
         "final": final,
         "deltaPct": 100.0 * (final - target) / target if target else None,
         "unit": "mg/L as N",
         "forms": list(NITROGEN_FORMS),
-        "fitted": False,
+        "fitted": fitted,
+        "overlapForms": [
+            form
+            for form in NITROGEN_FORMS
+            if fitted and form in targets and (form != "N_UREA" or targets[form] > 0)
+        ],
     }
 
 
@@ -1192,7 +1258,7 @@ def recommend(
     allow_carbonates: bool = False,
     ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
-    max_ammonium_fraction: float | None = AMMONIUM_FRACTION,
+    max_ammonium_fraction: float | None = None,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -1227,15 +1293,18 @@ def recommend(
             constraint, and any excess that cannot be removed is
             reported in limitViolations with feasible False. Omitted
             keeps the default.
-        max_ammonium_fraction: When targets declare no NH4-N requirement
-            (N_NH4 absent or 0) and no N_NH4 maximum is given,
+        max_ammonium_fraction: Selects the optional ammonium allowance
+            preset. Omitted (None), nothing limits incidental NH4-N: an
+            absent or zero N_NH4 target is no requirement and no
+            maximum. Given a number in [0, 1], and when targets declare
+            no NH4-N requirement and no N_NH4 maximum is given,
             incidental NH4-N may reach this share of the total target N
             (N_NO3 + N_NH4 + N_UREA), capped at 1.5 mmol/L NH4
-            (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). The default
-            AMMONIUM_FRACTION (0.10) follows Dutch soilless practice
-            (G23); ammoniumLimit reports it with its basis. None adds no
-            ammonium maximum. Untargeted nutrients do not enter the
-            objective.
+            (AMMONIUM_CAP_MG_PER_L, 21.01 mg/L N). AMMONIUM_FRACTION
+            (0.10) is the Dutch soilless practice value (G23);
+            ammoniumLimit reports the limit with its basis. A declared
+            N_NH4 maximum always replaces the preset. Untargeted
+            nutrients do not enter the objective.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1267,7 +1336,7 @@ def recommend(
             candidates.
     """
     _validate_ridge(ridge)
-    targets = validate_profile(targets, "targets")
+    targets = validate_profile(targets, "targets", total_n=True)
     if not targets:
         raise InputError("targets are required")
     # Each nitrogen form is fitted as its own row (D1); a zero N_NH4 is

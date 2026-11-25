@@ -28,9 +28,16 @@ _Avoid_: Acid, base, adjuster
 The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
+**Total nitrogen target**:
+Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea. Alone it imposes no form split; with all three forms it must
+agree with their sum; with some forms both are scored and the overlap is reported. It is a target only, never water, a
+maximum or an assay.
+_Avoid_: Total N conversion, N split
+
 **Ammonium allowance**:
-The default incidental NH₄-N ceiling when the NH₄ target is absent or zero, set to the smaller
-of 10% of total target nitrogen and 1.5 mmol/L ammonium. A declared NH₄-N maximum takes precedence.
+An optional preset, off by default, that caps incidental NH₄-N when the NH₄ target is absent or zero at the smaller
+of 10% of total target nitrogen and 1.5 mmol/L ammonium. An absent or zero NH₄ target is otherwise no requirement and no
+maximum. A declared NH₄-N maximum takes precedence over the preset.
 _Avoid_: Ammonium ban, zero ammonium
 
 **Precipitation risk**:

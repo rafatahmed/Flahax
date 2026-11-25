@@ -93,16 +93,17 @@ class WaterWorkflowTests(unittest.TestCase):
         self.assertEqual(
             result.stages['formulation'].message,
             'targets missed: N_NO3 -5.37 %, P -1.05 %, K +3.01 %, Ca +3.31 %, Mg +1.94 %, '
-            'S -1.88 %, Fe +0.1 %, Mn -100 %, Zn +0.00512 %, Cu +0.00176 %, Mo -100 %',
+            'S -1.88 %, Fe +0.1 %, Mn -100 %, Zn +0.00512 %, Cu +0.00176 %, Mo -100 %; '
+            'incidental nutrients with no declared maximum: N_NH4 5.06 mg/L; check them, '
+            'or declare maximum concentrations',
         )
-        # G23/G24: N_NH4 0 is no requirement; calcium nitrate's NH4-N is
-        # within the allowance min(10 % of 128 mg/L total N, 21.01) =
-        # 12.8 mg/L.
-        self.assertEqual(result.recommendation['ammoniumLimit']['mgPerL'], 12.8)
+        # G24/D1: N_NH4 0 is no requirement and no maximum; calcium
+        # nitrate's NH4-N is reported for review.
+        self.assertIsNone(result.recommendation['ammoniumLimit'])
         (incidental,) = result.recommendation['incidentalContributions']
         self.assertEqual(
             (incidental['symbol'], incidental['maximumPpm'], incidental['assessment']),
-            ('N_NH4', 12.8, 'within_limit'),
+            ('N_NH4', None, 'requires_review'),
         )
         self.assertEqual(incidental['source'], ['Calcium Nitrate (ag grade)'])
         finals = {r['symbol']: r['final'] for r in result.recommendation['rows']}
@@ -138,8 +139,8 @@ class WaterWorkflowTests(unittest.TestCase):
             plan_fertilizer_workflow(products(), TARGETS, None, 6.5)
         # G24: an explicit N_NH4 0 is no ammonium requirement, the same
         # as an omitted one; calcium nitrate (1.1 % NH4-N) stays
-        # eligible. recommend and solve_weights hold incidental NH4-N
-        # within the same G23 allowance (10 % of total N).
+        # eligible. recommend and solve_weights set no ammonium maximum
+        # by default (D1); the optional G23 allowance is not applied.
         nitrate = 84 * 14.4 / 19
         for function in (recommend, solve_weights):
             result = function([products()[1]], {'Ca': 84, 'N_NO3': nitrate, 'N_NH4': 0}, {})
@@ -154,9 +155,10 @@ class WaterWorkflowTests(unittest.TestCase):
             (row,) = result['incidentalContributions']
             self.assertEqual(row['symbol'], 'N_NH4')
             self.assertAlmostEqual(row['ppm'], 84 / 190 * 11, places=12)
-            self.assertAlmostEqual(row['maximumPpm'], 0.1 * nitrate, places=12)
-            self.assertEqual(row['assessment'], 'within_limit')
-            self.assertFalse(result['requiresReview'])
+            self.assertIsNone(row['maximumPpm'])
+            self.assertEqual(row['assessment'], 'requires_review')
+            self.assertIsNone(result['ammoniumLimit'])
+            self.assertTrue(result['requiresReview'])
         result = recommend([products()[5]], {'K': 10, 'N_NH4': 0}, {})
         self.assertTrue(result['feasible'])
         self.assertNotIn('N_NH4', {r['symbol'] for r in result['incidentalContributions']})

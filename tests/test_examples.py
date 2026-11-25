@@ -35,19 +35,20 @@ class CapabilityExamplesTests(unittest.TestCase):
         # maximum blocks.
         self.assertEqual(workflow['stages']['formulation']['status'], 'requires_review')
         self.assertEqual(
-            workflow['stages']['formulation']['message'], 'targets missed: Mn -100 %, Mo -100 %'
+            workflow['stages']['formulation']['message'],
+            'targets missed: Mn -100 %, Mo -100 %; incidental nutrients with no declared '
+            'maximum: N_NH4 4.86 mg/L; check them, or declare maximum concentrations',
         )
         rows = {r['symbol']: r['final'] for r in workflow['recommendation']['rows']}
-        # G24: N_NH4 0 is no ammonium requirement; calcium nitrate's
-        # NH4-N stays within the G23 allowance min(10 % of 128 mg/L
-        # total N, 21.01) = 12.8 mg/L.
+        # G24/D1: N_NH4 0 is no ammonium requirement and no maximum;
+        # calcium nitrate's NH4-N is reported for review.
         self.assertAlmostEqual(rows['N_NH4'], 4.8632, places=4)
         self.assertEqual(rows['Na'], 0)
-        self.assertEqual(workflow['recommendation']['ammoniumLimit']['mgPerL'], 12.8)
+        self.assertIsNone(workflow['recommendation']['ammoniumLimit'])
         incidental = workflow['recommendation']['incidentalContributions']
         self.assertEqual(
             [(r['symbol'], r['maximumPpm'], r['assessment'], r['source']) for r in incidental],
-            [('N_NH4', 12.8, 'within_limit', ['Calcium Nitrate (ag grade)'])],
+            [('N_NH4', None, 'requires_review', ['Calcium Nitrate (ag grade)'])],
         )
 
     def test_pepper_tank_review_keeps_all_products_and_acid_accounting(self):

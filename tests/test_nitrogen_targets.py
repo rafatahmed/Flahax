@@ -6,6 +6,7 @@
 (D1, G23, G24).
 """
 
+import copy
 from html import escape
 import math
 import unittest
@@ -19,8 +20,14 @@ from flahax import (
     summarize_batch,
 )
 from flahax.composition import fitted_targets, nitrogen_rows, theoretical_assay
-from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION
-from flahax.grower_report import nitrogen_notes, number, render_batch_sheet, render_report
+from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION, ammonium_allowance_preset
+from flahax.grower_report import (
+    nitrogen_notes,
+    nitrogen_paragraphs,
+    number,
+    render_batch_sheet,
+    render_report,
+)
 from flahax.grower_sheet import render_mix_sheet
 from flahax.ph_adjustment import _blend_recipe, nutrient_salts
 from flahax.requirement_fit import RELATIVE_TOLERANCE, met
@@ -56,12 +63,14 @@ class NitrogenRowsTests(unittest.TestCase):
 
 
 class CucumberAllowanceTests(unittest.TestCase):
-    """Cucumber (Howard Resh): N_NO3 140, N_NH4 0 (G23, G24)."""
+    """Cucumber (Howard Resh): N_NO3 140, N_NH4 0, with the optional
+    ammonium allowance selected (G23, G24, D1).
+    """
 
     @classmethod
     def setUpClass(cls):
         cls.targets = FORMULAS['Cucumber (Howard Resh)']
-        cls.result = recommend(SALTS, cls.targets, {})
+        cls.result = recommend(SALTS, cls.targets, {}, max_ammonium_fraction=AMMONIUM_FRACTION)
 
     def test_formula_values(self):
         self.assertEqual((self.targets['N_NO3'], self.targets['N_NH4']), (140, 0))
@@ -90,14 +99,15 @@ class CucumberAllowanceTests(unittest.TestCase):
         self.assertEqual(incidental['assessment'], 'within_limit')
         self.assertIn(CALCIUM_NITRATE, incidental['source'])
 
-    def test_grower_summary_shows_the_allowance_and_total_n(self):
+    def test_the_preset_record_is_the_one_recommend_reports(self):
+        self.assertEqual(ammonium_allowance_preset(self.targets), self.result['ammoniumLimit'])
+
+    def test_grower_summary_has_no_allowance_by_default_and_reports_total_n(self):
         flow = plan_fertilizer_workflow(
             SALTS, self.targets, {}, 5.8, final_volume=VolumeLitres(100)
         )
         summary = summarize_batch(flow, SALTS, title='Cucumber', water_label='RO')
-        allowance = summary['formulation']['ammonium_allowance']
-        self.assertEqual(allowance['mgPerL'], 14.0)
-        self.assertEqual(allowance['basis'], BASIS)
+        self.assertIsNone(summary['formulation']['ammonium_allowance'])
         total = summary['formulation']['total_n']
         self.assertEqual(total['target'], 140)
         self.assertFalse(total['fitted'])
@@ -267,7 +277,7 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
     def test_blended_recipe_keeps_the_allowance(self):
         pool = nutrient_salts(SALTS)
         targets = FORMULAS['Cucumber (Howard Resh)']
-        unadjusted = recommend(pool, targets, {})
+        unadjusted = recommend(pool, targets, {}, max_ammonium_fraction=AMMONIUM_FRACTION)
         blended = _blend_recipe(
             pool, fitted_targets(targets), {'N_NO3': 20}, [unadjusted] * 2, 0.0, None
         )
@@ -299,10 +309,10 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
         (candidate,) = flow.stages['ph_adjustment'].value.candidates
         recipe = candidate.recommendation
         ammonium = next(r for r in recipe['incidentalContributions'] if r['symbol'] == 'N_NH4')
-        self.assertEqual((ammonium['maximumPpm'], ammonium['assessment']), (13.0, 'within_limit'))
-        self.assertLessEqual(ammonium['ppm'], 13.0)
+        self.assertEqual(
+            (ammonium['maximumPpm'], ammonium['assessment']), (None, 'requires_review')
+        )
         self.assertEqual(recipe['totalN']['final'], nitrogen_sum(recipe['rows']))
-        self.assertNotIn('N_NH4', candidate.message or '')
 
 
 class SolveWeightsAllowanceTests(unittest.TestCase):
@@ -315,8 +325,8 @@ class SolveWeightsAllowanceTests(unittest.TestCase):
         nitrate = 84 * 14.4 / 19
         for targets in ({'Ca': 84, 'N_NO3': nitrate}, {'Ca': 84, 'N_NO3': nitrate, 'N_NH4': 0}):
             with self.subTest(targets=targets):
-                low = solve_weights([calcium], targets, {})
-                high = recommend([calcium], targets, {})
+                low = solve_weights([calcium], targets, {}, max_ammonium_fraction=0.1)
+                high = recommend([calcium], targets, {}, max_ammonium_fraction=0.1)
                 self.assertEqual(
                     low['ammoniumLimit'],
                     {
@@ -341,8 +351,10 @@ class SolveWeightsAllowanceTests(unittest.TestCase):
     def test_none_and_a_tighter_fraction(self):
         calcium = next(s for s in SALTS if s['name'] == CALCIUM_NITRATE)
         targets = {'Ca': 84, 'N_NO3': 84 * 14.4 / 19}
-        none = solve_weights([calcium], targets, max_ammonium_fraction=None)
+        none = solve_weights([calcium], targets)
         self.assertIsNone(none['ammoniumLimit'])
+        explicit = solve_weights([calcium], targets, max_ammonium_fraction=None)
+        self.assertIsNone(explicit['ammoniumLimit'])
         tight = solve_weights([calcium], targets, max_ammonium_fraction=0.05)
         self.assertEqual(tight['ammoniumLimit']['mgPerL'], 0.05 * targets['N_NO3'])
         self.assertLessEqual(row(tight, 'N_NH4')['final'], 0.05 * targets['N_NO3'])
@@ -358,6 +370,7 @@ class GrowerNitrogenLinesTests(unittest.TestCase):
         'Incidental NH4-N allowed up to 14 mg/L (10 % of total N, cap 21.01 mg/L): '
         'Dutch soilless practice (De Kreij, Voogt et al.)'
     )
+    TARGET_NOTE = '(sum of NO3-N, NH4-N and urea-N; reported, not a target)'
 
     @classmethod
     def setUpClass(cls):
@@ -365,6 +378,12 @@ class GrowerNitrogenLinesTests(unittest.TestCase):
             SALTS, FORMULAS['Cucumber (Howard Resh)'], {}, 5.8, final_volume=VolumeLitres(100)
         )
         cls.summary = summarize_batch(flow, SALTS, title='Cucumber', water_label='RO')
+        # The workflow selects no allowance (D1); the optional record is
+        # attached here to cover how every output prints it.
+        cls.selected = copy.deepcopy(cls.summary)
+        cls.selected['formulation']['ammonium_allowance'] = ammonium_allowance_preset(
+            FORMULAS['Cucumber (Howard Resh)']
+        )
         cls.total = (
             f'Total N: {number(cls.summary["formulation"]["total_n"]["final"], 2)} mg/L '
             '(sum of NO3-N, NH4-N and urea-N; reported, not a target)'
@@ -375,16 +394,20 @@ class GrowerNitrogenLinesTests(unittest.TestCase):
             self.total,
             'Total N: 160.88 mg/L (sum of NO3-N, NH4-N and urea-N; reported, not a target)',
         )
-        self.assertEqual(nitrogen_notes(self.summary), [self.ALLOWANCE, self.total])
+        self.assertEqual(nitrogen_notes(self.summary), [self.total])
+        self.assertEqual(nitrogen_notes(self.selected), [self.ALLOWANCE, self.total])
 
-    def test_report_batch_sheet_and_mix_sheet_print_both_lines(self):
+    def test_outputs_print_total_n_and_only_a_selected_allowance(self):
+        # The summary is sealed, so the selected allowance is checked on the
+        # paragraphs the pages are built from.
+        self.assertIn(escape(self.ALLOWANCE), nitrogen_paragraphs(self.selected))
         for name, page in (
             ('report', render_report(self.summary)),
             ('batch sheet', render_batch_sheet(self.summary)),
             ('mix sheet', render_mix_sheet(self.summary, 2)),
         ):
             with self.subTest(page=name):
-                self.assertIn(f'<p class="small">{escape(self.ALLOWANCE)}</p>', page)
+                self.assertNotIn('Incidental NH4-N allowed', page)
                 self.assertIn(f'<p class="small">{escape(self.total)}</p>', page)
 
     def test_lines_only_when_they_apply(self):

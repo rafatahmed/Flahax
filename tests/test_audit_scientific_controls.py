@@ -179,9 +179,10 @@ class ScientificAuditRegressionTests(unittest.TestCase):
         self.assertNotIn('no measurement behind it', bases)
 
     def test_f12_ammonium_maximum_is_declared_with_its_basis(self):
-        # G23: with no NH4-N requirement the allowance min(10 % of total
-        # N, 1.5 mmol/L) applies and is reported with its basis; None
-        # leaves no ammonium maximum.
+        # G23: with no NH4-N requirement the optional allowance min(10 %
+        # of total N, 1.5 mmol/L), when selected, is reported with its
+        # basis; by default (D1) and with None there is no ammonium
+        # maximum.
         products = [
             dict(
                 id='synthetic',
@@ -189,7 +190,8 @@ class ScientificAuditRegressionTests(unittest.TestCase):
                 elements={'K': 10, 'N_NO3': 10, 'N_NH4': 1},
             )
         ]
-        result = recommend(products, {'K': 100, 'N_NO3': 100}, {})
+        self.assertIsNone(recommend(products, {'K': 100, 'N_NO3': 100}, {})['ammoniumLimit'])
+        result = recommend(products, {'K': 100, 'N_NO3': 100}, {}, max_ammonium_fraction=0.10)
         self.assertEqual(
             result['ammoniumLimit'],
             {
