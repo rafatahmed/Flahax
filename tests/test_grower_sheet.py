@@ -103,7 +103,9 @@ class SheetTests(unittest.TestCase):
         self.assertIn('after fertilizers', two)
 
     def test_report_preserves_condition_qualified_rules(self):
-        report = render_report(self.ro)
+        # The visible report, not the embedded calculation evidence, which also carries
+        # the saved inputs and so every catalogue note.
+        report = render_report(self.ro).split('<pre id="flahax-result-data">')[0]
         self.assertNotIn('decision 2026-10-22', report)
         self.assertFalse(self.ro['tanks']['waived'])
         self.assertIn('Pairs kept apart', report)
