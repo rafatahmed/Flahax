@@ -33,6 +33,7 @@ from .stock_solubility import (
     check_stock_solubility,
     exceeds_message,
     load_solubility_table,
+    unverified_temperature_note,
 )
 from .tank_grouping import group_tanks
 
@@ -727,6 +728,9 @@ def summarize_batch(
                 'is unchanged; use a larger tank or a different injection ratio.'
             )
     warnings.append('Tank separation is a structural assignment, not qualified mixture approval.')
+    temperature_note = unverified_temperature_note(solubility, temperature_c)
+    if temperature_note:
+        warnings.append(temperature_note)
     for row in solubility:
         if row.status == 'exceeds':
             status = 'blocked'
