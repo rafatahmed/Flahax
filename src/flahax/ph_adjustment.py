@@ -158,6 +158,9 @@ class PhAdjustmentPlan:
     unadjusted_recommendation: dict | None = None
     post_mix_measurement_required: bool = True
     unadjusted_state: object | None = None
+    # The acceptable pH interval (low, high) when one was asked for; target_ph is then the
+    # bound the plan aimed at, or the mix's own pH when it was already inside.
+    interval: tuple | None = None
 
     @property
     def selected(self):
@@ -205,6 +208,29 @@ def nutrient_salts(salts):
     ]
 
 
+def _ph_value(value, code):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise DeliveryError(code, 'target_ph must be finite in [0,14]')
+    if not math.isfinite(value) or not 0 <= value <= 14:
+        raise DeliveryError('out_of_range', 'target_ph must be finite in [0,14]')
+    return float(value)
+
+
+def normalize_target_ph(target_ph):
+    """``(point, interval)``: a point target gives ``(value, None)``; an acceptable
+    interval ``(low, high)`` gives ``(None, (low, high))`` and a zero-width interval is
+    the point. Raises ``DeliveryError`` for anything else.
+    """
+    if isinstance(target_ph, (tuple, list)):
+        if len(target_ph) != 2:
+            raise DeliveryError('invalid_value', 'a pH interval is two numbers, (low, high)')
+        low, high = (_ph_value(v, 'invalid_value') for v in target_ph)
+        if low > high:
+            raise DeliveryError('invalid_value', 'a pH interval needs low <= high')
+        return (low, None) if low == high else (None, (low, high))
+    return _ph_value(target_ph, 'out_of_range'), None
+
+
 def plan_coupled_ph(
     salts,
     targets,
@@ -241,6 +267,7 @@ def plan_coupled_ph(
     recovery when no matching direction is offered. A candidate's
     quantities and unresolved numerical status remain inspectable.
     """
+    point_ph, interval = normalize_target_ph(target_ph)
     mass = _positive(water_mass_kg, 'water_mass_kg')
     volume = _positive(final_volume_litres, 'final_volume_litres')
     cap = _positive(maximum_reagent_volume_litres, 'maximum_reagent_volume_litres')
@@ -266,6 +293,14 @@ def plan_coupled_ph(
     targets = fitted_targets(targets)
     joint_maxima = assessed_limits(maximum_concentrations, unadjusted)
     base_state = mix(unadjusted)
+    if interval is None:
+        target_ph = point_ph
+    elif interval[0] - PH_TOLERANCE <= base_state.ph <= interval[1] + PH_TOLERANCE:
+        # Already acceptable: no reagent. The mix's own pH stands in as the aim.
+        target_ph = base_state.ph
+    else:
+        # The smallest change that qualifies is the nearest bound; never a midpoint.
+        target_ph = interval[0] if base_state.ph < interval[0] else interval[1]
     if abs(base_state.ph - target_ph) <= PH_TOLERANCE:
         direction = 'none'
     else:
@@ -516,6 +551,7 @@ def plan_coupled_ph(
         policy,
         unadjusted,
         unadjusted_state=base_state,
+        interval=interval,
     )
 
 

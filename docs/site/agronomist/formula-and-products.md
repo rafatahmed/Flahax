@@ -91,11 +91,16 @@ Total N can also be a target, written `N` (mg/L as N), alone or with forms (deci
 
 - `N` alone is one requirement on the sum of the three forms. It imposes no form split, and
   a urea-bearing product is still not used unless the formula declares urea.
-- `N` with all three forms: the forms are scored once and the declared total is checked
-  against their sum. A disagreement is an error before any fitting.
-- `N` with only some forms: both are scored and `totalN.overlapForms` lists the forms
-  scored beside the total. No other form target is invented; the selected products decide
-  the unspecified forms. Forms that add up to more than `N` are an error.
+- Total N is nitrate + ammonium + urea, and urea that is not asked for is a zero
+  requirement, not an unknown. `N` with a nitrate target and a positive ammonium target:
+  the forms determine the total, so they are scored once and the declared total is checked
+  against their sum (urea counted as declared or zero). A disagreement is an error before
+  any fitting. For example `N` 150 with `N_NO3` 100 and `N_NH4` 30 is rejected, because
+  100 + 30 + 0 = 130.
+- `N` with other forms (for example nitrate only, or an explicit zero `N_NH4`, which asks
+  for nothing): both are scored and `totalN.overlapForms` lists the forms scored beside the
+  total. No other form target is invented; the selected products decide the unspecified
+  forms. Forms that add up to more than `N` are an error.
 - `N` is accepted in targets only, not in water, maxima or product assays.
 
 - `N_NO3` is fitted to its declared value.

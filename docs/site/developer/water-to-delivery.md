@@ -243,6 +243,35 @@ Potassium Carbonate); acids are supplied by the user with the assay and density
 from the supplier's certificate. A supersaturated phase never rejects a plan; it is
 reported (next section).
 
+### Acceptable deviation ranges
+
+`recommend(..., deviation_ranges=...)` and `plan_fertilizer_workflow(..., deviation_ranges=...)` take
+`dict(percent=..., overrides={symbol: {shortage_percent | shortage_mg_per_l, excess_percent |
+excess_mg_per_l}}, mode='assess' | 'require')`. None is a default: no setting means no range. A range
+exists only for a positive target; an override for a nutrient with no positive target raises
+`range_without_positive_target`, and a zero target is never relaxed. The result's `deviationRanges`
+holds the `effective` ranges (`low`, `high`, None for an open side), the `assessment` (each nutrient
+`inside`, `below` or `above`, and by how many mg/L) and, in `require` mode, a `requirement` with
+status `met` or `search_incomplete`. `assess` leaves the recipe unchanged. `require` fits with each
+upper bound as a hard maximum and doubles the weight of a nutrient below its lower bound, up to 24
+times; a candidate that still misses is kept, `feasible` is false, the unmet nutrients are named and
+nothing is widened (this is a candidate, not a proof that no recipe qualifies). In the workflow the
+final recipe, with the pH reagent, is classified in `summary['deviation_ranges']`; a missed required
+range asks for review. The settings are saved with the inputs.
+
+### An acceptable pH interval
+
+`target_ph` may be a pair `(low, high)` (a list in the JSON workflow) instead of one number. The
+interval is judged against its bounds and no midpoint is used: a mix already inside it needs no
+reagent (`direction` is `none`, `target_ph` is the mix's own pH), and a mix outside it is moved to
+the nearest bound, the smallest change that qualifies. `PhAdjustmentPlan.interval` and
+`FertilizerWorkflow.ph_interval` hold the pair, `workflow.target_ph` is the bound the plan aimed at
+(None until `ph_adjustment` has run) and the summary carries `target_ph_interval` and
+`ph.interval`. A zero-width interval is the point target. Only `ph_adjustment` accepts an interval:
+`nitric`, `titration` and `acid_selection` plan a reagent to one pH, so they report
+`unsupported_ph_interval` and choose no point. `low` above `high`, or a value outside 0 to 14, is
+refused.
+
 ## Saturation indices and acceptance
 
 A positive saturation index is a thermodynamic finding, not a precipitation rate, and

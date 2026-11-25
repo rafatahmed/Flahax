@@ -690,7 +690,7 @@ Source module: `flahax.engine`. Import with `from flahax import load_library`.
 ### `recommend`
 
 ```text
-recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None) -> 'dict'
+recommend(library: 'list[dict]', targets: 'dict', water: 'dict | None' = None, *, allow_ions: 'frozenset[str] | set[str] | None' = None, allow_carbonates: 'bool' = False, ridge: 'float' = 0.0, maximum_concentrations: 'dict | None' = None, max_ammonium_fraction: 'float | None' = None, deviation_ranges: 'dict | None' = None) -> 'dict'
 ```
 
 Select eligible products and fit non-negative product g/L.
@@ -738,6 +738,17 @@ Args:
         ammoniumLimit reports the limit with its basis. A declared
         N_NH4 maximum always replaces the preset. Untargeted
         nutrients do not enter the objective.
+    deviation_ranges: Optional acceptable deviation ranges for
+        positive targets: ``percent`` (symmetric), ``overrides`` (a
+        nutrient's ``shortage_percent``, ``shortage_mg_per_l``,
+        ``excess_percent`` or ``excess_mg_per_l``) and ``mode``.
+        ``assess`` (default) classifies the result against the ranges
+        and changes nothing; ``require`` fits with each upper bound as
+        a hard maximum and raises the weight of a nutrient below its
+        lower bound, keeping the candidate and naming the unmet
+        requirement if a bound is not reached. Reported as
+        ``deviationRanges``. None sets no range; a range never relaxes
+        a zero target or a declared maximum.
 
 Returns:
     Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -994,13 +1005,13 @@ Source module: `flahax.fertilizer_equilibrium`. Import with `from flahax import 
 ### `FertilizerWorkflow`
 
 ```text
-FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>) -> None
+FertilizerWorkflow(recommendation: dict, water: dict, nutrient_gap: dict, target_ph: float, stages: dict = <factory>, post_mix_measurement_required: bool = True, maximum_concentrations: dict | None = None, water_basis: dict | None = None, canonical_result: flahax.canonical_result.CanonicalResult | None = None, remedies: dict = <factory>, ph_interval: tuple | None = None, deviation_ranges: dict | None = None) -> None
 ```
 
 The recommendation, water, nutrient gap and pH target, with each
 stage's result; the pH must still be measured after mixing.
 
-Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`.
+Record fields: `recommendation`, `water`, `nutrient_gap`, `target_ph`, `stages`, `post_mix_measurement_required`, `maximum_concentrations`, `water_basis`, `canonical_result`, `remedies`, `ph_interval`, `deviation_ranges`.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import FertilizerWorkflow`.
 
@@ -1020,7 +1031,7 @@ Source module: `flahax.fertilizer_workflow`. Import with `from flahax import Wor
 ### `plan_fertilizer_workflow`
 
 ```text
-plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None)
+plan_fertilizer_workflow(salts, targets, water, target_ph, *, final_volume=None, equilibrium=None, nitric=None, titration=None, stocks=None, acids=None, maximum_concentrations=None, ph_adjustment=None, remedy_options=(), max_remedy_evaluations=20, volumetric_stocks=None, equipment_check=None, deviation_ranges=None)
 ```
 
 Run available stages; expose missing inputs and rejected stages
@@ -1631,13 +1642,13 @@ Source module: `flahax.mixed_equilibrium`. Import with `from flahax import solve
 ### `PhAdjustmentPlan`
 
 ```text
-PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None) -> None
+PhAdjustmentPlan(target_ph: float, unadjusted_ph: float, direction: str, candidates: tuple, selected_product_id: str | None, selection_policy: str, unadjusted_recommendation: dict | None = None, post_mix_measurement_required: bool = True, unadjusted_state: object | None = None, interval: tuple | None = None) -> None
 ```
 
 Every pH reagent tried and the selected one; the pH must still be
 measured after mixing.
 
-Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`.
+Record fields: `target_ph`, `unadjusted_ph`, `direction`, `candidates`, `selected_product_id`, `selection_policy`, `unadjusted_recommendation`, `post_mix_measurement_required`, `unadjusted_state`, `interval`.
 
 Source module: `flahax.ph_adjustment`. Import with `from flahax import PhAdjustmentPlan`.
 
@@ -2110,13 +2121,13 @@ Source module: `flahax.result_acceptance`. Import with `from flahax import verif
 ### `StockPlan`
 
 ```text
-StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True, unverified: 'tuple[dict, ...]' = ()) -> None
+StockPlan(recipe: 'FinalSolutionRecipe', injection_ratio: 'InjectionRatio', temperature: 'TemperatureCelsius', tanks: 'tuple[StockTankPlan, ...]', compatibility_rule_ids: 'tuple[str, ...]', solubility_limit_ids: 'tuple[str, ...]', mixture_approved: 'bool' = False, status: 'str' = 'requires_review', mixture_assessments: 'tuple[dict, ...]' = (), assignments_evaluated: 'int' = 0, search_complete: 'bool' = True, unverified: 'tuple[dict, ...]' = (), qualification: 'tuple[dict, ...]' = ()) -> None
 ```
 
 A capacity-checked assignment with explicit mixture qualification
 and search status.
 
-Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`, `unverified`.
+Record fields: `recipe`, `injection_ratio`, `temperature`, `tanks`, `compatibility_rule_ids`, `solubility_limit_ids`, `mixture_approved`, `status`, `mixture_assessments`, `assignments_evaluated`, `search_complete`, `unverified`, `qualification`.
 
 Source module: `flahax.stock_planning`. Import with `from flahax import StockPlan`.
 

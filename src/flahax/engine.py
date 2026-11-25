@@ -38,7 +38,8 @@ from .composition import (
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
-from .requirement_fit import met
+from .deviation_ranges import assessment as range_assessment, effective_ranges, normalize_ranges
+from .requirement_fit import RELATIVE_TOLERANCE, met
 
 # Rank and feasibility threshold, relative to the problem's column
 # scale.
@@ -494,9 +495,12 @@ def _fit(
     ceilings: dict[str, tuple[float, float]] | None = None,
     x0: list[float] | None = None,
     grams_cache: dict | None = None,
+    row_weights: dict[str, float] | None = None,
 ) -> dict:
     """Minimize positive-target squared relative errors with nonnegative
-    doses.
+    doses. row_weights, when given, multiplies a target's error row (a
+    required lower bound raises its importance; the loss and every
+    report still use equal weights).
 
     No dose or incidental-nutrient penalty enters the objective. An ion
     in ceilings, as (weight, aim mg/L), is pulled toward that aim. The
@@ -522,8 +526,9 @@ def _fit(
         rates = [ppm_per_gram(_supply(_nutrients(salt), symbol)) for salt in salts]
         background = _background(water, symbol)
         if target is not None and target > 0:
-            matrix.append([rate / target for rate in rates])
-            rhs.append((target - background) / target)
+            factor = (row_weights or {}).get(symbol, 1.0)
+            matrix.append([factor * rate / target for rate in rates])
+            rhs.append(factor * (target - background) / target)
         if symbol in ceilings:
             weight, aim = ceilings[symbol]
             limit = maxima[symbol]
@@ -531,7 +536,7 @@ def _fit(
             rhs.append(weight * (aim - background) / limit)
     gram = None
     if grams_cache is not None and matrix:
-        key = tuple(sorted(ceilings))
+        key = (tuple(sorted(ceilings)), tuple(sorted((row_weights or {}).items())))
         gram = grams_cache.get(key)
         if gram is None:
             gram = grams_cache[key] = _LazyGram([list(column) for column in zip(*matrix)])
@@ -548,6 +553,7 @@ def _fit_within(
     ridge: float,
     maxima: dict,
     x0: list[float] | None = None,
+    row_weights: dict[str, float] | None = None,
 ) -> dict:
     """Fit with structural zero requirements and every stated nutrient
     maximum.
@@ -590,6 +596,7 @@ def _fit_within(
             ridge,
             {s: v for s, v in maxima.items() if s not in unreachable},
             None if x0 is None else [x0[i] for i in keep],
+            row_weights,
         )
         grams = [0.0] * len(salts)
         for index, value in zip(keep, solved["grams"]):
@@ -598,7 +605,9 @@ def _fit_within(
         loss, rows = score(achieved, targets)
         return {"grams": grams, "loss": loss, "rows": rows}
     cache: dict = {}
-    solved = _fit(salts, targets, water, ridge, maxima, x0=x0, grams_cache=cache)
+    solved = _fit(
+        salts, targets, water, ridge, maxima, x0=x0, grams_cache=cache, row_weights=row_weights
+    )
     # symbol -> [shift, (lo shift, lo excess > 0) or None, (hi shift, hi
     # excess < 0) or None, side]
     search: dict[str, list] = {}
@@ -665,7 +674,15 @@ def _fit_within(
             for symbol, state in search.items()
         }
         solved = _fit(
-            salts, targets, water, ridge, maxima, ceilings, x0=solved["grams"], grams_cache=cache
+            salts,
+            targets,
+            water,
+            ridge,
+            maxima,
+            ceilings,
+            x0=solved["grams"],
+            grams_cache=cache,
+            row_weights=row_weights,
         )
     return solved
 
@@ -801,6 +818,7 @@ def _simplify(
     solved: dict,
     ridge: float,
     maxima: dict | None = None,
+    row_weights: dict[str, float] | None = None,
 ) -> dict:
     """Reduce product count only without degrading the original fit or
     hard limits.
@@ -837,6 +855,7 @@ def _simplify(
                 ridge,
                 maxima or {},
                 x0=[grams[item] for item in others],
+                row_weights=row_weights,
             )
             if (
                 not _still_within(trial["rows"], original_rows)
@@ -964,26 +983,54 @@ def _recover(library, ready, excluded, targets, short):
     return ready, excluded, warnings
 
 
-def _automatic_fit(library, salts, excluded, targets, water, ridge, maxima):
+FLOOR_WEIGHT_STEPS = 24  # doublings of a short nutrient's row weight, at most 2**24
+
+
+def _below_floor(rows, floors):
+    """Symbols whose final concentration is under a required lower bound."""
+    final = {row['symbol']: float(row['final'] or 0.0) for row in rows}
+    return [
+        symbol
+        for symbol, floor in floors.items()
+        if final.get(symbol, 0.0) < floor * (1 - RELATIVE_TOLERANCE)
+    ]
+
+
+def _automatic_fit(library, salts, excluded, targets, water, ridge, maxima, floors=None):
     """Grow the permitted supplied pool until no deficient nutrient adds
     a source.
 
     Every successful recovery adds an ID from the finite caller
     inventory. Each fit considers mixtures of the whole current pool; no
-    target or limit changes.
+    target or limit changes. floors (symbol to required lower bound)
+    raise the weight of a short nutrient's row, doubling it up to
+    FLOOR_WEIGHT_STEPS times; the best result is kept if a bound is not
+    reached, and no bound is widened.
     """
     warnings, attempts = [], []
     while True:
         attempts.append([salt['id'] for salt in salts])
         if salts:
-            solved = _simplify(
-                salts,
-                targets,
-                water,
-                _fit_within(salts, targets, water, ridge, maxima),
-                ridge,
-                maxima,
-            )
+            weights: dict[str, float] = {}
+
+            def fit(weights=None):
+                return _simplify(
+                    salts,
+                    targets,
+                    water,
+                    _fit_within(salts, targets, water, ridge, maxima, row_weights=weights),
+                    ridge,
+                    maxima,
+                    weights,
+                )
+
+            solved = fit()
+            for _ in range(FLOOR_WEIGHT_STEPS if floors else 0):
+                short = _below_floor(solved['rows'], floors)
+                if not short:
+                    break
+                weights = {**weights, **{s: weights.get(s, 1.0) * 2.0 for s in short}}
+                solved = fit(weights)
         else:
             loss, rows = score(forward([], [], water), targets)
             solved = dict(grams=[], rows=rows, loss=loss)
@@ -1259,6 +1306,7 @@ def recommend(
     ridge: float = 0.0,
     maximum_concentrations: dict | None = None,
     max_ammonium_fraction: float | None = None,
+    deviation_ranges: dict | None = None,
 ) -> dict:
     """Select eligible products and fit non-negative product g/L.
 
@@ -1305,6 +1353,17 @@ def recommend(
             ammoniumLimit reports the limit with its basis. A declared
             N_NH4 maximum always replaces the preset. Untargeted
             nutrients do not enter the objective.
+        deviation_ranges: Optional acceptable deviation ranges for
+            positive targets: ``percent`` (symmetric), ``overrides`` (a
+            nutrient's ``shortage_percent``, ``shortage_mg_per_l``,
+            ``excess_percent`` or ``excess_mg_per_l``) and ``mode``.
+            ``assess`` (default) classifies the result against the ranges
+            and changes nothing; ``require`` fits with each upper bound as
+            a hard maximum and raises the weight of a nutrient below its
+            lower bound, keeping the candidate and naming the unmet
+            requirement if a bound is not reached. Reported as
+            ``deviationRanges``. None sets no range; a range never relaxes
+            a zero target or a declared maximum.
 
     Returns:
         Dictionary containing identity-bearing salts with gramsPerLitre,
@@ -1349,6 +1408,20 @@ def recommend(
     maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
     ammonium_limit = ammonium_allowance(targets, maxima, max_ammonium_fraction)
+    ranges = effective_ranges(deviation_ranges, targets)
+    require = normalize_ranges(deviation_ranges) is not None and (
+        normalize_ranges(deviation_ranges)['mode'] == 'require'
+    )
+    fit_maxima, floors = dict(maxima), {}
+    if require:
+        # An upper bound is a hard maximum for the fit, never above a declared one.
+        for row in ranges:
+            if row['high'] is not None:
+                fit_maxima[row['symbol']] = min(
+                    fit_maxima.get(row['symbol'], math.inf), row['high']
+                )
+            if row['low']:
+                floors[row['symbol']] = row['low']
     salts, excluded = _eligible(library, targets, allowed, allow_carbonates)
     warnings: list[str] = []
     balance = target_ion_balance(targets)
@@ -1356,7 +1429,7 @@ def recommend(
     if note:
         warnings.append(note)
     salts, excluded, solved, recovered, attempts = _automatic_fit(
-        library, salts, excluded, targets, water, ridge, maxima
+        library, salts, excluded, targets, water, ridge, fit_maxima, floors
     )
     warnings.extend(recovered)
     solved["salts"] = _chosen(salts, solved["grams"])
@@ -1433,6 +1506,12 @@ def recommend(
     solved["unmetTargets"] = _diagnose(
         library, targets, water, solved["rows"], maxima, allowed, allow_carbonates
     )
+    solved["deviationRanges"] = range_assessment(
+        deviation_ranges, targets, {row["symbol"]: row["final"] for row in solved["rows"]}
+    )
+    requirement = (solved["deviationRanges"] or {}).get("requirement")
+    if requirement and requirement["status"] != "met":
+        solved["feasible"] = False  # a candidate outside a required range is diagnostic
     solved['substitutionSearch'] = {
         'status': 'candidate_found' if solved['feasible'] else 'search_incomplete',
         'availableProductIds': [salt.get('id') for salt in library],

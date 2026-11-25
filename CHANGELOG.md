@@ -11,19 +11,24 @@ Development checkout: 0.7.1.dev0.
 
 ### Added
 
-- Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with all three forms it must agree with their sum; with some forms both are scored and `totalN.overlapForms` lists the overlap (#291).
+- Total nitrogen (`N`, mg/L as N) is a target alone or with nitrogen forms. Alone it imposes no form split; with a nitrate and a positive ammonium target it must agree with their sum (an absent urea counts as zero); with other forms both are scored and `totalN.overlapForms` lists the overlap (#291).
 - `flahax batch` takes `--available-tanks` and `--tank-capacity`; the report lists the tanks the recipe needs against yours, and a tank too small for its stock blocks without changing the recipe (#293).
+- Acceptable deviation ranges, none by default: `deviation_ranges` on `recommend` and the workflow, and `--range-percent`, `--range` and `--require-ranges` on `flahax batch`. Assess classifies the result; Require constrains the fit and keeps an unmet candidate. A zero target or declared maximum is never relaxed (#305).
+- `target_ph` accepts an acceptable interval `(low, high)` (`--ph-min` and `--ph-max` on `flahax batch`): a mix inside needs no reagent, otherwise the plan aims at the nearest bound, never a midpoint; single-purpose pH stages refuse an interval (#304).
 - `--fit-equipment` and `available_product_search(on_equipment_miss=True)` search other products for a recipe that fits the declared tanks; tanks and separation rules never change, and the mode and equipment are saved in `remedies` (#294).
 - A saved result keeps `supplied_inputs`, bound to its input fingerprint, and `saved_input_differences` names what a recalculation changed (#297).
 
 ### Changed
 
+- The batch report and `plan_stocks` qualify a solubility value through one function (`qualify_single_product`): `verified` only where the recorded temperature range and the concentration basis support it, otherwise the gap is named. `StockPlan.qualification` is new and a solubility-limit record may state an optional `basis` (#307).
+- The glossary no longer implies a fixed A/B: the stock assignment may use more than two tanks and the result lists every one (`tanks.tanks`) (#308).
 - An absent or zero `N_NH4` target is no requirement and no maximum. The ammonium allowance is now an opt-in preset (`max_ammonium_fraction`), so default recipes may use ammonium nitrate and report NH4-N for review (#290).
 - Products sharing an exact name are rejected as `ambiguous_product_name` before dose resolution (#288).
 - `plan_stocks` no longer raises `missing_solubility_limit`: with no limit at the temperature it keeps the quantities, lists the product in `StockPlan.unverified` and approves nothing (#295).
 
 ### Fixed
 
+- Total nitrogen counts an absent urea as a zero requirement: a declared nitrate and a positive ammonium now determine the total, a total that disagrees with them is rejected before fitting (for example `N` 150 with `N_NO3` 100 and `N_NH4` 30), and a consistent total is scored once (#303).
 - Coupled recipes are assessed at the emitted reagent dose, and search provenance survives dose reassessment (#288).
 - Each solubility row states that it is a single-product value and whether its temperature is verified; a value recorded at another temperature is flagged, not silently accepted (#295).
 - The glossary defines stock assignment, required and available tanks, equipment fit and single-product solubility (#296).

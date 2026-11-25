@@ -22,6 +22,7 @@ from .delivery_contracts import (
     validate_compatibility_rule,
     validate_solubility_limit,
 )
+from .stock_solubility import qualify_single_product
 from .delivery_quantities import (
     FinalSolutionRecipe,
     GramsPerLitre,
@@ -84,16 +85,41 @@ class StockPlan:
     assignments_evaluated: int = 0
     search_complete: bool = True
     unverified: tuple[dict, ...] = ()
+    # One qualification per product, from the function the batch report also uses.
+    qualification: tuple[dict, ...] = ()
+
+
+def _recorded_limits(limits, product_id):
+    """The validated limit records for a product, lowest temperature first."""
+    found = [validate_solubility_limit(raw) for raw in limits]
+    found = [limit for limit in found if limit['productId'] == product_id]
+    return sorted(found, key=lambda limit: (limit['temperatureMinC'], limit['temperatureMaxC']))
 
 
 def _recorded_ranges(limits, product_id):
     """Temperature ranges of the recorded limits for a product."""
-    ranges = []
-    for raw in limits:
-        limit = validate_solubility_limit(raw)
-        if limit['productId'] == product_id:
-            ranges.append([limit['temperatureMinC'], limit['temperatureMaxC']])
-    return sorted(ranges)
+    return [
+        [x['temperatureMinC'], x['temperatureMaxC']] for x in _recorded_limits(limits, product_id)
+    ]
+
+
+def _qualify(limits, product_id, temperature_c):
+    """The shared single-product qualification for the limit nearest the temperature."""
+    recorded = _recorded_limits(limits, product_id)
+    if not recorded:
+        return qualify_single_product('not_checked', None, temperature_c, None)
+
+    def distance(limit):
+        low, high = limit['temperatureMinC'], limit['temperatureMaxC']
+        return max(low - temperature_c, temperature_c - high, 0)
+
+    nearest = min(recorded, key=distance)
+    return qualify_single_product(
+        'ok',
+        (nearest['temperatureMinC'], nearest['temperatureMaxC']),
+        temperature_c,
+        nearest.get('basis'),
+    )
 
 
 def _validated_tanks(tanks: Iterable[StockTank]) -> tuple[StockTank, ...]:
@@ -236,12 +262,16 @@ def plan_stocks(
         raise DeliveryError('invalid_value', 'max_assignments must be a positive integer')
     clean_tanks = _validated_tanks(tanks)
     rules = tuple(validate_compatibility_rule(item) for item in compatibility_rules)
+    solubility_limits = tuple(solubility_limits)
     limits = _limits_at_temperature(solubility_limits, temperature)
     stock_volume = VolumeLitres(recipe.final_volume.value / injection_ratio.value)
 
     prepared = []
     unverified = []
-    solubility_limits = tuple(solubility_limits)
+    qualification = tuple(
+        dict(salt_id=salt.salt_id, **_qualify(solubility_limits, salt.salt_id, temperature.value))
+        for salt in recipe.salts
+    )
     for salt in recipe.salts:
         limit = limits.get(salt.salt_id)
         concentration = GramsPerLitre(salt.dose.value * injection_ratio.value)
@@ -319,6 +349,7 @@ def plan_stocks(
                 evaluated,
                 True,
                 unverified,
+                qualification,
             )
             if approved:
                 return candidate

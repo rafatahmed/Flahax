@@ -28,10 +28,22 @@ _Avoid_: Acid, base, adjuster
 The charge a product label's ions cannot balance, reported and not refused.
 _Avoid_: Label check, identity check, charge gate
 
+**Acceptable deviation range**:
+A range a user declares around a positive target (a symmetric percentage, with per-nutrient shortage and excess in percent or
+mg/L). None is a default. Assess classifies the result against it; Require constrains the search by it. It never relaxes a zero
+target or a declared maximum, and a miss is reported, not widened.
+_Avoid_: Tolerance, allowance, default range
+
+**Acceptable pH interval**:
+A pair `(low, high)` given as the target pH. It is judged against its bounds: a mix inside needs no reagent, a mix outside
+is moved to the nearest bound. No midpoint is ever used.
+_Avoid_: Target range midpoint, pH setpoint range
+
 **Total nitrogen target**:
-Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea. Alone it imposes no form split; with all three forms it must
-agree with their sum; with some forms both are scored and the overlap is reported. It is a target only, never water, a
-maximum or an assay.
+Elemental N (`N`, mg/L) summed over nitrate, ammonium and urea; urea that is not asked for is a zero requirement, not an
+unknown. Alone it imposes no form split. With a nitrate target and a positive ammonium target the forms determine it and it
+must agree with their sum; otherwise both are scored and the overlap is reported. It is a target only, never water, a maximum
+or an assay.
 _Avoid_: Total N conversion, N split
 
 **Ammonium allowance**:
@@ -58,7 +70,8 @@ _Avoid_: Declaration, assumption to confirm
 
 **Tank A / Tank B**:
 The usual nutrient stock channels, with calcium and micronutrients in A and sulfates and
-phosphates in B. Actual layouts depend on separation constraints, equipment and mixture evidence.
+phosphates in B. This is a usual layout, not a limit: the assignment may use more than two tanks (named A, B, C and so on),
+and the effective assignment is in the result (`tanks.tanks`). Layouts depend on separation constraints and mixture evidence.
 _Avoid_: Part A / Part B, Stock 1 / Stock 2
 
 **Stock assignment**:
