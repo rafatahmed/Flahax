@@ -8,8 +8,8 @@ control.
 
 from collections.abc import Mapping
 
-from .conductivity import _number
 from .delivery_contracts import DeliveryError
+from .inputs import number
 
 
 def size_injection_requirements(
@@ -31,7 +31,7 @@ def size_injection_requirements(
     """
     if equipment_type not in ('dosing_pump', 'venturi', 'dosatron'):
         raise DeliveryError('unknown_equipment_type', 'choose dosing_pump, venturi or dosatron')
-    hours = _number(duration_hours, 'duration hours', positive=True)
+    hours = number(duration_hours, 'duration hours', positive=True)
     area_mode = active_area_m2 is not None or gross_depth_mm is not None
     if (final_volume_litres is not None) == area_mode:
         raise DeliveryError(
@@ -39,27 +39,27 @@ def size_injection_requirements(
         )
     volume = (
         (
-            _number(active_area_m2, 'active area m2', positive=True)
-            * _number(gross_depth_mm, 'gross depth mm', positive=True)
+            number(active_area_m2, 'active area m2', positive=True)
+            * number(gross_depth_mm, 'gross depth mm', positive=True)
         )
         if area_mode
         else final_volume_litres
     )
-    volume = _number(volume, 'final volume L', positive=True)
+    volume = number(volume, 'final volume L', positive=True)
     if not isinstance(channels, Mapping) or not channels:
         raise DeliveryError('missing_field', 'at least one channel is required')
     results = {}
     for name, spec in channels.items():
         if not isinstance(name, str) or not name.strip() or not isinstance(spec, Mapping):
             raise DeliveryError('invalid_type', 'channels must map nonempty names to records')
-        ratio = _number(
+        ratio = number(
             spec.get('final_litres_per_stock_litre'), 'final L / stock L', positive=True
         )
-        available = _number(spec.get('available_stock_litres'), 'available prepared stock L')
-        dose = _number(volume / ratio, 'required stock L', positive=True)
+        available = number(spec.get('available_stock_litres'), 'available prepared stock L')
+        dose = number(volume / ratio, 'required stock L', positive=True)
         results[name] = dict(
             required_stock_litres=dose,
-            required_flow_litres_per_hour=_number(dose / hours, 'stock flow L/h', positive=True),
+            required_flow_litres_per_hour=number(dose / hours, 'stock flow L/h', positive=True),
             final_litres_per_stock_litre=ratio,
             stock_percent_of_final=100 / ratio,
             available_stock_litres=available,
@@ -80,7 +80,7 @@ def size_injection_requirements(
         equipment_type=equipment_type,
         final_volume_litres=volume,
         duration_hours=hours,
-        final_flow_litres_per_hour=_number(volume / hours, 'final flow L/h', positive=True),
+        final_flow_litres_per_hour=number(volume / hours, 'final flow L/h', positive=True),
         carrier_water_litres=carrier,
         channels=results,
         model_selection_status='needs_manufacturer_operating_point',

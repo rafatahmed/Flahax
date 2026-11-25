@@ -17,19 +17,10 @@ import math
 from typing import Any
 
 from .composition import IONS, InputError, validate_profile
+from .inputs import DeliveryError
 
 DELIVERY_SCHEMA_VERSION = "0.1"
 DELIVERY_MODES = frozenset({"batch"})
-
-
-class DeliveryError(InputError):
-    """A delivery-planning input failure with a stable machine-readable
-    code.
-    """
-
-    def __init__(self, code: str, message: str):
-        super().__init__(message)
-        self.code = code
 
 
 def _error(code: str, message: str) -> None:

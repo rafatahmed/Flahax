@@ -12,8 +12,9 @@ identities.
 
 from collections.abc import Mapping
 
-from .conductivity import _number, water_ec25
+from .conductivity import water_ec25
 from .delivery_contracts import DeliveryError
+from .inputs import number
 
 
 SOURCE = {
@@ -69,9 +70,9 @@ def estimate_manufacturer_ec(
         raise DeliveryError('invalid_type', 'doses must map exact commercial product names to g/L')
     if any(not isinstance(k, str) or not k.strip() for k in doses_g_per_litre):
         raise DeliveryError('invalid_value', 'product names must be nonempty strings')
-    doses = {k: _number(v, 'product g/L') for k, v in doses_g_per_litre.items()}
+    doses = {k: number(v, 'product g/L') for k, v in doses_g_per_litre.items()}
     water = water_ec25(ec_ms_cm=water_ec_ms_cm, tds_ppm=water_tds_ppm, tds_factor=tds_factor)
-    _number(temperature_c, 'temperature')
+    number(temperature_c, 'temperature')
     if not isinstance(acid_added, bool):
         raise DeliveryError('invalid_type', 'acid_added must be boolean')
     if channel != 'irrigation' and not (
@@ -122,7 +123,7 @@ def estimate_manufacturer_ec(
         result.update(status='not_supported', error_code=reason)
         return result
     result['contributions_ms_cm'] = {k: v * _ANCHORS[k] for k, v in doses.items() if v > 0}
-    result['ec_ms_cm'] = _number(
+    result['ec_ms_cm'] = number(
         water + sum(result['contributions_ms_cm'].values()), 'estimated EC'
     )
     return result

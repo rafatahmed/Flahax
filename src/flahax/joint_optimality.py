@@ -9,7 +9,8 @@ problem.
 from fractions import Fraction as F
 
 from .engine import nnls
-from .joint_problem import _profile_doses, _number
+from .inputs import number
+from .joint_problem import _profile_doses
 
 
 def objective_certificate(problem, fertilizer_doses, reagent_dose):
@@ -24,7 +25,7 @@ def objective_certificate(problem, fertilizer_doses, reagent_dose):
     floating values are for display only.
     """
     doses = _profile_doses(fertilizer_doses, problem.fertilizers)
-    q = _number(reagent_dose, 'reagent dose')
+    q = number(reagent_dose, 'reagent dose')
     sources = (*problem.fertilizers, problem.reagent)
     x = [F(doses.get(s.product_id, 0)) for s in problem.fertilizers] + [F(q)]
     positive = [(k, t) for k, t in problem.targets.items() if t > 0]

@@ -909,9 +909,10 @@ def make_joint_problem(salts, reagent, targets, water, *, reagent_solvent_fracti
     solvent is not inferred; use explicit JointSource records when
     needed.
     """
-    from .joint_problem import JointSource, JointProblem, _number
+    from .inputs import number
+    from .joint_problem import JointSource, JointProblem
 
-    reagent_solvent_fraction = _number(reagent_solvent_fraction, "reagent solvent fraction")
+    reagent_solvent_fraction = number(reagent_solvent_fraction, "reagent solvent fraction")
     if len(nutrient_salts(salts)) != len(salts):
         raise DeliveryError('invalid_role', 'pH reagents cannot also be fertilizer variables')
     fraction, density = _check_product(reagent)

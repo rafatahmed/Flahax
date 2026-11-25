@@ -14,27 +14,19 @@ final inventory, not source water.
 from dataclasses import dataclass, field
 from collections.abc import Mapping
 from types import MappingProxyType
-import math
 
 from .aqueous_model import chemistry, solve
 from .composition import NITROGEN_FORMS, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
+from .inputs import number
 from .engine import score
 from .product_conversion import component_nutrient_masses
-
-
-def _number(value, name, *, positive=False, signed=False):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-        raise DeliveryError('invalid_value', f'{name} must be a finite number')
-    if (positive and value <= 0) or (not signed and value < 0):
-        raise DeliveryError('out_of_range', f'{name} is outside its permitted range')
-    return float(value)
 
 
 def _profile(value, name, *, components=False, targets=False):
     if not isinstance(value, Mapping):
         raise DeliveryError('invalid_type', f'{name} must be an object')
-    values = {k: _number(v, name) for k, v in value.items()}
+    values = {k: number(v, name) for k, v in value.items()}
     if components:
         if set(values) - set(chemistry()['bases']):
             raise DeliveryError('unknown_component', f'{name} contains unsupported components')
@@ -68,13 +60,13 @@ class JointSource:
             object.__setattr__(
                 self, 'components', _profile(self.components, 'components', components=True)
             )
-        fraction = _number(self.solvent_fraction, 'solvent_fraction')
+        fraction = number(self.solvent_fraction, 'solvent_fraction')
         if fraction + sum(self.nutrients.values()) > 1:
             raise DeliveryError(
                 'inconsistent_assay', 'declared nutrient and solvent fractions exceed one'
             )
         if self.density_kg_per_litre is not None:
-            _number(self.density_kg_per_litre, 'density', positive=True)
+            number(self.density_kg_per_litre, 'density', positive=True)
 
     def fraction(self, symbol):
         """Mass fraction of a nutrient; total N (``N``) is the sum of the nitrogen forms."""
@@ -129,14 +121,14 @@ class JointProblem:
                 'water_components',
                 _profile(self.water_components, 'water components', components=True),
             )
-        _number(self.final_volume_litres, 'final volume', positive=True)
-        _number(self.solvent_mass_kg, 'final solvent mass', positive=True)
-        if _number(self.target_ph, 'target pH') > 14:
+        number(self.final_volume_litres, 'final volume', positive=True)
+        number(self.solvent_mass_kg, 'final solvent mass', positive=True)
+        if number(self.target_ph, 'target pH') > 14:
             raise DeliveryError('out_of_range', 'target pH must be in [0,14]')
-        _number(self.reference_charge_mol_per_kg, 'reference charge', signed=True)
-        _number(self.maximum_reagent_mass_g, 'maximum reagent mass')
+        number(self.reference_charge_mol_per_kg, 'reference charge', minimum=None)
+        number(self.maximum_reagent_mass_g, 'maximum reagent mass')
         if self.maximum_reagent_volume_litres is not None:
-            _number(self.maximum_reagent_volume_litres, 'maximum reagent volume')
+            number(self.maximum_reagent_volume_litres, 'maximum reagent volume')
             if self.reagent.density_kg_per_litre is None:
                 raise DeliveryError('missing_density', 'a volume cap requires reagent density')
         if not isinstance(self.phases, (tuple, list)) or not all(
@@ -166,7 +158,7 @@ class JointProblem:
         candidate from a fresh solve.
         """
         doses = _profile_doses(fertilizer_g_per_litre, self.fertilizers)
-        q = _number(reagent_g_per_litre, 'reagent dose')
+        q = number(reagent_g_per_litre, 'reagent dose')
         sources = [*((s, doses.get(s.product_id, 0)) for s in self.fertilizers), (self.reagent, q)]
         concentrations = dict(self.water)
         components = dict(self.water_components or {})
@@ -188,18 +180,18 @@ class JointProblem:
         # misleading score.
         concentrations = dict(_profile(concentrations, 'final nutrients'))
         components = dict(_profile(components, 'final components', components=True))
-        solvent = _number(solvent, 'declared product solvent')
-        mass = _number(q * self.final_volume_litres, 'reagent mass')
+        solvent = number(solvent, 'declared product solvent')
+        mass = number(q * self.final_volume_litres, 'reagent mass')
         volume = (
             mass / (1000 * self.reagent.density_kg_per_litre)
             if self.reagent.density_kg_per_litre is not None
             else None
         )
         if volume is not None:
-            volume = _number(volume, 'reagent volume')
+            volume = number(volume, 'reagent volume')
         try:
             loss, rows = score(concentrations, self.targets)
-            _number(loss, 'objective')
+            number(loss, 'objective')
         except OverflowError as exc:
             raise DeliveryError('numerical_failure', 'objective overflow') from exc
         violations = [
@@ -273,4 +265,4 @@ class JointProblem:
 def _profile_doses(value, sources):
     if not isinstance(value, Mapping) or set(value) - {s.product_id for s in sources}:
         raise DeliveryError('unknown_product', 'doses must map only supplied fertilizer IDs')
-    return {k: _number(v, 'fertilizer dose') for k, v in value.items()}
+    return {k: number(v, 'fertilizer dose') for k, v in value.items()}

@@ -18,6 +18,7 @@ from typing import Mapping
 from .saturation_policy import assess_saturation, risk_warnings
 from .aqueous_model import AcidResult, chemistry
 from .delivery_contracts import DeliveryError, validate_product_assay
+from .inputs import number
 from .delivery_quantities import (
     FinalSolutionRecipe,
     MassGrams,
@@ -31,14 +32,6 @@ from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
 from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 from .measured_water import BalancedWaterAnalysis, nutrient_mg_per_litre
-
-
-def _number(value, name, *, positive=False):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-        raise DeliveryError('invalid_value', f'{name} must be a finite number')
-    if value < 0 or (positive and value == 0):
-        raise DeliveryError('out_of_range', f'{name} is outside its permitted range')
-    return float(value)
 
 
 @dataclass(frozen=True)
@@ -105,9 +98,9 @@ def plan_equilibrium_delivery(
     # water alone (G25).
     if not isinstance(recipe, FinalSolutionRecipe) or not recipe.feasible:
         raise DeliveryError('infeasible_recipe', 'a feasible FinalSolutionRecipe is required')
-    water_mass = _number(water_mass_kg, 'water_mass_kg', positive=True)
-    initial_ph = _number(initial_ph, 'initial_ph')
-    target_ph = _number(target_ph, 'target_ph')
+    water_mass = number(water_mass_kg, 'water_mass_kg', positive=True)
+    initial_ph = number(initial_ph, 'initial_ph')
+    target_ph = number(target_ph, 'target_ph')
     phases = tuple(phases)
     tolerance = declared_error_percent(maximum_nutrient_error_percent)
     if isinstance(temperature_c, bool) or temperature_c != 25:
@@ -144,7 +137,7 @@ def plan_equilibrium_delivery(
         for basis, amount in inventory.items():
             if basis not in chemistry()['bases']:
                 raise DeliveryError('invalid_totals', f'unknown water component {basis}')
-            _number(amount, basis)
+            number(amount, basis)
     if not isinstance(maximum_reagent_volume, VolumeLitres):
         raise DeliveryError('invalid_type', 'maximum_reagent_volume must be VolumeLitres')
     if not isinstance(targets, Mapping) or not targets:
