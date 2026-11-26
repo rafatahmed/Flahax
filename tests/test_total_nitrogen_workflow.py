@@ -5,6 +5,7 @@
 """A total-N target reaches the workflow, not only ``recommend`` (D2, contract Q11-Q13)."""
 
 import json
+import math
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,6 +14,7 @@ import unittest
 from flahax import InputError, VolumeLitres, load_library, plan_fertilizer_workflow
 from flahax.batch_request import BatchOptions, run_batch
 from flahax.joint_problem import JointProblem, JointSource
+from flahax.nitrogen import total_nitrogen
 
 SALTS = load_library()['salts']
 
@@ -48,6 +50,18 @@ class JointTotalNitrogenTests(unittest.TestCase):
         self.assertAlmostEqual(source.fraction('N'), 0.12)
         self.assertEqual(source.fraction('Ca'), 0.1)
         self.assertEqual(source.fraction('Mg'), 0)
+
+    def test_total_n_is_added_exactly_as_the_engine_adds_it(self):
+        # Three forms whose left-to-right float sum differs from the exactly rounded sum on
+        # Python 3.11 (0.6000000000000001 against 0.6; 6.200000000000001 against 6.2). The
+        # joint solver and the engine must use one total, on every supported Python.
+        source = JointSource('uan', {'N_NO3': 0.1, 'N_NH4': 0.2, 'N_UREA': 0.3}, None)
+        self.assertEqual(source.fraction('N'), math.fsum([0.1, 0.2, 0.3]))
+        self.assertEqual(source.fraction('N'), total_nitrogen(source.nutrients))
+        water = {'N_NO3': 4.4, 'N_NH4': 0.7, 'N_UREA': 1.1}
+        problem = SimpleNamespace(water=water)
+        self.assertEqual(JointProblem.water_at(problem, 'N'), math.fsum([4.4, 0.7, 1.1]))
+        self.assertEqual(JointProblem.water_at(problem, 'N'), total_nitrogen(water))
 
     def test_water_total_n_is_the_sum_of_its_forms(self):
         problem = SimpleNamespace(water={'N_NO3': 4.0, 'N_NH4': 1.0, 'Ca': 9.0})
