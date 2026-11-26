@@ -17,6 +17,9 @@ from .product_conversion import MOLAR_MASS
 
 # Water analysis key -> (basis, grams per mole of the reported
 # quantity).
+# Molar mass of HCO3-, g/mol. The legacy HCO3 input (mg/L as HCO3) is converted to an
+# equivalent amount of carbon with it, both here and in the lab-water prompts (mix_water).
+HCO3_MOLAR_MASS = 61.0168
 WATER_KEYS = {
     'Ca': ('Ca+2', MOLAR_MASS['Ca']),
     'Mg': ('Mg+2', MOLAR_MASS['Mg']),
@@ -33,7 +36,7 @@ WATER_KEYS = {
     'Cu': ('Cu+2', MOLAR_MASS['Cu']),
     'B': ('H3BO3', MOLAR_MASS['B']),
     'Mo': ('MoO4-2', MOLAR_MASS['Mo']),
-    'HCO3': ('CO3-2', 61.0168),
+    'HCO3': ('CO3-2', HCO3_MOLAR_MASS),
 }
 
 
