@@ -10,7 +10,7 @@ from copy import deepcopy
 import json
 
 from . import VolumeLitres, plan_fertilizer_workflow
-from .batch_cli import read_json
+from .inputs import read_json
 from .canonical_result import seal_summary
 from .delivery_contracts import DeliveryError
 from .evaluated_remedies import available_product_search

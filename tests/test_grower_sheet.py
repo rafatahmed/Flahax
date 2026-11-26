@@ -11,7 +11,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 from flahax.report_format import dose_number, grams
 from flahax.report_html import render_batch_sheet, render_report
 from flahax.canonical_result import seal_summary

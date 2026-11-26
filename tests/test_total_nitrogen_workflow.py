@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import unittest
 
 from flahax import InputError, VolumeLitres, load_library, plan_fertilizer_workflow
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 from flahax.joint_problem import JointProblem, JointSource
 
 SALTS = load_library()['salts']

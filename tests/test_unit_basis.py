@@ -21,7 +21,8 @@ from flahax import (
     load_library,
     plan_fertilizer_workflow,
 )
-from flahax.batch_cli import BatchOptions, blend, read_water, run_batch, water_basis
+from flahax.batch_request import BatchOptions, run_batch
+from flahax.water_input import blend, read_water, water_basis
 from flahax.measured_water import nutrient_mg_per_litre
 
 
@@ -144,7 +145,7 @@ class UnitBasisTests(unittest.TestCase):
     def test_volume_blend_uses_solvent_mass_share_for_molal_dilution(self):
         label, nutrients, config = self.read(final_volume_litres=1, water_mass_kg=2)
         balanced = SimpleNamespace(diluted=lambda share: share)
-        with patch('flahax.batch_cli.balance_water_analysis', return_value=balanced):
+        with patch('flahax.water_input.balance_water_analysis', return_value=balanced):
             _, diluted, result = blend(label, nutrients, config, 50)
         self.assertEqual(diluted, {'Ca': 20.039})
         self.assertAlmostEqual(result['water_balance'], 2 / 3)
@@ -157,9 +158,9 @@ class UnitBasisTests(unittest.TestCase):
         config['concentration_basis']['water_kg_per_litre'] = 0.98
         summary = {'tanks': {'tanks': []}, 'warnings': []}
         with (
-            patch('flahax.batch_cli.read_water', return_value=('test', {}, config)),
-            patch('flahax.batch_cli.plan_fertilizer_workflow') as workflow,
-            patch('flahax.batch_cli.summarize_batch', return_value=summary),
+            patch('flahax.batch_request.read_water', return_value=('test', {}, config)),
+            patch('flahax.batch_request.plan_fertilizer_workflow') as workflow,
+            patch('flahax.batch_request.summarize_batch', return_value=summary),
         ):
             result = run_batch(options)
         self.assertAlmostEqual(workflow.call_args.kwargs['equilibrium']['water_mass_kg'], 19.6)

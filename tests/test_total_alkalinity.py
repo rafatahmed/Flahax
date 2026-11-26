@@ -15,7 +15,7 @@ import unittest
 
 from flahax import DeliveryError, balance_water_analysis, total_alkalinity
 from flahax.aqueous_model import solve
-from flahax.batch_cli import read_water
+from flahax.water_input import read_water
 from flahax.measured_water import _carbon_for_alkalinity
 
 

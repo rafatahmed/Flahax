@@ -72,7 +72,9 @@ class Store:
             raise DeliveryError(
                 'unknown_item', f'no saved {kind[:-1]} named {name!r} in {path.parent}'
             )
-        from .batch_cli import read_json  # names the file and the line if it is damaged
+        from .inputs import (
+            read_json,  # names the file and the line if it is damaged
+        )
 
         data = read_json(path, f'saved {kind[:-1]}')
         if kind == 'results':

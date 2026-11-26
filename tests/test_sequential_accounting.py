@@ -78,7 +78,7 @@ class SequentialAccountingTests(unittest.TestCase):
         self.assertNotIn('convex blend', candidate.recommendation['substitutionSearch']['method'])
 
     def test_batch_reports_the_final_sequential_reagent_contribution(self):
-        from flahax.batch_cli import BatchOptions, run_batch
+        from flahax.batch_request import BatchOptions, run_batch
 
         acid = next(p for p in catalogue_ph_reagents() if p['chemicalFormula'] == 'HNO3')
         with tempfile.TemporaryDirectory() as directory:

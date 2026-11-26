@@ -12,7 +12,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 from flahax.report_html import render_report, render_batch_sheet
 from flahax.grower_sheet import render_mix_sheet
 from flahax import load_library

@@ -407,7 +407,8 @@ class MixTests(unittest.TestCase):
         self.assertEqual(Store(self.home).load('sessions', 'tomato-howard-resh-ro')['limits'], {})
         shutil.rmtree(self.home)  # a fresh store, so the script below matches
         with mock.patch(
-            'flahax.mix_cli.run_batch', wraps=__import__('flahax.batch_cli').batch_cli.run_batch
+            'flahax.mix_cli.run_batch',
+            wraps=__import__('flahax.batch_request').batch_request.run_batch,
         ) as run:
             code, lines, target = self.full(water_answers=['1', 'Na=69'], out='limited')
         self.assertIn(code, (0, 3), lines)

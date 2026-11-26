@@ -69,9 +69,9 @@ class FieldSessionConsistency(unittest.TestCase):
         cls.enterClassContext(historical_catalogue())
         cls.tmp = tempfile.TemporaryDirectory()
         out, answers, lines = Path(cls.tmp.name) / 'out', list(ANSWERS), []
-        from flahax import batch_cli
+        from flahax import batch_request
 
-        actual_workflow = batch_cli.plan_fertilizer_workflow
+        actual_workflow = batch_request.plan_fertilizer_workflow
 
         def capture(*args, **kwargs):
             cls.workflow = actual_workflow(*args, **kwargs)
@@ -79,7 +79,7 @@ class FieldSessionConsistency(unittest.TestCase):
 
         with (
             mock.patch.dict(os.environ, {'FLAHAX_HOME': str(Path(cls.tmp.name) / 'home')}),
-            mock.patch.object(batch_cli, 'plan_fertilizer_workflow', side_effect=capture),
+            mock.patch.object(batch_request, 'plan_fertilizer_workflow', side_effect=capture),
         ):
             code = main(
                 ['--output', str(out)],

@@ -16,7 +16,7 @@ import unittest
 
 from flahax import render_report
 from flahax.canonical_result import seal_summary
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 
 TARGETS = {'N_NO3': 140, 'Ca': 100, 'K': 150, 'P': 30, 'Mg': 40}
 

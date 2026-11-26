@@ -16,7 +16,7 @@ import sys
 import threading
 
 from . import __version__
-from .batch_cli import run_batch
+from .batch_request import run_batch
 from .delivery_contracts import DeliveryError
 from .mix_cli import (
     Prompts,

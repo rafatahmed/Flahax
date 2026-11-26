@@ -15,7 +15,7 @@ import tempfile
 import unittest
 
 from flahax import render_report
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 
 ROOT = Path(__file__).resolve().parents[1]
 STATEMENT = 'No real-mixture predictive accuracy is claimed'

@@ -553,7 +553,7 @@ class RunTuiTests(unittest.TestCase):
         self.assertTrue(lines[-1].startswith('Wrote batch-sheet.html'), lines)
 
     def test_run_tui_blocked_exit_code(self):
-        from flahax.batch_cli import BatchOptions, run_batch
+        from flahax.batch_request import BatchOptions, run_batch
 
         # A stock above its product's solubility value blocks the batch.
         blocked = run_batch(

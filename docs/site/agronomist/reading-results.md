@@ -16,7 +16,7 @@ agronomist (adds the nutrient table, limits and pH path) or developer and
 manager (adds `report.html`). `summary.json` is always written. In Python,
 `grower_sheet.render_mix_sheet(summary, depth)` and
 `grower_sheet.agronomist_rows(summary)` give the same from any
-`batch_cli.run_batch` summary. See the [growers page](../grower/index.md).
+`batch_request.run_batch` summary. See the [growers page](../grower/index.md).
 
 ## From the command line
 

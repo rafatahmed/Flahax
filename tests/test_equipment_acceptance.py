@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 from tests.test_batch_equipment_search import NITRIC, alternative_file, targets_file
 
 CALCIUM = 'cmbpfudif00lkq8z99slfmci3'

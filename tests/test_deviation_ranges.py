@@ -283,7 +283,7 @@ class RangeInterfaceTests(unittest.TestCase):
         self.assertEqual(execute('workflow', payload).deviation_ranges, dict(percent=2.0))
 
     def test_a_range_option_is_read_as_percent_or_mg_per_l_per_side(self):
-        from flahax.batch_cli import parse_range
+        from flahax.batch_request import parse_range
 
         self.assertEqual(
             parse_range('K=2%:5%'), ('K', dict(shortage_percent=2.0, excess_percent=5.0))

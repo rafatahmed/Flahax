@@ -26,7 +26,7 @@ from flahax import (
     rescore_with_reagent,
     solve_weights,
 )
-from flahax.batch_cli import BatchOptions, run_batch
+from flahax.batch_request import BatchOptions, run_batch
 from flahax.composition import validate_profile, validate_targets
 from flahax.joint_problem import JointProblem, JointSource
 
