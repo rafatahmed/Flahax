@@ -95,13 +95,15 @@ class JointAcceptanceBoundaryTests(unittest.TestCase):
         from tests import test_joint_workflow as fixtures
         from flahax import ph_adjustment
 
-        original = ph_adjustment._blend_recipe
+        original = ph_adjustment.blend_recipe
 
         def missed(*args, **kwargs):
             return original(*args, **kwargs) | {'feasible': False}
 
-        with patch.object(ph_adjustment, '_blend_recipe', missed):
-            with patch.object(ph_adjustment, '_judge', return_value=('accepted', None, None, {})):
+        with patch.object(ph_adjustment, 'blend_recipe', missed):
+            with patch.object(
+                ph_adjustment, 'judge_candidate', return_value=('accepted', None, None, {})
+            ):
                 stage = fixtures.JointWorkflowTests().positive_case()
         self.assertTrue(stage.value.candidates)
         self.assertEqual(stage.value.candidates[0].status, 'requires_review')

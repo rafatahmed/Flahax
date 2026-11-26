@@ -14,7 +14,7 @@ from unittest.mock import patch
 from flahax.delivery_contracts import DeliveryError
 
 from flahax import recommend
-from flahax.ph_adjustment import _blend_recipe, _couple
+from flahax.ph_adjustment import blend_recipe, _couple
 from flahax.requirement_fit import met
 from tests.test_ph_adjustment import coupled, amended_ph
 from tests.catalogue_history import historical_catalogue
@@ -30,7 +30,7 @@ class RecipeBlendTests(unittest.TestCase):
         self.ends = [recommend([p], self.targets) for p in self.pool]
 
     def test_convex_mass_balance_and_diagnostics_are_rebuilt(self):
-        result = _blend_recipe(self.pool, self.targets, {'K': 10}, self.ends, 0.25, {})
+        result = blend_recipe(self.pool, self.targets, {'K': 10}, self.ends, 0.25, {})
         expected = {'K': Fraction(10) + Fraction(3, 4) * 100, 'Ca': Fraction(1, 4) * 100}
         rows = {r['symbol']: r for r in result['rows']}
         for symbol, value in expected.items():
@@ -49,22 +49,22 @@ class RecipeBlendTests(unittest.TestCase):
 
     def test_zero_and_maximum_are_checked_against_actual_blend(self):
         for targets, maxima in [({'K': 0, 'Ca': 100}, {}), (self.targets, {'Ca': 20})]:
-            result = _blend_recipe(self.pool, targets, {}, self.ends, 0.25, maxima)
+            result = blend_recipe(self.pool, targets, {}, self.ends, 0.25, maxima)
             self.assertFalse(result['feasible'])
             self.assertTrue(result['limitViolations'])
 
     def test_supply_conflicts_are_recomputed_not_copied(self):
-        result = _blend_recipe(self.pool, self.targets, {'Ca': 120}, self.ends, 0, {'Ca': 110})
+        result = blend_recipe(self.pool, self.targets, {'Ca': 120}, self.ends, 0, {'Ca': 110})
         self.assertEqual(
             result['requirementConflicts'],
             [dict(symbol='Ca', reason='water_above_maximum', waterPpm=120, maximumPpm=110)],
         )
-        result = _blend_recipe(self.pool, self.targets, {}, [result] * 2, 0, {})
+        result = blend_recipe(self.pool, self.targets, {}, [result] * 2, 0, {})
         self.assertEqual(result['requirementConflicts'], [])
 
     def test_endpoints_preserve_product_identity_without_zero_rows(self):
         for weight, identity in ((0, 'k'), (1, 'ca')):
-            result = _blend_recipe(self.pool, self.targets, {}, self.ends, weight, {})
+            result = blend_recipe(self.pool, self.targets, {}, self.ends, weight, {})
             self.assertEqual([s['id'] for s in result['salts']], [identity])
             self.assertEqual(result['salts'][0]['gramsPerLitre'], 1)
 

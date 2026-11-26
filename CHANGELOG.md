@@ -22,6 +22,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- Sixteen helpers that other modules import lose their leading underscore and gain a docstring where they had none, for example `canonical_result.digest`, `engine.recipe_report` and `stock_evidence.required_text`. Code that imported the old private names uses the new ones; nothing is exported from `flahax` and no result differs.
 - The nitrogen rules live in `flahax.nitrogen`: the three forms, `nitrogen_rows`, `fitted_targets`, `total_nitrogen`, the ammonium allowance and `total_n_report`, moved from `composition` and `engine`. `evaluate_remedies` takes the planner as an argument, so `fertilizer_workflow` and `evaluated_remedies` no longer import each other. No recipe, total-N report or ammonium cap differs.
 - `run_batch` and `BatchOptions` move from `flahax.batch_cli` to `flahax.batch_request`, the water reader to `flahax.water_input`, and `read_json` to `flahax.inputs`; `flahax batch`, `flahax mix` and `flahax.batch_cli.main` behave as before and no output differs. Code that imported those names from `batch_cli` imports them from the new modules.
 - `flahax.grower_report` is split into `batch_summary`, `report_html`, `result_wording` and `report_format`. `summarize_batch`, `render_report` and `render_batch_sheet` import from `flahax` as before and no report, sheet or summary differs. Other names move to the new modules; the reason and row helpers lose their underscore.

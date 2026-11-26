@@ -537,7 +537,7 @@ class JointQualificationTests(unittest.TestCase):
     def test_bounded_linear_rank_failure_does_not_invent_an_unbounded_step(self):
         from flahax.joint_linear import bounded_lstsq
 
-        with patch('flahax.joint_linear._lstsq', side_effect=ValueError('rank failure')):
+        with patch('flahax.joint_linear.lstsq', side_effect=ValueError('rank failure')):
             x = bounded_lstsq([[1]], [1], [0], [2], 10)
         self.assertEqual(x, [0])
 

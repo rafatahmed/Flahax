@@ -14,7 +14,7 @@ import math
 from collections.abc import Mapping
 from fractions import Fraction as F
 
-from .joint_problem import JointProblem, _profile_doses
+from .joint_problem import JointProblem, profile_doses
 from .delivery_contracts import DeliveryError
 from .inputs import number
 from .engine import nnls
@@ -410,7 +410,7 @@ def solve_joint_problem(
     for budget in (max_iterations, max_backtracks):
         if type(budget) is not int or budget < 1:
             raise DeliveryError('invalid_value', 'iteration budgets must be positive integers')
-    start = _profile_doses(fertilizer_doses, problem.fertilizers)
+    start = profile_doses(fertilizer_doses, problem.fertilizers)
     doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [number(reagent_dose, 'reagent dose')]
     point = [number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
     constraints = _constraints(problem, scales)

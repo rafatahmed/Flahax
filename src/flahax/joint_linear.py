@@ -8,7 +8,7 @@ budgets.
 
 import math
 
-from .engine import _lstsq, ROUNDOFF
+from .engine import lstsq, ROUNDOFF
 
 
 def bounded_lstsq(matrix, rhs, lower, upper, budget):
@@ -66,7 +66,7 @@ def bounded_lstsq(matrix, rhs, lower, upper, budget):
             ]
             try:
                 norms = [math.hypot(*cols[j]) for j in free]
-                solution = _lstsq(
+                solution = lstsq(
                     [[v / scale for v in cols[j]] for j, scale in zip(free, norms)], adjusted
                 )
                 solution = [v / scale for v, scale in zip(solution, norms)]

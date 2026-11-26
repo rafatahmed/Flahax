@@ -131,7 +131,7 @@ def gap_for(targets: dict, water: dict | None = None) -> dict:
     return gap
 
 
-def _lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
+def lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
     """Least squares by Householder QR. columns are the active salt
     vectors.
     """
@@ -313,7 +313,7 @@ def nnls(
 
     def least_squares(chosen: list[int]) -> list[float]:
         sub = _gram_lstsq(gram, cross, cols, rhs, chosen)
-        return _lstsq([cols[j] for j in chosen], rhs) if sub is None else sub
+        return lstsq([cols[j] for j in chosen], rhs) if sub is None else sub
 
     def settle(sub: list[float]) -> None:
         """Move x toward the passive-set least-squares solution,
@@ -562,7 +562,7 @@ def _fit_within(
     so each shift is found by a bracketed (Illinois) search; a ceiling
     whose shift reaches zero with the ion below its aim is released.
     Each refit starts from the last doses. A remainder after
-    CEILING_STEPS is reported by _report as a limit violation.
+    CEILING_STEPS is reported by recipe_report as a limit violation.
 
     At a ceiling already reached by water, products carrying that ion
     cannot be added; Water above the ceiling remains an explicit
@@ -722,7 +722,7 @@ def solve_weights(
     ammonium_limit = ammonium_allowance(targets, maxima, max_ammonium_fraction)
     solved = _fit_within(salts, targets, water, ridge, maxima)
     chosen = _chosen(salts, solved["grams"])
-    solved.update(_report(solved["rows"], solved["grams"], [], maxima))
+    solved.update(recipe_report(solved["rows"], solved["grams"], [], maxima))
     solved["salts"] = chosen
     solved["ammoniumLimit"] = ammonium_limit
     solved["totalN"] = total_n_report(solved["rows"], targets)
@@ -1015,7 +1015,7 @@ def _target_misses(salts: list[dict], targets: dict, water: dict, drop=frozenset
     }
 
 
-def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
+def diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) -> list[dict]:
     """Explain missed positive/zero targets with scoped structural
     proofs or non-certifying relaxed-search observations; never infer
     proof from a miss.
@@ -1112,7 +1112,7 @@ def _diagnose(library, targets, water, rows, maxima, allowed, allow_carbonates) 
     return out
 
 
-def _charge_report(result):
+def charge_report(result):
     """Refresh partial charge diagnostics from the final emitted
     nutrient inventory.
     """
@@ -1151,7 +1151,7 @@ def _documents(value) -> list[dict]:
     return [dict(item) for item in (value or ()) if item]
 
 
-def _provenance(record: dict) -> dict:
+def provenance(record: dict) -> dict:
     """Provenance of the record that produced a salt entry; never
     guessed when absent.
     """
@@ -1197,9 +1197,10 @@ def _provenance(record: dict) -> dict:
     }
 
 
-def _report(
+def recipe_report(
     rows: list[dict], grams: list[float], warnings: list[str], maxima: dict | None = None
 ) -> dict:
+    """The report of a fitted recipe: deltas, feasibility, incidental review and warnings."""
     deltas = [abs(row["deltaPct"]) for row in rows if row["deltaPct"] is not None]
     undesired = [
         {"symbol": row["symbol"], "ppm": round(row["final"], 4)}
@@ -1365,7 +1366,7 @@ def recommend(
     solved["saltIds"] = [item["id"] for item in solved["salts"]]
     by_id = {salt.get("id"): salt for salt in salts}
     for item in solved["salts"]:
-        item["provenance"] = _provenance(by_id[item["id"]])
+        item["provenance"] = provenance(by_id[item["id"]])
         drift = assay_drift(by_id[item["id"]])
         if drift:
             warnings.append(drift)
@@ -1395,12 +1396,12 @@ def recommend(
             "Fit includes formula counterion sodium (chelates D2, "
             f"CH - micro borax/molybdate): {counterion_na:.4f} mg/L."
         )
-    solved.update(_report(solved["rows"], solved["grams"], warnings, maxima))
+    solved.update(recipe_report(solved["rows"], solved["grams"], warnings, maxima))
     name_sources(solved, solved["salts"], salts, water)
     solved["ammoniumLimit"] = ammonium_limit
     solved["totalN"] = total_n_report(solved["rows"], targets)
     solved["targetIonBalance"] = balance
-    _charge_report(solved)
+    charge_report(solved)
     solved["requirementConflicts"] = [
         {
             "symbol": symbol,
@@ -1426,7 +1427,7 @@ def recommend(
     ]
     if solved["requirementConflicts"]:
         solved["feasible"] = False
-    solved["unmetTargets"] = _diagnose(
+    solved["unmetTargets"] = diagnose(
         library, targets, water, solved["rows"], maxima, allowed, allow_carbonates
     )
     solved["deviationRanges"] = range_assessment(

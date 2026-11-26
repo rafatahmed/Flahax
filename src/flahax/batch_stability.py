@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from .composition import ATOMIC
 from .ph_evidence import check_batch_ph
 from .inputs import number
-from .stock_evidence import _text, _within
+from .stock_evidence import required_text, within_bound
 
 
 def _time(raw, now):
@@ -42,7 +42,7 @@ def _interval(record):
     }:
         raise ValueError("Each measurement requires value, bound and instrument/method provenance")
     for key in ("instrument_id", "calibration_reference", "method", "source"):
-        _text(record, key)
+        required_text(record, key)
     if record["uncertainty_basis"] != "total_bounded_error":
         raise ValueError("Measurement errors must include bias and calibration uncertainty")
     value, error = (
@@ -100,7 +100,7 @@ def assess_batch_stability(recipe, evidence):
                 "Stability assignment requires batch, vessel and preparation fingerprint"
             )
         for key in assignment:
-            _text(assignment, key)
+            required_text(assignment, key)
             if assignment[key] != verified["batch_ph_check"][key]:
                 raise ValueError("Stability records do not match the verified measured batch")
         policy = evidence["policy"]
@@ -149,7 +149,7 @@ def assess_batch_stability(recipe, evidence):
         }:
             raise ValueError("A complete observation and material-accounting protocol is required")
         for key in ("protocol_id", "source", "storage_conditions"):
-            _text(protocol, key)
+            required_text(protocol, key)
         if number(protocol.get("filter_pore_um"), "filter_pore_um", positive=True) > 0.45:
             raise ValueError(
                 "Dissolved analyses require a consistent filter of 0.45 micrometres or finer"
@@ -184,7 +184,7 @@ def assess_batch_stability(recipe, evidence):
                 raise ValueError(
                     "Observation fields must include all measurements and sample time"
                 )
-            identity = _text(row, "observation_id")
+            identity = required_text(row, "observation_id")
             if identity in seen_ids:
                 raise ValueError("Duplicate observation IDs")
             seen_ids.add(identity)
@@ -250,16 +250,16 @@ def assess_batch_stability(recipe, evidence):
             reasons = []
             if ph_failure is not None:
                 reasons.append("batch_ph")
-            if not _within(turbidity[1], turbidity_limit):
+            if not within_bound(turbidity[1], turbidity_limit):
                 reasons.append("turbidity")
             if index == 0:
                 baseline = mass
                 allowed_volume = recipe["uncertainty_verification"]["assumptions"][
                     "volume_error_litres"
                 ]
-                if not _within(recipe["volume_litres"] - allowed_volume, volume[0]) or not _within(
-                    volume[1], recipe["volume_litres"] + allowed_volume
-                ):
+                if not within_bound(
+                    recipe["volume_litres"] - allowed_volume, volume[0]
+                ) or not within_bound(volume[1], recipe["volume_litres"] + allowed_volume):
                     reasons.append("initial_volume")
                 for element in ("Ca", "P"):
                     target = (
@@ -269,15 +269,15 @@ def assess_batch_stability(recipe, evidence):
                     )
                     if target <= 0 or mass[element][0] <= 0:
                         raise ValueError("Positive initial dissolved Ca and P are required")
-                    if not _within(
+                    if not within_bound(
                         target * (1 - initial_tolerance), mass[element][0]
-                    ) or not _within(mass[element][1], target * (1 + initial_tolerance)):
+                    ) or not within_bound(mass[element][1], target * (1 + initial_tolerance)):
                         reasons.append(f"initial_{element}_recovery")
             else:
                 for element in ("Ca", "P"):
                     lower = mass[element][0] / baseline[element][1]
                     check["retention_lower_bounds"][element] = lower
-                    if not _within(retention, lower):
+                    if not within_bound(retention, lower):
                         reasons.append(f"{element}_retention")
             if reasons:
                 check.update(status="failed", failed_checks=reasons)

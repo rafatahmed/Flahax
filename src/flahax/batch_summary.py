@@ -161,10 +161,10 @@ class EquipmentCheck:
 
     def __call__(self, workflow):
         """None when the workflow's recipe fits the equipment, else the first problem."""
-        from .evaluated_remedies import _recommendation
+        from .evaluated_remedies import weighed_recommendation
 
         try:
-            salts = _recommendation(workflow)['salts']
+            salts = weighed_recommendation(workflow)['salts']
             grouping = group_tanks(salts, self._products, rules=self._rules)
         except DeliveryError as exc:
             return dict(error_code=exc.code, message=str(exc))
@@ -552,17 +552,17 @@ def _bind_identity(summary, canonical, recipe, state):
         state_sha256=None,
     )
     if canonical is not None:
-        from .canonical_result import _digest
+        from .canonical_result import digest
 
         snapshot = canonical.to_dict()
         # The supplied inputs and product assays are saved with the result
         # and bound by input_sha256 (Q27).
         summary['supplied_inputs'] = snapshot['inputs']
         summary['calculation_identity'].update(
-            input_sha256=_digest(snapshot['inputs']),
-            source_sha256=_digest(snapshot['sources']),
-            recipe_sha256=_digest(recipe),
-            state_sha256=_digest(state) if state is not None else None,
+            input_sha256=digest(snapshot['inputs']),
+            source_sha256=digest(snapshot['sources']),
+            recipe_sha256=digest(recipe),
+            state_sha256=digest(state) if state is not None else None,
         )
 
 

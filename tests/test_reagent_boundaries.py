@@ -71,9 +71,9 @@ class ReagentAcceptanceBoundaryTests(unittest.TestCase):
     def test_explicit_overdose_outranks_clear_saturation_and_clear_case_can_pass(self):
         clean = dict(blocks=[], review=[], advisories=[])
         with patch.object(ph, 'assess_saturation', return_value=clean):
-            verdict = ph._judge({'rows': []}, None, {}, over_dose=True)
+            verdict = ph.judge_candidate({'rows': []}, None, {}, over_dose=True)
             self.assertEqual(verdict[:2], ('rejected', 'dose_limit_exceeded'))
-            verdict = ph._judge({'rows': []}, None, {}, accepted='not_needed')
+            verdict = ph.judge_candidate({'rows': []}, None, {}, accepted='not_needed')
             self.assertEqual(verdict[:3], ('not_needed', None, None))
 
 
@@ -119,6 +119,6 @@ class LegacyBlendBoundaryTests(unittest.TestCase):
         pool = [p for p in load_library()['salts'] if p['formula'] == 'KNO3']
         endpoint = recommend(pool, {'K': 10}, {})
         endpoint.pop('substitutionSearch', None)
-        result = ph._blend_recipe(pool, {'K': 10}, {}, [endpoint, endpoint], 0.5, {})
+        result = ph.blend_recipe(pool, {'K': 10}, {}, [endpoint, endpoint], 0.5, {})
         self.assertNotIn('substitutionSearch', result)
         self.assertAlmostEqual(next(r['final'] for r in result['rows'] if r['symbol'] == 'K'), 10)

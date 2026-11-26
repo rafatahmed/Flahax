@@ -14,21 +14,23 @@ from datetime import datetime, timezone, date
 from .inputs import number
 
 
-def _text(record, key):
+def required_text(record, key):
+    """The record's value for ``key``, which must be a nonempty string."""
     value = record.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{key} requires a nonempty string")
     return value
 
 
-def _common(record, today, temperature):
+def check_record(record, today, temperature):
+    """Check the fields every stock evidence record carries, and return its dates."""
     if not isinstance(record, dict):
         raise ValueError("Record must be an object")
     for key in ("record_id", "source", "method"):
-        _text(record, key)
+        required_text(record, key)
     dates = []
     for key in ("measured_on", "valid_until"):
-        raw = _text(record, key)
+        raw = required_text(record, key)
         parsed = date.fromisoformat(raw)
         if parsed.isoformat() != raw:
             raise ValueError(f"{key} must use YYYY-MM-DD")
@@ -41,9 +43,10 @@ def _common(record, today, temperature):
         raise ValueError("A total error bound valid through expiry is required")
 
 
-def _within(value, limit):
+def within_bound(value, limit):
     # Only floating-point arithmetic allowance, not a relaxed physical
     # bound.
+    """Whether ``value`` is within ``limit``, allowing only floating-point rounding."""
     return value <= limit + 1e-12 * max(1, abs(limit))
 
 
@@ -61,9 +64,9 @@ def _final_volume_check(recipe, evidence, today, other_record_ids):
         }:
             raise ValueError("Final-volume assignment requires vessel and calibration IDs")
         for key in assignment:
-            _text(assignment, key)
+            required_text(assignment, key)
         record = evidence["calibration"]
-        _common(record, today, recipe["temperature_c"])
+        check_record(record, today, recipe["temperature_c"])
         required = {
             "record_id",
             "source",
@@ -115,7 +118,7 @@ def _final_volume_check(recipe, evidence, today, other_record_ids):
             total_deviation_litres=deviation,
             allowed_deviation_litres=allowed,
         )
-        if measured - uncertainty <= 0 or not _within(deviation, allowed):
+        if measured - uncertainty <= 0 or not within_bound(deviation, allowed):
             raise ValueError("Final-volume bias plus uncertainty exceeds the modeled volume bound")
         check["status"] = "passed"
         return check, None
@@ -173,7 +176,7 @@ def assess_stock_evidence(recipe, evidence):
             if not isinstance(rows, list):
                 raise ValueError(f"{kind} must be a list")
             for row in rows:
-                _common(row, today, recipe["temperature_c"])
+                check_record(row, today, recipe["temperature_c"])
                 common_fields = {
                     "record_id",
                     "source",
@@ -219,7 +222,7 @@ def assess_stock_evidence(recipe, evidence):
             }:
                 raise ValueError("Assignment requires stock, dispenser, assay and calibration IDs")
             for key in assignment:
-                _text(assignment, key)
+                required_text(assignment, key)
             if assignment["stock_id"] in used_stock_ids:
                 raise ValueError("Single-compound stocks require distinct stock IDs")
             used_stock_ids.add(assignment["stock_id"])
@@ -263,7 +266,7 @@ def assess_stock_evidence(recipe, evidence):
             required = nominal * spec["concentration_relative_error"]
             error = abs(measured - nominal) + uncertainty
             check.update(assay_total_deviation_g_l=error, allowed_deviation_g_l=required)
-            if measured - uncertainty <= 0 or not _within(error, required):
+            if measured - uncertainty <= 0 or not within_bound(error, required):
                 raise ValueError(
                     "Measured assay interval exceeds the modeled concentration bounds"
                 )
@@ -286,7 +289,7 @@ def assess_stock_evidence(recipe, evidence):
                 dosing_total_error_ml=bias + uncertainty,
                 allowed_dosing_error_ml=dose["dose_error_ml"],
             )
-            if not _within(bias + uncertainty, dose["dose_error_ml"]):
+            if not within_bound(bias + uncertainty, dose["dose_error_ml"]):
                 raise ValueError("Calibration bias plus uncertainty exceeds the dosing bound")
             check["status"] = "passed"
         except (ValueError, KeyError, TypeError) as exc:

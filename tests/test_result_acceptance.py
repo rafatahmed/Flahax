@@ -158,7 +158,7 @@ class SavedSessionTests(unittest.TestCase):
             changed['ph'] = 7
             with self.assertRaises(DeliveryError):
                 check_session(changed, 'changed')
-            with patch('flahax.canonical_result._sources', return_value={}):
+            with patch('flahax.canonical_result.package_sources', return_value={}):
                 with self.assertRaises(DeliveryError):
                     verify_session(store, saved)
             store.save('waters', 'well', {'K': 2})
@@ -212,7 +212,7 @@ class StoreBoundaryTests(unittest.TestCase):
             store = Store(root)
             store.save('sessions', 'saved', GOOD_SESSION)
             with patch('flahax.mix_cli.run_batch') as run:
-                with patch('flahax.canonical_result._sources', return_value={}):
+                with patch('flahax.canonical_result.package_sources', return_value={}):
                     lines = []
                     code = main(
                         ['sessions/saved', '--plain', '--output', str(Path(root) / 'out')],

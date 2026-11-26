@@ -32,9 +32,9 @@ from .engine import (
     recommend,
     score,
     forward,
-    _report,
-    _diagnose,
-    _charge_report,
+    recipe_report,
+    diagnose,
+    charge_report,
 )
 from .nitrogen import total_n_report
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
@@ -357,7 +357,7 @@ def plan_coupled_ph(
             if direction == 'none':
                 # No reagent, but the same final acceptance as every
                 # dosed candidate (#84).
-                status, code, message, saturation = _judge(
+                status, code, message, saturation = judge_candidate(
                     unadjusted, base_state, maximum_concentrations, accepted='not_needed'
                 )
                 candidates.append(
@@ -564,7 +564,9 @@ def _loss(recommendation):
     )
 
 
-def _judge(recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'):
+def judge_candidate(
+    recommendation, target, maximum_concentrations, over_dose=False, accepted='accepted'
+):
     """Final acceptance of one candidate: dose, then hard limits. A
     precipitation risk is returned with the candidate and never
     rejects it (decision G12).
@@ -597,7 +599,7 @@ def _judge(recommendation, target, maximum_concentrations, over_dose=False, acce
     return accepted, None, None, saturation
 
 
-def _blend_recipe(pool, targets, supply, endpoints, weight, maxima):
+def blend_recipe(pool, targets, supply, endpoints, weight, maxima):
     """Conserve product doses and rebuild assessments for a convex
     recipe blend.
 
@@ -645,10 +647,10 @@ def _assess_recipe(pool, targets, supply, recipe, salts, maxima):
     warnings = [
         w for w in result['warnings'] if not w.startswith('Fit includes formula counterion')
     ]
-    result.update(_report(rows, grams, warnings, maxima))
+    result.update(recipe_report(rows, grams, warnings, maxima))
     result['totalN'] = total_n_report(rows, targets)
     name_sources(result, salts, pool, supply)
-    result['unmetTargets'] = _diagnose(
+    result['unmetTargets'] = diagnose(
         pool,
         targets,
         supply,
@@ -666,7 +668,7 @@ def _assess_recipe(pool, targets, supply, recipe, salts, maxima):
         )
         for s in salts
     ]
-    _charge_report(result)
+    charge_report(result)
     selected = {s['id'] for s in salts}
     result['excluded'] = [e for e in result['excluded'] if e.get('id') not in selected]
     result['requirementConflicts'] = [
@@ -800,7 +802,7 @@ def _couple(
                 supply = dict(water)
                 for ion, mg in contribution(assumed_dose).items():
                     supply[ion] = supply.get(ion, 0.0) + mg
-                recipe = _blend_recipe(pool, targets, supply, ends, weight, maximum_concentrations)
+                recipe = blend_recipe(pool, targets, supply, ends, weight, maximum_concentrations)
                 state = mix(recipe)
                 amended = dict(state.totals)
                 for basis, n in REAGENTS[formula][1].items():
@@ -843,7 +845,7 @@ def _couple(
     over_dose = (litres is not None and (litres > cap or litres > volume)) or grams * (
         1 - fraction
     ) > mass * 1000
-    status, code, message, saturation = _judge(
+    status, code, message, saturation = judge_candidate(
         recommendation, target, maximum_concentrations, over_dose
     )
     return PhCandidate(

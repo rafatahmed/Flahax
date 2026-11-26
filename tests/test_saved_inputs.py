@@ -13,7 +13,7 @@ from copy import deepcopy
 import unittest
 
 from flahax import VolumeLitres, load_library, plan_fertilizer_workflow, summarize_batch
-from flahax.canonical_result import _digest, seal_summary
+from flahax.canonical_result import digest, seal_summary
 from flahax.delivery_contracts import DeliveryError
 from flahax.result_acceptance import (
     load_result,
@@ -56,7 +56,7 @@ class SavedInputsTests(unittest.TestCase):
 
     def test_the_supplied_inputs_are_the_ones_the_input_fingerprint_binds(self):
         identity = self.summary['calculation_identity']
-        self.assertEqual(_digest(self.summary['supplied_inputs']), identity['input_sha256'])
+        self.assertEqual(digest(self.summary['supplied_inputs']), identity['input_sha256'])
 
     def test_save_and_load_keep_the_inputs_and_assays(self):
         loaded = load_result(save_result(self.summary))
@@ -70,7 +70,7 @@ class SavedInputsTests(unittest.TestCase):
         record = save_result(self.summary)
         tampered = deepcopy(record['payload'])
         tampered['summary']['supplied_inputs']['targets']['K'] += 1
-        forged = dict(record, payload=tampered, sha256=_digest(tampered))
+        forged = dict(record, payload=tampered, sha256=digest(tampered))
         with self.assertRaises(DeliveryError) as raised:
             load_result(forged)
         self.assertEqual(raised.exception.code, 'invalid_saved_result')

@@ -1062,10 +1062,10 @@ def nutrient_band(
     material use the shipped record with no band.
     """
     from .product_conversion import (
-        _check_materials,
+        check_materials,
     )  # deferred: avoids a circular import with product_conversion
 
-    resolved = _check_materials(doses_g_per_litre, materials, allow_undisclosed=True)
+    resolved = check_materials(doses_g_per_litre, materials, allow_undisclosed=True)
     nutrients: dict = {}
     basis: dict = {}
     for name, dose in doses_g_per_litre.items():

@@ -79,7 +79,8 @@ def elemental_from_totals(totals, volume, mass):
     return {k: v * mass / volume * 1000 for k, v in component_nutrient_masses(totals).items()}
 
 
-def _sources(products):
+def product_sources(products):
+    """Validate the product records and return the sources they define."""
     if not isinstance(products, list) or not products:
         raise DeliveryError("invalid_ratio_products", "Supply a nonempty list of product records")
     sources = []
@@ -201,7 +202,7 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
     """Find a nonnegative local candidate; independently reconstruct and
     qualify it.
     """
-    sources = _sources(products)
+    sources = product_sources(products)
     initial = water_totals(water, volume, mass)
     water_elements = elemental_from_totals(initial, volume, mass)
     if not limit_assessment(water_elements, limits)["passed"]:

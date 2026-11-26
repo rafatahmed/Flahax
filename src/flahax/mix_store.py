@@ -126,7 +126,7 @@ def check_saved_state(data):
     """Validate versioned answers; legacy inputs have no asserted
     provenance.
     """
-    from .canonical_result import _digest
+    from .canonical_result import digest
 
     if 'acceptance' in data or 'accepted' in data:
         raise DeliveryError('invalid_session', 'acceptance belongs to an exact saved result')
@@ -140,13 +140,13 @@ def check_saved_state(data):
         or state['schema_version'] != 1
         or not isinstance(state['references'], dict)
         or not isinstance(state['sources'], dict)
-        or state['inputs_sha256'] != _digest(session_inputs(data))
+        or state['inputs_sha256'] != digest(session_inputs(data))
     ):
         raise DeliveryError('invalid_session', 'saved session metadata or inputs changed')
 
 
 def _references(store, data):
-    from .canonical_result import _digest
+    from .canonical_result import digest
     from .engine import load_library
 
     if 'sonneveld_batch' in data:
@@ -162,7 +162,7 @@ def _references(store, data):
             names.append((kind, data[key]))
     if data.get('reagent_store') not in (None, 'catalogue'):
         names.append(('reagents', data['reagent_store']))
-    return {f'{kind}/{name}': _digest(store.load(kind, name)) for kind, name in names}
+    return {f'{kind}/{name}': digest(store.load(kind, name)) for kind, name in names}
 
 
 def bind_session(store, data):
@@ -170,7 +170,7 @@ def bind_session(store, data):
     is not reconstructed.
     """
     from copy import deepcopy
-    from .canonical_result import _digest, _sources
+    from .canonical_result import digest, package_sources
 
     check_saved_state(data)
     if 'saved_state' in data:
@@ -179,9 +179,9 @@ def bind_session(store, data):
     result = deepcopy(data)
     result['saved_state'] = dict(
         schema_version=1,
-        inputs_sha256=_digest(data),
+        inputs_sha256=digest(data),
         references=_references(store, data),
-        sources=_sources(),
+        sources=package_sources(),
     )
     return result
 
@@ -190,13 +190,13 @@ def verify_session(store, data):
     """Detect reference/model drift before running saved answers. Legacy
     answers rerun normally.
     """
-    from .canonical_result import _sources
+    from .canonical_result import package_sources
 
     check_saved_state(data)
     if 'saved_state' not in data:
         return
     state = data['saved_state']
-    if state['references'] != _references(store, data) or state['sources'] != _sources():
+    if state['references'] != _references(store, data) or state['sources'] != package_sources():
         raise DeliveryError(
             'stale_session', 'saved inputs or model changed; review and resave answers'
         )

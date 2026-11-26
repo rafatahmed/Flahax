@@ -582,7 +582,7 @@ class RunTuiTests(unittest.TestCase):
         self.assertIn('export changed after finalization', lines[-1])
 
     def test_stale_session_is_rejected_before_workflow_and_terminal_restored(self):
-        with mock.patch('flahax.canonical_result._sources', return_value={}):
+        with mock.patch('flahax.canonical_result.package_sources', return_value={}):
             with mock.patch('flahax.mix_tui.run_batch') as calculate_batch:
                 term, code, lines = self.run_tui([], 'plain-home', 'tomato stage 1', 'stale')
         self.assertEqual(code, 1)

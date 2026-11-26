@@ -52,7 +52,7 @@ class CanonicalResultTests(unittest.TestCase):
             self.summary()
 
     def test_source_change_and_duplicate_products_rejected(self):
-        with patch('flahax.canonical_result._sources', return_value={}):
+        with patch('flahax.canonical_result.package_sources', return_value={}):
             with self.assertRaises(DeliveryError):
                 self.summary()
         with self.assertRaises(DeliveryError):

@@ -163,9 +163,9 @@ def plan_ratio_recipe(
             validate_analysis_uncertainty(uncertainty, volume_litres, products, water)
             if stock_dosing is not None:
                 from .ratio_product_stocks import validate_product_stocks
-                from .ratio_products import _sources
+                from .ratio_products import product_sources
 
-                validate_product_stocks(stock_dosing, _sources(products), uncertainty)
+                validate_product_stocks(stock_dosing, product_sources(products), uncertainty)
                 if stock_evidence is not None or batch_stability is not None:
                     raise DeliveryError(
                         "unsupported_product_stock_evidence",
