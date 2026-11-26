@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from flahax import DeliveryError, VolumeLitres, load_library, plan_fertilizer_workflow
-from flahax import grower_report as report
+from flahax import batch_summary, report_format
 from flahax.stock_solubility import SolubilityRow
 
 
@@ -29,7 +29,7 @@ class ReportBoundaryTests(unittest.TestCase):
         self.flow.canonical_result = None
 
     def summary(self, flow=None, **kw):
-        return report.summarize_batch(
+        return batch_summary.summarize_batch(
             flow or self.flow, self.pool, title='Legacy test', water_label='RO', **kw
         )
 
@@ -64,14 +64,14 @@ class ReportBoundaryTests(unittest.TestCase):
             from dataclasses import replace
 
             with patch.object(
-                report, 'check_stock_solubility', return_value=[replace(row, status=status)]
+                batch_summary, 'check_stock_solubility', return_value=[replace(row, status=status)]
             ):
                 self.assertEqual(self.summary()['status'], expected)
 
     def test_laboratory_decision_change_is_visible_and_requires_review(self):
         self.flow.stages['ph_adjustment'].status = 'calculated'
         self.flow.stages['formulation'].status = 'calculated'
-        water, limits = report._water_and_limits(self.flow, self.flow.recommendation)
+        water, limits = batch_summary._water_and_limits(self.flow, self.flow.recommendation)
         limits.append(
             dict(
                 symbol='Na',
@@ -82,14 +82,14 @@ class ReportBoundaryTests(unittest.TestCase):
                 note='Synthetic laboratory/model limit difference',
             )
         )
-        with patch.object(report, '_water_and_limits', return_value=(water, limits)):
+        with patch.object(batch_summary, '_water_and_limits', return_value=(water, limits)):
             summary = self.summary()
         self.assertEqual(summary['status'], 'requires_review')
         self.assertIn(limits[0]['note'], summary['warnings'])
 
     def test_long_plot_labels_wrap_without_dropping_words(self):
         label = 'A product label with several words beyond the available single line width'
-        svg = report.bars('Test', [label], [('Values', [1])], 'g')
+        svg = report_format.bars('Test', [label], [('Values', [1])], 'g')
         for word in label.split():
             self.assertIn(word, svg)
         self.assertGreater(svg.count('<text x="12"'), 1)
@@ -109,11 +109,11 @@ class ReportCalculationFailureTests(unittest.TestCase):
             equilibrium=RO | {'water_mass_kg': 100},
         )
         with patch.object(
-            report,
+            batch_summary,
             'calculate_ec_from_totals',
             side_effect=DeliveryError('not_supported', 'Injected EC refusal'),
         ):
-            summary = report.summarize_batch(flow, pool, title='Test', water_label='RO')
+            summary = batch_summary.summarize_batch(flow, pool, title='Test', water_label='RO')
         self.assertEqual(summary['ec']['status'], 'not_supported')
         self.assertIsNone(summary['ec']['ec25_ms_cm'])
         self.assertIn('Injected EC refusal', summary['ec']['message'])

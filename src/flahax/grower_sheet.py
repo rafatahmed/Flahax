@@ -16,24 +16,25 @@ is weighed.
 import re
 
 from .requirement_fit import met
-from .grower_report import (
+from .result_wording import (
     ph_goal,
-    SHEET_STYLE,
     STATUS_WORDS,
-    _limit_rows,
-    _miss_difference,
-    _review_reason,
-    _page,
-    _reagent_line,
+    limit_rows,
+    miss_difference,
+    review_reason,
+    reagent_line,
+    reagent_preparation_lines,
+    reagent_preparation,
+    nitrogen_paragraphs,
+)
+from .report_html import SHEET_STYLE, page
+from .report_format import (
     ec_text,
     below_checklist_precision,
     checklist_grams,
-    reagent_preparation_lines,
-    reagent_preparation,
     grams,  # noqa: F401
     litres,
     millilitres,
-    nitrogen_paragraphs,
     number,
     percentage,
     text,
@@ -165,11 +166,11 @@ def _reagent_card(summary, volumes):
     if not chosen or ph.get('direction') == 'none':
         return (
             f'<div class="card warn"><h2>pH '
-            f'reagent</h2><p>{text(_reagent_line(summary))}</p></div>'
+            f'reagent</h2><p>{text(reagent_line(summary))}</p></div>'
         )
     if chosen['volume_ml_per_batch'] is None:
         return (
-            f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(_reagent_line(summary))}</p></div>'
+            f'<div class="card"><h2>pH reagent</h2>' f'<p>{text(reagent_line(summary))}</p></div>'
         )
     preparation = reagent_preparation(summary)
     if preparation and preparation['status'] == 'blocked':
@@ -234,7 +235,7 @@ def _agronomist_section(summary):
         miss = missed_target(r)
         hi = ' class="num hi"' if miss else ' class="num"'
         difference = (
-            _miss_difference(r['target'], r['final'])
+            miss_difference(r['target'], r['final'])
             if miss
             else f'{r["diff_mg_l"]:+.2f} ({percentage(r["diff_pct"], 1, " %")})'
         )
@@ -257,8 +258,7 @@ def _agronomist_section(summary):
         'not met within the numerical tolerance).</p>' + nitrogen_paragraphs(summary)
     )
     limits = ''.join(
-        f'<li>{text(r[0])}: {r[2]} of {r[1]} mg/L ({text(r[4])})</li>'
-        for r in _limit_rows(summary)
+        f'<li>{text(r[0])}: {r[2]} of {r[1]} mg/L ({text(r[4])})</li>' for r in limit_rows(summary)
     )
     ph, chem = summary['ph'], summary.get('chemistry')
     path = []
@@ -312,7 +312,7 @@ def render_mix_sheet(summary, depth=1):
         f'pH '
         f'{ph_goal(s)} &middot; {text(s["water_label"])}</div>'
         f'<div class="box {css}"><b>{text(STATUS_WORDS[s["status"]].capitalize())}.</b>'
-        + (f' {text(_review_reason(s))}' if s['status'] == 'requires_review' else '')
+        + (f' {text(review_reason(s))}' if s['status'] == 'requires_review' else '')
         + (f'<ul class="small">{notes}</ul>' if notes else '')
         + '</div>'
     )
@@ -327,6 +327,6 @@ def render_mix_sheet(summary, depth=1):
         'products and '
         'assays against your supplier certificates.</p>'
     )
-    from .grower_report import result_reference
+    from .report_html import result_reference
 
-    return _page(s['title'] + ' - batch sheet', body + result_reference(s), CARD_STYLE)
+    return page(s['title'] + ' - batch sheet', body + result_reference(s), CARD_STYLE)

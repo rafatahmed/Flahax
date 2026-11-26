@@ -27,7 +27,8 @@ from flahax.evaluated_remedies import (
     _joint_start_retry,
     available_product_search,
 )
-from flahax.grower_report import summarize_batch, render_report
+from flahax.batch_summary import summarize_batch
+from flahax.report_html import render_report
 from tests.test_joint_workflow import configuration
 from tests.test_ph_adjustment import ACIDS, RO
 from tests.test_stock_planning import record

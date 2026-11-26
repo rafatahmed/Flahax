@@ -345,7 +345,7 @@ class ReportTests(unittest.TestCase):
     def test_review_is_judged_on_the_weighed_recipe_both_ways(self):
         import copy
         from unittest import mock
-        from flahax import grower_report
+        from flahax import batch_summary
 
         base = workflow('Tomato (Howard Resh)')
         first = base.recommendation
@@ -353,7 +353,7 @@ class ReportTests(unittest.TestCase):
         # first fit had incidentals, weighed recipe has none: review
         # drops
         with mock.patch.object(
-            grower_report,
+            batch_summary,
             'unreviewed_reason',
             side_effect=lambda r: 'x 1 mg/L' if r is first else None,
         ):
@@ -373,7 +373,7 @@ class ReportTests(unittest.TestCase):
         # first fit clean, weighed recipe has incidentals: review
         # raised, overall status follows
         with mock.patch.object(
-            grower_report,
+            batch_summary,
             'unreviewed_reason',
             side_effect=lambda r: None if r is first else 'y 2 mg/L',
         ):
@@ -389,7 +389,7 @@ class ReportTests(unittest.TestCase):
         self.assertIn('formulation: y 2 mg/L', s['warnings'])
         self.assertEqual(s['status'], 'requires_review')  # incidental review keeps it under review
         # a block is never downgraded
-        with mock.patch.object(grower_report, 'unreviewed_reason', return_value='z 3 mg/L'):
+        with mock.patch.object(batch_summary, 'unreviewed_reason', return_value='z 3 mg/L'):
             wf = copy.copy(base)
             wf.canonical_result = None  # Explicit synthetic stage fixture.
             wf.stages = dict(base.stages, formulation=copy.copy(stage))

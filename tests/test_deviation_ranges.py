@@ -205,7 +205,7 @@ class WorkflowRangeTests(unittest.TestCase):
         return flow, summarize_batch(flow, self.products, title='T', water_label='RO')
 
     def test_without_ranges_the_summary_has_none_and_the_report_no_table(self):
-        from flahax.grower_report import render_report
+        from flahax.report_html import render_report
 
         _, summary = self.summary(None)
         self.assertIsNone(summary['deviation_ranges'])
@@ -220,7 +220,7 @@ class WorkflowRangeTests(unittest.TestCase):
         self.assertEqual(summary['supplied_inputs']['deviation_ranges'], spec)
 
     def test_the_report_prints_each_effective_range_and_where_the_delivery_sits(self):
-        from flahax.grower_report import render_report
+        from flahax.report_html import render_report
 
         _, summary = self.summary(dict(percent=1.0, mode='assess'))
         visible = render_report(summary).split('<pre id="flahax-result-data">')[0]

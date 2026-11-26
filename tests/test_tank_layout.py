@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import unittest
 
 from flahax import group_tanks, summarize_batch
-from flahax.grower_report import _extra_tank_note
+from flahax.result_wording import extra_tank_note
 from flahax.tank_grouping import CLASS_RULES, MICRO_PHOSPHATE
 from tests.test_grower_outputs import PACKAGED, PACKAGED_PRODUCTS, workflow
 
@@ -158,20 +158,18 @@ class ThirdTankTests(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            _extra_tank_note(grouping, 2),
+            extra_tank_note(grouping, 2),
             'Stock assignment needs a third tank: P3 cannot share with P1 (rule one). '
             'No separation is waived.',
         )
-        self.assertTrue(
-            _extra_tank_note(grouping, 1).startswith('Stock assignment needs a second')
-        )
+        self.assertTrue(extra_tank_note(grouping, 1).startswith('Stock assignment needs a second'))
         grouping.separations = []
         self.assertEqual(
-            _extra_tank_note(grouping, 2),
+            extra_tank_note(grouping, 2),
             'Stock assignment needs 3 tanks; only 2 supplied. No separation is waived.',
         )
-        self.assertIn('fourth tank', _extra_tank_note(grouping_with(4), 3))
-        self.assertIn('5th tank', _extra_tank_note(grouping_with(5), 4))
+        self.assertIn('fourth tank', extra_tank_note(grouping_with(4), 3))
+        self.assertIn('5th tank', extra_tank_note(grouping_with(5), 4))
 
 
 def grouping_with(count):

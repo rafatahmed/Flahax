@@ -10,7 +10,7 @@ import json
 from copy import deepcopy
 
 from flahax.batch_cli import BatchOptions, run_batch, render as render_outputs
-from flahax.grower_report import render_report, render_batch_sheet
+from flahax.report_html import render_report, render_batch_sheet
 from flahax.grower_sheet import render_mix_sheet
 from flahax.mix_results import results_lines
 from flahax.terminal import glyphs

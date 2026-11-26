@@ -1786,7 +1786,8 @@ class DeclaredCompoundTests(unittest.TestCase):
 
     def test_store_with_unmodellable_product_plans_no_acid(self):
         from flahax import VolumeLitres, plan_fertilizer_workflow
-        from flahax.grower_report import render_batch_sheet, summarize_batch
+        from flahax.report_html import render_batch_sheet
+        from flahax.batch_summary import summarize_batch
 
         product, _ = self.product(k2o=10)
         library = load_library()

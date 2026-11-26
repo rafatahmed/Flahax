@@ -12,7 +12,8 @@ import tempfile
 import unittest
 
 from flahax.batch_cli import BatchOptions, run_batch
-from flahax.grower_report import dose_number, grams, render_batch_sheet, render_report
+from flahax.report_format import dose_number, grams
+from flahax.report_html import render_batch_sheet, render_report
 from flahax.canonical_result import seal_summary
 from flahax.mix_results import _nutrient_rows
 from flahax.grower_sheet import agronomist_rows, render_mix_sheet
@@ -176,10 +177,10 @@ class SheetTests(unittest.TestCase):
             volume_ml_per_batch=0.001,
             mass_g_per_batch=0.002,
         )
-        from flahax.grower_report import _reagent_line
+        from flahax.result_wording import reagent_line
 
-        self.assertIn('diagnostic only', _reagent_line(summary))
-        self.assertNotIn('Add ', _reagent_line(summary))
+        self.assertIn('diagnostic only', reagent_line(summary))
+        self.assertNotIn('Add ', reagent_line(summary))
 
     def test_positive_doses_do_not_disappear(self):
         for value in (1e-15, 0.00001, 0.01, 1, 1000):
@@ -193,7 +194,7 @@ class QualificationTests(unittest.TestCase):
         self.assertEqual(dose_number(-1), '-1')
 
     def test_ec_applicability_states_and_real_range_only(self):
-        from flahax.grower_report import qualification_lines
+        from flahax.result_wording import qualification_lines
 
         self.assertIn('not evaluated', ' '.join(qualification_lines({'ec': None})))
         estimated = dict(

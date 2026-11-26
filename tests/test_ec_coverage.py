@@ -115,7 +115,8 @@ class CoverageTests(unittest.TestCase):
     # planned.
     def test_grower_outputs_retain_qualifications(self):
         self.enterContext(historical_catalogue())
-        from flahax.grower_report import summarize_batch, render_report, render_batch_sheet
+        from flahax.batch_summary import summarize_batch
+        from flahax.report_html import render_report, render_batch_sheet
         from tests.test_grower_outputs import workflow, PRODUCTS
 
         summary = summarize_batch(
@@ -152,7 +153,7 @@ class CoverageTests(unittest.TestCase):
         self.assertIsNone(result.uncertainty_components['numerical']['bound_ms_cm'])
 
     def test_missing_reagent_quantity_does_not_hide_ec_qualifications(self):
-        from flahax.grower_report import reagent_amount
+        from flahax.result_wording import reagent_amount
 
         self.assertEqual(
             reagent_amount({'volume_ml_per_batch': None, 'mass_g_per_batch': None}),

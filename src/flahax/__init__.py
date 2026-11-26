@@ -262,7 +262,8 @@ from .tank_grouping import (
     default_compatibility_rules,
     group_tanks,
 )
-from .grower_report import render_batch_sheet, render_report, summarize_batch
+from .report_html import render_batch_sheet, render_report
+from .batch_summary import summarize_batch
 from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
 from .calculated_ec import estimate_manufacturer_ec
 from .injector_sizing import size_injection_requirements

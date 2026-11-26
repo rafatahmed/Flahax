@@ -437,7 +437,8 @@ class SonneveldAppendixI(unittest.TestCase):
                 self.assertAlmostEqual(high, 2.202, delta=0.002)
 
     def test_batch_verifies_rounded_copper_stock_without_sodium_nitrate(self):
-        from flahax.grower_report import render_batch_sheet, render_report, summarize_batch
+        from flahax.report_html import render_batch_sheet, render_report
+        from flahax.batch_summary import summarize_batch
 
         copper = 'copper sulfate pentahydrate'
         sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
@@ -569,7 +570,8 @@ class SonneveldAppendixI(unittest.TestCase):
     def test_batch_blocks_a_rounded_delivery_that_misses_targets(self):
         from unittest.mock import patch
 
-        from flahax.grower_report import render_batch_sheet, summarize_batch
+        from flahax.report_html import render_batch_sheet
+        from flahax.batch_summary import summarize_batch
 
         sulfate = ('sodium sulfate anhydrous', 142.04, {'Na': 2, 'S': 1})
         # Inject a failed rounded delivery to exercise the workflow and

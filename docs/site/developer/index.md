@@ -25,7 +25,7 @@ flowchart TB
         MA[materials<br/>materials, material_chemistry]
         WA[water<br/>measured_water]
     end
-    OUT[summarize_batch, render_report,<br/>render_batch_sheet<br/>grower_report, grower_sheet]
+    OUT[summarize_batch, render_report,<br/>render_batch_sheet<br/>batch_summary, report_html, grower_sheet]
     entry --> plan
     plan --> core
     plan --> OUT

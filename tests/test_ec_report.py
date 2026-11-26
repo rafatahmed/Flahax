@@ -16,7 +16,8 @@ import unittest
 
 from flahax import DeliveryError
 from flahax.batch_cli import main as batch
-from flahax.grower_report import ec_text, requested_ec_note
+from flahax.report_format import ec_text
+from flahax.result_wording import requested_ec_note
 from flahax.irrigation_ec import QUALIFIER
 
 RANGE = {'status': 'range', 'ec25_range_ms_cm': (1.5, 2.5)}
@@ -123,7 +124,7 @@ class BatchEcTests(unittest.TestCase):
         self.assertIn(QUALIFIER, self.summary['warnings'])
 
     def test_a_request_that_is_not_a_positive_number_is_refused(self):
-        from flahax.grower_report import summarize_batch
+        from flahax.batch_summary import summarize_batch
 
         for bad in (0, -1.0, float('nan'), True, '2'):
             with self.subTest(bad=bad), self.assertRaises(DeliveryError) as raised:

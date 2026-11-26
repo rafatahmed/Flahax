@@ -10,17 +10,11 @@ batch sheet uses, with the sheet's rounding, so the screen and the sheet
 always agree.
 """
 
-from .grower_report import _miss_difference, _review_reason, percentage, qualification_lines
+from .result_wording import miss_difference, review_reason, qualification_lines
+from .report_format import percentage
 from . import __version__
-from .grower_report import (
-    _reagent_line,
-    below_checklist_precision,
-    checklist_grams,
-    litres,
-    number,
-    reagent_preparation_lines,
-    rounded_dose_rows,
-)
+from .result_wording import reagent_line, reagent_preparation_lines, rounded_dose_rows
+from .report_format import below_checklist_precision, checklist_grams, litres, number
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -133,7 +127,7 @@ def _tank_rows(summary, width, g):
         ]
         rows += _card('Acid' if selected['direction'] == 'acid' else 'pH reagent', body, width, g)
     elif not blocked:
-        rows += _card('pH reagent', [[(_reagent_line(summary), 'warn')]], width, g)
+        rows += _card('pH reagent', [[(reagent_line(summary), 'warn')]], width, g)
     checks = summary['solubility'] or []
     if any(c['status'] == 'exceeds' for c in checks):
         dissolves = 'a product exceeds its single-product limit (see Notes)'
@@ -184,7 +178,7 @@ def _nutrient_rows(summary):
         diff = (
             ''
             if r['target'] is None
-            else _miss_difference(r['target'], r['final'])
+            else miss_difference(r['target'], r['final'])
             if missed_target(r)
             else f'{r["diff_mg_l"]:+.2f} ({percentage(r["diff_pct"], 1, " %")})'
         )
@@ -282,7 +276,7 @@ def results_lines(summary, view, width, height, scroll, g, output, message=None)
         body = _note_rows(summary, usable - 2)
     if summary['status'] == 'requires_review':
         body = [
-            [(line, 'warn')] for line in wrap(_review_reason(summary), usable - 2, lines=20)
+            [(line, 'warn')] for line in wrap(review_reason(summary), usable - 2, lines=20)
         ] + body
     room = height - 1 - len(lines) - 2
     scroll = max(0, min(scroll, len(body) - room))

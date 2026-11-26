@@ -143,6 +143,34 @@ Record fields: `totals`, `ph`, `ionic_strength`, `species`, `activities`, `satur
 
 Source module: `flahax.aqueous_model`. Import with `from flahax import AqueousResult`.
 
+## flahax.batch_summary
+
+### `summarize_batch`
+
+```text
+summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=None, tank_capacities_litres=None, requested_ec_ms_cm=None)
+```
+
+Plain data for a grower report and batch sheet.
+
+``workflow`` is a ``plan_fertilizer_workflow`` result with a final
+volume; ``products`` are the product records it was planned with
+(they give the tank grouping its chemistry); ``rules`` are extra
+``compatibilityRule`` records. When a pH plan is selected its
+refitted recipe, which counts the reagent's nutrients, is the recipe
+to weigh. Each concentrate is compared with that product's own
+solubility value (catalogue data first, then the historical table),
+in the value's basis, and a product without data is not checked.
+
+``available_tanks`` and ``tank_capacities_litres`` declare the
+equipment (D3). Undeclared, two tanks are assumed and the summary
+says so (``available_tanks_declared`` false). Capacities are listed
+in tank order, one per available tank; a tank that cannot hold its
+stock volume is reported and blocks, and the recipe and equipment
+are never changed to make it fit.
+
+Source module: `flahax.batch_summary`. Import with `from flahax import summarize_batch`.
+
 ## flahax.calculated_ec
 
 ### `estimate_manufacturer_ec`
@@ -1047,54 +1075,6 @@ equilibrium water_mass_kg. Optional starting_points are never
 accepted without verification.
 
 Source module: `flahax.fertilizer_workflow`. Import with `from flahax import plan_fertilizer_workflow`.
-
-## flahax.grower_report
-
-### `render_batch_sheet`
-
-```text
-render_batch_sheet(summary)
-```
-
-Printable A4 batch sheet from ``summarize_batch``.
-
-Source module: `flahax.grower_report`. Import with `from flahax import render_batch_sheet`.
-
-### `render_report`
-
-```text
-render_report(summary)
-```
-
-Self-contained HTML report from ``summarize_batch``.
-
-Source module: `flahax.grower_report`. Import with `from flahax import render_report`.
-
-### `summarize_batch`
-
-```text
-summarize_batch(workflow, products, *, title, water_label, injection_ratio=100, rules=(), temperature_c=25, available_tanks=None, tank_capacities_litres=None, requested_ec_ms_cm=None)
-```
-
-Plain data for a grower report and batch sheet.
-
-``workflow`` is a ``plan_fertilizer_workflow`` result with a final
-volume; ``products`` are the product records it was planned with
-(they give the tank grouping its chemistry); ``rules`` are extra
-``compatibilityRule`` records. When a pH plan is selected its
-refitted recipe, which counts the reagent's nutrients, is the recipe
-to weigh. Each concentrate is compared with that product's own
-solubility value (catalogue data first, then the historical table),
-in the value's basis, and a product without data is not checked.
-
-``available_tanks`` and ``tank_capacities_litres`` declare the
-equipment (D3). Undeclared, two tanks are assumed and the summary
-says so (``available_tanks_declared`` false). Capacities are listed
-in tank order, one per available tank; a tank that cannot hold its
-stock volume is reported and blocks, and the recipe and equipment
-are never changed to make it fit.
-
-Source module: `flahax.grower_report`. Import with `from flahax import summarize_batch`.
 
 ## flahax.injector_sizing
 
@@ -2067,6 +2047,28 @@ the strongest verified candidate found, with no global optimality
 assertion.
 
 Source module: `flahax.ratio_search`. Import with `from flahax import search_ratio_recipe`.
+
+## flahax.report_html
+
+### `render_batch_sheet`
+
+```text
+render_batch_sheet(summary)
+```
+
+Printable A4 batch sheet from ``summarize_batch``.
+
+Source module: `flahax.report_html`. Import with `from flahax import render_batch_sheet`.
+
+### `render_report`
+
+```text
+render_report(summary)
+```
+
+Self-contained HTML report from ``summarize_batch``.
+
+Source module: `flahax.report_html`. Import with `from flahax import render_report`.
 
 ## flahax.result_acceptance
 

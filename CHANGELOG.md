@@ -22,6 +22,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- `flahax.grower_report` is split into `batch_summary`, `report_html`, `result_wording` and `report_format`. `summarize_batch`, `render_report` and `render_batch_sheet` import from `flahax` as before and no report, sheet or summary differs. Other names move to the new modules; the reason and row helpers lose their underscore.
 - One number check, `flahax.inputs.number`, replaces nine private copies in the engine modules and three guards in `flahax batch`. Error codes are unchanged. A numeric string is no longer coerced to a number in delivery contracts, and the stock, pH and stability evidence checks raise `DeliveryError` (still a `ValueError`) for a malformed number.
 - Targets are validated by one function, `validate_targets`; `validate_profile` is only for water, maxima and assays and no longer takes the `total_n` flag that let an entry point keep the old rule (#316).
 - A total-nitrogen target (`N`) now reaches the workflow and the batch command; it was accepted by `recommend` only (#311).
