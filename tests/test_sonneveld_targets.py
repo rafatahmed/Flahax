@@ -11,7 +11,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from flahax.batch_cli import BatchOptions, main, run_batch
+from flahax.batch_request import BatchOptions, run_batch
+from flahax.batch_cli import main
 from flahax.delivery_contracts import DeliveryError
 from flahax.sonneveld import design_targets
 

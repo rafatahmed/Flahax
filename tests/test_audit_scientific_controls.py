@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 
 from flahax import calculate_equilibrium_ph, load_library, recommend, summarize_batch
-from flahax.batch_cli import read_water
+from flahax.water_input import read_water
 from flahax.delivery_contracts import DeliveryError
 from flahax.irrigation_ec import calculate_ec_from_totals
 from flahax.measured_water import _carbon_for_alkalinity

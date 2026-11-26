@@ -11,7 +11,7 @@ caption: How the package fits together
 flowchart TB
     subgraph entry[Entry points]
         CLI1[flahax mix<br/>mix_cli, mix_tui]
-        CLI2[flahax batch<br/>batch_cli]
+        CLI2[flahax batch<br/>batch_cli, batch_request]
         CLI3[flahax JSON and planning<br/>__main__, planning_cli]
     end
     subgraph plan[Planning]

@@ -14,7 +14,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from flahax.batch_cli import BatchOptions, main, run_batch
+from flahax.batch_request import BatchOptions, run_batch
+from flahax.batch_cli import main
 from flahax.engine import load_library
 
 NITRIC_65 = 'HNO3:0.65:1.39:Nitric acid 65%'
@@ -104,7 +105,7 @@ def check_grower_outputs(case, summary, report, sheet):
 
 class ReagentQualificationTests(unittest.TestCase):
     def test_only_declared_solvent_and_mass_caps_enter_the_joint_configuration(self):
-        from flahax.batch_cli import joint_configuration, acid_record
+        from flahax.batch_request import joint_configuration, acid_record
         from flahax.ph_adjustment import catalogue_ph_reagents
         from flahax.delivery_contracts import DeliveryError
 
@@ -124,7 +125,7 @@ class ReagentQualificationTests(unittest.TestCase):
                 joint_configuration([], [dry], 100, 2, solid_cap=cap)
 
     def test_undeclared_physical_form_cannot_bypass_a_liquid_volume_cap(self):
-        from flahax.batch_cli import joint_configuration
+        from flahax.batch_request import joint_configuration
 
         reagent = dict(id='unknown', chemicalFormula='KHCO3', massFraction=0.95)
         config = joint_configuration([], [reagent], 100, 2)
@@ -133,7 +134,7 @@ class ReagentQualificationTests(unittest.TestCase):
 
     def test_sequential_solid_still_honours_a_declared_mass_cap(self):
         from flahax import catalogue_ph_reagents, plan_fertilizer_workflow, VolumeLitres
-        from flahax.batch_cli import joint_configuration
+        from flahax.batch_request import joint_configuration
         from tests.test_joint_workflow import RO
 
         pool = [next(p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate')]
@@ -164,7 +165,7 @@ class ReagentQualificationTests(unittest.TestCase):
 
     def test_joint_dry_candidate_obeys_its_mass_cap_without_a_density(self):
         from flahax import catalogue_ph_reagents, plan_fertilizer_workflow, VolumeLitres
-        from flahax.batch_cli import joint_configuration
+        from flahax.batch_request import joint_configuration
         from tests.test_joint_workflow import RO
 
         pool = [next(p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate')]
@@ -202,7 +203,7 @@ class ReagentQualificationTests(unittest.TestCase):
             summarize_batch,
             VolumeLitres,
         )
-        from flahax.batch_cli import joint_configuration
+        from flahax.batch_request import joint_configuration
         from tests.test_joint_workflow import RO
 
         pool = [next(p for p in load_library()['salts'] if p['name'] == 'Potassium Nitrate')]
@@ -275,7 +276,7 @@ class ReagentQualificationTests(unittest.TestCase):
 class DirectionTests(unittest.TestCase):
     def test_missing_base_is_reported_without_trying_the_offered_acid(self):
         with (
-            patch('flahax.batch_cli.catalogue_ph_reagents', return_value=[]),
+            patch('flahax.batch_request.catalogue_ph_reagents', return_value=[]),
             patch('flahax.joint_workflow.solve_joint_problem') as solver,
         ):
             ph = tomato()['ph']
@@ -675,7 +676,7 @@ class RemedyTests(unittest.TestCase):
             ):
                 (root / f'{name}.json').write_text(json.dumps(data), encoding='utf-8')
             with patch(
-                'flahax.batch_cli.balance_water_analysis',
+                'flahax.water_input.balance_water_analysis',
                 side_effect=DeliveryError('invalid_value', 'Blend chemistry unavailable'),
             ):
                 result = run_batch(
@@ -756,7 +757,7 @@ class RemedyTests(unittest.TestCase):
                 with self.assertRaises(DeliveryError):
                     options_for(store, GOOD_SESSION | change)
         for ids in ('not a list', ['missing'], [salt['id'], salt['id']]):
-            from flahax.batch_cli import left_out_products
+            from flahax.batch_request import left_out_products
 
             with self.assertRaises(DeliveryError):
                 left_out_products(load_library(), [], ids)

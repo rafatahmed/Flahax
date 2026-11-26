@@ -18,7 +18,7 @@ from flahax import (
     recommend,
     solve_joint_problem,
 )
-from flahax.batch_cli import JOINT_CONTROLS
+from flahax.batch_request import JOINT_CONTROLS
 
 
 def capped_problem(include_forbidden):
@@ -55,7 +55,7 @@ def capped_problem(include_forbidden):
 
 class JointHardCapTests(unittest.TestCase):
     def test_batch_converges_with_explicit_zero_ammonium_maximum(self):
-        from flahax.batch_cli import BatchOptions, run_batch
+        from flahax.batch_request import BatchOptions, run_batch
 
         targets = {
             'N_NO3': 140,

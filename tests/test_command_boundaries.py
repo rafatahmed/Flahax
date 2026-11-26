@@ -15,7 +15,7 @@ import unittest
 from unittest.mock import patch
 
 from flahax import DeliveryError, load_library
-from flahax import planning_cli as planning, batch_cli as batch
+from flahax import batch_cli as batch, batch_request, inputs, planning_cli as planning, water_input
 
 
 class PlanningInputBoundaryTests(unittest.TestCase):
@@ -106,7 +106,7 @@ class BatchInputBoundaryTests(unittest.TestCase):
     def test_unreadable_and_malformed_water_records(self):
         with patch.object(Path, 'read_text', side_effect=PermissionError(13, 'denied')):
             with self.assertRaises(DeliveryError) as caught:
-                batch.read_json('water.json', 'water')
+                inputs.read_json('water.json', 'water')
         self.assertEqual(caught.exception.code, 'missing_file')
         cases = [
             ([], 'invalid_type'),
@@ -135,23 +135,23 @@ class BatchInputBoundaryTests(unittest.TestCase):
         for payload, code in cases:
             with (
                 self.subTest(payload=payload),
-                patch.object(batch, 'read_json', return_value=payload),
+                patch.object(water_input, 'read_json', return_value=payload),
             ):
                 with self.assertRaises(DeliveryError) as caught:
-                    batch.read_water('water.json')
+                    water_input.read_water('water.json')
                 self.assertEqual(caught.exception.code, code)
         payload = dict(mg_per_litre={'HCO3': 0}, measured_ph=7)
-        with patch.object(batch, 'read_json', return_value=payload):
-            _, _, config = batch.read_water('water.json')
+        with patch.object(water_input, 'read_json', return_value=payload):
+            _, _, config = water_input.read_water('water.json')
         self.assertNotIn('balance_ion', config)
 
     def test_invalid_blends_do_not_modify_nutrient_inventory(self):
         for chemistry, percent in [({}, 10), ({'measured_ph': 7}, 0), ({'measured_ph': 7}, 101)]:
             with self.assertRaises(DeliveryError) as caught:
-                batch.blend('Water', {}, chemistry, percent)
+                water_input.blend('Water', {}, chemistry, percent)
             self.assertEqual(caught.exception.code, 'invalid_value')
         chemistry = dict(measured_ph=7, water_totals={'unknown': 1}, water_analysis_id='test')
-        label, water, result = batch.blend('Water', {'K': 20}, chemistry, 100)
+        label, water, result = water_input.blend('Water', {'K': 20}, chemistry, 100)
         self.assertIn('Chemistry not calculated', label)
         self.assertEqual(water, {'K': 20})
         self.assertIsNone(result)
@@ -164,10 +164,10 @@ class BatchInputBoundaryTests(unittest.TestCase):
                 batch.limit_entry(text)
         for text in ('HNO3', 'HNO3:2:1'):
             with self.assertRaises(DeliveryError) as caught:
-                batch.acid_record(text)
+                batch_request.acid_record(text)
             self.assertEqual(caught.exception.code, 'invalid_value')
         with self.assertRaises(DeliveryError) as caught:
-            batch.choose_formula(load_library(), 'missing', None)
+            batch_request.choose_formula(load_library(), 'missing', None)
         self.assertEqual(caught.exception.code, 'unknown_formula')
         out = StringIO()
         with redirect_stdout(out):
@@ -205,16 +205,16 @@ class BatchOutputBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             targets = Path(tmp) / 'targets.json'
             targets.write_text('{"K": 10}')
-            label, ions, chemistry = batch.read_water('ro')
-            opts = batch.BatchOptions(water='ro', targets=str(targets))
-            with patch.object(batch, 'read_water', return_value=(label, ions, None)):
-                no_chemistry = batch.run_batch(opts)
+            label, ions, chemistry = water_input.read_water('ro')
+            opts = batch_request.BatchOptions(water='ro', targets=str(targets))
+            with patch.object(batch_request, 'read_water', return_value=(label, ions, None)):
+                no_chemistry = batch_request.run_batch(opts)
             self.assertIsNone(no_chemistry['chemistry'])
             chemistry = chemistry | {'water_input_notes': ['Synthetic laboratory input note']}
-            with patch.object(batch, 'read_water', return_value=(label, ions, chemistry)):
-                notes = batch.run_batch(opts)
+            with patch.object(batch_request, 'read_water', return_value=(label, ions, chemistry)):
+                notes = batch_request.run_batch(opts)
             self.assertEqual(notes['warnings'].count('Synthetic laboratory input note'), 1)
-            original = batch.summarize_batch
+            original = batch_request.summarize_batch
 
             def missing_note(*args, **kwargs):
                 result = original(*args, **kwargs)
@@ -225,7 +225,9 @@ class BatchOutputBoundaryTests(unittest.TestCase):
 
             # Adapter fault injection: the batch boundary restores
             # omitted input provenance.
-            with patch.object(batch, 'summarize_batch', missing_note):
-                with patch.object(batch, 'read_water', return_value=(label, ions, chemistry)):
-                    restored = batch.run_batch(opts)
+            with patch.object(batch_request, 'summarize_batch', missing_note):
+                with patch.object(
+                    batch_request, 'read_water', return_value=(label, ions, chemistry)
+                ):
+                    restored = batch_request.run_batch(opts)
             self.assertEqual(restored['warnings'].count('Synthetic laboratory input note'), 1)

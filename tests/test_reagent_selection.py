@@ -11,7 +11,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from flahax.batch_cli import BatchOptions, acid_record, run_batch, main as batch
+from flahax.batch_request import BatchOptions, acid_record, run_batch
+from flahax.batch_cli import main as batch
 from flahax.mix_cli import main as mix
 from flahax.mix_store import Store
 from flahax.ph_adjustment import catalogue_ph_reagents

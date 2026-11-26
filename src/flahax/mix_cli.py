@@ -25,7 +25,9 @@ from pathlib import Path
 import sys
 
 from . import __version__
-from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, render, run_batch
+from .batch_request import ACID_FORMULAS, BatchOptions, run_batch
+from .batch_cli import limit_entry, render
+from .inputs import read_json
 from .composition import target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
@@ -509,7 +511,7 @@ def ask_reagents(p, store, pending):
     """Select the available pH products just like the available
     fertilizers.
     """
-    from .batch_cli import acid_record
+    from .batch_request import acid_record
 
     catalogue = catalogue_ph_reagents()
     saved = [name for name in store.list('reagents') if name != 'catalogue']
