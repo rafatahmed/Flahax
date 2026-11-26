@@ -184,10 +184,10 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
                             "sodium_chloride_limits" if key in ("Na", "Cl") else "nutrient_limits"
                         )
                 totals = dict(zip(BASIS, [a / 1000 / water_mass for a in batch]))
-                from .ratio_ph_refinement import refine_ph
+                from .ratio_ph_refinement import refine_ph, warm_started
 
                 states, refinement = refine_ph(
-                    lambda ph: solve(totals, ph),
+                    warm_started(lambda ph, start: solve(totals, ph, start=start)),
                     nominal.get("base_evaluated_ph", nominal["evaluated_ph"]),
                     nominal["selected_phases"],
                     nominal["si_required_below"],
