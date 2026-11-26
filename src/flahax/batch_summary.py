@@ -240,80 +240,8 @@ def _joint_record(result):
     }
 
 
-def summarize_batch(
-    workflow,
-    products,
-    *,
-    title,
-    water_label,
-    injection_ratio=100,
-    rules=(),
-    temperature_c=25,
-    available_tanks=None,
-    tank_capacities_litres=None,
-    requested_ec_ms_cm=None,
-):
-    """Plain data for a grower report and batch sheet.
-
-    ``workflow`` is a ``plan_fertilizer_workflow`` result with a final
-    volume; ``products`` are the product records it was planned with
-    (they give the tank grouping its chemistry); ``rules`` are extra
-    ``compatibilityRule`` records. When a pH plan is selected its
-    refitted recipe, which counts the reagent's nutrients, is the recipe
-    to weigh. Each concentrate is compared with that product's own
-    solubility value (catalogue data first, then the historical table),
-    in the value's basis, and a product without data is not checked.
-
-    ``available_tanks`` and ``tank_capacities_litres`` declare the
-    equipment (D3). Undeclared, two tanks are assumed and the summary
-    says so (``available_tanks_declared`` false). Capacities are listed
-    in tank order, one per available tank; a tank that cannot hold its
-    stock volume is reported and blocks, and the recipe and equipment
-    are never changed to make it fit.
-    """
-    if requested_ec_ms_cm is not None and (
-        isinstance(requested_ec_ms_cm, bool)
-        or not isinstance(requested_ec_ms_cm, (int, float))
-        or not math.isfinite(requested_ec_ms_cm)
-        or requested_ec_ms_cm <= 0
-    ):
-        raise DeliveryError('invalid_value', 'requested_ec_ms_cm must be finite and positive')
-    canonical = workflow.canonical_result
-    if canonical is not None:
-        canonical.verify(workflow, products)
-    batch = workflow.stages.get('batch')
-    if batch is None or batch.status != 'calculated':
-        raise DeliveryError('missing_field', 'the workflow needs a final volume for a batch sheet')
-    litres = batch.value.final_volume.value
-    stages = {name: _stage(stage) for name, stage in workflow.stages.items()}
-    ph_stage = workflow.stages.get('ph_adjustment')
-    plan = ph_stage.value if ph_stage is not None else None
-    chosen = plan.selected if plan is not None else None
-    # Rejected-candidate diagnostics must never replace the weighed
-    # recipe state.
-    rejected = None
-    if plan is not None and chosen is None:
-        rejected = next(
-            (c for c in plan.candidates if c.target is not None and c.direction == plan.direction),
-            None,
-        )
-    if chosen is not None:
-        recipe = chosen.recommendation
-    elif plan is not None and plan.unadjusted_recommendation is not None:
-        recipe = plan.unadjusted_recommendation
-    else:
-        recipe = workflow.recommendation
-    # Report target misses and incidental contributions from the weighed
-    # recipe. Preserve blocks.
-    form = stages['formulation']
-    if form['status'] in ('calculated', 'requires_review'):
-        reason = (
-            '; '.join(filter(None, (missed_message(recipe), unreviewed_reason(recipe)))) or None
-        )
-        form['status'], form['message'] = (
-            ('requires_review', reason) if reason else ('calculated', None)
-        )
-
+def _ph_record(workflow, ph_stage, plan, chosen):
+    """The pH section of the summary: the plan, its candidates and the skipped products."""
     ph = None
     if plan is not None:
 
@@ -368,7 +296,11 @@ def summarize_batch(
             candidates=[],
             message=ph_stage.message,
         )
+    return ph
 
+
+def _chemistry_and_ec(workflow, plan, chosen, rejected):
+    """The weighed recipe state, its chemistry and the EC estimate; never a rejected candidate."""
     state = None
     chemistry = ec = None
     chem = workflow.stages.get('chemistry')
@@ -458,7 +390,20 @@ def summarize_batch(
             ec = asdict(result)
         except DeliveryError as exc:
             ec = dict(status='not_supported', ec25_ms_cm=None, ph=state.ph, message=str(exc))
+    return state, chemistry, ec
 
+
+def _tank_plan(
+    recipe,
+    products,
+    rules,
+    injection_ratio,
+    temperature_c,
+    available_tanks,
+    tank_capacities_litres,
+    litres,
+):
+    """The stock tank assignment, its single-product solubility and the declared equipment."""
     available_tanks, capacities, declared = declared_tanks(available_tanks, tank_capacities_litres)
     grouping = group_tanks(recipe['salts'], products, rules=rules)
     solubility = check_stock_solubility(
@@ -502,6 +447,212 @@ def summarize_batch(
             )
             for t in grouping.tanks
         ],
+    )
+    return tanks, grouping, solubility, available_tanks, capacities
+
+
+def _formulation_record(recipe, litres):
+    """The formulation section: the salts, the target rows and what stayed unmet."""
+    sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
+    return dict(
+        feasible=recipe['feasible'],
+        targets_met=all(
+            met(r['target'], r['final']) for r in recipe['rows'] if r['target'] is not None
+        ),
+        match_criterion=dict(
+            relative=RELATIVE_TOLERANCE, zero_target_mg_per_l=ZERO_TARGET_TOLERANCE_MG_PER_L
+        ),
+        salts=[
+            dict(
+                id=s['id'],
+                name=s['name'],
+                gramsPerLitre=s['gramsPerLitre'],
+                gramsPerBatch=s['gramsPerLitre'] * litres,
+            )
+            for s in recipe['salts']
+        ],
+        rows=[
+            dict(
+                symbol=r['symbol'],
+                target=r['target'],
+                final=r['final'],
+                deltaPct=r['deltaPct'],
+                **({} if r['target'] else {'source': sources.get(r['symbol'], [])}),
+            )
+            for r in recipe['rows']
+            if r['target'] is not None or r['final'] > 1e-6
+        ],
+        unmet=recipe['unmetTargets'],
+        incidental_review=[
+            r['symbol']
+            for r in recipe['incidentalContributions']
+            if r['assessment'] == 'requires_review'
+        ],
+        ion_balance=recipe['targetIonBalance'],
+        # The ammonium allowance (G23), shown with its basis, and
+        # total N as the sum of the three forms (D1, D2).
+        ammonium_allowance=recipe.get('ammoniumLimit'),
+        total_n=recipe.get('totalN'),
+    )
+
+
+def _assumptions(grouping, temperature_c):
+    """The assumptions every report states beside the result."""
+    return [
+        'Planning calculation, not a dosing instruction: measure EC and pH after mixing.',
+        'Product grades are the supplied records; confirm them against supplier certificates.',
+        'EC is the experimental speciation estimate (McCleskey 2012), not a measurement.',
+        'Tanks follow '
+        + grouping.source
+        + '; no equipment or small-dose separation waiver is applied. '
+        f'Each stock is compared with its own product solubility value at {temperature_c:g} '
+        '°C (basis and source temperature shown); a product without data is not checked '
+        'and no comparison approves a mixed stock.',
+        'A positive saturation index is a precipitation risk, not a predicted rate.',
+        'Closed carbon: the mixed tank does not exchange CO2 with air.',
+        'Chemistry at 25 °C only.',
+        'No real-mixture predictive accuracy is claimed: results are calculations checked '
+        'against reference models, and any accuracy claim needs measured evidence '
+        '(issue #41).',
+        'Meeting a nutrient target does not establish that nutrients remain dissolved or '
+        'available; the dissolved-target calculation is not supported, so dissolved species '
+        'and predicted precipitate are reported apart from the totals.',
+        '1 L of solution is taken as 1 kg of water.',
+    ]
+
+
+def _apply_stage_evidence(summary, workflow, stages):
+    """Make the stage evidence describe the same final recipe as the visible stage messages."""
+    # Stage evidence must describe the same final recipe as the visible
+    # stage messages. Keep alternative evaluations and the original
+    # workflow evidence unchanged.
+    volumetric = workflow.stages.get('volumetric_stocks')
+    if volumetric is not None:
+        summary['volumetric_stocks'] = deepcopy(volumetric.value)
+        if volumetric.status == 'blocked':
+            summary['status'] = 'blocked'
+    for requirement in summary['remedies'].get('requirements', []):
+        kind, _, name = requirement['id'].partition(':')
+        if kind == 'stage' and name in stages:
+            stage = stages[name]
+            requirement['status'] = stage['status']
+            requirement['evidence'] = dict(
+                error_code=stage['error_code'], message=stage['message']
+            )
+
+
+def _bind_identity(summary, canonical, recipe, state):
+    """Bind the summary to the canonical calculation it was drawn from."""
+    summary['calculation_identity'] = dict(
+        status='bound' if canonical is not None else 'legacy_unverified',
+        result_id=canonical.result_id if canonical is not None else None,
+        input_sha256=None,
+        source_sha256=None,
+        recipe_sha256=None,
+        state_sha256=None,
+    )
+    if canonical is not None:
+        from .canonical_result import _digest
+
+        snapshot = canonical.to_dict()
+        # The supplied inputs and product assays are saved with the result
+        # and bound by input_sha256 (Q27).
+        summary['supplied_inputs'] = snapshot['inputs']
+        summary['calculation_identity'].update(
+            input_sha256=_digest(snapshot['inputs']),
+            source_sha256=_digest(snapshot['sources']),
+            recipe_sha256=_digest(recipe),
+            state_sha256=_digest(state) if state is not None else None,
+        )
+
+
+def summarize_batch(
+    workflow,
+    products,
+    *,
+    title,
+    water_label,
+    injection_ratio=100,
+    rules=(),
+    temperature_c=25,
+    available_tanks=None,
+    tank_capacities_litres=None,
+    requested_ec_ms_cm=None,
+):
+    """Plain data for a grower report and batch sheet.
+
+    ``workflow`` is a ``plan_fertilizer_workflow`` result with a final
+    volume; ``products`` are the product records it was planned with
+    (they give the tank grouping its chemistry); ``rules`` are extra
+    ``compatibilityRule`` records. When a pH plan is selected its
+    refitted recipe, which counts the reagent's nutrients, is the recipe
+    to weigh. Each concentrate is compared with that product's own
+    solubility value (catalogue data first, then the historical table),
+    in the value's basis, and a product without data is not checked.
+
+    ``available_tanks`` and ``tank_capacities_litres`` declare the
+    equipment (D3). Undeclared, two tanks are assumed and the summary
+    says so (``available_tanks_declared`` false). Capacities are listed
+    in tank order, one per available tank; a tank that cannot hold its
+    stock volume is reported and blocks, and the recipe and equipment
+    are never changed to make it fit.
+    """
+    if requested_ec_ms_cm is not None and (
+        isinstance(requested_ec_ms_cm, bool)
+        or not isinstance(requested_ec_ms_cm, (int, float))
+        or not math.isfinite(requested_ec_ms_cm)
+        or requested_ec_ms_cm <= 0
+    ):
+        raise DeliveryError('invalid_value', 'requested_ec_ms_cm must be finite and positive')
+    canonical = workflow.canonical_result
+    if canonical is not None:
+        canonical.verify(workflow, products)
+    batch = workflow.stages.get('batch')
+    if batch is None or batch.status != 'calculated':
+        raise DeliveryError('missing_field', 'the workflow needs a final volume for a batch sheet')
+    litres = batch.value.final_volume.value
+    stages = {name: _stage(stage) for name, stage in workflow.stages.items()}
+    ph_stage = workflow.stages.get('ph_adjustment')
+    plan = ph_stage.value if ph_stage is not None else None
+    chosen = plan.selected if plan is not None else None
+    # Rejected-candidate diagnostics must never replace the weighed
+    # recipe state.
+    rejected = None
+    if plan is not None and chosen is None:
+        rejected = next(
+            (c for c in plan.candidates if c.target is not None and c.direction == plan.direction),
+            None,
+        )
+    if chosen is not None:
+        recipe = chosen.recommendation
+    elif plan is not None and plan.unadjusted_recommendation is not None:
+        recipe = plan.unadjusted_recommendation
+    else:
+        recipe = workflow.recommendation
+    # Report target misses and incidental contributions from the weighed
+    # recipe. Preserve blocks.
+    form = stages['formulation']
+    if form['status'] in ('calculated', 'requires_review'):
+        reason = (
+            '; '.join(filter(None, (missed_message(recipe), unreviewed_reason(recipe)))) or None
+        )
+        form['status'], form['message'] = (
+            ('requires_review', reason) if reason else ('calculated', None)
+        )
+
+    ph = _ph_record(workflow, ph_stage, plan, chosen)
+
+    state, chemistry, ec = _chemistry_and_ec(workflow, plan, chosen, rejected)
+
+    tanks, grouping, solubility, available_tanks, capacities = _tank_plan(
+        recipe,
+        products,
+        rules,
+        injection_ratio,
+        temperature_c,
+        available_tanks,
+        tank_capacities_litres,
+        litres,
     )
 
     warnings = list(recipe['warnings'])
@@ -645,7 +796,6 @@ def summarize_batch(
             )
             + '. No range was widened.'
         )
-    sources = {r['symbol']: r.get('source', []) for r in recipe['incidentalContributions']}
     summary = dict(
         remedies=deepcopy(workflow.remedies),
         title=title,
@@ -658,46 +808,7 @@ def summarize_batch(
         status=status,
         water=water,
         limits=limits,
-        formulation=dict(
-            feasible=recipe['feasible'],
-            targets_met=all(
-                met(r['target'], r['final']) for r in recipe['rows'] if r['target'] is not None
-            ),
-            match_criterion=dict(
-                relative=RELATIVE_TOLERANCE, zero_target_mg_per_l=ZERO_TARGET_TOLERANCE_MG_PER_L
-            ),
-            salts=[
-                dict(
-                    id=s['id'],
-                    name=s['name'],
-                    gramsPerLitre=s['gramsPerLitre'],
-                    gramsPerBatch=s['gramsPerLitre'] * litres,
-                )
-                for s in recipe['salts']
-            ],
-            rows=[
-                dict(
-                    symbol=r['symbol'],
-                    target=r['target'],
-                    final=r['final'],
-                    deltaPct=r['deltaPct'],
-                    **({} if r['target'] else {'source': sources.get(r['symbol'], [])}),
-                )
-                for r in recipe['rows']
-                if r['target'] is not None or r['final'] > 1e-6
-            ],
-            unmet=recipe['unmetTargets'],
-            incidental_review=[
-                r['symbol']
-                for r in recipe['incidentalContributions']
-                if r['assessment'] == 'requires_review'
-            ],
-            ion_balance=recipe['targetIonBalance'],
-            # The ammonium allowance (G23), shown with its basis, and
-            # total N as the sum of the three forms (D1, D2).
-            ammonium_allowance=recipe.get('ammoniumLimit'),
-            total_n=recipe.get('totalN'),
-        ),
+        formulation=_formulation_record(recipe, litres),
         ph=ph,
         chemistry=chemistry,
         ec=ec,
@@ -711,66 +822,11 @@ def summarize_batch(
         warnings=warnings,
         concentration_basis=concentration_basis,
         solubility=[dict(**asdict(r), note=SINGLE_SALT) for r in solubility],
-        assumptions=[
-            'Planning calculation, not a dosing instruction: measure EC and pH after mixing.',
-            'Product grades are the supplied records; confirm them against supplier certificates.',
-            'EC is the experimental speciation estimate (McCleskey 2012), not a measurement.',
-            'Tanks follow '
-            + grouping.source
-            + '; no equipment or small-dose separation waiver is applied. '
-            f'Each stock is compared with its own product solubility value at {temperature_c:g} '
-            '°C (basis and source temperature shown); a product without data is not checked '
-            'and no comparison approves a mixed stock.',
-            'A positive saturation index is a precipitation risk, not a predicted rate.',
-            'Closed carbon: the mixed tank does not exchange CO2 with air.',
-            'Chemistry at 25 °C only.',
-            'No real-mixture predictive accuracy is claimed: results are calculations checked '
-            'against reference models, and any accuracy claim needs measured evidence '
-            '(issue #41).',
-            'Meeting a nutrient target does not establish that nutrients remain dissolved or '
-            'available; the dissolved-target calculation is not supported, so dissolved species '
-            'and predicted precipitate are reported apart from the totals.',
-            '1 L of solution is taken as 1 kg of water.',
-        ],
+        assumptions=_assumptions(grouping, temperature_c),
     )
 
-    # Stage evidence must describe the same final recipe as the visible
-    # stage messages. Keep alternative evaluations and the original
-    # workflow evidence unchanged.
-    volumetric = workflow.stages.get('volumetric_stocks')
-    if volumetric is not None:
-        summary['volumetric_stocks'] = deepcopy(volumetric.value)
-        if volumetric.status == 'blocked':
-            summary['status'] = 'blocked'
-    for requirement in summary['remedies'].get('requirements', []):
-        kind, _, name = requirement['id'].partition(':')
-        if kind == 'stage' and name in stages:
-            stage = stages[name]
-            requirement['status'] = stage['status']
-            requirement['evidence'] = dict(
-                error_code=stage['error_code'], message=stage['message']
-            )
+    _apply_stage_evidence(summary, workflow, stages)
     summary['statuses'] = result_statuses(summary)
     summary['status_explanations'] = status_explanations(summary)
-    summary['calculation_identity'] = dict(
-        status='bound' if canonical is not None else 'legacy_unverified',
-        result_id=canonical.result_id if canonical is not None else None,
-        input_sha256=None,
-        source_sha256=None,
-        recipe_sha256=None,
-        state_sha256=None,
-    )
-    if canonical is not None:
-        from .canonical_result import _digest
-
-        snapshot = canonical.to_dict()
-        # The supplied inputs and product assays are saved with the result
-        # and bound by input_sha256 (Q27).
-        summary['supplied_inputs'] = snapshot['inputs']
-        summary['calculation_identity'].update(
-            input_sha256=_digest(snapshot['inputs']),
-            source_sha256=_digest(snapshot['sources']),
-            recipe_sha256=_digest(recipe),
-            state_sha256=_digest(state) if state is not None else None,
-        )
+    _bind_identity(summary, canonical, recipe, state)
     return seal_summary(summary)
