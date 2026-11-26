@@ -22,6 +22,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- `run_batch` and `BatchOptions` move from `flahax.batch_cli` to `flahax.batch_request`, the water reader to `flahax.water_input`, and `read_json` to `flahax.inputs`; `flahax batch`, `flahax mix` and `flahax.batch_cli.main` behave as before and no output differs. Code that imported those names from `batch_cli` imports them from the new modules.
 - `flahax.grower_report` is split into `batch_summary`, `report_html`, `result_wording` and `report_format`. `summarize_batch`, `render_report` and `render_batch_sheet` import from `flahax` as before and no report, sheet or summary differs. Other names move to the new modules; the reason and row helpers lose their underscore.
 - One number check, `flahax.inputs.number`, replaces nine private copies in the engine modules and three guards in `flahax batch`. Error codes are unchanged. A numeric string is no longer coerced to a number in delivery contracts, and the stock, pH and stability evidence checks raise `DeliveryError` (still a `ValueError`) for a malformed number.
 - Targets are validated by one function, `validate_targets`; `validate_profile` is only for water, maxima and assays and no longer takes the `total_n` flag that let an entry point keep the old rule (#316).
