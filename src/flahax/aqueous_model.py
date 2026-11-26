@@ -17,6 +17,7 @@ from functools import lru_cache
 from importlib.resources import files
 import json
 import math
+from operator import itemgetter, mul
 
 from .delivery_contracts import DeliveryError
 from .root_finding import shrink_bracket
@@ -33,6 +34,24 @@ def chemistry():
     (``data/chemistry_25c.json``), loaded once.
     """
     return json.loads(files('flahax').joinpath('data/chemistry_25c.json').read_text())
+
+
+_derived = [None, {}]
+
+
+def _memo(data, key, build):
+    """Derived values for one chemistry dataset. The packaged data is
+    loaded once; a substituted dataset (model-qualification tests)
+    starts a fresh store, so nothing derived from another dataset is
+    reused.
+    """
+    if _derived[0] is not data:
+        _derived[0], _derived[1] = data, {}
+    store = _derived[1]
+    value = store.get(key)
+    if value is None:
+        value = store[key] = build()
+    return value
 
 
 @dataclass(frozen=True)
@@ -73,6 +92,24 @@ def model_qualification(totals):
     metals, not every possible omitted reaction. Numerical convergence
     cannot remove a model-coverage limitation.
     """
+    ligands = ('Edta-4', 'Citrate-3', 'Dtp-5', 'Edd-4')
+    metals = ('Ca+2', 'Mg+2', 'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2')
+    present = tuple(totals.get(k, 0) > 0 for k in ligands + metals)
+    limitations, domain = _memo(
+        chemistry(), ('qualification', present), lambda: _qualification(present)
+    )
+    return tuple(dict(item) for item in limitations), dict(domain)
+
+
+def _qualification(present):
+    """The qualification for one pattern of positive ligands and metals
+    (it depends on nothing else); callers receive copies.
+    """
+    ligand_flags, metal_flags = present[:4], present[4:]
+    totals = {
+        **dict(zip(('Edta-4', 'Citrate-3', 'Dtp-5', 'Edd-4'), ligand_flags)),
+        **dict(zip(('Ca+2', 'Mg+2', 'Fe+2', 'Fe+3', 'Mn+2', 'Zn+2', 'Cu+2'), metal_flags)),
+    }
     data = chemistry()
     limitations = []
     for ligand in ('Edta-4', 'Citrate-3', 'Dtp-5', 'Edd-4'):
@@ -136,17 +173,26 @@ def linear(a, b):
     a = rows
     n = len(b)
     for k in range(n):
-        p = max(range(k, n), key=lambda i: abs(a[i][k]))
-        a[k], a[p] = a[p], a[k]
-        if a[k][k] == 0:
-            raise DeliveryError('nonconvergent', 'singular equilibrium Jacobian')
+        # First row with the largest pivot magnitude, as max() chooses.
+        p, best = k, abs(a[k][k])
         for i in range(k + 1, n):
-            f = a[i][k] / a[k][k]
-            for j in range(k + 1, n + 1):
-                a[i][j] -= f * a[k][j]
+            size = abs(a[i][k])
+            if size > best:
+                p, best = i, size
+        a[k], a[p] = a[p], a[k]
+        pivot_row = a[k]
+        pivot = pivot_row[k]
+        if pivot == 0:
+            raise DeliveryError('nonconvergent', 'singular equilibrium Jacobian')
+        tail = pivot_row[k + 1 :]
+        for i in range(k + 1, n):
+            row = a[i]
+            f = row[k] / pivot
+            row[k + 1 :] = [v - f * w for v, w in zip(row[k + 1 :], tail)]
     x = [0.0] * n
     for i in range(n - 1, -1, -1):
-        x[i] = (a[i][n] - sum(a[i][j] * x[j] for j in range(i + 1, n))) / a[i][i]
+        row = a[i]
+        x[i] = (row[n] - sum(map(mul, row[i + 1 : n], x[i + 1 : n]))) / row[i]
     if not all(map(math.isfinite, x)):
         raise DeliveryError('nonconvergent', 'nonfinite equilibrium linear solution')
     return x
@@ -257,6 +303,44 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, sta
     )
 
 
+def _phase_table():
+    """Pinned phases by name (read-only)."""
+    data = chemistry()
+    return _memo(data, 'phases', lambda: {r['name']: r for r in data['phases']})
+
+
+def _single(j):
+    return lambda x: (x[j],)
+
+
+def _basis(bases):
+    """Reaction records and sparse stoichiometry for one ordered
+    component set; derived data only, shared between solves and never
+    modified.
+    """
+    data = chemistry()
+    return _memo(data, ('basis', bases), lambda: _build_basis(bases, data))
+
+
+def _build_basis(bases, data):
+    permitted = frozenset(bases) | {'H+', 'H2O'}
+    records = [r for r in data['aqueous'] if r['name'] != 'H2O' and set(r['powers']) <= permitted]
+    stoich = [[r['powers'].get(b, 0.0) for b in bases] for r in records]
+    # Each species involves few components; iterate only its non-zero
+    # stoichiometry.
+    sparse = [[(j, v) for j, v in enumerate(s) if v] for s in stoich]
+    getters = []
+    for nz in sparse:
+        if not nz:
+            getters.append(lambda x: ())
+        elif len(nz) == 1:
+            getters.append(_single(nz[0][0]))
+        else:
+            getters.append(itemgetter(*[j for j, _ in nz]))
+    coefficients = [tuple(v for _, v in nz) for nz in sparse]
+    return permitted, records, stoich, sparse, getters, coefficients
+
+
 def _solve(
     totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, presolve=False, start=None
 ):
@@ -280,19 +364,19 @@ def _solve(
     totals = {n: totals[n] for n in sorted(totals) if totals[n] > 0}
     bases = list(totals)
     n = len(bases)
-    permitted = set(bases) | {'H+', 'H2O'}
-    records = [
-        r for r in chemistry()['aqueous'] if r['name'] != 'H2O' and set(r['powers']) <= permitted
-    ]
-    all_phases = {r['name']: r for r in chemistry()['phases']}
+    permitted, records, stoich, sparse, getters, coefficients = _basis(tuple(bases))
+    all_phases = _phase_table()
     phases = [chemistry()['aliases'].get(p, p) for p in phases]
     if any(p not in all_phases for p in phases):
         raise DeliveryError('unknown_phase', 'phase not in the pinned reaction set')
     candidates = {p: all_phases[p] for p in phases if set(all_phases[p]['powers']) <= permitted}
-    stoich = [[r['powers'].get(b, 0.0) for b in bases] for r in records]
-    # Each species involves few components; iterate only its non-zero
-    # stoichiometry.
-    sparse = [[(j, v) for j, v in enumerate(s) if v] for s in stoich]
+    beta = [r['beta'] for r in records]
+    h_power = [r['powers'].get('H+', 0) for r in records]
+    water_power = [r['powers'].get('H2O', 0) for r in records]
+    charges = [r['charge'] for r in records]
+    total_list = [totals[b] for b in bases]
+    # Phase stoichiometry as vectors over the Newton basis, built once.
+    phase_vectors = {}
     strength = (
         ionic_strength
         if ionic_strength is not None
@@ -321,36 +405,49 @@ def _solve(
         root = math.sqrt(strength)
         return -0.509 * z * z * (root / (1 + root) - 0.3 * strength) if z else 0.1 * strength
 
+    def phase_vector(p):
+        vector = phase_vectors.get(p)
+        if vector is None:
+            powers = all_phases[p]['powers']
+            vector = phase_vectors[p] = tuple(powers.get(b, 0.0) for b in bases)
+        return vector
+
     for outer in range(100):
+        log_water = math.log10(water)
+        gammas = {z: lgamma(z) for z in set(charges)}
         offsets = [
-            r['beta']
-            - ph * r['powers'].get('H+', 0)
-            + math.log10(water) * r['powers'].get('H2O', 0)
-            - lgamma(r['charge'])
-            for r in records
+            b - ph * h + log_water * w - gammas[z]
+            for b, h, w, z in zip(beta, h_power, water_power, charges)
         ]
 
         def evaluate(x, jacobian=False):
+            # 10 ** clamp(e, -300, 100); a NaN exponent clamps to 100 as
+            # max(-300, min(100, e)) does.
             amounts = [
-                10.0 ** max(-300, min(100, o + sum(v * x[j] for j, v in nz)))
-                for o, nz in zip(offsets, sparse)
+                10.0 ** (-300 if e < -300 else (e if e <= 100 else 100))
+                for e in [
+                    o + sum(map(mul, vs, get(x)))
+                    for o, vs, get in zip(offsets, coefficients, getters)
+                ]
             ]
             sums = [0.0] * n
             for a, nz in zip(amounts, sparse):
                 for j, v in nz:
                     sums[j] += a * v
             for k, p in enumerate(active):
-                for j, b in enumerate(bases):
-                    sums[j] += x[n + k] * all_phases[p]['powers'].get(b, 0.0)
-            if any(v <= 0 for v in sums):
-                return None
-            residual = [math.log10(v / totals[b]) for b, v in zip(bases, sums)]
+                vector = phase_vector(p)
+                for j in range(n):
+                    sums[j] += x[n + k] * vector[j]
+            for v in sums:
+                if v <= 0:
+                    return None
+            residual = [math.log10(v / t) for v, t in zip(sums, total_list)]
             for p in active:
                 r = all_phases[p]
                 residual.append(
                     sum(r['powers'].get(b, 0) * x[j] for j, b in enumerate(bases))
                     - ph * r['powers'].get('H+', 0)
-                    + math.log10(water) * r['powers'].get('H2O', 0)
+                    + log_water * r['powers'].get('H2O', 0)
                     - r['beta']
                 )
             if not jacobian:
@@ -365,12 +462,10 @@ def _solve(
             matrix = []
             for j, b in enumerate(bases):
                 row = [value / sums[j] for value in moments[j]]
-                row += [all_phases[p]['powers'].get(b, 0.0) / (sums[j] * LN10) for p in active]
+                row += [phase_vector(p)[j] / (sums[j] * LN10) for p in active]
                 matrix.append(row)
             for p in active:
-                matrix.append(
-                    [all_phases[p]['powers'].get(b, 0.0) for b in bases] + [0.0] * len(active)
-                )
+                matrix.append(list(phase_vector(p)) + [0.0] * len(active))
             return residual, amounts, matrix
 
         for phase_step in range(80):
