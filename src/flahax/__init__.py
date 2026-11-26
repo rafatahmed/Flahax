@@ -159,147 +159,198 @@ __all__ = [
 ]
 __version__ = '0.7.1.dev0'
 
-from .ratio_recipe import plan_ratio_recipe
-from .ratio_search import search_ratio_recipe
+# Public names load on first use (PEP 562): `import flahax` stays cheap and each
+# name imports only the module that defines it (#335).
+_LAZY = {
+    'plan_ratio_recipe': 'ratio_recipe',
+    'search_ratio_recipe': 'ratio_search',
+    'InputError': 'composition',
+    'CalciumSulfateStruviteCompetition': 'competition',
+    'CarbonateCompetition': 'competition',
+    'calcium_sulfate_struvite_competition': 'competition',
+    'carbonate_competition': 'competition',
+    'AmmoniaSpeciation': 'ammonia',
+    'ammonia_speciation': 'ammonia',
+    'DeliveryError': 'delivery_contracts',
+    'make_audit_record': 'delivery_contracts',
+    'validate_delivery_request': 'delivery_contracts',
+    'FertilizerEquilibrium': 'fertilizer_equilibrium',
+    'FertilizerTotals': 'fertilizer_equilibrium',
+    'NitricAcidTargetPlan': 'fertilizer_equilibrium',
+    'plan_nitric_acid_target': 'fertilizer_equilibrium',
+    'solve_fertilizer_equilibrium': 'fertilizer_equilibrium',
+    'DeliveryPlan': 'delivery_plan',
+    'compose_delivery_plan': 'delivery_plan',
+    'delivery_report': 'delivery_plan',
+    'transition_plan': 'delivery_plan',
+    'SolventBasis': 'delivery_quantities',
+    'DurationMinutes': 'delivery_quantities',
+    'FinalSolutionRecipe': 'delivery_quantities',
+    'FlowLitresPerMinute': 'delivery_quantities',
+    'GramsPerLitre': 'delivery_quantities',
+    'InjectionRatio': 'delivery_quantities',
+    'MassGrams': 'delivery_quantities',
+    'MilliEquivalentsPerLitre': 'delivery_quantities',
+    'MilligramsPerLitre': 'delivery_quantities',
+    'TemperatureCelsius': 'delivery_quantities',
+    'VolumeLitres': 'delivery_quantities',
+    'elemental_contribution': 'delivery_quantities',
+    'final_solution_recipe': 'delivery_quantities',
+    'rescore_with_reagent': 'delivery_quantities',
+    'rescore_weighed_recipe': 'delivery_quantities',
+    'gap_for': 'engine',
+    'load_library': 'engine',
+    'recommend': 'engine',
+    'solve_weights': 'engine',
+    'CalciteCo2Equilibrium': 'equilibrium',
+    'GypsumEquilibrium': 'equilibrium',
+    'calcite_co2_reference_values': 'equilibrium',
+    'davies_gamma': 'equilibrium',
+    'gypsum_reference_values': 'equilibrium',
+    'solve_calcite_co2_equilibrium': 'equilibrium',
+    'solve_gypsum_equilibrium': 'equilibrium',
+    'PhPlan': 'ph_planning',
+    'alkalinity_meq_per_litre': 'ph_planning',
+    'plan_ph': 'ph_planning',
+    'PumpCommand': 'pump_planning',
+    'plan_pump_command': 'pump_planning',
+    'PhaseAllocation': 'phase_allocation',
+    'phase_allocation': 'phase_allocation',
+    'OrthophosphateSpeciation': 'phosphate',
+    'orthophosphate_speciation': 'phosphate',
+    'CalciumMagnesiumPhosphateSpeciation': 'phosphate_complexes',
+    'calcium_magnesium_phosphate_speciation': 'phosphate_complexes',
+    'hydroxyapatite_hpo4_activity_at_equilibrium': 'phosphate_complexes',
+    'StockPlan': 'stock_planning',
+    'StockSaltDose': 'stock_planning',
+    'StockTank': 'stock_planning',
+    'StockTankPlan': 'stock_planning',
+    'plan_stocks': 'stock_planning',
+    'struvite_saturation_index': 'struvite',
+    'ChargeBalancedStruviteMixture': 'struvite_mixture',
+    'StruviteMixtureSpeciation': 'struvite_mixture',
+    'solve_charge_balanced_struvite_mixture': 'struvite_mixture',
+    'struvite_mixture_speciation': 'struvite_mixture',
+    'MineralPhase': 'thermodynamics',
+    'phase_saturation_index': 'thermodynamics',
+    'ChMicroProductDose': 'trace_equilibrium',
+    'ChMicroTotals': 'trace_equilibrium',
+    'TraceEquilibrium': 'trace_equilibrium',
+    'solve_ch_micro_equilibrium': 'trace_equilibrium',
+    'ProductChemistry': 'catalogue_chemistry',
+    'assert_catalogue_coverage': 'catalogue_chemistry',
+    'chemistry_for_product': 'catalogue_chemistry',
+    'ProductAnalyticalTotals': 'product_conversion',
+    'material_inventory': 'product_conversion',
+    'component_nutrient_masses': 'product_conversion',
+    'convert_catalogue_product_dose': 'product_conversion',
+    'convert_product_dose': 'product_conversion',
+    'solve_catalogue_product_doses': 'product_conversion',
+    'catalogue_dose_totals': 'product_conversion',
+    'plan_catalogue_nitric_target': 'product_conversion',
+    'material_chemistry': 'material_chemistry',
+    'AqueousResult': 'aqueous_model',
+    'AcidResult': 'aqueous_model',
+    'MixedFertilizerEquilibrium': 'mixed_equilibrium',
+    'solve_mixed_fertilizer_equilibrium': 'mixed_equilibrium',
+    'EquilibriumPhPlan': 'equilibrium_delivery',
+    'plan_equilibrium_delivery': 'equilibrium_delivery',
+    'calculate_equilibrium_ph': 'calculated_ph',
+    'FertilizerWorkflow': 'fertilizer_workflow',
+    'WorkflowStage': 'fertilizer_workflow',
+    'plan_fertilizer_workflow': 'fertilizer_workflow',
+    'AcidCandidate': 'acid_selection',
+    'AcidSelection': 'acid_selection',
+    'plan_acid_options': 'acid_selection',
+    'PhAdjustmentPlan': 'ph_adjustment',
+    'PhCandidate': 'ph_adjustment',
+    'catalogue_ph_reagents': 'ph_adjustment',
+    'plan_coupled_ph': 'ph_adjustment',
+    'reagent_dose': 'ph_adjustment',
+    'ConcentrateTank': 'tank_grouping',
+    'TankGrouping': 'tank_grouping',
+    'TankProduct': 'tank_grouping',
+    'default_compatibility_rules': 'tank_grouping',
+    'group_tanks': 'tank_grouping',
+    'render_batch_sheet': 'report_html',
+    'render_report': 'report_html',
+    'summarize_batch': 'batch_summary',
+    'ECPrediction': 'conductivity',
+    'ECDeliveryPlan': 'conductivity',
+    'water_ec25': 'conductivity',
+    'ec_recipe_key': 'conductivity',
+    'plan_ec_delivery': 'conductivity',
+    'estimate_manufacturer_ec': 'calculated_ec',
+    'size_injection_requirements': 'injector_sizing',
+    'BalancedWaterAnalysis': 'measured_water',
+    'balance_water_analysis': 'measured_water',
+    'carbonate_alkalinity': 'measured_water',
+    'total_alkalinity': 'measured_water',
+    'IrrigationECResult': 'irrigation_ec',
+    'DeclaredPureWater': 'irrigation_ec',
+    'calculate_irrigation_ec': 'irrigation_ec',
+    'calculate_irrigation_ec_from_plan': 'irrigation_ec',
+    'calculate_ec_from_totals': 'irrigation_ec',
+    'compare_measured_ec': 'irrigation_ec',
+    'assay_charge_residual': 'irrigation_ec',
+    'calculate_irrigation_ec_band': 'irrigation_ec',
+    'DocumentReference': 'materials',
+    'Grade': 'materials',
+    'Lot': 'materials',
+    'ResolvedMaterial': 'materials',
+    'make_grade': 'materials',
+    'make_lot': 'materials',
+    'resolve_material': 'materials',
+    'nutrient_band': 'materials',
+    'load_identities': 'materials',
+    'identity_for_product': 'materials',
+    'JointSource': 'joint_problem',
+    'JointProblem': 'joint_problem',
+    'make_joint_problem': 'ph_adjustment',
+    'solve_joint_problem': 'joint_solver',
+    'CanonicalResult': 'canonical_result',
+    'accept_result': 'result_acceptance',
+    'verify_acceptance': 'result_acceptance',
+    'save_result': 'result_acceptance',
+    'load_result': 'result_acceptance',
+}
 
-from .composition import InputError
-from .competition import (
-    CalciumSulfateStruviteCompetition,
-    CarbonateCompetition,
-    calcium_sulfate_struvite_competition,
-    carbonate_competition,
-)
-from .ammonia import AmmoniaSpeciation, ammonia_speciation
-from .delivery_contracts import DeliveryError, make_audit_record, validate_delivery_request
-from .fertilizer_equilibrium import (
-    FertilizerEquilibrium,
-    FertilizerTotals,
-    NitricAcidTargetPlan,
-    plan_nitric_acid_target,
-    solve_fertilizer_equilibrium,
-)
-from .delivery_plan import DeliveryPlan, compose_delivery_plan, delivery_report, transition_plan
-from .delivery_quantities import (
-    SolventBasis,
-    DurationMinutes,
-    FinalSolutionRecipe,
-    FlowLitresPerMinute,
-    GramsPerLitre,
-    InjectionRatio,
-    MassGrams,
-    MilliEquivalentsPerLitre,
-    MilligramsPerLitre,
-    TemperatureCelsius,
-    VolumeLitres,
-    elemental_contribution,
-    final_solution_recipe,
-    rescore_with_reagent,
-    rescore_weighed_recipe,
-)
-from .engine import gap_for, load_library, recommend, solve_weights
-from .equilibrium import (
-    CalciteCo2Equilibrium,
-    GypsumEquilibrium,
-    calcite_co2_reference_values,
-    davies_gamma,
-    gypsum_reference_values,
-    solve_calcite_co2_equilibrium,
-    solve_gypsum_equilibrium,
-)
-from .ph_planning import PhPlan, alkalinity_meq_per_litre, plan_ph
-from .pump_planning import PumpCommand, plan_pump_command
-from .phase_allocation import PhaseAllocation, phase_allocation
-from .phosphate import OrthophosphateSpeciation, orthophosphate_speciation
-from .phosphate_complexes import (
-    CalciumMagnesiumPhosphateSpeciation,
-    calcium_magnesium_phosphate_speciation,
-    hydroxyapatite_hpo4_activity_at_equilibrium,
-)
-from .stock_planning import StockPlan, StockSaltDose, StockTank, StockTankPlan, plan_stocks
-from .struvite import struvite_saturation_index
-from .struvite_mixture import (
-    ChargeBalancedStruviteMixture,
-    StruviteMixtureSpeciation,
-    solve_charge_balanced_struvite_mixture,
-    struvite_mixture_speciation,
-)
-from .thermodynamics import MineralPhase, phase_saturation_index
-from .trace_equilibrium import (
-    ChMicroProductDose,
-    ChMicroTotals,
-    TraceEquilibrium,
-    solve_ch_micro_equilibrium,
-)
-from .catalogue_chemistry import ProductChemistry, assert_catalogue_coverage, chemistry_for_product
-from .product_conversion import (
-    ProductAnalyticalTotals,
-    material_inventory,
-    component_nutrient_masses,
-    convert_catalogue_product_dose,
-    convert_product_dose,
-    solve_catalogue_product_doses,
-    catalogue_dose_totals,
-    plan_catalogue_nitric_target,
-)
-from .material_chemistry import material_chemistry
-from .aqueous_model import AqueousResult, AcidResult
-from .mixed_equilibrium import MixedFertilizerEquilibrium, solve_mixed_fertilizer_equilibrium
-from .equilibrium_delivery import EquilibriumPhPlan, plan_equilibrium_delivery
-from .calculated_ph import calculate_equilibrium_ph
-from .fertilizer_workflow import FertilizerWorkflow, WorkflowStage, plan_fertilizer_workflow
-from .acid_selection import AcidCandidate, AcidSelection, plan_acid_options
-from .ph_adjustment import (
-    PhAdjustmentPlan,
-    PhCandidate,
-    catalogue_ph_reagents,
-    plan_coupled_ph,
-    reagent_dose,
-)
-from .tank_grouping import (
-    ConcentrateTank,
-    TankGrouping,
-    TankProduct,
-    default_compatibility_rules,
-    group_tanks,
-)
-from .report_html import render_batch_sheet, render_report
-from .batch_summary import summarize_batch
-from .conductivity import ECPrediction, ECDeliveryPlan, water_ec25, ec_recipe_key, plan_ec_delivery
-from .calculated_ec import estimate_manufacturer_ec
-from .injector_sizing import size_injection_requirements
-from .measured_water import (
-    BalancedWaterAnalysis,
-    balance_water_analysis,
-    carbonate_alkalinity,
-    total_alkalinity,
-)
-from .irrigation_ec import (
-    IrrigationECResult,
-    DeclaredPureWater,
-    calculate_irrigation_ec,
-    calculate_irrigation_ec_from_plan,
-    calculate_ec_from_totals,
-    compare_measured_ec,
-    assay_charge_residual,
-    calculate_irrigation_ec_band,
-)
-from .materials import (
-    DocumentReference,
-    Grade,
-    Lot,
-    ResolvedMaterial,
-    make_grade,
-    make_lot,
-    resolve_material,
-    nutrient_band,
-    load_identities,
-    identity_for_product,
-)
 
-from .joint_problem import JointSource, JointProblem
-from .ph_adjustment import make_joint_problem
+def __getattr__(name):
+    import importlib
+    import importlib.util
 
-from .joint_solver import solve_joint_problem
+    module = _LAZY.get(name)
+    if module is not None:
+        value = getattr(importlib.import_module(f".{module}", __name__), name)
+    elif importlib.util.find_spec(f".{name}", __name__) is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    else:
+        value = importlib.import_module(f".{name}", __name__)
+    globals()[name] = value
+    return value
 
-from .canonical_result import CanonicalResult
-from .result_acceptance import accept_result, verify_acceptance, save_result, load_result
+
+def __dir__():
+    return sorted({*globals(), *_LAZY})
+
+
+def _install_guard():
+    import sys
+    from types import ModuleType
+
+    # Two public functions share their submodule's name. Importing the
+    # submodule must not replace the function on the package, whichever
+    # import happens first.
+    shadowed = frozenset(name for name, module in _LAZY.items() if name == module)
+
+    class _Package(ModuleType):
+        def __setattr__(self, name, value):
+            if name in shadowed and isinstance(value, ModuleType):
+                return
+            super().__setattr__(name, value)
+
+    sys.modules[__name__].__class__ = _Package
+
+
+_install_guard()
