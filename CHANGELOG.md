@@ -22,6 +22,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- One number check, `flahax.inputs.number`, replaces nine private copies in the engine modules and three guards in `flahax batch`. Error codes are unchanged. A numeric string is no longer coerced to a number in delivery contracts, and the stock, pH and stability evidence checks raise `DeliveryError` (still a `ValueError`) for a malformed number.
 - Targets are validated by one function, `validate_targets`; `validate_profile` is only for water, maxima and assays and no longer takes the `total_n` flag that let an entry point keep the old rule (#316).
 - A total-nitrogen target (`N`) now reaches the workflow and the batch command; it was accepted by `recommend` only (#311).
 - `tools/check_numeric_review.py` reports `fully_classified` and `scientifically_qualified` as separate outcomes and no longer prints one `valid` flag, so a complete audit cannot be read as scientific qualification (#309).
