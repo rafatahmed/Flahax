@@ -9,7 +9,8 @@ absent or zero N_NH4 target is no requirement and no maximum (D1).
 
 import unittest
 
-from flahax.engine import InputError, ammonium_allowance_preset
+from flahax.engine import InputError
+from flahax.nitrogen import ammonium_allowance_preset
 
 from flahax import load_library, recommend
 from tests.catalogue_history import historical_catalogue

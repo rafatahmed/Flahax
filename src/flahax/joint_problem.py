@@ -16,7 +16,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from .aqueous_model import chemistry, solve
-from .composition import NITROGEN_FORMS, validate_profile, validate_targets
+from .composition import validate_profile, validate_targets
+from .nitrogen import NITROGEN_FORMS
 from .delivery_contracts import DeliveryError
 from .inputs import number
 from .engine import score

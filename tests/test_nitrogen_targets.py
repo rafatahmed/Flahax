@@ -19,8 +19,9 @@ from flahax import (
     solve_weights,
     summarize_batch,
 )
-from flahax.composition import fitted_targets, nitrogen_rows, theoretical_assay
-from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION, ammonium_allowance_preset
+from flahax.composition import theoretical_assay
+from flahax.nitrogen import fitted_targets, nitrogen_rows
+from flahax.nitrogen import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION, ammonium_allowance_preset
 from flahax.result_wording import nitrogen_notes, nitrogen_paragraphs
 from flahax.report_format import number
 from flahax.report_html import render_batch_sheet, render_report

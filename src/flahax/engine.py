@@ -27,15 +27,18 @@ from .composition import (
     InputError,
     assay_conflict,
     assay_drift,
-    fitted_targets,
     imbalance_note,
     is_carbonate,
-    total_nitrogen,
-    target_total_nitrogen,
-    NITROGEN_FORMS,
     target_ion_balance,
     validate_profile,
     validate_targets,
+)
+from .nitrogen import (
+    NITROGEN_FORMS,
+    ammonium_allowance,
+    fitted_targets,
+    total_n_report,
+    total_nitrogen,
 )
 from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
@@ -75,14 +78,6 @@ CEILING_TOLERANCE = 1e-9
 PH_REAGENT = "ph_reagent"
 # Relative aim below a stated maximum (1 ppm of the limit).
 CEILING_MARGIN = 1e-6
-# Ammonium allowance (G23): when a formula declares no NH4-N requirement
-# (absent or 0), incidental NH4-N may reach min(10% of total target N,
-# 1.5 mmol/L NH4 = 21.01 mg/L N). Dutch soilless practice: NH4 at 5-15%
-# of total N with at most 1-1.5 mmol/L (Van der Lugt et al. 2016
-# handbook, after De Kreij, Voogt et al.).
-AMMONIUM_FRACTION = 0.10
-AMMONIUM_CAP_MG_PER_L = 1.5 * 14.0067
-AMMONIUM_BASIS = "Dutch soilless practice (De Kreij, Voogt et al.)"
 
 
 def load_library() -> dict:
@@ -734,52 +729,6 @@ def solve_weights(
     return solved
 
 
-def ammonium_allowance(targets: dict, maxima: dict, fraction: float | None) -> dict | None:
-    """The ammonium allowance (G23) for fitted targets, added to maxima
-    as N_NH4.
-
-    It applies when the targets have no NH4-N requirement and no N_NH4
-    maximum is stated: min(fraction x total target N,
-    AMMONIUM_CAP_MG_PER_L). None adds no maximum.
-    """
-    if fraction is None:
-        return None
-    if (
-        isinstance(fraction, bool)
-        or not isinstance(fraction, (int, float))
-        or not 0 <= fraction <= 1
-    ):
-        raise InputError("max_ammonium_fraction must be a number in [0, 1]")
-    total_n = target_total_nitrogen(targets)
-    # A positive N_NH4 target keeps its own row; absent or 0 gets the
-    # allowance (G23).
-    if total_n <= 0 or "N_NH4" in targets or "N_NH4" in maxima:
-        return None
-    limit = min(fraction * total_n, AMMONIUM_CAP_MG_PER_L)
-    maxima["N_NH4"] = limit
-    return {
-        "mgPerL": limit,
-        "fractionOfTotalN": fraction,
-        "absoluteCapMgPerL": AMMONIUM_CAP_MG_PER_L,
-        "basis": AMMONIUM_BASIS,
-    }
-
-
-def ammonium_allowance_preset(targets: dict, fraction: float = AMMONIUM_FRACTION) -> dict | None:
-    """The optional ammonium allowance preset for ``targets``, as a
-    disclosed record, without applying it.
-
-    Returns the same record ``ammoniumLimit`` carries (mgPerL,
-    fractionOfTotalN, absoluteCapMgPerL, basis), or None when the
-    targets already state NH4-N or have no nitrogen. To apply it, pass
-    ``max_ammonium_fraction=fraction`` to ``recommend`` or declare
-    ``maximum_concentrations={'N_NH4': record['mgPerL']}``.
-    """
-    return ammonium_allowance(
-        fitted_targets(validate_targets(dict(targets), "targets")), {}, fraction
-    )
-
-
 def _chosen(salts: list[dict], grams: list[float]) -> list[dict]:
     chosen = []
     for salt, gram in zip(salts, grams):
@@ -1245,33 +1194,6 @@ def _provenance(record: dict) -> dict:
         "sourceStatus": "declared_unattributed",
         "assumptionStatus": "declared_composition_not_independently_verified",
         "atomicMassConvention": ATOMIC_CONVENTION,
-    }
-
-
-def total_n_report(rows: list[dict], targets: dict) -> dict:
-    """Total N as the sum of the three forms in the final rows (water,
-    products and any reagent), against the declared total or the sum of
-    the declared forms (D1, D2). The target is None when neither a form
-    nor a total is declared. fitted is True when the total is its own
-    row; overlapForms then lists the forms scored beside it (the urea
-    safeguard's zero is not an overlap).
-    """
-    declared = "N" in targets or any(form in targets for form in NITROGEN_FORMS)
-    target = target_total_nitrogen(targets) if declared else None
-    final = total_nitrogen({row["symbol"]: row["final"] for row in rows})
-    fitted = "N" in targets
-    return {
-        "target": target,
-        "final": final,
-        "deltaPct": 100.0 * (final - target) / target if target else None,
-        "unit": "mg/L as N",
-        "forms": list(NITROGEN_FORMS),
-        "fitted": fitted,
-        "overlapForms": [
-            form
-            for form in NITROGEN_FORMS
-            if fitted and form in targets and (form != "N_UREA" or targets[form] > 0)
-        ],
     }
 
 
