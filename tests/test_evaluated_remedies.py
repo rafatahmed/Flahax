@@ -22,6 +22,7 @@ from flahax import (
     StockTank,
 )
 from flahax.delivery_contracts import DeliveryError
+from flahax import evaluated_remedies
 from flahax.evaluated_remedies import (
     _candidate_score,
     _joint_start_retry,
@@ -71,6 +72,25 @@ class EvaluatedRemediesTests(unittest.TestCase):
         self.assertTrue(matched.recommendation['feasible'])
         self.assertEqual(matched.remedies['evaluations'], 0)
         self.assertEqual(matched.remedies['options'], [])
+
+    def test_each_scenario_runs_through_the_planner_that_is_passed_in(self):
+        requests = []
+        real = evaluated_remedies.evaluate_remedies
+
+        def spy_plan(**request):
+            requests.append(request)
+            return plan_fertilizer_workflow(**request)
+
+        def with_spy(*args, plan, **kwargs):
+            self.assertIs(plan, plan_fertilizer_workflow)  # the workflow passes itself
+            return real(*args, plan=spy_plan, **kwargs)
+
+        option = available_product_search([product('Ca', Ca=10), product('Mg', Mg=10)])
+        with patch('flahax.fertilizer_workflow.evaluate_remedies', with_spy):
+            result = self.run_plan([option])
+        self.assertEqual(result.remedies['evaluations'], 1)
+        self.assertEqual(len(requests), 1)
+        self.assertEqual({s['id'] for s in requests[0]['salts']}, {'K', 'Ca', 'Mg'})
 
     def test_multi_product_bundle_is_evaluated_without_adoption(self):
         option = catalogue([product('Ca', Ca=10), product('Mg', Mg=10)])
