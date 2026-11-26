@@ -18,20 +18,11 @@ import json
 import math
 
 from .delivery_contracts import DeliveryError
+from .inputs import number
 from .stock_planning import StockPlan
 from .delivery_quantities import VolumeLitres
 from .pump_planning import plan_pump_command
 from .engine import load_library
-
-
-def _number(value, name, *, positive=False):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-        raise DeliveryError('invalid_value', f'{name} must be a finite number')
-    if value < 0 or (positive and value == 0):
-        raise DeliveryError(
-            'out_of_range', f'{name} must be nonnegative (positive where required)'
-        )
-    return float(value)
 
 
 def water_ec25(*, ec_ms_cm=None, tds_ppm=None, tds_factor=None):
@@ -47,9 +38,9 @@ def water_ec25(*, ec_ms_cm=None, tds_ppm=None, tds_factor=None):
     if ec_ms_cm is not None:
         if tds_factor is not None:
             raise DeliveryError('ambiguous_ec_input', 'TDS factor applies only to TDS input')
-        return _number(ec_ms_cm, 'water EC mS/cm')
-    factor = _number(tds_factor, 'explicit meter TDS factor', positive=True)
-    return _number(_number(tds_ppm, 'meter TDS ppm') / factor / 1000, 'converted EC')
+        return number(ec_ms_cm, 'water EC mS/cm')
+    factor = number(tds_factor, 'explicit meter TDS factor', positive=True)
+    return number(number(tds_ppm, 'meter TDS ppm') / factor / 1000, 'converted EC')
 
 
 def _recipe(stocks, channel):
@@ -86,7 +77,7 @@ def ec_recipe_key(stocks, channel='irrigation', *, reagent_doses_g_per_l=None):
         not isinstance(k, str) or not k.strip() for k in reagents
     ):
         raise DeliveryError('invalid_type', 'reagent doses must map nonempty record IDs to g/L')
-    reagents = {key: _number(value, 'reagent g/L') for key, value in reagents.items()}
+    reagents = {key: number(value, 'reagent g/L') for key, value in reagents.items()}
     payload = dict(
         recipe=_recipe(stocks, channel),
         catalogue=load_library()['salts'],
@@ -187,9 +178,9 @@ def _predict(profile, water, strength, key, channel, source_id):
     for point in points:
         if not isinstance(point, dict):
             raise DeliveryError('invalid_ec_profile', 'points must be objects')
-        x = _number(point.get('water_ec_ms_cm'), 'calibration water EC')
-        y = _number(point.get('strength'), 'calibration strength')
-        ec = _number(point.get('ec_ms_cm'), 'calibration total EC')
+        x = number(point.get('water_ec_ms_cm'), 'calibration water EC')
+        y = number(point.get('strength'), 'calibration strength')
+        ec = number(point.get('ec_ms_cm'), 'calibration total EC')
         if (x, y) in grid:
             raise DeliveryError('invalid_ec_profile', 'duplicate calibration point')
         grid[x, y] = ec
@@ -204,7 +195,7 @@ def _predict(profile, water, strength, key, channel, source_id):
     upper = grid[x0, y1] * (1 - tx) + grid[x1, y1] * tx
     uncertainty = profile.get('validated_max_error_ms_cm')
     if uncertainty is not None:
-        uncertainty = _number(uncertainty, 'validated maximum EC error')
+        uncertainty = number(uncertainty, 'validated maximum EC error')
     try:
         digest = hashlib.sha256(
             json.dumps(profile, sort_keys=True, allow_nan=False).encode()

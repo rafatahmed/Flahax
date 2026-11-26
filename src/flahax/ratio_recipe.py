@@ -6,14 +6,15 @@
 pH reagents.
 """
 
-import math
-
 from .aqueous_model import solve
 from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
+from .inputs import number
 from .root_finding import shrink_bracket
 from .saturation_policy import assess_saturation
 from .ratio_verification import verification_options, verify_rounded_recipe
+
+RATIO_INPUT = "invalid_ratio_input"
 
 NUTRIENTS = ("K", "Ca", "Mg", "NO3", "P", "SO4")
 BASIS = ("K+", "Ca+2", "Mg+2", "NO3-", "PO4-3", "SO4-2")
@@ -30,18 +31,10 @@ SOURCES = (
 )
 
 
-def _number(value, name, *, zero=False):
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise DeliveryError("invalid_ratio_input", f"{name} must be numeric")
-    if not math.isfinite(value) or value < 0 or (value == 0 and not zero):
-        raise DeliveryError("invalid_ratio_input", f"{name} must be finite and positive")
-    return float(value)
-
-
 def _shares(values, name):
     if not isinstance(values, (list, tuple)) or len(values) != 3:
         raise DeliveryError("invalid_ratio_input", f"{name} requires three shares")
-    values = [_number(v, name, zero=True) for v in values]
+    values = [number(v, name, minimum=0.0, code=RATIO_INPUT) for v in values]
     largest = max(values)
     if largest == 0:
         raise DeliveryError("invalid_ratio_input", f"{name} must have a positive total")
@@ -88,7 +81,9 @@ def plan_ratio_recipe(
         "water_product_elemental",
     )
     limits = validate_limits(maximum_concentrations)
-    reserve = _number(nutrient_ceiling_reserve, "nutrient_ceiling_reserve", zero=True)
+    reserve = number(
+        nutrient_ceiling_reserve, "nutrient_ceiling_reserve", minimum=0.0, code=RATIO_INPUT
+    )
     if reserve >= 1 or (reserve and not limits):
         raise DeliveryError(
             "invalid_nutrient_reserve",
@@ -183,10 +178,12 @@ def plan_ratio_recipe(
             raise DeliveryError("missing_ph_range", "Uncertainty checks require ph_range")
     cations = _shares(cation_shares, "cation_shares")
     anions = _shares(anion_shares, "anion_shares")
-    ph = _number(ph, "ph", zero=True)
+    ph = number(ph, "ph", minimum=0.0, code=RATIO_INPUT)
     if ph > 14:
         raise DeliveryError("invalid_ratio_input", "ph must be between 0 and 14")
-    saturation_margin = _number(saturation_margin, "saturation_margin", zero=True)
+    saturation_margin = number(
+        saturation_margin, "saturation_margin", minimum=0.0, code=RATIO_INPUT
+    )
     if ph_range is None and (
         selected_phases is not None or mass_decimals != 5 or saturation_margin != 0
     ):
@@ -196,9 +193,9 @@ def plan_ratio_recipe(
         if ph_range is not None
         else None
     )
-    strength = _number(counted_mmol_l, "counted_mmol_l")
-    volume = _number(volume_litres, "volume_litres")
-    water_mass = _number(water_mass_kg, "water_mass_kg")
+    strength = number(counted_mmol_l, "counted_mmol_l", positive=True, code=RATIO_INPUT)
+    volume = number(volume_litres, "volume_litres", positive=True, code=RATIO_INPUT)
+    water_mass = number(water_mass_kg, "water_mass_kg", positive=True, code=RATIO_INPUT)
     from .ratio_water import account_water
 
     water_report = account_water(water, volume, water_mass)

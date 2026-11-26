@@ -14,8 +14,9 @@ import math
 from collections.abc import Mapping
 from fractions import Fraction as F
 
-from .joint_problem import JointProblem, _number, _profile_doses
+from .joint_problem import JointProblem, _profile_doses
 from .delivery_contracts import DeliveryError
+from .inputs import number
 from .engine import nnls
 
 
@@ -388,30 +389,30 @@ def solve_joint_problem(
     identifiers = [s.product_id for s in sources]
     if not isinstance(dose_steps, Mapping) or set(dose_steps) != set(identifiers):
         raise DeliveryError('invalid_value', 'dose_steps must name every supplied variable')
-    scales = [_number(dose_steps[k], 'dose step', positive=True) for k in identifiers]
+    scales = [number(dose_steps[k], 'dose step', positive=True) for k in identifiers]
     for name, value in [
         ('charge scale', charge_scale),
         ('charge tolerance', charge_tolerance),
         ('sensitivity tolerance', sensitivity_tolerance),
         ('trust radius', trust_radius),
     ]:
-        _number(value, name, positive=True)
-    _number(loss_tolerance, 'loss tolerance')
+        number(value, name, positive=True)
+    number(loss_tolerance, 'loss tolerance')
     if objective_gap_tolerance is not None:
-        _number(objective_gap_tolerance, 'objective gap tolerance')
+        number(objective_gap_tolerance, 'objective gap tolerance')
     if (stationarity_tolerance is None) != (active_bound_tolerance is None):
         raise DeliveryError(
             'invalid_value', 'stationarity and active-bound controls must be supplied together'
         )
     if stationarity_tolerance is not None:
-        _number(stationarity_tolerance, 'stationarity tolerance', positive=True)
-        _number(active_bound_tolerance, 'active bound tolerance')
+        number(stationarity_tolerance, 'stationarity tolerance', positive=True)
+        number(active_bound_tolerance, 'active bound tolerance')
     for budget in (max_iterations, max_backtracks):
         if type(budget) is not int or budget < 1:
             raise DeliveryError('invalid_value', 'iteration budgets must be positive integers')
     start = _profile_doses(fertilizer_doses, problem.fertilizers)
-    doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [_number(reagent_dose, 'reagent dose')]
-    point = [_number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
+    doses = [start.get(k, 0.0) for k in identifiers[:-1]] + [number(reagent_dose, 'reagent dose')]
+    point = [number(x / h, 'scaled initial dose') for x, h in zip(doses, scales)]
     constraints = _constraints(problem, scales)
     # Nonnegative sources of a nutrient with no remaining allowance are
     # fixed at zero. Keep them out of local proposals, not merely the

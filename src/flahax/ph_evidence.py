@@ -11,7 +11,8 @@ import json
 import math
 from datetime import datetime, timezone
 
-from .stock_evidence import _common, _number, _text, _within
+from .inputs import number
+from .stock_evidence import _common, _text, _within
 
 
 def preparation_fingerprint(recipe, evidence):
@@ -152,7 +153,10 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
                 "Reading must describe the final mixed batch with all additions accounted"
             )
         low, high = recipe["rounded_verification"]["ph_range"]
-        cal_low, cal_high = _number(calibration, "ph_min"), _number(calibration, "ph_max")
+        cal_low, cal_high = (
+            number(calibration.get("ph_min"), "ph_min"),
+            number(calibration.get("ph_max"), "ph_max"),
+        )
         if not 0 <= cal_low <= low <= high <= cal_high <= 14:
             raise ValueError("Calibration range does not cover the recipe pH interval")
         if calibration.get("coverage") != "entire_declared_range":
@@ -167,19 +171,23 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
                     "Each buffer requires reference and certified_ph at record temperature"
                 )
             reference = _text(buffer, "reference")
-            ph = _number(buffer, "certified_ph")
+            ph = number(buffer.get("certified_ph"), "certified_ph")
             if reference in refs or ph > 14:
                 raise ValueError("Invalid or duplicate buffer reference")
             refs.add(reference)
             ph_values.append(ph)
         if min(ph_values) > cal_low or max(ph_values) < cal_high or len(set(ph_values)) < 2:
             raise ValueError("Referenced buffers do not bracket the validated pH range")
-        reading = _number(measurement, "indicated_ph")
+        reading = number(measurement.get("indicated_ph"), "indicated_ph")
         if reading > 14:
             raise ValueError("pH reading outside supported range")
-        bias = _number(calibration, "maximum_absolute_bias_ph")
-        calibration_error = _number(calibration, "absolute_uncertainty_ph")
-        batch_error = _number(measurement, "additional_uncertainty_ph")
+        bias = number(calibration.get("maximum_absolute_bias_ph"), "maximum_absolute_bias_ph")
+        calibration_error = number(
+            calibration.get("absolute_uncertainty_ph"), "absolute_uncertainty_ph"
+        )
+        batch_error = number(
+            measurement.get("additional_uncertainty_ph"), "additional_uncertainty_ph"
+        )
         total_error = bias + calibration_error + batch_error
         if not math.isfinite(total_error):
             raise ValueError("Combined pH uncertainty must be finite")

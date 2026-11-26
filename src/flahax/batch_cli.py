@@ -52,6 +52,7 @@ import sys
 
 from . import __version__
 from .delivery_contracts import DeliveryError
+from .inputs import number
 from .delivery_quantities import SolventBasis, VolumeLitres
 from .engine import load_library
 from .fertilizer_workflow import plan_fertilizer_workflow
@@ -161,14 +162,14 @@ def _mg(key, value, what='water value'):
     if isinstance(value, bool) or not isinstance(value, (int, float, str)):
         raise DeliveryError('invalid_value', f'{what} {key} = {value!r} is not a number of mg/L')
     try:
-        number = float(value)
+        amount = float(value)
     except ValueError:
         raise DeliveryError(
             'invalid_value', f'{what} {key} = {value!r} is not a number of mg/L'
         ) from None
-    if not math.isfinite(number) or number < 0:
+    if not math.isfinite(amount) or amount < 0:
         raise DeliveryError('invalid_value', f'{what} {key} = {value!r} must be zero or more mg/L')
-    return number
+    return amount
 
 
 def water_basis(data):
@@ -269,14 +270,7 @@ def read_water(spec):
             raise DeliveryError(
                 'ambiguous_carbon', 'supply HCO3 carbon or total alkalinity, not both'
             )
-        if (
-            isinstance(alkalinity, bool)
-            or not isinstance(alkalinity, (int, float))
-            or not math.isfinite(alkalinity)
-        ):
-            raise DeliveryError(
-                'invalid_value', 'alkalinity_meq_per_litre must be a finite signed number'
-            )
+        number(alkalinity, 'alkalinity_meq_per_litre', minimum=None)
     totals = {}
     for key, mg in data['mg_per_litre'].items():
         basis, grams = WATER_KEYS[key]
@@ -537,15 +531,8 @@ def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_c
     caps use their recorded densities. Dry solids use a separately
     declared mass cap.
     """
-    if solid_cap is not None and (
-        isinstance(solid_cap, bool)
-        or not isinstance(solid_cap, (int, float))
-        or not math.isfinite(solid_cap)
-        or solid_cap < 0
-    ):
-        raise DeliveryError(
-            'invalid_value', 'solid reagent mass cap must be finite and nonnegative'
-        )
+    if solid_cap is not None:
+        number(solid_cap, 'solid reagent mass cap')
     pool_ids = [p['id'] for p in nutrient_salts(products)]
     solvents, masses, fallbacks, solids = {}, {}, {}, []
     for reagent in reagents:
@@ -558,15 +545,7 @@ def joint_configuration(products, reagents, solvent_mass_kg, cap_litres, solid_c
                 masses[identity] = solid_cap
         elif reagent.get('densityKgPerL') is not None:
             density = reagent['densityKgPerL']
-            if (
-                isinstance(density, bool)
-                or not isinstance(density, (int, float))
-                or not math.isfinite(density)
-                or density <= 0
-            ):
-                raise DeliveryError(
-                    'invalid_value', f'{identity}: densityKgPerL must be finite and positive'
-                )
+            number(density, f'{identity}: densityKgPerL', positive=True)
             masses[identity] = 1000 * cap_litres * density
         else:
             # Neither a known solid nor a liquid with a verifiable

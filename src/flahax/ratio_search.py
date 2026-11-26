@@ -9,7 +9,8 @@ gating.
 import math
 
 from .delivery_contracts import DeliveryError
-from .ratio_recipe import plan_ratio_recipe, _number
+from .inputs import number
+from .ratio_recipe import RATIO_INPUT, plan_ratio_recipe
 from .steiner_context import historical_context
 from .ratio_search_evidence import constraint_violations, observed_limit
 
@@ -31,17 +32,21 @@ def search_ratio_recipe(
     """
     if not isinstance(strength_range, (list, tuple)) or len(strength_range) != 2:
         raise DeliveryError("invalid_strength_range", "strength_range requires two values")
-    low, high = [_number(v, "strength_range") for v in strength_range]
+    low, high = [
+        number(v, "strength_range", positive=True, code=RATIO_INPUT) for v in strength_range
+    ]
     if low >= high:
         raise DeliveryError("invalid_strength_range", "Strength bounds must be increasing")
-    tolerance = _number(strength_tolerance, "strength_tolerance")
+    tolerance = number(strength_tolerance, "strength_tolerance", positive=True, code=RATIO_INPUT)
     if type(scan_points) is not int or not 3 <= scan_points <= 1001:
         raise DeliveryError("invalid_scan_points", "scan_points must be an integer from 3 to 1001")
     if recipe_options.get("ph_range") is None:
         raise DeliveryError("missing_ph_range", "A strength search requires ph_range")
     if "counted_mmol_l" in recipe_options:
         raise DeliveryError("duplicate_strength", "Choose a fixed strength or a search range")
-    saturation_margin = _number(saturation_margin, "saturation_margin", zero=True)
+    saturation_margin = number(
+        saturation_margin, "saturation_margin", minimum=0.0, code=RATIO_INPUT
+    )
     recipe_options["saturation_margin"] = saturation_margin
     required_records = {
         field: flag

@@ -9,23 +9,15 @@ records.
 import copy
 import hashlib
 import json
-import math
 from datetime import datetime, timezone, date
+
+from .inputs import number
 
 
 def _text(record, key):
     value = record.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{key} requires a nonempty string")
-    return value
-
-
-def _number(record, key, *, positive=False):
-    value = record.get(key)
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-        raise ValueError(f"{key} requires a finite number")
-    if value < 0 or (positive and value == 0):
-        raise ValueError(f"{key} is outside its allowed range")
     return value
 
 
@@ -43,7 +35,7 @@ def _common(record, today, temperature):
         dates.append(parsed)
     if not dates[0] <= today <= dates[1]:
         raise ValueError("Record is future-dated, expired or has reversed dates")
-    if _number(record, "temperature_c") != temperature:
+    if number(record.get("temperature_c"), "temperature_c") != temperature:
         raise ValueError("Record temperature does not match the recipe")
     if record.get("uncertainty_basis") != "total_bound_through_valid_until":
         raise ValueError("A total error bound valid through expiry is required")
@@ -103,9 +95,15 @@ def _final_volume_check(recipe, evidence, today, other_record_ids):
             or record.get("application") != "final_solution_including_stocks"
         ):
             raise ValueError("Calibration must apply to contained final solution including stocks")
-        nominal = _number(record, "nominal_volume_litres", positive=True)
-        measured = _number(record, "measured_volume_litres", positive=True)
-        uncertainty = _number(record, "absolute_uncertainty_litres")
+        nominal = number(
+            record.get("nominal_volume_litres"), "nominal_volume_litres", positive=True
+        )
+        measured = number(
+            record.get("measured_volume_litres"), "measured_volume_litres", positive=True
+        )
+        uncertainty = number(
+            record.get("absolute_uncertainty_litres"), "absolute_uncertainty_litres"
+        )
         if nominal != recipe["volume_litres"]:
             raise ValueError("Calibrated volume mark does not match the recipe's final volume")
         allowed = recipe["uncertainty_verification"]["assumptions"]["volume_error_litres"]
@@ -255,8 +253,12 @@ def assess_stock_evidence(recipe, evidence):
                 raise ValueError(
                     "Compound-specific assay and reactive-impurity assessment required"
                 )
-            measured = _number(assay, "measured_concentration_g_l", positive=True)
-            uncertainty = _number(assay, "absolute_uncertainty_g_l")
+            measured = number(
+                assay.get("measured_concentration_g_l"),
+                "measured_concentration_g_l",
+                positive=True,
+            )
+            uncertainty = number(assay.get("absolute_uncertainty_g_l"), "absolute_uncertainty_g_l")
             nominal = dose["concentration_g_l"]
             required = nominal * spec["concentration_relative_error"]
             error = abs(measured - nominal) + uncertainty
@@ -272,12 +274,14 @@ def assess_stock_evidence(recipe, evidence):
                 raise ValueError("Calibration must match the dispenser and stock liquid")
             if calibration.get("coverage") != "entire_declared_range":
                 raise ValueError("A bound covering the entire calibrated dose range is required")
-            low = _number(calibration, "dose_min_ml")
-            high = _number(calibration, "dose_max_ml", positive=True)
+            low = number(calibration.get("dose_min_ml"), "dose_min_ml")
+            high = number(calibration.get("dose_max_ml"), "dose_max_ml", positive=True)
             if not low <= dose["dose_ml"] <= high:
                 raise ValueError("Rounded dose is outside the calibrated range")
-            bias = _number(calibration, "maximum_absolute_bias_ml")
-            uncertainty = _number(calibration, "absolute_uncertainty_ml")
+            bias = number(calibration.get("maximum_absolute_bias_ml"), "maximum_absolute_bias_ml")
+            uncertainty = number(
+                calibration.get("absolute_uncertainty_ml"), "absolute_uncertainty_ml"
+            )
             check.update(
                 dosing_total_error_ml=bias + uncertainty,
                 allowed_dosing_error_ml=dose["dose_error_ml"],

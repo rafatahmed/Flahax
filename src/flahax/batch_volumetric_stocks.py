@@ -11,6 +11,8 @@ from .aqueous_model import solve
 from .calculated_ph import calculate_equilibrium_ph
 from .composition import fitted_targets
 from .delivery_contracts import DeliveryError
+from .inputs import number
+
 from .irrigation_ec import calculate_ec_from_totals
 from .measured_water import nutrient_mg_per_litre
 from .nutrient_acceptance import assessed_limits
@@ -20,17 +22,13 @@ from .ratio_product_stocks import prepare_product_stocks, validate_product_stock
 from .requirement_fit import met
 from .saturation_policy import assess_saturation
 
-
-def _number(value, field, maximum=math.inf):
-    if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= maximum:
-        raise DeliveryError('invalid_stock_dosing', f'Invalid value for {field}')
-    return value
+STOCK_DOSING = 'invalid_stock_dosing'
 
 
 def _interval(values, nominal, field, maximum=math.inf):
     if not isinstance(values, (list, tuple)) or len(values) != 2:
         raise DeliveryError('invalid_stock_dosing', f'Supply two endpoints for {field}')
-    low, high = (_number(value, field, maximum=maximum) for value in values)
+    low, high = (number(value, field, maximum=maximum, code=STOCK_DOSING) for value in values)
     if not low <= nominal <= high:
         raise DeliveryError('invalid_stock_dosing', f'{field} must contain the selected value')
     return low, high
@@ -57,7 +55,10 @@ def _uncertainty(config, dry_names, reagent, liquid):
             raise DeliveryError(
                 'invalid_stock_dosing', 'Specify dry errors by dosed dry product name'
             )
-        return {name: _number(error, field, maximum) for name, error in errors.items()}
+        return {
+            name: number(error, field, maximum=maximum, code=STOCK_DOSING)
+            for name, error in errors.items()
+        }
 
     field = 'reagent_volume_error_ml' if liquid else 'reagent_mass_error_g'
     assay = reagent['massFraction']
@@ -78,7 +79,7 @@ def _uncertainty(config, dry_names, reagent, liquid):
     return (
         dry_errors('dry_product_error_g', math.inf),
         dry_errors('dry_product_assay_relative_error', 1),
-        _number(uncertainty.get(field, 0), field),
+        number(uncertainty.get(field, 0), field, code=STOCK_DOSING),
         assay_bounds,
         density_bounds,
     )
@@ -139,7 +140,7 @@ def verify_batch_stock_delivery(
         if type(config[field]) is not int or not 0 <= config[field] <= 6:
             raise DeliveryError('invalid_stock_dosing', f'{field} must be an integer from 0 to 6')
     for field in ('nutrient_tolerance_percent', 'ph_tolerance'):
-        if _number(config[field], field) == 0:
+        if number(config[field], field, code=STOCK_DOSING) == 0:
             raise DeliveryError('invalid_stock_dosing', f'{field} must be positive')
     stock = config['stock']
     if not isinstance(stock, dict) or not isinstance(stock.get('concentrations_g_l'), dict):
@@ -170,7 +171,9 @@ def verify_batch_stock_delivery(
             replacement = stock | {'concentrations_g_l': concentrations | {name: strength}}
             validate_product_stocks(replacement, ingredients, stock_bounds)
 
-    reserve = _number(config.get('nutrient_ceiling_reserve', 0), 'nutrient_ceiling_reserve')
+    reserve = number(
+        config.get('nutrient_ceiling_reserve', 0), 'nutrient_ceiling_reserve', code=STOCK_DOSING
+    )
     if reserve >= 1 or (reserve and not maxima):
         raise DeliveryError(
             'invalid_stock_dosing', 'Reserve must be below one and requires declared ceilings'

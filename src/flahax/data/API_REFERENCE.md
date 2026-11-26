@@ -371,17 +371,6 @@ Source module: `flahax.conductivity`. Import with `from flahax import water_ec25
 
 ## flahax.delivery_contracts
 
-### `DeliveryError`
-
-```text
-DeliveryError(code: 'str', message: 'str')
-```
-
-A delivery-planning input failure with a stable machine-readable
-code.
-
-Source module: `flahax.delivery_contracts`. Import with `from flahax import DeliveryError`.
-
 ### `make_audit_record`
 
 ```text
@@ -1124,6 +1113,19 @@ Area is the concurrently irrigated zone, not necessarily the whole
 farm. Gross depth already includes losses.
 
 Source module: `flahax.injector_sizing`. Import with `from flahax import size_injection_requirements`.
+
+## flahax.inputs
+
+### `DeliveryError`
+
+```text
+DeliveryError(code: 'str', message: 'str')
+```
+
+A delivery-planning input failure with a stable machine-readable
+code.
+
+Source module: `flahax.inputs`. Import with `from flahax import DeliveryError`.
 
 ## flahax.irrigation_ec
 

@@ -13,23 +13,13 @@ unchanged.
 from __future__ import annotations
 
 from datetime import datetime
-import math
 from typing import Any
 
 from .composition import IONS, InputError, validate_profile
+from .inputs import DeliveryError, number
 
 DELIVERY_SCHEMA_VERSION = "0.1"
 DELIVERY_MODES = frozenset({"batch"})
-
-
-class DeliveryError(InputError):
-    """A delivery-planning input failure with a stable machine-readable
-    code.
-    """
-
-    def __init__(self, code: str, message: str):
-        super().__init__(message)
-        self.code = code
 
 
 def _error(code: str, message: str) -> None:
@@ -50,22 +40,6 @@ def _text(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         _error("invalid_value", f"{label} must be a non-empty string")
     return value.strip()
-
-
-def _number(value: Any, label: str, *, minimum: float | None = None) -> float:
-    if value is None:
-        _error("missing_field", f"{label} is required")
-    if isinstance(value, bool):
-        _error("invalid_type", f"{label} must be a number")
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        _error("invalid_type", f"{label} must be a number")
-    if not math.isfinite(number):
-        _error("invalid_value", f"{label} must be finite")
-    if minimum is not None and number < minimum:
-        _error("out_of_range", f"{label} must be at least {minimum:g}")
-    return number
 
 
 def _timestamp(value: Any, label: str) -> str:
@@ -105,7 +79,7 @@ def _element_assay(value: Any, label: str) -> dict[str, float]:
             _error("ambiguous_unit", f"{label} must split total N into N_NO3 and N_NH4")
         if symbol not in IONS:
             _error("unknown_ion", f"{label} has unknown ion {symbol}")
-        clean[symbol] = _number(raw, f"{label}.{symbol}", minimum=0.0)
+        clean[symbol] = number(raw, f"{label}.{symbol}", minimum=0.0, type_code="invalid_type")
         if clean[symbol] > 100.0:
             _error("out_of_range", f"{label}.{symbol} cannot exceed 100%")
     if sum(clean.values()) > 100.5:
@@ -125,17 +99,25 @@ def validate_water_analysis(payload: Any) -> dict:
     result = {
         **record,
         "ions": ions,
-        "temperatureC": _number(source.get("temperatureC"), "waterAnalysis.temperatureC"),
+        "temperatureC": number(
+            source.get("temperatureC"),
+            "waterAnalysis.temperatureC",
+            minimum=None,
+            type_code="invalid_type",
+        ),
     }
     if "pH" in source:
-        result["pH"] = _number(source["pH"], "waterAnalysis.pH", minimum=0.0)
+        result["pH"] = number(
+            source["pH"], "waterAnalysis.pH", minimum=0.0, type_code="invalid_type"
+        )
         if result["pH"] > 14.0:
             _error("out_of_range", "waterAnalysis.pH cannot exceed 14")
     if "alkalinityMgLAsCaCO3" in source:
-        result["alkalinityMgLAsCaCO3"] = _number(
+        result["alkalinityMgLAsCaCO3"] = number(
             source["alkalinityMgLAsCaCO3"],
             "waterAnalysis.alkalinityMgLAsCaCO3",
             minimum=0.0,
+            type_code="invalid_type",
         )
     return result
 
@@ -155,14 +137,20 @@ def validate_product_assay(payload: Any) -> dict:
         "elements": _element_assay(source.get("elements"), "productAssay.elements"),
     }
     if "densityKgPerL" in source:
-        result["densityKgPerL"] = _number(
-            source["densityKgPerL"], "productAssay.densityKgPerL", minimum=0.0
+        result["densityKgPerL"] = number(
+            source["densityKgPerL"],
+            "productAssay.densityKgPerL",
+            minimum=0.0,
+            type_code="invalid_type",
         )
         if result["densityKgPerL"] == 0:
             _error("out_of_range", "productAssay.densityKgPerL must be greater than 0")
     if "normalityMeqPerL" in source:
-        result["normalityMeqPerL"] = _number(
-            source["normalityMeqPerL"], "productAssay.normalityMeqPerL", minimum=0.0
+        result["normalityMeqPerL"] = number(
+            source["normalityMeqPerL"],
+            "productAssay.normalityMeqPerL",
+            minimum=0.0,
+            type_code="invalid_type",
         )
         if result["normalityMeqPerL"] == 0:
             _error("out_of_range", "productAssay.normalityMeqPerL must be greater than 0")
@@ -187,11 +175,17 @@ def validate_compatibility_rule(payload: Any) -> dict:
         if source.get("constraint") == "separate"
         else _invalid_constraint(),
         "reason": _text(source.get("reason"), "compatibilityRule.reason"),
-        "temperatureMinC": _number(
-            source.get("temperatureMinC"), "compatibilityRule.temperatureMinC"
+        "temperatureMinC": number(
+            source.get("temperatureMinC"),
+            "compatibilityRule.temperatureMinC",
+            minimum=None,
+            type_code="invalid_type",
         ),
-        "temperatureMaxC": _number(
-            source.get("temperatureMaxC"), "compatibilityRule.temperatureMaxC"
+        "temperatureMaxC": number(
+            source.get("temperatureMaxC"),
+            "compatibilityRule.temperatureMaxC",
+            minimum=None,
+            type_code="invalid_type",
         ),
     }
 
@@ -205,12 +199,25 @@ def validate_solubility_limit(payload: Any) -> dict:
     limit.
     """
     source, record = _record(payload, "solubilityLimit")
-    minimum = _number(source.get("temperatureMinC"), "solubilityLimit.temperatureMinC")
-    maximum = _number(source.get("temperatureMaxC"), "solubilityLimit.temperatureMaxC")
+    minimum = number(
+        source.get("temperatureMinC"),
+        "solubilityLimit.temperatureMinC",
+        minimum=None,
+        type_code="invalid_type",
+    )
+    maximum = number(
+        source.get("temperatureMaxC"),
+        "solubilityLimit.temperatureMaxC",
+        minimum=None,
+        type_code="invalid_type",
+    )
     if maximum < minimum:
         _error("out_of_range", "solubilityLimit.temperatureMaxC is below temperatureMinC")
-    concentration = _number(
-        source.get("maxGramsPerLitre"), "solubilityLimit.maxGramsPerLitre", minimum=0.0
+    concentration = number(
+        source.get("maxGramsPerLitre"),
+        "solubilityLimit.maxGramsPerLitre",
+        minimum=0.0,
+        type_code="invalid_type",
     )
     if concentration == 0:
         _error("out_of_range", "solubilityLimit.maxGramsPerLitre must be greater than 0")
@@ -241,10 +248,18 @@ def validate_titration_curve(payload: Any) -> dict:
     previous_p_h: float | None = None
     for index, point in enumerate(points):
         item = _map(point, f"titrationCurve.points[{index}]")
-        demand = _number(
-            item.get("demandMeqPerL"), f"titrationCurve.points[{index}].demandMeqPerL", minimum=0.0
+        demand = number(
+            item.get("demandMeqPerL"),
+            f"titrationCurve.points[{index}].demandMeqPerL",
+            minimum=0.0,
+            type_code="invalid_type",
         )
-        p_h = _number(item.get("pH"), f"titrationCurve.points[{index}].pH", minimum=0.0)
+        p_h = number(
+            item.get("pH"),
+            f"titrationCurve.points[{index}].pH",
+            minimum=0.0,
+            type_code="invalid_type",
+        )
         if p_h > 14.0:
             _error("out_of_range", f"titrationCurve.points[{index}].pH cannot exceed 14")
         if demand <= previous_demand:
@@ -273,28 +288,39 @@ def validate_pump_calibration(payload: Any) -> dict:
     pump.
     """
     source, record = _record(payload, "pumpCalibration")
-    flow = _number(
-        source.get("flowLitresPerMinute"), "pumpCalibration.flowLitresPerMinute", minimum=0.0
+    flow = number(
+        source.get("flowLitresPerMinute"),
+        "pumpCalibration.flowLitresPerMinute",
+        minimum=0.0,
+        type_code="invalid_type",
     )
     if flow == 0:
         _error("out_of_range", "pumpCalibration.flowLitresPerMinute must be greater than 0")
-    deviation = _number(
+    deviation = number(
         source.get("standardDeviationLitresPerMinute"),
         "pumpCalibration.standardDeviationLitresPerMinute",
         minimum=0.0,
+        type_code="invalid_type",
     )
-    minimum_volume = _number(
-        source.get("validMinLitres"), "pumpCalibration.validMinLitres", minimum=0.0
+    minimum_volume = number(
+        source.get("validMinLitres"),
+        "pumpCalibration.validMinLitres",
+        minimum=0.0,
+        type_code="invalid_type",
     )
-    maximum_volume = _number(
-        source.get("validMaxLitres"), "pumpCalibration.validMaxLitres", minimum=0.0
+    maximum_volume = number(
+        source.get("validMaxLitres"),
+        "pumpCalibration.validMaxLitres",
+        minimum=0.0,
+        type_code="invalid_type",
     )
     if maximum_volume < minimum_volume:
         _error("out_of_range", "pumpCalibration.validMaxLitres is below validMinLitres")
-    density = _number(
+    density = number(
         source.get("stockDensityKgPerL"),
         "pumpCalibration.stockDensityKgPerL",
         minimum=0.0,
+        type_code="invalid_type",
     )
     if density == 0:
         _error("out_of_range", "pumpCalibration.stockDensityKgPerL must be greater than 0")
@@ -302,8 +328,11 @@ def validate_pump_calibration(payload: Any) -> dict:
         **record,
         "channelId": _text(source.get("channelId"), "pumpCalibration.channelId"),
         "stockDensityKgPerL": density,
-        "testTemperatureC": _number(
-            source.get("testTemperatureC"), "pumpCalibration.testTemperatureC"
+        "testTemperatureC": number(
+            source.get("testTemperatureC"),
+            "pumpCalibration.testTemperatureC",
+            minimum=None,
+            type_code="invalid_type",
         ),
         "flowLitresPerMinute": flow,
         "standardDeviationLitresPerMinute": deviation,
