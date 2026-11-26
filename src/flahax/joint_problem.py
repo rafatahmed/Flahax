@@ -17,7 +17,7 @@ from types import MappingProxyType
 
 from .aqueous_model import chemistry, solve
 from .composition import validate_profile, validate_targets
-from .nitrogen import NITROGEN_FORMS
+from .nitrogen import total_nitrogen
 from .delivery_contracts import DeliveryError
 from .inputs import number
 from .engine import score
@@ -72,7 +72,7 @@ class JointSource:
     def fraction(self, symbol):
         """Mass fraction of a nutrient; total N (``N``) is the sum of the nitrogen forms."""
         if symbol == 'N':
-            return sum(self.nutrients.get(form, 0) for form in NITROGEN_FORMS)
+            return total_nitrogen(self.nutrients)
         return self.nutrients.get(symbol, 0)
 
 
@@ -143,7 +143,7 @@ class JointProblem:
     def water_at(self, symbol):
         """Water concentration; total N (``N``) is the sum of the nitrogen forms."""
         if symbol == 'N':
-            return sum(self.water.get(form, 0) for form in NITROGEN_FORMS)
+            return total_nitrogen(self.water)
         return self.water.get(symbol, 0)
 
     def evaluate(self, fertilizer_g_per_litre, reagent_g_per_litre, *, equilibrium_start=None):
