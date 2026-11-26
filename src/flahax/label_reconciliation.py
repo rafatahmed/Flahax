@@ -21,8 +21,8 @@ from dataclasses import dataclass
 
 from .composition import ATOMIC
 from .material_chemistry import COMPLEXES, ION_TABLE, NUTRIENT_CHARGES
+from .nitrogen import NITROGEN_FORMS
 
-_N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _SUBSCRIPTS = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
 # Hydroxide is the proton deficit the charge balance closes
 # (material_chemistry._IMPLICIT).
@@ -93,7 +93,7 @@ def charge_surplus(ion_forms: Mapping, elements: Mapping) -> LabelReconciliation
         return LabelReconciliation({}, 0.0, 'an unstated ion closes the charge balance')
     charges = _mean_charges(ion_forms)
     equivalents = {
-        key: charges[key] * value / ATOMIC['N' if key in _N_FORMS else key]
+        key: charges[key] * value / ATOMIC['N' if key in NITROGEN_FORMS else key]
         for key, value in declared.items()
         if charges.get(key)
     }

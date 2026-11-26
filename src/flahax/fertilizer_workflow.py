@@ -30,6 +30,7 @@ from .materials import make_grade, resolve_material
 from .stock_planning import plan_stocks
 from .acid_selection import plan_acid_options
 from .deviation_ranges import normalize_ranges
+from .evaluated_remedies import evaluate_remedies
 from .ph_adjustment import normalize_target_ph, plan_coupled_ph
 from .requirement_fit import PH_TOLERANCE, declared_error_percent, met, reagent_shift_exceeds
 from .nutrient_acceptance import (
@@ -999,9 +1000,9 @@ def plan_fertilizer_workflow(
         if not callable(equipment_check):
             raise DeliveryError('invalid_type', 'equipment_check must be callable')
         request['equipment_check'] = equipment_check
-    from .evaluated_remedies import evaluate_remedies
-
-    output.remedies = evaluate_remedies(output, request, remedy_options, max_remedy_evaluations)
+    output.remedies = evaluate_remedies(
+        output, request, remedy_options, max_remedy_evaluations, plan=plan_fertilizer_workflow
+    )
     output.canonical_result = CanonicalResult.capture(
         output,
         dict(

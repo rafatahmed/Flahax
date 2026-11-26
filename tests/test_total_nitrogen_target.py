@@ -13,7 +13,8 @@ is reported; no other form target is invented.
 import unittest
 
 from flahax import InputError, load_library, recommend, solve_weights
-from flahax.composition import fitted_targets, nitrogen_rows, validate_profile, validate_targets
+from flahax.composition import validate_profile, validate_targets
+from flahax.nitrogen import fitted_targets, nitrogen_rows
 from flahax.requirement_fit import met
 
 SALTS = load_library()['salts']

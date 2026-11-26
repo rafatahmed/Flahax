@@ -430,9 +430,12 @@ def _joint_start_retry(option, request, workflow, expanded, seen):
     return retry, dict(adjustment, joint=dict(joint, starting_points=starts))
 
 
-def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
+def evaluate_remedies(workflow, request, options=(), max_evaluations=20, *, plan):
     """Re-run declared alternatives and rank checked results within the
     scenario budget.
+
+    ``plan`` is the planner each scenario runs through, called as
+    ``plan(**request)``; ``plan_fertilizer_workflow`` passes itself.
 
     Options have unique id, kind (catalogue/treatment/equipment), and
     changes. Catalogue bundles require available=True; treatment
@@ -506,15 +509,13 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20):
                 next_action='Increase the evaluation budget; this scenario has no result.',
             )
         else:
-            from .fertilizer_workflow import plan_fertilizer_workflow
-
             candidate_request = deepcopy(request)
             candidate_request.update(changes)
             if adjustment is not None:
                 candidate_request['ph_adjustment'] = adjustment
             evaluations += 1
             try:
-                candidate = plan_fertilizer_workflow(**candidate_request)
+                candidate = plan(**candidate_request)
             except InputError as exc:
                 candidate = None
                 result.update(

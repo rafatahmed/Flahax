@@ -23,7 +23,8 @@ import math
 from collections.abc import Callable, Mapping, Sequence
 
 from .aqueous_model import AqueousResult, solve
-from .composition import ATOMIC, fitted_targets
+from .composition import ATOMIC
+from .nitrogen import fitted_targets
 from .delivery_contracts import DeliveryError
 from .engine import (
     PH_REAGENT,
@@ -34,8 +35,8 @@ from .engine import (
     _report,
     _diagnose,
     _charge_report,
-    total_n_report,
 )
+from .nitrogen import total_n_report
 from .nutrient_acceptance import assess_incidental, assessed_limits, name_sources
 from .requirement_fit import PH_TOLERANCE, met  # a pH within 1e-4 is met (G25)
 from .root_finding import shrink_bracket

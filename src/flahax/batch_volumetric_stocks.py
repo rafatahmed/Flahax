@@ -9,7 +9,7 @@ import math
 
 from .aqueous_model import solve
 from .calculated_ph import calculate_equilibrium_ph
-from .composition import fitted_targets
+from .nitrogen import fitted_targets
 from .delivery_contracts import DeliveryError
 from .inputs import number
 

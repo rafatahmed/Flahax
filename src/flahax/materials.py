@@ -29,6 +29,7 @@ from typing import Any
 from .composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from .delivery_contracts import DeliveryError
 from .inputs import number
+from .nitrogen import NITROGEN_FORMS
 
 _RESOURCE = 'data/material_identities.json'
 _RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
@@ -186,7 +187,6 @@ OXIDE_FACTORS = {
 }
 COMPOSITIONS = frozenset({'single', 'disclosed', 'undisclosed', 'declared_ions'})
 CHELATING_AGENTS = ('EDTA', 'DTPA', 'o,o-EDDHA', None)
-N_FORMS = ('N_NO3', 'N_NH4', 'N_UREA')
 _BANDS = ('typical', 'minimum', 'maximum')
 # Disclosed blend: declared vs component-implied analysis, relative and
 # absolute (% points).
@@ -456,7 +456,7 @@ def _charge_residual_percent(identity: dict, declared: dict) -> float | None:
         if charge == 0:
             continue
         has_cation, has_anion = has_cation or charge > 0, has_anion or charge < 0
-        moles = percent / ATOMIC['N' if nutrient in N_FORMS else nutrient]
+        moles = percent / ATOMIC['N' if nutrient in NITROGEN_FORMS else nutrient]
         signed += charge * moles
         absolute += abs(charge) * moles
     if not (has_cation and has_anion) or absolute <= 0:
@@ -478,7 +478,7 @@ def _analysis_targets(
     if key != 'N':
         return [_nutrient_key(key, label, conversions, extra)]
     theory = load_identities()[identity_id]['theoretical_analysis'] if identity_id else {}
-    forms = {form: theory[form] for form in N_FORMS if theory.get(form, 0) > 0}
+    forms = {form: theory[form] for form in NITROGEN_FORMS if theory.get(form, 0) > 0}
     if not forms:
         raise DeliveryError(
             'invalid_value', f'{label}: total N needs an identity whose theory states N forms'
@@ -526,7 +526,7 @@ def make_grade(record: Mapping) -> Grade:
     analysis = record.get('analysis')
     if not isinstance(analysis, Mapping) or not analysis:
         raise DeliveryError('invalid_value', f'{label}: analysis must be a non-empty mapping')
-    if 'N' in analysis and set(analysis) & set(N_FORMS):
+    if 'N' in analysis and set(analysis) & set(NITROGEN_FORMS):
         raise DeliveryError('invalid_value', f'{label}: state total N or its forms, not both')
     conversions: dict = {}
     split: dict = {}
@@ -633,7 +633,7 @@ def declared_ions_check(grade: Grade) -> DeclaredCheck:
     )  # deferred: product_conversion imports this module
 
     declared = {**grade.minimum, **grade.typical}
-    missing = [form for form in N_FORMS if form not in declared]
+    missing = [form for form in NITROGEN_FORMS if form not in declared]
     if missing:
         return DeclaredCheck(
             False,
