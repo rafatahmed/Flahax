@@ -14,8 +14,9 @@ printed; FlahaX converts.
 import math
 
 from .product_conversion import MOLAR_MASS
+from .water_input import HCO3_MOLAR_MASS
 
-HCO3, CACO3 = 61.0168, 50.0435
+CACO3 = 50.0435
 # Lab name -> (water key, g/mol of the ion as reported, charge, g/mol of
 # the water key). Phosphate in meq/L is taken as H2PO4- (charge 1); the
 # prompt says so.
@@ -24,12 +25,12 @@ IONS = {
     'Mg': ('Mg', MOLAR_MASS['Mg'], 2, MOLAR_MASS['Mg']),
     'K': ('K', MOLAR_MASS['K'], 1, MOLAR_MASS['K']),
     'Na': ('Na', MOLAR_MASS['Na'], 1, MOLAR_MASS['Na']),
-    'NH4': ('N_NH4', 18.0385, 1, 14.0067),
-    'NO3': ('N_NO3', 62.0049, -1, 14.0067),
+    'NH4': ('N_NH4', 18.0385, 1, MOLAR_MASS['N']),
+    'NO3': ('N_NO3', 62.0049, -1, MOLAR_MASS['N']),
     'Cl': ('Cl', MOLAR_MASS['Cl'], -1, MOLAR_MASS['Cl']),
-    'SO4': ('S', 96.06, -2, 32.06),
-    'PO4': ('P', 94.9712, -1, 30.973762),
-    'Alk': ('HCO3', HCO3, -1, HCO3),
+    'SO4': ('S', 96.06, -2, MOLAR_MASS['S']),
+    'PO4': ('P', 94.9712, -1, MOLAR_MASS['P']),
+    'Alk': ('HCO3', HCO3_MOLAR_MASS, -1, HCO3_MOLAR_MASS),
 }
 MICROS = ('Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo')
 WATER_IONS = tuple(IONS) + MICROS
@@ -54,7 +55,9 @@ def to_elements(values, units, alkalinity, micro='mg'):
         key, ion_mass, charge, key_mass = IONS[ion]
         if units == 'mg':
             factor = (
-                HCO3 / CACO3 if ion == 'Alk' and alkalinity == 'CaCO3' else key_mass / ion_mass
+                HCO3_MOLAR_MASS / CACO3
+                if ion == 'Alk' and alkalinity == 'CaCO3'
+                else key_mass / ion_mass
             )
         elif units == 'mmol':
             factor = key_mass * (2 if ion == 'Alk' and alkalinity == 'CaCO3' else 1)
@@ -202,7 +205,7 @@ def ask_analysis(p, store):
         # The lab's alkalinity-as-HCO3 is an equivalent mass, not
         # measured carbon.
         if 'HCO3' in mg:
-            data['alkalinity_meq_per_litre'] = mg.pop('HCO3') / HCO3
+            data['alkalinity_meq_per_litre'] = mg.pop('HCO3') / HCO3_MOLAR_MASS
         p.say(
             'Concentration basis: no solvent mass was entered; the report flags '
             'the 1 kg final solvent/L assumption and unquantified uncertainty. '
@@ -212,6 +215,6 @@ def ask_analysis(p, store):
             data['below_detection'] = to_elements(below, units, alkalinity, micro)
             if 'HCO3' in data['below_detection']:
                 data['alkalinity_below_detection_meq_per_litre'] = (
-                    data['below_detection'].pop('HCO3') / HCO3
+                    data['below_detection'].pop('HCO3') / HCO3_MOLAR_MASS
                 )
         return name, data
