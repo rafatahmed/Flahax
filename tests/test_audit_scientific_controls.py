@@ -138,7 +138,7 @@ class ScientificAuditRegressionTests(unittest.TestCase):
 
         # Observe the actual calculation; do not replace its chemistry
         # or its result.
-        with patch('flahax.grower_report.calculate_ec_from_totals', side_effect=capture):
+        with patch('flahax.batch_summary.calculate_ec_from_totals', side_effect=capture):
             summary = summarize_batch(result, PRODUCTS, title='Audit', water_label='RO')
         self.assertIsNotNone(summary['ec'])
         self.assertEqual(len(captured), 1)

@@ -21,13 +21,9 @@ from flahax import (
 )
 from flahax.composition import fitted_targets, nitrogen_rows, theoretical_assay
 from flahax.engine import AMMONIUM_CAP_MG_PER_L, AMMONIUM_FRACTION, ammonium_allowance_preset
-from flahax.grower_report import (
-    nitrogen_notes,
-    nitrogen_paragraphs,
-    number,
-    render_batch_sheet,
-    render_report,
-)
+from flahax.result_wording import nitrogen_notes, nitrogen_paragraphs
+from flahax.report_format import number
+from flahax.report_html import render_batch_sheet, render_report
 from flahax.grower_sheet import render_mix_sheet
 from flahax.ph_adjustment import _blend_recipe, nutrient_salts
 from flahax.requirement_fit import RELATIVE_TOLERANCE, met

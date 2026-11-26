@@ -12,7 +12,7 @@ invented values.
 
 import math
 
-from flahax.grower_report import bars, number, table, text  # noqa: F401  (shared with the package renderer)
+from flahax.report_format import bars, number, table, text  # noqa: F401  (shared with the package renderer)
 
 
 def render_html(report):

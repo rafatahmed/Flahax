@@ -14,7 +14,7 @@ from .batch_cli import read_json
 from .canonical_result import seal_summary
 from .delivery_contracts import DeliveryError
 from .evaluated_remedies import available_product_search
-from .grower_report import summarize_batch
+from .batch_summary import summarize_batch
 from .sonneveld import design_targets
 
 REQUIRED = {

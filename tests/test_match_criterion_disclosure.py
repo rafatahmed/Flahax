@@ -11,7 +11,8 @@ report prints them; "configured tolerances" alone told the reader nothing.
 import unittest
 
 from flahax import VolumeLitres, load_library, plan_fertilizer_workflow, summarize_batch
-from flahax.grower_report import render_report, status_explanations
+from flahax.report_html import render_report
+from flahax.result_wording import status_explanations
 from flahax.requirement_fit import RELATIVE_TOLERANCE, ZERO_TARGET_TOLERANCE_MG_PER_L
 
 LIBRARY = load_library()

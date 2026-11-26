@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from flahax.grower_report import checklist_grams, grams, millilitres, number
+from flahax.report_format import checklist_grams, grams, millilitres, number
 from flahax.grower_sheet import agronomist_rows, readable, render_mix_sheet
 from flahax.mix_cli import main
 from flahax.mix_results import first_view, handle_results, results_lines
@@ -124,7 +124,8 @@ class ResultViewTests(unittest.TestCase):
         self.assertIn('no acid in this tank', tanks)
 
     def test_nutrients_match_sheet(self):
-        from flahax.grower_report import _miss_difference, percentage
+        from flahax.result_wording import miss_difference
+        from flahax.report_format import percentage
         from flahax.grower_sheet import missed_target
 
         nutrients, sheet = '\n'.join(screen(self.summary, 1)), sheet_text(self.summary, 2)
@@ -136,7 +137,7 @@ class ResultViewTests(unittest.TestCase):
                 number(row['target'], 2),
                 number(row['final'], 2),
                 (
-                    _miss_difference(row['target'], row['final'])
+                    miss_difference(row['target'], row['final'])
                     if missed_target(row)
                     else f"{row['diff_mg_l']:+.2f} ({percentage(row['diff_pct'], 1, ' %')})"
                 ),

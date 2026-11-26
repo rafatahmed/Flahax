@@ -29,16 +29,14 @@ from .batch_cli import ACID_FORMULAS, BatchOptions, limit_entry, read_json, rend
 from .composition import target_ion_balance
 from .delivery_contracts import DeliveryError
 from .engine import load_library
-from .grower_report import (
-    _reagent_line,
-    _review_reason,
-    below_checklist_precision,
-    checklist_grams,
-    number,
+from .result_wording import (
+    reagent_line,
+    review_reason,
     reagent_preparation_lines,
-    render_report,
     rounded_dose_rows,
 )
+from .report_format import below_checklist_precision, checklist_grams, number
+from .report_html import render_report
 from .grower_sheet import (
     LABEL,
     STATUS_WORDS,
@@ -875,7 +873,7 @@ def summarize(summary, say):
     blocked = summary['status'] == 'blocked'
     say(f'FlahaX {__version__}: {summary["title"]} - {STATUS_WORDS[summary["status"]]}')
     if summary['status'] == 'requires_review' and 'formulation' in summary:
-        say(_review_reason(summary))
+        say(review_reason(summary))
     for reason in map(readable, key_reasons(summary)):
         if len(reason) > 160:
             reason = reason[:150].rstrip() + ' ... (full text on the batch sheet)'
@@ -917,7 +915,7 @@ def summarize(summary, say):
         and not blocked
         and (summary['ph'].get('direction') == 'none' or selected['volume_ml_per_batch'] is None)
     ):
-        say(_reagent_line(summary))
+        say(reagent_line(summary))
     elif selected and not blocked:
         acid = selected.get('direction') == 'acid'
         say(f'pH reagent: {selected["product"]}')

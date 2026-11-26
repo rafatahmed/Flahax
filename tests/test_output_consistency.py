@@ -21,7 +21,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from flahax.grower_report import grams, number
+from flahax.report_format import grams, number
 from flahax.grower_sheet import render_mix_sheet
 from flahax.mix_cli import main
 from tests.catalogue_history import historical_catalogue
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
 class ReagentQuantityRendering(unittest.TestCase):
     def test_liquid_volume_and_mass_have_distinct_units(self):
-        from flahax.grower_report import reagent_amount
+        from flahax.result_wording import reagent_amount
 
         self.assertEqual(
             reagent_amount(dict(volume_ml_per_batch=12.34, mass_g_per_batch=16.042)), '12.3 mL'

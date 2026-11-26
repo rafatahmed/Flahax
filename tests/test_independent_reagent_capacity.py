@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 from flahax.batch_cli import BatchOptions, run_batch
-from flahax.grower_report import render_report, render_batch_sheet
+from flahax.report_html import render_report, render_batch_sheet
 from flahax.grower_sheet import render_mix_sheet
 from flahax import load_library
 from flahax.ph_adjustment import catalogue_ph_reagents

@@ -232,13 +232,15 @@ class TerminalSummaryBoundaryTests(unittest.TestCase):
         self.assertTrue(any('5 mL' in line for line in lines))
 
     def test_unavailable_and_unselected_ph_report_reasons(self):
-        from flahax.grower_report import _reagent_line, number, _water_section
+        from flahax.result_wording import reagent_line
+        from flahax.report_format import number
+        from flahax.report_html import _water_section
 
         s = self.summary()
         s['ph'] = dict(selected=None, unadjusted_ph=None, message='Missing chemistry')
-        self.assertIn('Missing chemistry', _reagent_line(s))
+        self.assertIn('Missing chemistry', reagent_line(s))
         s['ph'].update(unadjusted_ph=7, target_ph=6, direction='acid')
-        self.assertIn('needs an acid', _reagent_line(s))
+        self.assertIn('needs an acid', reagent_line(s))
         self.assertEqual(number('<missing>'), '&lt;missing&gt;')
         s['water'] = dict(
             analysis_mg_per_litre={},

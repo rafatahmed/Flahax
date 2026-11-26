@@ -321,7 +321,7 @@ class JointFitTests(unittest.TestCase):
             self.assertTrue(candidate['joint']['status'], candidate['product'])
 
     def test_tomato_converges_with_verified_ph_charge_and_reported_misses(self):
-        from flahax.grower_report import render_report, render_batch_sheet
+        from flahax.report_html import render_report, render_batch_sheet
         from flahax.requirement_fit import PH_TOLERANCE
 
         ph = self.summary['ph']
@@ -350,16 +350,16 @@ class JointFitTests(unittest.TestCase):
 
 class ReportReviewTests(unittest.TestCase):
     def test_signed_difference_handles_a_tiny_shortfall_and_a_zero_target(self):
-        from flahax.grower_report import _miss_difference
+        from flahax.result_wording import miss_difference
 
-        self.assertEqual(_miss_difference(3, 2.99996445), '-0.00003555 mg/L (-0.001185%)')
+        self.assertEqual(miss_difference(3, 2.99996445), '-0.00003555 mg/L (-0.001185%)')
         self.assertEqual(
-            _miss_difference(0, 0.000002),
+            miss_difference(0, 0.000002),
             '+0.000002 mg/L; relative difference undefined (zero target)',
         )
 
     def test_saved_summary_respects_declared_limits_and_ammonium_allowance(self):
-        from flahax.grower_report import _review_reason
+        from flahax.result_wording import review_reason
 
         summary = dict(
             formulation=dict(
@@ -378,13 +378,14 @@ class ReportReviewTests(unittest.TestCase):
             tanks={'mixture_approved': False},
         )
         self.assertEqual(
-            _review_reason(summary),
+            review_reason(summary),
             'All nutrient targets met. Sodium has no declared maximum. '
             'Mixed-stock solubility is unverified.',
         )
 
     def test_old_report_with_a_changed_water_limit_names_the_qualification(self):
-        from flahax.grower_report import _review_reason, number
+        from flahax.result_wording import review_reason
+        from flahax.report_format import number
 
         summary = dict(
             formulation=dict(rows=[dict(symbol='N_NH4', target=None, final=1)]),
@@ -398,7 +399,7 @@ class ReportReviewTests(unittest.TestCase):
             solubility=[],
             tanks={'mixture_approved': True},
         )
-        reason = _review_reason(summary)
+        reason = review_reason(summary)
         self.assertIn('Ammonium nitrogen has no declared maximum.', reason)
         self.assertIn('Water basis needs review.', reason)
         self.assertIn('Check the water analysis.', reason)
@@ -436,7 +437,7 @@ class ReportReviewTests(unittest.TestCase):
         self.assertNotIn('Acid container: add', html)
 
     def test_status_reasons_and_tiny_signed_miss(self):
-        from flahax.grower_report import render_batch_sheet, render_report
+        from flahax.report_html import render_batch_sheet, render_report
         from flahax.grower_sheet import render_mix_sheet
 
         cases = [
@@ -641,7 +642,7 @@ class RemedyTests(unittest.TestCase):
         self.assertIn(extra['id'], candidate['workflow']['recommendation']['saltIds'])
 
     def test_report_identifies_bounded_search_result(self):
-        from flahax.grower_report import remedy_section
+        from flahax.report_html import remedy_section
 
         section = remedy_section(
             {

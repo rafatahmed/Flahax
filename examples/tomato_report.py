@@ -23,7 +23,7 @@ import flahax
 from . import tomato_advanced, tomato_simple
 from .common import serializable
 from .visual_report import bars, number, table, text
-from flahax.grower_report import ec_text
+from flahax.report_format import ec_text
 from flahax.saturation_policy import RISK_PHASES
 
 MICRO = ('Fe', 'Mn', 'Zn', 'B', 'Cu', 'Mo')

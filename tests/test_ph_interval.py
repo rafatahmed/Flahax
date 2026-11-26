@@ -25,7 +25,7 @@ from flahax import (
     summarize_batch,
 )
 from flahax.batch_cli import BatchOptions, main, run_batch
-from flahax.grower_report import render_report
+from flahax.report_html import render_report
 from flahax.requirement_fit import PH_TOLERANCE
 from tests.test_water_workflow import inputs
 from tests.test_water_workflow import products as water_products

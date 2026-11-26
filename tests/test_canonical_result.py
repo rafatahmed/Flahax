@@ -16,7 +16,7 @@ from unittest.mock import patch
 from flahax import load_library, plan_fertilizer_workflow, VolumeLitres, summarize_batch
 from flahax.delivery_contracts import DeliveryError
 from flahax.canonical_result import CanonicalResult, seal_summary, verify_summary, result_statuses
-from flahax.grower_report import render_report, render_batch_sheet
+from flahax.report_html import render_report, render_batch_sheet
 from flahax.grower_sheet import render_mix_sheet
 from flahax.batch_cli import render
 
@@ -114,7 +114,7 @@ class CanonicalResultTests(unittest.TestCase):
             self.assertEqual(result_statuses(s)['phase'], expected)
         s['solubility'] = [{'status': 'exceeds'}]
         self.assertEqual(result_statuses(s)['stock'], 'blocked')
-        from flahax.grower_report import result_reference
+        from flahax.report_html import result_reference
 
         self.assertIn('legacy unverified', result_reference({}))
 

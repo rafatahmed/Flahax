@@ -10,7 +10,7 @@ import unittest
 from flahax import VolumeLitres, load_library, plan_fertilizer_workflow
 from flahax.batch_cli import int_at_least
 from flahax.delivery_contracts import DeliveryError
-from flahax.grower_report import EquipmentCheck, declared_tanks
+from flahax.batch_summary import EquipmentCheck, declared_tanks
 
 LIBRARY = load_library()
 SALTS = LIBRARY['salts']
