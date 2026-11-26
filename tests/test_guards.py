@@ -11,7 +11,7 @@ import unittest
 
 from flahax import InputError, gap_for, load_library, recommend
 from flahax.composition import assay_conflict, assay_drift, theoretical_assay
-from flahax.engine import _lstsq, nnls
+from flahax.engine import lstsq, nnls
 from flahax.requirement_fit import met
 from tests.catalogue_history import historical_catalogue
 
@@ -120,7 +120,7 @@ class LeastSquares(unittest.TestCase):
     def test_householder_solves_a_known_system(self):
         # Columns [1, 1, 0] and [0, 1, 1], observation [1, 2, 1] -> [1,
         # 1].
-        solution = _lstsq([[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]], [1.0, 2.0, 1.0])
+        solution = lstsq([[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]], [1.0, 2.0, 1.0])
         self.assertAlmostEqual(solution[0], 1.0, places=8)
         self.assertAlmostEqual(solution[1], 1.0, places=8)
 

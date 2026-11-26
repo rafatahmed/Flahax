@@ -13,7 +13,7 @@ from .delivery_contracts import DeliveryError
 from .joint_optimality import objective_certificate
 from .joint_solver import solve_joint_problem
 from .calculated_ph import calculate_equilibrium_ph
-from .engine import _provenance
+from .engine import provenance
 from .requirement_fit import PH_TOLERANCE
 
 
@@ -83,8 +83,8 @@ def joint_candidate(
         make_joint_problem,
         PhCandidate,
         REAGENTS,
-        _blend_recipe,
-        _judge,
+        blend_recipe,
+        judge_candidate,
     )
 
     if water_components is None:
@@ -218,19 +218,19 @@ def joint_candidate(
                 id=p['id'],
                 name=p['name'],
                 gramsPerLitre=doses.get(p['id'], 0),
-                provenance=_provenance(p),
+                provenance=provenance(p),
             )
             for p in pool
             if doses.get(p['id'], 0) > 0
         ],
     )
-    recommendation = _blend_recipe(pool, targets, supply, [endpoint, endpoint], 0, maxima)
+    recommendation = blend_recipe(pool, targets, supply, [endpoint, endpoint], 0, maxima)
     recommendation['substitutionSearch'] = dict(
         status='candidate_found' if recommendation['feasible'] else 'search_incomplete',
         method='joint fertilizer and reagent search; no global optimality claim',
         attemptedProductIds=[[p['id'] for p in pool]],
     )
-    status, code, message, saturation = _judge(
+    status, code, message, saturation = judge_candidate(
         recommendation,
         target,
         maxima,

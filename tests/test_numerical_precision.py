@@ -154,7 +154,7 @@ class LinearPrecisionTests(unittest.TestCase):
     def test_rank_exclusion_report_does_not_invent_condition_estimate(self):
         with (
             patch('flahax.engine._gram_lstsq', return_value=None),
-            patch('flahax.engine._lstsq', side_effect=ValueError('rank deficient')),
+            patch('flahax.engine.lstsq', side_effect=ValueError('rank deficient')),
         ):
             diagnostics = {}
             x = nnls([[1]], [1], diagnostics=diagnostics)

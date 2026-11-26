@@ -26,7 +26,7 @@ from flahax.result_wording import nitrogen_notes, nitrogen_paragraphs
 from flahax.report_format import number
 from flahax.report_html import render_batch_sheet, render_report
 from flahax.grower_sheet import render_mix_sheet
-from flahax.ph_adjustment import _blend_recipe, nutrient_salts
+from flahax.ph_adjustment import blend_recipe, nutrient_salts
 from flahax.requirement_fit import RELATIVE_TOLERANCE, met
 from tests.catalogue_history import historical_catalogue
 from tests.test_joint_workflow import configuration
@@ -217,7 +217,7 @@ class TotalNAfterReagentTests(unittest.TestCase):
         pool = nutrient_salts(SALTS)
         targets = FORMULAS['Cucumber (Howard Resh)']
         unadjusted = recommend(pool, targets, {})
-        blended = _blend_recipe(
+        blended = blend_recipe(
             pool, fitted_targets(targets), {'N_NO3': 20}, [unadjusted] * 2, 0.0, None
         )
         self.assertEqual(blended['totalN']['final'], nitrogen_sum(blended['rows']))
@@ -275,7 +275,7 @@ class LegacyBlendAllowanceTests(unittest.TestCase):
         pool = nutrient_salts(SALTS)
         targets = FORMULAS['Cucumber (Howard Resh)']
         unadjusted = recommend(pool, targets, {}, max_ammonium_fraction=AMMONIUM_FRACTION)
-        blended = _blend_recipe(
+        blended = blend_recipe(
             pool, fitted_targets(targets), {'N_NO3': 20}, [unadjusted] * 2, 0.0, None
         )
         ammonium = next(r for r in blended['incidentalContributions'] if r['symbol'] == 'N_NH4')

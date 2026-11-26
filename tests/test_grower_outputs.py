@@ -35,7 +35,7 @@ from flahax import (
 from flahax.batch_cli import main as batch
 from flahax.canonical_result import seal_summary
 from flahax.nutrient_acceptance import assess_incidental, assessed_limits
-from flahax.ph_adjustment import _judge
+from flahax.ph_adjustment import judge_candidate
 from flahax.delivery_contracts import DeliveryError
 from flahax.tank_grouping import (
     ANALOGUE,
@@ -541,7 +541,7 @@ class IncidentalAssessmentTests(unittest.TestCase):
             return seen[-1]
 
         with mock.patch('flahax.ph_adjustment.assess_incidental', spy):
-            status, _, message, _ = _judge(chosen.recommendation, chosen.target, limits)
+            status, _, message, _ = judge_candidate(chosen.recommendation, chosen.target, limits)
         self.assertNotIn(
             'N_NH4',
             [

@@ -550,12 +550,12 @@ class TerminalNavigationRegressionTests(unittest.TestCase):
 
 class EngineInputBoundaryTests(unittest.TestCase):
     def test_empty_linear_system_and_zero_rank(self):
-        from flahax.engine import _lstsq, nnls
+        from flahax.engine import lstsq, nnls
 
-        self.assertEqual(_lstsq([], [1]), [])
+        self.assertEqual(lstsq([], [1]), [])
         self.assertEqual(nnls([], []), [])
         with self.assertRaisesRegex(ValueError, 'rank deficient'):
-            _lstsq([[0]], [1])
+            lstsq([[0]], [1])
 
     def test_conflicting_assay_is_rejected_or_excluded_and_targets_are_required(self):
         from flahax.engine import InputError, solve_weights, recommend
@@ -616,7 +616,7 @@ class MultipleCeilingBoundaryTests(unittest.TestCase):
         # incomplete-result contract.
         with patch.object(engine, 'CEILING_STEPS', 1):
             result = engine._fit_within(case['salts'], case['targets'], {}, 0, case['maxima'])
-        verdict = engine._report(result['rows'], result['grams'], [], case['maxima'])
+        verdict = engine.recipe_report(result['rows'], result['grams'], [], case['maxima'])
         self.assertFalse(verdict['feasible'])
         self.assertTrue(verdict['limitViolations'])
 

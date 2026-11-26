@@ -12,7 +12,7 @@ import unittest
 from flahax import plan_ratio_recipe
 from flahax.materials import make_grade, resolve_material
 from flahax.ratio_element_uncertainty import perturb_sources, validate_element_factors
-from flahax.ratio_products import _sources
+from flahax.ratio_products import product_sources
 from flahax.delivery_contracts import DeliveryError
 from tests.test_ratio_analysis_uncertainty import request
 from tests.test_ratio_element_uncertainty import elemental_options
@@ -60,7 +60,7 @@ class GradeUncertaintyTests(unittest.TestCase):
 
     def test_sampled_grade_is_separate_hypothesis_with_identity(self):
         req = with_grade(request())
-        sources = _sources(req['products'])
+        sources = product_sources(req['products'])
         for row in sources:
             row['grams'] = 1.0
         original = copy.deepcopy(sources)
@@ -77,7 +77,7 @@ class GradeUncertaintyTests(unittest.TestCase):
 
     def test_blend_grade_remains_refused(self):
         req = with_grade(request())
-        sources = _sources(req['products'])
+        sources = product_sources(req['products'])
         sources[0]['product']['grade']['composition'] = 'disclosed'
         with self.assertRaises(DeliveryError) as caught:
             validate_element_factors(sources, elemental_options(req)['product_element_factors'])
@@ -100,7 +100,7 @@ class GradeUncertaintyTests(unittest.TestCase):
 
     def test_adapter_must_preserve_nominal_inventory(self):
         req = with_grade(request())
-        sources = _sources(req['products'])
+        sources = product_sources(req['products'])
         sources[0]['inventory']['components_moles_per_gram']['K+'] *= 0.9
         with self.assertRaises(DeliveryError) as caught:
             validate_element_factors(sources, elemental_options(req)['product_element_factors'])

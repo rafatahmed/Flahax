@@ -9,7 +9,7 @@ feed.
 from datetime import date
 import math
 
-from .canonical_result import _digest
+from .canonical_result import digest
 from .composition import ATOMIC
 from .delivery_contracts import DeliveryError
 
@@ -81,7 +81,7 @@ def _root_zone_feedback(sample, target_design, require_approval):
         'without_guide': sorted(measured.keys() - guides.keys()),
         'without_measurement': sorted(guides.keys() - measured.keys()),
     }
-    fingerprint = _digest({'sample': evidence, 'feed_design': target_design})
+    fingerprint = digest({'sample': evidence, 'feed_design': target_design})
     evidence.update(design_sha256=fingerprint, status='awaiting_approval')
     if 'approval' not in sample:
         if require_approval:

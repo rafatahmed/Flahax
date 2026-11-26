@@ -10,7 +10,7 @@ from copy import deepcopy
 from collections.abc import Mapping
 from math import fsum, isclose, isfinite
 
-from .canonical_result import _digest
+from .canonical_result import digest
 from .composition import InputError, validate_profile
 from .delivery_contracts import DeliveryError
 from .nutrient_acceptance import assess_incidental, assessed_limits
@@ -34,7 +34,10 @@ ACTIONS = {
 RANKING_PREFERENCES = ('relative_residual', 'incidental_mg_l', 'product_count')
 
 
-def _recommendation(workflow):
+def weighed_recommendation(workflow):
+    """The recipe that is weighed: the selected pH candidate, else the unadjusted
+    recipe, else the workflow's own.
+    """
     stage = workflow.stages.get('ph_adjustment')
     plan = stage.value if stage is not None else None
     chosen = getattr(plan, 'selected', None)
@@ -49,7 +52,7 @@ def unresolved_requirements(workflow, request=None):
     """Return next actions for every unmet nutrient, hard limit and
     unfinished workflow stage.
     """
-    recipe = _recommendation(workflow)
+    recipe = weighed_recommendation(workflow)
     requirements = []
     for row in recipe.get('unmetTargets', []):
         requirements.append(
@@ -262,7 +265,7 @@ def _preferences(options):
 
 
 def _candidate_score(candidate, request, preferences):
-    recipe = _recommendation(candidate)
+    recipe = weighed_recommendation(candidate)
     rows = recipe['rows']
     assessment = assess_incidental(
         rows, assessed_limits(request['maximum_concentrations'], recipe)
@@ -335,8 +338,8 @@ def _source_retries(option, request, workflow, expanded, seen):
     products = [p for p in option['changes']['products'] if p['id'] not in existing]
     if len(products) < 2:
         return []
-    original = _recommendation(workflow)
-    current = _recommendation(expanded) if expanded is not None else original
+    original = weighed_recommendation(workflow)
+    current = weighed_recommendation(expanded) if expanded is not None else original
     maxima = request['maximum_concentrations']
 
     def source_score(product):
@@ -491,7 +494,7 @@ def evaluate_remedies(workflow, request, options=(), max_evaluations=20, *, plan
         result = dict(
             id=option['id'],
             kind=option['kind'],
-            option_sha256=_digest(option),
+            option_sha256=digest(option),
             resolved_requirements=[],
             introduced_requirements=[],
             remaining_requirements=deepcopy(baseline),

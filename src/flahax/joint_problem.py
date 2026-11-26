@@ -158,7 +158,7 @@ class JointProblem:
         equilibrium iteration; callers must still verify the final
         candidate from a fresh solve.
         """
-        doses = _profile_doses(fertilizer_g_per_litre, self.fertilizers)
+        doses = profile_doses(fertilizer_g_per_litre, self.fertilizers)
         q = number(reagent_g_per_litre, 'reagent dose')
         sources = [*((s, doses.get(s.product_id, 0)) for s in self.fertilizers), (self.reagent, q)]
         concentrations = dict(self.water)
@@ -263,7 +263,8 @@ class JointProblem:
         )
 
 
-def _profile_doses(value, sources):
+def profile_doses(value, sources):
+    """Validate a dose map against the supplied fertilizer IDs."""
     if not isinstance(value, Mapping) or set(value) - {s.product_id for s in sources}:
         raise DeliveryError('unknown_product', 'doses must map only supplied fertilizer IDs')
     return {k: number(v, 'fertilizer dose') for k, v in value.items()}

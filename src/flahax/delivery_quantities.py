@@ -18,7 +18,7 @@ from typing import Any, Mapping
 
 from .composition import IONS, InputError, assay_conflict, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
-from .engine import _report, forward, score
+from .engine import recipe_report, forward, score
 
 
 def _value(raw: Any, label: str, *, minimum: float | None = None, strict: bool = False) -> float:
@@ -421,7 +421,7 @@ def rescore_weighed_recipe(
     maxima = validate_profile(dict(maximum_concentrations or {}), 'maximum_concentrations')
     achieved = forward(selected, doses, clean_water)
     loss, rows = score(achieved, clean_targets)
-    result = dict(loss=loss, rows=rows, **_report(rows, doses, [], maxima))
+    result = dict(loss=loss, rows=rows, **recipe_report(rows, doses, [], maxima))
     result['salts'] = [
         dict(id=p['id'], name=p.get('name', p['id']), gramsPerLitre=dose)
         for p, dose in zip(selected, doses)

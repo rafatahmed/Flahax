@@ -12,7 +12,7 @@ import math
 from datetime import datetime, timezone
 
 from .inputs import number
-from .stock_evidence import _common, _text, _within
+from .stock_evidence import check_record, required_text, within_bound
 
 
 def preparation_fingerprint(recipe, evidence):
@@ -54,7 +54,7 @@ def preparation_fingerprint(recipe, evidence):
 
 
 def _timestamp(record, key, now):
-    raw = _text(record, key)
+    raw = required_text(record, key)
     value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError(f"{key} must include a timezone")
@@ -91,7 +91,7 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
         if not isinstance(assignment, dict) or set(assignment) != keys:
             raise ValueError("Batch pH assignment is incomplete")
         for key in keys:
-            _text(assignment, key)
+            required_text(assignment, key)
         if assignment["vessel_id"] != vessel_id:
             raise ValueError("pH measurement vessel does not match final-volume assignment")
         calibration, measurement = evidence["calibration"], evidence["measurement"]
@@ -129,7 +129,7 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
             (calibration, calibration_fields, "calibration_record_id"),
             (measurement, measurement_fields, "measurement_record_id"),
         ):
-            _common(row, now.date(), recipe["temperature_c"])
+            check_record(row, now.date(), recipe["temperature_c"])
             if set(row) != base | extra:
                 raise ValueError("Unexpected or missing pH record fields")
             if row["record_id"] != assignment[identity_key] or row["record_id"] in other_ids:
@@ -170,7 +170,7 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
                 raise ValueError(
                     "Each buffer requires reference and certified_ph at record temperature"
                 )
-            reference = _text(buffer, "reference")
+            reference = required_text(buffer, "reference")
             ph = number(buffer.get("certified_ph"), "certified_ph")
             if reference in refs or ph > 14:
                 raise ValueError("Invalid or duplicate buffer reference")
@@ -200,7 +200,7 @@ def check_batch_ph(recipe, evidence, fingerprint, vessel_id, other_ids):
             measured_interval_ph=[lower, upper],
             required_interval_ph=[low, high],
         )
-        if not _within(low, lower) or not _within(upper, high):
+        if not within_bound(low, lower) or not within_bound(upper, high):
             raise ValueError("Measured batch pH uncertainty interval leaves the required pH range")
         check["status"] = "passed"
         return check, None

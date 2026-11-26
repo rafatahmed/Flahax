@@ -9,7 +9,7 @@ waiver.
 from copy import deepcopy
 from datetime import datetime, timezone
 
-from .canonical_result import _digest, verify_summary
+from .canonical_result import digest, verify_summary
 from .delivery_contracts import DeliveryError
 
 
@@ -94,7 +94,7 @@ def save_result(summary, acceptance=None):
     if acceptance is not None:
         verify_acceptance(summary, acceptance)
     payload = dict(summary=deepcopy(summary), acceptance=deepcopy(acceptance))
-    return dict(schema_version=1, payload=payload, sha256=_digest(payload))
+    return dict(schema_version=1, payload=payload, sha256=digest(payload))
 
 
 def _flatten(value, prefix=''):
@@ -149,7 +149,7 @@ def load_result(record):
     if (
         not isinstance(payload, dict)
         or set(payload) != {'summary', 'acceptance'}
-        or record['sha256'] != _digest(payload)
+        or record['sha256'] != digest(payload)
     ):
         raise DeliveryError('invalid_saved_result', 'saved result content changed')
     summary = payload['summary']
@@ -158,7 +158,7 @@ def load_result(record):
         isinstance(summary, dict)
         and 'supplied_inputs' in summary
         and isinstance(identity, dict)
-        and identity.get('input_sha256') != _digest(summary['supplied_inputs'])
+        and identity.get('input_sha256') != digest(summary['supplied_inputs'])
     ):
         raise DeliveryError('invalid_saved_result', 'saved inputs do not match their fingerprint')
     save_result(payload['summary'], payload['acceptance'])

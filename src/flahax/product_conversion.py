@@ -292,7 +292,7 @@ def _declared_unit(name: str, material, dose: float):
     return name, chemistry, totals
 
 
-def _check_materials(
+def check_materials(
     doses: Mapping[str, float], materials, *, allow_undisclosed: bool = False
 ) -> dict:
     """Validate the optional resolved-material mapping against the dosed
@@ -373,7 +373,7 @@ def catalogue_dose_contributions(doses: Mapping[str, float], *, materials=None, 
 
     catalogue = catalogue_salts_by_name()
     library = {**catalogue, **_named(products)}
-    resolved = _check_materials(doses, materials)
+    resolved = check_materials(doses, materials)
     units = []
     for name, dose in doses.items():
         material = resolved.get(name)
@@ -532,7 +532,7 @@ def catalogue_dose_totals(doses: Mapping[str, float], *, materials=None, product
     from .engine import catalogue_salts_by_name
 
     library = catalogue_salts_by_name() | _named(products)
-    resolved = _check_materials(doses, materials)
+    resolved = check_materials(doses, materials)
     result = {}
     for name, dose in doses.items():
         if name not in library and name not in resolved:

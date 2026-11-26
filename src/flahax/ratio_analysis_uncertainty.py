@@ -96,9 +96,9 @@ def validate_analysis_uncertainty(options, volume, products, water):
             "invalid_analysis_uncertainty",
             "This mode requires explicit commercial product records",
         )
-    from .ratio_products import _sources
+    from .ratio_products import product_sources
 
-    sources = _sources(products)
+    sources = product_sources(products)
     if elemental:
         from .ratio_element_uncertainty import validate_element_factors
         from .ratio_assay_documents import resolve_documented_assays

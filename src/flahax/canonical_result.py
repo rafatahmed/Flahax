@@ -48,11 +48,13 @@ def _json(value):
     return json.dumps(_plain(value), sort_keys=True, separators=(',', ':'), allow_nan=False)
 
 
-def _digest(value):
+def digest(value):
+    """The SHA-256 of a value in canonical JSON."""
     return hashlib.sha256(_json(value).encode('utf-8')).hexdigest()
 
 
-def _sources():
+def package_sources():
+    """The SHA-256 of every packaged source and data file, by relative path."""
     root = Path(__file__).parent
     return {
         p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -95,7 +97,7 @@ class CanonicalResult:
                     schema_version=1,
                     package_version=__version__,
                     inputs=inputs,
-                    sources=_sources(),
+                    sources=package_sources(),
                     workflow=workflow,
                 )
             )
@@ -114,7 +116,7 @@ class CanonicalResult:
         for product in record['inputs']['salts']:
             if _json(supplied.get(product['id'])) != _json(product):
                 raise DeliveryError('canonical_result_mismatch', 'report product record changed')
-        if _sources() != record['sources']:
+        if package_sources() != record['sources']:
             raise DeliveryError(
                 'canonical_result_mismatch', 'model sources changed after calculation'
             )
@@ -139,7 +141,7 @@ def seal_summary(summary):
     JSON-compatible mapping.
     """
     result = _export_value(deepcopy({k: v for k, v in summary.items() if k != 'export_identity'}))
-    result['export_identity'] = dict(schema_version=1, sha256=_digest(result))
+    result['export_identity'] = dict(schema_version=1, sha256=digest(result))
     return result
 
 
@@ -152,7 +154,7 @@ def verify_summary(summary):
         raise DeliveryError('canonical_result_mismatch', 'bound export identity is missing')
     if identity is not None and identity != dict(
         schema_version=1,
-        sha256=_digest({k: v for k, v in summary.items() if k != 'export_identity'}),
+        sha256=digest({k: v for k, v in summary.items() if k != 'export_identity'}),
     ):
         raise DeliveryError('canonical_result_mismatch', 'export changed after finalization')
 
