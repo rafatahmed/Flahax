@@ -318,17 +318,15 @@ _LAZY = {
 
 def __getattr__(name):
     import importlib
+    import importlib.util
 
     module = _LAZY.get(name)
     if module is not None:
         value = getattr(importlib.import_module(f".{module}", __name__), name)
+    elif importlib.util.find_spec(f".{name}", __name__) is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     else:
-        try:
-            value = importlib.import_module(f".{name}", __name__)
-        except ModuleNotFoundError as error:
-            if error.name != f"{__name__}.{name}":
-                raise
-            raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
+        value = importlib.import_module(f".{name}", __name__)
     globals()[name] = value
     return value
 
