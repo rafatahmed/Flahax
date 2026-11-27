@@ -10,14 +10,12 @@ import copy
 import json
 import math
 from functools import lru_cache
-from importlib.resources import files
+from .package_data import read_text
 
 
 @lru_cache(maxsize=1)
 def _article():
-    return json.loads(
-        files('flahax').joinpath('data/steiner_1961_evidence.json').read_text(encoding='utf-8')
-    )
+    return json.loads(read_text('data/steiner_1961_evidence.json'))
 
 
 def article_evidence():

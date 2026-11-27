@@ -22,7 +22,6 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
-from importlib.resources import files
 
 import json
 
@@ -34,9 +33,10 @@ from .float_sum import float_sum
 from .materials import IDENTITIES_SHA256, ResolvedMaterial, material_audit_entry, resolve_material
 from .measured_water import BalancedWaterAnalysis
 from .product_conversion import catalogue_dose_contributions, catalogue_dose_totals
+from .package_data import read_bytes
 
 _RESOURCE = 'data/conductivity_mccleskey2012.json'
-_RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
+_RAW = read_bytes(_RESOURCE)
 COEFFICIENTS_SHA256 = hashlib.sha256(_RAW).hexdigest()
 
 
@@ -199,9 +199,7 @@ class IrrigationECResult:
 
 @lru_cache(maxsize=1)
 def _chemistry_sha256():
-    return hashlib.sha256(
-        files('flahax').joinpath('data/chemistry_25c.json').read_bytes()
-    ).hexdigest()
+    return hashlib.sha256(read_bytes('data/chemistry_25c.json')).hexdigest()
 
 
 @lru_cache(maxsize=1)
@@ -729,9 +727,7 @@ def calculate_irrigation_ec(
         'reagent_id': reagent_id,
         'reagent_additions_molal': dict(additions),
         'doses_g_per_kg_water': dict(doses_g_per_kg_water),
-        'catalogueSha256': hashlib.sha256(
-            files('flahax').joinpath('data/library.json').read_bytes()
-        ).hexdigest(),
+        'catalogueSha256': hashlib.sha256(read_bytes('data/library.json')).hexdigest(),
         'identitiesSha256': IDENTITIES_SHA256,
     }
     try:

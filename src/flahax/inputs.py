@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
 
 from .composition import InputError
 
@@ -68,6 +67,9 @@ def read_json(path, what):
     """A JSON file's content, or a DeliveryError that names the file and
     the line (#117).
     """
+    # Imported here: only commands that read a file need pathlib (#342).
+    from pathlib import Path
+
     try:
         text = Path(path).read_text(encoding='utf-8-sig')
     except FileNotFoundError:
