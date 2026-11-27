@@ -1,0 +1,50 @@
+{
+ "counts": {
+  "first_call.flahax_modules": 17,
+  "import.flahax_modules": 0,
+  "ph_grid.cold_iterations": 372,
+  "ph_grid.warm_iterations": 174,
+  "phases_calcite.iterations": 26,
+  "phases_calcite.solves": 1,
+  "phases_mixed_product_phases.iterations": 55,
+  "phases_mixed_product_phases.solves": 1,
+  "products_mixed_products.iterations": 47,
+  "products_mixed_products.solves": 1,
+  "products_mixed_target_ph_nitric.iterations": 115,
+  "products_mixed_target_ph_nitric.solves": 9
+ },
+ "max_warm_over_cold": 0.6,
+ "measured_timings": {
+  "first_call": {
+   "median_ms": 48.37,
+   "p90_ms": 62.041,
+   "relative_median": 2.8939
+  },
+  "import": {
+   "median_ms": 0.544,
+   "p90_ms": 0.75,
+   "relative_median": 0.0325
+  },
+  "second_call": {
+   "median_ms": 3.831,
+   "p90_ms": 10.556,
+   "relative_median": 0.2292
+  }
+ },
+ "note": "Counts are ceilings: the measured value for modules and solves (so one extra module or solve fails), the measured value plus 10 percent (at least 2) for Newton iterations, which can differ by a step between platform math libraries. The total module count depends on the Python version and is recorded only. Timings are medians relative to a fixed calibration loop, budgeted at 3 times the measured value. Regenerate only for an intended change: python -m tools.performance_budgets write-budgets",
+ "recorded_with": {
+  "bytecode_precompiled": true,
+  "calibration_ms": 16.714,
+  "flahax": "0.7.1.dev0",
+  "implementation": "CPython",
+  "machine": "AMD64",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.15",
+  "repeats": 7
+ },
+ "timings_relative_median": {
+  "first_call": 8.6817,
+  "import": 0.0975,
+  "second_call": 0.6876
+ }
+}
