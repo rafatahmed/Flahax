@@ -574,10 +574,12 @@ def verify_analysis_uncertainty(recipe, options):
                     if result[key] is None
                     else [min(result[key][0], value), max(result[key][1], value)]
                 )
-            from .ratio_ph_refinement import refine_ph
+            from .ratio_ph_refinement import refine_ph, warm_started
 
             states, refinement = refine_ph(
-                lambda ph: solve(rebuilt["aqueous_totals_mol_kg"], ph),
+                warm_started(
+                    lambda ph, start: solve(rebuilt["aqueous_totals_mol_kg"], ph, start=start)
+                ),
                 nominal.get("base_evaluated_ph", nominal["evaluated_ph"]),
                 nominal["selected_phases"],
                 result["si_required_below"],

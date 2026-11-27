@@ -15,6 +15,27 @@ MAX_ADDITIONAL_POINTS = 256
 MAX_ROUNDS = 16
 
 
+def warm_started(solve):
+    """A ``solve_at(ph)`` for ``refine_ph`` that seeds each pH solve with
+    the nearest pH already solved for the same totals.
+
+    Neighbouring pH points have nearly the same speciation, so Newton
+    needs far fewer steps; the converged state agrees with the cold
+    start to within the solver tolerance (not bit for bit), and a
+    failed warm start falls back to the cold start inside ``solve``.
+    ``solve(ph, start)`` takes ``start=None`` for the first point.
+    """
+    solved = {}
+
+    def solve_at(ph):
+        nearest = min(solved, key=lambda known: abs(known - ph), default=None)
+        state = solve(ph, solved.get(nearest))
+        solved[ph] = state
+        return state
+
+    return solve_at
+
+
 def refine_ph(solve_at, base_grid, phases, si_limit):
     """Refine observed maxima and crossings, reporting unresolved work
     explicitly.
