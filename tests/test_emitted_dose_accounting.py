@@ -23,6 +23,7 @@ from flahax import (
     solve_weights,
 )
 from flahax.composition import assay_conflict
+from flahax.float_sum import float_sum
 from flahax.engine import forward
 
 
@@ -61,7 +62,7 @@ class EmittedDoseTests(unittest.TestCase):
                 for row in result['rows']:
                     self.assertEqual(row['final'], reconstructed.get(row['symbol'], 0))
                 self.assertEqual(
-                    result['totalGramsPerLitre'], sum(p['gramsPerLitre'] for p in emitted)
+                    result['totalGramsPerLitre'], float_sum(p['gramsPerLitre'] for p in emitted)
                 )
 
 
