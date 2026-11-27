@@ -421,7 +421,9 @@ def rescore_weighed_recipe(
     if not clean_targets:
         raise InputError('targets are required')
     clean_water = validate_profile(dict(water or {}), 'water')
-    maxima = validate_profile(dict(maximum_concentrations or {}), 'maximum_concentrations')
+    maxima = validate_profile(
+        dict(maximum_concentrations or {}), 'maximum_concentrations', bounded=False
+    )
     achieved = forward(selected, doses, clean_water)
     loss, rows = score(achieved, clean_targets)
     result = dict(loss=loss, rows=rows, **recipe_report(rows, doses, [], maxima))

@@ -136,9 +136,13 @@ def read_water(spec):
         raise DeliveryError(
             'unknown_field', '"below_detection" maps water keys to detection limits in mg/L'
         )
-    if isinstance(data['measured_ph'], bool) or not isinstance(data['measured_ph'], (int, float)):
+    if (
+        isinstance(data['measured_ph'], bool)
+        or not isinstance(data['measured_ph'], (int, float))
+        or not math.isfinite(data['measured_ph'])
+    ):
         raise DeliveryError(
-            'invalid_value', f'"measured_ph" = {data["measured_ph"]!r} is not a number'
+            'invalid_value', f'"measured_ph" = {data["measured_ph"]!r} is not a finite number'
         )
     solvent, basis_audit = water_basis(data)
     alkalinity = data.get('alkalinity_meq_per_litre')

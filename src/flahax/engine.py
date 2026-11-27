@@ -1332,7 +1332,9 @@ def recommend(
     allowed = frozenset(allow_ions or ())
     if allowed:
         validate_profile({ion: 0.0 for ion in allowed}, "allow_ions")
-    maxima = validate_profile(maximum_concentrations or {}, "maximum_concentrations")
+    maxima = validate_profile(
+        maximum_concentrations or {}, "maximum_concentrations", bounded=False
+    )
     allowed |= {ion for ion, limit in maxima.items() if limit > 0}
     ammonium_limit = ammonium_allowance(targets, maxima, max_ammonium_fraction)
     ranges = effective_ranges(deviation_ranges, targets)

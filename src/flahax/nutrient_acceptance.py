@@ -18,7 +18,9 @@ def assess_incidental(rows, maximum_concentrations=None):
     Declared maxima are compared directly without an absolute slack.
     """
     maximums = validate_profile(
-        {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
+        {} if maximum_concentrations is None else maximum_concentrations,
+        'maximum_concentrations',
+        bounded=False,
     )
     zeros = {row['symbol'] for row in rows if row['target'] == 0}
     maximums.update({symbol: 0.0 for symbol in zeros})
@@ -99,7 +101,9 @@ def assess_water_basis(rows, maximum_concentrations, analytical_ppm, modelled_pp
     to pass or fail a plan.
     """
     maximums = validate_profile(
-        {} if maximum_concentrations is None else maximum_concentrations, 'maximum_concentrations'
+        {} if maximum_concentrations is None else maximum_concentrations,
+        'maximum_concentrations',
+        bounded=False,
     )
     final = {row['symbol']: row['final'] for row in rows}
     findings = []
