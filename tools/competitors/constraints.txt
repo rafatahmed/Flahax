@@ -51,7 +51,7 @@ pillow==13.0.0
 Pint==0.26.2
 platformdirs==4.13.5
 plotly==7.1.0
-pycparser==3.11
+pycparser==3.12
 pydantic==2.14.1
 pydantic-settings==2.16.1
 pydantic_core==2.50.1
