@@ -4,11 +4,12 @@
 # its results are calculations, not dosing instructions.
 """Results have the same digits on every supported Python (#346).
 
-The recorded values were produced on Python 3.11, 3.12, 3.13 and 3.14, which all agree to the
-last digit. The test compares exactly, with no tolerance, so every CI leg checks the same
-digits and a new Python-dependent sum, or a change that is not bit-identical, fails on the leg
-where it differs. Regenerate only for an intended numerical change:
-``python -m tests.test_cross_version_digits --write``.
+The recorded values were produced on Windows with Python 3.11, 3.12, 3.13 and 3.14, which all
+agree to the last digit. Doses, totals, ionic strength and acid amount are compared exactly on
+every CI leg (Linux included); the tiny species are compared to 1e-9 relative, because their last
+digits depend on the platform's math library, not on the Python version. A new Python-dependent
+sum, or a change that is not bit-identical, fails on the leg where it differs. Regenerate only for
+an intended numerical change: ``python -m tests.test_cross_version_digits --write``.
 """
 
 import ast
@@ -53,6 +54,9 @@ def current():
     }
 
 
+SPECIES = {'aqueous_initial_species', 'nitric_target_species'}
+
+
 class CrossVersionDigitTests(unittest.TestCase):
     def test_results_match_the_recorded_digits_exactly(self):
         expected = json.loads(FIXTURE.read_text(encoding='utf-8'))
@@ -60,7 +64,21 @@ class CrossVersionDigitTests(unittest.TestCase):
         self.assertEqual(sorted(actual), sorted(expected))
         for name in expected:
             with self.subTest(result=name):
-                self.assertEqual(actual[name], expected[name])
+                if name in SPECIES:
+                    self.assert_species_close(actual[name], expected[name])
+                else:
+                    self.assertEqual(actual[name], expected[name])
+
+    def assert_species_close(self, actual, expected):
+        # Species far below the solver tolerance (1e-14 mol/kg) differ by about 1e-13 relative
+        # between Linux and Windows math libraries, on the same Python. They are compared to 1e-9
+        # relative; every total, dose, ionic strength and acid amount stays exact.
+        self.assertEqual(sorted(actual), sorted(expected))
+        for species, value in expected.items():
+            if value == 0:
+                self.assertEqual(actual[species], 0, msg=species)
+            else:
+                self.assertAlmostEqual(actual[species] / value, 1.0, delta=1e-9, msg=species)
 
     def test_the_builtin_sum_is_not_reached_through_another_name(self):
         found = []
