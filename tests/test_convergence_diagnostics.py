@@ -153,6 +153,15 @@ class SolveAttemptsTests(unittest.TestCase):
         self.assertIs(raised.exception, error)
         self.assertEqual(error.details, {})
 
+    def test_a_different_error_from_the_last_attempt_is_left_unchanged(self):
+        other = DeliveryError('activity_model_out_of_range', 'ionic strength too high')
+        failures = [aq.nonconvergent('cold start failed'), other]
+        with patch.object(aq, '_solve', side_effect=failures):
+            with self.assertRaises(DeliveryError) as raised:
+                aq.solve({'K+': 0.001}, 7)
+        self.assertIs(raised.exception, other)
+        self.assertEqual(other.details, {})
+
 
 class RootSearchTests(unittest.TestCase):
     def test_an_exhausted_step_budget_reports_steps_and_bracket(self):
