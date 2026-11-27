@@ -44,7 +44,17 @@ def shrink_bracket(g, lo, g_lo, hi, g_hi, *, width=0.0, relative=0.0, accept=Non
         if hi - lo <= allowance:
             return lo, hi
         if iteration == max_steps:
-            raise DeliveryError('nonconvergent', 'root search exhausted its step budget')
+            raise DeliveryError(
+                'nonconvergent',
+                f'root search exhausted its step budget (steps {max_steps}, bracket '
+                f'[{lo:g}, {hi:g}], width {hi - lo:g}, allowance {allowance:g})',
+                stage='root search',
+                steps=max_steps,
+                low=lo,
+                high=hi,
+                width=hi - lo,
+                allowance=allowance,
+            )
         iteration += 1
         scale = max(abs(g_lo), abs(g_hi))
         fraction = (abs(g_lo) / scale) / (abs(g_lo) / scale + abs(g_hi) / scale)

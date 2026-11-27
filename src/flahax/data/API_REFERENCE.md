@@ -1099,11 +1099,14 @@ Source module: `flahax.injector_sizing`. Import with `from flahax import size_in
 ### `DeliveryError`
 
 ```text
-DeliveryError(code: 'str', message: 'str')
+DeliveryError(code: 'str', message: 'str', **details)
 ```
 
 A delivery-planning input failure with a stable machine-readable
 code.
+
+``details`` holds optional machine-readable facts about the failure, for example the stage,
+iteration count and residual of a solver that did not converge (#348).
 
 Source module: `flahax.inputs`. Import with `from flahax import DeliveryError`.
 

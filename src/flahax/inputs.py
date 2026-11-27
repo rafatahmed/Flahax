@@ -22,11 +22,15 @@ from .composition import InputError
 class DeliveryError(InputError):
     """A delivery-planning input failure with a stable machine-readable
     code.
+
+    ``details`` holds optional machine-readable facts about the failure, for example the stage,
+    iteration count and residual of a solver that did not converge (#348).
     """
 
-    def __init__(self, code: str, message: str):
+    def __init__(self, code: str, message: str, **details):
         super().__init__(message)
         self.code = code
+        self.details = details
 
 
 def number(
