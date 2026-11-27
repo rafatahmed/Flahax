@@ -19,6 +19,8 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
+from .float_sum import float_sum
+
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
 REL = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id'
 FORMULAS = ('KH2PO4', 'Ca(NO3)2.4H2O', 'MgSO4.7H2O', 'Mg(NO3)2.6H2O', 'KNO3', 'KOH')
@@ -84,7 +86,7 @@ class _Book:
                 if (
                     len(info) > 256
                     or len(set(names)) != len(names)
-                    or sum(i.file_size for i in info) > 40_000_000
+                    or float_sum(i.file_size for i in info) > 40_000_000
                 ):
                     raise WorkbookImportError(['Workbook ZIP size or duplicate member limit'])
                 if any(

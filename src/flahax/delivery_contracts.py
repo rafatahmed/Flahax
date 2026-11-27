@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Any
 
 from .composition import IONS, InputError, validate_profile
+from .float_sum import float_sum
 from .inputs import DeliveryError, number
 
 DELIVERY_SCHEMA_VERSION = "0.1"
@@ -82,7 +83,7 @@ def _element_assay(value: Any, label: str) -> dict[str, float]:
         clean[symbol] = number(raw, f"{label}.{symbol}", minimum=0.0, type_code="invalid_type")
         if clean[symbol] > 100.0:
             _error("out_of_range", f"{label}.{symbol} cannot exceed 100%")
-    if sum(clean.values()) > 100.5:
+    if float_sum(clean.values()) > 100.5:
         _error("out_of_range", f"{label} adds to more than 100%")
     return clean
 

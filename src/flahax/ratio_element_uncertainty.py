@@ -11,6 +11,7 @@ import itertools
 import math
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .product_conversion import MOLAR_MASS, material_inventory
 from .ratio_products import LABELS
 
@@ -90,7 +91,7 @@ def validate_element_factors(sources, factors):
         # Independent intervals include the all-high vertex. This
         # necessary mass bound does not establish stoichiometric
         # realizability of every vertex.
-        upper_percent = sum(product["elements"][k] * pair[1] for k, pair in entry.items())
+        upper_percent = float_sum(product["elements"][k] * pair[1] for k, pair in entry.items())
         if (
             not math.isfinite(upper_percent)
             or upper_percent / 100 + source["solvent_fraction"] > 1 + 1e-12

@@ -21,6 +21,7 @@ from typing import Mapping
 from .catalogue_chemistry import ProductChemistry, chemistry_for_product
 from .composition import product_name_collision
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .label_reconciliation import chemistry_elements
 from .material_chemistry import chemistry_ions, material_chemistry, unstated_amounts
 
@@ -112,7 +113,7 @@ def convert_product_dose(
     # assay leaves out. Hydroxide (potassium hydroxide) stays implicit,
     # like the protons of the acids (#75).
     counterions, ligands = unstated_amounts(ions, totals)
-    inert = max(0.0, 1.0 - sum(float(v) for v in assay.values()) / 100.0)
+    inert = max(0.0, 1.0 - float_sum(float(v) for v in assay.values()) / 100.0)
     return ProductAnalyticalTotals(chemistry, dose, totals, counterions, ligands, inert)
 
 
@@ -259,9 +260,9 @@ def declared_ion_totals(
     if chelating_agent is not None:
         ligand, sodium = _DECLARED_CHELATES[chelating_agent]
         chelated = {metal: totals.get(_DECLARED_BASIS[metal], 0.0) for metal in sodium}
-        totals[ligand] = sum(chelated.values())
+        totals[ligand] = float_sum(chelated.values())
         if 'Na' not in elements:
-            totals['Na+'] = sum(count * chelated[metal] for metal, count in sodium.items())
+            totals['Na+'] = float_sum(count * chelated[metal] for metal, count in sodium.items())
     return {basis: amount for basis, amount in totals.items() if amount}
 
 
@@ -270,8 +271,10 @@ def declared_ion_charges(elements: Mapping[str, float], chelating_agent) -> tupl
     declared-ions compound.
     """
     totals = declared_ion_totals(elements, chelating_agent, 100.0)
-    cations = sum(_DECLARED_CHARGE[b] * v for b, v in totals.items() if _DECLARED_CHARGE[b] > 0)
-    anions = -sum(
+    cations = float_sum(
+        _DECLARED_CHARGE[b] * v for b, v in totals.items() if _DECLARED_CHARGE[b] > 0
+    )
+    anions = -float_sum(
         _DECLARED_CHARGE[b] * v
         for b, v in totals.items()
         if _DECLARED_CHARGE[b] < 0 and b != 'PO4-3'

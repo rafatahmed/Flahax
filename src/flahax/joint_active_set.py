@@ -9,6 +9,7 @@ original linear caps.
 import math
 
 from .aqueous_model import linear
+from .float_sum import float_sum
 
 
 def _dot(row, x):
@@ -105,7 +106,7 @@ def feasible_endpoint(point, direction, alpha, constraints):
     """
     trial = [max(0.0, x + alpha * dx) for x, dx in zip(point, direction)]
     for row, bound in constraints[len(point) :]:
-        total = sum(a * x for a, x in zip(row, trial))
+        total = float_sum(a * x for a, x in zip(row, trial))
         # Leave room for rounding when the independent dose calculation
         # sums products in a different order from the linear feasibility
         # check.

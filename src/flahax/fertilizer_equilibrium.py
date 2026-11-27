@@ -18,6 +18,7 @@ from typing import Mapping
 from .ammonia import ammonia_speciation
 from .delivery_contracts import DeliveryError
 from .equilibrium import davies_gamma
+from .float_sum import float_sum
 from .phosphate_complexes import (
     LOG_BETA_CA_H2PO4,
     LOG_BETA_CA_HPO4,
@@ -310,7 +311,7 @@ def _ionic_strength(species: Mapping[str, float]) -> float:
         "CO3-2": -2,
         "HCO3-": -1,
     }
-    return 0.5 * sum(species[name] * charge**2 for name, charge in charges.items())
+    return 0.5 * float_sum(species[name] * charge**2 for name, charge in charges.items())
 
 
 def _fixed_ph_equilibrium(totals: FertilizerTotals, ph: float) -> FertilizerEquilibrium:

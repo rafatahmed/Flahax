@@ -19,6 +19,7 @@ from typing import Any, Mapping
 from .composition import IONS, InputError, assay_conflict, validate_profile, validate_targets
 from .delivery_contracts import DeliveryError
 from .engine import recipe_report, forward, score
+from .float_sum import float_sum
 
 
 def _value(raw: Any, label: str, *, minimum: float | None = None, strict: bool = False) -> float:
@@ -113,7 +114,9 @@ class SolventBasis:
             reagent_carrier_water_kg=reagent_carrier_water_kg,
             dissolved_hydrate_water_kg=dissolved_hydrate_water_kg,
         )
-        return cls(final_volume_litres, sum(_value(v, k, minimum=0) for k, v in entries.items()))
+        return cls(
+            final_volume_litres, float_sum(_value(v, k, minimum=0) for k, v in entries.items())
+        )
 
     def mg_per_litre_to_molality(self, concentration, molar_mass):
         """Convert mg/L of a stated component to mol/kg solvent
@@ -248,7 +251,7 @@ class FinalSolutionRecipe:
     @property
     def total_mass(self) -> MassGrams:
         """The mass of all fertilizers in the recipe."""
-        return MassGrams(sum(item.mass.value for item in self.salts))
+        return MassGrams(float_sum(item.mass.value for item in self.salts))
 
 
 def final_solution_recipe(

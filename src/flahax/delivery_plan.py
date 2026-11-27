@@ -13,6 +13,7 @@ from typing import Iterable, Mapping, Any
 
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import FinalSolutionRecipe
+from .float_sum import float_sum
 from .ph_planning import PhPlan
 from .equilibrium_delivery import EquilibriumPhPlan
 from .pump_planning import PumpCommand
@@ -98,7 +99,7 @@ def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
             fail('reagent volume must be finite and non-negative')
         if volume > 0:
             expected[channel] = volume
-    total = sum(expected.values())
+    total = float_sum(expected.values())
     if not math.isfinite(total) or total >= recipe.final_volume.value:
         fail('combined stocks and reagent must leave positive carrier volume')
     seen = set()

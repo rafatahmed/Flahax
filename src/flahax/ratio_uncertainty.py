@@ -10,6 +10,7 @@ import math
 from .aqueous_model import solve
 from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .ratio_verification import BASIS, ELEMENTS, VALENCES
 from .ratio_products import LABELS
 from .product_conversion import MOLAR_MASS
@@ -119,7 +120,7 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
             sorted({(row["grams"] - error) * low_purity, (row["grams"] + error) * high_purity})
         )
         atoms = parse_formula(row["formula"])["atoms"]
-        mw = sum(ATOMIC[e] * n for e, n in atoms.items())
+        mw = float_sum(ATOMIC[e] * n for e, n in atoms.items())
         vectors.append([1000 * atoms.get(e, 0) / mw for e in ELEMENTS])
     if effective_bounds is not None:
         bounds = effective_bounds
@@ -137,13 +138,15 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
     result["all_scenario_ph_in_range"] = True
     try:
         for doses in itertools.product(*bounds):
-            batch = [sum(d * vector[i] for d, vector in zip(doses, vectors)) for i in range(6)]
+            batch = [
+                float_sum(d * vector[i] for d, vector in zip(doses, vectors)) for i in range(6)
+            ]
             eq = [a * z for a, z in zip(batch, VALENCES)]
-            if not sum(eq[:3]) or not sum(eq[3:]):
+            if not float_sum(eq[:3]) or not float_sum(eq[3:]):
                 result["failed_checks"] = ["empty_ion_group"]
                 return result
-            ratios = [100 * v / sum(eq[:3]) for v in eq[:3]] + [
-                100 * v / sum(eq[3:]) for v in eq[3:]
+            ratios = [100 * v / float_sum(eq[:3]) for v in eq[:3]] + [
+                100 * v / float_sum(eq[3:]) for v in eq[3:]
             ]
             for i, (actual, target) in enumerate(zip(ratios, target_ratios)):
                 ranges[i] = [min(ranges[i][0], actual), max(ranges[i][1], actual)]
@@ -156,7 +159,7 @@ def verify_uncertainty(recipe, options, *, effective_bounds=None):
                 if abs(actual - target) > 1e-10 + options["ratio_relative_tolerance"] * target:
                     failures.add("nutrient_ratios")
             for volume in volumes:
-                concentration = sum(batch) / volume
+                concentration = float_sum(batch) / volume
                 concentration_range = [
                     min(concentration_range[0], concentration),
                     max(concentration_range[1], concentration),

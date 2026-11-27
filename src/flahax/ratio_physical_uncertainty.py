@@ -11,6 +11,7 @@ import itertools
 import math
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .ratio_water import BASIS, account_water
 from .product_conversion import MOLAR_MASS, component_nutrient_masses
 
@@ -80,7 +81,7 @@ def validate_physical(options, sources, water):
     # A necessary lower bound using known nutrient elements only, not a
     # complete dissolved-solids estimate (oxygen, hydrogen and unknown
     # solutes are omitted).
-    elemental_mass = sum(component_nutrient_masses(water["totals_mol_kg"]).values()) / 1000
+    elemental_mass = float_sum(component_nutrient_masses(water["totals_mol_kg"]).values()) / 1000
     max_elements = elemental_mass * (1 + options["water_relative_error"])
     if max_elements > 1 / p["source_water_solvent_fraction"][1] - 1 + 1e-12:
         raise DeliveryError(

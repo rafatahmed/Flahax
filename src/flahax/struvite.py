@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 
 LOG_K_STRUVITE_25C = -13.26
 
@@ -21,4 +22,4 @@ def struvite_saturation_index(
     values = (magnesium_activity, ammonium_activity, phosphate_activity)
     if not all(math.isfinite(value) and value > 0 for value in values):
         raise DeliveryError("out_of_range", "struvite activities must be positive and finite")
-    return sum(math.log10(value) for value in values) - LOG_K_STRUVITE_25C
+    return float_sum(math.log10(value) for value in values) - LOG_K_STRUVITE_25C
