@@ -13,9 +13,26 @@ pushing a tag.
 | Version is not already on PyPI | `guard` | An existing version is skipped with a notice, never re-uploaded |
 | Full test suite and clean wheel/sdist installs on Python 3.11, 3.12, 3.13 and 3.14 | `test` | Runs on the tagged commit |
 | Pinned live PHREEQC replay | `phreeqc-live` | Hash-pinned PHREEQC 3.8.6 on Windows |
-| One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Artifact SHA-256 values appear in the run summary |
+| One build, `twine check --strict`, exactly one wheel and one sdist | `build` | Build tools installed from `tools/requirements-release.txt` with `--require-hashes`, built without isolation; artifact SHA-256 values appear in the run summary |
 | Maintainer approval | `publish` | The `pypi` environment requires a reviewer and accepts only `v*` tags |
 | Upload | `publish` | PyPI Trusted Publishing (OIDC). No API token is stored in GitHub |
+
+## Build-tool pinning
+
+The release job installs `build`, `twine` and the build backend (`setuptools`), with every
+transitive dependency, from `tools/requirements-release.txt` using `pip install --require-hashes`,
+then builds with `python -m build --no-isolation`, so the artifacts are made by exactly the
+reviewed tool versions. The other jobs that install `build` use the same version
+(`build==1.6.1`). Dependabot proposes monthly updates for `/tools`; a pin changes only through a
+reviewed pull request that regenerates the file:
+
+```
+uv pip compile --universal --generate-hashes --python-version 3.11   tools/requirements-release.in -o tools/requirements-release.txt
+```
+
+Raise the `build==` pins in `test.yml` and `publish.yml` in the same pull request; a test fails if
+they disagree. A clean `python tools/verify_distribution.py` still builds in an isolated
+environment, as a user of the sdist would.
 
 ## Recovering validation after an upstream outage
 
