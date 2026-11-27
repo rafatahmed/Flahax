@@ -3,7 +3,7 @@ aioitertools==0.13.0
 annotated-types==0.8.0
 attrs==26.1.0
 bcrypt==5.0.0
-bibtexparser==1.4.4
+bibtexparser==2.1.0
 boto3==1.43.115
 botocore==1.43.115
 certifi==2026.10.19
