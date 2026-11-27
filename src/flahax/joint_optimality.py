@@ -9,6 +9,7 @@ problem.
 from fractions import Fraction as F
 
 from .engine import nnls
+from .float_sum import float_sum
 from .inputs import number
 from .joint_problem import profile_doses
 
@@ -53,15 +54,15 @@ def objective_certificate(problem, fertilizer_doses, reagent_dose):
                 F(cap),
             )
         )
-    feasible = all(sum(v * d for v, d in zip(row, x)) <= bound for row, bound in bounds)
-    residual = [sum(v * d for v, d in zip(row, x)) - target for row, target in zip(a, b)]
-    loss = sum((r * r for r in residual), F(0))
+    feasible = all(float_sum(v * d for v, d in zip(row, x)) <= bound for row, bound in bounds)
+    residual = [float_sum(v * d for v, d in zip(row, x)) - target for row, target in zip(a, b)]
+    loss = float_sum((r * r for r in residual), F(0))
     witness = ([F(0)] * len(positive), [F(0)] * len(bounds))
     if not positive:
         lower = F(0)
     else:
         columns = list(zip(*a))
-        gradient = [2 * sum(v * r for v, r in zip(col, residual)) for col in columns]
+        gradient = [2 * float_sum(v * r for v, r in zip(col, residual)) for col in columns]
         # Numerical multipliers only propose a certificate.
         # Nonnegativity and every dual inequality are enforced below
         # with exact rational arithmetic.
@@ -76,25 +77,26 @@ def objective_certificate(problem, fertilizer_doses, reagent_dose):
         candidates = [(F(0), *witness)]
         for lambdas in ([F(0)] * len(bounds), multipliers):
             c = [
-                sum(lam * row[j] for lam, (row, _) in zip(lambdas, bounds)) for j in range(len(x))
+                float_sum(lam * row[j] for lam, (row, _) in zip(lambdas, bounds))
+                for j in range(len(x))
             ]
             shift = max(
                 [F(0)]
                 + [
-                    -(g + v) / (2 * sum(col))
+                    -(g + v) / (2 * float_sum(col))
                     for g, v, col in zip(gradient, c, columns)
-                    if sum(col) > 0
+                    if float_sum(col) > 0
                 ]
             )
             dual = [r + shift for r in residual]
             assert all(
-                2 * sum(v * r for v, r in zip(col, dual)) + offset >= 0
+                2 * float_sum(v * r for v, r in zip(col, dual)) + offset >= 0
                 for col, offset in zip(columns, c)
             )
             value = (
-                -2 * sum(v * r for v, r in zip(b, dual))
-                - sum(r * r for r in dual)
-                - sum(lam * bound for lam, (_, bound) in zip(lambdas, bounds))
+                -2 * float_sum(v * r for v, r in zip(b, dual))
+                - float_sum(r * r for r in dual)
+                - float_sum(lam * bound for lam, (_, bound) in zip(lambdas, bounds))
             )
             candidates.append((value, dual, lambdas))
         lower, *witness = max(candidates, key=lambda item: item[0])

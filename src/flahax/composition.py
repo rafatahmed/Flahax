@@ -16,6 +16,8 @@ import math
 import re
 from collections.abc import Mapping
 
+from .float_sum import float_sum
+
 # Ions the mass balance knows. Total "N" is absent on purpose: nitrate
 # and ammonium are different rows, and a single N figure cannot be split
 # safely. A formula may still declare total N as a target (see
@@ -372,7 +374,7 @@ def theoretical_assay(formula: str) -> dict[str, float] | None:
     parsed = parse_formula(formula)
     if parsed is None:
         return None
-    mass = sum(ATOMIC[element] * count for element, count in parsed["atoms"].items())
+    mass = float_sum(ATOMIC[element] * count for element, count in parsed["atoms"].items())
     if mass <= 0:
         return None
 
@@ -417,7 +419,7 @@ def _cleaned_assay(salt: dict) -> tuple[dict[str, float] | None, str | None]:
         if not math.isfinite(number) or number < 0 or number > 100:
             return None, f"{name} has an impossible {symbol} assay of {raw}"
         cleaned[symbol] = number
-    if sum(cleaned.values()) > 100.5:
+    if float_sum(cleaned.values()) > 100.5:
         return None, f"{name} assays add to more than 100%"
     formula = str(salt.get("formula") or "")
     if formula == "Input Formula Here":

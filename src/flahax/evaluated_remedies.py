@@ -13,6 +13,7 @@ from math import fsum, isclose, isfinite
 from .canonical_result import digest
 from .composition import InputError, validate_profile
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .nutrient_acceptance import assess_incidental, assessed_limits
 from .product_conversion import material_inventory
 from .requirement_fit import met
@@ -283,7 +284,7 @@ def _candidate_score(candidate, request, preferences):
     ):
         return None
     targets = [row for row in rows if row['target'] is not None]
-    missed = sum(not met(r['target'], r['final']) for r in targets)
+    missed = float_sum(not met(r['target'], r['final']) for r in targets)
     requested_stages = (
         ('equilibrium', 'chemistry'),
         ('nitric', 'nitric'),
@@ -293,7 +294,7 @@ def _candidate_score(candidate, request, preferences):
         ('ph_adjustment', 'ph_adjustment'),
         ('volumetric_stocks', 'volumetric_stocks'),
     )
-    incomplete = sum(
+    incomplete = float_sum(
         candidate.stages[stage].status != 'calculated'
         for key, stage in requested_stages
         if request.get(key) is not None

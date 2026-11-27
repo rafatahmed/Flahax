@@ -20,6 +20,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from .composition import ATOMIC
+from .float_sum import float_sum
 from .material_chemistry import COMPLEXES, ION_TABLE, NUTRIENT_CHARGES
 from .nitrogen import NITROGEN_FORMS
 
@@ -100,15 +101,15 @@ def charge_surplus(ion_forms: Mapping, elements: Mapping) -> LabelReconciliation
     signs = {charges[key] > 0 for key in equivalents}
     if signs != {True, False}:
         return LabelReconciliation({}, 0.0, 'one side of the charge is not declared')
-    net = sum(equivalents.values())
+    net = float_sum(equivalents.values())
     if not net:
         return LabelReconciliation({}, 0.0, 'the declared charges balance')
-    imbalance = 100.0 * net / sum(abs(eq) for eq in equivalents.values())
+    imbalance = 100.0 * net / float_sum(abs(eq) for eq in equivalents.values())
     excess = {key: eq for key, eq in equivalents.items() if eq * net > 0}
     # Each excess ion gives up net x (its share of the excess charge);
     # in mass that is the same fraction, net / excess charge, of its
     # declared %.
-    share = net / sum(excess.values())
+    share = net / float_sum(excess.values())
     word = 'cations' if net > 0 else 'anions'
     return LabelReconciliation(
         {key: share * declared[key] for key in excess},

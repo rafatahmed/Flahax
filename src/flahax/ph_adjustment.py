@@ -24,6 +24,7 @@ from collections.abc import Callable, Mapping, Sequence
 
 from .aqueous_model import AqueousResult, solve
 from .composition import ATOMIC
+from .float_sum import float_sum
 from .nitrogen import fitted_targets
 from .delivery_contracts import DeliveryError
 from .engine import (
@@ -557,7 +558,7 @@ def plan_coupled_ph(
 
 
 def _loss(recommendation):
-    return sum(
+    return float_sum(
         (row['deltaPct'] / 100) ** 2
         for row in recommendation['rows']
         if row['deltaPct'] is not None

@@ -9,6 +9,7 @@ pH reagents.
 from .aqueous_model import solve
 from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .inputs import number
 from .root_finding import shrink_bracket
 from .saturation_policy import assess_saturation
@@ -39,7 +40,7 @@ def _shares(values, name):
     if largest == 0:
         raise DeliveryError("invalid_ratio_input", f"{name} must have a positive total")
     scaled = [v / largest for v in values]
-    return [v / sum(scaled) for v in scaled]
+    return [v / float_sum(scaled) for v in scaled]
 
 
 def plan_ratio_recipe(
@@ -233,8 +234,8 @@ def plan_ratio_recipe(
         )
     concentration_factor = volume / water_mass / 1000
     weights = cations + anions
-    cation_count = sum(v / z for v, z in zip(cations, CHARGES[:3]))
-    anion_count = sum(v / z for v, z in zip(anions, CHARGES[3:]))
+    cation_count = float_sum(v / z for v, z in zip(cations, CHARGES[:3]))
+    anion_count = float_sum(v / z for v, z in zip(anions, CHARGES[3:]))
 
     def amounts(cation_total):
         anion_total = max(0.0, (strength - cation_count * cation_total) / anion_count)
@@ -298,7 +299,7 @@ def plan_ratio_recipe(
     accounting["water_mmol_l"] = dict(zip(NUTRIENTS, water_amounts))
     for (formula, stoichiometry), dose in zip(sources, doses):
         dose = max(0.0, dose)
-        molar_mass = sum(ATOMIC[e] * n for e, n in parse_formula(formula)["atoms"].items())
+        molar_mass = float_sum(ATOMIC[e] * n for e, n in parse_formula(formula)["atoms"].items())
         contribution = [dose * n for n in stoichiometry]
         achieved = [a + b for a, b in zip(achieved, contribution)]
         category = "ph_reagents_mmol_l" if formula in ("KOH", "HNO3") else "salts_mmol_l"
@@ -321,10 +322,10 @@ def plan_ratio_recipe(
         "volume_litres": volume,
         "water_mass_kg": water_mass,
         "temperature_c": 25,
-        "counted_mmol_l": sum(achieved),
+        "counted_mmol_l": float_sum(achieved),
         "analytical_mmol_l": dict(zip(NUTRIENTS, achieved)),
-        "cation_percent": [100 * v / sum(equivalents[:3]) for v in equivalents[:3]],
-        "anion_percent": [100 * v / sum(equivalents[3:]) for v in equivalents[3:]],
+        "cation_percent": [100 * v / float_sum(equivalents[:3]) for v in equivalents[:3]],
+        "anion_percent": [100 * v / float_sum(equivalents[3:]) for v in equivalents[3:]],
         "ingredients": ingredients,
         "water_accounting": water_report,
         "nutrient_accounting": accounting,

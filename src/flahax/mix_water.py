@@ -13,6 +13,7 @@ printed; FlahaX converts.
 
 import math
 
+from .float_sum import float_sum
 from .product_conversion import MOLAR_MASS
 from .water_input import HCO3_MOLAR_MASS
 
@@ -75,8 +76,8 @@ def water_balance(mg):
     for ion, (key, _, charge, key_mass) in IONS.items():
         if key in mg:
             parts[ion] = mg[key] / key_mass * charge
-    cations = sum(v for v in parts.values() if v > 0)
-    anions = -sum(v for v in parts.values() if v < 0)
+    cations = float_sum(v for v in parts.values() if v > 0)
+    anions = -float_sum(v for v in parts.values() if v < 0)
     apart = 100 * abs(cations - anions) / (cations + anions) if cations + anions else 0.0
     return cations, anions, apart, parts
 

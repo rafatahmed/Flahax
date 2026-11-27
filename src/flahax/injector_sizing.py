@@ -9,6 +9,7 @@ control.
 from collections.abc import Mapping
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .inputs import number
 
 
@@ -65,7 +66,7 @@ def size_injection_requirements(
             available_stock_litres=available,
             inventory_sufficient=available >= dose,
         )
-    stock_volume = sum(r['required_stock_litres'] for r in results.values())
+    stock_volume = float_sum(r['required_stock_litres'] for r in results.values())
     if stock_volume >= volume:
         raise DeliveryError(
             'invalid_ratio', 'combined injected stock must be less than final volume'

@@ -17,6 +17,7 @@ from types import MappingProxyType
 
 from .aqueous_model import chemistry, solve
 from .composition import validate_profile, validate_targets
+from .float_sum import float_sum
 from .nitrogen import total_nitrogen
 from .delivery_contracts import DeliveryError
 from .inputs import number
@@ -62,7 +63,7 @@ class JointSource:
                 self, 'components', _profile(self.components, 'components', components=True)
             )
         fraction = number(self.solvent_fraction, 'solvent_fraction')
-        if fraction + sum(self.nutrients.values()) > 1:
+        if fraction + float_sum(self.nutrients.values()) > 1:
             raise DeliveryError(
                 'inconsistent_assay', 'declared nutrient and solvent fractions exceed one'
             )

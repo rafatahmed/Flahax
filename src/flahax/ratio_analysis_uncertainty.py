@@ -13,6 +13,7 @@ import random
 
 from .aqueous_model import solve
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .product_conversion import MOLAR_MASS
 from .ratio_products import LABELS, VALENCES, reconstruct_products
 from .ratio_water import BASIS, account_water
@@ -173,7 +174,7 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
     def choice(group, r):
         scores = [
             v[nutrient] * VALENCES[nutrient]
-            - r * sum(v[i] * VALENCES[i] for i in range(offset, offset + 3))
+            - r * float_sum(v[i] * VALENCES[i] for i in range(offset, offset + 3))
             for v in group[1:]
         ]
         choose = max if maximum else min
@@ -184,7 +185,7 @@ def _ratio_extreme(groups, nutrient, offset, maximum):
         value = 0.0
         for group in groups:
             v = group[1 + choice(group, mid)]
-            value += v[nutrient] * VALENCES[nutrient] - mid * sum(
+            value += v[nutrient] * VALENCES[nutrient] - mid * float_sum(
                 v[i] * VALENCES[i] for i in range(offset, offset + 3)
             )
         if value > 0:
@@ -370,15 +371,15 @@ def verify_analysis_uncertainty(recipe, options):
         )
         maximum_solvent += mass_high * solvent_high / 1000
     dimension("volume", *volumes)
-    count_low = sum(min(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[1]
-    count_high = sum(max(sum(v[:6]) for v in g[1:]) for g in groups) / volumes[0]
+    count_low = float_sum(min(float_sum(v[:6]) for v in g[1:]) for g in groups) / volumes[1]
+    count_high = float_sum(max(float_sum(v[:6]) for v in g[1:]) for g in groups) / volumes[0]
     result["counted_mmol_l_range"] = [count_low, count_high]
     result["elemental_mg_l_ranges"] = {
         k: [
-            sum(min(v[i] for v in g[1:]) for g in groups)
+            float_sum(min(v[i] for v in g[1:]) for g in groups)
             / volumes[1]
             * (MOLAR_MASS[k.split("_")[0]] if i < 6 else 1),
-            sum(max(v[i] for v in g[1:]) for g in groups)
+            float_sum(max(v[i] for v in g[1:]) for g in groups)
             / volumes[0]
             * (MOLAR_MASS[k.split("_")[0]] if i < 6 else 1),
         ]
@@ -410,8 +411,10 @@ def verify_analysis_uncertainty(recipe, options):
     ranges = []
     for offset in (0, 3):
         if (
-            sum(
-                min(sum(v[i] * VALENCES[i] for i in range(offset, offset + 3)) for v in g[1:])
+            float_sum(
+                min(
+                    float_sum(v[i] * VALENCES[i] for i in range(offset, offset + 3)) for v in g[1:]
+                )
                 for g in groups
             )
             <= 0
@@ -506,7 +509,9 @@ def verify_analysis_uncertainty(recipe, options):
             if len(points) >= options["max_scenarios"]:
                 break
             add({name: float(rng.randrange(2)) if i % 2 == 0 else rng.random() for name in names})
-    result["corners_evaluated"] = sum(all(v in (0.0, 1.0) for v in point) for point in points)
+    result["corners_evaluated"] = float_sum(
+        all(v in (0.0, 1.0) for v in point) for point in points
+    )
     result["all_corners_evaluated"] = result["corners_evaluated"] == 2 ** len(names)
     result["planned_scenarios"] = len(points)
     result["sampling_seed"] = 1961

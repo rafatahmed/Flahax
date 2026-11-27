@@ -11,6 +11,7 @@ import math
 
 from .delivery_contracts import DeliveryError
 from .equilibrium import davies_gamma
+from .float_sum import float_sum
 from .phosphate import LOG_BETA_H2PO4_25C, LOG_BETA_H3PO4_25C, LOG_BETA_HPO4_25C
 
 
@@ -133,7 +134,7 @@ def calcium_magnesium_phosphate_speciation(
         result["mg_total"] = (
             result["mg"] + result["mg_hpo4"] + result["mg_h2po4"] + result["mg_po4"]
         )
-        result["p_total"] = sum(
+        result["p_total"] = float_sum(
             result[name]
             for name in (
                 "po4",

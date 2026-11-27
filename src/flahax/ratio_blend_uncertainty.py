@@ -12,6 +12,7 @@ import math
 
 from .delivery_contracts import DeliveryError
 from .engine import load_library
+from .float_sum import float_sum
 from .materials import make_grade
 from .product_conversion import material_inventory, component_nutrient_masses, MOLAR_MASS
 from .ratio_products import LABELS
@@ -103,7 +104,7 @@ def validate_blend(row, entry):
                 "invalid_blend_bounds",
                 "Finite fraction bounds must contain nominal fractions within 0..1",
             )
-    if sum(p[1] for p in bounds.values()) + row["solvent_fraction"] > 1 + 1e-12:
+    if float_sum(p[1] for p in bounds.values()) + row["solvent_fraction"] > 1 + 1e-12:
         raise DeliveryError(
             "invalid_blend_mass_bounds",
             "Upper ingredient fractions plus solvent exceed product mass",

@@ -18,6 +18,7 @@ import json
 import math
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .inputs import number
 from .stock_planning import StockPlan
 from .delivery_quantities import VolumeLitres
@@ -294,7 +295,10 @@ def plan_ec_delivery(
             final_litres_per_stock_litre=ratio,
             ml_per_litre_final=1000 / ratio,
         )
-    if assigned != set(base) or sum(i['volume_litres'] for i in injections.values()) > volume:
+    if (
+        assigned != set(base)
+        or float_sum(i['volume_litres'] for i in injections.values()) > volume
+    ):
         raise DeliveryError(
             'inconsistent_recipe', 'stock coverage or combined injected volume is invalid'
         )

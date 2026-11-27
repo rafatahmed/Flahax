@@ -32,6 +32,7 @@ from .composition import (
     validate_profile,
     validate_targets,
 )
+from .float_sum import float_sum
 from .nitrogen import (
     NITROGEN_FORMS,
     ammonium_allowance,
@@ -143,11 +144,11 @@ def lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
     beta = b[:]
     # Rank tests are relative so that rescaling a problem does not
     # change its rank.
-    rank_tol = EPS * max(math.sqrt(sum(v * v for v in column)) for column in columns)
+    rank_tol = EPS * max(math.sqrt(float_sum(v * v for v in column)) for column in columns)
     if rank_tol == 0.0:
         raise ValueError("rank deficient least squares block")
     for k in range(min(n, m)):
-        sigma = math.sqrt(sum(matrix[i][k] * matrix[i][k] for i in range(k, m)))
+        sigma = math.sqrt(float_sum(matrix[i][k] * matrix[i][k] for i in range(k, m)))
         if sigma < rank_tol:
             raise ValueError("rank deficient least squares block")
         if matrix[k][k] < 0:
@@ -156,15 +157,15 @@ def lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
         reflector[k] = matrix[k][k] + sigma
         for i in range(k + 1, m):
             reflector[i] = matrix[i][k]
-        norm = sum(value * value for value in reflector)
+        norm = float_sum(value * value for value in reflector)
         # The sign choice makes norm >= 2 * sigma**2; sigma already
         # passed rank_tol.
         for j in range(k, n):
-            dot = sum(reflector[i] * matrix[i][j] for i in range(k, m))
+            dot = float_sum(reflector[i] * matrix[i][j] for i in range(k, m))
             factor = 2.0 * dot / norm
             for i in range(k, m):
                 matrix[i][j] -= factor * reflector[i]
-        dot = sum(reflector[i] * beta[i] for i in range(k, m))
+        dot = float_sum(reflector[i] * beta[i] for i in range(k, m))
         factor = 2.0 * dot / norm
         for i in range(k, m):
             beta[i] -= factor * reflector[i]
@@ -175,7 +176,7 @@ def lstsq(columns: list[list[float]], b: list[float]) -> list[float]:
     for i in range(min(n, m) - 1, -1, -1):
         # Each diagonal is -sigma, already checked before the reflector
         # was applied.
-        total = beta[i] - sum(matrix[i][j] * solution[j] for j in range(i + 1, n))
+        total = beta[i] - float_sum(matrix[i][j] * solution[j] for j in range(i + 1, n))
         solution[i] = total / matrix[i][i]
     return solution
 
@@ -205,7 +206,9 @@ class _GramRow:
         cache = self.gram.rows[a]
         value = cache.get(b)
         if value is None:
-            value = cache[b] = sum(x * y for x, y in zip(self.gram.cols[a], self.gram.cols[b]))
+            value = cache[b] = float_sum(
+                x * y for x, y in zip(self.gram.cols[a], self.gram.cols[b])
+            )
         return value
 
 
@@ -224,7 +227,7 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     for i in range(k):
         gi = gram[passive[i]]
         for j in range(i + 1):
-            value = gi[passive[j]] - sum(chol[i][t] * chol[j][t] for t in range(j))
+            value = gi[passive[j]] - float_sum(chol[i][t] * chol[j][t] for t in range(j))
             if i == j:
                 if value <= GRAM_PIVOT_FLOOR * gi[passive[i]]:
                     return None
@@ -236,10 +239,10 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     def solve(vector):
         y = [0.0] * k
         for i in range(k):
-            y[i] = (vector[i] - sum(chol[i][t] * y[t] for t in range(i))) / chol[i][i]
+            y[i] = (vector[i] - float_sum(chol[i][t] * y[t] for t in range(i))) / chol[i][i]
         z = [0.0] * k
         for i in range(k - 1, -1, -1):
-            z[i] = (y[i] - sum(chol[t][i] * z[t] for t in range(i + 1, k))) / chol[i][i]
+            z[i] = (y[i] - float_sum(chol[t][i] * z[t] for t in range(i + 1, k))) / chol[i][i]
         return z
 
     z = solve([cross[j] for j in passive])
@@ -248,8 +251,8 @@ def _gram_lstsq(gram, cross, cols, rhs, passive):
     # Well-conditioned subproblems are already accurate; refine only
     # weak ones.
     for _ in range(0 if weakest > GRAM_REFINE_BELOW else 2):
-        residual = [rhs[r] - sum(z[i] * picked[i][r] for i in range(k)) for r in range(m)]
-        delta = solve([sum(col[r] * residual[r] for r in range(m)) for col in picked])
+        residual = [rhs[r] - float_sum(z[i] * picked[i][r] for i in range(k)) for r in range(m)]
+        delta = solve([float_sum(col[r] * residual[r] for r in range(m)) for col in picked])
         z = [a + b for a, b in zip(z, delta)]
     return z
 
@@ -306,8 +309,8 @@ def nnls(
             raise InputError(
                 'NNLS column products exceed floating-point range; rescale the problem'
             )
-    cross = [sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
-    cross_size = [sum(abs(a * b) for a, b in zip(ci, rhs)) for ci in cols]
+    cross = [float_sum(a * b for a, b in zip(ci, rhs)) for ci in cols]
+    cross_size = [float_sum(abs(a * b) for a, b in zip(ci, rhs)) for ci in cols]
     if not all(map(math.isfinite, cross_size)):
         raise InputError('NNLS right-hand-side products exceed floating-point range')
 
@@ -372,8 +375,8 @@ def nnls(
         for i in range(n):
             row = gram[i]
             terms = [row[j] * x[j] for j in support]
-            weights.append(cross[i] - sum(terms))
-            sizes.append(cross_size[i] + sum(map(abs, terms)))
+            weights.append(cross[i] - float_sum(terms))
+            sizes.append(cross_size[i] + float_sum(map(abs, terms)))
         candidates = [j for j in active if j not in rejected and weights[j] > bound * sizes[j]]
         if not candidates:
             break
@@ -1215,7 +1218,7 @@ def recipe_report(
         **incidental,
         "maxAbsDeltaPct": round(max(deltas), 4) if deltas else None,
         "undesiredIons": undesired,
-        "totalGramsPerLitre": sum(gram for gram in grams if gram > 0),
+        "totalGramsPerLitre": float_sum(gram for gram in grams if gram > 0),
         "warnings": warnings,
     }
 

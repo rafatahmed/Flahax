@@ -9,6 +9,7 @@ delivery.
 import math
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 
 
 def validate_stocks(options, formulae):
@@ -80,13 +81,13 @@ def prepare_stock_delivery(recipe, options, volume_error):
                 "effective_grams_bounds": interval,
             }
         )
-    maximum_volume = sum(row["dose_ml"] + row["dose_error_ml"] for row in rows)
+    maximum_volume = float_sum(row["dose_ml"] + row["dose_error_ml"] for row in rows)
     if maximum_volume >= 1000 * (recipe["volume_litres"] - volume_error):
         raise DeliveryError("ratio_stock_volume_infeasible", "Stock doses leave no dilution water")
     return {
         "stocks": rows,
         "effective_grams_bounds": bounds,
-        "total_dose_ml": sum(row["dose_ml"] for row in rows),
+        "total_dose_ml": float_sum(row["dose_ml"] for row in rows),
         "specification": dict(options),
         "verification_scope": "Numerical assessment under declared stock and dosing bounds; "
         "no measured stock assays or dispenser calibration records have been supplied.",
