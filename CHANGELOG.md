@@ -22,6 +22,9 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- `import flahax` loads no submodule: public names resolve on first use, so import time no longer grows with the package (#335).
+- The first `recommend` call takes about 67 ms instead of 90 ms: packaged data is read directly through `importlib.resources` and `pathlib` is imported only when needed (#342).
+- The aqueous solve is faster and returns bit-identical results (#337), and each pH point of the uncertainty grid starts from its nearest solved pH (#339).
 - Sixteen helpers that other modules import lose their leading underscore and gain a docstring where they had none, for example `canonical_result.digest`, `engine.recipe_report` and `stock_evidence.required_text`. Code that imported the old private names uses the new ones; nothing is exported from `flahax` and no result differs.
 - The nitrogen rules live in `flahax.nitrogen`: the three forms, `nitrogen_rows`, `fitted_targets`, `total_nitrogen`, the ammonium allowance and `total_n_report`, moved from `composition` and `engine`. `evaluate_remedies` takes the planner as an argument, so `fertilizer_workflow` and `evaluated_remedies` no longer import each other. No recipe, total-N report or ammonium cap differs.
 - `run_batch` and `BatchOptions` move from `flahax.batch_cli` to `flahax.batch_request`, the water reader to `flahax.water_input`, and `read_json` to `flahax.inputs`; `flahax batch`, `flahax mix` and `flahax.batch_cli.main` behave as before and no output differs. Code that imported those names from `batch_cli` imports them from the new modules.
@@ -38,6 +41,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Fixed
 
+- Sums of floats give the same digits on Python 3.11 and 3.12 or newer: 3.12 changed the built-in `sum`, so results differed in the last digits. The emitted total is compared with `float_sum` in tests (#334).
 - Total nitrogen counts an absent urea as a zero requirement: a declared nitrate and a positive ammonium now determine the total, a total that disagrees with them is rejected before fitting (for example `N` 150 with `N_NO3` 100 and `N_NH4` 30), and a consistent total is scored once (#303).
 - Coupled recipes are assessed at the emitted reagent dose, and search provenance survives dose reassessment (#288).
 - Each solubility row states that it is a single-product value and whether its temperature is verified; a value recorded at another temperature is flagged, not silently accepted (#295).
