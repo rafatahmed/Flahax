@@ -103,7 +103,12 @@ def calculate_equilibrium_ph(
         previous = current
     if bracket is None:
         raise DeliveryError(
-            'ph_not_bracketed', 'no charge-balanced pH in the supported [0,14] interval'
+            'ph_not_bracketed',
+            'no charge-balanced pH in the supported [0,14] interval '
+            f'(stage pH bracketing, last pH {current.ph:g}, charge imbalance {off(current):g})',
+            stage='pH bracketing',
+            last_ph=current.ph,
+            residual=off(current),
         )
     low, high = bracket
     for _ in range(60):
@@ -114,4 +119,13 @@ def calculate_equilibrium_ph(
             low = current
         else:
             high = current
-    raise DeliveryError('nonconvergent', 'calculated pH did not close charge balance')
+    raise DeliveryError(
+        'nonconvergent',
+        'calculated pH did not close charge balance (stage pH bisection, steps 60, bracket '
+        f'[{low.ph:g}, {high.ph:g}], charge residual {abs(off(current)):g})',
+        stage='pH bisection',
+        steps=60,
+        low=low.ph,
+        high=high.ph,
+        residual=abs(off(current)),
+    )

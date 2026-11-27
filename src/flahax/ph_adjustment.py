@@ -111,7 +111,15 @@ def reagent_dose(totals, initial_ph, target_ph, formula, *, phases=(), initial=N
         low, g_low = high, g_high
         high *= 2
     else:
-        raise DeliveryError('nonconvergent', 'reagent demand could not be bracketed')
+        raise DeliveryError(
+            'nonconvergent',
+            'reagent demand could not be bracketed (stage dose bracketing, steps 32, '
+            f'last dose {high:g}, charge gap {g_high:g})',
+            stage='dose bracketing',
+            steps=32,
+            dose=high,
+            residual=g_high,
+        )
     # Same final width as 40 bisection steps from [0, high].
     low, high = shrink_bracket(gap, low, g_low, high, g_high, width=high * 2.0**-40)
     dose = (low + high) / 2

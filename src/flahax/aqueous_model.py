@@ -157,6 +157,19 @@ def _qualification(present):
     return tuple(limitations), domain
 
 
+def nonconvergent(text, **details):
+    """A ``nonconvergent`` DeliveryError whose message and ``details`` name the stage,
+    the iteration counts and the residual where the solver gave up (#348).
+    """
+    shown = ', '.join(
+        f'{name.replace("_", " ")} {value:g}'
+        if isinstance(value, float)
+        else f'{name.replace("_", " ")} {value}'
+        for name, value in details.items()
+    )
+    return DeliveryError('nonconvergent', f'{text} ({shown})' if shown else text, **details)
+
+
 def linear(a, b):
     """Row-equilibrated elimination; zero pivots fail without an
     absolute floor.
@@ -167,10 +180,15 @@ def linear(a, b):
     certify forward accuracy or conditioning.
     """
     rows = []
-    for row, value in zip(a, b):
+    for index, (row, value) in enumerate(zip(a, b)):
         scale = max(map(abs, row), default=0.0)
         if scale == 0 or not math.isfinite(scale):
-            raise DeliveryError('nonconvergent', 'singular or nonfinite equilibrium Jacobian')
+            raise nonconvergent(
+                'singular or nonfinite equilibrium Jacobian',
+                stage='linear solve',
+                zero_or_nonfinite_row=index,
+                size=len(b),
+            )
         rows.append([v / scale for v in row] + [value / scale])
     a = rows
     n = len(b)
@@ -185,7 +203,12 @@ def linear(a, b):
         pivot_row = a[k]
         pivot = pivot_row[k]
         if pivot == 0:
-            raise DeliveryError('nonconvergent', 'singular equilibrium Jacobian')
+            raise nonconvergent(
+                'singular equilibrium Jacobian',
+                stage='linear solve',
+                zero_pivot_column=k,
+                size=n,
+            )
         tail = pivot_row[k + 1 :]
         for i in range(k + 1, n):
             row = a[i]
@@ -196,7 +219,7 @@ def linear(a, b):
         row = a[i]
         x[i] = (row[n] - float_sum(map(mul, row[i + 1 : n], x[i + 1 : n]))) / row[i]
     if not all(map(math.isfinite, x)):
-        raise DeliveryError('nonconvergent', 'nonfinite equilibrium linear solution')
+        raise nonconvergent('nonfinite equilibrium linear solution', stage='linear solve', size=n)
     return x
 
 
@@ -273,6 +296,7 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, sta
     solver tolerance, and a failed warm start falls back to the cold
     start below.
     """
+    attempts = []
     if start is not None:
         try:
             return _solve(
@@ -286,6 +310,7 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, sta
         except DeliveryError as exc:
             if exc.code != 'nonconvergent':
                 raise
+            attempts.append(f'warm start: {exc}')
     try:
         return _solve(
             totals, ph, phases=phases, ionic_strength=ionic_strength, temperature_c=temperature_c
@@ -293,17 +318,25 @@ def solve(totals, ph, *, phases=(), ionic_strength=None, temperature_c=25.0, sta
     except DeliveryError as exc:
         if exc.code != 'nonconvergent':
             raise
+        attempts.append(f'cold start: {exc}')
     # The cold start (every free activity at total/1000) can leave
     # Newton crawling far from strongly complexed free ions (#52);
     # restart from a continued-fraction estimate.
-    return _solve(
-        totals,
-        ph,
-        phases=phases,
-        ionic_strength=ionic_strength,
-        temperature_c=temperature_c,
-        presolve=True,
-    )
+    try:
+        return _solve(
+            totals,
+            ph,
+            phases=phases,
+            ionic_strength=ionic_strength,
+            temperature_c=temperature_c,
+            presolve=True,
+        )
+    except DeliveryError as exc:
+        if exc.code == 'nonconvergent':
+            # The last failure is raised; the earlier attempts stay readable (#348).
+            exc.details['pH'] = ph
+            exc.details['earlier_attempts'] = attempts
+        raise
 
 
 def _phase_table():
@@ -501,11 +534,25 @@ def _solve(
                     # instead. Paths that converge today are unchanged.
                     x = _damped_step(evaluate, x, residual, matrix)
                     if x is None:
-                        raise DeliveryError(
-                            'nonconvergent', f'equilibrium line search stalled (residual {norm:g})'
+                        raise nonconvergent(
+                            'equilibrium line search stalled',
+                            stage='newton line search',
+                            iteration=iteration + 1,
+                            residual=norm,
+                            phase_step=phase_step,
+                            ionic_strength_pass=outer + 1,
+                            newton_evaluations=count,
                         )
             else:
-                raise DeliveryError('nonconvergent', 'aqueous Newton iteration limit')
+                raise nonconvergent(
+                    'aqueous Newton iteration limit',
+                    stage='newton',
+                    iterations=iteration + 1,
+                    residual=norm,
+                    phase_step=phase_step,
+                    ionic_strength_pass=outer + 1,
+                    newton_evaluations=count,
+                )
             logs = x[:n]
             solids = dict(zip(active, x[n:]))
             negative = [p for p in active if solids[p] < -1e-13]
@@ -523,7 +570,14 @@ def _solve(
                 break
             active.append(max(excess, key=saturation.get))
         else:
-            raise DeliveryError('nonconvergent', 'phase active set iteration limit')
+            raise nonconvergent(
+                'phase active set iteration limit',
+                stage='phase active set',
+                phase_steps=phase_step + 1,
+                ionic_strength_pass=outer + 1,
+                active_phases=','.join(sorted(active)) or 'none',
+                newton_evaluations=count,
+            )
         species = {r['name']: a for r, a in zip(records, amounts)}
         updated = 0.5 * float_sum(a * r['charge'] ** 2 for a, r in zip(amounts, records))
         next_water = max(0.9, 1 - float_sum(amounts) / 55.5084)
@@ -531,7 +585,9 @@ def _solve(
             raise DeliveryError(
                 'activity_model_out_of_range', f'Davies ionic strength {updated:g} exceeds 0.1'
             )
-        if (ionic_strength is not None or abs(updated - strength) < 1e-12) and abs(
+        strength_gap = abs(updated - strength)
+        water_gap = abs(next_water - water)
+        if (ionic_strength is not None or strength_gap < 1e-12) and abs(
             next_water - water
         ) < 1e-12:
             activities = {
@@ -591,7 +647,14 @@ def _solve(
         # Water activity depends only weakly on itself (through
         # H2O-bearing species).
         water = next_water
-    raise DeliveryError('nonconvergent', 'ionic strength/water iteration limit')
+    raise nonconvergent(
+        'ionic strength/water iteration limit',
+        stage='ionic strength and water activity',
+        passes=outer + 1,
+        ionic_strength_gap=strength_gap,
+        water_activity_gap=water_gap,
+        newton_evaluations=count,
+    )
 
 
 @dataclass(frozen=True)

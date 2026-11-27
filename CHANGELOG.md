@@ -23,6 +23,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- A solver that gives up names where: the message keeps its wording and adds the stage, iteration count and residual (Newton, line search, phase active set, ionic strength, root search, pH bracketing, dose bracketing), and `DeliveryError.details` carries the same facts; `solve` also lists the earlier warm-start and cold-start failures. Successful results are unchanged (#348).
 - `import flahax` loads no submodule: public names resolve on first use, so import time no longer grows with the package (#335).
 - The first `recommend` call takes about 67 ms instead of 90 ms: packaged data is read directly through `importlib.resources` and `pathlib` is imported only when needed (#342).
 - The aqueous solve is faster and returns bit-identical results (#337), and each pH point of the uncertainty grid starts from its nearest solved pH (#339).
