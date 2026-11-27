@@ -177,7 +177,7 @@ class InputError(ValueError):
 MAX_MG_PER_L = 2_000_000.0
 
 
-def _finite(value) -> float:
+def _finite(value, bounded=True) -> float:
     if isinstance(value, bool):
         raise InputError(f"{value!r} is not a concentration")
     try:
@@ -186,17 +186,19 @@ def _finite(value) -> float:
         raise InputError(f"{value!r} is not a concentration") from exc
     if not math.isfinite(number):
         raise InputError(f"{value!r} is not a finite concentration")
-    if number > MAX_MG_PER_L:
+    if bounded and number > MAX_MG_PER_L:
         raise InputError(
             f"{value!r} is above {MAX_MG_PER_L:,.0f} mg/L, more than a litre of solution can hold"
         )
     return number
 
 
-def validate_profile(profile: dict, label: str) -> dict[str, float]:
+def validate_profile(profile: dict, label: str, *, bounded: bool = True) -> dict[str, float]:
     """Return a copy of a ppm map, or raise InputError.
 
-    For water, maxima and assays. The total-N symbol "N" is a target only, so it is always
+    For water, maxima and assays. A measured concentration cannot exceed ``MAX_MG_PER_L``; a
+    maximum is an upper bound, so callers validating maxima pass ``bounded=False`` and may use a
+    huge value for "no limit". The total-N symbol "N" is a target only, so it is always
     rejected here; validate a targets map with ``validate_targets``.
     """
     if not isinstance(profile, dict):
@@ -210,7 +212,7 @@ def validate_profile(profile: dict, label: str) -> dict[str, float]:
             )
         if symbol not in IONS:
             raise InputError(f"{label} has unknown ion {symbol}")
-        number = _finite(raw)
+        number = _finite(raw, bounded)
         if number < 0:
             raise InputError(f"{label} {symbol} is {number}, which is below 0 ppm")
         clean[symbol] = number

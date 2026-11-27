@@ -42,7 +42,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Fixed
 
-- A concentration above 2,000,000 mg/L, or a `True`/`False` for one, is rejected as an `InputError` instead of overflowing the recommendation (`OverflowError`, or a result with non-finite masses); a water file whose `measured_ph` is NaN or infinite is refused at the file (#348).
+- A measured concentration (water, target or assay) above 2,000,000 mg/L, or a `True`/`False`, is an `InputError` instead of an `OverflowError` or non-finite masses; a maximum stays an upper bound, so 1e9 still means no limit. A water file whose `measured_ph` is NaN or infinite is refused (#348).
 - The aqueous solver and `nitric_target` raise `DeliveryError` (`out_of_range`, `invalid_totals`, `activity_model_out_of_range`) for a pH, total or ionic strength that is not a number, instead of a `TypeError`; a pH of `True` is no longer read as 1 (#348).
 - Sums of floats give the same digits on Python 3.11 and 3.12 or newer: 3.12 changed the built-in `sum`, so results differed in the last digits. The emitted total is compared with `float_sum` in tests (#334).
 - Total nitrogen counts an absent urea as a zero requirement: a declared nitrate and a positive ammonium now determine the total, a total that disagrees with them is rejected before fitting (for example `N` 150 with `N_NO3` 100 and `N_NH4` 30), and a consistent total is scored once (#303).

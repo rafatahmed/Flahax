@@ -61,6 +61,21 @@ class RecommendInputTests(unittest.TestCase):
                     with self.assertRaises(InputError):
                         recommend(self.salts, TARGETS, {**WATER, ion: value})
 
+    def test_a_maximum_is_an_upper_bound_so_a_huge_one_means_no_limit(self):
+        for value in (1e9, 1e308):
+            with self.subTest(value=value):
+                result = recommend(
+                    self.salts,
+                    TARGETS,
+                    WATER,
+                    maximum_concentrations={'Na': value, 'Cl': value},
+                )
+                self.assertTrue(finite(result['grams']))
+        for value in (float('nan'), float('inf'), -1.0, True, 'abc'):
+            with self.subTest(value=repr(value)):
+                with self.assertRaises(InputError):
+                    recommend(self.salts, TARGETS, WATER, maximum_concentrations={'Na': value})
+
     def test_an_unknown_ion_is_an_input_error(self):
         with self.assertRaises(InputError):
             recommend(self.salts, TARGETS, {**WATER, 'Zz': 1.0})
