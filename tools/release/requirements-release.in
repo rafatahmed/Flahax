@@ -1,6 +1,6 @@
 # Tools that build and check the release artifacts (#348, roadmap H8).
 # Compile with: uv pip compile --universal --generate-hashes --python-version 3.11 \
-#   tools/requirements-release.in -o tools/requirements-release.txt
+#   tools/release/requirements-release.in -o tools/release/requirements-release.txt
 build==1.6.1
 twine
 setuptools>=77.0.3
