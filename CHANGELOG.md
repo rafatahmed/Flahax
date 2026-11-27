@@ -23,6 +23,7 @@ Development checkout: 0.7.1.dev0.
 
 ### Changed
 
+- `compose_delivery_plan`, `delivery_report` and `transition_plan` refuse a stage value whose own fields contradict each other (`cross_stage_constraint`): a changed pH plan (blank ids, target outside pH 0-14, reagent volume with zero mass or demand), a pump command with no calibration id or runtime, a stock plan whose approval disagrees with its status (#348).
 - A solver that gives up names where: the message keeps its wording and adds the stage, iteration count and residual (Newton, line search, phase active set, ionic strength, root search, pH bracketing, dose bracketing), and `DeliveryError.details` carries the same facts; `solve` also lists the earlier warm-start and cold-start failures. Successful results are unchanged (#348).
 - `import flahax` loads no submodule: public names resolve on first use, so import time no longer grows with the package (#335).
 - The first `recommend` call takes about 67 ms instead of 90 ms: packaged data is read directly through `importlib.resources` and `pathlib` is imported only when needed (#342).

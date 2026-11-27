@@ -47,6 +47,50 @@ class DeliveryPlan:
     state: str = "draft"
 
 
+def _nonempty(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def _check_ph_plan_record(ph_plan, volume, fail):
+    """Reject a pH plan whose own fields contradict each other, such as one
+    changed after it was planned (#348, H5). The reagent record is not
+    kept in the plan, so only what the plan itself determines is checked.
+    """
+    names = ('water_analysis_id', 'reagent_id', 'reagent_channel_id')
+    if isinstance(ph_plan, PhPlan):
+        names += ('titration_curve_id',)
+    for name in names:
+        if not _nonempty(getattr(ph_plan, name)):
+            fail(f'pH plan {name} must be a nonempty string')
+    if not _number(ph_plan.target_ph) or not 0 <= ph_plan.target_ph <= 14:
+        fail('pH plan target must be a finite pH from 0 to 14')
+    if not _number(ph_plan.loss):
+        fail('pH plan loss must be finite')
+    if ph_plan.post_mix_measurement_required is not True:
+        fail('a pH plan always needs a measurement after mixing')
+    if volume > 0 and ph_plan.reagent_mass.value <= 0:
+        fail('a positive reagent volume needs a positive reagent mass')
+    if isinstance(ph_plan, PhPlan):
+        if ph_plan.direction not in ('acid', 'base'):
+            fail('pH plan direction must be acid or base')
+        if volume > 0 and ph_plan.demand.value <= 0:
+            fail('a positive reagent volume needs a positive titration demand')
+
+
+def _check_command_record(command, fail):
+    """Reject a pump command whose own fields cannot describe a run."""
+    if not _nonempty(command.calibration_id):
+        fail('pump command needs the id of its calibration record')
+    if not _number(command.runtime.value) or command.runtime.value <= 0:
+        fail('pump command runtime must be positive')
+    if not _number(command.volume_uncertainty.value):
+        fail('pump command volume uncertainty must be finite')
+
+
 def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
     """Check additive batch-volume bookkeeping and unrounded product
     identities.
@@ -64,6 +108,16 @@ def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
     def fail(message):
         raise DeliveryError('cross_stage_constraint', message)
 
+    if stocks.status not in ('qualified', 'requires_review') or stocks.mixture_approved != (
+        stocks.status == 'qualified'
+    ):
+        fail('stock plan status and mixture approval disagree')
+    if stocks.mixture_approved and (
+        not stocks.search_complete
+        or stocks.unverified
+        or any(a.get('status') != 'compatible' for a in stocks.mixture_assessments)
+    ):
+        fail('an approved stock mixture needs a complete search and compatible assessments')
     expected = {}
     masses = {}
     for tank in stocks.tanks:
@@ -97,6 +151,7 @@ def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
         volume = ph_plan.reagent_volume_litres
         if not math.isfinite(volume) or volume < 0:
             fail('reagent volume must be finite and non-negative')
+        _check_ph_plan_record(ph_plan, volume, fail)
         if volume > 0:
             expected[channel] = volume
     total = float_sum(expected.values())
@@ -104,6 +159,7 @@ def _check_delivery_balance(recipe, stocks, ph_plan, commands, *, complete):
         fail('combined stocks and reagent must leave positive carrier volume')
     seen = set()
     for command in commands:
+        _check_command_record(command, fail)
         if command.channel_id in seen or command.channel_id not in expected:
             fail('duplicate or unknown delivery channel')
         seen.add(command.channel_id)

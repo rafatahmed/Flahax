@@ -111,6 +111,13 @@ not prepared inventory. Mixing acid into a fertilizer channel is unsupported.
 masses, wrong command volumes and nonpositive carrier remainders. Drafts may lack
 stock commands; state advancement requires exactly one command for every stock
 and nonzero reagent channel. A zero reagent dose has no reagent command.
+The same check refuses a stage value whose own fields contradict each other, such as a
+pH plan changed after planning (a blank record id, a target outside pH 0 to 14, no
+measurement after mixing, a positive reagent volume with zero mass or demand), a pump
+command without a calibration id or a positive runtime, or a stock plan whose approval
+disagrees with its status, search or assessments. Stage values do not keep the records
+they were planned from, so a plan altered consistently cannot be detected here; the
+planners (`plan_ph`, `plan_pump_command`) check the records themselves.
 Titration `PhPlan` retains its `final_volume`; the default separate channel is
 `acid`. Legacy manually constructed plans without that volume cannot validate.
 Equilibrium plans retain their matching recipe and explicit reagent channel.
