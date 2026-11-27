@@ -172,13 +172,24 @@ class InputError(ValueError):
     """The caller passed a profile or a salt the balance cannot use."""
 
 
+# A litre of any aqueous solution weighs less than 2 kg, so no element can exceed 2,000,000 mg/L;
+# larger values are rejected before they overflow the arithmetic (#348).
+MAX_MG_PER_L = 2_000_000.0
+
+
 def _finite(value) -> float:
+    if isinstance(value, bool):
+        raise InputError(f"{value!r} is not a concentration")
     try:
         number = float(value)
     except (TypeError, ValueError) as exc:
         raise InputError(f"{value!r} is not a concentration") from exc
     if not math.isfinite(number):
         raise InputError(f"{value!r} is not a finite concentration")
+    if number > MAX_MG_PER_L:
+        raise InputError(
+            f"{value!r} is above {MAX_MG_PER_L:,.0f} mg/L, more than a litre of solution can hold"
+        )
     return number
 
 

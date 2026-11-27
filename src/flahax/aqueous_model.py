@@ -20,6 +20,7 @@ from operator import itemgetter, mul
 
 from .delivery_contracts import DeliveryError
 from .float_sum import float_sum
+from .inputs import number
 from .root_finding import shrink_bracket
 from .package_data import read_text
 
@@ -348,16 +349,19 @@ def _solve(
 ):
     if temperature_c != 25:
         raise DeliveryError('temperature_out_of_range', 'reaction dataset is restricted to 25 C')
-    if not math.isfinite(ph) or not 0 <= ph <= 14:
-        raise DeliveryError('out_of_range', 'pH must be finite in [0,14]')
+    number(ph, 'pH', maximum=14, code='out_of_range')
+    if not isinstance(totals, dict):
+        raise DeliveryError('invalid_totals', 'totals must be a map of component to mol/kg')
     for name, value in totals.items():
-        if name not in chemistry()['bases'] or not math.isfinite(value) or value < 0:
+        if name not in chemistry()['bases']:
             raise DeliveryError('invalid_totals', f'invalid analytical component {name}: {value}')
-    if ionic_strength is not None and (
-        not math.isfinite(ionic_strength) or not 0 <= ionic_strength <= 0.1
-    ):
-        raise DeliveryError(
-            'activity_model_out_of_range', 'Davies model requires I <= 0.1 mol/kgw'
+        number(value, f'component {name}', code='invalid_totals')
+    if ionic_strength is not None:
+        number(
+            ionic_strength,
+            'ionic strength',
+            maximum=0.1,
+            code='activity_model_out_of_range',
         )
     # A saved JSON round trip or a set-derived inventory can reorder
     # identical components. Fix the Newton basis (and initial strength
@@ -612,6 +616,8 @@ def nitric_target(totals, initial_ph, target_ph, *, phases=()):
     final residual electrical charge equals the initial residual charge,
     after adding nitrate.
     """
+    number(initial_ph, 'initial pH', maximum=14, code='out_of_range')
+    number(target_ph, 'target pH', maximum=14, code='out_of_range')
     initial = solve(totals, initial_ph, phases=phases)
     if target_ph == initial_ph:
         return AcidResult(initial, initial, 0.0)
