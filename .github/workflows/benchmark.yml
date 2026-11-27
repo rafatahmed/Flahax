@@ -34,6 +34,9 @@ jobs:
           python -m asv machine --yes
           python -m asv check --python=same
           python -m asv run --python=same --set-commit-hash "$GITHUB_SHA" --record-samples --show-stderr 2>&1 | tee build/benchmark-v1/asv.log
+      - name: Performance budgets (timings are reported, counts fail)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: python -m tools.performance_budgets check --output build/benchmark-v1/performance.json
       - name: Record provenance and sample summary
         if: always()
         run: python -m tools.benchmark_baseline --metadata-only --compare-inputs build/benchmark-v1/before.json --asv-results build/asv/results --output build/benchmark-v1/after.json
