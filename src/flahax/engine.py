@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 import math
 from functools import lru_cache
-from importlib.resources import files
 
 from .composition import (
     ATOMIC_CONVENTION,
@@ -44,6 +43,7 @@ from .nutrient_acceptance import assess_incidental, name_sources
 from .product_conversion import counterion_sodium_mg_per_l, material_inventory
 from .deviation_ranges import assessment as range_assessment, effective_ranges, normalize_ranges
 from .requirement_fit import RELATIVE_TOLERANCE, met
+from .package_data import read_text
 
 # Rank and feasibility threshold, relative to the problem's column
 # scale.
@@ -84,7 +84,7 @@ def load_library() -> dict:
     """Salt library, water profiles, and crop formulas shipped with the
     package.
     """
-    text = files("flahax").joinpath("data/library.json").read_text(encoding="utf-8")
+    text = read_text("data/library.json")
     return json.loads(text)
 
 

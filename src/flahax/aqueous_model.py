@@ -14,13 +14,13 @@ in PHREEQC SOLUTION speciation.
 
 from dataclasses import dataclass, field
 from functools import lru_cache
-from importlib.resources import files
 import json
 import math
 from operator import itemgetter, mul
 
 from .delivery_contracts import DeliveryError
 from .root_finding import shrink_bracket
+from .package_data import read_text
 
 LN10 = math.log(10.0)
 # Continued-fraction sweeps before Newton when the cold start does not
@@ -33,7 +33,7 @@ def chemistry():
     """The packaged 25 °C thermodynamic data
     (``data/chemistry_25c.json``), loaded once.
     """
-    return json.loads(files('flahax').joinpath('data/chemistry_25c.json').read_text())
+    return json.loads(read_text('data/chemistry_25c.json'))
 
 
 _derived = [None, {}]

@@ -23,16 +23,16 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from functools import lru_cache
-from importlib.resources import files
 from typing import Any
 
 from .composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from .delivery_contracts import DeliveryError
 from .inputs import number
 from .nitrogen import NITROGEN_FORMS
+from .package_data import read_bytes
 
 _RESOURCE = 'data/material_identities.json'
-_RAW = files('flahax').joinpath(_RESOURCE).read_bytes()
+_RAW = read_bytes(_RESOURCE)
 IDENTITIES_SHA256 = hashlib.sha256(_RAW).hexdigest()
 
 IDENTITY_STATUSES = frozenset(

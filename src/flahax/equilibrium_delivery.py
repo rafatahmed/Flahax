@@ -11,7 +11,6 @@ analytical water.
 
 from dataclasses import dataclass
 import hashlib
-from importlib.resources import files
 import math
 from typing import Mapping
 
@@ -32,6 +31,7 @@ from .product_conversion import MOLAR_MASS, plan_catalogue_nitric_target
 from .nutrient_acceptance import assess_incidental
 from .requirement_fit import declared_error_percent, reagent_shift_exceeds
 from .measured_water import BalancedWaterAnalysis, nutrient_mg_per_litre
+from .package_data import read_bytes
 
 
 @dataclass(frozen=True)
@@ -242,12 +242,8 @@ def plan_equilibrium_delivery(
         'maximumConcentrationsPpm': dict(maximum_concentrations or {}),
         'residualBicarbonateMmolPerKg': residual_bicarbonate,
         'sourceDatabaseSha256': chemistry()['database_sha256'],
-        'chemistrySha256': hashlib.sha256(
-            files('flahax').joinpath('data/chemistry_25c.json').read_bytes()
-        ).hexdigest(),
-        'catalogueSha256': hashlib.sha256(
-            files('flahax').joinpath('data/library.json').read_bytes()
-        ).hexdigest(),
+        'chemistrySha256': hashlib.sha256(read_bytes('data/chemistry_25c.json')).hexdigest(),
+        'catalogueSha256': hashlib.sha256(read_bytes('data/library.json')).hexdigest(),
         'identitiesSha256': IDENTITIES_SHA256,
         'materials': {name: material_audit_entry(resolve_material(name)) for name in doses},
     }
