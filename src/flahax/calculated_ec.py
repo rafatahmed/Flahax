@@ -14,6 +14,7 @@ from collections.abc import Mapping
 
 from .conductivity import water_ec25
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .inputs import number
 
 
@@ -117,13 +118,13 @@ def estimate_manufacturer_ec(
         reason = 'acid_reaction_model_unavailable'
     elif missing:
         reason = 'missing_product_ec_evidence'
-    elif sum(doses.values()) > 1:
+    elif float_sum(doses.values()) > 1:
         reason = 'loading_outside_screening_policy'
     if reason:
         result.update(status='not_supported', error_code=reason)
         return result
     result['contributions_ms_cm'] = {k: v * _ANCHORS[k] for k, v in doses.items() if v > 0}
     result['ec_ms_cm'] = number(
-        water + sum(result['contributions_ms_cm'].values()), 'estimated EC'
+        water + float_sum(result['contributions_ms_cm'].values()), 'estimated EC'
     )
     return result

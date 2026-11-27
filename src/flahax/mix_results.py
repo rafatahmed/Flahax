@@ -10,6 +10,7 @@ batch sheet uses, with the sheet's rounding, so the screen and the sheet
 always agree.
 """
 
+from .float_sum import float_sum
 from .result_wording import miss_difference, review_reason, qualification_lines
 from .report_format import percentage
 from . import __version__
@@ -258,7 +259,7 @@ def results_lines(summary, view, width, height, scroll, g, output, message=None)
         tabs.append((f' {name} ', 'selected' if i == view else 'dim'))
         tabs.append(('  ', None))
     status = STATUS_WORDS[summary['status']]
-    used = sum(len(t) for t, _ in tabs)
+    used = float_sum(len(t) for t, _ in tabs)
     tabs.append((' ' * max(1, usable - used - len(status) - 2), None))
     tabs.append((status, STATUS_STYLE[summary['status']]))
     lines = [

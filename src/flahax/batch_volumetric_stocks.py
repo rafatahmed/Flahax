@@ -9,6 +9,7 @@ import math
 
 from .aqueous_model import solve
 from .calculated_ph import calculate_equilibrium_ph
+from .float_sum import float_sum
 from .nitrogen import fitted_targets
 from .delivery_contracts import DeliveryError
 from .inputs import number
@@ -280,7 +281,8 @@ def verify_batch_stock_delivery(
             for side in (0, -1)
         ]
         volumes = [
-            sum(row['dose_ml'] + sign * row['dose_error_ml'] for row in rows) for sign in (-1, 1)
+            float_sum(row['dose_ml'] + sign * row['dose_error_ml'] for row in rows)
+            for sign in (-1, 1)
         ]
         endpoints = [
             inventories(masses, volume, active)
@@ -305,11 +307,11 @@ def verify_batch_stock_delivery(
         ]
         exceeded = [key for key, limit in limits.items() if nutrient_bounds[key][1] > limit]
         reagent_exceeded = steps[1] > reagent_maximum
-        score = sum(
+        score = float_sum(
             max(abs(value - target) for value in nutrient_bounds[key]) / max(target, 1e-6)
             for key, target in targets.items()
         )
-        score += sum(
+        score += float_sum(
             max(0, nutrient_bounds[key][1] - limit) / max(limit, 1e-6)
             for key, limit in limits.items()
         )

@@ -28,6 +28,7 @@ from typing import Any
 
 from .composition import ATOMIC, ATOMIC_CONVENTION, theoretical_assay
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .inputs import number
 from .nitrogen import NITROGEN_FORMS
 
@@ -421,7 +422,7 @@ def _components(raw: Any, composition: str, label: str) -> tuple:
         raise DeliveryError(
             'invalid_composition', f'{label}: a component identity is listed twice'
         )
-    if sum(fraction for _, fraction in pairs) > 1 + _FRACTION_TOLERANCE:
+    if float_sum(fraction for _, fraction in pairs) > 1 + _FRACTION_TOLERANCE:
         raise DeliveryError(
             'invalid_composition', f'{label}: component mass fractions sum above 1'
         )
@@ -483,7 +484,7 @@ def _analysis_targets(
         raise DeliveryError(
             'invalid_value', f'{label}: total N needs an identity whose theory states N forms'
         )
-    total = sum(forms.values())
+    total = float_sum(forms.values())
     split['N'] = {form: value / total for form, value in forms.items()}
     return list(split['N'].items())
 
@@ -817,7 +818,7 @@ def _blend_implied(grade: Grade) -> tuple[dict, bool]:
         for identity_id, fraction in grade.components
     ]
     implied = {
-        key: sum(fraction * elements.get(key, 0.0) for elements, fraction in assays)
+        key: float_sum(fraction * elements.get(key, 0.0) for elements, fraction in assays)
         for key in declared
     }
     unreconciled = any(

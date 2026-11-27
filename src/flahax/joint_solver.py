@@ -14,6 +14,7 @@ import math
 from collections.abc import Mapping
 from fractions import Fraction as F
 
+from .float_sum import float_sum
 from .joint_problem import JointProblem, profile_doses
 from .delivery_contracts import DeliveryError
 from .inputs import number
@@ -71,9 +72,9 @@ def _fraction(point, direction, constraints):
     """
     alpha = 1.0
     for row, bound in constraints:
-        slope = sum(a * d for a, d in zip(row, direction))
+        slope = float_sum(a * d for a, d in zip(row, direction))
         if slope > 0:
-            slack = bound - sum(a * x for a, x in zip(row, point))
+            slack = bound - float_sum(a * x for a, x in zip(row, point))
             alpha = min(alpha, max(0.0, slack / slope))
     return math.nextafter(alpha, 0.0) if 0 < alpha < 1 else alpha
 
@@ -468,7 +469,7 @@ def solve_joint_problem(
 
     def evaluate(u, *, cold=False):
         diagnostics['evaluations'] += 1
-        if any(sum(a * x for a, x in zip(row, u)) > bound for row, bound in constraints):
+        if any(float_sum(a * x for a, x in zip(row, u)) > bound for row, bound in constraints):
             diagnostics['rejectedTrials'] += 1
             diagnostics['lastError'] = 'linear_constraint'
             return None
@@ -501,14 +502,14 @@ def solve_joint_problem(
                 if r['target'] is not None and r['target'] > 0
             ]
             residual.append(state['chargeResidual'] / charge_scale)
-            merit = sum(r * r for r in residual)
+            merit = float_sum(r * r for r in residual)
             if not math.isfinite(merit):
                 raise DeliveryError('numerical_failure', 'nonfinite scaled residual')
             exact = state['loss']
             if exact_model is not None:
                 rational_doses = list(map(F, x))
-                exact = sum(
-                    (sum(a * rational_doses[j] for j, a in row) - target) ** 2
+                exact = float_sum(
+                    (float_sum(a * rational_doses[j] for j, a in row) - target) ** 2
                     for row, target in exact_model
                 )
             if key is not None and len(outcomes) < _OUTCOME_LIMIT:
@@ -748,7 +749,7 @@ def solve_joint_problem(
                         result[3]
                         - current[3]
                         + multiplier
-                        * sum(F(a) * (F(y) - F(x)) for a, x, y in zip(matrix[-1], point, u))
+                        * float_sum(F(a) * (F(y) - F(x)) for a, x, y in zip(matrix[-1], point, u))
                     )
                     # Explore model descent within the caller's feasible
                     # charge band when residual precision masks the
@@ -853,7 +854,9 @@ def solve_joint_problem(
                     ]
                     columns.append(nutrient_column + [2 * fine[-1] - coarse[-1]])
             matrix = [list(row) for row in zip(*columns)]
-        rhs = [sum(a * x for a, x in zip(row, point)) - r for row, r in zip(matrix, current[1])]
+        rhs = [
+            float_sum(a * x for a, x in zip(row, point)) - r for row, r in zip(matrix, current[1])
+        ]
         linear = {}
         # Restore the nonlinear charge equality before testing
         # stationarity. This changes the actual reagent dose and

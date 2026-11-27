@@ -23,6 +23,7 @@ from functools import lru_cache
 from .catalogue_chemistry import PHREEQC_MINTEQ_V4, ProductChemistry
 from .composition import parse_formula
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 
 UNDEFINED = 'give its formula, its ions, or its analysis by nutrient form'
 
@@ -149,7 +150,7 @@ def _pair_ligands(ions: dict) -> dict | None:
         ligands = ions.pop(agent, 0)
         if not ligands:
             continue
-        if sum(count for ion, count in ions.items() if (agent, ion) in _CHELATED) != ligands:
+        if float_sum(count for ion, count in ions.items() if (agent, ion) in _CHELATED) != ligands:
             return None
         ions = chelate(ions, agent)
     return ions
@@ -273,8 +274,8 @@ def _checked_ions(name: str, ions, agent: str | None = None) -> dict:
             )
     if agent is not None:
         ions = chelate(ions, agent)
-    net = sum(_charge(ion) * count for ion, count in ions.items())
-    if abs(net) > _BALANCE_TOLERANCE * sum(
+    net = float_sum(_charge(ion) * count for ion, count in ions.items())
+    if abs(net) > _BALANCE_TOLERANCE * float_sum(
         abs(_charge(ion)) * count for ion, count in ions.items()
     ):
         raise DeliveryError(
@@ -505,7 +506,7 @@ def unstated_amounts(ions: Mapping, totals: Mapping) -> tuple[dict, dict]:
             f'the analysis must state all but one of the charged ions; '
             f'{", ".join(unstated)} are not stated',
         )
-    charge = sum(z * sum(amounts) for z, amounts in by_charge.items())
+    charge = float_sum(z * float_sum(amounts) for z, amounts in by_charge.items())
     shares: dict = {}
     for ion, count in ions.items():
         if ion in ION_TABLE and ION_TABLE[ion][2]:

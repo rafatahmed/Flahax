@@ -15,6 +15,7 @@ from fractions import Fraction as F
 
 from .aqueous_model import chemistry, LN10
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 
 
 def _exact_linear(matrix, rhs):
@@ -37,10 +38,10 @@ def _exact_linear(matrix, rhs):
     for i in range(n - 1, -1, -1):
         for c in range(count):
             result[i][c] = (
-                rows[i][n + c] - sum(rows[i][j] * result[j][c] for j in range(i + 1, n))
+                rows[i][n + c] - float_sum(rows[i][j] * result[j][c] for j in range(i + 1, n))
             ) / rows[i][i]
     if any(
-        sum(a * result[j][c] for j, a in enumerate(row)) != target[c]
+        float_sum(a * result[j][c] for j, a in enumerate(row)) != target[c]
         for row, target in zip(matrix, rhs)
         for c in range(count)
     ):
@@ -81,7 +82,7 @@ def equilibrium_charge_gradient(problem, state):
     records = [
         r for r in chemistry()['aqueous'] if r['name'] != 'H2O' and set(r['powers']) <= permitted
     ]
-    amount_sum = sum(F(eq.species.get(r['name'], 0)) for r in records)
+    amount_sum = float_sum(F(eq.species.get(r['name'], 0)) for r in records)
     floor = water == 0.9
     if floor and amount_sum <= F(55.5084) * (1 - F(0.9)):
         raise DeliveryError('unresolved_sensitivity', 'water-activity floor boundary')
@@ -170,7 +171,8 @@ def equilibrium_charge_gradient(problem, state):
     adjoint = _exact_linear([list(row) for row in zip(*matrix)], [[q] for q in charge])
     try:
         gradient = [
-            float(sum(z[0] * row[c] for z, row in zip(adjoint, rhs))) for c in range(len(sources))
+            float(float_sum(z[0] * row[c] for z, row in zip(adjoint, rhs)))
+            for c in range(len(sources))
         ]
     except OverflowError as error:
         raise DeliveryError('unresolved_sensitivity', 'nonfinite charge sensitivity') from error

@@ -11,6 +11,7 @@ import math
 from .aqueous_model import solve
 from .composition import ATOMIC, parse_formula
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .root_finding import shrink_bracket
 
 PHASE_ALIASES = {
@@ -93,7 +94,7 @@ def verify_rounded_recipe(
                 else delivered_grams[index]
             )
             atoms = parse_formula(row["formula"])["atoms"]
-            molar_mass = sum(ATOMIC[e] * n for e, n in atoms.items())
+            molar_mass = float_sum(ATOMIC[e] * n for e, n in atoms.items())
             mmol_l = grams / molar_mass * 1000 / recipe["volume_litres"]
             amounts = [v + mmol_l * atoms.get(e, 0) for v, e in zip(amounts, ELEMENTS)]
             ingredients.append({"formula": row["formula"], "grams": grams})
@@ -135,15 +136,15 @@ def verify_rounded_recipe(
         "analytical_mmol_l": analytical,
         "aqueous_totals_mol_kg": totals,
         "reference_charge_mol_kg": reference_charge,
-        "counted_mmol_l": sum(amounts),
+        "counted_mmol_l": float_sum(amounts),
         "nutrient_errors_mmol_l": errors,
         "rounding_relative_tolerance": ROUNDING_RELATIVE_TOLERANCE,
         "rounding_within_tolerance": rounding_ok,
-        "cation_percent": [100 * v / sum(equivalents[:3]) for v in equivalents[:3]]
-        if sum(equivalents[:3])
+        "cation_percent": [100 * v / float_sum(equivalents[:3]) for v in equivalents[:3]]
+        if float_sum(equivalents[:3])
         else None,
-        "anion_percent": [100 * v / sum(equivalents[3:]) for v in equivalents[3:]]
-        if sum(equivalents[3:])
+        "anion_percent": [100 * v / float_sum(equivalents[3:]) for v in equivalents[3:]]
+        if float_sum(equivalents[3:])
         else None,
         "evaluated_ph": [],
         "base_evaluated_ph": list(grid),

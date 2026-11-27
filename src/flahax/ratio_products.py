@@ -13,6 +13,7 @@ from .aqueous_model import solve
 from .composition import validate_profile, InputError
 from .delivery_contracts import DeliveryError
 from .engine import nnls
+from .float_sum import float_sum
 from .nutrient_acceptance import assess_incidental
 from .product_conversion import material_inventory, component_nutrient_masses, MOLAR_MASS
 from .ratio_water import BASIS, NUTRIENTS
@@ -115,7 +116,7 @@ def product_sources(products):
             raise DeliveryError(
                 "invalid_ratio_products", "Declare a solvent mass fraction between zero and one"
             )
-        if sum(assay.values()) / 100 + solvent > 1 + 1e-12:
+        if float_sum(assay.values()) / 100 + solvent > 1 + 1e-12:
             raise DeliveryError(
                 "invalid_ratio_products",
                 "Declared elemental assay and solvent exceed product mass",
@@ -169,7 +170,7 @@ def reconstruct_products(sources, grams, water, volume, mass, *, scenario_invent
             )
         )
     elemental = {
-        k: sum(part.get(k, 0) for part in audit.values())
+        k: float_sum(part.get(k, 0) for part in audit.values())
         for k in set().union(*(part.keys() for part in audit.values()))
     }
     six = {n: elemental.get(k, 0) / MOLAR_MASS[k.split("_")[0]] for n, k in zip(NUTRIENTS, LABELS)}
@@ -237,7 +238,7 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
     for offset, shares in ((0, cations), (3, anions)):
         for j, share in enumerate(shares):
             group = [
-                sum(coefficients[offset + i][p] * VALENCES[offset + i] for i in range(3))
+                float_sum(coefficients[offset + i][p] * VALENCES[offset + i] for i in range(3))
                 for p in range(len(active))
             ]
             matrix.append(
@@ -250,12 +251,15 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
             rhs.append(
                 -(
                     background[offset + j] * VALENCES[offset + j]
-                    - share * sum(background[offset + i] * VALENCES[offset + i] for i in range(3))
+                    - share
+                    * float_sum(background[offset + i] * VALENCES[offset + i] for i in range(3))
                 )
                 / strength
             )
-    matrix.append([sum(row[p] for row in coefficients) / strength for p in range(len(active))])
-    rhs.append((strength - sum(background)) / strength)
+    matrix.append(
+        [float_sum(row[p] for row in coefficients) / strength for p in range(len(active))]
+    )
+    rhs.append((strength - float_sum(background)) / strength)
     bounds = []
     for k, cap in limits.items():
         remaining = cap - water_elements.get(k, 0)
@@ -298,14 +302,14 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         return solve(totals, ph)
 
     def errors(point):
-        linear = [sum(v * x for v, x in zip(row, point)) - b for row, b in zip(matrix, rhs)]
+        linear = [float_sum(v * x for v, x in zip(row, point)) - b for row, b in zip(matrix, rhs)]
         charge = (state(point).charge_balance - water["reference_charge_mol_kg"]) * charge_scale
         return linear, charge
 
     point = [0.0] * (n + slack)
     for iteration in range(60):
         linear, charge = errors(point)
-        merit = sum(v * v for v in linear) + charge * charge
+        merit = float_sum(v * v for v in linear) + charge * charge
         if max(map(abs, linear), default=0) < 1e-10 and abs(charge) < min(
             1e-10, 1e-10 * charge_scale
         ):
@@ -315,14 +319,15 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         for j in range(n):
             direction = directions[j]
             if direction not in charge_derivatives:
-                step = 1e-5 * max(1, sum(point[k] for k in direction_columns[direction]))
+                step = 1e-5 * max(1, float_sum(point[k] for k in direction_columns[direction]))
                 trial = list(point)
                 trial[j] += step
                 charge_derivatives[direction] = (errors(trial)[1] - charge) / step
             derivative.append(charge_derivatives[direction])
         derivative += [0.0] * slack
         proposal = nnls(
-            matrix + [derivative], rhs + [sum(a * x for a, x in zip(derivative, point)) - charge]
+            matrix + [derivative],
+            rhs + [float_sum(a * x for a, x in zip(derivative, point)) - charge],
         )
         for power in range(24):
             trial = [x + (y - x) * 2 ** (-power) for x, y in zip(point, proposal)]
@@ -330,7 +335,7 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
                 lin, ch = errors(trial)
             except DeliveryError:
                 continue
-            if sum(v * v for v in lin) + ch * ch < merit:
+            if float_sum(v * v for v in lin) + ch * ch < merit:
                 point = trial
                 break
         else:
@@ -356,9 +361,9 @@ def plan_products(products, cations, anions, ph, strength, volume, mass, water, 
         volume_litres=volume,
         water_mass_kg=mass,
         temperature_c=25,
-        counted_mmol_l=sum(achieved),
-        cation_percent=[100 * v / sum(eq[:3]) for v in eq[:3]],
-        anion_percent=[100 * v / sum(eq[3:]) for v in eq[3:]],
+        counted_mmol_l=float_sum(achieved),
+        cation_percent=[100 * v / float_sum(eq[:3]) for v in eq[:3]],
+        anion_percent=[100 * v / float_sum(eq[3:]) for v in eq[3:]],
         water_accounting=water,
         product_inventory=True,
         maximum_concentrations=limits,

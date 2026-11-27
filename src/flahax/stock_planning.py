@@ -22,6 +22,7 @@ from .delivery_contracts import (
     validate_compatibility_rule,
     validate_solubility_limit,
 )
+from .float_sum import float_sum
 from .stock_solubility import qualify_single_product
 from .delivery_quantities import (
     FinalSolutionRecipe,
@@ -211,7 +212,7 @@ def _assess_mixture(tank, temperature, model):
     if not (
         result['temperature_min_c'] <= temperature.value <= result['temperature_max_c']
         and 0 <= result['ionic_strength'] <= result['ionic_strength_max']
-        and sum(s.concentration.value for s in tank.salts)
+        and float_sum(s.concentration.value for s in tank.salts)
         <= result['total_concentration_max_g_per_l']
     ):
         return dict(

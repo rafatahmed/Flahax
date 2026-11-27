@@ -29,6 +29,7 @@ from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .delivery_contracts import DeliveryError
 from .delivery_quantities import SolventBasis
+from .float_sum import float_sum
 from .product_conversion import NUTRIENT_BASES as NUTRIENT_BASES
 from .product_conversion import component_nutrient_masses
 from .root_finding import shrink_bracket
@@ -231,14 +232,16 @@ def total_alkalinity(state):
             raise DeliveryError(
                 'unsupported_alkalinity', f'no qualified alkalinity proton reference for {name}'
             )
-        equivalents = sum(ALKALINITY_PROTON_REFERENCE[b] * n for b, n in record['powers'].items())
+        equivalents = float_sum(
+            ALKALINITY_PROTON_REFERENCE[b] * n for b, n in record['powers'].items()
+        )
         total += amount * equivalents
     return total
 
 
 def _total_charge(state):
     charges = {r['name']: r['charge'] for r in chemistry()['aqueous']}
-    return sum(abs(charges.get(name, 0)) * amount for name, amount in state.species.items())
+    return float_sum(abs(charges.get(name, 0)) * amount for name, amount in state.species.items())
 
 
 def _imbalance_percent(state):

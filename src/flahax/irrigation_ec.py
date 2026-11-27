@@ -30,6 +30,7 @@ from .aqueous_model import AqueousResult, chemistry, solve
 from .calculated_ph import calculate_equilibrium_ph
 from .delivery_contracts import DeliveryError
 from .equilibrium_delivery import EquilibriumPhPlan
+from .float_sum import float_sum
 from .materials import IDENTITIES_SHA256, ResolvedMaterial, material_audit_entry, resolve_material
 from .measured_water import BalancedWaterAnalysis
 from .product_conversion import catalogue_dose_contributions, catalogue_dose_totals
@@ -381,7 +382,9 @@ def _ec_from_state(
     species_map = _coverage()
     supplementary = _supplementary()
     strength = state.ionic_strength
-    equivalents = sum(abs(charges[n]) * m for n, m in state.species.items() if charges.get(n))
+    equivalents = float_sum(
+        abs(charges[n]) * m for n, m in state.species.items() if charges.get(n)
+    )
     if assay_residual_percent is not None:
         percent = assay_residual_percent
     else:
@@ -414,8 +417,8 @@ def _ec_from_state(
     excess = state.charge_balance - assay_residual_eq
     if ph_mode == 'supplied' and abs(excess) > max(1e-12, 0.001 * equivalents):
         unrecorded = excess
-    low = sum(contributions.values())
-    bound = sum(LAMBDA_MAX_PER_CHARGE * abs(s['charge']) * s['molal'] for s in missing)
+    low = float_sum(contributions.values())
+    bound = float_sum(LAMBDA_MAX_PER_CHARGE * abs(s['charge']) * s['molal'] for s in missing)
     if unrecorded is not None:
         bound += LAMBDA_MAX_PER_CHARGE * abs(unrecorded)
     status, reason = ('range', None) if bound > 0 else ('estimated', None)

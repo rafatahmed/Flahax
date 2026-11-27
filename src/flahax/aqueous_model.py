@@ -20,6 +20,7 @@ import math
 from operator import itemgetter, mul
 
 from .delivery_contracts import DeliveryError
+from .float_sum import float_sum
 from .root_finding import shrink_bracket
 
 LN10 = math.log(10.0)
@@ -192,7 +193,7 @@ def linear(a, b):
     x = [0.0] * n
     for i in range(n - 1, -1, -1):
         row = a[i]
-        x[i] = (row[n] - sum(map(mul, row[i + 1 : n], x[i + 1 : n]))) / row[i]
+        x[i] = (row[n] - float_sum(map(mul, row[i + 1 : n], x[i + 1 : n]))) / row[i]
     if not all(map(math.isfinite, x)):
         raise DeliveryError('nonconvergent', 'nonfinite equilibrium linear solution')
     return x
@@ -204,11 +205,12 @@ def _damped_step(evaluate, x, residual, matrix):
     """
     m = len(residual)
     normal = [
-        [sum(matrix[r][i] * matrix[r][j] for r in range(m)) for j in range(m)] for i in range(m)
+        [float_sum(matrix[r][i] * matrix[r][j] for r in range(m)) for j in range(m)]
+        for i in range(m)
     ]
-    gradient = [sum(matrix[r][i] * residual[r] for r in range(m)) for i in range(m)]
+    gradient = [float_sum(matrix[r][i] * residual[r] for r in range(m)) for i in range(m)]
     scale = [max(normal[i][i], 1e-300) for i in range(m)]
-    merit = sum(v * v for v in residual)
+    merit = float_sum(v * v for v in residual)
     damping = 1e-3
     for _ in range(40):
         system = [
@@ -222,7 +224,7 @@ def _damped_step(evaluate, x, residual, matrix):
         if step is not None:
             trial = [v + d for v, d in zip(x, step)]
             got = evaluate(trial)
-            if got and sum(v * v for v in got[0]) < merit:
+            if got and float_sum(v * v for v in got[0]) < merit:
                 return trial
         damping *= 10
     return None
@@ -248,7 +250,7 @@ def _continued_fraction(
     for _ in range(sweeps):
         sums = [0.0] * len(bases)
         for o, nz in zip(offsets, sparse):
-            a = 10.0 ** max(-300, min(100, o + sum(v * logs[j] for j, v in nz)))
+            a = 10.0 ** max(-300, min(100, o + float_sum(v * logs[j] for j, v in nz)))
             for j, v in nz:
                 sums[j] += a * v
         worst = 0.0
@@ -380,7 +382,7 @@ def _solve(
     strength = (
         ionic_strength
         if ionic_strength is not None
-        else min(0.05, max(1e-8, sum(totals.values())))
+        else min(0.05, max(1e-8, float_sum(totals.values())))
     )
     logs = [math.log10(totals[b]) - 3 for b in bases]
     if presolve:
@@ -426,7 +428,7 @@ def _solve(
             amounts = [
                 10.0 ** (-300 if e < -300 else (e if e <= 100 else 100))
                 for e in [
-                    o + sum(map(mul, vs, get(x)))
+                    o + float_sum(map(mul, vs, get(x)))
                     for o, vs, get in zip(offsets, coefficients, getters)
                 ]
             ]
@@ -445,7 +447,7 @@ def _solve(
             for p in active:
                 r = all_phases[p]
                 residual.append(
-                    sum(r['powers'].get(b, 0) * x[j] for j, b in enumerate(bases))
+                    float_sum(r['powers'].get(b, 0) * x[j] for j, b in enumerate(bases))
                     - ph * r['powers'].get('H+', 0)
                     + log_water * r['powers'].get('H2O', 0)
                     - r['beta']
@@ -508,7 +510,7 @@ def _solve(
                 continue
             loga = dict(zip(bases, logs)) | {'H+': -ph, 'H2O': math.log10(water)}
             saturation = {
-                p: sum(v * loga[b] for b, v in r['powers'].items()) - r['beta']
+                p: float_sum(v * loga[b] for b, v in r['powers'].items()) - r['beta']
                 for p, r in all_phases.items()
                 if set(r['powers']) <= permitted
             }
@@ -519,8 +521,8 @@ def _solve(
         else:
             raise DeliveryError('nonconvergent', 'phase active set iteration limit')
         species = {r['name']: a for r, a in zip(records, amounts)}
-        updated = 0.5 * sum(a * r['charge'] ** 2 for a, r in zip(amounts, records))
-        next_water = max(0.9, 1 - sum(amounts) / 55.5084)
+        updated = 0.5 * float_sum(a * r['charge'] ** 2 for a, r in zip(amounts, records))
+        next_water = max(0.9, 1 - float_sum(amounts) / 55.5084)
         if updated > 0.1:
             raise DeliveryError(
                 'activity_model_out_of_range', f'Davies ionic strength {updated:g} exceeds 0.1'
@@ -533,8 +535,10 @@ def _solve(
             }
             activities['H2O'] = water
             residuals = {
-                b: sum(a * s[j] for a, s in zip(amounts, stoich))
-                + sum(max(0, v) * all_phases[p]['powers'].get(b, 0.0) for p, v in solids.items())
+                b: float_sum(a * s[j] for a, s in zip(amounts, stoich))
+                + float_sum(
+                    max(0, v) * all_phases[p]['powers'].get(b, 0.0) for p, v in solids.items()
+                )
                 - totals[b]
                 for j, b in enumerate(bases)
             }
@@ -549,7 +553,7 @@ def _solve(
                 {p: max(0, v) for p, v in solids.items()},
                 residuals,
                 count,
-                sum(a * r['charge'] for a, r in zip(amounts, records)),
+                float_sum(a * r['charge'] for a, r in zip(amounts, records)),
                 water,
                 limitations,
                 domain,
