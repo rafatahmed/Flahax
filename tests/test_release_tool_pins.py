@@ -4,10 +4,11 @@
 # its results are calculations, not dosing instructions.
 """The tools that build and check the release are pinned (#348, roadmap H8).
 
-The release job installs ``tools/requirements-release.txt`` with ``--require-hashes`` and builds
-without isolation, so the build tool, its backend (setuptools) and twine are exactly the reviewed
-versions. Every other job that installs ``build`` uses the same version. Dependabot proposes
-updates monthly.
+The release job installs ``tools/release/requirements-release.txt`` with ``--require-hashes``
+and builds without isolation, so the build tool, its backend (setuptools) and twine are exactly
+the reviewed versions. Every other job that installs ``build`` uses the same version. Dependabot
+proposes updates monthly, for ``tools/release`` only: ``tools/competitors/constraints.txt``
+records the environment of the published #40 comparison run and is not bumped piecemeal.
 """
 
 from pathlib import Path
@@ -16,8 +17,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / '.github' / 'workflows'
-REQUIREMENTS = ROOT / 'tools' / 'requirements-release.txt'
-SOURCES = ROOT / 'tools' / 'requirements-release.in'
+REQUIREMENTS = ROOT / 'tools' / 'release' / 'requirements-release.txt'
+SOURCES = ROOT / 'tools' / 'release' / 'requirements-release.in'
 
 
 def requirements():
@@ -72,7 +73,9 @@ class ReleaseToolPinTests(unittest.TestCase):
 
     def test_the_release_job_installs_with_hashes_and_builds_without_isolation(self):
         text = (WORKFLOWS / 'publish.yml').read_text(encoding='utf-8')
-        self.assertIn('pip install --require-hashes -r tools/requirements-release.txt', text)
+        self.assertIn(
+            'pip install --require-hashes -r tools/release/requirements-release.txt', text
+        )
         self.assertIn('python -m build --no-isolation', text)
         self.assertNotIn('--upgrade', text)
         self.assertNotIn('python -m build\n', text)
@@ -91,7 +94,9 @@ class ReleaseToolPinTests(unittest.TestCase):
 
     def test_dependabot_proposes_updates_to_the_pinned_tools(self):
         text = (ROOT / '.github' / 'dependabot.yml').read_text(encoding='utf-8')
-        self.assertRegex(text, r'package-ecosystem: pip\s+directory: /tools')
+        self.assertRegex(text, r'package-ecosystem: pip\s+directory: /tools/release\s')
+        # Not /tools itself: tools/competitors/constraints.txt records the #40 comparison run.
+        self.assertNotRegex(text, r'directory: /tools\s')
         self.assertIn('package-ecosystem: github-actions', text)
 
 

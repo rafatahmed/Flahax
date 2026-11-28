@@ -5,6 +5,6 @@ updates:
     schedule:
       interval: monthly
   - package-ecosystem: pip
-    directory: /tools
+    directory: /tools/release
     schedule:
       interval: monthly
