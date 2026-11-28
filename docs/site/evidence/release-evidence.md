@@ -24,12 +24,41 @@ They are kept here because the records cite them.
 
 | Version | Date | Status | Record |
 |---|---|---|---|
+| 0.7.1 | 2026-11-28 | Prepared, unpublished | [Preparation](#071-preparation-2026-11-28) |
 | 0.7.0 | 2026-11-19 | Published, latest recorded | [Publication](#070-publication-2026-11-19) |
 | 0.6.0 | 2026-10-24 | Published | [Publication](#060-publication-2026-10-24) |
 | 0.5.0 | 2026-10-20 | Published | [Publication](#050-publication-2026-10-20) |
 | 0.4.0 | 2026-10-17 | Published | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
+
+## 0.7.1 preparation (2026-11-28)
+
+Prepared revision: `main` at `ef6ad37` (merge of
+[PR #361](https://github.com/rafatahmed/Flahax/pull/361)). This is release-readiness evidence
+for [issue #344](https://github.com/rafatahmed/Flahax/issues/344), not publication
+authorization. Version 0.7.1 is unpublished; the checkout is 0.7.1.dev0, and the version,
+citation, manual and dated changelog are aligned in a later pull request. PyPI's latest release
+is 0.7.0.
+
+| Check | Result |
+|---|---|
+| Hosted CI on `ef6ad37` | [Run 46087636649](https://github.com/rafatahmed/Flahax/actions/runs/46087636649) (push to `main`): all 26 jobs passed: style; test and compatibility on Python 3.11, 3.12 and 3.14; Python 3.13 coverage on Linux and Windows (six shards each); strict documentation build; required live PHREEQC replay; the exact coverage gate |
+| Local full suite | Python 3.13.15 on Windows, from a clean detached worktree: 12 shards, each its own run capped at 290 s (55 to 115 s each, 1064 s in all). 2146 tests, 0 failures, 0 errors, 4 skips. The 12 shards ran every one of the 2146 inventory ids once |
+| Skips | The built-site audit-data test (CI builds the docs), the opt-in source-download test, and two POSIX-only terminal tests (Windows) |
+| Live PHREEQC replay | 19 tests OK in five modules with `FLAHAX_REQUIRE_PHREEQC=1`; the PHREEQC 3.8.6 executable SHA-256 matched the pin in `tools/provision_phreeqc.ps1` |
+| Golden fixture | Re-captured with `tools/phreeqc_evidence.py`: all 53 stored files equal the fresh capture after ignoring the database path, run time, file hashes and the width of dashed lines; nothing in `tests/fixtures/phreeqc` changed |
+| Style | ruff 0.8.4 check and format clean on 391 files |
+| Isolated distribution check | `tools/verify_distribution.py` passed: clean wheel and sdist installs of 0.7.1.dev0 on Python 3.13.15 (`build` 1.6.1) |
+| Build tools | The release workflow installs `build`, `twine` and setuptools from `tools/release/requirements-release.txt` with `--require-hashes` ([PR #355](https://github.com/rafatahmed/Flahax/pull/355), [PR #362](https://github.com/rafatahmed/Flahax/pull/362)); a hashed install and `--no-isolation` build of the sdist and wheel were checked with `twine check --strict` on Python 3.13 |
+
+Not covered by the local run: Python 3.11, 3.12 and 3.14, Linux, the strict documentation build
+and the coverage gate; the hosted run above covers them on this revision. The
+performance budgets in `benchmarks/budgets.json` were measured on one Windows machine and are
+not a performance claim. No independent physical validation exists
+([issue #41](https://github.com/rafatahmed/Flahax/issues/41)). Candidate artifact hashes, the
+tag commit and the version DOI are recorded after publication, in a "0.7.1 publication"
+section.
 
 ## 0.7.0 publication (2026-11-19)
 

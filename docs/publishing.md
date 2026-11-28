@@ -150,7 +150,8 @@ Dashboard settings, recorded here because they live outside the repository:
 
 - [x] Hardening and speed work merged (#334 to #355) and the changelog and
       [release notes](releases/0.7.1.md) written; migration guide updated.
-- [ ] Clean full CI-equivalent evidence run on Python 3.11 to 3.14 (#344).
+- [x] Clean full CI-equivalent evidence run (#344): hosted run 46087636649 on `ef6ad37` (26 of 26
+      jobs, Python 3.11 to 3.14) and a clean local run on Python 3.13; recorded in the release evidence.
 - [ ] Align the version, runtime version, citation, manual and generated API reference with
       0.7.1; date the changelog and the manual's version line before tagging.
 - [ ] Explicit maintainer authorization for tag, release and package publication.
