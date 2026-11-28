@@ -6,9 +6,9 @@ which revision, and with what result. Newest first.
 :::{note}
 **Current published release: 0.7.0**, dated 2026-11-19.
 The exact tag, publisher, artifact hashes and installed checks are recorded
-[below](#070-publication-2026-11-19). This checkout is **0.7.1.dev0**, unpublished
-development. Published 0.7.0 evidence applies to its tagged revision and actual
-artifacts; it does not certify later development changes.
+[below](#070-publication-2026-11-19). This checkout is **0.7.1**, an unpublished release-preparation
+candidate. Published 0.7.0 evidence applies to its tagged revision and actual
+artifacts; it does not certify later changes.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.
 See the [migration guide](../start/migration.md) and
@@ -37,8 +37,8 @@ They are kept here because the records cite them.
 Prepared revision: `main` at `ef6ad37` (merge of
 [PR #361](https://github.com/rafatahmed/Flahax/pull/361)). This is release-readiness evidence
 for [issue #344](https://github.com/rafatahmed/Flahax/issues/344), not publication
-authorization. Version 0.7.1 is unpublished; the checkout is 0.7.1.dev0, and the version,
-citation, manual and dated changelog are aligned in a later pull request. PyPI's latest release
+authorization. Version 0.7.1 is unpublished. The evidence below was gathered on 0.7.1.dev0; the pull request
+that aligned the version, citation, manual and changelog changes metadata and documentation only. PyPI's latest release
 is 0.7.0.
 
 | Check | Result |

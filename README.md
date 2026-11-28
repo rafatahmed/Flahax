@@ -53,14 +53,16 @@ Recalculate and review saved results; acceptance does not transfer to changed in
 [current publication evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
 See the [0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
 
-**This source checkout: 0.7.1.dev0**, unpublished development after 0.7.0.
-The release DOI identifies the published archive, not this development checkout.
+**This source checkout: 0.7.1**, an unpublished release-preparation candidate. See the
+[0.7.1 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.1.md) and the
+[migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html#from-070-to-071).
+The 0.7.0 release DOI identifies the published 0.7.0 archive, not this candidate.
 
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
 From a reviewed source checkout, install with `python -m pip install .`.
-Install the published version from PyPI:
+Install the published 0.7.0 from PyPI (this is not the 0.7.1 candidate):
 
 ```bash
 python -m pip install flahax==0.7.0
@@ -255,18 +257,17 @@ Live PHREEQC replay and distribution verification are described in
 
 ## Citation
 
-Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.0, 2026-11-19)
+Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.1, unpublished candidate)
 [Computer software]. Cite the reviewed source revision as well as the version.
-Published 0.7.0: [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
-For development checkouts, include the development version and exact source revision.
+No new version DOI or release date is assigned; published 0.7.0 is
+[10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739) and identifies that version only.
 
 ```bibtex
 @software{alkhashan2026flahax,
   author  = {Al Khashan, Rafat A.},
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
-  version = {0.7.0},
-  doi     = {10.5281/zenodo.24356739},
+  version = {0.7.1},
   url     = {https://github.com/rafatahmed/Flahax},
   license = {Apache-2.0}
 }

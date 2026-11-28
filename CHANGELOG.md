@@ -7,7 +7,16 @@ from its predecessor. Detailed notes retain sources, limitations and migration.
 
 ## [Unreleased]
 
-Development checkout: 0.7.1.dev0.
+No additional changes beyond the unpublished 0.7.1 candidate are recorded.
+
+## [0.7.1] - not yet released
+
+A hardening and speed update for growers, agronomists and developers: ammonium and total
+nitrogen handled explicitly, acceptable ranges and pH intervals, equipment-fit checks,
+qualified solubility, clearer failures, stricter inputs, and faster import and solves.
+Python 3.11 or newer; no runtime dependencies. Default recipes can differ from 0.7.0 because
+the ammonium allowance is now opt-in: recalculate saved recipes.
+[Full notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.1.md).
 
 ### Added
 
@@ -323,6 +332,7 @@ development history remains in Git; this changelog does not claim it for the 0.2
 - The first FlahaX package on PyPI, with its release workflow.
 
 [unreleased]: https://github.com/rafatahmed/Flahax/compare/v0.7.0...HEAD
+[0.7.1]: https://github.com/rafatahmed/Flahax/compare/v0.7.0...HEAD
 [0.7.0]: https://github.com/rafatahmed/Flahax/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/rafatahmed/Flahax/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rafatahmed/Flahax/compare/v0.4.0...v0.5.0

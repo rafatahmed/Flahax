@@ -1,8 +1,8 @@
-# FlahaX 0.7.1.dev0 — User Manual
+# FlahaX 0.7.1 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.7.1.dev0, unpublished development checkout. Published 0.7.0 (2026-11-19) is archived at https://doi.org/10.5281/zenodo.24356739; its release evidence does not certify subsequent development changes.
+**Version:** 0.7.1, unpublished release-preparation candidate. Published 0.7.0 (2026-11-19) is archived at https://doi.org/10.5281/zenodo.24356739; its release evidence does not certify this candidate.
 
 ## Contents
 
@@ -37,8 +37,8 @@ Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-ED
 
 Python 3.11 or newer is required. The hosted verification matrix targets 3.11–3.14; local checks do not replace that matrix.
 
-Install from a reviewed source checkout using the commands below. Published 0.7.0 is available on PyPI; `python -m pip install flahax==0.7.0` installs that exact
-version. Verify availability and the installed version; do not silently select
+Install this unpublished 0.7.1 candidate from a reviewed source checkout using the commands below. Published 0.7.0 is available on PyPI; `python -m pip install flahax==0.7.0` installs that exact
+version, not this candidate. Verify availability and the installed version; do not silently select
 a different release.
 
 ```text
@@ -475,6 +475,14 @@ python -c "from importlib.resources import files; print(files('flahax').joinpath
 
 ## 10. Upgrading, integration and citation
 
+### Migration to 0.7.1 from 0.7.0
+
+Recalculate saved recipes: an absent or zero `N_NH4` is no longer limited by a default
+allowance (select it with `max_ammonium_fraction=0.10`), total nitrogen `N` is accepted as a
+target, a stock with no solubility limit at its temperature is kept and listed as unverified,
+and malformed numbers or contradictory plan fields are refused with a `DeliveryError`. See the
+migration guide and the 0.7.1 release notes for every change.
+
 ### Migration to 0.7.0 from 0.6.0
 
 Recalculate saved recipes from their original inputs; do not reuse an old acceptance
@@ -524,7 +532,7 @@ maps these changes to current references and executable checks.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.7.0 (2026-11-19; include the reviewed source revision). Published version DOI: https://doi.org/10.5281/zenodo.24356739. Development 0.7.1.dev0 must also identify its exact source revision; that DOI identifies published 0.7.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.7.1 (unpublished candidate; include the reviewed source revision). No new version DOI or release date is assigned; the version DOI https://doi.org/10.5281/zenodo.24356739 identifies published 0.7.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 
