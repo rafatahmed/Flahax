@@ -154,8 +154,9 @@ Dashboard settings, recorded here because they live outside the repository:
       jobs, Python 3.11 to 3.14) and a clean local run on Python 3.13; recorded in the release evidence.
 - [x] Align the version, runtime version, citation, manual and generated API reference with
       0.7.1 as an unpublished candidate (no date, no version DOI).
-- [ ] After approval and before tagging: date the changelog and the manual's version line, and
-      add the comparison links; after publication add the version DOI.
+- [x] Date the changelog and the manual's version line (2026-11-28) and add the comparison links.
+- [ ] Merge the finalization after CI passes; the tag must point at the merged commit.
+- [ ] After publication, record the receipts and add the version DOI.
 - [ ] Explicit maintainer authorization for tag, release and package publication.
 - [ ] Publish `v0.7.1`; review the protected publisher run and approve the `pypi` deployment.
 - [ ] Verify actual PyPI and GitHub file hashes and fresh wheel and sdist installs.
