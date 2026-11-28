@@ -146,6 +146,19 @@ Dashboard settings, recorded here because they live outside the repository:
   `latest` continues to track development on `main`.
 - Never put a Read the Docs token in the repository.
 
+## Checklist (0.7.1)
+
+- [x] Hardening and speed work merged (#334 to #355) and the changelog and
+      [release notes](releases/0.7.1.md) written; migration guide updated.
+- [ ] Clean full CI-equivalent evidence run on Python 3.11 to 3.14 (#344).
+- [ ] Align the version, runtime version, citation, manual and generated API reference with
+      0.7.1; date the changelog and the manual's version line before tagging.
+- [ ] Explicit maintainer authorization for tag, release and package publication.
+- [ ] Publish `v0.7.1`; review the protected publisher run and approve the `pypi` deployment.
+- [ ] Verify actual PyPI and GitHub file hashes and fresh wheel and sdist installs.
+- [ ] Confirm the Read the Docs `stable` version builds `v0.7.1`; confirm the Zenodo version DOI.
+- [ ] Record the publication receipts and open the next development version.
+
 ## Checklist (0.7.0)
 
 - [x] Align/finalize release metadata, manual, changelog and citation (2026-11-19).
@@ -157,7 +170,7 @@ Dashboard settings, recorded here because they live outside the repository:
 - [x] Verify installed grower/Appendix I/replay/uncertainty journeys; retain physical limits.
 - [x] Verify Zenodo 10.5281/zenodo.24356739 and exact-tag/stable documentation.
 - [x] Record actual publication receipts and version DOI in this follow-up.
-- [ ] Integrate the locally prepared 0.7.1.dev0 bookkeeping branch through PR/CI.
+- [x] Integrate the 0.7.1.dev0 bookkeeping through PR/CI (merged as 485c645).
 
 ## Checklist (0.6.0)
 

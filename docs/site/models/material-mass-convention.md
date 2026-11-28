@@ -48,10 +48,11 @@ ligands or counterions are not inferred from a similar commercial product.
 
 ## Explicit ammonium policy
 
-`recommend` defaults to an ammonium fraction of 0.10. When `N_NH4` is
+`recommend` generates no ammonium maximum by default (0.7.0 defaulted to a fraction of 0.10).
+Passing `max_ammonium_fraction` selects the allowance: when `N_NH4` is
 absent or zero in the original targets and no explicit ammonium maximum exists, the allowance is the smaller of
 that fraction of positive total target nitrogen and 1.5 mmol/L expressed as nitrogen
-(21.01005 mg/L). `max_ammonium_fraction=None` disables this generated maximum.
+(21.01005 mg/L). `max_ammonium_fraction=None`, the default, generates no maximum.
 A positive ammonium target prevents this allowance. The public recommendation
 workflow removes a zero ammonium target before fitting; it does not treat it as
 an ammonium prohibition. An explicit ammonium maximum retains its own meaning. No allowance is generated
