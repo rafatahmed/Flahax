@@ -1,6 +1,29 @@
 # Release readiness
 
-## Published 0.7.0 and prepared 0.7.1
+## Published 0.7.1 and development 0.7.2.dev0
+
+Published **0.7.1** (2026-11-28), tag `v0.7.1`, identifies
+`a95cfa9ca3462cb0ea4190112dbcee1c3f02b436`. See the
+[publication receipts](site/evidence/release-evidence.md#071-publication-2026-11-28),
+[release notes](releases/0.7.1.md) and [migration guide](site/start/migration.md#from-070-to-071).
+The version DOI is [10.5281/zenodo.24615878](https://doi.org/10.5281/zenodo.24615878).
+
+This checkout opens **0.7.2.dev0**, unpublished development. It is not a new release and does
+not inherit qualification for changed source. No numerical chemistry, reference data or recipe
+targets change in this step.
+
+| Item | Current disposition |
+|---|---|
+| Released source and CI | Main a95cfa9 passes 26 Test jobs; protected publisher 46097514014 passes all eight jobs. |
+| Delivered artifacts | Actual PyPI downloads match the build artifact byte for byte; a fresh wheel install passes version, API, resource, `recommend` and `flahax batch` checks. |
+| Archive/documentation | Zenodo version DOI archives the exact tag (880 files identical in size and CRC to the tag's source zip); tagged and stable Read the Docs builds show 0.7.1. |
+| Development identity | Project, runtime, manual and generated API reference identify 0.7.2.dev0. Citation and published installation guidance retain 0.7.1. |
+| Physical validation (#41) | Independent preparation/assay/crop evidence remains separate; no physical-accuracy or dosing-certification claim. |
+| Future publication | This record creates no tag or upload. Any later release requires its own qualification and explicit approval. |
+
+Historical records below retain their original revisions and publication facts.
+
+### 0.7.0 published and 0.7.1 prepared (record at the time)
 
 Published **0.7.0** (2026-11-19), tag `v0.7.0`, identifies
 `8787877cac626251cba2ff0a049958a6a25cef71`. See the

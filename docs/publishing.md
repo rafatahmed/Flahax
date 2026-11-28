@@ -155,13 +155,19 @@ Dashboard settings, recorded here because they live outside the repository:
 - [x] Align the version, runtime version, citation, manual and generated API reference with
       0.7.1 as an unpublished candidate (no date, no version DOI).
 - [x] Date the changelog and the manual's version line (2026-11-28) and add the comparison links.
-- [ ] Merge the finalization after CI passes; the tag must point at the merged commit.
-- [ ] After publication, record the receipts and add the version DOI.
-- [ ] Explicit maintainer authorization for tag, release and package publication.
-- [ ] Publish `v0.7.1`; review the protected publisher run and approve the `pypi` deployment.
-- [ ] Verify actual PyPI and GitHub file hashes and fresh wheel and sdist installs.
-- [ ] Confirm the Read the Docs `stable` version builds `v0.7.1`; confirm the Zenodo version DOI.
-- [ ] Record the publication receipts and open the next development version.
+- [x] Merge the finalization after CI passes (PR #365, `a95cfa9`); the tag points at that commit.
+- [x] Explicit maintainer authorization for tag, release and package publication (2026-11-28).
+- [x] Publish `v0.7.1`; protected publisher run 46097514014 passed; the `pypi` deployment was
+      approved by the maintainer.
+- [x] Verify actual PyPI file hashes and a fresh wheel install; Read the Docs `v0.7.1` and `stable`
+      build; Zenodo version DOI 10.5281/zenodo.24615878.
+- [x] Record the publication receipts and open 0.7.2.dev0 (this change).
+
+Lessons from 0.7.1: run the local evidence from a clean detached worktree, because an untracked
+folder inside the repository (for example a tutorial virtual environment) fails
+`tests.test_file_headers`; after a coverage-gate failure caused by queue time, re-run the whole
+workflow, not only the failed jobs; the final `Publish to PyPI` job waits for a reviewer click on
+the run page, and the upload follows within a minute of it.
 
 ## Checklist (0.7.0)
 
