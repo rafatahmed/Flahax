@@ -4,11 +4,11 @@ This page is the release log: for each FlahaX version, what was checked, on
 which revision, and with what result. Newest first.
 
 :::{note}
-**Current published release: 0.7.0**, dated 2026-11-19.
+**Current published release: 0.7.1**, dated 2026-11-28.
 The exact tag, publisher, artifact hashes and installed checks are recorded
-[below](#070-publication-2026-11-19). This checkout is **0.7.1**, declared artifact date 2026-11-28, unpublished:
-no upload, tag or version DOI is recorded yet. Published 0.7.0 evidence applies to its tagged revision and actual
-artifacts; it does not certify later changes.
+[below](#071-publication-2026-11-28). This checkout is **0.7.2.dev0**, unpublished
+development. Published 0.7.1 evidence applies to its tagged revision and actual
+artifacts; it does not certify later development changes.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.
 See the [migration guide](../start/migration.md) and
@@ -24,13 +24,62 @@ They are kept here because the records cite them.
 
 | Version | Date | Status | Record |
 |---|---|---|---|
-| 0.7.1 | 2026-11-28 | Finalized artifact, unpublished | [Preparation](#071-preparation-2026-11-28) |
-| 0.7.0 | 2026-11-19 | Published, latest recorded | [Publication](#070-publication-2026-11-19) |
+| 0.7.1 | 2026-11-28 | Published, latest recorded | [Publication](#071-publication-2026-11-28), [preparation](#071-preparation-2026-11-28) |
+| 0.7.0 | 2026-11-19 | Published | [Publication](#070-publication-2026-11-19) |
 | 0.6.0 | 2026-10-24 | Published | [Publication](#060-publication-2026-10-24) |
 | 0.5.0 | 2026-10-20 | Published | [Publication](#050-publication-2026-10-20) |
 | 0.4.0 | 2026-10-17 | Published | [Publication](#040-publication-2026-10-17), [preparation](#040-preparation-2026-10-17) |
 | 0.3.1 | 2026-10-17 | Published | [Publication](#031-publication-2026-10-17), [release audit](#031-release-audit-2026-10-17), [documentation audit](#031-documentation-audit-2026-10-02), [preparation](#031-preparation-2026-10-01) |
 | 0.3.0 | 2026-09-27 | Yanked 2026-10-17 | [Publication exception](#030-authorized-publication-exception-2026-09-27), [automated evidence](#030-automated-evidence), [P2/P3 acceptance](#p2p3-end-to-end-numerical-acceptance), [continuation](#package-and-delivery-continuation-2026-09-27), [cleanup](#030-release-readiness-cleanup), [preparation](#030-preparation) |
+
+## 0.7.1 publication (2026-11-28)
+
+Published under explicit maintainer authorization. The lightweight tag `v0.7.1`, created
+by the GitHub Release, identifies `a95cfa9ca3462cb0ea4190112dbcee1c3f02b436` (merge of
+[PR #365](https://github.com/rafatahmed/Flahax/pull/365)).
+[Main CI 46095946638](https://github.com/rafatahmed/Flahax/actions/runs/46095946638)
+passed all 26 jobs; the tagged
+[publisher 46097514014](https://github.com/rafatahmed/Flahax/actions/runs/46097514014)
+passed all eight jobs: tag and PyPI guard, the four Python-version unit and clean-install
+jobs, pinned live PHREEQC, build and the protected PyPI deployment. The maintainer approved the
+`pypi` deployment after the build; protection settings were retained. The GitHub Release was
+published at 02:19:39 UTC (05:19:39 Riyadh) and has no release assets.
+
+| Published artifact | Bytes | SHA-256 | PyPI upload (UTC, 2026-11-28) |
+|---|---:|---|---|
+| `flahax-0.7.1-py3-none-any.whl` | 501912 | `a511f46f395c79c1ea0132419a41f4ffc07bd504693838842bb667963dc9ca2d` | 2026-11-28T03:06:40.356414Z |
+| `flahax-0.7.1.tar.gz` | 9128028 | `8666ddb9bf19c1625b04f65869fe02b95466feff02de65d2b1bcc98765d3f6cb` | 2026-11-28T03:06:42.633927Z |
+
+The bytes downloaded from PyPI match PyPI's own digests and the build artifact hashed before
+the deployment was approved. Metadata: 0.7.1, Python >=3.11, Apache-2.0, no runtime
+dependencies; neither file is yanked. The source package is larger than 0.7.0's (6.7 to
+9.1 MB) mainly because three brand images were added under `docs/site/_static/brand/`.
+
+A fresh installation from PyPI on Python 3.13.15 (`pip install flahax==0.7.1`) installs no other
+package; `flahax --version` prints 0.7.1, the package has 151 exports (unchanged), the packaged
+resources are present, `recommend` is feasible and `flahax batch --formula "Tomato (Howard
+Resh)" --water ro --ph 5.8` writes its three files. Install checks on Python 3.11, 3.12 and
+3.14 or on Linux and macOS from PyPI were not run; the publisher's unit and clean-install jobs
+ran on all four Pythons on the tagged commit.
+
+Each publisher test job ran 2146 tests with no failures or errors: Python 3.11 skipped 33,
+3.12 skipped 31, and 3.13 and 3.14 each skipped 30. These are not 2146 passes per version.
+Native coverage and the exact coverage gate are in the separate exact-main CI run.
+
+Zenodo version DOI: [10.5281/zenodo.24615878](https://doi.org/10.5281/zenodo.24615878) (created 2026-11-28T02:19:45Z). It archives
+the GitHub source ZIP, not the wheel or sdist; its recorded MD5 matches the downloaded file.
+GitHub regenerates source ZIPs, so the two archives differ as bytes, but all 880 files are
+identical in name, size and CRC to the tag's source ZIP, and the archive's top folder is
+`rafatahmed-Flahax-a95cfa9`.
+
+Read the Docs: `/en/v0.7.1/` builds, with the 0.7.1 changelog and the "From 0.7.0 to 0.7.1"
+migration section, and `/en/stable/` serves the 0.7.1 changelog. Build numbers were not read
+from the Read the Docs dashboard. No source tag or uploaded artifact was rewritten.
+
+Process notes: a first local evidence run in the developer working copy failed
+`tests.test_file_headers` because an untracked tutorial virtual environment sits inside the
+repository folder; the run was repeated from a clean worktree (see the preparation record).
+The detailed run records are kept outside the repository.
 
 ## 0.7.1 preparation (2026-11-28)
 

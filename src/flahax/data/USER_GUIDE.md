@@ -1,8 +1,8 @@
-# FlahaX 0.7.1 — User Manual
+# FlahaX 0.7.2.dev0 — User Manual
 
 Fertilizer formulation • bounded chemistry • reviewed delivery planning
 
-**Version:** 0.7.1, released 2026-11-28. This is the declared artifact date; registry and archive publication are recorded separately in the release evidence. Published 0.7.0 (2026-11-19) is archived at https://doi.org/10.5281/zenodo.24356739; its release evidence does not certify 0.7.1.
+**Version:** 0.7.2.dev0, unpublished development checkout. Published 0.7.1 (2026-11-28) is archived at https://doi.org/10.5281/zenodo.24615878; its release evidence does not certify subsequent development changes.
 
 ## Contents
 
@@ -37,9 +37,9 @@ Fe-DTPA and Fe-o,o-EDDHA are Fe(III)-only 1:1 catalogue products. Fe/Mn/Zn/Cu-ED
 
 Python 3.11 or newer is required. The hosted verification matrix targets 3.11–3.14; local checks do not replace that matrix.
 
-Install from a reviewed source checkout using the commands below. Once 0.7.1 is available on PyPI,
-`python -m pip install flahax==0.7.1` installs that exact version; `flahax==0.7.0` installs the previous release.
-Verify availability and the installed version; do not silently select a different release.
+Install from a reviewed source checkout using the commands below. Published 0.7.1 is available on PyPI;
+`python -m pip install flahax==0.7.1` installs that exact version. Verify availability and the installed
+version; do not silently select a different release.
 
 ```text
 python -m venv .venv
@@ -532,7 +532,7 @@ maps these changes to current references and executable checks.
 
 FlahaFAST integration is owned by the separate FlahaFAST project. No host paths, external writes or automatic control are configured by this package.
 
-Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.7.1 (2026-11-28; include the reviewed source revision). Use a version DOI only after its archive has been verified; https://doi.org/10.5281/zenodo.24356739 identifies published 0.7.0. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
+Citation: Rafat Al Khashan (2026), *FlahaX*, version 0.7.1 (2026-11-28; include the reviewed source revision). Published version DOI: https://doi.org/10.5281/zenodo.24615878. Development 0.7.2.dev0 must also identify its exact source revision; that DOI identifies published 0.7.1. Use the repository's `CITATION.cff` and cite the version actually used. FlahaX is licensed under Apache-2.0; redistributions must keep the copyright notice and the `NOTICE` file.
 
 Further reference: [repository documentation](https://github.com/rafatahmed/Flahax/tree/main/docs), [source and issues](https://github.com/rafatahmed/Flahax), [PyPI project](https://pypi.org/project/flahax/).
 

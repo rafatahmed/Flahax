@@ -53,22 +53,24 @@ Recalculate and review saved results; acceptance does not transfer to changed in
 [current publication evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
 See the [0.7.0 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md).
 
-**This source checkout: 0.7.1 — 2026-11-28.** This is the artifact's declared release date; registry
-uploads and version-specific archive records are verified separately in the
-[release evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
+**Published release: 0.7.1 (2026-11-28).**
+[PyPI wheel and source package](https://pypi.org/project/flahax/0.7.1/),
+[version DOI](https://doi.org/10.5281/zenodo.24615878) and
+[current publication evidence](https://flahax.readthedocs.io/en/latest/evidence/release-evidence.html).
 See the [0.7.1 notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.1.md) and the
 [migration guide](https://flahax.readthedocs.io/en/latest/start/migration.html#from-070-to-071).
-The 0.7.0 release DOI identifies the published 0.7.0 archive, not 0.7.1.
+
+**This source checkout: 0.7.2.dev0**, unpublished development after 0.7.1.
+The release DOI identifies the published archive, not this development checkout.
 
 ## Installation
 
 Python 3.11 or newer. There are no third-party runtime dependencies.
 From a reviewed source checkout, install with `python -m pip install .`.
-Install the published 0.7.0 from PyPI. After 0.7.1 is available there, pin it with
-`python -m pip install flahax==0.7.1`:
+Install the published version from PyPI:
 
 ```bash
-python -m pip install flahax==0.7.0
+python -m pip install flahax==0.7.1
 ```
 
 Verify availability before installation; do not substitute another version silently.
@@ -262,8 +264,8 @@ Live PHREEQC replay and distribution verification are described in
 
 Al Khashan, R. A. (2026). *FlahaX* (Version 0.7.1, 2026-11-28)
 [Computer software]. Cite the reviewed source revision as well as the version.
-Use a 0.7.1 version DOI only after its archive is verified; published 0.7.0 is
-[10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739) and identifies that version only.
+Published 0.7.1: [10.5281/zenodo.24615878](https://doi.org/10.5281/zenodo.24615878).
+For development checkouts, include the development version and exact source revision.
 
 ```bibtex
 @software{alkhashan2026flahax,
@@ -271,6 +273,7 @@ Use a 0.7.1 version DOI only after its archive is verified; published 0.7.0 is
   title   = {FlahaX: plant-nutrient chemistry engine for fertilizer formulation and delivery planning},
   year    = {2026},
   version = {0.7.1},
+  doi     = {10.5281/zenodo.24615878},
   url     = {https://github.com/rafatahmed/Flahax},
   license = {Apache-2.0}
 }

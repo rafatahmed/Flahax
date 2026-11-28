@@ -157,7 +157,7 @@ __all__ = [
     "load_identities",
     "identity_for_product",
 ]
-__version__ = '0.7.1'
+__version__ = '0.7.2.dev0'
 
 # Public names load on first use (PEP 562): `import flahax` stays cheap and each
 # name imports only the module that defines it (#335).

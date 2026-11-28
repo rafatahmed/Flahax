@@ -5,7 +5,7 @@ decisions, are kept per release:
 
 | Release | Notes |
 |---|---|
-| 0.7.1 (2026-11-28 artifact date) | [Release notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.1.md); [migration](../start/migration.md#from-070-to-071) |
+| 0.7.1 (published 2026-11-28) | [Release notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.1.md); [migration](../start/migration.md#from-070-to-071) |
 | 0.7.0 (published 2026-11-19) | [Release notes](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.7.0.md); [migration](../start/migration.md) |
 | 0.6.0 | [docs/releases/0.6.0.md](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.6.0.md) |
 | 0.5.0 | [docs/releases/0.5.0.md](https://github.com/rafatahmed/Flahax/blob/main/docs/releases/0.5.0.md) |

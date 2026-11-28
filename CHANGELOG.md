@@ -7,7 +7,7 @@ from its predecessor. Detailed notes retain sources, limitations and migration.
 
 ## [Unreleased]
 
-No changes recorded since 0.7.1.
+Development checkout: 0.7.2.dev0. No user-facing changes recorded since 0.7.1.
 
 ## [0.7.1] - 2026-11-28
 
