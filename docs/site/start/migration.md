@@ -1,7 +1,7 @@
 # Migrate saved workflows
 
 This guide covers upgrading **from 0.7.0 to 0.7.1** (first section) and **from 0.6.0 to 0.7.0**
-(the table after it). 0.7.1 is prepared but not published; the latest publication recorded in
+(the table after it). 0.7.1 has declared artifact date 2026-11-28 and is not yet recorded as published; the latest publication recorded in
 [release evidence](../evidence/release-evidence.md) is 0.7.0. Historical tests and benchmark
 downloads describe their own revisions.
 

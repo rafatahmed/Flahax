@@ -8,8 +8,8 @@ Published **0.7.0** (2026-11-19), tag `v0.7.0`, identifies
 [release notes](releases/0.7.0.md) and [migration guide](site/start/migration.md).
 The version DOI is [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
 
-This checkout prepares **0.7.1**, an unpublished release candidate. It is not published
-and does not inherit the qualification of 0.7.0 for changed source: its evidence is the
+This checkout is **0.7.1** with declared artifact date **2026-11-28**. It is not published until
+the registry and archive are checked, and it does not inherit the qualification of 0.7.0 for changed source: its evidence is the
 [0.7.1 preparation record](site/evidence/release-evidence.md#071-preparation-2026-11-28) for
 `ef6ad37`, and the committed head of the release pull request needs its own hosted checks.
 See the [0.7.1 release notes](releases/0.7.1.md) and the
@@ -21,11 +21,11 @@ See the [0.7.1 release notes](releases/0.7.1.md) and the
 | Delivered artifacts | Actual PyPI downloads match the validated build/GitHub assets; fresh wheel/sdist installs pass examples, APIs/resources and CLI checks. |
 | Installed workflows | Fresh PyPI grower/Appendix I import/replay, uncertainty intervals, sodium reserve and explicit changed-sample review pass; qualification remains software-only. |
 | Archive/documentation | Version DOI/source identity and successful tagged/stable RTD builds match 8787877; stable is default. |
-| Candidate identity | Project, runtime, manual and generated API reference identify 0.7.1; the changelog section is "not yet released". Citation and README state that no version DOI or date is assigned, and published installation guidance retains 0.7.0. |
+| Artifact identity | Project, runtime, manual and generated API reference identify 0.7.1; the changelog, manual and citation declare 2026-11-28. No version DOI is assigned until its archive is verified, and published installation guidance retains 0.7.0 until 0.7.1 is on PyPI. |
 | 0.7.1 evidence | Hosted run 46087636649 on `ef6ad37`: 26 of 26 jobs; clean local run on Python 3.13: 2146 tests, 0 failures; live PHREEQC replay, golden fixture re-capture and clean wheel/sdist verification pass. |
 | Completed software findings | #276/#277/#278/#280/#282 closed; lifecycle fixture follow-up #285 accompanies this branch. |
 | Physical validation (#41) | Independent preparation/assay/crop evidence remains separate; no physical-accuracy or dosing-certification claim. |
-| Future publication | This preparation creates no tag or upload. Tag, GitHub Release and package publication need explicit maintainer approval, then the publication receipts are recorded. |
+| Future publication | This finalization creates no tag or upload. Tag, GitHub Release and package publication need explicit maintainer approval, then the publication receipts are recorded. |
 
 Recorded grower software acceptance (#231) and completed computational campaign
 #42 retain their scope; neither becomes independent physical validation.

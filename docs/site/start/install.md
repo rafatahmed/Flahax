@@ -11,9 +11,9 @@ python -m pip install flahax
 ```
 
 Published **0.7.0** (2026-11-19) is available with
-`python -m pip install flahax==0.7.0`, which is not the 0.7.1 candidate. This source checkout
-is **0.7.1**, an unpublished release-preparation candidate; install a reviewed checkout with
-`python -m pip install .`.
+`python -m pip install flahax==0.7.0`. Version **0.7.1** has declared artifact date **2026-11-28**;
+install a reviewed checkout with `python -m pip install .`. Once 0.7.1 is available on PyPI, pin it
+with `python -m pip install flahax==0.7.1`.
 Check `flahax --version` and do not silently substitute versions.
 
 ## Check what is installed

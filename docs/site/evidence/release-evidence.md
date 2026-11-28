@@ -6,8 +6,8 @@ which revision, and with what result. Newest first.
 :::{note}
 **Current published release: 0.7.0**, dated 2026-11-19.
 The exact tag, publisher, artifact hashes and installed checks are recorded
-[below](#070-publication-2026-11-19). This checkout is **0.7.1**, an unpublished release-preparation
-candidate. Published 0.7.0 evidence applies to its tagged revision and actual
+[below](#070-publication-2026-11-19). This checkout is **0.7.1**, declared artifact date 2026-11-28, unpublished:
+no upload, tag or version DOI is recorded yet. Published 0.7.0 evidence applies to its tagged revision and actual
 artifacts; it does not certify later changes.
 FlahaX is a planning and verification prototype: computational evidence is not
 laboratory/field validation and does not authorize dosing or deployment.
@@ -24,7 +24,7 @@ They are kept here because the records cite them.
 
 | Version | Date | Status | Record |
 |---|---|---|---|
-| 0.7.1 | 2026-11-28 | Prepared, unpublished | [Preparation](#071-preparation-2026-11-28) |
+| 0.7.1 | 2026-11-28 | Finalized artifact, unpublished | [Preparation](#071-preparation-2026-11-28) |
 | 0.7.0 | 2026-11-19 | Published, latest recorded | [Publication](#070-publication-2026-11-19) |
 | 0.6.0 | 2026-10-24 | Published | [Publication](#060-publication-2026-10-24) |
 | 0.5.0 | 2026-10-20 | Published | [Publication](#050-publication-2026-10-20) |
