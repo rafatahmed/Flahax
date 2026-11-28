@@ -1,6 +1,6 @@
 # Release readiness
 
-## Published 0.7.0 and development 0.7.1.dev0
+## Published 0.7.0 and prepared 0.7.1
 
 Published **0.7.0** (2026-11-19), tag `v0.7.0`, identifies
 `8787877cac626251cba2ff0a049958a6a25cef71`. See the
@@ -8,10 +8,12 @@ Published **0.7.0** (2026-11-19), tag `v0.7.0`, identifies
 [release notes](releases/0.7.0.md) and [migration guide](site/start/migration.md).
 The version DOI is [10.5281/zenodo.24356739](https://doi.org/10.5281/zenodo.24356739).
 
-This checkout opens **0.7.1.dev0**, unpublished development. It is not a new
-release and does not inherit qualification for changed source. The local
-bookkeeping branch still needs its own committed-head hosted checks and review.
-No numerical chemistry, reference data or recipe targets change in this step.
+This checkout prepares **0.7.1**, an unpublished release candidate. It is not published
+and does not inherit the qualification of 0.7.0 for changed source: its evidence is the
+[0.7.1 preparation record](site/evidence/release-evidence.md#071-preparation-2026-11-28) for
+`ef6ad37`, and the committed head of the release pull request needs its own hosted checks.
+See the [0.7.1 release notes](releases/0.7.1.md) and the
+[migration guide](site/start/migration.md#from-070-to-071).
 
 | Item | Current disposition |
 |---|---|
@@ -19,10 +21,11 @@ No numerical chemistry, reference data or recipe targets change in this step.
 | Delivered artifacts | Actual PyPI downloads match the validated build/GitHub assets; fresh wheel/sdist installs pass examples, APIs/resources and CLI checks. |
 | Installed workflows | Fresh PyPI grower/Appendix I import/replay, uncertainty intervals, sodium reserve and explicit changed-sample review pass; qualification remains software-only. |
 | Archive/documentation | Version DOI/source identity and successful tagged/stable RTD builds match 8787877; stable is default. |
-| Development identity | Project/runtime/manual/generated API reference identify 0.7.1.dev0. Citation and published installation guidance retain 0.7.0. |
+| Candidate identity | Project, runtime, manual and generated API reference identify 0.7.1; the changelog section is "not yet released". Citation and README state that no version DOI or date is assigned, and published installation guidance retains 0.7.0. |
+| 0.7.1 evidence | Hosted run 46087636649 on `ef6ad37`: 26 of 26 jobs; clean local run on Python 3.13: 2146 tests, 0 failures; live PHREEQC replay, golden fixture re-capture and clean wheel/sdist verification pass. |
 | Completed software findings | #276/#277/#278/#280/#282 closed; lifecycle fixture follow-up #285 accompanies this branch. |
 | Physical validation (#41) | Independent preparation/assay/crop evidence remains separate; no physical-accuracy or dosing-certification claim. |
-| Future publication | This bookkeeping creates no tag or upload. Any later release requires its own qualification and explicit approval. |
+| Future publication | This preparation creates no tag or upload. Tag, GitHub Release and package publication need explicit maintainer approval, then the publication receipts are recorded. |
 
 Recorded grower software acceptance (#231) and completed computational campaign
 #42 retain their scope; neither becomes independent physical validation.
